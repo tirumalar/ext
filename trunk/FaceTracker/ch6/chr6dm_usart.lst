@@ -1,0 +1,2012 @@
+
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease\chr6dm_usart.o:     file format elf32-littlearm
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease\chr6dm_usart.o
+
+Disassembly of section .text.TXBufPush:
+
+00000000 <TXBufPush>:
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+   0:	f240 0100 	movw	r1, #0	; 0x0
+   4:	f2c0 0100 	movt	r1, #0	; 0x0
+   8:	680b      	ldr	r3, [r1, #0]
+   a:	2b32      	cmp	r3, #50
+   c:	d009      	beq.n	22 <TXBufPush+0x22>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+   e:	680a      	ldr	r2, [r1, #0]
+  10:	f240 0300 	movw	r3, #0	; 0x0
+  14:	f2c0 0300 	movt	r3, #0	; 0x0
+  18:	5498      	strb	r0, [r3, r2]
+  1a:	3201      	adds	r2, #1
+  1c:	600a      	str	r2, [r1, #0]
+  1e:	2001      	movs	r0, #1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:90
+
+    return 1;
+}
+  20:	4770      	bx	lr
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+  22:	2000      	movs	r0, #0
+  24:	e7fc      	b.n	52 <gRXPacketBufferStart+0x13>
+  26:	46c0      	nop			(mov r8, r8)
+Disassembly of section .text.TXBufPop:
+
+00000000 <TXBufPop>:
+TXBufPop():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:102
+* Description    : Pops the next character off of the TX buffer.  This is typically
+						  called when the next character needs to be transmitted by the
+						  USART.
+*******************************************************************************/
+char TXBufPop( void )
+{
+   0:	b410      	push	{r4}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:106
+    char buffer_data;
+    int32_t index;
+
+    if( gTXBufPtr == 0 )
+   2:	f240 0400 	movw	r4, #0	; 0x0
+   6:	f2c0 0400 	movt	r4, #0	; 0x0
+   a:	6823      	ldr	r3, [r4, #0]
+   c:	b1cb      	cbz	r3, 42 <TXBufPop+0x42>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:111
+    {
+        return 0;
+    }
+
+    buffer_data = gTXBuf[0];
+   e:	f240 0000 	movw	r0, #0	; 0x0
+  12:	f2c0 0000 	movt	r0, #0	; 0x0
+  16:	7803      	ldrb	r3, [r0, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:113
+
+    for( index = 0; index < (gTXBufPtr-1); index++ )
+  18:	6822      	ldr	r2, [r4, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:111
+    if( gTXBufPtr == 0 )
+    {
+        return 0;
+    }
+
+    buffer_data = gTXBuf[0];
+  1a:	469c      	mov	ip, r3
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:113
+
+    for( index = 0; index < (gTXBufPtr-1); index++ )
+  1c:	2a01      	cmp	r2, #1
+  1e:	dd09      	ble.n	66 <gRXPacketBufferStart+0x27>
+  20:	2200      	movs	r2, #0
+  22:	e000      	b.n	58 <gRXPacketBufferStart+0x19>
+  24:	460a      	mov	r2, r1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:115
+    {
+        gTXBuf[index] = gTXBuf[index+1];
+  26:	1c51      	adds	r1, r2, #1
+  28:	5c43      	ldrb	r3, [r0, r1]
+  2a:	5483      	strb	r3, [r0, r2]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:113
+        return 0;
+    }
+
+    buffer_data = gTXBuf[0];
+
+    for( index = 0; index < (gTXBufPtr-1); index++ )
+  2c:	6822      	ldr	r2, [r4, #0]
+  2e:	3a01      	subs	r2, #1
+  30:	428a      	cmp	r2, r1
+  32:	dcf7      	bgt.n	56 <gRXPacketBufferStart+0x17>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:118
+    {
+        gTXBuf[index] = gTXBuf[index+1];
+    }
+
+    gTXBufPtr--;
+  34:	6823      	ldr	r3, [r4, #0]
+  36:	3b01      	subs	r3, #1
+  38:	6023      	str	r3, [r4, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:121
+
+    return buffer_data;
+}
+  3a:	fa4f f08c 	sxtb.w	r0, ip
+  3e:	bc10      	pop	{r4}
+  40:	4770      	bx	lr
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:106
+char TXBufPop( void )
+{
+    char buffer_data;
+    int32_t index;
+
+    if( gTXBufPtr == 0 )
+  42:	469c      	mov	ip, r3
+  44:	e7f9      	b.n	6c <gRXPacketBufferStart+0x2d>
+  46:	46c0      	nop			(mov r8, r8)
+Disassembly of section .text.AddTXPacket:
+
+00000000 <AddTXPacket>:
+AddTXPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:555
+* Output         : None
+* Return         : None
+* Description    : Adds the specified packet to the TX Packet Buffer.
+*******************************************************************************/
+void AddTXPacket( USARTPacket* new_packet )
+{
+   0:	b570      	push	{r4, r5, r6, lr}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:556
+	 gTXPacketBuffer[gTXPacketBufferEnd] = *new_packet;
+   2:	f240 0500 	movw	r5, #0	; 0x0
+   6:	f2c0 0500 	movt	r5, #0	; 0x0
+   a:	792b      	ldrb	r3, [r5, #4]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:555
+* Output         : None
+* Return         : None
+* Description    : Adds the specified packet to the TX Packet Buffer.
+*******************************************************************************/
+void AddTXPacket( USARTPacket* new_packet )
+{
+   c:	4601      	mov	r1, r0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:556
+	 gTXPacketBuffer[gTXPacketBufferEnd] = *new_packet;
+   e:	009c      	lsls	r4, r3, #2
+  10:	0118      	lsls	r0, r3, #4
+  12:	1b00      	subs	r0, r0, r4
+  14:	1ac0      	subs	r0, r0, r3
+  16:	f240 0200 	movw	r2, #0	; 0x0
+  1a:	f2c0 0200 	movt	r2, #0	; 0x0
+  1e:	0080      	lsls	r0, r0, #2
+  20:	1810      	adds	r0, r2, r0
+  22:	222c      	movs	r2, #44
+  24:	f7ff fffe 	bl	0 <memcpy>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:558
+	 
+	 gTXPacketBufferEnd++;
+  28:	792b      	ldrb	r3, [r5, #4]
+  2a:	3301      	adds	r3, #1
+  2c:	b2db      	uxtb	r3, r3
+  2e:	712b      	strb	r3, [r5, #4]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:559
+	 if( gTXPacketBufferEnd >= TX_PACKET_BUFFER_SIZE )
+  30:	792a      	ldrb	r2, [r5, #4]
+  32:	2a13      	cmp	r2, #19
+  34:	d901      	bls.n	3a <memcpy+0x3a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:561
+	 {
+		  gTXPacketBufferEnd = 0;
+  36:	2300      	movs	r3, #0
+  38:	712b      	strb	r3, [r5, #4]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:563
+	 }
+}
+  3a:	bd70      	pop	{r4, r5, r6, pc}
+Disassembly of section .text.AddRXPacket:
+
+00000000 <AddRXPacket>:
+AddRXPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:573
+* Output         : None
+* Return         : None
+* Description    : Adds the specified packet to the RX Packet Buffer.
+*******************************************************************************/
+void AddRXPacket( USARTPacket* new_packet )
+{
+   0:	b570      	push	{r4, r5, r6, lr}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:574
+	 gRXPacketBuffer[gRXPacketBufferEnd] = *new_packet;
+   2:	f240 0500 	movw	r5, #0	; 0x0
+   6:	f2c0 0500 	movt	r5, #0	; 0x0
+   a:	796b      	ldrb	r3, [r5, #5]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:573
+* Output         : None
+* Return         : None
+* Description    : Adds the specified packet to the RX Packet Buffer.
+*******************************************************************************/
+void AddRXPacket( USARTPacket* new_packet )
+{
+   c:	4601      	mov	r1, r0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:574
+	 gRXPacketBuffer[gRXPacketBufferEnd] = *new_packet;
+   e:	009c      	lsls	r4, r3, #2
+  10:	0118      	lsls	r0, r3, #4
+  12:	1b00      	subs	r0, r0, r4
+  14:	1ac0      	subs	r0, r0, r3
+  16:	f240 0200 	movw	r2, #0	; 0x0
+  1a:	f2c0 0200 	movt	r2, #0	; 0x0
+  1e:	0080      	lsls	r0, r0, #2
+  20:	1810      	adds	r0, r2, r0
+  22:	222c      	movs	r2, #44
+  24:	f7ff fffe 	bl	0 <memcpy>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:576
+	 
+	 gRXPacketBufferEnd++;
+  28:	796b      	ldrb	r3, [r5, #5]
+  2a:	3301      	adds	r3, #1
+  2c:	b2db      	uxtb	r3, r3
+  2e:	716b      	strb	r3, [r5, #5]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:577
+	 if( gRXPacketBufferEnd >= RX_PACKET_BUFFER_SIZE )
+  30:	796a      	ldrb	r2, [r5, #5]
+  32:	2a13      	cmp	r2, #19
+  34:	d901      	bls.n	3a <memcpy+0x3a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:579
+	 {
+		  gRXPacketBufferEnd = 0;
+  36:	2300      	movs	r3, #0
+  38:	716b      	strb	r3, [r5, #5]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:581
+	 }
+}
+  3a:	bd70      	pop	{r4, r5, r6, pc}
+Disassembly of section .text.ComputeChecksum:
+
+00000000 <ComputeChecksum>:
+ComputeChecksum():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:592
+* Return         : uint16_t
+* Description    : Returns the two byte sum of all the individual bytes in the
+						 given packet.
+*******************************************************************************/
+uint16_t ComputeChecksum( USARTPacket* new_packet )
+{
+   0:	b430      	push	{r4, r5}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:595
+	 int32_t index;
+
+	 uint16_t checksum = 0x73 + 0x6E + 0x70 + new_packet->PT + new_packet->length;
+   2:	7844      	ldrb	r4, [r0, #1]
+   4:	7803      	ldrb	r3, [r0, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:592
+* Return         : uint16_t
+* Description    : Returns the two byte sum of all the individual bytes in the
+						 given packet.
+*******************************************************************************/
+uint16_t ComputeChecksum( USARTPacket* new_packet )
+{
+   6:	4605      	mov	r5, r0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:595
+	 int32_t index;
+
+	 uint16_t checksum = 0x73 + 0x6E + 0x70 + new_packet->PT + new_packet->length;
+   8:	191b      	adds	r3, r3, r4
+   a:	f503 70a8 	add.w	r0, r3, #336	; 0x150
+   e:	3001      	adds	r0, #1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:597
+	 
+	 for( index = 0; index < new_packet->length; index++ )
+  10:	b13c      	cbz	r4, 22 <memcpy+0x22>
+  12:	2100      	movs	r1, #0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:599
+	 {
+		  checksum += new_packet->packet_data[index];
+  14:	186a      	adds	r2, r5, r1
+  16:	7913      	ldrb	r3, [r2, #4]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:597
+{
+	 int32_t index;
+
+	 uint16_t checksum = 0x73 + 0x6E + 0x70 + new_packet->PT + new_packet->length;
+	 
+	 for( index = 0; index < new_packet->length; index++ )
+  18:	3101      	adds	r1, #1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:599
+	 {
+		  checksum += new_packet->packet_data[index];
+  1a:	18c3      	adds	r3, r0, r3
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:597
+{
+	 int32_t index;
+
+	 uint16_t checksum = 0x73 + 0x6E + 0x70 + new_packet->PT + new_packet->length;
+	 
+	 for( index = 0; index < new_packet->length; index++ )
+  1c:	42a1      	cmp	r1, r4
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:599
+	 {
+		  checksum += new_packet->packet_data[index];
+  1e:	b298      	uxth	r0, r3
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:597
+{
+	 int32_t index;
+
+	 uint16_t checksum = 0x73 + 0x6E + 0x70 + new_packet->PT + new_packet->length;
+	 
+	 for( index = 0; index < new_packet->length; index++ )
+  20:	dbf8      	blt.n	14 <memcpy+0x14>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:603
+	 {
+		  checksum += new_packet->packet_data[index];
+	 }
+	 
+	 return checksum;
+  22:	bc30      	pop	{r4, r5}
+  24:	4770      	bx	lr
+  26:	46c0      	nop			(mov r8, r8)
+Disassembly of section .text.USART1_TX_start:
+
+00000000 <USART1_TX_start>:
+USART1_TX_start():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:134
+						  not already busy, then USART1_TX_start pops the next character
+						  to be transmitted off the TX buffer, and then copies that character
+						  into the USART1 TX register to be transmitted.
+*******************************************************************************/
+void USART1_TX_start( )
+{
+   0:	b510      	push	{r4, lr}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:135
+    if( gTXBusy )
+   2:	f240 0400 	movw	r4, #0	; 0x0
+   6:	f2c0 0400 	movt	r4, #0	; 0x0
+   a:	79a3      	ldrb	r3, [r4, #6]
+   c:	469c      	mov	ip, r3
+   e:	bb23      	cbnz	r3, 5a <USART1_TX_start+0x5a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:140
+    {
+        return;
+    }
+
+    if( gTXBufPtr == 0 )
+  10:	6823      	ldr	r3, [r4, #0]
+  12:	b313      	cbz	r3, 5a <USART1_TX_start+0x5a>
+TXBufPop():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:106
+char TXBufPop( void )
+{
+    char buffer_data;
+    int32_t index;
+
+    if( gTXBufPtr == 0 )
+  14:	6821      	ldr	r1, [r4, #0]
+  16:	b1c1      	cbz	r1, 4a <USART1_TX_start+0x4a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:111
+    {
+        return 0;
+    }
+
+    buffer_data = gTXBuf[0];
+  18:	f240 0000 	movw	r0, #0	; 0x0
+  1c:	f2c0 0000 	movt	r0, #0	; 0x0
+  20:	7803      	ldrb	r3, [r0, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:113
+
+    for( index = 0; index < (gTXBufPtr-1); index++ )
+  22:	6822      	ldr	r2, [r4, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:111
+    if( gTXBufPtr == 0 )
+    {
+        return 0;
+    }
+
+    buffer_data = gTXBuf[0];
+  24:	469e      	mov	lr, r3
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:113
+
+    for( index = 0; index < (gTXBufPtr-1); index++ )
+  26:	2a01      	cmp	r2, #1
+  28:	dd09      	ble.n	3e <USART1_TX_start+0x3e>
+  2a:	4662      	mov	r2, ip
+  2c:	e000      	b.n	30 <USART1_TX_start+0x30>
+  2e:	460a      	mov	r2, r1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:115
+    {
+        gTXBuf[index] = gTXBuf[index+1];
+  30:	1c51      	adds	r1, r2, #1
+  32:	5c43      	ldrb	r3, [r0, r1]
+  34:	5483      	strb	r3, [r0, r2]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:113
+        return 0;
+    }
+
+    buffer_data = gTXBuf[0];
+
+    for( index = 0; index < (gTXBufPtr-1); index++ )
+  36:	6822      	ldr	r2, [r4, #0]
+  38:	3a01      	subs	r2, #1
+  3a:	4291      	cmp	r1, r2
+  3c:	dbf7      	blt.n	2e <USART1_TX_start+0x2e>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:118
+    {
+        gTXBuf[index] = gTXBuf[index+1];
+    }
+
+    gTXBufPtr--;
+  3e:	6823      	ldr	r3, [r4, #0]
+  40:	fa4f f28e 	sxtb.w	r2, lr
+  44:	3b01      	subs	r3, #1
+  46:	6023      	str	r3, [r4, #0]
+  48:	b291      	uxth	r1, r2
+USART1_TX_start():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:145
+    if( gTXBufPtr == 0 )
+    {
+        return;
+    }
+
+    USART_SendData(USART1, TXBufPop() );
+  4a:	f643 0000 	movw	r0, #14336	; 0x3800
+  4e:	f2c4 0001 	movt	r0, #16385	; 0x4001
+  52:	f7ff fffe 	bl	0 <USART_SendData>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:147
+
+    gTXBusy = 1;    
+  56:	2301      	movs	r3, #1
+  58:	71a3      	strb	r3, [r4, #6]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:148
+}
+  5a:	bd10      	pop	{r4, pc}
+Disassembly of section .text.SendNextPacket:
+
+00000000 <SendNextPacket>:
+SendNextPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:462
+Buffer, where they "wait" until the USART1 transmitter isn't busy.  Then, when
+the transmitter becomes available, the packet is copied into the TX buffer.
+
+*******************************************************************************/
+void SendNextPacket( )
+{
+   0:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:469
+	 uint8_t data_length;
+	 uint16_t checksum;
+	 int32_t i;
+	 
+	 // If there are no packets in the buffer that need to be transmitted, return
+	 if( gTXPacketBufferStart == gTXPacketBufferEnd )
+   4:	f240 0500 	movw	r5, #0	; 0x0
+   8:	f2c0 0500 	movt	r5, #0	; 0x0
+   c:	79ea      	ldrb	r2, [r5, #7]
+   e:	792b      	ldrb	r3, [r5, #4]
+  10:	429a      	cmp	r2, r3
+  12:	f000 80bc 	beq.w	18e <SendNextPacket+0x18e>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:476
+		  return;
+	 }
+	 
+	 // If there is already data in the TX buffer, return - the next packet will be sent
+	 // automatically when the buffer is empty
+	 if( gTXBusy )
+  16:	79ab      	ldrb	r3, [r5, #6]
+  18:	2b00      	cmp	r3, #0
+  1a:	f040 80b8 	bne.w	18e <SendNextPacket+0x18e>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:481
+	 {
+		  return;
+	 }
+	 
+	 PT = gTXPacketBuffer[gTXPacketBufferStart].PT;
+  1e:	79ea      	ldrb	r2, [r5, #7]
+  20:	f240 0700 	movw	r7, #0	; 0x0
+  24:	0091      	lsls	r1, r2, #2
+  26:	0113      	lsls	r3, r2, #4
+  28:	1a5b      	subs	r3, r3, r1
+  2a:	1a9b      	subs	r3, r3, r2
+  2c:	f2c0 0700 	movt	r7, #0	; 0x0
+  30:	f817 1023 	ldrb.w	r1, [r7, r3, lsl #2]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:482
+	 data_length = gTXPacketBuffer[gTXPacketBufferStart].length;
+  34:	79ea      	ldrb	r2, [r5, #7]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:481
+	 if( gTXBusy )
+	 {
+		  return;
+	 }
+	 
+	 PT = gTXPacketBuffer[gTXPacketBufferStart].PT;
+  36:	460c      	mov	r4, r1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:482
+	 data_length = gTXPacketBuffer[gTXPacketBufferStart].length;
+  38:	0113      	lsls	r3, r2, #4
+  3a:	0091      	lsls	r1, r2, #2
+  3c:	1a5b      	subs	r3, r3, r1
+  3e:	1a9b      	subs	r3, r3, r2
+  40:	009b      	lsls	r3, r3, #2
+  42:	18fb      	adds	r3, r7, r3
+  44:	7859      	ldrb	r1, [r3, #1]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:483
+	 checksum = gTXPacketBuffer[gTXPacketBufferStart].checksum;
+  46:	79ea      	ldrb	r2, [r5, #7]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:482
+	 {
+		  return;
+	 }
+	 
+	 PT = gTXPacketBuffer[gTXPacketBufferStart].PT;
+	 data_length = gTXPacketBuffer[gTXPacketBufferStart].length;
+  48:	460e      	mov	r6, r1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:483
+	 checksum = gTXPacketBuffer[gTXPacketBufferStart].checksum;
+  4a:	0113      	lsls	r3, r2, #4
+  4c:	0091      	lsls	r1, r2, #2
+  4e:	1a5b      	subs	r3, r3, r1
+  50:	1a9b      	subs	r3, r3, r2
+  52:	009b      	lsls	r3, r3, #2
+  54:	18fb      	adds	r3, r7, r3
+  56:	885a      	ldrh	r2, [r3, #2]
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+  58:	682b      	ldr	r3, [r5, #0]
+SendNextPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:483
+		  return;
+	 }
+	 
+	 PT = gTXPacketBuffer[gTXPacketBufferStart].PT;
+	 data_length = gTXPacketBuffer[gTXPacketBufferStart].length;
+	 checksum = gTXPacketBuffer[gTXPacketBufferStart].checksum;
+  5a:	fa1f fc82 	uxth.w	ip, r2
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+  5e:	2b32      	cmp	r3, #50
+  60:	d008      	beq.n	74 <SendNextPacket+0x74>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+  62:	682b      	ldr	r3, [r5, #0]
+  64:	f240 0200 	movw	r2, #0	; 0x0
+  68:	f2c0 0200 	movt	r2, #0	; 0x0
+  6c:	2173      	movs	r1, #115
+  6e:	54d1      	strb	r1, [r2, r3]
+  70:	3301      	adds	r3, #1
+  72:	602b      	str	r3, [r5, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+  74:	682b      	ldr	r3, [r5, #0]
+  76:	f240 0000 	movw	r0, #0	; 0x0
+  7a:	2b32      	cmp	r3, #50
+  7c:	f2c0 0000 	movt	r0, #0	; 0x0
+  80:	d008      	beq.n	94 <SendNextPacket+0x94>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+  82:	6803      	ldr	r3, [r0, #0]
+  84:	f240 0200 	movw	r2, #0	; 0x0
+  88:	f2c0 0200 	movt	r2, #0	; 0x0
+  8c:	216e      	movs	r1, #110
+  8e:	54d1      	strb	r1, [r2, r3]
+  90:	3301      	adds	r3, #1
+  92:	6003      	str	r3, [r0, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+  94:	682b      	ldr	r3, [r5, #0]
+  96:	f240 0000 	movw	r0, #0	; 0x0
+  9a:	2b32      	cmp	r3, #50
+  9c:	f2c0 0000 	movt	r0, #0	; 0x0
+  a0:	d008      	beq.n	b4 <SendNextPacket+0xb4>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+  a2:	6803      	ldr	r3, [r0, #0]
+  a4:	f240 0200 	movw	r2, #0	; 0x0
+  a8:	f2c0 0200 	movt	r2, #0	; 0x0
+  ac:	2170      	movs	r1, #112
+  ae:	54d1      	strb	r1, [r2, r3]
+  b0:	3301      	adds	r3, #1
+  b2:	6003      	str	r3, [r0, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+  b4:	682b      	ldr	r3, [r5, #0]
+  b6:	f240 0100 	movw	r1, #0	; 0x0
+  ba:	2b32      	cmp	r3, #50
+  bc:	f2c0 0100 	movt	r1, #0	; 0x0
+  c0:	d007      	beq.n	d2 <SendNextPacket+0xd2>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+  c2:	680a      	ldr	r2, [r1, #0]
+  c4:	f240 0300 	movw	r3, #0	; 0x0
+  c8:	f2c0 0300 	movt	r3, #0	; 0x0
+  cc:	549c      	strb	r4, [r3, r2]
+  ce:	3201      	adds	r2, #1
+  d0:	600a      	str	r2, [r1, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+  d2:	682b      	ldr	r3, [r5, #0]
+  d4:	f240 0100 	movw	r1, #0	; 0x0
+  d8:	2b32      	cmp	r3, #50
+  da:	f2c0 0100 	movt	r1, #0	; 0x0
+  de:	d007      	beq.n	f0 <SendNextPacket+0xf0>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+  e0:	680a      	ldr	r2, [r1, #0]
+  e2:	f240 0300 	movw	r3, #0	; 0x0
+  e6:	f2c0 0300 	movt	r3, #0	; 0x0
+  ea:	549e      	strb	r6, [r3, r2]
+  ec:	3201      	adds	r2, #1
+  ee:	600a      	str	r2, [r1, #0]
+SendNextPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:491
+	 TXBufPush( 'n' );
+	 TXBufPush( 'p' );
+	 TXBufPush( PT );
+	 TXBufPush( data_length );
+	 
+	 for( i = 0; i < data_length; i++ )
+  f0:	b1e6      	cbz	r6, 12c <SendNextPacket+0x12c>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:493
+	 {
+		  TXBufPush( gTXPacketBuffer[gTXPacketBufferStart].packet_data[i] );
+  f2:	f240 0400 	movw	r4, #0	; 0x0
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    if( gTXBufPtr == TX_BUF_SIZE )
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+  f6:	f240 0e00 	movw	lr, #0	; 0x0
+SendNextPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:491
+	 TXBufPush( 'n' );
+	 TXBufPush( 'p' );
+	 TXBufPush( PT );
+	 TXBufPush( data_length );
+	 
+	 for( i = 0; i < data_length; i++ )
+  fa:	2000      	movs	r0, #0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:493
+	 {
+		  TXBufPush( gTXPacketBuffer[gTXPacketBufferStart].packet_data[i] );
+  fc:	f2c0 0400 	movt	r4, #0	; 0x0
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    if( gTXBufPtr == TX_BUF_SIZE )
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+ 100:	f2c0 0e00 	movt	lr, #0	; 0x0
+SendNextPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:493
+	 TXBufPush( PT );
+	 TXBufPush( data_length );
+	 
+	 for( i = 0; i < data_length; i++ )
+	 {
+		  TXBufPush( gTXPacketBuffer[gTXPacketBufferStart].packet_data[i] );
+ 104:	79ea      	ldrb	r2, [r5, #7]
+ 106:	0091      	lsls	r1, r2, #2
+ 108:	0113      	lsls	r3, r2, #4
+ 10a:	1a5b      	subs	r3, r3, r1
+ 10c:	1a9b      	subs	r3, r3, r2
+ 10e:	009b      	lsls	r3, r3, #2
+ 110:	181b      	adds	r3, r3, r0
+ 112:	18fb      	adds	r3, r7, r3
+ 114:	791a      	ldrb	r2, [r3, #4]
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+ 116:	682b      	ldr	r3, [r5, #0]
+ 118:	2b32      	cmp	r3, #50
+ 11a:	d004      	beq.n	126 <SendNextPacket+0x126>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+ 11c:	6823      	ldr	r3, [r4, #0]
+ 11e:	f80e 2003 	strb.w	r2, [lr, r3]
+ 122:	3301      	adds	r3, #1
+ 124:	6023      	str	r3, [r4, #0]
+SendNextPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:491
+	 TXBufPush( 'n' );
+	 TXBufPush( 'p' );
+	 TXBufPush( PT );
+	 TXBufPush( data_length );
+	 
+	 for( i = 0; i < data_length; i++ )
+ 126:	3001      	adds	r0, #1
+ 128:	42b0      	cmp	r0, r6
+ 12a:	dbeb      	blt.n	104 <SendNextPacket+0x104>
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+ 12c:	682b      	ldr	r3, [r5, #0]
+ 12e:	f240 0000 	movw	r0, #0	; 0x0
+ 132:	2b32      	cmp	r3, #50
+ 134:	f2c0 0000 	movt	r0, #0	; 0x0
+ 138:	d009      	beq.n	14e <SendNextPacket+0x14e>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+ 13a:	6803      	ldr	r3, [r0, #0]
+ 13c:	f240 0200 	movw	r2, #0	; 0x0
+SendNextPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:496
+	 for( i = 0; i < data_length; i++ )
+	 {
+		  TXBufPush( gTXPacketBuffer[gTXPacketBufferStart].packet_data[i] );
+	 }
+	 
+	 TXBufPush( (char)((checksum >> 8) & 0x0FF) );
+ 140:	ea4f 211c 	mov.w	r1, ip, lsr #8
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    if( gTXBufPtr == TX_BUF_SIZE )
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+ 144:	f2c0 0200 	movt	r2, #0	; 0x0
+ 148:	54d1      	strb	r1, [r2, r3]
+ 14a:	3301      	adds	r3, #1
+ 14c:	6003      	str	r3, [r0, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+ 14e:	682b      	ldr	r3, [r5, #0]
+ 150:	f240 0000 	movw	r0, #0	; 0x0
+ 154:	2b32      	cmp	r3, #50
+ 156:	f2c0 0000 	movt	r0, #0	; 0x0
+ 15a:	d009      	beq.n	170 <SendNextPacket+0x170>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+ 15c:	6803      	ldr	r3, [r0, #0]
+ 15e:	f240 0200 	movw	r2, #0	; 0x0
+SendNextPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:497
+	 {
+		  TXBufPush( gTXPacketBuffer[gTXPacketBufferStart].packet_data[i] );
+	 }
+	 
+	 TXBufPush( (char)((checksum >> 8) & 0x0FF) );
+	 TXBufPush( (char)((checksum) & 0x0FF) );
+ 162:	fa5f f18c 	uxtb.w	r1, ip
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    if( gTXBufPtr == TX_BUF_SIZE )
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+ 166:	f2c0 0200 	movt	r2, #0	; 0x0
+ 16a:	54d1      	strb	r1, [r2, r3]
+ 16c:	3301      	adds	r3, #1
+ 16e:	6003      	str	r3, [r0, #0]
+SendNextPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:500
+	 
+	 TXBufPush( (char)((checksum >> 8) & 0x0FF) );
+	 TXBufPush( (char)((checksum) & 0x0FF) );
+	 
+	 // Increment packet buffer start pointer.
+	 gTXPacketBufferStart++;
+ 170:	79eb      	ldrb	r3, [r5, #7]
+ 172:	f240 0100 	movw	r1, #0	; 0x0
+ 176:	3301      	adds	r3, #1
+ 178:	b2db      	uxtb	r3, r3
+ 17a:	71eb      	strb	r3, [r5, #7]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:501
+	 if( gTXPacketBufferStart >= TX_PACKET_BUFFER_SIZE )
+ 17c:	79ea      	ldrb	r2, [r5, #7]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:500
+	 
+	 TXBufPush( (char)((checksum >> 8) & 0x0FF) );
+	 TXBufPush( (char)((checksum) & 0x0FF) );
+	 
+	 // Increment packet buffer start pointer.
+	 gTXPacketBufferStart++;
+ 17e:	f2c0 0100 	movt	r1, #0	; 0x0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:501
+	 if( gTXPacketBufferStart >= TX_PACKET_BUFFER_SIZE )
+ 182:	2a13      	cmp	r2, #19
+ 184:	d901      	bls.n	18a <SendNextPacket+0x18a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:503
+	 {
+		  gTXPacketBufferStart = 0;
+ 186:	2300      	movs	r3, #0
+ 188:	71cb      	strb	r3, [r1, #7]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:507
+	 }
+	 
+	 // Start the transmission
+	 USART1_TX_start();
+ 18a:	f7ff fffe 	bl	0 <SendNextPacket>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:508
+}
+ 18e:	e8bd 81f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, pc}
+ 192:	46c0      	nop			(mov r8, r8)
+Disassembly of section .text.SendTXPacket:
+
+00000000 <SendTXPacket>:
+SendTXPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:520
+* Description    : Copies the given packet into the TX Packet Buffer.  Then,
+						 SendNextPacket() is called, which copies the packet into the
+						 TX Buffer *IF* the transmitter is not already busy.
+*******************************************************************************/
+void SendTXPacket( USARTPacket* new_packet )
+{
+   0:	b570      	push	{r4, r5, r6, lr}
+AddTXPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:556
+* Return         : None
+* Description    : Adds the specified packet to the TX Packet Buffer.
+*******************************************************************************/
+void AddTXPacket( USARTPacket* new_packet )
+{
+	 gTXPacketBuffer[gTXPacketBufferEnd] = *new_packet;
+   2:	f240 0500 	movw	r5, #0	; 0x0
+   6:	f2c0 0500 	movt	r5, #0	; 0x0
+   a:	792b      	ldrb	r3, [r5, #4]
+SendTXPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:520
+* Description    : Copies the given packet into the TX Packet Buffer.  Then,
+						 SendNextPacket() is called, which copies the packet into the
+						 TX Buffer *IF* the transmitter is not already busy.
+*******************************************************************************/
+void SendTXPacket( USARTPacket* new_packet )
+{
+   c:	4601      	mov	r1, r0
+AddTXPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:556
+* Return         : None
+* Description    : Adds the specified packet to the TX Packet Buffer.
+*******************************************************************************/
+void AddTXPacket( USARTPacket* new_packet )
+{
+	 gTXPacketBuffer[gTXPacketBufferEnd] = *new_packet;
+   e:	009c      	lsls	r4, r3, #2
+  10:	0118      	lsls	r0, r3, #4
+  12:	1b00      	subs	r0, r0, r4
+  14:	1ac0      	subs	r0, r0, r3
+  16:	f240 0200 	movw	r2, #0	; 0x0
+  1a:	f2c0 0200 	movt	r2, #0	; 0x0
+  1e:	0080      	lsls	r0, r0, #2
+  20:	1810      	adds	r0, r2, r0
+  22:	222c      	movs	r2, #44
+  24:	f7ff fffe 	bl	0 <memcpy>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:558
+	 
+	 gTXPacketBufferEnd++;
+  28:	792b      	ldrb	r3, [r5, #4]
+  2a:	3301      	adds	r3, #1
+  2c:	b2db      	uxtb	r3, r3
+  2e:	712b      	strb	r3, [r5, #4]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:559
+	 if( gTXPacketBufferEnd >= TX_PACKET_BUFFER_SIZE )
+  30:	792a      	ldrb	r2, [r5, #4]
+  32:	2a13      	cmp	r2, #19
+  34:	d901      	bls.n	3a <SendTXPacket+0x3a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:561
+	 {
+		  gTXPacketBufferEnd = 0;
+  36:	2300      	movs	r3, #0
+  38:	712b      	strb	r3, [r5, #4]
+SendTXPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:522
+						 TX Buffer *IF* the transmitter is not already busy.
+*******************************************************************************/
+void SendTXPacket( USARTPacket* new_packet )
+{
+	 AddTXPacket( new_packet );
+	 SendNextPacket();
+  3a:	f7ff fffe 	bl	0 <SendTXPacket>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:523
+}
+  3e:	bd70      	pop	{r4, r5, r6, pc}
+Disassembly of section .text.SendTXPacketSafe:
+
+00000000 <SendTXPacketSafe>:
+SendTXPacketSafe():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:538
+						 SendTXPacketSafe, in which case the function might already be
+						 in use.  This "safe" function call prevents packet data from
+						 being corrupted.
+*******************************************************************************/
+void SendTXPacketSafe( USARTPacket* new_packet )
+{
+   0:	b510      	push	{r4, lr}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:539
+	 if( TXPacketBufferReady )
+   2:	f240 0400 	movw	r4, #0	; 0x0
+   6:	f2c0 0400 	movt	r4, #0	; 0x0
+   a:	7823      	ldrb	r3, [r4, #0]
+   c:	b12b      	cbz	r3, 1a <SendTXPacketSafe+0x1a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:541
+	 {
+		  TXPacketBufferReady = 0;
+   e:	2300      	movs	r3, #0
+  10:	7023      	strb	r3, [r4, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:542
+		  SendTXPacket( new_packet );
+  12:	f7ff fffe 	bl	0 <SendTXPacketSafe>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:543
+		  TXPacketBufferReady = 1;
+  16:	2301      	movs	r3, #1
+  18:	7023      	strb	r3, [r4, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:545
+	 }
+}
+  1a:	bd10      	pop	{r4, pc}
+Disassembly of section .text.ProcessNextCharacter:
+
+00000000 <ProcessNextCharacter>:
+ProcessNextCharacter():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:238
+	 USART_STATE_WAIT state.  The packet will be handled later from within the
+	 main program loop. 
+
+*******************************************************************************/
+void ProcessNextCharacter( )
+{
+   0:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:244
+	 static uint8_t USART_State = USART_STATE_WAIT;
+	 static uint8_t data_counter = 0;
+	 static USARTPacket new_packet;
+	 
+	 // The next action should depend on the USART state.
+	 switch( USART_State )
+   4:	f240 0600 	movw	r6, #0	; 0x0
+   8:	f2c0 0600 	movt	r6, #0	; 0x0
+   c:	7873      	ldrb	r3, [r6, #1]
+   e:	3b01      	subs	r3, #1
+  10:	2b04      	cmp	r3, #4
+  12:	d83a      	bhi.n	8a <ProcessNextCharacter+0x8a>
+  14:	e8df f003 	tbb	[pc, r3]
+  18:	815d4f3b 	.word	0x815d4f3b
+  1c:	0003      	.short	0x0003
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:346
+		  // USART in CHECKSUM state.  In this state, the entire packet has been received, with the exception
+		  // of the 16-bit checksum.
+		  case USART_STATE_CHECKSUM:
+				
+				// Get the highest-order byte
+				if( data_counter == 0 )
+  1e:	f240 0700 	movw	r7, #0	; 0x0
+  22:	f2c0 0700 	movt	r7, #0	; 0x0
+  26:	7a3b      	ldrb	r3, [r7, #8]
+  28:	2b00      	cmp	r3, #0
+  2a:	f000 80a0 	beq.w	16e <ProcessNextCharacter+0x16e>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:355
+					 data_counter++;
+				}
+				else // ( data_counter == 1 )
+				{
+					 // Get lower-order byte
+					 new_packet.checksum = new_packet.checksum | ((uint16_t)gRXBuf[gRXBufPtr] & 0x0FF);
+  2e:	68f8      	ldr	r0, [r7, #12]
+  30:	f240 0300 	movw	r3, #0	; 0x0
+  34:	f2c0 0300 	movt	r3, #0	; 0x0
+  38:	5c19      	ldrb	r1, [r3, r0]
+  3a:	8a7a      	ldrh	r2, [r7, #18]
+ComputeChecksum():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:595
+*******************************************************************************/
+uint16_t ComputeChecksum( USARTPacket* new_packet )
+{
+	 int32_t index;
+
+	 uint16_t checksum = 0x73 + 0x6E + 0x70 + new_packet->PT + new_packet->length;
+  3c:	7c3b      	ldrb	r3, [r7, #16]
+ProcessNextCharacter():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:355
+					 data_counter++;
+				}
+				else // ( data_counter == 1 )
+				{
+					 // Get lower-order byte
+					 new_packet.checksum = new_packet.checksum | ((uint16_t)gRXBuf[gRXBufPtr] & 0x0FF);
+  3e:	ea41 0e02 	orr.w	lr, r1, r2
+ComputeChecksum():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:595
+*******************************************************************************/
+uint16_t ComputeChecksum( USARTPacket* new_packet )
+{
+	 int32_t index;
+
+	 uint16_t checksum = 0x73 + 0x6E + 0x70 + new_packet->PT + new_packet->length;
+  42:	7c79      	ldrb	r1, [r7, #17]
+ProcessNextCharacter():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:355
+					 data_counter++;
+				}
+				else // ( data_counter == 1 )
+				{
+					 // Get lower-order byte
+					 new_packet.checksum = new_packet.checksum | ((uint16_t)gRXBuf[gRXBufPtr] & 0x0FF);
+  44:	f8a7 e012 	strh.w	lr, [r7, #18]
+ComputeChecksum():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:595
+*******************************************************************************/
+uint16_t ComputeChecksum( USARTPacket* new_packet )
+{
+	 int32_t index;
+
+	 uint16_t checksum = 0x73 + 0x6E + 0x70 + new_packet->PT + new_packet->length;
+  48:	185b      	adds	r3, r3, r1
+  4a:	f503 74a8 	add.w	r4, r3, #336	; 0x150
+  4e:	3401      	adds	r4, #1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:597
+	 
+	 for( index = 0; index < new_packet->length; index++ )
+  50:	b149      	cbz	r1, 66 <ProcessNextCharacter+0x66>
+  52:	2000      	movs	r0, #0
+  54:	f107 0510 	add.w	r5, r7, #16	; 0x10
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:599
+	 {
+		  checksum += new_packet->packet_data[index];
+  58:	182a      	adds	r2, r5, r0
+  5a:	7913      	ldrb	r3, [r2, #4]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:597
+{
+	 int32_t index;
+
+	 uint16_t checksum = 0x73 + 0x6E + 0x70 + new_packet->PT + new_packet->length;
+	 
+	 for( index = 0; index < new_packet->length; index++ )
+  5c:	3001      	adds	r0, #1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:599
+	 {
+		  checksum += new_packet->packet_data[index];
+  5e:	18e3      	adds	r3, r4, r3
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:597
+{
+	 int32_t index;
+
+	 uint16_t checksum = 0x73 + 0x6E + 0x70 + new_packet->PT + new_packet->length;
+	 
+	 for( index = 0; index < new_packet->length; index++ )
+  60:	4288      	cmp	r0, r1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:599
+	 {
+		  checksum += new_packet->packet_data[index];
+  62:	b29c      	uxth	r4, r3
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:597
+{
+	 int32_t index;
+
+	 uint16_t checksum = 0x73 + 0x6E + 0x70 + new_packet->PT + new_packet->length;
+	 
+	 for( index = 0; index < new_packet->length; index++ )
+  64:	dbf8      	blt.n	58 <ProcessNextCharacter+0x58>
+ProcessNextCharacter():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:361
+					 
+					 // Both checksum bytes have been received.  Make sure that the checksum is valid.
+					 uint16_t checksum = ComputeChecksum( &new_packet );
+					 
+					 // If checksum does not match, send a BAD_CHECKSUM packet
+					 if( checksum != new_packet.checksum )
+  66:	45a6      	cmp	lr, r4
+  68:	f000 808c 	beq.w	184 <ProcessNextCharacter+0x184>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:364
+					 {
+						  // Send bad checksum packet
+						  new_packet.PT = BAD_CHECKSUM;
+  6c:	f06f 034d 	mvn.w	r3, #77	; 0x4d
+  70:	743b      	strb	r3, [r7, #16]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:365
+						  new_packet.length = 0;
+  72:	2200      	movs	r2, #0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:366
+						  new_packet.checksum = ComputeChecksum( &new_packet );
+  74:	f240 2303 	movw	r3, #515	; 0x203
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:365
+					 // If checksum does not match, send a BAD_CHECKSUM packet
+					 if( checksum != new_packet.checksum )
+					 {
+						  // Send bad checksum packet
+						  new_packet.PT = BAD_CHECKSUM;
+						  new_packet.length = 0;
+  78:	747a      	strb	r2, [r7, #17]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:366
+						  new_packet.checksum = ComputeChecksum( &new_packet );
+  7a:	827b      	strh	r3, [r7, #18]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:368
+						  
+						  SendTXPacketSafe( &new_packet );
+  7c:	4859      	ldr	r0, [pc, #356]	(1e4 <ProcessNextCharacter+0x1e4>)
+  7e:	f7ff fffe 	bl	0 <ProcessNextCharacter>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:381
+					 }
+					 
+					 // A full packet has been received.
+					 // Put the USART back into the WAIT state and reset 
+					 // the data_counter variable so that it can be used to receive the next packet.
+					 data_counter = 0;
+  82:	2300      	movs	r3, #0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:383
+						  
+					 USART_State = USART_STATE_WAIT;					  
+  84:	2201      	movs	r2, #1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:381
+					 }
+					 
+					 // A full packet has been received.
+					 // Put the USART back into the WAIT state and reset 
+					 // the data_counter variable so that it can be used to receive the next packet.
+					 data_counter = 0;
+  86:	723b      	strb	r3, [r7, #8]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:383
+						  
+					 USART_State = USART_STATE_WAIT;					  
+  88:	7072      	strb	r2, [r6, #1]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:389
+				}
+				
+		  break;
+	 }
+		  
+}
+  8a:	e8bd 81f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, pc}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:249
+	 switch( USART_State )
+	 {
+		  // USART in the WAIT state.  In this state, the USART is waiting to see the sequence of bytes
+		  // that signals a new incoming packet.
+		  case USART_STATE_WAIT:
+				if( data_counter == 0 )		// Waiting on 's' character
+  8e:	f240 0000 	movw	r0, #0	; 0x0
+  92:	f2c0 0000 	movt	r0, #0	; 0x0
+  96:	7a04      	ldrb	r4, [r0, #8]
+  98:	2c00      	cmp	r4, #0
+  9a:	d156      	bne.n	14a <ProcessNextCharacter+0x14a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:251
+				{
+					 if( gRXBuf[gRXBufPtr] == 's' )
+  9c:	68c3      	ldr	r3, [r0, #12]
+  9e:	f240 0200 	movw	r2, #0	; 0x0
+  a2:	f2c0 0200 	movt	r2, #0	; 0x0
+  a6:	5cd1      	ldrb	r1, [r2, r3]
+  a8:	2973      	cmp	r1, #115
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:257
+					 {
+						  data_counter++;
+					 }
+					 else
+					 {
+						  data_counter = 0;
+  aa:	bf18      	it	ne
+  ac:	7204      	strbne	r4, [r0, #8]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:251
+		  // USART in the WAIT state.  In this state, the USART is waiting to see the sequence of bytes
+		  // that signals a new incoming packet.
+		  case USART_STATE_WAIT:
+				if( data_counter == 0 )		// Waiting on 's' character
+				{
+					 if( gRXBuf[gRXBufPtr] == 's' )
+  ae:	d1ec      	bne.n	8a <ProcessNextCharacter+0x8a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:253
+					 {
+						  data_counter++;
+  b0:	2301      	movs	r3, #1
+  b2:	7203      	strb	r3, [r0, #8]
+  b4:	e7e9      	b.n	8a <ProcessNextCharacter+0x8a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:290
+		  break;
+		  
+		  // USART in the TYPE state.  In this state, the USART has just received the sequence of bytes that
+		  // indicates a new packet is about to arrive.  Now, the USART expects to see the packet type.
+		  case USART_STATE_TYPE:
+				new_packet.PT = gRXBuf[gRXBufPtr];
+  b6:	f240 0100 	movw	r1, #0	; 0x0
+  ba:	f2c0 0100 	movt	r1, #0	; 0x0
+  be:	68c8      	ldr	r0, [r1, #12]
+  c0:	f240 0300 	movw	r3, #0	; 0x0
+  c4:	f2c0 0300 	movt	r3, #0	; 0x0
+  c8:	5c1a      	ldrb	r2, [r3, r0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:291
+				USART_State = USART_STATE_LENGTH;
+  ca:	2303      	movs	r3, #3
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:290
+		  break;
+		  
+		  // USART in the TYPE state.  In this state, the USART has just received the sequence of bytes that
+		  // indicates a new packet is about to arrive.  Now, the USART expects to see the packet type.
+		  case USART_STATE_TYPE:
+				new_packet.PT = gRXBuf[gRXBufPtr];
+  cc:	740a      	strb	r2, [r1, #16]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:291
+				USART_State = USART_STATE_LENGTH;
+  ce:	7073      	strb	r3, [r6, #1]
+  d0:	e7db      	b.n	8a <ProcessNextCharacter+0x8a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:297
+		  break;
+		  
+		  // USART in the LENGTH state.  In this state, the USART expects to receive a single byte indicating
+		  // the number of bytes in the data section of the packet.
+		  case USART_STATE_LENGTH:
+				new_packet.length = gRXBuf[gRXBufPtr];
+  d2:	f240 0000 	movw	r0, #0	; 0x0
+  d6:	f2c0 0000 	movt	r0, #0	; 0x0
+  da:	68c3      	ldr	r3, [r0, #12]
+  dc:	f240 0200 	movw	r2, #0	; 0x0
+  e0:	f2c0 0200 	movt	r2, #0	; 0x0
+  e4:	5cd1      	ldrb	r1, [r2, r3]
+  e6:	7441      	strb	r1, [r0, #17]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:299
+				
+				if( new_packet.length > 0 )
+  e8:	2900      	cmp	r1, #0
+  ea:	d03d      	beq.n	168 <ProcessNextCharacter+0x168>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:301
+				{
+					 USART_State = USART_STATE_DATA;
+  ec:	2304      	movs	r3, #4
+  ee:	f240 0400 	movw	r4, #0	; 0x0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:310
+					 USART_State = USART_STATE_CHECKSUM;
+				}
+		  
+				// If the packet size is larger than the highest allowable packet data section size, then
+				// restore USART state to the WAIT state.  Packet is invalid.
+				if( new_packet.length > MAX_PACKET_DATA )
+  f2:	2928      	cmp	r1, #40
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:301
+		  case USART_STATE_LENGTH:
+				new_packet.length = gRXBuf[gRXBufPtr];
+				
+				if( new_packet.length > 0 )
+				{
+					 USART_State = USART_STATE_DATA;
+  f4:	f2c0 0400 	movt	r4, #0	; 0x0
+  f8:	7073      	strb	r3, [r6, #1]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:310
+					 USART_State = USART_STATE_CHECKSUM;
+				}
+		  
+				// If the packet size is larger than the highest allowable packet data section size, then
+				// restore USART state to the WAIT state.  Packet is invalid.
+				if( new_packet.length > MAX_PACKET_DATA )
+  fa:	d9c6      	bls.n	8a <ProcessNextCharacter+0x8a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:315
+				{
+					 USART_State = USART_STATE_WAIT;
+					 
+					 // Send a BAD_DATA_LENGTH message
+					 new_packet.PT = BAD_DATA_LENGTH;
+  fc:	f06f 034c 	mvn.w	r3, #76	; 0x4c
+ 100:	7403      	strb	r3, [r0, #16]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:318
+					 new_packet.packet_data[0] = new_packet.length;
+					 new_packet.length = 1;
+					 new_packet.checksum = ComputeChecksum( &new_packet );
+ 102:	f501 7300 	add.w	r3, r1, #512	; 0x200
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:312
+		  
+				// If the packet size is larger than the highest allowable packet data section size, then
+				// restore USART state to the WAIT state.  Packet is invalid.
+				if( new_packet.length > MAX_PACKET_DATA )
+				{
+					 USART_State = USART_STATE_WAIT;
+ 106:	2201      	movs	r2, #1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:318
+					 
+					 // Send a BAD_DATA_LENGTH message
+					 new_packet.PT = BAD_DATA_LENGTH;
+					 new_packet.packet_data[0] = new_packet.length;
+					 new_packet.length = 1;
+					 new_packet.checksum = ComputeChecksum( &new_packet );
+ 108:	3305      	adds	r3, #5
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:316
+				{
+					 USART_State = USART_STATE_WAIT;
+					 
+					 // Send a BAD_DATA_LENGTH message
+					 new_packet.PT = BAD_DATA_LENGTH;
+					 new_packet.packet_data[0] = new_packet.length;
+ 10a:	7501      	strb	r1, [r0, #20]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:317
+					 new_packet.length = 1;
+ 10c:	7442      	strb	r2, [r0, #17]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:318
+					 new_packet.checksum = ComputeChecksum( &new_packet );
+ 10e:	8243      	strh	r3, [r0, #18]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:312
+		  
+				// If the packet size is larger than the highest allowable packet data section size, then
+				// restore USART state to the WAIT state.  Packet is invalid.
+				if( new_packet.length > MAX_PACKET_DATA )
+				{
+					 USART_State = USART_STATE_WAIT;
+ 110:	7062      	strb	r2, [r4, #1]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:320
+					 new_packet.PT = BAD_DATA_LENGTH;
+					 new_packet.packet_data[0] = new_packet.length;
+					 new_packet.length = 1;
+					 new_packet.checksum = ComputeChecksum( &new_packet );
+					 
+					 SendTXPacketSafe( &new_packet );
+ 112:	3010      	adds	r0, #16
+ 114:	f7ff fffe 	bl	0 <ProcessNextCharacter>
+ 118:	e7b7      	b.n	ffffff72 <gRXPacketBufferStart+0xffffff33>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:328
+		  break;
+		  
+		  // USART in the DATA state.  In this state, the USART expects to receive new_packet.length bytes of
+		  // data.
+		  case USART_STATE_DATA:
+				new_packet.packet_data[data_counter] =  gRXBuf[gRXBufPtr];
+ 11a:	f240 0500 	movw	r5, #0	; 0x0
+ 11e:	f2c0 0500 	movt	r5, #0	; 0x0
+ 122:	7a2a      	ldrb	r2, [r5, #8]
+ 124:	68ec      	ldr	r4, [r5, #12]
+ 126:	f240 0300 	movw	r3, #0	; 0x0
+ 12a:	f2c0 0300 	movt	r3, #0	; 0x0
+ 12e:	18a9      	adds	r1, r5, r2
+ 130:	5d18      	ldrb	r0, [r3, r4]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:329
+				data_counter++;
+ 132:	3201      	adds	r2, #1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:332
+		  
+				// If the expected number of bytes has been received, transition to the CHECKSUM state.
+				if( data_counter == new_packet.length )
+ 134:	7c6b      	ldrb	r3, [r5, #17]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:329
+		  
+		  // USART in the DATA state.  In this state, the USART expects to receive new_packet.length bytes of
+		  // data.
+		  case USART_STATE_DATA:
+				new_packet.packet_data[data_counter] =  gRXBuf[gRXBufPtr];
+				data_counter++;
+ 136:	b2d2      	uxtb	r2, r2
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:332
+		  
+				// If the expected number of bytes has been received, transition to the CHECKSUM state.
+				if( data_counter == new_packet.length )
+ 138:	4293      	cmp	r3, r2
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:328
+		  break;
+		  
+		  // USART in the DATA state.  In this state, the USART expects to receive new_packet.length bytes of
+		  // data.
+		  case USART_STATE_DATA:
+				new_packet.packet_data[data_counter] =  gRXBuf[gRXBufPtr];
+ 13a:	7508      	strb	r0, [r1, #20]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:329
+				data_counter++;
+ 13c:	722a      	strb	r2, [r5, #8]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:332
+		  
+				// If the expected number of bytes has been received, transition to the CHECKSUM state.
+				if( data_counter == new_packet.length )
+ 13e:	d1a4      	bne.n	8a <ProcessNextCharacter+0x8a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:335
+				{
+					 // Reset data_counter, since it will be used in the CHECKSUM state.
+					 data_counter = 0;
+ 140:	2300      	movs	r3, #0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:336
+					 USART_State = USART_STATE_CHECKSUM;
+ 142:	2205      	movs	r2, #5
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:335
+		  
+				// If the expected number of bytes has been received, transition to the CHECKSUM state.
+				if( data_counter == new_packet.length )
+				{
+					 // Reset data_counter, since it will be used in the CHECKSUM state.
+					 data_counter = 0;
+ 144:	722b      	strb	r3, [r5, #8]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:336
+					 USART_State = USART_STATE_CHECKSUM;
+ 146:	7072      	strb	r2, [r6, #1]
+ 148:	e79f      	b.n	8a <ProcessNextCharacter+0x8a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:260
+					 else
+					 {
+						  data_counter = 0;
+					 }
+				}
+				else if( data_counter == 1 )		// Waiting on 'n' character
+ 14a:	2c01      	cmp	r4, #1
+ 14c:	d03b      	beq.n	1c6 <ProcessNextCharacter+0x1c6>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:271
+					 else
+					 {
+						  data_counter = 0;
+					 }
+				}
+				else if( data_counter == 2 )		// Waiting on 'p' character
+ 14e:	2c02      	cmp	r4, #2
+ 150:	d19b      	bne.n	8a <ProcessNextCharacter+0x8a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:273
+				{
+					 if( gRXBuf[gRXBufPtr] == 'p' )
+ 152:	68c3      	ldr	r3, [r0, #12]
+ 154:	f240 0200 	movw	r2, #0	; 0x0
+ 158:	f2c0 0200 	movt	r2, #0	; 0x0
+ 15c:	5cd1      	ldrb	r1, [r2, r3]
+ 15e:	2970      	cmp	r1, #112
+ 160:	d03c      	beq.n	1dc <ProcessNextCharacter+0x1dc>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:282
+						  data_counter = 0;
+						  USART_State = USART_STATE_TYPE;
+					 }
+					 else
+					 {
+						  data_counter = 0;
+ 162:	2300      	movs	r3, #0
+ 164:	7203      	strb	r3, [r0, #8]
+ 166:	e790      	b.n	8a <ProcessNextCharacter+0x8a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:305
+				{
+					 USART_State = USART_STATE_DATA;
+				}
+				else
+				{
+					 USART_State = USART_STATE_CHECKSUM;
+ 168:	2305      	movs	r3, #5
+ 16a:	7073      	strb	r3, [r6, #1]
+ 16c:	e78d      	b.n	8a <ProcessNextCharacter+0x8a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:348
+		  case USART_STATE_CHECKSUM:
+				
+				// Get the highest-order byte
+				if( data_counter == 0 )
+				{
+					 new_packet.checksum = ((uint16_t)gRXBuf[gRXBufPtr] << 8);
+ 16e:	68f9      	ldr	r1, [r7, #12]
+ 170:	f240 0300 	movw	r3, #0	; 0x0
+ 174:	f2c0 0300 	movt	r3, #0	; 0x0
+ 178:	5c5a      	ldrb	r2, [r3, r1]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:350
+					 
+					 data_counter++;
+ 17a:	2301      	movs	r3, #1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:348
+		  case USART_STATE_CHECKSUM:
+				
+				// Get the highest-order byte
+				if( data_counter == 0 )
+				{
+					 new_packet.checksum = ((uint16_t)gRXBuf[gRXBufPtr] << 8);
+ 17c:	0212      	lsls	r2, r2, #8
+ 17e:	827a      	strh	r2, [r7, #18]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:350
+					 
+					 data_counter++;
+ 180:	723b      	strb	r3, [r7, #8]
+ 182:	e782      	b.n	8a <ProcessNextCharacter+0x8a>
+AddRXPacket():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:574
+* Return         : None
+* Description    : Adds the specified packet to the RX Packet Buffer.
+*******************************************************************************/
+void AddRXPacket( USARTPacket* new_packet )
+{
+	 gRXPacketBuffer[gRXPacketBufferEnd] = *new_packet;
+ 184:	797b      	ldrb	r3, [r7, #5]
+ 186:	f240 0400 	movw	r4, #0	; 0x0
+ 18a:	0099      	lsls	r1, r3, #2
+ 18c:	0118      	lsls	r0, r3, #4
+ 18e:	1a40      	subs	r0, r0, r1
+ 190:	1ac0      	subs	r0, r0, r3
+ 192:	f240 0200 	movw	r2, #0	; 0x0
+ 196:	f2c0 0200 	movt	r2, #0	; 0x0
+ 19a:	0080      	lsls	r0, r0, #2
+ 19c:	f2c0 0400 	movt	r4, #0	; 0x0
+ 1a0:	1810      	adds	r0, r2, r0
+ 1a2:	f104 0110 	add.w	r1, r4, #16	; 0x10
+ 1a6:	222c      	movs	r2, #44
+ 1a8:	f7ff fffe 	bl	0 <memcpy>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:576
+	 
+	 gRXPacketBufferEnd++;
+ 1ac:	797b      	ldrb	r3, [r7, #5]
+ 1ae:	3301      	adds	r3, #1
+ 1b0:	b2db      	uxtb	r3, r3
+ 1b2:	717b      	strb	r3, [r7, #5]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:577
+	 if( gRXPacketBufferEnd >= RX_PACKET_BUFFER_SIZE )
+ 1b4:	797a      	ldrb	r2, [r7, #5]
+ 1b6:	2a13      	cmp	r2, #19
+ 1b8:	d901      	bls.n	1be <ProcessNextCharacter+0x1be>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:579
+	 {
+		  gRXPacketBufferEnd = 0;
+ 1ba:	2300      	movs	r3, #0
+ 1bc:	7163      	strb	r3, [r4, #5]
+ProcessNextCharacter():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:375
+					 else
+					 {
+						  // Packet was received correctly.  Add the packet to the RX packet buffer and
+						  // set a flag indicating that a new packet has been received.  
+						  AddRXPacket( &new_packet );
+						  gRXPacketReceived = 1;
+ 1be:	2301      	movs	r3, #1
+ 1c0:	f887 303c 	strb.w	r3, [r7, #60]
+ 1c4:	e75d      	b.n	82 <ProcessNextCharacter+0x82>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:262
+						  data_counter = 0;
+					 }
+				}
+				else if( data_counter == 1 )		// Waiting on 'n' character
+				{
+					 if( gRXBuf[gRXBufPtr] == 'n' )
+ 1c6:	68c3      	ldr	r3, [r0, #12]
+ 1c8:	f240 0200 	movw	r2, #0	; 0x0
+ 1cc:	f2c0 0200 	movt	r2, #0	; 0x0
+ 1d0:	5cd1      	ldrb	r1, [r2, r3]
+ 1d2:	296e      	cmp	r1, #110
+ 1d4:	d1c5      	bne.n	162 <ProcessNextCharacter+0x162>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:264
+					 {
+						  data_counter++;
+ 1d6:	2302      	movs	r3, #2
+ 1d8:	7203      	strb	r3, [r0, #8]
+ 1da:	e756      	b.n	8a <ProcessNextCharacter+0x8a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:277
+				{
+					 if( gRXBuf[gRXBufPtr] == 'p' )
+					 {
+						  // The full 'snp' sequence was received.  Reset data_counter (it will be used again
+						  // later) and transition to the next state.
+						  data_counter = 0;
+ 1dc:	2300      	movs	r3, #0
+ 1de:	7203      	strb	r3, [r0, #8]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:278
+						  USART_State = USART_STATE_TYPE;
+ 1e0:	7074      	strb	r4, [r6, #1]
+ 1e2:	e752      	b.n	8a <ProcessNextCharacter+0x8a>
+ 1e4:	00000010 	.word	0x00000010
+Disassembly of section .text.USART1_transmit:
+
+00000000 <USART1_transmit>:
+USART1_transmit():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:52
+						 start transmission.  Subsequent characters in the TX buffer 
+						 are transmitted one at a time after the first character is
+						 transmitted; this is handled in the USART interrupt handler.
+*******************************************************************************/
+int32_t USART1_transmit( char* txdata, int32_t length )
+{
+   0:	b570      	push	{r4, r5, r6, lr}
+   2:	4605      	mov	r5, r0
+   4:	4608      	mov	r0, r1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:55
+    int32_t index;
+    
+    if( length + gTXBufPtr > TX_BUF_SIZE )
+   6:	f240 0100 	movw	r1, #0	; 0x0
+   a:	f2c0 0100 	movt	r1, #0	; 0x0
+   e:	680b      	ldr	r3, [r1, #0]
+  10:	18c3      	adds	r3, r0, r3
+  12:	2b32      	cmp	r3, #50
+  14:	dc18      	bgt.n	48 <USART1_transmit+0x48>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:60
+    {
+        return 0;
+    }
+    
+    for( index = 0; index < length; index++ )
+  16:	2800      	cmp	r0, #0
+  18:	dd12      	ble.n	40 <USART1_transmit+0x40>
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    if( gTXBufPtr == TX_BUF_SIZE )
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+  1a:	f240 0c00 	movw	ip, #0	; 0x0
+USART1_transmit():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:60
+    if( length + gTXBufPtr > TX_BUF_SIZE )
+    {
+        return 0;
+    }
+    
+    for( index = 0; index < length; index++ )
+  1e:	2200      	movs	r2, #0
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+  20:	460c      	mov	r4, r1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+  22:	f2c0 0c00 	movt	ip, #0	; 0x0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+  26:	680b      	ldr	r3, [r1, #0]
+USART1_transmit():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:62
+        return 0;
+    }
+    
+    for( index = 0; index < length; index++ )
+    {
+        TXBufPush( txdata[index] );
+  28:	f815 e002 	ldrb.w	lr, [r5, r2]
+TXBufPush():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:82
+						  character at a time, into the TX register to be transmitted
+						  by the USART.
+*******************************************************************************/
+int32_t TXBufPush( char txdata )
+{
+    if( gTXBufPtr == TX_BUF_SIZE )
+  2c:	2b32      	cmp	r3, #50
+  2e:	d004      	beq.n	3a <USART1_transmit+0x3a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:87
+    {
+        return 0;
+    }
+
+    gTXBuf[gTXBufPtr++] = txdata;
+  30:	6823      	ldr	r3, [r4, #0]
+  32:	f80c e003 	strb.w	lr, [ip, r3]
+  36:	3301      	adds	r3, #1
+  38:	6023      	str	r3, [r4, #0]
+USART1_transmit():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:60
+    if( length + gTXBufPtr > TX_BUF_SIZE )
+    {
+        return 0;
+    }
+    
+    for( index = 0; index < length; index++ )
+  3a:	3201      	adds	r2, #1
+  3c:	4290      	cmp	r0, r2
+  3e:	dcf2      	bgt.n	26 <USART1_transmit+0x26>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:65
+    {
+        TXBufPush( txdata[index] );
+    }
+
+    USART1_TX_start( );
+  40:	f7ff fffe 	bl	0 <USART1_transmit>
+  44:	2001      	movs	r0, #1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:68
+	 
+	 return 1;
+}
+  46:	bd70      	pop	{r4, r5, r6, pc}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:55
+*******************************************************************************/
+int32_t USART1_transmit( char* txdata, int32_t length )
+{
+    int32_t index;
+    
+    if( length + gTXBufPtr > TX_BUF_SIZE )
+  48:	2000      	movs	r0, #0
+  4a:	e7fc      	b.n	46 <USART1_transmit+0x46>
+Disassembly of section .text.USART1_IRQHandler:
+
+00000000 <USART1_IRQHandler>:
+USART1_IRQHandler():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:414
+
+*******************************************************************************/
+void USART1_IRQHandler(void)
+{
+	 // Handle TX interrupts
+    if(USART_GetITStatus(USART1, USART_IT_TC) != RESET)
+   0:	f643 0000 	movw	r0, #14336	; 0x3800
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:412
+to be transmitted, the packet is copied into the TX buffer and transmission resumes.
+If there are no packets waiting, and if the buffer is empty, transmission stops.
+
+*******************************************************************************/
+void USART1_IRQHandler(void)
+{
+   4:	b510      	push	{r4, lr}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:414
+	 // Handle TX interrupts
+    if(USART_GetITStatus(USART1, USART_IT_TC) != RESET)
+   6:	f2c4 0001 	movt	r0, #16385	; 0x4001
+   a:	f240 6126 	movw	r1, #1574	; 0x626
+   e:	f7ff fffe 	bl	0 <USART_GetITStatus>
+  12:	2800      	cmp	r0, #0
+  14:	d02e      	beq.n	74 <USART1_IRQHandler+0x74>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:418
+    {
+		  // If there is data in the USART that needs to be transmitted, 
+		  // send the next byte
+        if( gTXBufPtr > 0 )
+  16:	f240 0400 	movw	r4, #0	; 0x0
+  1a:	f2c0 0400 	movt	r4, #0	; 0x0
+  1e:	6823      	ldr	r3, [r4, #0]
+  20:	2b00      	cmp	r3, #0
+  22:	dd28      	ble.n	76 <USART1_IRQHandler+0x76>
+TXBufPop():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:106
+char TXBufPop( void )
+{
+    char buffer_data;
+    int32_t index;
+
+    if( gTXBufPtr == 0 )
+  24:	6821      	ldr	r1, [r4, #0]
+  26:	b1c1      	cbz	r1, 5a <USART1_IRQHandler+0x5a>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:111
+    {
+        return 0;
+    }
+
+    buffer_data = gTXBuf[0];
+  28:	f240 0000 	movw	r0, #0	; 0x0
+  2c:	f2c0 0000 	movt	r0, #0	; 0x0
+  30:	7803      	ldrb	r3, [r0, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:113
+
+    for( index = 0; index < (gTXBufPtr-1); index++ )
+  32:	6822      	ldr	r2, [r4, #0]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:111
+    if( gTXBufPtr == 0 )
+    {
+        return 0;
+    }
+
+    buffer_data = gTXBuf[0];
+  34:	469e      	mov	lr, r3
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:113
+
+    for( index = 0; index < (gTXBufPtr-1); index++ )
+  36:	2a01      	cmp	r2, #1
+  38:	dd09      	ble.n	4e <USART1_IRQHandler+0x4e>
+  3a:	2200      	movs	r2, #0
+  3c:	e000      	b.n	40 <USART1_IRQHandler+0x40>
+  3e:	460a      	mov	r2, r1
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:115
+    {
+        gTXBuf[index] = gTXBuf[index+1];
+  40:	1c51      	adds	r1, r2, #1
+  42:	5c43      	ldrb	r3, [r0, r1]
+  44:	5483      	strb	r3, [r0, r2]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:113
+        return 0;
+    }
+
+    buffer_data = gTXBuf[0];
+
+    for( index = 0; index < (gTXBufPtr-1); index++ )
+  46:	6822      	ldr	r2, [r4, #0]
+  48:	3a01      	subs	r2, #1
+  4a:	4291      	cmp	r1, r2
+  4c:	dbf7      	blt.n	3e <USART1_IRQHandler+0x3e>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:118
+    {
+        gTXBuf[index] = gTXBuf[index+1];
+    }
+
+    gTXBufPtr--;
+  4e:	6823      	ldr	r3, [r4, #0]
+  50:	fa4f f28e 	sxtb.w	r2, lr
+  54:	3b01      	subs	r3, #1
+  56:	6023      	str	r3, [r4, #0]
+  58:	b291      	uxth	r1, r2
+USART1_IRQHandler():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:420
+    {
+		  // If there is data in the USART that needs to be transmitted, 
+		  // send the next byte
+        if( gTXBufPtr > 0 )
+        {
+            USART_SendData(USART1, TXBufPop() );
+  5a:	f643 0000 	movw	r0, #14336	; 0x3800
+  5e:	f2c4 0001 	movt	r0, #16385	; 0x4001
+  62:	f7ff fffe 	bl	0 <USART_SendData>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:436
+					 SendNextPacket( );
+				}
+				
+        }
+
+        USART_ClearFlag( USART1, USART_FLAG_TC );
+  66:	f643 0000 	movw	r0, #14336	; 0x3800
+  6a:	f2c4 0001 	movt	r0, #16385	; 0x4001
+  6e:	2140      	movs	r1, #64
+  70:	f7ff fffe 	bl	0 <USART_ClearFlag>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:440
+    }
+
+
+}
+  74:	bd10      	pop	{r4, pc}
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:425
+            USART_SendData(USART1, TXBufPop() );
+        }
+        else
+        {
+				// TX buffer is empty.  
+				gTXBusy = 0;
+  76:	2300      	movs	r3, #0
+  78:	71a3      	strb	r3, [r4, #6]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:429
+				
+				// If there is a packet waiting to be transmitted,
+				// copy the packet data to the TX buffer and start the transmission.
+				if( gTXPacketBufferStart != gTXPacketBufferEnd )
+  7a:	79e2      	ldrb	r2, [r4, #7]
+  7c:	7923      	ldrb	r3, [r4, #4]
+  7e:	429a      	cmp	r2, r3
+  80:	d0f1      	beq.n	66 <USART1_IRQHandler+0x66>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:431
+				{
+					 SendNextPacket( );
+  82:	f7ff fffe 	bl	0 <USART1_IRQHandler>
+  86:	e7ee      	b.n	66 <USART1_IRQHandler+0x66>
+Disassembly of section .text.HandleUSART1Reception:
+
+00000000 <HandleUSART1Reception>:
+HandleUSART1Reception():
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:166
+The RX buffer is filled by the DMA controller as data arrives over the UART.
+gRXBufPtr points to the next character that needs to be processed.
+
+*******************************************************************************/
+void HandleUSART1Reception( )
+{
+   0:	b570      	push	{r4, r5, r6, lr}
+   2:	f240 0500 	movw	r5, #0	; 0x0
+   6:	f2c0 0500 	movt	r5, #0	; 0x0
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:172
+	 // As long as there are unprocessed characters in the RX buffer, retrieve and
+	 // process them.  The function call DMA_GetCurrDataCounter(DMA1_Channel5)
+	 // returns the number of characters that must be received to fill the RX buffer.
+	 // If gRXBufPtr != (RX_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Channel5))
+	 // then there are new characters that haven't been processed yet.
+	 while( gRXBufPtr != (RX_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Channel5)) )
+   a:	462c      	mov	r4, r5
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:184
+		  // be doing the same.
+		  gRXBufPtr++;
+		  
+		  if( gRXBufPtr == RX_BUF_SIZE )
+		  {
+				gRXBufPtr = 0;
+   c:	2600      	movs	r6, #0
+   e:	e008      	b.n	22 <HandleUSART1Reception+0x22>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:174
+	 // returns the number of characters that must be received to fill the RX buffer.
+	 // If gRXBufPtr != (RX_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Channel5))
+	 // then there are new characters that haven't been processed yet.
+	 while( gRXBufPtr != (RX_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Channel5)) )
+	 {
+		  ProcessNextCharacter();
+  10:	f7ff fffe 	bl	0 <HandleUSART1Reception>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:180
+		  
+		  // Increment RXBufPtr.  We use the RX buffer as a circular buffer (since that
+		  // is how the DMA controller is configured to treat it).  Therefore, if gRXBufPtr
+		  // becomes larger than the buffer size, reset it to zero.  The DMA controller should
+		  // be doing the same.
+		  gRXBufPtr++;
+  14:	68e3      	ldr	r3, [r4, #12]
+  16:	3301      	adds	r3, #1
+  18:	60e3      	str	r3, [r4, #12]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:182
+		  
+		  if( gRXBufPtr == RX_BUF_SIZE )
+  1a:	68e2      	ldr	r2, [r4, #12]
+  1c:	2a32      	cmp	r2, #50
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:184
+		  {
+				gRXBufPtr = 0;
+  1e:	bf08      	it	eq
+  20:	60e6      	streq	r6, [r4, #12]
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:172
+	 // As long as there are unprocessed characters in the RX buffer, retrieve and
+	 // process them.  The function call DMA_GetCurrDataCounter(DMA1_Channel5)
+	 // returns the number of characters that must be received to fill the RX buffer.
+	 // If gRXBufPtr != (RX_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Channel5))
+	 // then there are new characters that haven't been processed yet.
+	 while( gRXBufPtr != (RX_BUF_SIZE - DMA_GetCurrDataCounter(DMA1_Channel5)) )
+  22:	f240 0058 	movw	r0, #88	; 0x58
+  26:	f2c4 0002 	movt	r0, #16386	; 0x4002
+  2a:	f7ff fffe 	bl	0 <DMA_GetCurrDataCounter>
+  2e:	68eb      	ldr	r3, [r5, #12]
+  30:	f1c0 0032 	rsb	r0, r0, #50	; 0x32
+  34:	4298      	cmp	r0, r3
+  36:	d1eb      	bne.n	10 <DMA_GetCurrDataCounter+0x10>
+C:\Users\Caleb\Documents\Ride\projects\CHR6dmRelease/chr6dm_usart.c:187
+		  if( gRXBufPtr == RX_BUF_SIZE )
+		  {
+				gRXBufPtr = 0;
+		  }
+	 }
+}
+  38:	bd70      	pop	{r4, r5, r6, pc}
+  3a:	46c0      	nop			(mov r8, r8)
