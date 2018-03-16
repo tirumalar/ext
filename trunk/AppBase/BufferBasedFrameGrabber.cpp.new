@@ -1,0 +1,174 @@
+/*
+ * BufferBasedFrameGrabber.cpp
+ *
+ *  Created on: Apr 7, 2011
+ *      Author: developer1
+ */
+#include <stdio.h>
+#include "BufferBasedFrameGrabber.h"
+#include "Configurable.h"
+#include "logging.h"
+extern "C"{
+#include "file_manip.h"
+}
+
+const char logger[30] = "BufferBasedFrameGrabber";
+
+BufferBasedFrameGrabber::BufferBasedFrameGrabber():m_Width(0),m_Height(0),m_WidthStep(0),m_pImageBuffer(0) {
+	m_ImageSize = 0;
+	m_Debug = true;
+}
+
+BufferBasedFrameGrabber::~BufferBasedFrameGrabber() {
+}
+
+void BufferBasedFrameGrabber::init(Configuration *pConf){
+	if (m_Debug)
+		EyelockLog(logger, DEBUG, "BufferBasedFrameGrabber::init() Start");
+// Read from FILE and update Width and Height
+	m_Width=pConf->getValue("FrameSize.width",1200); //1984);
+	m_Height=pConf->getValue("FrameSize.height",960);	//1392);
+	m_WidthStep=pConf->getValue("FrameSize.widthstep",0);
+	imagebits=pConf->getValue("FrameSize.bits",8);
+
+	m_ImageSize = m_Width * m_Height;
+	//m_ImageSize = 2 * m_Width * m_Height;
+	if(m_Debug)
+	{
+		//  W H S = 1984 1392 5523456
+		EyelockLog(logger, DEBUG, "W H S = %d %d %d ",m_Width,m_Height,m_ImageSize);
+	}
+	m_pImageBuffer = new char[m_ImageSize];
+
+
+	int numbits = pConf->getValue("Eyelock.NumBits", 8);
+	m_numbits = numbits > 8 ? 16 : numbits;
+	SetImageBits(m_numbits);
+
+	m_pRingBuffer = new RingBufferImageQueue(10); /* Allocate ring buffer to be frame buffer - 1 */
+	m_RingBufferOffset = new RingBufferQueueOffset(10);
+	m_ill0 = 0;
+	m_frameIndex = 0;
+	m_ts = 0;
+}
+
+void BufferBasedFrameGrabber::getDims(int & width, int & height) const
+{
+	width = m_Width;
+	height = m_Height;
+}
+
+char *BufferBasedFrameGrabber::getLatestFrame_raw(){
+	//if (m_Debug)
+		//EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::getLatestFrame_raw() Start");
+	//printf("BufferBasedFrameGrabber::getLatestFrame_raw() Start");
+
+	//int length = (m_Width * m_Height)*2;
+	int length = (m_Width * m_Height);
+	//if (m_numbits != 8)
+	//	length = length * 2;
+
+	ImageQueue val;
+	bool status = m_pRingBuffer->TryPop(val);
+	if (status == true) {
+		unsigned char *ptr = val.m_ptr;
+		if (m_Debug)
+		{
+			EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::getLatestFrame_raw() get image queue");
+				/*for (int x=0; x < 50; x++)
+				{
+			        printf(" 0x%x", ptr[x]);
+				}
+				printf("\n");*/
+
+		/*char fname[1024];
+		 FILE *pfile22;
+				    sprintf(fname,"getLatestFrame_raw.raw");
+				    pfile22=fopen(fname,"wb");
+				    fwrite(ptr,sizeof(unsigned char),1200*960*2,pfile22);
+				    fclose(pfile22);*/
+		}
+		m_ill0 = val.m_ill0;
+		m_frameIndex = val.m_frameIndex;
+		m_ts = val.m_endTime;
+		memcpy(m_pImageBuffer, ptr, length);
+
+		/*char fname[1024];
+		FILE *pfile22;
+		sprintf(fname,"getLatestFrame_raw1.raw");
+		pfile22=fopen(fname,"wb");
+		fwrite(m_pImageBuffer,sizeof(unsigned char),1200*960*2,pfile22);
+		fclose(pfile22);*/
+		//return m_pImageBuffer;
+	}
+	else {
+		memset(m_pImageBuffer, 0, length);
+	}
+	//if (m_Debug)
+		//EyelockLog(logger, DEBUG, "get image queue m_ill0 %d, m_frameIndex %d, time %llu", m_ill0,m_frameIndex, m_ts);
+	return m_pImageBuffer;
+}
+
+void BufferBasedFrameGrabber::setLatestFrame_raw(char *ptr){
+	if (m_Debug)
+		EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::setLatestFrame_raw() Start");
+	if (ptr == NULL)
+		return;
+
+	/*for (int x=0; x < 10; x++)
+	{
+	        printf(" 0x%x", ptr[x]);
+	}
+	printf("\n");*/
+
+	ImageQueue val;
+	static int cntr=0;
+	//int length = (m_Width * m_Height)*2;
+	int length = (m_Width * m_Height);
+	//if (m_numbits != 8)
+	//	length = length * 2;
+
+	if(cntr & 0x1){
+		val.m_ill0 = 1;
+	}else{
+		val.m_ill0 = 0;
+	}
+	val.m_frameIndex = cntr;
+	cntr++;
+
+	//printf("BufferBasedFrameGrabber::setLatestFrame_raw() before memcpy ..length is %d \n",length);
+	unsigned char *pdata = val.m_ptr;
+
+	memcpy(pdata, ptr, length);
+
+	//printf("BufferBasedFrameGrabber::setLatestFrame_raw() before memcpy done\n");
+	//EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::setLatestFrame_raw() memcpy done\n");
+
+	struct timeval m_timer;
+	gettimeofday(&m_timer, 0);
+	TV_AS_USEC(m_timer,starttimestamp);
+	val.m_startTime = starttimestamp;
+	val.m_endTime = val.m_startTime;
+	EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::setLatestFrame_raw() pushing to ring buffer\n");
+	//printf("BufferBasedFrameGrabber::setLatestFrame_raw() pushing to ring buffer\n");
+	m_pRingBuffer->TryPush(val);
+	//printf("BufferBasedFrameGrabber::setLatestFrame_raw() pushed to ring buffer\n");
+	//if (1)
+		//EyelockLog(logger, DEBUG, "setLatestFrame_raw() Push to ring buffer");
+}
+void BufferBasedFrameGrabber::term()
+{
+	if(m_pImageBuffer)
+		delete [] m_pImageBuffer;
+	if (m_RingBufferOffset)
+		delete m_RingBufferOffset;
+	if (m_pRingBuffer)
+		delete m_pRingBuffer;
+}
+
+void BufferBasedFrameGrabber::clearFrameBuffer(){
+	if (m_Debug)
+		EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::ClearRing() Start");
+
+	m_pRingBuffer->Clear();
+}
