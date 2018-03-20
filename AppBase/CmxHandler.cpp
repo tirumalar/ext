@@ -2332,6 +2332,7 @@ void CmxHandler::HandleSendMsg(char *msg)
 #ifndef HBOX_PG
 	if(m_debug)
 		EyelockLog(logger, TRACE, "CmxHandler::HandleSendMsg() %d", msg[0]);
+	printf("CmxHandler::HandleSendMsg() %s \n", msg);
 	return;
 	CMXMESSAGETYPE msgType = (CMXMESSAGETYPE)msg[0];
 	char buf[512];
@@ -2383,6 +2384,7 @@ void CmxHandler::HandleSendMsg(char *msg)
 
 		case CMX_SOUND_CMD:
 				printf("******** sending the sound file******** %d : %d : %d \n",msg[1],msg[2],msg[3]);
+#if 0
 				switch(msg[2])
 				{
 				case 1:
@@ -2396,7 +2398,7 @@ void CmxHandler::HandleSendMsg(char *msg)
 					break;
 				}
 
-	#if 0
+	//#if 0
 			{
 			FILE *fp = fopen("/home/root/tones/auth1.wav", "r");
 			if (fp == NULL) {

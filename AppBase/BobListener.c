@@ -16,7 +16,7 @@
 
 #include <termios.h>
 #if defined(HBOX_PG) || defined(CMX_C1)
-#define I2C_BUS	"/dev/ttyUSB2"
+#define I2C_BUS	"/dev/ttyUSB0"
 #else
 #ifdef CMX_C1_OLD
 #define I2C_BUS	"/dev/i2c-1"

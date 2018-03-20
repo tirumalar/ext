@@ -221,9 +221,11 @@ protected:
 	bool m_enableLaplacian_focus_Threshold,m_enableLaplacian_focus_ThresholdEnroll;
 	float m_laplacian_focusThreshold,m_laplacian_focusThresholdEnrollment;
 	volatile bool m_matchingmode,m_lapdebug;
+	bool m_SaveEyeCrops;
+	bool m_SaveFullFrame;
 #ifdef HBOX_PG	
 	bool m_SPAWAREnable;
-	bool m_HboxSaveEyeCrops;
+
 	HttpPostSender *m_pHttpPostSender;
 #endif	
 private:

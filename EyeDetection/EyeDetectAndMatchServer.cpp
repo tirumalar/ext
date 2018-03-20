@@ -186,7 +186,7 @@ bool EyeDetectAndMatchServer::Detect(CSampleFrame *videoFrame, int level)
 	/*
 	 * Perform specularity detection
 	 */
-	printf("Anita...level...%d\n", level);
+	//printf("Anita...level...%d\n", level);
 	Image8u *pImage = videoFrame->GetPyramid()->GetLevel(level);
 
 	if(m_SingleSpecMode)
@@ -202,17 +202,17 @@ bool EyeDetectAndMatchServer::Detect(CSampleFrame *videoFrame, int level)
 		detectionStatus = m_pEyeDetectionServer[level]->IsFrameAnEye( pImage, pEyeList )
 		);
 	}
-	printf("Anita....detectionStatus..%d\n", detectionStatus);
+	//printf("Anita....detectionStatus..%d\n", detectionStatus);
 
 	if(detectionStatus)
 	{
 		numberOfSpecularityEyes = pEyeList->size();
-		printf("Anita....numberOfSpecularityEyes..%d\n", numberOfSpecularityEyes);
+		//printf("Anita....numberOfSpecularityEyes..%d\n", numberOfSpecularityEyes);
 	//	printf("***************Number Of Spec Eyes ************%d\n",numberOfSpecularityEyes);
 		EyeCenterPointList::iterator iter = pEyeList->begin();
 		while(iter != pEyeList->end())
 		{
-			printf("Anita...Inside iter\n");
+			//printf("Anita...Inside iter\n");
 
 			CEyeCenterPoint &eye = (*iter);
 			bool isPointAnEye = true;
@@ -232,7 +232,7 @@ bool EyeDetectAndMatchServer::Detect(CSampleFrame *videoFrame, int level)
 #if DO_HAAR_EYE_CLASSIFIER
 			if(m_DoHaar)
 			{
-				printf("Anita...Inside DoHaar\n");
+				//printf("Anita...Inside DoHaar\n");
 				bool isPointAHaarEye;
 				isPointAHaarEye= DetectHaarEye(videoFrame, eye);
 
