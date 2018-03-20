@@ -25,11 +25,13 @@ The views and conclusions contained in the software and documentation are those 
 authors and should not be interpreted as representing official policies, either expressed
 or implied, of Rafael Muñoz Salinas.
 ********************************************************************************************/
-#if 0
 #include <string>
 #include <iostream>
 #include <fstream>
 #include <sstream>
+//#include <time.h>
+
+
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv/cv.h>
@@ -42,22 +44,26 @@ or implied, of Rafael Muñoz Salinas.
 
 #include <chrono>
 #include <time.h>
-#include <ctime>
+#include <fstream>
 
 using namespace cv;
-#if 0 //Anita
 using namespace std::chrono;
-#endif
 using namespace std;
 
 VideoCapture TheVideoCapturer;
 
 Mat TheInputImage, TheInputImageCopy, outImg, grImage, mask;
 Mat smallImg;
+Mat frame_gray;
 Mat smallImgBeforeRotate;
 int downScale = 4;
-double scaling = 8;
-//extern int IrisFramesHaveEyes(void);
+
+//experiment purposes
+ofstream fileName("processedTimePyr16.csv");
+string t = "Processing time: ";
+double scaling = 8;		//8
+
+
 extern int vid_stream_start(int port);
 extern int vid_stream_get(int *win,int *hin, char *wbuffer);
 extern int portcom_start();
@@ -75,12 +81,16 @@ int face_init(  );
 #define CENTER_POS 164		//low fx_abs val is 0 and max is 328. So the center falls in 164
 #define MIN_POS 0
 #define MAX_POS 328			//previous val was 200
+#define POS_threshold 28
 //#define MOTOR_STEP 5  //For 8mm Lens
-#define MOTOR_STEP 1 //For 3mm Lens
-#define BRIGHTNESS_MAX 100
+#define MOTOR_STEP 1 //For 3mm Lens, value was 3
+#define MOTOR_STEP_MO 2
+#define BRIGHTNESS_MAX 10
 #define BRIGHTNESS_MIN 10
 #define MODE_CHANGE_FREEZE 10
 int cur_pos=CENTER_POS;
+#define MOVE_COUNTS_REHOME 7
+#define MIN_IRIS_FRAMES 10
 int fileNum=0;
 int move_counts=0;
 void MoveTo(int v)
@@ -96,6 +106,34 @@ void MoveTo(int v)
 	//cvWaitKey(100);
 }
 
+void accelStatus(){
+	char buff[100];
+	sprintf(buff,"accel()");
+	printf("Sending accel command\n");
+	port_com_send(buff);
+
+/*	for(int i = 0; i <30; i++){
+		printf("%c \n",buff[i]);
+
+	}*/
+
+}
+
+void motorMoveTo(int v)
+{
+	char buff[100];
+	char buffRe[100];
+	if (v<MIN_POS) v= MIN_POS;
+	if (v>MAX_POS) v=MAX_POS;
+	//cvWaitKey(100);
+	sprintf(buffRe,"fx_home()");
+	port_com_send(buffRe);
+	sprintf(buff,"fx_abs(%d)",v);
+	printf("Sending move: %s\n",buff);
+	port_com_send(buff);
+	move_counts++;
+	//cvWaitKey(100);
+}
 
 //cycle experiment. This code is not part of the main code
 void motorCycleTest(int up){
@@ -148,14 +186,14 @@ void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask)
 {
 	static int free = 1;
 	static int setTime = 0;
-#if 0 //Anita
-	static std::chrono::time_point<std::chrono::system_clock> start, end;
+
+	static std::chrono:: time_point<std::chrono::system_clock> start, end;
 
 	end = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds = end-start;
 	if(elapsed_seconds.count()>=setTime || VIPcall==1)
 		free=1;
-#endif
+
 	//printf("Current time : %u",start);
 	if(free)
 	{
@@ -163,10 +201,8 @@ void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask)
 		sprintf(temp,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
 		port_com_send(temp);
 		free = 0;
-#if 0 //Anita
 		start = std::chrono::system_clock::now();
 		setTime = (double)mtime/1000;
-#endif
 	}
 }
 
@@ -223,14 +259,13 @@ int agc_set_gain =0;
 
 int run_state=RUN_STATE_FACE;
 
-#if 0 //Anita
-std::chrono::time_point<std::chrono::system_clock> start_mode_change;
-#endif
+
+std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
 void RecoverModeDrop()
 {
 	//If no mode change happens for a set amount of time then set face mode to recover from
-	//from possible condition of loosing the mode change message
-#if 0 //Anita
+	//from possible condition of losing the mode change message
+
 	static std::chrono:: time_point<std::chrono::system_clock> end;
 
 	end = std::chrono::system_clock::now();
@@ -243,98 +278,119 @@ void RecoverModeDrop()
 		//SetFaceMode();
 
 	}
-#endif
 }
 void SetFaceMode()
 {
 	// enable face camera only
 	// was 70
-	printf("switching to face mode : %s\n",GetTimeStamp());
+	//printf("switching to face mode : %s\n",GetTimeStamp());
 	//port_com_send("grab_send(3)");
 	//port_com_send("b_on_time(2,0,\"\")");
 	//port_com_send("b_on_time(1,70,\"grab_send(4)\")");
-	port_com_send("set_cam_mode(4,100)");
+
 	//port_com_send("fixed_set_rgb(10,10,10)");
-	//setRGBled(BRIGHTNESS_MAX,BRIGHTNESS_MAX,BRIGHTNESS_MAX,1000,0,0x1F);
-#if 0 //Anita
+	setRGBled(20,20,20,1000,0,0x1F);
+	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
 	start_mode_change = std::chrono::system_clock::now();
-#endif
 }
 
 #define IRIS_FRAME_TIME 180
 
 void SetIrisMode()
 {
-	//printf("switching to  eyes mode : %s\n",GetTimeStamp());
-	//port_com_send("grab_send(3)");
-	printf("sent switching to  eyes mode : %s\n",GetTimeStamp());
-	//port_com_send("b_on_time(1,0,\"\")");
-	//port_com_send("b_on_time(1,180,\"grab_send(3)\")");
-	port_com_send("set_cam_mode(3,100)");
-	//port_com_send("fixed_set_rgb(0,0,10)");
-	//setRGBled(0,0,BRIGHTNESS_MAX,1000,0);
-
-	//wcr(3,0x305E,0x80)
+	port_com_send("psoc_write(2,40) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,7) | psoc_write(3,0x31)| psoc_write(6,4)");
+	cvWaitKey(200);
 	IrisFrameCtr=0;
-#if 0 //Anita
 	start_mode_change = std::chrono::system_clock::now();
-#endif
 }
 
 void DoStartCmd()
 {
-	printf("Re Homing\n");
-	//port_com_send("fixed_set_rgb(0,0,0)");
-	//port_com_send("fx_home()\n");  //Mihir- temp
-	//cvWaitKey(6000);
-	//MoveTo(CENTER_POS);
-	//port_com_send("fixed_set_rgb(10,10,10)");
-	//setRGBled(BRIGHTNESS_MAX,BRIGHTNESS_MAX,BRIGHTNESS_MAX,10,0,0x1F);
-	//port_com_send("psoc_write(2,24) | psoc_write(1,1) | psoc_write(4,7) | psoc_write(3,0x31) | psoc_write(5,30)");
-	//port_com_send("wcr(7,0x3012,9) | wcr(7,0x301e,0) | wcr(7,0x305e,0x35)");
-	//port_com_send("wcr(4,0x3012,4)");
-	//port_com_send("wcr(7,0x3040,0xC000)");  //To rotate by 180 deg
-	//port_com_send("b_on_time(1,70,\"grab_send(4)\")");
-	//port_com_send("set_cam_mode(4,70)");
-	//Increase gain for face cam
-	//port_com_send("wcr(3,0x305E,0x60)");
-	//port_com_send("wcr(4,0x305E,0x80)");
+	setRGBled(BRIGHTNESS_MIN,BRIGHTNESS_MIN,BRIGHTNESS_MIN,10,0,0x1F);
+
 	//port_com_send("set_audio(1)");
 	//port_com_send("/home/root/tones/auth.wav");
 	//start_mode_change = std::chrono::system_clock::now();
 
-
-
-	//Moahammad
+	//Mohammad
 	//setting up face cameras and motor pos
+	printf("Re Homing\n");
 	port_com_send("fx_home()\n");
 	cvWaitKey(6000);
-	// MoveTo(CENTER_POS);
-	port_com_send("set_cam_mode(7,100)");
-	MoveTo(200);
-	//Face settings
-	//port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(4,4) | psoc_write(3,4) |psoc_write(5,20) | psoc_write(6,4)");
-	//port_com_send("wcr(4,0x3012,10) | wcr(4,0x301e,0) | wcr(4,0x305e,0xA0)");
 
-	//Iris AUX camera settings
-	port_com_send("psoc_write(2,40) | psoc_write(1,1) | psoc_write(4,3) | psoc_write(3,0x31) |psoc_write(5,40) | psoc_write(6,6)");
-	//port_com_send("wcr(131,0x3012,10) | wcr(131,0x301e,0) | wcr(131,0x305e,128)");
-	port_com_send("wcr(3,0x3012,16) | wcr(3,0x301e,0) | wcr(3,0x305e,80)");
+	printf("Moving to Center\n");
+	MoveTo(CENTER_POS);
+
+
+
+
+
+	//printf("configuring face settings\n");
+	//Face configuration of LED
+	//port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,1)");
+	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
+
+	//Face cameras configuration
+	port_com_send("wcr(4,0x3012,16) | wcr(4,0x301e,0) | wcr(4,0x305e,160)");
+
+	//printf("configuring Main Iris settings\n");
+	//Main Iris cameras configuration
+	port_com_send("wcr(0x18,0x3012,16) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,40)");
+	port_com_send("wcr(0x18,0x3040,0xC000)"); //Flipping of iris images
+
+
+	//streaming Main and face cameras
+	port_com_send("set_cam_mode(7,100)");
 }
+
+
+//Mohammad
+void faceSettings(){
+	printf("configuring face settings\n");
+	//Face configuration of LED
+	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,1)");
+	//Face cameras configuration
+	port_com_send("wcr(4,0x3012,12) | wcr(4,0x301e,0) | wcr(4,0x305e,160)");
+}
+
+void AuxIrisSettings(){
+	printf("configuring Main Iris settings\n");
+	//Iris configuration of LED
+	port_com_send("psoc_write(2,40) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,3) | psoc_write(3,3)| psoc_write(6,1)");
+	//Face cameras configuration
+	port_com_send("wcr(3,0x3012,12) | wcr(3,0x301e,0) | wcr(3,0x305e,40)");
+}
+
+
+void MainIrisSettings(){
+	printf("configuring AUX Iris settings\n");
+	//Iris configuration of LED
+	port_com_send("psoc_write(2,40) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,3) | psoc_write(3,3)| psoc_write(6,1)");
+	//Face cameras configuration
+	port_com_send("wcr(0x83,0x3012,12) | wcr(0x83,0x301e,0) | wcr(0x83,0x305e,128)");
+}
+
+
 //Old
 #define SCALE 3
-Rect detect_area(100/SCALE,00/SCALE,400/SCALE,500/SCALE);
+Rect detect_area(80/SCALE,80/SCALE,1040/SCALE,800/SCALE);
 //Rect no_move_area(0,200/SCALE,600/SCALE,50/SCALE);  //Old
 //Rect no_move_area(0,220/SCALE,600/SCALE,50/SCALE);  //Mihir - 8mm Face Camera Lens
-Rect no_move_area(0,450/scaling,1200/scaling,100/scaling);  //Mihir - 3mm Face Camera Lens
+//Rect no_move_area(0,450/scaling,1200/scaling,100/scaling);  //Mihir - 3mm Face Camera Lens
+Rect centerLine(1200/scaling, 960/scaling, 0, 0); //Mohammad center of the display
+Rect no_move_area(0,560/scaling,960/scaling,80/scaling); //Mohammad rect at the center
+
 void detectAndDisplay( Mat frame );
 //std::printf("Detect face = %i\n",1);
+
 int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size);
 Point eyes;
 
+//at 40inch or 106cm distance
+#define MIN_FACE_SIZE 20		// previous val 40
+#define MAX_FACE_SIZE 30		//// previous val 60
 
-#define MIN_FACE_SIZE 40
-#define MAX_FACE_SIZE 65
+
 
 extern int IrisFramesHaveEyes();
 char temp[100];
@@ -395,6 +451,18 @@ Mat rotation90(Mat src){
 }
 
 
+int IrisFramesHaveEyes()
+{
+	IrisFrameCtr++;
+	printf("Iris with eyes %d\n",IrisFrameCtr);
+	//cvWaitKey(30);
+	if (IrisFrameCtr>MIN_IRIS_FRAMES)
+		return 0;
+	else
+		return 1;
+}
+
+
 void DoRunMode()
 {
   float eye_size;
@@ -404,54 +472,18 @@ void DoRunMode()
 		    float p;
 		    char temp_str[40];
 
-			/// create the small image
 
-		    /*
-		     *
-		    static int test_count=0;
-		    test_count=test_count+5;
-		    if (test_count>120)
-		    	test_count =5;
-
-		    SelLedDistance(test_count);
-*/
-
-
-/*		    printf("cols: %d    Rows: %d\n",outImg.cols, outImg.rows);
-		    printf("cols: %d    Rows: %d\n",outImg.cols/2, outImg.rows/2);
-		    printf("cols: %d    Rows: %d\n",outImg.cols/4, outImg.rows/4);
-		    printf("cols: %d    Rows: %d\n",outImg.cols/8, outImg.rows/8);
-		    printf("cols: %d    Rows: %d\n",outImg.cols/16, outImg.rows/16);*/
-
-		    //printf("cols: %d    Rows: %d\n",outImg.cols, outImg.rows);
 		    int64 startTime = cv::getTickCount();
 
 		    cv::resize(outImg, smallImgBeforeRotate, cv::Size(),(1/scaling),(1/scaling), INTER_NEAREST);	//Mohammad
 
-/*		    //pyramid test
-		    pyrDown(outImg, smallImgBeforeRotate, Size(outImg.cols/downScale, outImg.rows/downScale));
-		    pyrDown(smallImgBeforeRotate, smallImgBeforeRotate, Size(smallImgBeforeRotate.cols/downScale, smallImgBeforeRotate.rows/downScale));
-		    pyrDown(smallImgBeforeRotate, smallImgBeforeRotate, Size(smallImgBeforeRotate.cols/downScale, smallImgBeforeRotate.rows/downScale));
-		    pyrDown(smallImgBeforeRotate, smallImgBeforeRotate, Size(smallImgBeforeRotate.cols/downScale, smallImgBeforeRotate.rows/downScale));
-		    */
 
 		    smallImg = rotation90(smallImgBeforeRotate);
-		    //printf("cols: %i    Rows: %i\n",smallImg.cols, smallImg.rows);
 
-/*		    int64 lastTime = cv::getTickCount();
-		    double tm = (lastTime - startTime)/cv::getTickFrequency();
-
-		    fileName << t << "," << tm << endl;
-
-		    imwrite("x.bmp", smallImg);*/
-
-
-		    //detectAndDisplay(smallImg);
-
-
+/*
 			p = AGC(smallImg.cols,smallImg.rows,(unsigned char *)(smallImg.data));
 
-		//	printf("P = %d\n",p);
+
 			if (p<FACE_GAIN_PER_GOAL-FACE_GAIN_HIST_GOAL)
 				agc_val= agc_val + (FACE_GAIN_PER_GOAL-p)*FACE_CONTROL_GAIN;
 			if (p>FACE_GAIN_PER_GOAL+FACE_GAIN_HIST_GOAL)
@@ -472,135 +504,129 @@ void DoRunMode()
 				//printf("agc gain = %x p = %f\n",agc_val,p);
 				agc_set_gain=agc_val;
 				}
+*/
+
+		    accelStatus();
 
 
 			if (FindEyeLocation( smallImg, eyes,eye_size))
 				{
 
-				  //cv::rectangle(smallImg,eyes,Scalar( 127, 0, 0 ), 1, 0);
-				  //ellipse( smallImg, eyes, Size( 20,20), 0, 0, 360, Scalar( 255, 0, 255 ), 4, 8, 0 );
-				  printf("Working121321321321321321321321321321321321321321321321321");
 				if (detect_area.contains(eyes))
 					{
 					printf("eyes found\n");
-					//if (no_eye_counter!=0)
-					//	port_com_send("fixed_set_rgb(10,10,10)");
 
 					no_eye_counter=0;
-					if (no_move_area.contains(eyes))
+
+					if (!no_move_area.contains(eyes))
 						{
-						if (1)
-						{
-						char temp[100];
-						int val;
-						val =  (eye_size-10)*100/55; //Ask Ilya
-						//if (val<25) val =0;
-						if (val>100) val = 120; //ask ilya
-
-					    printf("Val = %d size = %d\n",val,eye_size);
-
-					    //Logic for too close
-					    if(agc_val==FACE_GAIN_MIN)
-					    {
-					    	//SelLedDistance(150);
-					    	setRGBled(120,0,0,500,0,0x4);
-					    }
-					    else
-					    {
-					    	//if(val>25)
-					    		//SelLedDistance(val);
-					    }
-
-						//sprintf(temp,"fixed_set_rgb(%d,%d,%d)",val,val,val);
-						//port_com_send(temp);
-						//setRGBled(val,val,val,500,0); // multi leveled brightness
-						//setRGBled(BRIGHTNESS_MAX,BRIGHTNESS_MAX,BRIGHTNESS_MAX,500,0,0x1F);  //Two leveled brightness
-						}
 						if ((eye_size>= MIN_FACE_SIZE) && (eye_size<= MAX_FACE_SIZE))
 							{
-							run_state = RUN_STATE_EYES;
-							printf("Face is IN RANGE!!!!\n");
-							SetIrisMode();
+							int err;
+							int constant = 10;
+							int MoveToLimitBound = 10;
+							err = (no_move_area.y+no_move_area.height/2) - eyes.y;
+							//printf("err: %i\n", err);
+							err = err * 3;
+							//printf("err: %i\n", err);
+							//err+=constant;
+							//printf("err: %i\n", err);
+							//err = err*SCALE;
+							//err=err*-1;  //Image rotated by 180deg so no need to do this
+							//err=err/MOTOR_STEP;  //Old
+							//err=err/1;  //New
+							//cur_pos+=err;
+							err=err/MOTOR_STEP_MO;
+							printf("err: %i, previous cur_pos: %i\n", err, cur_pos);
+							cur_pos = cur_pos + err;
+							printf("err: %i, New cur_pos: %i\n", err, cur_pos);
+							//cur_pos = err + CENTER_POS;
+							if (cur_pos<MIN_POS) cur_pos= POS_threshold + MIN_POS;
+							if (cur_pos>MAX_POS) cur_pos=MAX_POS - POS_threshold;
+
+							if (abs(err) > MoveToLimitBound){
+								printf("Eyes out of range must move %d  current %d\n",err,cur_pos);
+								MoveTo(cur_pos);
+								printf("fx_abs val: %i\n", cur_pos);
+								printf("Face is IN RANGE!!!!\n");
+							}
+
 							}
 						else
 							printf("Face out of range\n");
 						}
+
+					{
+					if ((eye_size>= 25) && (eye_size<= 65))
+					{
+						SetIrisMode();
+						run_state = RUN_STATE_EYES;
+						printf("Switching ON IRIS LEDs!!!!\n");
+						port_com_send("fixed_set_rgb(0,0,50)");
+					}
+				}
+
+#if 0
 					else
 						{
-#if 0 //15Mar -face
+						//Code for multistep motor movement
 						int err;
-
+						int constant = 10;
 						err = (no_move_area.y+no_move_area.height/2) - eyes.y;
-						err = err*SCALE;
+						err = err * 8;
+						//err = err*SCALE;
 						//err=err*-1;  //Image rotated by 180deg so no need to do this
-						err=err/MOTOR_STEP;  //Old
+						//err=err/MOTOR_STEP;  //Old
 						//err=err/1;  //New
-						cur_pos+=err;
+						//cur_pos+=err;
+						err=err/MOTOR_STEP_MO;
+						cur_pos = cur_pos + err;
+						//cur_pos = err + CENTER_POS;
 						if (cur_pos<MIN_POS) cur_pos= MIN_POS;
 						if (cur_pos>MAX_POS) cur_pos=MAX_POS;
 						printf("Eyes out of range must move %d  current %d\n",err,cur_pos);
 						MoveTo(cur_pos);
-#endif
+						//motorMoveTo(cur_pos);
 						}
+#endif
+
 					}
+
 				}
-			else
+
+
+
+				if (move_counts> MOVE_COUNTS_REHOME)
 				{
-				//printf("No eyes %d\n",no_eye_counter);  //Mihir commented
-				if (no_eye_counter>=5)
-				{
-					//port_com_send("fixed_set_rgb(10,10,10)");
-					//printf("No Eyes for 10 frames\n");
-					setRGBled(BRIGHTNESS_MAX,BRIGHTNESS_MAX,BRIGHTNESS_MAX,1000,0,0x1F);
+					printf("Re Homing\n");
+					setRGBled(0,0,0,100,0,0x1F);
+					port_com_send("fx_home()\n");
+					cvWaitKey(6000);
+					MoveTo(CENTER_POS);
+					setRGBled(20,20,20,100,0,0x1F);
+					move_counts=0;
 				}
 
-				if (no_eye_counter<NO_EYE_HOME_FRAMES+2)
-					no_eye_counter++;
-				if (no_eye_counter==NO_EYE_CENTER_FRAMES)
-					{
-					printf("Recentering no eyse\n");
-			//		port_com_send("fx_home()\n");
-				//	usleep(100000);
-					agc_val=FACE_GAIN_DEFAULT;
-					//MoveTo(CENTER_POS);
-					}
-#define MOVE_COUNTS_REHOME 30
-				if
-				(
-						//(no_eye_counter==NO_EYE_HOME_FRAMES)||
-						( move_counts> MOVE_COUNTS_REHOME))
-							{
-							printf("Re Homing\n");
-							//port_com_send("fixed_set_rgb(0,0,0)");
-							//setRGBled(0,0,0,10,0,0x1F);
-							port_com_send("fx_home()\n");
-							cvWaitKey(6000);
-							MoveTo(CENTER_POS);
-						    //port_com_send("fixed_set_rgb(10,10,10)");
-						    //setRGBled(BRIGHTNESS_MAX,BRIGHTNESS_MAX,BRIGHTNESS_MAX,100,0,0x1F);
-						    move_counts=0;
-							}
 
-				}
-
-		//	cv::rectangle(smallImg,detect_area,Scalar( 255, 0, 0 ), 8, 0);
-			cv::rectangle(smallImg,no_move_area,Scalar( 127, 0, 0 ), 2, 0);
-
-			//imwrite("x.bmp", smallImg);
+			cv::rectangle(smallImg,no_move_area,Scalar( 255, 0, 0 ), 1, 0);
 			imshow(temp,smallImg);
 	}
+
+
+
+
+
   if (run_state == RUN_STATE_EYES)
   	  {
 	  if (IrisFramesHaveEyes()==0)
 	  	  {
 			run_state = RUN_STATE_FACE;
-			agc_val=FACE_GAIN_DEFAULT;
 			SetFaceMode();
 	  	  }
   	  }
 }
 
-int backup_main(int argc, char **argv)
+int main(int argc, char **argv)
 {
     int w,h;
     char key;
@@ -610,11 +636,6 @@ int backup_main(int argc, char **argv)
     pthread_t threadId;
     pthread_t thredEcId;
 
-    //printf("%d\n", argc);
-
-    //Subsampled
-    //Rect detect_area(50,50,250,190);
-    //Rect no_move_area(5,5,5,5);
 
 	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
 
@@ -628,7 +649,6 @@ int backup_main(int argc, char **argv)
 	else
 		run_mode =0;
 
-	//run_mode = atoi(argv[2]);
 	if (run_mode)
 		pthread_create(&threadId,NULL,init_tunnel,NULL);
 	if (run_mode)
@@ -643,41 +663,12 @@ int backup_main(int argc, char **argv)
 
 	if (run_mode)
 		{
-
 		face_init();
 		portcom_start();
-		//MoveTo(cur_pos);
-		 DoStartCmd();
-		//Mihir - Testing
-//		while(1)
-//		{
-//			MoveTo(MIN_POS);
-//			cvWaitKey(2000);
-//			MoveTo(MAX_POS);
-//			cvWaitKey(2000);
-//		}
+		DoStartCmd();
 		}
 
 	cv::namedWindow(temp);
-
-/*
-
-	//experimenting motor cycle calc
-	int countCycle = 0;
-
-	clock_t startTime = clock();
-	while(countCycle < 50){
-		motorCycleTest(328);	//Max value that represt to go up is 328
-		countCycle++;
-		printf("cycle : %d\n", countCycle);
-
-	}
-	clock_t stopTime = clock();
-	double elapsed = double(stopTime - startTime) * 1000.0 / CLOCKS_PER_SEC;
-	printf("elapsedTime: %d\n", elapsed);
-
-*/
-
 
 
 	while (1)
@@ -691,7 +682,7 @@ int backup_main(int argc, char **argv)
 			cv::waitKey(IRIS_FRAME_TIME);
 		}
 
-//		imshow(temp,smallImg);
+
 		if (run_mode)
 			{
 			 DoRunMode();
@@ -699,14 +690,7 @@ int backup_main(int argc, char **argv)
 		else
 			{
 			cv::resize(outImg, smallImg, cv::Size(), 0.5, 0.5, INTER_NEAREST); //Time debug
-			//Mat rotateImg = rotation90(smallImg, run_mode);
-			{
-				//int EyeFinderNew(cv::Mat &mt);
-				//EyeFinderNew(outImg);
-			}
 			imshow(temp,smallImg);  //Time debug
-
-			//printf("Got Image : %s\n",GetTimeStamp());
 			}
 	    key = cv::waitKey(1);
 	    //printf("Key pressed : %u\n",key);
@@ -730,5 +714,3 @@ int backup_main(int argc, char **argv)
  *
  *
  ************************************/
- #endif
- 
