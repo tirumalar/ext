@@ -78,7 +78,8 @@ void AudioDispatcher::process(MatchResult *msg)
 	EyelockLog(logger, DEBUG, "AudioDispatcher match state %d ***", msg->getState()); fflush(stdout);
 
 	if (msg->getState()==DUAL_AUTHN_CARD) return;
-#ifdef HBOX_PG
+#if defined(HBOX_PG) || defined(CMX_C1)
+// #ifdef HBOX_PG
 	if (msg->getState()==FAILED || msg->getState()==CONFUSION)
 		{
 
@@ -102,7 +103,7 @@ void AudioDispatcher::process(MatchResult *msg)
 				char buf[100];
 				string name;
 				name.assign(msg->getName());
-				m_pCmxHandler->CameraStatus(false);
+				//m_pCmxHandler->CameraStatus(false);
 				char *pch = strtok ((char*)name.c_str(),"|");
 				sprintf(buf,"espeak \"welcome %s\" ",pch);
 				// printf("name.cstr()........%s \n", name.c_str());
@@ -110,10 +111,10 @@ void AudioDispatcher::process(MatchResult *msg)
 				// printf("Buf..%s", buf);
 				EyelockLog(logger, DEBUG, "AudioDispather sound for match %s", buf); fflush(stdout);
 				RunSystemCmd_Audio(buf);
-				m_pCmxHandler->CameraStatus(true);
+				//m_pCmxHandler->CameraStatus(true);
 			}
 		}
-	return;
+	//return;
 #endif
 #ifndef CMX_C1
 	if (msg->getState()==FAILED || msg->getState()==CONFUSION) {
@@ -137,7 +138,7 @@ void AudioDispatcher::process(MatchResult *msg)
 	//RunSystemCmd("aplay /home/root/tones/auth.wav");
 #else
 #ifndef HBOX_PG
-	SetAlsaMasterVolume(0);	// disable NXT local sound
+	//SetAlsaMasterVolume(0);	// disable NXT local sound
 #endif	
 	printf("AudioDispathcer ******* sending CMX command\n");
 	char buff[100];

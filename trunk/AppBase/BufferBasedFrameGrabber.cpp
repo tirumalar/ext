@@ -63,7 +63,7 @@ void BufferBasedFrameGrabber::getDims(int & width, int & height) const
 	height = m_Height;
 }
 
-#if 1
+#if 0
 char *BufferBasedFrameGrabber::getLatestFrame_raw(){
 	//if (m_Debug)
 		//EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::getLatestFrame_raw() Start");

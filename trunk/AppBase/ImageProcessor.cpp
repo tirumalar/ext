@@ -345,8 +345,9 @@ m_LedConsolidator = NULL;
 		m_lapdetectorEnroll =  new LaplacianBasedFocusDetector(we,he);
 		m_centreEyecropEnroll = cvCreateImage(cvSize(we,he),IPL_DEPTH_8U,1);
 	}
+	m_SaveFullFrame = pConf->getValue("Eyelock.SaveFullFrames",false);
+	m_SaveEyeCrops = pConf->getValue("Eyelock.SaveEyeCrops",false);
 #ifdef HBOX_PG
-	m_HboxSaveEyeCrops = pConf->getValue("Eyelock.SaveEyeCrops",false);
 	m_SPAWAREnable = pConf->getValue("Eyelock.SPAWAREnable",false);
 	m_pHttpPostSender = new HttpPostSender(*pConf);
 #endif
@@ -767,18 +768,16 @@ void ImageProcessor::GenMsgToNormal(BinMessage& msg){
 
 bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 {
-	printf("Inside ProcessImage\n");
+	// printf("Inside ProcessImage\n");
 	XTIME_OP("SetImage",
 		SetImage(frame)
 	);
-#if 1
-		char filename[50];
+	char filename[50];
+	if(m_SaveFullFrame){
 		static int Index = 0;
 		sprintf(filename,"InputImage_%d.pgm",Index++);
 		cvSaveImage(filename, frame);
-		// cvSaveImage("InsideProcess.pgm", frame);
-#endif
-
+	}
     m_inputImg.Init(frame);
     XTIME_OP("Pyramid",
     m_sframe.SetImage(&m_inputImg);
@@ -798,7 +797,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
     XTIME_OP("Detect",
     	detect = m_pSrv->Detect(&m_sframe,m_eyeDetectionLevel)
     );
-    printf("After Detect Eyes\n");
+   //  printf("After Detect Eyes\n");
     if(m_shouldLog){
         logResults(m_faceIndex);
     }
@@ -813,7 +812,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
     if(m_Debug)
     	printf("NumEyes %d \n", maxEyes);
 #if 1
-    printf("NumEyes %d \n", maxEyes);
+    // printf("NumEyes %d \n", maxEyes);
 #endif
 
 #if 0
@@ -850,25 +849,17 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		CheckForHaloScoreThreshold(halo);
 		CvPoint3D32f output;
 		output.x = -1.0f;
-#if 0
-		cvSaveImage("EyeCrop_PG.pgm", eye->getEyeCrop());
-#endif
-#if 1
-			static int eyecropIndex = 0;
-			sprintf(filename,"EyeCrop_PG_%d.pgm",eyecropIndex++);
-			cvSaveImage(filename, eye->getEyeCrop());
-#endif
-#ifdef HBOX_PG
-		char filename[50];
-		if(m_HboxSaveEyeCrops)
+
+		if(m_SaveEyeCrops)
 		{
 			static int eyecropIndex = 0;
 			sprintf(filename,"EyeCrop_PG_%d.pgm",eyecropIndex++);
 			cvSaveImage(filename, eye->getEyeCrop());
 		}else{
-			sprintf(filename,"EyeCrop_PG_%d.pgm",eyeIdx);
+			// sprintf(filename,"EyeCrop_PG_%d.pgm",eyeIdx);
 			// cvSaveImage(filename, eye->getEyeCrop());
 		}
+#ifdef HBOX_PG
 		if(m_SPAWAREnable){
 			int eyeCropSize = eye->getEyeCrop()->height * eye->getEyeCrop()->width;
 			// printf("EyeCropSize.....%d\n", eyeCropSize);
