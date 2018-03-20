@@ -8,7 +8,7 @@
 #ifndef EYELOCK_COM_H_
 #define EYELOCK_COM_H_
 
-#define MIN_IRIS_FRAMES 10
+
 
  #ifdef __cplusplus
      extern "C" {

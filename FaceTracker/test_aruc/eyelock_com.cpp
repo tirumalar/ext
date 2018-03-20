@@ -27,17 +27,8 @@ extern int IrisFrameCtr;
 
 int match_Lock=0;
 
-extern int IrisFrameCtr;
 
-int IrisFramesHaveEyes()
-{
-	IrisFrameCtr++;
-	printf("Iris with eyes %d\n",IrisFrameCtr);
-	if (IrisFrameCtr>MIN_IRIS_FRAMES)
-		return 0;
-	else
-		return 1;
-}
+
 
 extern int move_counts;
 extern void port_com_send(char *cmd);
@@ -68,7 +59,7 @@ ec_read_from_client (int filedes)
 		  *strchr(buffer,'\n')=' ';
 	  if (strchr(buffer,'\r'))
 		  *strchr(buffer,'\r')=' ';
-    //  fprintf (stderr, "EC Server: got message: `%s'\n", buffer);
+	  printf ("EC Server: got message: `%s'\n", buffer);
 
       //Process the commands sent by EyeLock app
       if(strstr(buffer,"MATCH_FAIL"))
@@ -86,10 +77,10 @@ ec_read_from_client (int filedes)
       {
     	  fprintf (stderr, "EC Server: got message: `%s  %s'\n", buffer,GetTimeStamp());
 
-    	  IrisFrameCtr = MIN_IRIS_FRAMES;
+    	  //IrisFrameCtr = MIN_IRIS_FRAMES;
     	  No_eyes_counter=0;
     	  //port_com_send("fixed_set_rgb(0,100,0)");
-    	  setRGBled(0,BRIGHTNESS_MAX,0,2000,1,0x1F);
+    	  setRGBled(0,BRIGHTNESS_MIN,0,2000,1,0x1F);
     	  system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
     	  printf("Re Homing\n");
 #if 1 //Anita
@@ -114,7 +105,8 @@ ec_read_from_client (int filedes)
     	  {
 
     		  fprintf (stderr, "EC Server: got message: `%s  %s'\n", buffer,GetTimeStamp());
-    		  IrisFrameCtr = MIN_IRIS_FRAMES/2;
+    		  printf("More Detections \n");
+    		  //IrisFrameCtr = MIN_IRIS_FRAMES/2;
     		  No_eyes_counter=0;
     		  //port_com_send("fixed_set_rgb(0,0,100)");
     		  setRGBled(0,0,BRIGHTNESS_MAX,1000,0,0x1F);
