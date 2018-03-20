@@ -25,6 +25,7 @@ The views and conclusions contained in the software and documentation are those 
 authors and should not be interpreted as representing official policies, either expressed
 or implied, of Rafael Muñoz Salinas.
 ********************************************************************************************/
+#if 0
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -599,7 +600,7 @@ void DoRunMode()
   	  }
 }
 
-int main(int argc, char **argv)
+int backup_main(int argc, char **argv)
 {
     int w,h;
     char key;
@@ -729,3 +730,5 @@ int main(int argc, char **argv)
  *
  *
  ************************************/
+ #endif
+ 
