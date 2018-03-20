@@ -97,7 +97,7 @@ int vid_stream_get(int *win,int *hin, char *wbuffer)
 		 }
 		 if(p_count > 0)
 		 {
-			  printf("skipped %d packets\n",p_count);
+			//  printf("skipped %d packets\n",p_count);
 		 }
 		 p_count=0;
 		 usleep(100);
