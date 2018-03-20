@@ -73,13 +73,18 @@ void port_com_send(char *cmd)
 		printf("rv & command length don't match\n");
 	//printf("%d rv send %d\n",x,rv);
 
-	printf("# ");
+//	printf("# ");
 	int counter=0;
 	while (1)
 		{
 		rv=recv(sockfd,buffer,512,MSG_DONTWAIT);
 		if(rv<=0)
 			continue;
+		else{
+			cmd = buffer;
+	/*		for (int i=0; i < 30; i++)
+				printf("%c \n",buffer[i]);
+*/		}
 		buffer[rv]=0;
 		//if (strchr(buffer,'K'))
 			{
@@ -90,5 +95,5 @@ void port_com_send(char *cmd)
 		}
 	//usleep(5000);
    in_send =0;
-   printf("%u & \n",counter);
+  // printf("%u & \n",counter);
 }
