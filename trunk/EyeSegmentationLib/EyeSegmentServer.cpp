@@ -734,7 +734,8 @@ m_w(w), m_h(h),
 m_startIrisRadius(70), m_endIrisRadius(145), m_levels(3),f_levels(2), // m_levels is 3 radii are not divided by two
 m_startPupilRadius(16), m_endPupilRadius(85),  //radii are not divided by two
 m_minIrisAngle((float) (-30*CV_PI/180) ), m_maxIrisAngle((float) (60*CV_PI/180) ), // 0 to 60
-m_minPupilAngle((float) (-90*CV_PI/180) ), m_maxPupilAngle( (float) (45*CV_PI/180) ),	/// MAGIC NUMBER, was -45
+m_minPupilAngle((float) (-80*CV_PI/180) ), m_maxPupilAngle( (float) (25*CV_PI/180) ),	/// MAGIC NUMBER, was -45
+//  m_minPupilAngle((float) (-90*CV_PI/180) ), m_maxPupilAngle( (float) (45*CV_PI/180) ),	/// MAGIC NUMBER, was -45
 m_tmpHist(0), m_innerRingHist(0), m_outerRingHist(0),
 m_flatIris(0), m_annularHist(0), m_angleSamples(20),m_measureIris(0),m_measurePupil(0),m_nbhdCheckIris(true),m_nbhdCheckPupil(true),
 m_emdFlow(0), m_transposedEMDFlow(0),

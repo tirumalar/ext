@@ -140,7 +140,7 @@ void AudioDispatcher::process(MatchResult *msg)
 #ifndef HBOX_PG
 	//SetAlsaMasterVolume(0);	// disable NXT local sound
 #endif	
-	printf("AudioDispathcer ******* sending CMX command\n");
+	//printf("AudioDispathcer ******* sending CMX command\n");
 	char buff[100];
 	buff[0] = CMX_SOUND_CMD;	// 1-PASS 2-FAIL 3-TAMPER
 	buff[1] = 2;	// message length

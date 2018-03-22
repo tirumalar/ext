@@ -49,8 +49,8 @@ void BufferBasedFrameGrabber::init(Configuration *pConf){
 	m_pRingBuffer = new RingBufferImageQueue(20); /* Allocate ring buffer to be frame buffer - 1 */
 	m_RingBufferOffset = new RingBufferQueueOffset(20);
 #else
-	m_pRingBuffer = new RingBufferImageQueue(10); /* Allocate ring buffer to be frame buffer - 1 */
-	m_RingBufferOffset = new RingBufferQueueOffset(10);
+	m_pRingBuffer = new RingBufferImageQueue(5); /* Allocate ring buffer to be frame buffer - 1 */
+	m_RingBufferOffset = new RingBufferQueueOffset(5);
 #endif	
 	m_ill0 = 0;
 	m_frameIndex = 0;
