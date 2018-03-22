@@ -2332,12 +2332,12 @@ void CmxHandler::HandleSendMsg(char *msg)
 #ifndef HBOX_PG
 	if(m_debug)
 		EyelockLog(logger, TRACE, "CmxHandler::HandleSendMsg() %d", msg[0]);
-	printf("CmxHandler::HandleSendMsg() %s \n", msg);
-	return;
+//	printf("CmxHandler::HandleSendMsg() %s \n", msg);
+	//return;
 	CMXMESSAGETYPE msgType = (CMXMESSAGETYPE)msg[0];
 	char buf[512];
 	int len = 0;
-	memcpy(buf,0x00,512);
+	memset(buf,0x00,512);
 	if(msgType == CMX_MATCH)
 	{
 		printf("setting mes type to match\n");
@@ -2384,33 +2384,20 @@ void CmxHandler::HandleSendMsg(char *msg)
 
 		case CMX_SOUND_CMD:
 				printf("******** sending the sound file******** %d : %d : %d \n",msg[1],msg[2],msg[3]);
-#if 0
+#if 1
 				switch(msg[2])
 				{
 				case 1:
-					system("/home/root/tones/sound.sh 1 &");
+					len = sprintf(buf, "MATCH\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
+					SendMessage(buf, len);
 					break;
 				case 2:
-					system("/home/root/tones/sound.sh 2 &");
+					len = sprintf(buf, "MATCH_FAIL\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
+					SendMessage(buf, len);
 					break;
-				case 3:
-					system("/home/root/tones/sound.sh 3 &");
+				default:
 					break;
 				}
-
-	//#if 0
-			{
-			FILE *fp = fopen("/home/root/tones/auth1.wav", "r");
-			if (fp == NULL) {
-				break;
-			}
-			int len = fread(buf, sizeof(char), 20000, fp);
-			//SendMessage(buf, len);
-			fclose(fp);
-			EyelockLog(logger, DEBUG, "sent sound file auth1.wav ");
-		}
-			//len = sprintf(buf, "set_sound(%d)\n", msg[2]);	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
-			//SendMessage(buf, len);
 #endif
 		break;
 		case CMX_PING_CMD:

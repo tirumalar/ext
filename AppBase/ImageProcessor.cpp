@@ -27,7 +27,7 @@ extern "C"{
 }
 #include "SocketFactory.h"
 
-
+CmxHandler *mm_pCMXHandle;
 using namespace std;
 
 #ifdef __ANDROID__
@@ -54,6 +54,7 @@ printf("ImageProcessor::ImageProcessor: set the configuration file\n"); fflush(s
 m_tsDestAddrpresent=false;
 m_nwLedDispatcher = NULL;
 m_LedConsolidator = NULL;
+//m_pCmxHandler = NULL;
 
 #if 1
 	setConf(pConf);
@@ -351,6 +352,9 @@ m_LedConsolidator = NULL;
 	m_SPAWAREnable = pConf->getValue("Eyelock.SPAWAREnable",false);
 	m_pHttpPostSender = new HttpPostSender(*pConf);
 #endif
+//	if()
+	mm_pCMXHandle = new CmxHandler(*pConf);
+	m_bShouldSend =pConf->getValue("Eyelock.EyeMessage",true);
 }
 
 static void flipOnYAxis(int &x, int &/*y*/, int width, int /* height */)
@@ -815,15 +819,15 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
     // printf("NumEyes %d \n", maxEyes);
 #endif
 
-#if 0
-    if(maxEyes == 0)
+#if 1
+    if(maxEyes != 0)
     {
     	unsigned char buf[256];
-    	buf[0] = CMX_NO_DETECT;
+    	buf[0] = CMX_EYE_DETECT;
+
        if(mm_pCMXHandle && m_bShouldSend)
        	{
-    		//mm_pCMXHandle = new CmxHandler(*pConf);
-    	   mm_pCMXHandle->HandleSendMsg((char *)buf);
+        	   mm_pCMXHandle->HandleSendMsg((char *)buf);
        	}
     }
 #endif	

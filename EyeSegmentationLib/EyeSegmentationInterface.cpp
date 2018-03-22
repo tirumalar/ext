@@ -288,7 +288,7 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 	PROFILE_END(PROCESSIMAGE)
 
 	CvScalar color = cvRealScalar(255);
-
+#if 0 //Anita
 	if( m_eso->ip.x > 0 )
 	{
 		EyeSegmentationOutput tmp1 = *m_eso;
@@ -297,6 +297,7 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 		draw( image, tmp1.ip, color );
 		cvSaveImage("segmented_Image.pgm",image);
 	}
+#endif
 #if 0
 	if( m_eso->ip.x > 0 )
 	{
@@ -311,7 +312,7 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 
 
 
-	cvReleaseImageHeader(&image);
+	//cvReleaseImageHeader(&image);
 
 	memset( Iriscode, 0, m_pEyeFeatureServer->GetFeatureLength() );
 	memset( Maskcode, -1, m_pEyeFeatureServer->GetFeatureLength() );
@@ -384,9 +385,21 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 		printf("Too many Bits Corrupted\n");
 
 	if(corruptBitcount <= m_maxCorruptBitsPercAllowed && (AnnularCheck==1)) // && Getiseye() )
+	{
+		if( m_eso->ip.x > 0 )
+		{
+				EyeSegmentationOutput tmp1 = *m_eso;
+
+				draw( image, tmp1.pp, color );
+				draw( image, tmp1.ip, color );
+				cvSaveImage("segmented_Image.pgm",image);
+		}
+		cvReleaseImageHeader(&image);
 		return true; // Iris and Segmentation is OK
+	}
 	else{
 		printf("Inside GetIrisCode bad Seg\n");
+		cvReleaseImageHeader(&image);
 		return false; // Iris or Segmentation is NOT OK
 	}
 

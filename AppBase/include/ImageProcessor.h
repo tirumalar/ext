@@ -116,10 +116,12 @@ public:
 	void setShouldDetectEyes(bool val){ m_shouldDetect = val;}
 	int getFrameType() { return m_testImageSendLevel;}
 	bool getShouldDetectEyes() { return m_shouldDetect;}
+	//void SetCmxHandler(CmxHandler *pCmxHandler) {m_pCmxHandler = pCmxHandler;}
 
 #ifndef UNITTEST    
 protected:
 #endif
+	//CmxHandler *m_pCmxHandler;
     bool m_tsDestAddrpresent;
     ProcessorChain *m_nwLedDispatcher;
     ProcessorChain *m_LedConsolidator;
@@ -228,9 +230,11 @@ protected:
 
 	HttpPostSender *m_pHttpPostSender;
 #endif	
+	bool m_bShouldSend;
 private:
     void extractSmallCropForFocus(int indx,DetectedEye * eye);
     SocketFactory *m_socketFactory;
+
 };
 
 #endif /* IMAGEPROCESSOR_H_ */
