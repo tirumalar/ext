@@ -6,6 +6,7 @@
 #include "EyeFeatureServer.h"
 #include "EyeMatchServer.h"
 #include "useful.h"
+#include "pupilsegmentation.h"
 
 //#include "FFTVarSpoofDetector.h"
 
@@ -38,6 +39,8 @@ extern "C" {
 #ifdef __BFIN__
 #include <bfin_sram.h>
 #endif
+
+
 
 void EyeSegmentationInterface::init(int scale, int w, int h)
 {
@@ -384,15 +387,41 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 	if(corruptBitcount > m_maxCorruptBitsPercAllowed)
 		printf("Too many Bits Corrupted\n");
 
+	//char name[100];
+	//static int segmented_count;
+	//char filename[100];
+	//FILE *fp;
+	// static int i;
 	if(corruptBitcount <= m_maxCorruptBitsPercAllowed && (AnnularCheck==1)) // && Getiseye() )
 	{
 		if( m_eso->ip.x > 0 )
 		{
 				EyeSegmentationOutput tmp1 = *m_eso;
-
-				draw( image, tmp1.pp, color );
-				draw( image, tmp1.ip, color );
-				cvSaveImage("segmented_Image.pgm",image);
+				// segmentation(unsigned char *data, int w, int h, float pupilX, float pupilY, float pupilR, float irisX, float irisY, float irisR)
+				bool status = (bool)segmentation((unsigned char*)imageBuffer, 640,480, m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
+				if (status)
+				{
+					//draw( image, tmp1.pp, color );
+					//draw( image, tmp1.ip, color );
+					//sprintf(name, "Good_segmented_image_%d.pgm",segmented_count++);
+					//cvSaveImage(name,image);
+					//sprintf(filename,"text_%d.txt",segmented_count++);
+					//fp = fopen(filename, "wb");
+					//fprintf(fp, "%f %f %f %f %f %f %f", m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
+					//fclose(fp);
+					// cvSaveImage("segmented_Image.pgm",image);
+				}
+				else
+				{
+				//	draw( image, tmp1.pp, color );
+				//	draw( image, tmp1.ip, color );
+					//sprintf(name, "Bad_segmented_image_%d.pgm",segmented_count++);
+					//cvSaveImage(name,image);
+					//sprintf(filename,"text_%d.txt",segmented_count++);
+					//fp = fopen(filename, "wb");
+					//fprintf(fp, "%f %f %f %f %f %f %f", m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
+					//fclose(fp);
+				}
 		}
 		cvReleaseImageHeader(&image);
 		return true; // Iris and Segmentation is OK
