@@ -20,8 +20,9 @@
 #define PORT    50
 #define MAXMSG  512
 #define NO_EYES_THRESHOLD 10
-#define CENTER_POS 240
+#define CENTER_POS 164
 #define BRIGHTNESS_MAX 100
+#define BRIGHTNESS_MELLOW 40
 #define BRIGHTNESS_MIN 10
 extern int IrisFrameCtr;
 
@@ -59,7 +60,7 @@ ec_read_from_client (int filedes)
 		  *strchr(buffer,'\n')=' ';
 	  if (strchr(buffer,'\r'))
 		  *strchr(buffer,'\r')=' ';
-	  printf ("EC Server: got message: `%s'\n", buffer);
+	  //printf ("EC Server: got message: `%s'\n", buffer);
 
       //Process the commands sent by EyeLock app
       if(strstr(buffer,"MATCH_FAIL"))
@@ -69,8 +70,8 @@ ec_read_from_client (int filedes)
     	  //IrisFrameCtr = MIN_IRIS_FRAMES;
     	  //No_eyes_counter=0;
     	  //port_com_send("fixed_set_rgb(0,100,0)");
-    	  setRGBled(BRIGHTNESS_MAX,0,0,2000,0,0x1F);
-    	  system("nc -O 512 192.168.4.172 35 < /home/root/tones/rej.raw");
+    	  //setRGBled(BRIGHTNESS_MAX,0,0,2000,0,0x1F);
+    	 // system("nc -O 512 192.168.4.172 35 < /home/root/tones/rej.raw");
     	  //SetFaceMode();
       }
       else if(strstr(buffer,"MATCH"))
@@ -81,15 +82,13 @@ ec_read_from_client (int filedes)
     	  No_eyes_counter=0;
     	  //port_com_send("fixed_set_rgb(0,100,0)");
     	  setRGBled(0,BRIGHTNESS_MIN,0,2000,1,0x1F);
-    	  system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
-    	  printf("Re Homing\n");
-#if 1 //Anita
-    	  port_com_send("fx_home()\n");
-#endif
-    	  sleep(1);
+    	 // port_com_send("set_audio(1)");
+    	 // system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
+    	 // port_com_send("set_audio(0)");
+
     	  MoveTo(CENTER_POS);
-    	  sleep(1);
-    	  setRGBled(BRIGHTNESS_MAX,BRIGHTNESS_MAX,BRIGHTNESS_MAX,10,0,0x1F);
+    	  sleep(2);
+    	  setRGBled(BRIGHTNESS_MIN,BRIGHTNESS_MIN,BRIGHTNESS_MIN,10,0,0x1F);
     	  move_counts = 0;
     	  //SetFaceMode();
     	  //match_Lock=0;
@@ -99,17 +98,13 @@ ec_read_from_client (int filedes)
     	  if(first_detect==0)
     	  {
     		  first_detect=1;
-    		  printf("Got First Detect \n");
     	  }
     	  else
     	  {
 
-    		  fprintf (stderr, "EC Server: got message: `%s  %s'\n", buffer,GetTimeStamp());
-    		  printf("More Detections \n");
-    		  //IrisFrameCtr = MIN_IRIS_FRAMES/2;
     		  No_eyes_counter=0;
     		  //port_com_send("fixed_set_rgb(0,0,100)");
-    		  setRGBled(0,0,BRIGHTNESS_MAX,1000,0,0x1F);
+    		  setRGBled(0,0,BRIGHTNESS_MELLOW,1000,0,0x1F);
     		  match_Lock=0;
 
     	  }
@@ -148,6 +143,8 @@ ec_make_socket (uint16_t port)
 
   /* Create the socket. */
   sock = socket (PF_INET, SOCK_STREAM , 0);
+  int optval = 1;
+  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &optval , sizeof(optval));
   if (sock < 0)
     {
       perror ("socket");

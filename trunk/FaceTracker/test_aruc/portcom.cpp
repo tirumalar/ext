@@ -97,3 +97,73 @@ void port_com_send(char *cmd)
    in_send =0;
   // printf("%u & \n",counter);
 }
+
+
+
+
+int port_com_send_return(char *cmd, char *buffer, int min_len)
+{
+	//char buffer[512];
+	int rv,ret;
+
+	if (in_send)
+	{
+		printf("--------------------------------------->  In send\n");
+	}
+	in_send=1;
+
+	//usleep(10000);
+	while (recv(sockfd,buffer,512,MSG_DONTWAIT)>0);
+
+
+
+	sprintf(buffer,"%s\n",cmd);
+	rv= send(sockfd,buffer,strlen(buffer), 0);
+	if(rv!=(int)strlen(buffer))
+		printf("rv & command length don't match\n");
+	//printf("%d rv send %d\n",x,rv);
+
+//	printf("# ");
+	int counter=0;
+	while (1)
+		{
+		rv=recv(sockfd,buffer,512,MSG_DONTWAIT);
+		if(rv<=min_len)
+			continue;
+		buffer[rv]=0;
+		//if (strchr(buffer,'K'))
+			{
+			//printf("Got K\n");
+			break;
+			}
+		counter++;
+		}
+	//usleep(5000);
+   in_send =0;
+  // printf("%u & \n",counter);
+
+   return rv;
+}
+
+float read_angle(void)
+{
+	char buffer[512];
+
+	float x,y,z,a;
+	int len;
+	printf("Reading angle \n");
+	if ((len=port_com_send_return("accel",buffer,20))>0)
+	{
+	printf("got data %d\n",len);
+	buffer[len]=0;
+	sscanf(buffer,"%f %f %f %f",&x,&y,&z,&a);
+	printf("Buffer =>%s\n",buffer);
+	printf ("%3.3f %3.3f %3.3f %3.3f\n",x,y,z,a);
+	return a;
+	}
+	else
+		printf("error reading angle\n");
+   return 0;
+}
+
+
