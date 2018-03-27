@@ -344,10 +344,10 @@ Socket::Socket(const Socket& sock):m_isTimoutSet(false),rcvBuff(0), rcvBuffSize(
 {
 	int err;
 	socklen_t size=sizeof(err);
-	if ( getsockopt(SD, SOL_SOCKET, SO_ERROR, &err, &size) != 0 )
-		throw NetException("Socket error");
 	if ( (SD = dup(sock.SD)) < 0 )
 		throw FileException("Can't copy socket");
+	if ( getsockopt(SD, SOL_SOCKET, SO_ERROR, &err, &size) != 0 )
+		throw NetException("Socket error");
 
 	makeBuff(sock.rcvBuffSize);
 }

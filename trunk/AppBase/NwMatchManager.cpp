@@ -444,7 +444,7 @@ void NwMatchManager::ProcessReloadMsg(HTTPPOSTMsg* msg) {
 	int msgtype;
 	int filenumber = -1;
 	int sd = 0;
-	int st = 0;
+	unsigned long st = 0;
 	int isEncrypt = false;
 	try{
 		if (msg->getReloadDBParsedMsg(msgtype, filenumber, sd, st, isEncrypt)) {

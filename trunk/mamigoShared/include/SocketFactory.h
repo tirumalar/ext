@@ -24,11 +24,13 @@ public:
 	virtual ~SocketFactory();
 	SocketClient createSocketClient(SocketSecurityType secType);
 	SocketServer createSocketServer(SocketSecurityType secType, int port, ENetwork Network=eIPv4, int QLen=15);
+	SocketServer* createSocketServer2(SocketSecurityType secType, int port, ENetwork Network=eIPv4, int QLen=15);
 	SocketServer createSocketServer(SocketSecurityType secType, HostAddress& Addr, int QLen=15);
 	static Socket wrapSocket(int sd, SecureTrait *st);
 	SocketClient createSocketClient(const char* iniKey);
 	SocketClient* createSocketClientP(const char* iniKey);
 	SocketServer createSocketServer(const char* iniKey, int port, ENetwork Network=eIPv4, int QLen=15);
+	SocketServer* createSocketServer2(const char* iniKey, int port, ENetwork Network=eIPv4, int QLen=15);
 	SocketServer createSocketServer(const char* iniKey, HostAddress& Addr, int QLen=15);
 	SocketSecurityType getSecurityType(const char* iniKey);
 private:

@@ -6,7 +6,7 @@
 #include "logging.h"
 #include "DBMap.h"
 #include <unistd.h>
-#define HBOX_PG
+
 using namespace soci;
 using namespace std;
 
@@ -36,13 +36,9 @@ bool DBAdapter::ReOpenConnection(){
 bool DBAdapter::OpenFile(char* filename){
 	CloseConnection();
 	try {
-#ifdef HBOX_PG
-		m_sqlConn = new session(sqlite3, "test.db3");
-		m_filename.assign("test.db3");
-#else
+
 		m_sqlConn = new session(sqlite3, filename);
 		m_filename.assign(filename);
-#endif
 		return true;
 	} catch (soci::soci_error const &err) {
 		EyelockLog(logger, ERROR, "SOCI ERRR :: %s",err.what());

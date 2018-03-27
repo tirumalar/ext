@@ -29,8 +29,6 @@ extern "C"{
 }
 using namespace std;
 
-#define HBOX_PG
-
 NWHDMatcher::NWHDMatcher(Configuration& conf):m_DB(0),m_ShouldIQuit(false),m_KeyFilename(0),
 m_ID(0),m_BufferSize(0),m_dbRdr(0),m_MatchMsgRxBuffer(0),m_IrisData(0),m_DBFileMsg(NULL),m_portBinded(false)
 {
