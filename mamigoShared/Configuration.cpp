@@ -46,8 +46,10 @@ const char* Configuration::_getValue(const char *key){
 	std::string sKey(key);
 	std::transform(sKey.begin(), sKey.end(), sKey.begin(), to_upper());
 	if(confMap.find(sKey)!=confMap.end()){
-		TStrStrPair pair = confMap[sKey];
-		return pair.second.c_str();
+		// changed from returning dangling pointer.
+		// still not a proper approach: not thread safe,
+		// returned pointer is only valid till the Configuration object destruction.
+		return confMap[sKey].second.c_str();
 	}
 	else return 0;
 }

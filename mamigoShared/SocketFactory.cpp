@@ -37,6 +37,17 @@ SocketServer SocketFactory::createSocketServer(SocketSecurityType secType, int p
 	return sc;
 }
 
+SocketServer* SocketFactory::createSocketServer2(SocketSecurityType secType, int port, ENetwork Network, int QLen)
+{
+	SocketServer* pSc = new SocketServer(port,Network,QLen);
+
+	if(secType==SOCK_SECURE){
+		pSc->SecureIt();
+		pSc->AddCipher(m_serverCipher);
+	}
+	return pSc;
+}
+
 SocketServer SocketFactory::createSocketServer(SocketSecurityType secType, HostAddress& Addr, int QLen)
 {
 	SocketServer sc(Addr,QLen);
@@ -69,6 +80,11 @@ SocketServer SocketFactory::createSocketServer(const char* iniKey, int port, ENe
 {
 	return createSocketServer(getSecurityType(iniKey), port, Network, QLen);
 }
+SocketServer* SocketFactory::createSocketServer2(const char* iniKey, int port, ENetwork Network, int QLen)
+{
+	return createSocketServer2(getSecurityType(iniKey), port, Network, QLen);
+}
+
 SocketServer SocketFactory::createSocketServer(const char* iniKey, HostAddress& Addr, int QLen)
 {
 	return createSocketServer(getSecurityType(iniKey), Addr, QLen);

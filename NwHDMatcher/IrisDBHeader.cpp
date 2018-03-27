@@ -251,11 +251,9 @@ char * getNameFromID(const char * id)
 	int rc;
 	int count = 0;
  //open the DB
-#ifndef HBOX_PG
+
 	rc = sqlite3_open("test.db", &db);
-#else
-	rc = sqlite3_open("test.db3", &db);
-#endif
+
 	if( rc ){
 	  fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 	  sqlite3_close(db);
@@ -328,11 +326,9 @@ char * getACSTestData(int & bytes, int & bitlen)
 	int rc;
 	int count = 0;
  //open the DB
-#ifndef HBOX_PG
+
 	rc = sqlite3_open("./test.db", &db);
-#else	
-	rc = sqlite3_open("test.db3", &db);
-#endif	
+
 	if( rc ){
 	  fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 	  sqlite3_close(db);
@@ -388,11 +384,9 @@ char * getACSDisplayTestData()
 
 
  //open the DB
-#ifndef HBOX_PG 
+
 	rc = sqlite3_open("test.db", &db);
-#else
-	rc = sqlite3_open("test.db3", &db);
-#endif
+
 	if( rc ){
 	  fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 	  sqlite3_close(db);
@@ -434,11 +428,9 @@ int getNumUsers()
 			int rc;
 			int count = 0;
 		 //open the DB
-#ifndef HBOX_PG		 
+
 			rc = sqlite3_open("test.db", &db);
-#else			
-			rc = sqlite3_open("test.db3", &db);
-#endif
+
 			if( rc ){
 			  fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 			  sqlite3_close(db);
@@ -481,11 +473,9 @@ char * sqlitePackDB(int & length, int & xcount, bool headerOnly)
 		int rc;
 		int count = 0;
 	 //open the DB
-#ifndef HBOX_PG	
+
 		rc = sqlite3_open("test.db", &db);
-#else	
-		rc = sqlite3_open("test.db3", &db);
-#endif
+
 		if( rc ){
 		  fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
 		  sqlite3_close(db);

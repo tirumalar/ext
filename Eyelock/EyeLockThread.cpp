@@ -293,11 +293,13 @@ int EyeLockThread::End()
 	EyelockLog(logger, DEBUG, "EyeLockThread::End() done"); fflush(stdout);
 }
 
+
 EyeLockThread::EyeLockThread(Configuration& conf) :
 	GenericProcessor(conf), m_MatchProcessor(0), m_DetectedMsg(20),m_pEyeDispatcher(0),m_ScoreFactor(0.5),m_spoofEnable(false),m_nwLedDispatcher(NULL),
 			m_MotionMsg(20), m_outQSize(5), m_Debug(false), m_MaxFrames(5),m_HBDestAddr(0),m_shouldProcess(true),m_shouldSegment(true),m_tsDestAddrpresent(false),
 			m_ledConsolidator(0), m_Mode(EyelockDual),m_HBMsg(256),m_ProcessModeMsg(256),m_FuturisticTime(0), m_pNwListener(0),m_doMatching(true),m_sleepTimeFlow(100000),
-			m_MustDie(false),m_MinTrackedCount(0),m_logging(false),m_segmentationMiliSecSleep(20),m_trackingEnabled(true),m_detectDestAddr(0),m_DetectBinMsg(0){
+			m_MustDie(false),m_MinTrackedCount(0),m_logging(false),m_segmentationMiliSecSleep(20),m_trackingEnabled(true),m_detectDestAddr(0),m_DetectBinMsg(0)
+{
 	m_PreviousMode = m_Mode;
 	const char* detectedMsg = conf.getValue("GRI.DetectedLEDMsg", "Name;0");
 	const char* motionMsg = conf.getValue("GRI.MotionMsg", "MOTION");
@@ -358,7 +360,10 @@ EyeLockThread::EyeLockThread(Configuration& conf) :
 #ifdef HBOX_PG	
 	m_SPAWAREnable = conf.getValue("Eyelock.SPAWAREnable",false);
 	m_HeartBeatFrequency = conf.getValue("Eyelock.SPAWARHeartBeatFrequency", 5);
-	m_HttpPostSender = new HttpPostSender(conf);
+	if (m_SPAWAREnable)
+	{
+		m_HttpPostSender = new HttpPostSender(conf);
+	}
 #endif	
 	// Parse pipe "|" separate list of slave IP addresses for processing mode notification
 	// e.g., nano019-1.local|nano019-2.local|nano019-3.local
@@ -484,6 +489,11 @@ EyeLockThread::~EyeLockThread() {
 		delete m_HBDestAddr;
 	if(m_socketFactory)
 		delete m_socketFactory;
+#ifdef HBOX_PG
+	if(m_HttpPostSender)
+		delete m_HttpPostSender;
+#endif
+
 }
 
 bool EyeLockThread::enqueMsg(Copyable& msg) {
@@ -1358,8 +1368,13 @@ unsigned int EyeLockThread::MainLoop() {
 	std::string name = "EyeLockThread::";
 	try {
 #ifdef HBOX_PG
-		struct timeval start;
+	struct timeval start;
+	if(m_SPAWAREnable){
+		m_HttpPostSender->init();
+		m_HttpPostSender->Begin();
 		gettimeofday(&start, 0);
+	}
+
 #endif		
 
 		while (!ShouldIQuit())
@@ -1409,11 +1424,9 @@ unsigned int EyeLockThread::MainLoop() {
 				long mtime, seconds, useconds;
 				seconds  = end.tv_sec  - start.tv_sec;
 				useconds = end.tv_usec - start.tv_usec;
-				mtime = ((seconds) + useconds/1000.0);
+				mtime = ((seconds) + useconds/1000000.0);
 				if(mtime > m_HeartBeatFrequency){
-					m_HttpPostSender->init();
-					m_HttpPostSender->Begin();
-					m_HttpPostSender->enqueSignalHeartbeat();
+  					m_HttpPostSender->enqueSignalHeartbeat();
 					start = end;
 				}
 			}

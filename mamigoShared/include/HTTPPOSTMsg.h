@@ -576,7 +576,7 @@ bool getSDKDBMsg(int& msgtype,std::string& fname){
 	return true;
 }
 
-bool getReloadDBParsedMsg(int& msgtype,int& filenumber, int& sd,int& securetrait, int& isEncrypt){
+bool getReloadDBParsedMsg(int& msgtype,int& filenumber, int& sd,unsigned long& securetrait, int& isEncrypt){
 //"RELOADDB;%d;%d;%d;%d;",eREPLACEDB,m_rxfilenumber-1,msg->m_SD,(void*)msg->m_SecureTrait;msg->isEncrypt;);
 	char *temp=Buffer;
 	temp=strstr(temp,";");
@@ -594,7 +594,7 @@ bool getReloadDBParsedMsg(int& msgtype,int& filenumber, int& sd,int& securetrait
 	temp=strstr(temp,";");
 	if(0==temp) return false;
 	temp+=1;
-	securetrait=atoi(temp);
+	securetrait=atol(temp);
 	temp=strstr(temp,";");
 	if(0==temp) return false;
 	temp+=1;

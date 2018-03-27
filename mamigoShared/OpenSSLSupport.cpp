@@ -149,15 +149,11 @@ SSL_CTX* OpenSSLSupport::InitCTX(bool bClient) {
 
 	FileConfiguration conf ("Eyelock.ini");
 	std::string certPath, certKeyPath, caFilePath;
-#ifndef HBOX_PG
+
 	certPath = conf.getValue("Eyelock.SecureCertificate", "./rootCert/certs/nanoNXTDefault.crt");
 	certKeyPath = conf.getValue("Eyelock.SecureCertificateKey", "./rootCert/certs/nanoNXTDefault.key");
 	caFilePath = conf.getValue("Eyelock.CAPath", "./rootCert/rootCA.cert");
-#else
-	certPath.assign("rootCert/certs/nanoNXTDefault.crt");
-	certKeyPath.assign("rootCert/certs/nanoNXTDefault.key");
-	caFilePath.assign("rootCert/rootCA.cert");
-#endif
+
 	bool enableTLS = conf.getValue("Eyelock.TLSEnable",false);
 
 	if (bClient){
