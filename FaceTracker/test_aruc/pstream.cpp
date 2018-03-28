@@ -91,6 +91,13 @@ int vid_stream_start(int port)
     return 1;
   }
 
+int vid_stream_flush(void)
+
+{
+	ImageQueue val;
+		while((m_pRingBuffer->TryPop(val)) != false);
+
+}
 int vid_stream_get(int *win,int *hin,char *m_pImageBuffer){
 
 	int length = (HEIGHT * WIDTH);
@@ -138,7 +145,7 @@ int vid_stream_get_old(int *win,int *hin, char *wbuffer)
     wait_for_sync=1;
 	while(bytes_to_get>0)
 	{
-		ret = recvfrom(s, buf, BUFLEN, 0, (struct sockaddr*)&si_other, &slen);
+		ret = recvfrom(s, buf, min(BUFLEN,bytes_to_get), 0, (struct sockaddr*)&si_other, &slen);
 		if(ret<0)
 		{
 		    printf("error read image socket\n");

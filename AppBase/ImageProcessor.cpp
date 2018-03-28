@@ -772,6 +772,19 @@ void ImageProcessor::GenMsgToNormal(BinMessage& msg){
 
 bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 {
+#if 0 // 27th March to reduce noise
+	static int firstEntry = 1;
+	//if(firstEntry)
+	IplImage *DiffImage = cvLoadImage("white.pgm", CV_LOAD_IMAGE_GRAYSCALE);
+		//firstEntry = 0;
+	//}
+	IplImage *destframe = cvCreateImage(cvSize(frame->width, frame->height),IPL_DEPTH_8U,1);
+	cvSub(frame,DiffImage,destframe);
+	cvCopyImage(destframe, frame);
+	cvReleaseImage(&DiffImage);
+	cvReleaseImage(&destframe);
+	cvSaveImage("sub.pgm", frame);
+#endif
 	// printf("Inside ProcessImage\n");
 	XTIME_OP("SetImage",
 		SetImage(frame)
@@ -819,18 +832,6 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
     // printf("NumEyes %d \n", maxEyes);
 #endif
 
-#if 1
-    if(maxEyes != 0)
-    {
-    	unsigned char buf[256];
-    	buf[0] = CMX_EYE_DETECT;
-
-       if(mm_pCMXHandle && m_bShouldSend)
-       	{
-        	   mm_pCMXHandle->HandleSendMsg((char *)buf);
-       	}
-    }
-#endif	
     if(maxEyes > m_maxEyes){
     	int clear = ClearEyes(m_faceIndex);
         return bSentSomething;
@@ -854,6 +855,18 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		CvPoint3D32f output;
 		output.x = -1.0f;
 
+#if 0
+    if(maxEyes != 0)
+    {
+    	unsigned char buf[256];
+    	buf[0] = CMX_EYE_DETECT;
+
+       if(mm_pCMXHandle && m_bShouldSend)
+       	{
+        	   mm_pCMXHandle->HandleSendMsg((char *)buf);
+       	}
+    }
+#endif
 		if(m_SaveEyeCrops)
 		{
 			static int eyecropIndex = 0;
@@ -937,6 +950,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 					cvResetImageROI(im);
 				}
 				XTIME_OP("Laplacian : ", output = lapdetector->ComputeRegressionFocus(cec, m_maxSpecValue););
+
 				printf("%d -> [LS:HS] =[%f , %f] \n",m_faceIndex,output.x,halo.z);
 			}
   		}
@@ -1177,7 +1191,7 @@ bool ImageProcessor::process(bool matchmode) {
 			frame = GetFrame()
 
 	);
-	cvSaveImage("Before.pgm", frame);
+	// cvSaveImage("Before.pgm", frame);
 #if 0
 	IplImage *test = cvCreateImage(cvSize(1200, 960),IPL_DEPTH_8U,1);
 	cvFlip(frame, test, 0);
@@ -1324,6 +1338,7 @@ bool ImageProcessor::CheckHaloAndBLC(DetectedEye *eye){
       	 if((eye->getAreaScore()) < m_laplacian_focusThreshold){
          	 if(m_Debug)printf("Discarding on behalf of Laplacian %d %d %f %f\n",eye->getFaceIndex(), eye->getEyeIndex(), eye->getAreaScore(), m_laplacian_focusThreshold);
               tobesend = false;
+
           }
      }
 
@@ -1342,6 +1357,15 @@ bool ImageProcessor::CheckHaloAndBLC(DetectedEye *eye){
 
      if(m_checkConfusion){
     	 CheckConfusion(eye,tobesend);
+     }
+
+
+     unsigned char buf[256];
+     buf[0] = CMX_EYE_DETECT;
+
+     if(mm_pCMXHandle && tobesend)
+     {
+    	 mm_pCMXHandle->HandleSendMsg((char *)buf);
      }
 
      return tobesend;

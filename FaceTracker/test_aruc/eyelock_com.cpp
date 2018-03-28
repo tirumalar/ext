@@ -82,9 +82,9 @@ ec_read_from_client (int filedes)
     	  No_eyes_counter=0;
     	  //port_com_send("fixed_set_rgb(0,100,0)");
     	  setRGBled(0,BRIGHTNESS_MIN,0,2000,1,0x1F);
-    	 // port_com_send("set_audio(1)");
-    	 // system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
-    	 // port_com_send("set_audio(0)");
+    	  port_com_send("set_audio(1)");
+    	  system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
+    	  port_com_send("set_audio(0)");
 
     	  MoveTo(CENTER_POS);
     	  sleep(2);
