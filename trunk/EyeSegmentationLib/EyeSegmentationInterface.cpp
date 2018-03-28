@@ -387,8 +387,8 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 	if(corruptBitcount > m_maxCorruptBitsPercAllowed)
 		printf("Too many Bits Corrupted\n");
 
-	//char name[100];
-	//static int segmented_count;
+	char name[100];
+	static int segmented_count;
 	//char filename[100];
 	//FILE *fp;
 	// static int i;
@@ -401,10 +401,10 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 				bool status = (bool)segmentation((unsigned char*)imageBuffer, 640,480, m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
 				if (status)
 				{
-					//draw( image, tmp1.pp, color );
-					//draw( image, tmp1.ip, color );
-					//sprintf(name, "Good_segmented_image_%d.pgm",segmented_count++);
-					//cvSaveImage(name,image);
+					draw( image, tmp1.pp, color );
+					draw( image, tmp1.ip, color );
+					sprintf(name, "Good_segmented_image_%d.pgm",segmented_count++);
+					cvSaveImage(name,image);
 					//sprintf(filename,"text_%d.txt",segmented_count++);
 					//fp = fopen(filename, "wb");
 					//fprintf(fp, "%f %f %f %f %f %f %f", m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
@@ -413,10 +413,10 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 				}
 				else
 				{
-				//	draw( image, tmp1.pp, color );
-				//	draw( image, tmp1.ip, color );
-					//sprintf(name, "Bad_segmented_image_%d.pgm",segmented_count++);
-					//cvSaveImage(name,image);
+					draw( image, tmp1.pp, color );
+					draw( image, tmp1.ip, color );
+					sprintf(name, "Bad_segmented_image_%d.pgm",segmented_count++);
+					cvSaveImage(name,image);
 					//sprintf(filename,"text_%d.txt",segmented_count++);
 					//fp = fopen(filename, "wb");
 					//fprintf(fp, "%f %f %f %f %f %f %f", m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);

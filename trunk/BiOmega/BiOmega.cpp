@@ -2,6 +2,7 @@
 #include "BiOmega.h"
 #include "IrisSelectServer.h"
 
+
 extern "C" {
 	#include "test_fw.h"
 	#include "file_manip.h"
@@ -144,19 +145,26 @@ bool BiOmega::GetIrisCode(unsigned char *imageBuffer, int w, int h, int stride, 
 	// printf("entering BiOmega::GetIrisCode\n");
 	bool rc=m_pEyeSegmentInterface->GetIrisCode(imageBuffer, w, h, stride, (unsigned char *) irisCode, (unsigned char *) irisCode+m_pEyeSegmentInterface->GetFeatureLength(),pCircles);
 
+	bool status;
+
 	// If Bad Segementation fix
 	if(rc){
+
+
+
 		if(robustFetaureVariance)
+//		if (status)
 		{
 			// printf("Before GetRobustFeatureVariances\n");
 
-			m_pEyeSegmentInterface->GetRobustFeatureVariances(robustFetaureVariance);
+			//m_pEyeSegmentInterface->GetRobustFeatureVariances(robustFetaureVariance);
 			// printf("After GetRobustFeatureVariances\n");
 		}
 	}else{
 		printf("Bad Segmentation\n");
 	}
 	return rc;
+
 }
 bool BiOmega::GetDefaultMaskCode(unsigned char *irisCode)
 {

@@ -37,7 +37,8 @@ extern "C" {
 
 const char logger[30] = "CmxHandler";
 CMXMESSAGETYPE Prev_mesg;
-
+#define BUFLEN 1500
+#define min(a,b)((a<b)?(a):(b))
 #ifdef HBOX_PG
 #if 0
 unsigned long SwapEndian(unsigned long input)
@@ -2580,18 +2581,21 @@ void *leftCServer(void *arg)
 {
         EyelockLog(logger, TRACE, "CmxHandler::leftCServer() start");
 
+
+
         CmxHandler *me = (CmxHandler *) arg;
         int length;
         int pckcnt=0;
         char buf[IMAGE_SIZE];
         char databuf[IMAGE_SIZE];
         int datalen = 0;
+        int bytes_to_get=IMAGE_SIZE;
         short *pShort = (short *)buf;
         bool b_syncReceived = false;
         struct sockaddr_in from;
         socklen_t fromlen = sizeof(struct sockaddr_in);
 
-        me->HandleReceiveImage(databuf, datalen);
+        // me->HandleReceiveImage(databuf, datalen);
 
         int leftCSock = me->CreateUDPServer(8192);
         if (leftCSock < 0) {
@@ -2652,7 +2656,8 @@ void *leftCServer(void *arg)
 	// cvReleaseImage(&m_warppedeyeCrop);
 #endif
 #else
-            length = recvfrom(leftCSock, buf, 1500, 0, (struct sockaddr *)&from, &fromlen);
+            length = recvfrom(leftCSock, buf, min(BUFLEN,bytes_to_get), 0, (struct sockaddr *)&from, &fromlen);
+			//length = recvfrom(leftCSock, buf, min(BUFLEN,bytes_to_get), 0, (struct sockaddr *)&from, &fromlen);
             if (length < 0)
                 EyelockLog(logger, ERROR, "recvfrom error in leftCServer()");
             else
@@ -2675,13 +2680,21 @@ void *leftCServer(void *arg)
                         datalen += length;
                         pckcnt++;
                 }
+                if(!b_syncReceived)
+                                {
+                                	//printf("Sync not recvd\n");
+                                }
+
                 if(datalen >= IMAGE_SIZE-5)
                 {
                     me->HandleReceiveImage(databuf, datalen);
+                    bytes_to_get =  IMAGE_SIZE;
                    	datalen = 0;
                    	//printf("recvd frame\n");
                    	b_syncReceived=false;
                }
+
+                bytes_to_get =  bytes_to_get - length;
 #endif
           }
 #endif /* HBOX_PG */

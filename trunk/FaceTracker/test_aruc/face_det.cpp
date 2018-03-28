@@ -81,6 +81,8 @@ int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size)
     int64 start = cv::getTickCount();
     int Neighbors =2;
 
+	int t=clock();
+
     frame.copyTo(frame_gray);
 
     //Mohammad commented it out becuase hist eqlaization creating noise around
@@ -132,6 +134,7 @@ int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size)
     		imwrite(faceCrop, cropImg);
     	}
     	imwrite("y110Face.bmp", cropImg);*/
+    	printf("Face detect tooc %3.3f\n",(float)(clock()-t)/CLOCKS_PER_SEC);
     	return 1;
     }
 
