@@ -773,17 +773,18 @@ void ImageProcessor::GenMsgToNormal(BinMessage& msg){
 bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 {
 #if 0 // 27th March to reduce noise
-	static int firstEntry = 1;
-	//if(firstEntry)
-	IplImage *DiffImage = cvLoadImage("white.pgm", CV_LOAD_IMAGE_GRAYSCALE);
-		//firstEntry = 0;
-	//}
+	IplImage *DiffImage;
+	if (frame->imageData[0] == 0)
+		DiffImage = cvLoadImage("white_8192.pgm", CV_LOAD_IMAGE_GRAYSCALE);
+	else
+		DiffImage = cvLoadImage("white_8193.pgm", CV_LOAD_IMAGE_GRAYSCALE);
+
 	IplImage *destframe = cvCreateImage(cvSize(frame->width, frame->height),IPL_DEPTH_8U,1);
 	cvSub(frame,DiffImage,destframe);
 	cvCopyImage(destframe, frame);
 	cvReleaseImage(&DiffImage);
 	cvReleaseImage(&destframe);
-	cvSaveImage("sub.pgm", frame);
+
 #endif
 	// printf("Inside ProcessImage\n");
 	XTIME_OP("SetImage",
@@ -1363,9 +1364,19 @@ bool ImageProcessor::CheckHaloAndBLC(DetectedEye *eye){
      unsigned char buf[256];
      buf[0] = CMX_EYE_DETECT;
 
-     if(mm_pCMXHandle && tobesend)
+    // if(mm_pCMXHandle && tobesend)
+     if(tobesend)
      {
-    	 mm_pCMXHandle->HandleSendMsg((char *)buf);
+    	 printf("************sending LED Detect************\n");
+    	 LEDResult ld;
+    	 ld.setState(LED_DETECT);
+    	 if(m_nwLedDispatcher)m_nwLedDispatcher->enqueMsg(ld);
+    	 if(m_LedConsolidator)
+    	 {
+    		 printf("************sending LED Detect - LEDCOnsi************\n");
+    	 				if(m_LedConsolidator)m_LedConsolidator->enqueMsg(ld);
+    	 }
+    	 //mm_pCMXHandle->HandleSendMsg((char *)buf);
      }
 
      return tobesend;

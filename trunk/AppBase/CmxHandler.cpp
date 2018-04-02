@@ -36,9 +36,11 @@ extern "C" {
 //#include "EyeDispatcher.h"
 
 const char logger[30] = "CmxHandler";
+
 CMXMESSAGETYPE Prev_mesg;
 #define BUFLEN 1500
 #define min(a,b)((a<b)?(a):(b))
+
 #ifdef HBOX_PG
 #if 0
 unsigned long SwapEndian(unsigned long input)
@@ -2324,7 +2326,8 @@ void CmxHandler::SendMessage(char *outMsg, int len)
 	//printf("CMX SendMessage: sent\n");
 }
 
-
+int m_prevR=0,m_prevG=0,m_prevB=0;
+bool bSend=false;
 
 
 
@@ -2352,10 +2355,30 @@ void CmxHandler::HandleSendMsg(char *msg)
 	}
 	switch(msgType){
 		case CMX_LED_CMD:
-			len = sprintf(buf, "fixed_set_rgb(%d,%d,%d)\n", msg[2], msg[3], msg[4]);	// set_rgb(r,g,b)
+			if((m_prevR!=msg[2]) || (m_prevG!=msg[3]) || (m_prevB!=msg[4]))
+			{
+				m_prevR=msg[2];
+				m_prevG=msg[3];
+				m_prevB=msg[4];
+				bSend=true;
+			}
+			else
+			{
+				bSend=false;
+			}
+			if(bSend)
+			{
+				len = sprintf(buf, "fixed_set_rgb(%d,%d,%d)\n", msg[2], msg[3], msg[4]);	// set_rgb(r,g,b)
+				printf("CMX: sending %s\n",buf);
+				SendMessage(buf, len);
+			}
+			else
+			{
+				printf("SKIPPING AN LED COMMAND\n");
+				len = sprintf(buf, "fixed_set_rgb(%d,%d,%d)\n", msg[2], msg[3], msg[4]);	// set_rgb(r,g,b)
+				printf("CMX: NOT sending %s\n",buf);
 
-			printf("CMX: sending %s\n",buf);
-			//SendMessage(buf, len);
+			}
 			break;
 		case CMX_EYE_DETECT:
 					len = sprintf(buf,"DETECT\n");	// set_rgb(r,g,b)
@@ -2668,6 +2691,7 @@ void *leftCServer(void *arg)
                 {
                         datalen = 0;
                         memcpy(databuf, buf+2, length-2);
+                        databuf[0] = 0;
                         datalen = length - 2;
                         b_syncReceived = true;
                         pckcnt=1;
@@ -2796,6 +2820,7 @@ void *rightCServer(void *arg)
                 	//printf("received the sync byte --- new frame\n");
                         datalen = 0;
                         memcpy(databuf, buf+2, length-2);
+                        databuf[0] = 1;
                         datalen = length - 2;
                         b_syncReceived = true;
                        // printf("Sync\n");
