@@ -183,10 +183,13 @@ void LEDDispatcher::SetB() {
 }
 
 void LEDDispatcher::SetLEDValue(unsigned char mask) {
+	printf("****** enter SetLEDValue *****\n");
 #if DO_RGB_ABSTRACTION
 	if (m_pRGBController)
 		m_pRGBController->SetRGB(mask);
+
 	if (m_indicatorBoardSupport) {
+		printf("****** enter SetLEDValue:m_indicatorBoardSupport *****\n");
 		if (mask == m_initialState) {
 			//Set Red
 			SetR();
@@ -204,7 +207,9 @@ void LEDDispatcher::SetLEDValue(unsigned char mask) {
 		}
 	}
 #endif
+//#ifdef CMX_C1
 
+//#endif
 }
 
 void LEDDispatcher::UpdateState(LedState val) {

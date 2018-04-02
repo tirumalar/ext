@@ -186,6 +186,7 @@ T Pop() // wait and pop
 		{
 			status = true;
 			thing = m_Buffer.front();
+			//thing = m_Buffer.back();
 			m_Buffer.pop_front();
 			pthread_cond_signal(&m_NotFull);
 		}
