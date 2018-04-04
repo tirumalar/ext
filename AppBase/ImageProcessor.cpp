@@ -350,7 +350,13 @@ m_LedConsolidator = NULL;
 	m_SaveEyeCrops = pConf->getValue("Eyelock.SaveEyeCrops",false);
 #ifdef HBOX_PG
 	m_SPAWAREnable = pConf->getValue("Eyelock.SPAWAREnable",false);
-	m_pHttpPostSender = new HttpPostSender(*pConf);
+	if (m_SPAWAREnable)
+	{
+		m_pHttpPostSender = new HttpPostSender(*pConf);
+		m_pHttpPostSender->init();
+		m_pHttpPostSender->Begin();
+	}
+
 #endif
 //	if()
 	mm_pCMXHandle = new CmxHandler(*pConf);
@@ -453,6 +459,12 @@ ImageProcessor::~ImageProcessor() {
 	if(m_centreEyecropEnroll){
 		cvReleaseImage(&m_centreEyecropEnroll);
 	}
+#ifdef HBOX_PG
+	if(m_pHttpPostSender){
+		delete m_pHttpPostSender;
+	}
+
+#endif
 #if 0	
 	if(mm_pCMXHandle){
 		delete mm_pCMXHandle;
@@ -879,42 +891,32 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		}
 #ifdef HBOX_PG
 		if(m_SPAWAREnable){
-			int eyeCropSize = eye->getEyeCrop()->height * eye->getEyeCrop()->width;
 			// printf("EyeCropSize.....%d\n", eyeCropSize);
-			int size1 = eyeCropSize, size2 = eyeCropSize;
-			char *data1 = new char[size1];
-			char *data2 = new char[size2];
 
-			if(eyeIdx == 0){
-				memcpy( data1, eye->getEyeCrop()->imageData, size1);
-			}else if(eyeIdx == 1){
-				memcpy(data2, eye->getEyeCrop()->imageData, size2);
-			}
+			HTTPPOSTImage iris;
 
-			HTTPPOSTImage leftIris, rightIris;
+			iris.type = HTTPPOSTImage::IRIS;
+			iris.bppx = 8;
 
-			leftIris.type = HTTPPOSTImage::IRIS;
-			leftIris.size = size1;
-			leftIris.data = data1;
-			leftIris.bppx = 8;
+			iris.horLineLength = eye->getEyeCrop()->width;
+			iris.verLineLength = eye->getEyeCrop()->height;
+			iris.size = iris.horLineLength * iris.verLineLength;
 
-			rightIris.type = HTTPPOSTImage::IRIS;
-			rightIris.size = size2;
-			rightIris.data = data2;
-			rightIris.bppx = 8;
+			// TODO: review
+			// most likely this copying is not needed. Just provide enquePostIris with a pointer to imageData
+			iris.data = new char[iris.size];
+			memcpy(iris.data, eye->getEyeCrop()->imageData, iris.size);
+
+			int eyePos = (eyeIdx == 1) ? 2 : 1;
 
 			time_t rawtime;
 			time (&rawtime);
 			struct tm timeinfo = *localtime(&rawtime);
-			leftIris.acquisTime = &timeinfo;
-			rightIris.acquisTime = &timeinfo;
+			iris.acquisTime = &timeinfo;
 
-			m_pHttpPostSender->init();
-			m_pHttpPostSender->Begin();
-			m_pHttpPostSender->enquePostIris(leftIris, rightIris);
-			cout << "deleting data" << endl;
-			delete[] data1;
-			delete[] data2;
+			m_pHttpPostSender->enquePostIris(iris, eyePos);
+
+			delete[] iris.data;
 		}
 #endif
 		if (m_enableLaplacian_focus_Threshold||m_enableLaplacian_focus_ThresholdEnroll){
@@ -939,7 +941,6 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 				rect.width = cec->width;
 				rect.height = cec->height;
 				if(m_shouldRotate){
-					printf("Inside eyecrop...%d\n", m_shouldRotate);
 					cvTranspose(im, m_rotatedEyecrop);
 					XTIME_OP("cvFlip",cvFlip(m_rotatedEyecrop, m_rotatedEyecrop, 1););
 					cvSetImageROI(m_rotatedEyecrop,rect);
@@ -951,7 +952,6 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 					cvResetImageROI(im);
 				}
 				XTIME_OP("Laplacian : ", output = lapdetector->ComputeRegressionFocus(cec, m_maxSpecValue););
-
 				printf("%d -> [LS:HS] =[%f , %f] \n",m_faceIndex,output.x,halo.z);
 			}
   		}

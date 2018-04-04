@@ -294,6 +294,8 @@ int EyeLockThread::End()
 }
 
 
+
+
 EyeLockThread::EyeLockThread(Configuration& conf) :
 	GenericProcessor(conf), m_MatchProcessor(0), m_DetectedMsg(20),m_pEyeDispatcher(0),m_ScoreFactor(0.5),m_spoofEnable(false),m_nwLedDispatcher(NULL),
 			m_MotionMsg(20), m_outQSize(5), m_Debug(false), m_MaxFrames(5),m_HBDestAddr(0),m_shouldProcess(true),m_shouldSegment(true),m_tsDestAddrpresent(false),

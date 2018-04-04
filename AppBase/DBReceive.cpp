@@ -173,10 +173,17 @@ void DBReceive::process(Copyable *_msg) {
 
 			HTTPPOSTMsg passnext(1024);
 			int len = -1;
+
+#ifdef HBOX_PG // for x64
+			EyelockLog(logger, DEBUG, "Formatting message for x64");
+			const char* formatStr = "RELOADDB;%d;%d;%d;%lu;%d;";
+#else
+			const char* formatStr = "RELOADDB;%d;%d;%d;%d;%d;";
+#endif
 			if(msg->m_msgType == eREPLACEDB){
-				len = sprintf(passnext.GetBuffer(),"RELOADDB;%d;%d;%d;%d;%d;",eREPLACEDB,m_rxfilenumber-1,msg->m_SD,(void*)msg->m_SecureTrait,msg->m_isEncrypt);
+				len = sprintf(passnext.GetBuffer(),formatStr,eREPLACEDB,m_rxfilenumber-1,msg->m_SD,(unsigned long)msg->m_SecureTrait,msg->m_isEncrypt);
 			}else if(msg->m_msgType == eUPDATEDB){
-				len = sprintf(passnext.GetBuffer(),"RELOADDB;%d;%d;%d;%d;%d;",eUPDATEDB,m_rxfilenumber-1,msg->m_SD,(void*)msg->m_SecureTrait,msg->m_isEncrypt);
+				len = sprintf(passnext.GetBuffer(),formatStr,eUPDATEDB,m_rxfilenumber-1,msg->m_SD,(unsigned long)msg->m_SecureTrait,msg->m_isEncrypt);
 			}
 			if(len>0){
 				passnext.SetSize(len);

@@ -28,7 +28,7 @@ extern "C" {
 #include "EyeDispatcher.h"
 
 const char logger[30] = "MasterSlaveNwListner";
-#define HBOX_PG
+
 
 MasterSlaveNwListner::MasterSlaveNwListner(Configuration& conf):m_sleepAfterDispatchingEye(0),m_ledConsolidator(NULL)
 ,m_imageProcessor(NULL),m_nwMatchManager(NULL),m_pEyeDispatcher(NULL){
@@ -179,7 +179,7 @@ int MasterSlaveNwListner::End()
 
 unsigned int MasterSlaveNwListner::MainLoop() {
 #ifdef HBOX_PG
-	return;
+	return 0;
 #endif
 	std::string name = "MasterSlaveNwListner::";
 	bool reset = false;

@@ -16,11 +16,7 @@ using namespace std;
 namespace soci{
 	class session;
 }
-#ifdef HBOX_PG
-#define DATABASE_FILE "keys.db3"
-#else
 #define DATABASE_FILE "keys.db"
-#endif
 class DBAdapter_Keys{
 private:
 	soci::session *m_sqlConn;
