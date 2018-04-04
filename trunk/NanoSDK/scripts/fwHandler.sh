@@ -41,130 +41,16 @@ validateCheckSum(){
 }
 
 checkDeviceState(){
-# perform all checks to ensure that device can be upgraded
-
-	# is slave pingable?
-	ping -q -c2 192.168.40.2 > /dev/null
-	if [[ $? -eq 0 ]]
-	then
-		${logger} -L"Slave is pingable"
-	else
-		${logger} -L"Error: Slave is not pingable"
-		return 1	
-	fi
-
-	# is there enough free disk space on both boards?	
-	diskSpaceLimit=70 # maximum value of used disk space	
-	
-	# check for free space in /home
-	# 	the command searches for the correct line, prints the value in 5th column, then removes the '%'
-	# 1. for read-only FS, /home is mounted on the separate partition, so regex matching for ^/home$ in 6th column:
-	#	Filesystem                Size      Used Available Use% Mounted on
-	#	/dev/root               160.0M    120.6M     39.4M  75% /
-	#	/dev/mtdblock9          781.3M     68.0M    713.2M   9% /home
-	# 2. for not read-only FS, /home is mounted on /dev/root. 
-	#	Filesystem                Size      Used Available Use% Mounted on
-	#	/dev/root               996.5M    607.0M    389.5M  61% /
-	
-	if [[ ${MASTER_UNAME} == ${UNAME_READONLY_FS} ]]
-	then
-		masterUsedSpace=$(df -h | awk '{if ($6 ~ /^\/home$/) print $5}' | sed -n "s/\(.*\)%/\1/p")
-	else
-		# Can be simplified. Leaving command as is to reduce the impact on existing functionality
-		masterUsedSpace=$(df -h | grep '/dev/root' | awk '{print $5}' | sed -n "s/\(.*\)%/\1/p")
-	fi
-	
-	if [[ ${masterUsedSpace} -lt ${diskSpaceLimit} ]]
-	then
-		${logger} -L"Free disk space check passed on Master"
-	else
-		${logger} -L"Error: not enough free disk space on Master. Remove restore points to free it"
-		return 1
-	fi
-
-	# logic is the same as for master
-	if [[ ${SLAVE_UNAME} == ${UNAME_READONLY_FS} ]]
-	then
-		slaveUsedSpace=$(ssh root@192.168.40.2 'df -h' | awk '{if ($6 ~ /^\/home$/) print $5}' | sed -n "s/\(.*\)%/\1/p")
-	else
-		# Can be simplified. Leaving command as is to reduce the impact on existing functionality
-		slaveUsedSpace=$(ssh root@192.168.40.2 'df -h' | grep '/dev/root' | awk '{print $5}' | sed -n "s/\(.*\)%/\1/p")
-	fi
-	if [[ ${slaveUsedSpace} -lt ${diskSpaceLimit} ]]
-	then
-		${logger} -L"Free disk space check passed on Slave"
-	else
-		${logger} -L"Error: not enough free disk space on Slave. Remove restore points to free it"
-		return 1
-	fi
-
-	# TODO: can ICM be programmed with current icm_communicator? 
-
-	return 0
-}
-
-repairDevice()
-{
-	# remove excess restore point files
-	# algorithm:
-	# create list of restore point files on the slave
-	# iterate slave's list
-		# if file is not present on the master, remove it on the slave
-
-	# create list of restore point files on the master	
-	# iterate master's list
-		# if file is not present on the slave, remove it on the master
-
-	# no messages if everything is OK
-
-	slaveRestorePoints=($(ssh root@192.168.40.2 'ls /home/firmware/nano/restorepoints'))
-	for i in "${slaveRestorePoints[@]}"
-	do
-		test -f /home/firmware/nano/restorepoints/$i 
-		if [[ $? -ne 0 ]]
-		then
-			ssh root@192.168.40.2 "rm /home/firmware/nano/restorepoints/$i"
-			${logger} -L"no $i on master so deleted on slave"
-		fi
-	done
-
-	masterRestorePoints=($(ls /home/firmware/nano/restorepoints))
-	for i in "${masterRestorePoints[@]}"
-	do
-		ssh root@192.168.40.2 "test -f /home/firmware/nano/restorepoints/$i"
-		if [[ $? -ne 0 ]]
-		then
-			rm /home/firmware/nano/restorepoints/$i
-			${logger} -L"no $i on slave so deleted on master"
-		fi
-	done
+	${logger} -L"Checking the device state..."
+	# TODO. Do we need anything?
 }
 
 
 killApplication(){
-	# disabling watchdog
-	# this command is supposed to be safe, so can be repeated with no harm
-	# probably, sometimes this command fails, so repeating it
-	i2cset -y 3 0x2e 4 6
-	sleep 1	
-	i2cset -y 3 0x2e 4 6
-	sleep 1
-	i2cset -y 3 0x2e 4 6
-
 	killall -KILL PushButton
-
 	rm /home/root/Eyelock.run
-	ssh root@192.168.40.2 'cd /home/root;rm Eyelock.run'
 	sync
-	ssh root@192.168.40.2 'sync'
 	killall -s SIGKILL Eyelock
-	ssh root@192.168.40.2 'killall -s SIGKILL Eyelock'
-
-	# probably, Eyelock app running can block i2c bus and prevent disabling the watchdog, so repeating the command again when the process is killed	
-	sleep 5
-	i2cset -y 3 0x2e 4 6
-	sleep 1	
-	i2cset -y 3 0x2e 4 6
 }
 
 checkApplicationTermination()
@@ -172,19 +58,13 @@ checkApplicationTermination()
 	ps ax | grep -q "Eyelock$"
 	if [[ $? -eq 0 ]]
 	then
-		${logger} -L"Warn: Eyelock app was not terminated on Master"
+		${logger} -L"Warn: Eyelock app was not terminated"
 	fi
 
 	ps ax | grep -q "PushButton$"
 	if [[ $? -eq 0 ]]
 	then
 		${logger} -L"Warn: Some of FW processes were not terminated on Master"
-	fi
-
-	ssh root@192.168.40.2 'ps ax | grep -q "Eyelock$"'
-	if [[ $? -eq 0 ]]
-	then
-		${logger} -L"Warn: Eyelock app was not terminated on Slave"
 	fi
 }
 
@@ -197,7 +77,6 @@ createRestorePoint(){
 		if [[ -n ${toBeRemoved} ]]
 		then
 			${logger} -L"Deleting ${toBeRemoved}"
-			ssh root@192.168.40.2 "rm /home/firmware/nano/restorepoints/${toBeRemoved}" 
 			rm /home/firmware/nano/restorepoints/${toBeRemoved}
 		fi
 	fi
@@ -209,7 +88,6 @@ createRestorePoint(){
 
 	${logger} -L"New restore point name: (${name})"
 	
-	# MASTER
 	mkdir -p /home/firmware/nano/restorepoints
 
 	# do we need the second case?
@@ -238,23 +116,6 @@ createRestorePoint(){
 	fi
 	${logger} -L"Restore point creation on master: done."
 	
-	# SLAVE
-
-	# removing database file on the slave board to exclude it from the restore point
-	# assuming that it is restored from the master after device reboot
-	ssh root@192.168.40.2 "rm /home/root/data/PDB10.bin; sync"
-	
-	ssh root@192.168.40.2 "mkdir -p /home/firmware/nano/restorepoints; cd /home; tar cf /home/firmware/nano/restorepoints/${name} root && sync"
-	if [[ $? -ne 0 ]]
-	then
-		${logger} -L"Error: archive creation on slave failed."
-		rm /home/firmware/nano/restorepoints/${name}
-		sync
-		ssh root@192.168.40.2 "rm /home/firmware/nano/restorepoints/${name};sync"
-		return 1
-	fi
-	${logger} -L"Restore point creation on slave: done."
-	
 	return 0
 }
 
@@ -264,7 +125,7 @@ testMasterFw(){
 	# should we check version number?
 	if [[ $? -ne 0 ]]
 	then 
-		${logger} -L"Error: Master: Eyelock app: test run failed"
+		${logger} -L"Error: Eyelock app: test run failed"
 		return 1
 	fi
 
@@ -272,18 +133,7 @@ testMasterFw(){
 	/home/upgradeTemp/root/KeyMgr | grep -q "Start Key Management"
 	if [[ $? -ne 0 ]]
 	then 
-		${logger} -L"Error: Master: FW test run failed (1)"
-		return 1
-	fi
-
-	# swap ext_libs directory which contain libraries for avahi, check avahi restart output, return to original (swap again) in case of error
-	mv /home/upgradeTemp/ext_libs /home/upgradeTemp/ext_libs0 && mv /home/ext_libs /home/upgradeTemp/ext_libs && mv /home/upgradeTemp/ext_libs0 /home/ext_libs
-	ldconfig
-	/etc/init.d/avahi-daemon restart | grep -q "done"
-	if [[ $? -ne 0 ]]
-	then 
-		${logger} -L"Error: Master: FW test run failed (2)"
-		mv /home/upgradeTemp/ext_libs /home/upgradeTemp/ext_libs0 && mv /home/ext_libs /home/upgradeTemp/ext_libs && mv /home/upgradeTemp/ext_libs0 /home/ext_libs
+		${logger} -L"Error: FW test run failed (1)"
 		return 1
 	fi
 
@@ -296,12 +146,12 @@ upgradeMaster(){
 	# backup default settings file. It will be used for merging later
 	cp /home/default/Eyelock.ini /home/Eyelock.default 
 	
-	${logger} -L"Master: Decrypting ..."
+	${logger} -L"Decrypting ..."
 	/home/root/KeyMgr -d -i ${firmwareDir}/$1 -o ${firmwareDir}/out.tar.gz;
 	mv ${firmwareDir}/out.tar.gz ${firmwareDir}/$1
-	${logger} -L"Master: Decrypting done."
+	${logger} -L"Decrypting done."
 
-	${logger} -L"Master: Extracting..."
+	${logger} -L"Extracting..."
 	touch /home/untarpackage.txt
 	if [[ -d /home/upgradeTemp ]]
 	then
@@ -311,25 +161,25 @@ upgradeMaster(){
 	tar -xvzf ${firmwareDir}/$1 -C /home/upgradeTemp > /dev/null
 	if [[ $? -ne 0 ]]
 	then
-		${logger} -L"Error: Master: extracting failed."
+		${logger} -L"Error: extracting failed."
 		return 1
 	fi
-	${logger} -L"Master: Extracting done."
+	${logger} -L"Extracting done."
 	rm /home/untarpackage.txt
 
 	if [[ -f /home/upgradeTemp/root/patch.sh ]]
 	then
-		${logger} -L"Master: Patching..."
+		${logger} -L"Patching..."
 		touch /home/runPatch.txt		
 		chmod 777 /home/upgradeTemp/root/patch.sh
 		/home/upgradeTemp/root/patch.sh
 		rm /home/runPatch.txt
-		${logger} -L"Master: Patching done."
+		${logger} -L"Patching done."
 	else
-		${logger} -L"Master: No patch files in this FW"
+		${logger} -L"No patch files in this FW"
 	fi
 
-	${logger} -L"Master: Backup..."
+	${logger} -L"Backup..."
 	# TODO: check
 	# .key .crt and id.txt must be in /home/root for Logger needs (otherwise reconfigure)
 	mv /home/root/test.db /home/upgradeTemp/root/
@@ -348,33 +198,28 @@ upgradeMaster(){
 	
 	cp /home/root/nxtlog.cfg /home/upgradeTemp/root/nxtlog.cfg
 	cp /home/root/SDKRegisterIPs.txt /home/upgradeTemp/root/SDKRegisterIPs.txt
-
-	
 	
 	mv /home/root/interfaces /home/upgradeTemp/root/interfaces
 	mv /home/root/interfaces.md5 /home/upgradeTemp/root/interfaces.md5
 
 	mv /home/root/Calibration.ini /home/upgradeTemp/root/Calibration.ini
 	
-	${logger} -L"Master: Backup done."
+	${logger} -L"Backup done."
 
-	${logger} -L"Master: Testing..."
+	${logger} -L"Testing..."
 	testMasterFw
 	if [[ $? -ne 0 ]]
 	then
-		${logger} -L"Error: Master: master FW test failed"
+		${logger} -L"Error: FW test failed"
 		return 1
 	fi
-	${logger} -L"Master: Test passed."
+	${logger} -L"Test passed."
 
-	${logger} -L"Master: Applying changes..."
+	${logger} -L"Applying changes..."
 	mv /home/upgradeTemp/root /home/upgradeTemp/root0 && mv /home/root /home/upgradeTemp/root && mv /home/upgradeTemp/root0 /home/root
 	mv /home/upgradeTemp/www /home/upgradeTemp/www0 && mv /home/www /home/upgradeTemp/www && mv /home/upgradeTemp/www0 /home/www
 	mv /home/upgradeTemp/default /home/upgradeTemp/default0 && mv /home/default /home/upgradeTemp/default && mv /home/upgradeTemp/default0 /home/default
 	mv /home/upgradeTemp/factory /home/upgradeTemp/factory0 && mv /home/factory /home/upgradeTemp/factory && mv /home/upgradeTemp/factory0 /home/factory
-
-	# using ";" instead "&&" to proceed even if a file doesn't exist now
-	mv /home/upgradeTemp/wpa_supplicant /home/upgradeTemp/wpa_supplicant0; mv /home/wpa_supplicant /home/upgradeTemp/wpa_supplicant; mv /home/upgradeTemp/wpa_supplicant0 /home/wpa_supplicant
 
 	# copy ICM file even if ICM programming is not needed to have it in restore point
 	cp ${bobFileName} /home/root
@@ -389,8 +234,6 @@ upgradeMaster(){
 	cp ${firmwareDir}/fwHandler/fwHandler.sh /home/root	
 	cp ${logger} /home/root
 	cp "${logger}Settings.xml" /home/root
-
-	
 	
 	chmod 777 /home/root/nano_led
 	chmod 777 /home/root/Eyelock
@@ -400,89 +243,19 @@ upgradeMaster(){
 	chmod 777 /home/root/*.sh
 	chmod 777 /home/root/scripts/*.sh
 	chmod 777 /home/default/reloadinterfaces.sh
-	${logger} -L"Master: Applying done."
+	${logger} -L"Applying done."
 
-	${logger} -L"Master: Settings merging..."
+	${logger} -L"Settings merging..."
 	/home/root/scripts/mergeINI.sh
-	${logger} -L"Master: Settings merging done."
+	${logger} -L"Settings merging done."
 
 	sync
 
-	${logger} -L"Master: Done."
+	${logger} -L"Done."
 
 	return 0
 }
 
-testSlaveFw(){
-	ssh root@192.168.40.2 "chmod 777 /home/upgradeTemp/root/Eyelock"
-	ssh root@192.168.40.2 "/home/upgradeTemp/root/Eyelock -v | grep -q 'Eyelock'"
-	# should we check version number?
-	if [[ $? -ne 0 ]]
-	then 
-		${logger} -L"Error: Slave: Eyelock app: incorrect output when test run"
-		return 1
-	fi
-
-	ssh root@192.168.40.2 "chmod 777 /home/upgradeTemp/root/KeyMgr"
-	ssh root@192.168.40.2 "/home/upgradeTemp/root/KeyMgr | grep -q 'Start Key Management'"
-	if [[ $? -ne 0 ]]
-	then 
-		${logger} -L"Error: Slave: FW test run failed (1)"
-		return 1
-	fi
-
-	# TODO: test libs in ext_libs directory on Slave. How?
-
-	return 0
-}
-
-upgradeSlave(){
-# $1 - slave FW file
-	${logger} -L"Slave: Decrypting ..."
-	ssh root@192.168.40.2 "chmod 777 /home/root/KeyMgr"
-	ssh root@192.168.40.2 "/home/root/KeyMgr -d -i ${firmwareDir}/$1 -o ${firmwareDir}/out.tar.gz;mv ${firmwareDir}/out.tar.gz ${firmwareDir}/$1"
-	${logger} -L"Slave: Decrypting done."
-
-	ssh root@192.168.40.2 "if [[ -d /home/upgradeTemp ]]; then rm -r /home/upgradeTemp; fi; mkdir -p /home/upgradeTemp/root/rootCert/certs"
-
-	# slave board has different version of tar which doesn't support -z option
-	${logger} -L"Slave: Extracting..."
-	ssh root@192.168.40.2 "gzip -d < ${firmwareDir}/$1 | tar xvf - -C /home/upgradeTemp > /dev/null"
-	if [[ $? -ne 0 ]]
-	then
-		${logger} -L"Error: Slave: extracting failed."
-		return 1
-	fi
-	${logger} -L"Slave: Extracting done."
-
-	${logger} -L"Slave: Testing..."
-	testSlaveFw
-	if [[ $? -ne 0 ]]
-	then
-		${logger} -L"Error: Slave FW test failed"
-		return 1
-	fi
-	${logger} -L"Slave: Test passed."
-
-	${logger} -L"Slave: Applying changes..."
-	ssh root@192.168.40.2 "cp /home/root/Eyelock.ini /home/upgradeTemp/root/EyelockBak.ini"
-
-	ssh root@192.168.40.2 "mv /home/upgradeTemp/root /home/upgradeTemp/root0 && mv /home/root /home/upgradeTemp/root && mv /home/upgradeTemp/root0 /home/root"
-	ssh root@192.168.40.2 "mv /home/upgradeTemp/default /home/upgradeTemp/default0 && mv /home/default /home/upgradeTemp/default && mv /home/upgradeTemp/default0 /home/default"
-	ssh root@192.168.40.2 "mv /home/upgradeTemp/factory /home/upgradeTemp/factory0 && mv /home/factory /home/upgradeTemp/factory && mv /home/upgradeTemp/factory0 /home/factory"
-	ssh root@192.168.40.2 "mv /home/upgradeTemp/ext_libs /home/upgradeTemp/ext_libs0 && mv /home/ext_libs /home/upgradeTemp/ext_libs && mv /home/upgradeTemp/ext_libs0 /home/ext_libs"
-	${logger} -L"Slave: Applying done."
-
-	${logger} -L"Slave: Settings merging..."
-	ssh root@192.168.40.2 "chmod 777 /home/root/merge.sh && /home/root/merge.sh"
-	${logger} -L"Slave: Settings merging done."	
-
-	ssh root@192.168.40.2 "sync"
-
-	${logger} -L"Slave: Done."
-
-	return 0
-}
 
 checkIcmVersion(){
 	${logger} -L"Current ICM version: (${currentIcmVer})"
@@ -553,134 +326,15 @@ programIcm(){
 	fi
 }
 
-readXml(){
-	# no need to save initial IFS value. Tested on NXT and Ubuntu 14.04
-	# The following can be used to print IFS:
-	# printf %q "$IFS" 
-	local IFS=\>
-	
-    read -d \< ENTITY CONTENT
-    local ret=$?
-    TAG_NAME=${ENTITY%% *}
-    ATTRIBUTES=${ENTITY#* }
-    return $ret
-}
-
-validateCheckSumArg(){
-	TARGETFILE=$1
-	TARGETFILEMD5=$2
-	BOARD=$3
-	TARGETFILEPRINT=$4
-	
-	if [[ "${BOARD}" != 'Master' && "${BOARD}" != 'Slave' ]]
-	then
-		${logger} -L"Error: ${TARGETFILEPRINT} checksum validation failed on ${BOARD} (1)"
-		return
-	fi	
-	
-	if [[ -z "${TARGETFILEMD5}" ]]
-	then
-		${logger} -L"Error: ${TARGETFILEPRINT} checksum validation failed on ${BOARD} (2)"
-		return
-	fi	
-	
-	if [[ ${BOARD} = 'Master' ]]
-	then
-		test -f "${TARGETFILE}"
-	else
-		ssh -n root@192.168.40.2 "cd ${DEVICE_BASE_PATH}; test -f \"${TARGETFILE}\""
-	fi
-	if [[ $? -ne 0 ]]
-	then
-		${logger} -L"Error: ${TARGETFILEPRINT} file is missed on ${BOARD}"
-		return
-	fi
-	
-	if [[ ${BOARD} = 'Master' ]]
-	then
-		MD5=$(md5sum "${TARGETFILE}" | awk '{print $1}')
-	else
-		MD5=$(ssh -n root@192.168.40.2 "cd ${DEVICE_BASE_PATH}; md5sum \"${TARGETFILE}\"" | awk '{print $1}')
-	fi
-	if [ "$MD5" == "${TARGETFILEMD5}" ] 
-	then
-		# disabling reporting about success checks to reduce messages quantity
-		echo "${TARGETFILEPRINT} check passed on ${BOARD}"
-	else
-		${logger} -L"Error: ${TARGETFILEPRINT} checksum mismatch on ${BOARD}"
-	fi
-}
-
-checkFwElement(){
-    if [[ $TAG_NAME = "md5" ]]
-	then
-		eval local $ATTRIBUTES
-		if [[ -z $CONTENT || -z $path ]]
-		then
-			${logger} -L"Error: $printableName checksum validation error (4)"
-		else
-			if [[ $toBeCheckedOnMaster = "true" ]]
-			then
-				validateCheckSumArg "$path" $CONTENT "Master" "$printableName"
-			fi		
-			if [[ $toBeCheckedOnSlave = "true" ]]
-			then
-				validateCheckSumArg "$path" $CONTENT "Slave" "$printableName"
-			fi
-		fi
-
-	elif [[ $TAG_NAME = "existence" ]]
-	then
-		eval local $ATTRIBUTES
-		
-		if [[ $toBeCheckedOnMaster = "true" ]]
-		then
-			test -f "${path}" && EXIST='true' || EXIST='false'
-			if [[ $EXIST = $CONTENT ]]
-			then
-				# disabling reporting about success checks to reduce messages quantity
-				echo "$printableName test passed on Master"
-			else
-				${logger} -L"Error: $printableName test failed on Master"
-			fi
-		fi
-		
-		if [[ $toBeCheckedOnSlave = "true" ]]
-		then		
-			# ssh reads from standard input, therefore it eats all remaining lines, so redirecting standard input
-			ssh -n root@192.168.40.2 "cd ${DEVICE_BASE_PATH}; test -f \"${path}\"" && EXIST='true' || EXIST='false'
-			if [[ $EXIST = $CONTENT ]]
-			then
-				# disabling reporting about success checks to reduce messages quantity
-				echo "$printableName test passed on Slave"
-			else
-				${logger} -L"Error: $printableName test failed on Slave"
-			fi
-		fi	
-    fi
-}
-
-checkFwIntegrity(){
-	cp ${firmwareDir}/MultiChannelLoggerSettings.xml ${DEVICE_BASE_PATH}/MultiChannelLoggerSettings.xml
-	pushd ${DEVICE_BASE_PATH}
-	while readXml; do
-		checkFwElement
-	done < $1
-	popd
-	rm ${DEVICE_BASE_PATH}/MultiChannelLoggerSettings.xml
-}
-
 cleanup(){
 	echo "Cleanup..."
-	ssh root@192.168.40.2 "cd ${firmwareDir}; rm *.*"
-	cd ${firmwareDir}; rm -r "fwHandler"; rm *.*; rm ${logger}
+	#cd ${firmwareDir}; rm -r "fwHandler"; rm *.*; rm ${logger}
 	# should upgradeTemp be deleted? WebConfig doesn't
 	sync
 }
 
 cleanupRestore(){
 	echo "Cleanup..."
-	ssh root@192.168.40.2 "rm -r /home/restoreTemp"
 	rm -r /home/restoreTemp
 	sync
 }
@@ -689,23 +343,10 @@ rebootDevice(){
 	echo "Rebooting..."
 
 	sync
-	ssh root@192.168.40.2 'sync'	
-
-	# enabling watchdog
-	i2cset -y 3 0x2e 4 7 
-	sleep 1
-	i2cset -y 3 0x2e 4 7
-	sleep 1
-	i2cset -y 3 0x2e 4 7
 	sleep 10
-
-	ssh root@192.168.40.2 'reboot'
-	sleep 10
-	reboot
-
-	# reset command to motherboard if the above command fails
-	sleep 5
-	i2cset -y 3 0x2e 4 8
+	 
+	 # is it OK?
+	 /home/root/startup.sh &
 }
 
 getXmlTag()
@@ -737,8 +378,6 @@ changeIniValue()
 ### should updateInProgress flag be created before any changes? seems that autorestore will restore old version if error before new restore point creation
 ##touch /home/updateInProgress.txt 
 
-### is slaveNotUpdatedYet flag necessary? not used in autorestore.sh
-## touch /home/slaveNotUpdatedYet.txt 
 #
 #rm /home/restoreSoftware.txt
 #
@@ -755,11 +394,10 @@ changeIniValue()
 upgrade()
 {
 	firmwareDir=/home/firmware
-	bobVersion=$(getXmlTag ${firmwareDir}/fwHandler/NanoNXTVersionInfo.xml bobversion)
-	nanoVersion=$(getXmlTag ${firmwareDir}/fwHandler/NanoNXTVersionInfo.xml nanoversion)
-	bobFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoNXTVersionInfo.xml bobfilename)
-	masterFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoNXTVersionInfo.xml nanofilename)
-	slaveFileName=$(echo ${masterFileName} | sed -n "s/Master/Slave/p")
+	bobVersion=$(getXmlTag ${firmwareDir}/fwHandler/HBoxVersionInfo.xml bobversion)
+	nanoVersion=$(getXmlTag ${firmwareDir}/fwHandler/HBoxVersionInfo.xml nanoversion)
+	bobFileName=$(getXmlTag ${firmwareDir}/fwHandler/HBoxVersionInfo.xml bobfilename)
+	masterFileName=$(getXmlTag ${firmwareDir}/fwHandler/HBoxVersionInfo.xml nanofilename)
 
 	mv ${firmwareDir}/fwHandler/MultiChannelLogger ${firmwareDir}
 	mv ${firmwareDir}/fwHandler/MultiChannelLoggerSettings.xml ${firmwareDir}
@@ -780,7 +418,6 @@ upgrade()
 	# set global variables to be used in other functions
 	UNAME_READONLY_FS='3.0.0-BSP-dm37x-2.4-2Eyelock_NXT_6.0'
 	MASTER_UNAME=$(uname -r)
-	SLAVE_UNAME=$(ssh root@192.168.40.2 'uname -r')
 
 	${logger} -L"Device testing..."
 	checkDeviceState
@@ -794,51 +431,25 @@ upgrade()
 	fi
 	${logger} -L"Device testing completed."
 	
-	repairDevice
-
 	# must be done before swapping directories
 	# change to "icm_communicator -v ..."?
 	currentIcmVer=$(cat /home/root/BobVersion | sed -n "s/^ICM\ssoftware\sversion:\s\(.*\)$/\1/p")
 
 	${logger} -L"Upgrade process started."
 
-	if [[ -n "${masterFileName}" && -e ${masterFileName} && -e ${slaveFileName} ]]
+	if [[ -n "${masterFileName}" && -e ${masterFileName} ]]
 	then
 		${logger} -L"FW validation..."
 		validateCheckSum ${masterFileName}
 		if [[ $? -ne 0 ]]
 		then
-			${logger} -L"Error: master FW file checksum mismatch"
+			${logger} -L"Error: FW file checksum mismatch"
 			${logger} -L"STATUS:UNSUCCESSFUL"
 			cleanup
 			exit 3
 		fi
-		validateCheckSum ${slaveFileName}
-		if [[ $? -ne 0 ]]
-		then
-			${logger} -L"Error: slave FW file checksum mismatch"
-			${logger} -L"STATUS:SLAVE_UNSUCCESSFUL"
-			cleanup
-			exit 3	
-		fi
+
 		${logger} -L"FW validation done."
-	
-		${logger} -L"Preparing for upgrade..."
-		/home/root/nano_led 100 80 0 1
-	
-		${logger} -L"Transferring slave FW file..."
-		# Device state check was performed. Move file transfer to upgradeSlave?
-		ssh root@192.168.40.2 "mkdir /home/firmware"
-		scp ${slaveFileName} root@192.168.40.2:/home/firmware 
-		if [[ $? -ne 0 ]]
-		then
-			${logger} -L"Error: slave FW file transfer failed"
-			${logger} -L"STATUS:SLAVE_CONNECTION_FLOW_ERROR"
-			cleanup
-			# TODO: change led color to white. /home/root/nano_led args?
-			exit 1
-		fi
-		${logger} -L"Slave FW file transferred."
 	
 		${logger} -L"Restore point creation..."
 		touch /home/createrestorepoint.txt
@@ -876,25 +487,10 @@ upgrade()
 			sleep 5
 			cleanup
 			rebootDevice
+			exit 5
 		fi
 		${logger} -L"Master upgrade done."
 	
-		${logger} -L"Upgrading slave..."
-		touch /home/slaveUpdating.txt
-		upgradeSlave ${slaveFileName}
-		upgradeSlaveStatus=$?
-		if [[ ${upgradeSlaveStatus} -ne 0 ]]
-		then
-			${logger} -L"Error: slave upgrade failed."
-			${logger} -L"STATUS:SLAVE_UNSUCCESSFUL"
-			${logger} -L"Device will be rebooted."
-			cleanup
-			rebootDevice
-		fi
-		rm /home/slaveUpdating.txt
-		touch /home/slaveUpdated.txt
-		${logger} -L"Slave upgrade done."
-
 		# format is different from WebConfig. Is it OK?
 		NOW=$(date -u)
 		changeIniValue /home/root/Eyelock.ini "Eyelock.SoftwareUpdateDateNano" "${NOW}"
@@ -904,7 +500,7 @@ upgrade()
 
 		${logger} -L"FW upgrade done."
 	else
-		${logger} -L"FW master/slave files not found."
+		${logger} -L"FW files not found."
 	fi
 	
 	if [[ -n "${bobFileName}" && -e ${bobFileName} ]]
@@ -918,8 +514,7 @@ upgrade()
 			touch /home/icmupdate.txt
 			rm /home/bobupdate.txt
 		
-			# dependence on existing icm_communicator. It'd be better to take it from the FW distribution
-			icmCommunicator="/home/upgradeTemp/root/icm_communicator"
+			icmCommunicator="/home/root/icm_communicator"
 		
 			chmod 777 ${icmCommunicator}
 		
@@ -932,6 +527,7 @@ upgrade()
 				${logger} -L"Device will be rebooted."
 				cleanup
 				rebootDevice
+				exit 6
 			fi
 		
 			# time format is different from WebConfig. Is it OK?	
@@ -950,19 +546,12 @@ upgrade()
 	NOW=$(date +"%Y-%m-%d, %T.000")
 	echo "$NOW, INFO , [Eyelock], - SW Upgrade: AppVer: ${nanoVersion}; ICM FW: ${bobVersion}" >> /home/root/nxtLog.log
 
-	DEVICE_BASE_PATH='/home'
-	${logger} -L"Checking FW integrity..."
-	checkFwIntegrity ${firmwareDir}/fwIntegrityValidationList.xml
-	${logger} -L"FW integrity check done"
-	
 	touch /home/root/Eyelock.run
-	ssh root@192.168.40.2 "touch /home/root/Eyelock.run"
 
 	${logger} -L"Upgrade done."
 	${logger} -L"STATUS:SUCCESS"
 	${logger} -L"Device will be rebooted."
 
-	rm /home/slaveUpdated.txt
 	rm /home/updateInProgress.txt
 
 	cleanup
@@ -995,61 +584,32 @@ restore(){
 		cleanupRestore
 		exit 1		
 	else
-		${logger} -L"Master: archive exists"
-	fi
-
-	ssh root@192.168.40.2 "test -e ${restorePoint}"
-	if [[ $? -ne 0 ]]
-	then
-		${logger} -L"Error: restore point ${restorePoint} incomplete: slave part not found."
-		${logger} -L"STATUS:UNSUCCESSFUL"
-		cleanupRestore
-		exit 1	
-	else
-		${logger} -L"Slave: archive exists"
+		${logger} -L"Archive exists"
 	fi
 
 	${logger} -L"RESTORE_RUNNING"
-	/home/root/nano_led 100 80 0 1
 
 	${logger} -L"Terminating current FW processes..."
 	killApplication
 	${logger} -L"Terminating done."
 	checkApplicationTermination	
 
-	# SLAVE
-	# ===============================================================================
-	${logger} -L"Slave: extracting ${restorePoint}"
-	ssh root@192.168.40.2 "test -e /home/restoreTemp" && ssh root@192.168.40.2 "rm -r /home/restoreTemp"
-	ssh root@192.168.40.2 "mkdir -p /home/restoreTemp/root"
-	ssh root@192.168.40.2 "tar -xvf ${restorePoint} -C /home/restoreTemp > /dev/null"
-	if [[ $? -ne 0 ]]
-	then
-		${logger} -L"Error: Slave restore failed."		
-		${logger} -L"STATUS:SLAVE_UNSUCCESSFUL"
-		cleanupRestore
-		return 1
-	fi
-	${logger} -L"Slave: extracting done."
-	# ===============================================================================
-
-	# MASTER
 	# ===============================================================================
 	if [[ -d /home/restoreTemp ]]
 	then
 		rm -r /home/restoreTemp
 	fi
 	mkdir -p /home/restoreTemp/root/rootCert/certs
-	${logger} -L"Master: extracting ${restorePoint}"
+	${logger} -L"Extracting ${restorePoint}"
 	tar -xvf ${restorePoint} -C /home/restoreTemp > /dev/null
 	if [[ $? -ne 0 ]]
 	then
-		${logger} -L"Error: Master restore failed."
+		${logger} -L"Error: restore failed."
 		${logger} -L"STATUS:UNSUCCESSFUL"
 		cleanupRestore
 		return 1
 	fi
-	${logger} -L"Master: extracting done."
+	${logger} -L"Extracting done."
 	# ===============================================================================
 
 	# ICM
@@ -1103,15 +663,7 @@ restore(){
 	chmod 777 /home/root/*.sh
 	chmod 777 /home/root/scripts/*.sh
 	chmod 777 /home/default/reloadinterfaces.sh
-	${logger} -L"Master: applying done."
-
-	${logger} -L"Slave: applying changes..."
-	ssh root@192.168.40.2 "mv /home/restoreTemp/root /home/restoreTemp/root0 && mv /home/root /home/restoreTemp/root && mv /home/restoreTemp/root0 /home/root"
-	ssh root@192.168.40.2 "mv /home/restoreTemp/default /home/restoreTemp/default0 && mv /home/default /home/restoreTemp/default && mv /home/restoreTemp/default0 /home/default"
-
-	ssh root@192.168.40.2 "chmod 777 /home/root/Eyelock"
-	ssh root@192.168.40.2 "chmod 777 /home/root/KeyMgr"
-	${logger} -L"Slave: applying done."
+	${logger} -L"Applying done."
 
 	# adding restore event to logs
 	NOW=$(date -u +"%Y-%m-%d %T, %Z")

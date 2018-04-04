@@ -723,13 +723,12 @@ int32_t EyelockNanoDeviceHandler::SetIntParameter(const string& paramName, const
 	return NOT_IMPLEMENTED;
 }
 
-#if 0
+
 void EyelockNanoDeviceHandler::GetIntParameter(GetIntReturn& _return, const string& paramName) {
 	EyelockLog(logger, TRACE, "Getting int configuration parameter %s", paramName.c_str());
 	_return.status = NOT_IMPLEMENTED;
 	_return.value = 0;
 }
-#endif
 
 int32_t EyelockNanoDeviceHandler::SetUIntParameter(const string& paramName, const int64_t value) {
 	EyelockLog(logger, TRACE, "Setting uint configuration parameter %s to %l", paramName.c_str(), value);
@@ -747,14 +746,14 @@ int32_t EyelockNanoDeviceHandler::SetUIntParameter(const string& paramName, cons
 
 	return SUCCESS;
 }
-#if 0
+
 void EyelockNanoDeviceHandler::GetUIntParameter(GetIntReturn& _return, const string& paramName) {
 	EyelockLog(logger, TRACE, "Getting uint configuration parameter %s", paramName.c_str());
 	unsigned int value = 0;
 	_return.status = m_eyelockConf.getUIntParameter(paramName, value);
 	_return.value = (int64_t) value;
 }
-#endif
+
 int32_t EyelockNanoDeviceHandler::SetDoubleParameter(const string& paramName, const double value) {
 	EyelockLog(logger, TRACE, "Setting float configuration parameter %s to %f", paramName.c_str(), value);
 
@@ -771,14 +770,14 @@ int32_t EyelockNanoDeviceHandler::SetDoubleParameter(const string& paramName, co
 
 	return SUCCESS;
 }
-#if 0
+
 void EyelockNanoDeviceHandler::GetDoubleParameter(GetDoubleReturn& _return, const string& paramName) {
 	EyelockLog(logger, TRACE, "Getting float parameter %s", paramName.c_str());
 	float value = 0.0;
 	_return.status = m_eyelockConf.getFloatParameter(paramName, value);
 	_return.value = (double) value;
 }
-#endif
+
 int32_t EyelockNanoDeviceHandler::SetBoolParameter(const string& paramName, const bool value) {
 	EyelockLog(logger, TRACE, "Setting bool configuration parameter %s to %d", paramName.c_str(), value);
 
@@ -795,14 +794,14 @@ int32_t EyelockNanoDeviceHandler::SetBoolParameter(const string& paramName, cons
 
 	return SUCCESS;
 }
-#if 0
+
 void EyelockNanoDeviceHandler::GetBoolParameter(GetBoolReturn& _return, const string& paramName) {
 	EyelockLog(logger, TRACE, "Getting bool configuration parameter %s", paramName.c_str());
 	bool value = false;
 	_return.status = m_eyelockConf.getBoolParameter(paramName, value);
 	_return.value = value;
 }
-#endif
+
 int32_t EyelockNanoDeviceHandler::SetStrParameter(const string& paramName, const string& value) {
 	EyelockLog(logger, TRACE, "Setting string configuration parameter %s to %s", paramName.c_str(), value.c_str());
 
@@ -819,14 +818,14 @@ int32_t EyelockNanoDeviceHandler::SetStrParameter(const string& paramName, const
 
 	return SUCCESS;
 }
-#if 0
+
 void EyelockNanoDeviceHandler::GetStrParameter(GetStrReturn& _return, const string& paramName) {
 	EyelockLog(logger, TRACE, "Getting string configuration parameter %s", paramName.c_str());
 	string value;
 	_return.status = m_eyelockConf.getStrParameter(paramName, value);
 	_return.value = value;
 }
-#endif
+
 int32_t EyelockNanoDeviceHandler::ResetConfigParameters() {
 	EyelockLog(logger, TRACE, "Resetting configuration parameters");
 	return NOT_IMPLEMENTED;

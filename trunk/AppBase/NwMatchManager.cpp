@@ -1297,13 +1297,10 @@ bool NwMatchManager::DecryptDB( char* tempDbFileName) {
 
 		vector<pair<string,int64_t> > keysVec;
 		DBAdapter_Keys db;
-#ifdef HBOX_PG		
-		if (0 == db.OpenFile((char*)"keys.db3")) {
-			EyelockLog(logger, ERROR, "Failed to open file keys.db3");
-#else
+
 		if (0 == db.OpenFile((char*)"keys.db")) {
 			EyelockLog(logger, ERROR, "Failed to open file keys.db");
-#endif			
+
 			return false;
 		}
 

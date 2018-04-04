@@ -71,25 +71,15 @@ class EyelockNanoDeviceHandler : virtual public EyelockNanoDeviceIf {
   void GetFileChecksum(std::string& _return, const std::string& file);
 
   int32_t SetIntParameter(const std::string& paramName, const int64_t value);
-#if 0
   void GetIntParameter(GetIntReturn& _return, const std::string& paramName);
-#endif
   int32_t SetUIntParameter(const std::string& paramName, const int64_t value);
-#if 0
   void GetUIntParameter(GetIntReturn& _return, const std::string& paramName);
-#endif
   int32_t SetDoubleParameter(const std::string& paramName, const double value);
-#if 0
   void GetDoubleParameter(GetDoubleReturn& _return, const std::string& paramName);
-#endif
   int32_t SetBoolParameter(const std::string& paramName, const bool value);
-#if 0
   void GetBoolParameter(GetBoolReturn& _return, const std::string& paramName);
-#endif
   int32_t SetStrParameter(const std::string& paramName, const std::string& value);
-#if 0
   void GetStrParameter(GetStrReturn& _return, const std::string& paramName);
-#endif
   int32_t ResetConfigParameters();
 
  private:

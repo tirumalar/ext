@@ -207,9 +207,7 @@ void LEDDispatcher::SetLEDValue(unsigned char mask) {
 		}
 	}
 #endif
-//#ifdef CMX_C1
 
-//#endif
 }
 
 void LEDDispatcher::UpdateState(LedState val) {

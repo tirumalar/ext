@@ -24,8 +24,6 @@
 #include "ImageProcessor.h"
 #include "MatchManagerInterface.h"
 
-
-
 using namespace std;
 extern "C" {
 #include "file_manip.h"
@@ -506,7 +504,7 @@ int NwListener::End()
 	EyelockLog(logger, DEBUG, "NwListener::End()"); fflush(stdout);
 	m_QuitStatus.lock(); m_QuitStatus.set(true); m_QuitStatus.unlock();
     {
-#if 0
+#ifndef HBOX_PG
     	SafeLock<SocketServer *> lock(m_pSockSrv);
     	if(m_pSockSrv.get())
     	{
@@ -602,7 +600,7 @@ unsigned int NwListener::MainLoop() {
 	while (!ShouldIQuit()) {
 		if(m_debug)
 			EyelockLog(logger, DEBUG, "%s Looping again!", name.c_str()); fflush(stdout);
-#if 0
+#ifndef HBOX_PG
 		try{
 			{
 				SafeLock<SocketServer *> lock(m_pSockSrv);
@@ -641,11 +639,7 @@ unsigned int NwListener::MainLoop() {
 							// printf("m_port...%d\n", m_port);
 							// printf("Inside m_pSockSrv of NwListener\n");
 							EyelockLog(logger, INFO, "%s SocketServer Create!", name.c_str()); fflush(stdout);
-							#if 0
-							m_pSockSrv = new SocketServer(m_socketFactory->createSocketServer("GRI.NwListenerSecure",m_port));
-							#else
-							m_pSockSrv = new SocketServer(m_port);
-							#endif
+							m_pSockSrv = m_socketFactory->createSocketServer2("GRI.NwListenerSecure",m_port);
 							// perror("Error in Socket creation in NwListener\n");
 						}
 

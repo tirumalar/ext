@@ -17,8 +17,6 @@
 #include "ProcessorChain.h"
 #include "Synchronization.h"
 
-// #define HBOX_PG
-
 using namespace std;
 //fwd decl
 class HostAddress;
@@ -87,7 +85,7 @@ private:
 	map<string,uint64_t> m_healthStatus;
 	unsigned long m_healthTimeOutMS;
 	std::vector<HTTPPostMessageHandler *> m_MessageHandlers;
-#if 0
+#ifndef HBOX_PG
 	Safe<SocketServer *> m_pSockSrv;
 #else
 	SocketServer *m_pSockSrv;
