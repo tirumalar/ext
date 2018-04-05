@@ -42,7 +42,7 @@ void MatchManager::CreateMatchers(Configuration & conf){
 #ifdef HBOX_PG
 	m_MatchingLogFileName = (char *)conf.getValue("GRI.MatcherLogFile","Result.txt");
 #else
-	m_MatchingLogFileName = (char *)conf.getValue("GRI.MatcherLogFile","/mnt/mmc/Result.txt");
+	m_MatchingLogFileName = (char *)conf.getValue("GRI.MatcherLogFile","Result.txt");
 #endif
 	if(m_MatchingLogEnable){
 		int logbuffsz = conf.getValue("GRI.MatcherLogBuffSize",1024*100);

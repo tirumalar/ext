@@ -29,7 +29,7 @@ extern int IrisFrameCtr;
 int match_Lock=0;
 
 
-
+bool b_goHome=false;
 
 extern int move_counts;
 extern void port_com_send(char *cmd);
@@ -80,15 +80,16 @@ ec_read_from_client (int filedes)
 
     	  //IrisFrameCtr = MIN_IRIS_FRAMES;
     	  No_eyes_counter=0;
+    	  b_goHome = true;
     	  //port_com_send("fixed_set_rgb(0,100,0)");
-    	  setRGBled(0,BRIGHTNESS_MIN,0,2000,1,0x1F);
-    	  port_com_send("set_audio(1)");
-    	  system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
-    	  port_com_send("set_audio(0)");
+    	  //setRGBled(0,BRIGHTNESS_MIN,0,2000,1,0x1F);
+//    	  port_com_send("set_audio(1)");
+//    	  system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
+//    	  port_com_send("set_audio(0)");
 
-    	  MoveTo(CENTER_POS);
-    	  sleep(2);
-    	  setRGBled(BRIGHTNESS_MIN,BRIGHTNESS_MIN,BRIGHTNESS_MIN,10,0,0x1F);
+    	//  MoveTo(CENTER_POS);
+    	  //sleep(2);
+    	  //setRGBled(BRIGHTNESS_MIN,BRIGHTNESS_MIN,BRIGHTNESS_MIN,10,0,0x1F);
     	  move_counts = 0;
     	  //SetFaceMode();
     	  //match_Lock=0;
@@ -104,7 +105,7 @@ ec_read_from_client (int filedes)
 
     		  No_eyes_counter=0;
     		  //port_com_send("fixed_set_rgb(0,0,100)");
-    		  setRGBled(0,0,BRIGHTNESS_MELLOW,1000,0,0x1F);
+    		 // setRGBled(0,0,BRIGHTNESS_MELLOW,1000,0,0x1F);
     		  match_Lock=0;
 
     	  }
@@ -128,6 +129,34 @@ ec_read_from_client (int filedes)
 //    		  IrisFrameCtr = MIN_IRIS_FRAMES;
 //    	  }
 //    	  RecoverModeDrop();
+      }
+      else //if(buffer[0]=='f')
+      {
+          	  char temp[100];
+          	  sprintf(temp,"\"%s\"",buffer);
+        	  printf("EC Server: got message: `%s  %s'\n", buffer,GetTimeStamp());
+          	  port_com_send(buffer);
+
+          	  if(!(strncmp(temp,"fixed_set_rgb(0,10,0)",20)) || b_goHome)
+          		//if(0)
+          	  {
+          		printf("-----------------------------------------EC Server: Audio got message: `<%s>  %s'\n", buffer,GetTimeStamp());
+          		usleep(10000);
+       //   		port_com_send("set_audio(1)");
+          	//	system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
+         // 		port_com_send("set_audio(0)");
+	      	  }
+
+          	  if(b_goHome)
+          	  {
+          		 //usleep(10000)
+          		//MoveTo(CENTER_POS);
+          		/*port_com_send("psoc_write(3,0x00)");
+          		cvWaitKey(1000);*/
+          		port_com_send("set_audio(2)"); // to play auth sound
+          		b_goHome=false;
+          	  }
+
       }
 
       return 0;

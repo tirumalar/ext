@@ -85,11 +85,12 @@ private:
 	map<string,uint64_t> m_healthStatus;
 	unsigned long m_healthTimeOutMS;
 	std::vector<HTTPPostMessageHandler *> m_MessageHandlers;
-#ifndef HBOX_PG
-	Safe<SocketServer *> m_pSockSrv;
-#else
+#if defined(HBOX_PG) || defined(CMX_C1)
 	SocketServer *m_pSockSrv;
+#else
+	Safe<SocketServer *> m_pSockSrv;
 #endif
+
 	Mutex m_HBLock; // DJH: Add protection for m_healthStatus
 	bool m_logging;
 	SocketFactory *m_socketFactory;

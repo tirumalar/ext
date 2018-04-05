@@ -30,7 +30,7 @@ DBReceive::DBReceive(Configuration& conf ):GenericProcessor(conf),m_DBFileMsg(0)
 ,m_trigDispatcher(0),m_f2fDispatcher(0),m_tempDbFileName(0),m_F2FDbRxMsg(256),m_F2FDbDoneMsg(256),m_Debug(false),m_rxfilenumber(0)
 ,m_socketFactory(NULL),m_resultDestAddr(NULL),m_tempBuffer(NULL){
 #ifndef HBOX_PG
-	m_dbFileName = conf.getValue("GRI.irisCodeDatabaseFile", "./data/sqlite.db3");
+	m_dbFileName = conf.getValue("GRI.irisCodeDatabaseFile", "data/sqlite.db3");
 #else
 	m_dbFileName = conf.getValue("GRI.irisCodeDatabaseFile", "data/sqlite.db3");
 #endif
@@ -174,11 +174,12 @@ void DBReceive::process(Copyable *_msg) {
 			HTTPPOSTMsg passnext(1024);
 			int len = -1;
 
-#ifdef HBOX_PG // for x64
+#if defined(HBOX_PG) || defined(CMX_C1) // for x64
 			EyelockLog(logger, DEBUG, "Formatting message for x64");
 			const char* formatStr = "RELOADDB;%d;%d;%d;%lu;%d;";
 #else
-			const char* formatStr = "RELOADDB;%d;%d;%d;%d;%d;";
+			const char* formatStr = "RELOADDB;%d;%d;%d;%lu;%d;";
+			//const char* formatStr = "RELOADDB;%d;%d;%d;%d;%d;";
 #endif
 			if(msg->m_msgType == eREPLACEDB){
 				len = sprintf(passnext.GetBuffer(),formatStr,eREPLACEDB,m_rxfilenumber-1,msg->m_SD,(unsigned long)msg->m_SecureTrait,msg->m_isEncrypt);

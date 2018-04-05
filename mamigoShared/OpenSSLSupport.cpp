@@ -80,14 +80,15 @@ void OpenSSLSupport::init() {
 	FileConfiguration conf ("Eyelock.ini");
 	m_shadebug = conf.getValue("Eyelock.SSLDebug", false);
 	DBAdapter_Keys db;
-#ifndef HBOX_PG	
+
+#if defined(HBOX_PG) || defined(CMX_C1)
 	if(db.OpenFile("keys.db")){
 		if(0!= db.ReadDB(m_KeyVec)){
 			m_KeyVec.clear();
 		}
 	}
 #else
-	if(db.OpenFile("keys.db3")){
+	if(db.OpenFile("keys.db")){
 		if(0!= db.ReadDB(m_KeyVec)){
 			m_KeyVec.clear();
 		}

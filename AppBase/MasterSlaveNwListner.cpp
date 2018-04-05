@@ -178,7 +178,7 @@ int MasterSlaveNwListner::End()
 }
 
 unsigned int MasterSlaveNwListner::MainLoop() {
-#ifdef HBOX_PG
+#if defined(HBOX_PG) || defined(CMX_C1)
 	return 0;
 #endif
 	std::string name = "MasterSlaveNwListner::";

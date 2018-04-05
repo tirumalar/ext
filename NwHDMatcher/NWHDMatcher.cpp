@@ -80,7 +80,7 @@ m_ID(0),m_BufferSize(0),m_dbRdr(0),m_MatchMsgRxBuffer(0),m_IrisData(0),m_DBFileM
 	m_IrisData = new IrisData;
 	m_socketFactory = new SocketFactory(conf);
 #ifndef HBOX_PG
-	m_dbFileName = (char *)conf.getValue("GRI.irisCodeDatabaseFile", "./data/sqlite.db3");
+	m_dbFileName = (char *)conf.getValue("GRI.irisCodeDatabaseFile", "data/sqlite.db3");
 #else
 	m_dbFileName = (char *)conf.getValue("GRI.irisCodeDatabaseFile", "data/sqlite.db3");
 #endif	
@@ -134,10 +134,11 @@ void NWHDMatcher::run()
 		try{
 			m_portBinded=false;
 #ifndef HBOX_PG
-			if(!sockSrv) sockSrv= new SocketServer(m_socketFactory->createSocketServer("Eyelock.NWHDMatcherSecure",m_port));
+	//		if(!sockSrv) sockSrv= new SocketServer(m_socketFactory->createSocketServer("Eyelock.NWHDMatcherSecure",m_port));
 #else
 			if(!sockSrv) sockSrv= new SocketServer(m_port);
 #endif
+			if(!sockSrv) sockSrv= new SocketServer(m_port);
 			m_portBinded=true;
 			sockSrv->Accept(OnConnect, this);
 		}

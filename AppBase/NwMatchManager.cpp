@@ -51,10 +51,11 @@ NwMatchManager::NwMatchManager(Configuration& conf) :
 #else
 	m_bioInstance = NULL;
 #endif
-#ifndef HBOX_PG
-	m_irisCodeDatabaseFile = (char*) conf.getValue("GRI.irisCodeDatabaseFile","./data/sqlite.db3");
-#else	
+
+#if defined(HBOX_PG) || defined(CMX_C1)
 	m_irisCodeDatabaseFile = (char*) conf.getValue("GRI.irisCodeDatabaseFile","data/sqlite.db3");
+#else
+	m_irisCodeDatabaseFile = (char*) conf.getValue("GRI.irisCodeDatabaseFile","./data/sqlite.db3");
 #endif	
 	m_queueFullBehaviour = DROP;
 	m_Debug = conf.getValue("GRI.NwMmDebug", false);
