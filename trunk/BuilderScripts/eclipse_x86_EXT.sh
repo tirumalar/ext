@@ -1,6 +1,6 @@
 #!/bin/bash -e
 echo HOMEDIR  $HOME
-export WORKSPACE="${HOME}/workspace/Ext_Eyelock/trunk" 
+export WORKSPACE="${HOME}/workspace/trunk" 
 if [ -f "${HOME}/eclipse/eclipse" ];
 then
    export ECLIPSEPATH="${HOME}/eclipse"

@@ -96,7 +96,7 @@ int cur_pos=CENTER_POS;
 #define MIN_IRIS_FRAMES 100
 int fileNum=0;
 int move_counts=0;
-#define FRAME_DELAY 20
+#define FRAME_DELAY 40
 
 // this defines how many frames without a face will cause a switch back to face mode ie look for faces
 #define NO_FACE_SWITCH_FACE 10
@@ -124,7 +124,7 @@ void SetExp(int cam, int val)
 	int coarse = val/PIXEL_TOTAL;
 	int fine = val - coarse*PIXEL_TOTAL;
 
-//	sprintf(buff,"wcr(%d,0x3012,%d) | wcr(%d,0x3014,%d)",cam,coarse,cam,fine);
+	sprintf(buff,"wcr(%d,0x3012,%d) | wcr(%d,0x3014,%d)",cam,coarse,cam,fine);
 	sprintf(buff,"wcr(%d,0x3012,%d)",cam,coarse);
 	port_com_send(buff);
 
@@ -394,7 +394,7 @@ void AuxIrisSettings(){
 
 void MainIrisSettings(){
 
-	return;
+	//return;
 	printf("configuring Main Iris settings\n");
 	//Iris configuration of LED
 	port_com_send("psoc_write(2,40) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,3) | psoc_write(3,0x31)| psoc_write(6,1)");
@@ -424,6 +424,7 @@ void RecoverModeDrop()
 
 void SwitchIrisCameras(bool mode)
 {
+	printf("SWITCHING cameras------------------->");
 	char cmd[100];
 	if (mode)
 		sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY);
@@ -449,8 +450,9 @@ void SetFaceMode()
 	//setRGBled(20,20,20,1000,0,0x1F);
 	if (currnet_mode==MODE_FACE)
 		return;
-	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
-	port_com_send("wcr(4,0x3012,12) | wcr(4,0x301e,0) | wcr(4,0x305e,0xF0)");
+//	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
+	port_com_send("psoc_write(2,30) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)");
+	port_com_send("wcr(4,0x3012,12) | wcr(4,0x305e,0xF0)"); //| wcr(4,0x301e,0)
 	start_mode_change = std::chrono::system_clock::now();
 	currnet_mode = MODE_FACE;
 }
@@ -468,13 +470,28 @@ void SetIrisMode(int eye_distance)
 	AuxIrisSettings();
 
 
+/*	//switching cameras
+	if (eye_distance > 40)
+	{
+		SwitchIrisCameras(true);
+		MainIrisSettings();
+		printf("Main Cameras\n");
+	}
+	else
+	{
+		SwitchIrisCameras(false);
+		AuxIrisSettings();
+		printf("AUX Cameras\n");
+	}*/
+
+
 /*
 	port_com_send("psoc_write(2,40) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,7) | psoc_write(3,0x31)| psoc_write(6,4)");
 	port_com_send("wcr(4,0x3012,1) | wcr(4,0x301e,0) | wcr(4,0x305e,10)");
 */
-
-	printf("Dimming face cameras!!!");
-	port_com_send("wcr(4,0x3012,1) | wcr(4,0x301e,0) | wcr(4,0x305e,40)");
+//| wcr(4,0x301e,0)
+	//printf("Dimming face cameras!!!");
+	port_com_send("wcr(4,0x3012,1)  | wcr(4,0x305e,40)");
 
 	//cvWaitKey(200);
 	IrisFrameCtr=0;
@@ -538,6 +555,8 @@ char cmd[100];
 	//setting up face cameras and motor pos
 	printf("Re Homing\n");
 	port_com_send("fx_home()\n");
+	//port_com_send("wcr(0x1f,0x301a,0x1199)");
+	usleep(100000);
 	//cvWaitKey(6000);
 	port_com_send("fx_abs(25)\n");
 	//cvWaitKey(6000);
@@ -588,26 +607,25 @@ char cmd[100];
 	//this is before ilya mucked with it
 	//printf("configuring Main Iris settings\n");
 	//Main Iris cameras configuration
-	port_com_send("wcr(0x18,0x3012,16) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,40)");
+	//port_com_send("wcr(0x18,0x3012,12) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,64)");
 	//port_com_send("wcr(0x18,0x3040,0xC000)"); //Flipping of iris images
 
 	//Aux Iris Cameras Configuration
 	//port_com_send("wcr(0x03,0x3012,12) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,128)");
-	port_com_send("wcr(0x03,0x3012,10) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,128)"); // was 128 Anita chnaged my Mo
-
+	port_com_send("wcr(0x03,0x3012,12) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,160)"); // was 128 Anita chnaged my Mo
 
 
 	// setup up all pll values
 	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
 	cvWaitKey(100);
-	//port_com_send("wcr(0x1f,0x302e,2) | wcr(0x1f,0x3030,44) | wcr(0x1f,0x302c,2) | wcr(0x1f,0x302a,6))");
+	// port_com_send("wcr(0x1f,0x302e,2) | wcr(0x1f,0x3030,44) | wcr(0x1f,0x302c,2) | wcr(0x1f,0x302a,6))");
 	port_com_send("wcr(0x04,0x302e,2) | wcr(0x04,0x3030,44) | wcr(0x04,0x302c,2) | wcr(0x04,0x302a,6))");
 	cvWaitKey(10);
 
 	port_com_send("wcr(0x04,0x30b0,0x90");	//sarvesh
 
-	//port_com_send("wcr(0x1f,0x30b0,0x90");
-	//port_com_send("wcr(0x1B,0x30b0,0x80");
+	// port_com_send("wcr(0x1f,0x30b0,0x4090");
+	// port_com_send("wcr(0x1B,0x30b0,0x80");
 
 	//changes that ilya make
 	//printf("configuring Main Iris settings\n");
@@ -634,6 +652,14 @@ char cmd[100];
 	//cvWaitKey(6000);
 	port_com_send(cmd);
 
+	//This code is for playing sound
+	if(1)
+	{
+		port_com_send("set_audio(1)");
+		system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
+		sleep(2);
+	}
+
 #if 0
 	while (1)
 	{
@@ -658,7 +684,17 @@ Rect centerLine(1200/scaling, 960/scaling, 0, 0); //Mohammad center of the displ
 //Rect no_move_area(0,560/scaling,960/scaling,80/scaling); //Mohammad rect at the center
 //Rect no_move_area(0,660/scaling,960/scaling,160/scaling); //Mohammad rect at the center 580, the value 80 we moved to 160
 //Rect no_move_area(0,580/scaling,960/scaling,80/scaling); //Mohammad rect at the center 580, the value 80 we moved to 160
+
+//follwoing command is for test demo 1 no_move_area
 Rect no_move_area(0,52,120,14); //Mohammad rect at the center 580, the value 80 we moved to 160
+
+/*
+
+//follwoing command is for test demo 2 no_move_area
+Rect no_move_area(0,64,120,14); //Mohammad rect at the center 580, the value 80 we moved to 160
+*/
+
+
 //Rect detect_area_center(120/SCALE,120/SCALE,(960-120*2)/(SCALE*SCALE),1200/SCALE)
 //Rect no_move_area_aux(0,660/scaling,960/scaling,160/scaling); //Mohammad rect at the center 580
 
@@ -800,7 +836,7 @@ void DoRunMode()
 				static int agc_val_old=0;
 				  if (abs(agc_val-agc_val_old)>300)
 				  	  {
-					  printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
+					//  printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
 					  SetExp(4,agc_val);
 					  agc_val_old= agc_val;
 				  	  }
@@ -852,8 +888,8 @@ void DoRunMode()
 
 									MoveRelAngle(-1*err);
 								//	while (waitKey(10) != 'z');
-									printf("fx_abs val: %i\n", -1*err);
-									printf("Face is IN RANGE!!!!\n");
+								//	printf("fx_abs val: %i\n", -1*err);
+								//	printf("Face is IN RANGE!!!!\n");
 
 									//flush the video buffer to get rid of frames from motion
 									{
@@ -997,6 +1033,7 @@ int main(int argc, char **argv)
 		}
 
 
+
 		if (run_mode)
 			{
 			 DoRunMode();
@@ -1028,6 +1065,17 @@ int main(int argc, char **argv)
 			printf("saved %s\n",fName);
 
 		}
+		if(key=='b')
+			{
+				char fName[50];
+				sprintf(fName,"%d_%d.bin",atoi(argv[1]),fileNum++);
+				FILE *f = fopen("white.bin", "rb");
+				int length = 1200*960;
+				fwrite(outImg.data, length, 1, f);
+				cv::imwrite(fName,outImg);
+				printf("saved %s\n",fName);
+
+			}
 	}
 
  }

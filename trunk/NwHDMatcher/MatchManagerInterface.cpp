@@ -74,7 +74,7 @@ m_TimeoutActivity(1000000),m_MatchingLogEnable(0),m_SpecX(0),m_SpecY(0),m_dbAdap
 	m_bio = bio;
 #ifndef HBOX_PG
 	m_irisCodeDatabaseFile = conf.getValue("GRI.irisCodeDatabaseFile",
-			"./data/sqlite.db3");
+			"data/sqlite.db3");
 #else				
 	m_irisCodeDatabaseFile = conf.getValue("GRI.irisCodeDatabaseFile",
 			"data/sqlite.db3");

@@ -923,7 +923,7 @@ int i2c_start_transaction()
 	fd = open(_i2c_bus, O_RDWR | O_NOCTTY | O_SYNC);
 	if (fd < 0) {
 		//EyelockLog(logger, ERROR, "BoB => i2c_start_transaction - open %s", strerror(errno));
-		perror("**************open*************************************");
+		//perror("**************open*************************************");
 		return 0;
 	}
 

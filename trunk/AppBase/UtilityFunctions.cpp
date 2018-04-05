@@ -81,7 +81,7 @@ void SetKeyInFile(const char * fname,const char *key ,const char *val){
 
 	 len = snprintf(buffer,255,"sed -r \"/.*%s.\\*$/d\" -i %s && sed -r \"$ a\\%s=%s\" -i %s",key,fname,key,val,fname);
 #ifndef HBOX_PG
-	std::string s("./data/Scripts/ReplaceKey.sh ");
+	std::string s("data/Scripts/ReplaceKey.sh ");
 #else
 	std::string s("data/Scripts/ReplaceKey.sh ");
 #endif

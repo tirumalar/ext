@@ -57,18 +57,34 @@ int portcom_start()
 
 
 int in_send=0;
+
 void port_com_send(char *cmd)
 {
 	char buffer[512];
 	int rv,ret;
-	printf("In port com");
+	//printf("In port com");
+	FILE *file;
+	file = fopen("port.log","at");
+	if (file)
+	{
+		fprintf(file,"<%s>\n",cmd);
+		fclose(file);
+	}
 
+	if (strncmp(cmd,"ixed",strlen("ixed"))==0)
+			{
+		printf("I got ixed\n");
+		//scanf("%d",&rv);
+			return;
+			}
 	while (recv(sockfd,buffer,512,MSG_DONTWAIT)>0);
 	int t=clock();
 
 	if (in_send)
 	{
 		printf("--------------------------------------->  In send\n");
+		while (in_send)
+			usleep(1000);
 	}
 	in_send=1;
 	sprintf(buffer,"%s\n",cmd);
@@ -84,7 +100,7 @@ void port_com_send(char *cmd)
 		rv=recv(sockfd,buffer,512,MSG_DONTWAIT);
 		counter++;
 		usleep(100);
-		if (counter>10000)
+		if (counter>500000)
 			{
 			printf("----------------->error no return\n");
 			//printf(">%s Got K %2.3f\n",cmd,(float)(clock()-t)/CLOCKS_PER_SEC);
@@ -100,7 +116,7 @@ void port_com_send(char *cmd)
 		buffer[rv]=0;
 		if (strchr(buffer,'K'))
 			{
-			printf(">%s Got K %2.3f\n",cmd,(float)(clock()-t)/CLOCKS_PER_SEC);
+			//printf(">%s Got K %2.3f\n",cmd,(float)(clock()-t)/CLOCKS_PER_SEC);
 			break;
 			}
 		}
@@ -120,10 +136,12 @@ int port_com_send_return(char *cmd, char *buffer, int min_len)
 	if (in_send)
 	{
 		printf("--------------------------------------->  In send\n");
+		while (in_send)
+				usleep(1000);
 	}
 	in_send=1;
 
-	printf("In port com");
+	//printf("In port com");
 	//usleep(10000);
 	while (recv(sockfd,buffer,512,MSG_DONTWAIT)>0);
 
@@ -178,7 +196,7 @@ float read_angle(void)
 	buffer[len]=0;
 	sscanf(buffer,"%f %f %f %f",&x,&y,&z,&a);
 //	printf("Buffer =>%s\n",buffer);
-	printf ("%3.3f %3.3f %3.3f %3.3f  readTime=%2.4f\n",x,y,z,a,(float)(clock()-t)/CLOCKS_PER_SEC);
+	//printf ("%3.3f %3.3f %3.3f %3.3f  readTime=%2.4f\n",x,y,z,a,(float)(clock()-t)/CLOCKS_PER_SEC);
 	return a;
 	}
 	else
