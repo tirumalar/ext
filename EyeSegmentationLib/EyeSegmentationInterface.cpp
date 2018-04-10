@@ -399,6 +399,8 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 				EyeSegmentationOutput tmp1 = *m_eso;
 				// segmentation(unsigned char *data, int w, int h, float pupilX, float pupilY, float pupilR, float irisX, float irisY, float irisR)
 				bool status = (bool)segmentation((unsigned char*)imageBuffer, 640,480, m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
+#if 0 // Commented saving of images
+				
 				if (status)
 				{
 					draw( image, tmp1.pp, color );
@@ -422,6 +424,7 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 					//fprintf(fp, "%f %f %f %f %f %f %f", m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
 					//fclose(fp);
 				}
+#endif
 		}
 		cvReleaseImageHeader(&image);
 		return true; // Iris and Segmentation is OK
