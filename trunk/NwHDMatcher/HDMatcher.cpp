@@ -339,9 +339,9 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveCoarseFineDBUnCompressed(
 
 
 std::pair<int,float> HDMatcher::MatchIrisCode(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB){
-#ifdef HBOX_PG 
-	PrintDB(DB); 
-#endif
+//#ifdef HBOX_PG 
+	//PrintDB(DB); 
+// #endif
 	if(m_compressedMatching){
 		//return m_pIrisMatchInterface->MatchDBRotation(IrisCode,IrisCode+1280,DB,m_numIris,m_GreedyMatch,1.0,0xF);
 		if(m_CoarseFineMatch)
