@@ -916,10 +916,44 @@ int set_interface_attribs(int fd, int speed)
     return 0;
 }
 
+#define MAX_LINE_LEN 256
+
+char *LoadEyelockINIFile(){
+	static FILE *fp;
+	char line[MAX_LINE_LEN + 1] ;
+	char *token; char *Value;
+	char *i2cbus = (char *)calloc(50,sizeof(char));
+	fp = fopen("Eyelock.ini", "rb");
+	if(fp == NULL) {
+		EyelockLog(logger, ERROR, "Can't open Eyelock.ini %s", strerror(errno));
+		perror("open");
+		//return -1;
+	}else{
+		while( fgets( line, MAX_LINE_LEN, fp ) != NULL )
+		{
+			token = strtok( line, "\t =\n\r" ) ;
+			if( token != NULL && token[0] != '#' )
+			{
+				Value = strtok( NULL, "\t =\n\r" ) ;
+				if(strcmp(token,"Eyelock.ICMI2CUSBPort") == 0){
+					strcpy(i2cbus, Value);
+				}
+			}
+		}
+		fclose(fp);
+	}
+	return i2cbus;
+}
 int i2c_start_transaction()
 {
 	int fd, result;
 #if defined(HBOX_PG) || defined(CMX_C1)
+	static int firstEntry = 1;
+	static char *i2cbus;
+	if(firstEntry){
+		i2cbus = LoadEyelockINIFile();
+		firstEntry = 0;
+	}
 	fd = open(_i2c_bus, O_RDWR | O_NOCTTY | O_SYNC);
 	if (fd < 0) {
 		//EyelockLog(logger, ERROR, "BoB => i2c_start_transaction - open %s", strerror(errno));
