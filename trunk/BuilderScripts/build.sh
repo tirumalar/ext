@@ -25,15 +25,13 @@ export SOCI_BASE=${PKG_PATH}/soci-3.2.1
 export BOOST="${EYELOCK_3DPARTY}/boost/boost_1_53_0"
 export LIBEVENT=${PKG_PATH}/libevent-2.0.21-stable
 export ZLIB=${PKG_PATH}/zlib-1.2.8
-export FLYCAPTURE_INC=/usr/include/flycapture
-export FLYCAPTURE_LIBS=/usr/lib
+#export FLYCAPTURE_INC=/usr/include/flycapture
+#export FLYCAPTURE_LIBS=/usr/lib
 #export CURL=${PKG_PATH}/libcurl-7.58.0
 
 # for MultiChannelLogger
-#export POCO_BASE=${PKG_PATH}/poco-1.9.0
-#export OPENSSL_102N_BASE=${PKG_PATH}/openssl-1.0.2n
-
-
+export POCO_BASE=${PKG_PATH}/poco-1.9.0
+export OPENSSL_102N_BASE=${PKG_PATH}/openssl-1.0.2n
 
 export ARCH_PROCESSOR="x86"
 
@@ -51,6 +49,10 @@ NwHDMatcher
 EyelockConfigurationLib
 NanoSDK
 Eyelock
+nxtW
+KeyMgr
+icm_communicator
+MultiChannelLogger
 )
 
 NANOSDK_PATH="${EYELOCK_WS_EXT}/NanoSDK"
