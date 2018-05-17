@@ -33,6 +33,14 @@ export ZLIB=${PKG_PATH}/zlib-1.2.8
 export POCO_BASE=${PKG_PATH}/poco-1.9.0
 export OPENSSL_102N_BASE=${PKG_PATH}/openssl-1.0.2n
 
+#for test_aruc
+export FACE_INC=${WORKSPACE}/FaceTracker/facetracker/include
+export CLM_EIGEN_INC=${WORKSPACE}/FaceTracker/CLM/Eigen
+export CLM_INC=${WORKSPACE}/FaceTracker/CLM/include
+export OPENCV_NEW_INC=${PKG_PATH}/opencv3.4/include
+export OPENCV_NEW_LIBS=${PKG_PATH}/opencv3.4/lib
+
+
 export ARCH_PROCESSOR="x86"
 
 projects=(
@@ -53,6 +61,9 @@ nxtW
 KeyMgr
 icm_communicator
 MultiChannelLogger
+CLM
+facetracker
+test_aruc
 )
 
 NANOSDK_PATH="${EYELOCK_WS_EXT}/NanoSDK"
