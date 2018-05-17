@@ -22,6 +22,9 @@ nxtW
 KeyMgr
 icm_communicator
 MultiChannelLogger
+CLM
+facetracker
+test_aruc
 )
 
 echo "Importing projects"

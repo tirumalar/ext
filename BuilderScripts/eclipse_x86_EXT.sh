@@ -1,6 +1,6 @@
 #!/bin/bash -e
 echo HOMEDIR  $HOME
-export WORKSPACE="${HOME}/workspace/trunk" 
+export WORKSPACE="${HOME}/HBox/EXT/trunk" 
 if [ -f "${HOME}/eclipse/eclipse" ];
 then
    export ECLIPSEPATH="${HOME}/eclipse"
@@ -11,8 +11,8 @@ else
 	   export ECLIPSEPATH="${HOME}/eclipse_Kepler"
 	   echo "KEPLER PRESENT"
 	else
-	   export ECLIPSEPATH="${HOME}/workspace/eclipse_oxygen"
-	   echo "OXYGEN PRESENT"
+	   export ECLIPSEPATH="${HOME}/HBox/eclipse"
+	   echo "JUNO PRESENT"
 	fi
 fi
 echo $PATH
@@ -46,6 +46,13 @@ export ZLIB=${PKG_PATH}/zlib-1.2.8
 export FLYCAPTURE_INC=/usr/include/flycapture
 export FLYCAPTURE_LIBS=/usr/lib
 export COOLRUNNER_INC=${WORKSPACE}/SafeFlight/include
+
+#test_aruc
+export FACE_INC=${WORKSPACE}/FaceTracker/facetracker/include
+export CLM_EIGEN_INC=${WORKSPACE}/FaceTracker/CLM/Eigen
+export CLM_INC=${WORKSPACE}/FaceTracker/CLM/include
+export OPENCV_NEW_INC=${PKG_PATH}/opencv3.4/include
+export OPENCV_NEW_LIBS=${PKG_PATH}/opencv3.4/lib
 
 export ARCH_PROCESSOR="x86"
 
