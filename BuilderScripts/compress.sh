@@ -58,7 +58,6 @@ cp "${EYELOCK_WS_EXT}/Eyelock/data/keys.db" "${ROOT_DIR}"
 cp "${EYELOCK_WS_EXT}/linux/bin/Release/Eyelock" "${ROOT_DIR}"
 cp "${EYELOCK_WS_EXT}/linux/bin/Release/KeyMgr" "${ROOT_DIR}"
 cp "${EYELOCK_WS_EXT}/linux/bin/Release/icm_communicator" "${ROOT_DIR}"
-cp "${EYELOCK_WS_EXT}/linux/bin/Release/cvPreview" "${ROOT_DIR}"
 
 cp "${EYELOCK_WS_EXT}/NanoSDK/scripts/fwHandler.sh" "${ROOT_DIR}"
 

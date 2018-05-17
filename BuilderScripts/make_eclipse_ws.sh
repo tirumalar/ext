@@ -19,7 +19,9 @@ mamigoShared
 NanoSDK
 NwHDMatcher
 nxtW
+KeyMgr
 icm_communicator
+MultiChannelLogger
 )
 
 echo "Importing projects"
