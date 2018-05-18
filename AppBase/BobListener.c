@@ -16,7 +16,8 @@
 
 #include <termios.h>
 #if defined(HBOX_PG) || defined(CMX_C1)
-#define I2C_BUS	"/dev/ttyUSB0"
+//#define I2C_BUS	"/dev/ttyUSB0"
+#define I2C_BUS	"/dev/ttyACM0"
 #else
 #ifdef CMX_C1_OLD
 #define I2C_BUS	"/dev/i2c-1"
@@ -78,6 +79,7 @@ static int ShouldIQuit = 0;
 static int ShouldIPollACS = 1;
 
 uint64_t timestart = 0;
+int m_i2cdev = 0;
 
 
 
@@ -108,12 +110,13 @@ static int osdpResetCount = 0;
 
 pthread_t com_thread = 0;
 pthread_mutex_t lock;
-
+int testB=0;
 void bob_thread(void *arg)
 {
 	long int tid = syscall(SYS_gettid);
 	//EyelockLog(logger, INFO, "BoB => *** BobListener thread %ld ***",tid);
 
+	printf("******************bob thread started**************\n");
 	m_currentTimeInMS = 0;
 	unsigned int stat = 0;
 	memset(&bobTimer[0], 0, MAX_TIMER * sizeof(BoB_Timer));
@@ -127,7 +130,9 @@ void bob_thread(void *arg)
 	// read BoB version
 	char sw_version[3] = {0}, hw_version[3] = {0};
 	BobMutexStart();
+	printf("trying to send command %d\n",BOB_SW_VERSION_OFFSET);
 	BobReadArray(BOB_SW_VERSION_OFFSET, sw_version, 3);
+	printf("received data %s\n",sw_version);
 	BobReadArray(BOB_HW_VERSION_OFFSET, hw_version, 3);
 	BobWriteReg(BOB_OSDP_STATUS_OFFSET, 0);
 	BobMutexEnd();
@@ -141,8 +146,10 @@ void bob_thread(void *arg)
 	if (file){
 		fprintf(file, "ICM software version: %d.%d.%d\n", sw_version[0], sw_version[1], sw_version[2]);
 		fprintf(file, "ICM hardware version: %x.%x.%x\n", hw_version[0], hw_version[1], hw_version[2]);
-		//EyelockLog(logger, INFO, "BoB => ICM software version: %d.%d.%d", sw_version[0], sw_version[1], sw_version[2]);
-		//EyelockLog(logger, INFO, "BoB => ICM hardware version: %x.%x.%x", hw_version[0], hw_version[1], hw_version[2]);
+		printf("\n");
+		printf("BoB => ICM software version: %d.%d.%d\n", sw_version[0], sw_version[1], sw_version[2]);
+		printf("BoB => ICM hardware version: %x.%x.%x\n", hw_version[0], hw_version[1], hw_version[2]);
+		printf("\n");
 		fclose(file);
 	}
 
@@ -296,7 +303,6 @@ void bob_thread(void *arg)
 							BobMutexStart();
 							result = BobReadArray(BOB_OSDP_DATA_OFFSET, buf, length);
 							BobMutexEnd();
-							//printf("data length %d\n", length);
 							if (result == -1) {
 								;//EyelockLog(logger, ERROR, "BoB => Read ODSP Message failed, length %d", length);
 							}
@@ -355,6 +361,17 @@ void bob_thread(void *arg)
 				printf("\n************ reset count %d ***********\n\n", osdpResetCount);
 			}
 #endif
+		}
+		if(testB)
+		{
+			printf("**************can add code here**************8\n");
+
+			if (BoBSetACSRelayOut(1) == 0)
+			{
+				// set relay timer
+				BoBSetRelayTimerNew(1000, 1);
+			}
+			testB=0;
 		}
     }
 
@@ -579,13 +596,11 @@ int BobReadReg(unsigned char reg, unsigned int *val)
 	int fd = i2c_start_transaction();
 	if(fd == 0)
     {
-	#ifdef __ARM__
-		EyelockLog(logger, ERROR, "BoB => Error starting interface");
-	#endif
+		EyelockLog(logger, ERROR, "BobReadReg:BoB => Error starting interface");
         return -1;
     }
 	int result = internal_read_reg(fd, reg, val);
-	close(fd);
+	//close(fd);
 	return result;
 
 }
@@ -594,16 +609,15 @@ int BobReadReg(unsigned char reg, unsigned int *val)
 int internal_read_reg(int fd, unsigned char reg, unsigned int *val)
 {
 	int result;
-	unsigned char buff[2];
+	unsigned char buff[5];
 
-	buff[0] = 0x56;
-	buff[1] = (56 << 1) | 1;
-	buff[2] = 0x00;
-	buff[3] = reg;
-	buff[4] = 0x01;
+	buff[0] = 56;
+	buff[1] = 0x00;
+	buff[2] = reg;
+	buff[3] = 0x01;
 
-	result = write(fd, buff, 5);
-	if (result != 5) {
+	result = write(fd, buff, 4);
+	if (result != 4) {
 		//EyelockLog(logger, ERROR, "BoB => write error in internal_read_reg() - write %s, result %d", strerror(errno), result);
 		//perror("write");
 		return -1;
@@ -612,15 +626,15 @@ int internal_read_reg(int fd, unsigned char reg, unsigned int *val)
 	buff[0] = 0;
     //usleep(100);
 	usleep(50);
-	result = read(fd, buff, 1);
-	if (result != 1) {
+	result = read(fd, buff, 5);
+	if (result != 5) {
 		//EyelockLog(logger, ERROR, "BoB => read error in internal_read_reg() - read %s, result %d", strerror(errno), result);
 		//perror("read");
 		return -1;
 	}
 
 	if (val)
-		*val = buff[0];
+		*val = buff[4];
 	return 0;
 }
 #else
@@ -658,11 +672,11 @@ int BobReadArray(unsigned char reg, char *buf, int len)
 	int fd = i2c_start_transaction();
 	if(fd == 0)
     {
-		//EyelockLog(logger, ERROR, "BoB => Error starting interface");
+		EyelockLog(logger, ERROR, "BobReadArray:BoB => Error starting interface");
         return -1;
     }
 	int result = internal_read_array(fd, reg, buf, len);
-	close(fd);
+	//close(fd);
 	return result;
 
 }
@@ -672,14 +686,14 @@ int internal_read_array(int fd, unsigned char reg, char *buf, int len)
 	int result;
 	char buff[6000];	// 0xffff=65535
 
-	buff[0] = 0x56;
-	buff[1] = (56 << 1) | 1;
-	buff[2] = 0x00;
-	buff[3] = reg;
-	buff[4] = len;
+	buff[0] = 56;
+	buff[1] = 0x00;
+	buff[2] = reg;
+	buff[3] = len;
 	//EyelockLog(logger, DEBUG, "BoB => @@@ read data array fd=%d reg=%d, len=%d @@@", fd, reg, len);
-	result = write(fd, buff, 5);
-	if (result != 5) {
+	//flush(fd);
+	result = write(fd, buff, 4);
+	if (result != 4) {
 		//EyelockLog(logger, ERROR, "BoB => write error in internal_read_array() - write %s, result %d", strerror(errno), result);
 		//perror("write");
 		return -1;
@@ -687,6 +701,7 @@ int internal_read_array(int fd, unsigned char reg, char *buf, int len)
 
 	usleep(100);
 	//usleep(50);
+	len=len+4;
 	result = read(fd, buff, len);
 	if (result != len)
 	{
@@ -695,7 +710,7 @@ int internal_read_array(int fd, unsigned char reg, char *buf, int len)
         return -1;
 	}
 
-	memcpy(buf, buff, len);
+	memcpy(buf, buff+4, len-4);
 
 	return result;
 }
@@ -734,12 +749,12 @@ int BobWriteReg(unsigned char reg, unsigned int val)
 	int fd = i2c_start_transaction();
 	if(fd == 0)
     {
-		//EyelockLog(logger, ERROR, "BoB => Error starting interface");
+		EyelockLog(logger, ERROR, "BobWriteReg:BoB => Error starting interface");
         return -1;
     }
 	//EyelockLog(logger, DEBUG, "BoB => @@@ write data reg=%d value=%d @@@", reg, val);
 	int result = internal_write_reg(fd, reg, val);
-	close(fd);
+	//close(fd);
 	return result;
 
 }
@@ -747,7 +762,7 @@ int BobWriteReg(unsigned char reg, unsigned int val)
 int internal_write_reg(int fd, unsigned char reg, unsigned int val)
 {
 	int result = -1;
-	unsigned char buff[3];
+	unsigned char buff[5];
 
 	if(fd == 0)
     {
@@ -755,22 +770,23 @@ int internal_write_reg(int fd, unsigned char reg, unsigned int val)
         return -1;
     }
 
-	buff[0] = 0x56;
-	buff[1] = (56 << 1) | 0;
-	buff[2] = 0x00;
-	buff[3] = reg;
-	buff[4] = 0x01;
-	buff[5] = val;
+	buff[0] = 57;
+	buff[1] = 0x00;
+	buff[2] = reg;
+	buff[3] = 0x01;
+	buff[4] = val;
 
-	result = write(fd, buff, 6);
+	result = write(fd, buff, 5);
 
-	if (result != 6) {
-		//EyelockLog(logger, ERROR, "BoB => internal_write_reg - write %s", strerror(errno));
-		//perror("write");
+	if (result != 5) {
+		EyelockLog(logger, ERROR, "BoB => internal_write_reg - write %s", strerror(errno));
+		perror("write");
 	}
 	else
 		result = 0;
+
 	usleep(50);
+	read(fd, buff,4);
 	return result;
 }
 #else
@@ -806,11 +822,11 @@ int BobWriteArray(unsigned char reg, void *ptr, int len)
 	int fd = i2c_start_transaction();
 	if(fd == 0)
     {
-		// EyelockLog(logger, ERROR, "BoB => Error starting interface");
+	 EyelockLog(logger, ERROR, "BobWriteArray : BoB => Error starting interface");
         return -1;
     }
 	int result = internal_write_array(fd, reg, ptr, len);
-	close(fd);
+	//close(fd);
 	return result;
 
 }
@@ -826,20 +842,19 @@ int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
 		// EyelockLog(logger, ERROR, "BoB => Error starting interface");
         return -1;
     }
-	buff[0] = 0x56;
-	buff[1] = (56 << 1) | 0;
-	buff[2] = 0x00;
-	buff[3] = reg;
-	buff[4] = len;
+	buff[0] = 57;
+	buff[1] = 0x00;
+	buff[2] = reg;
+	buff[3] = len;
 	// buff[5] = val;
 	if (ptr)
-		memcpy(&buff[5],ptr,len);
+		memcpy(&buff[4],ptr,len);
 	else
-		memset(&buff[5],0,len);
+		memset(&buff[4],0,len);
 
-	result = write(fd, buff, len+5);
+	result = write(fd, buff, len+4);
 
-	if (result != len+5) {
+	if (result != len+4) {
 		//EyelockLog(logger, ERROR, "BoB => internal_write_array - write %s", strerror(errno));
 		//perror("write");
 	}
@@ -948,6 +963,19 @@ int i2c_start_transaction()
 {
 	int fd, result;
 #if defined(HBOX_PG) || defined(CMX_C1)
+	if(m_i2cdev == 0)
+	{
+		m_i2cdev = open(_i2c_bus, O_RDWR | O_NOCTTY | O_SYNC);
+		if (m_i2cdev < 0) {
+			//EyelockLog(logger, ERROR, "BoB => i2c_start_transaction - open %s", strerror(errno));
+			//perror("**************open*************************************");
+			return 0;
+		}
+
+		// Baudrate 19200, 8 bits, no parity, 1 stop bit
+		set_interface_attribs(m_i2cdev, B19200);
+	}
+#if 0
 	static int firstEntry = 1;
 	static char *i2cbus;
 	if(firstEntry){
@@ -963,6 +991,7 @@ int i2c_start_transaction()
 
 	// Baudrate 19200, 8 bits, no parity, 1 stop bit
 	set_interface_attribs(fd, B19200);
+#endif
 #else
 	fd = open(_i2c_bus, O_RDWR);
 	if (fd < 0) {
@@ -982,7 +1011,7 @@ int i2c_start_transaction()
 
 	usleep(100);
 
-	return fd;
+	return m_i2cdev;
 }
 
 
@@ -998,13 +1027,17 @@ void   BobMutexEnd(void)
 
 int BobSetCardReadAck()
 {
+	printf("inside BobSetCardReadAck\n ");
 	int result = 1;
 	usleep(100);
 	BobMutexStart();
 	unsigned int status = 0;
 	BobReadReg(BOB_STATUS_OUT_OFFSET, &status);
+	printf("inside BobSetCardReadAck reading status reg 0x%0x\n",status);
 	usleep(100);
 	result = BobWriteReg(BOB_STATUS_OUT_OFFSET, status|BOB_STATUS_OUT_CHANGE|BOB_STATUS_OUT_CARD_ACK);
+	printf("inside BobSetCardReadAck -- writing ack retrun %d\n",result);
+
 	BobMutexEnd();
 	return result;
 }
