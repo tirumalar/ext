@@ -1,10 +1,16 @@
 #!/bin/bash
 
+export ARM_INC="/opt/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux/aarch64-linux-gnu/libc/usr/include"
+export ARM_LIBS="/opt/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux/aarch64-linux-gnu/libc/usr/lib/aarch64-linux-gnu"
+
+export PATH=~/odroid_cross_bin:$PATH
+echo $PATH
+
 export PKG_PATH="${EYELOCK_WS_EXT}/linux/pkg"
 export TUT_INC=${PKG_PATH}/tut-190-trunk/include
 export ANT_HOME=${HOME}/cruisecontrol-bin-2.8.4/apache-ant-1.8.4
 
-export STATIC_LIBS=${PKG_PATH}/lib/x86
+export STATIC_LIBS=${PKG_PATH}/lib/odroidc2_Release
 export COMMON_INC=${PKG_PATH}/common/include
 
 export EYELOCK_INC=${EYELOCK_WS_EXT}/linux/lib/Include
