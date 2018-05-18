@@ -17,7 +17,18 @@ FW_VER=$(awk ' $0 ~ "^#define EYELOCK_VERSION \".*\"" {split($0, parts, "\""); p
 ICM_VER=$(cat "${EYELOCK_WS_EXT}/ICMBinary/icmversion.txt")
 
 ICM_FILE="nanoNxt_ICM_v${ICM_VER}.cyacd"
-FW_FILE="EyelockExt_v${FW_VER}_ICM_v${ICM_VER}.tar"
+
+if [[ ${configuration} == "Release" ]]
+then
+	NAME_POSTFIX=""
+
+elif [[ ${configuration} == "Release_OdroidC2" ]]
+then
+
+	NAME_POSTFIX="_Linux"
+fi
+
+FW_FILE="EyelockExt_v${FW_VER}_ICM_v${ICM_VER}${NAME_POSTFIX}.tar"
 
 BOARD_FILE="EyelockExt_v${FW_VER}.tar.gz"
 
