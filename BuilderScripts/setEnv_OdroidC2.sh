@@ -37,9 +37,9 @@ export POCO_BASE=${PKG_PATH}/poco-1.9.0
 export OPENSSL_102N_BASE=${PKG_PATH}/openssl-1.0.2n
 
 #for test_aruc
-export FACE_INC=${WORKSPACE}/FaceTracker/facetracker/include
-export CLM_EIGEN_INC=${WORKSPACE}/FaceTracker/CLM/Eigen
-export CLM_INC=${WORKSPACE}/FaceTracker/CLM/include
+export FACE_INC=${EYELOCK_WS_EXT}/FaceTracker/facetracker/include
+export CLM_EIGEN_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/Eigen
+export CLM_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/include
 export OPENCV_NEW_INC=${PKG_PATH}/opencv3.4/include
 export OPENCV_NEW_LIBS=${PKG_PATH}/opencv3.4/lib
 
