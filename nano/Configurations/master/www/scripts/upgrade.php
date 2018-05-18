@@ -199,12 +199,13 @@ function updateProgress($strExecMe)
 $lastline = shell_exec("tail -n 5 /home/updateFw1.log");
 	
     //error_log("finished icm upgrade last line is ".$lastline);
-    if((strpos($lastline , "STATUS:SUCCESS") != FALSE || strpos($lastline, "time:")!= FALSE))
-        return "ICM program done (can't tell if its actually successful!!!)";
-        else
-    return "";
-
-
+    if (strpos($lastline , "STATUS:UNSUCCESSFUL") != FALSE)
+        return FALSE;
+    else
+// DMO ATH-1929 this test and text return does nothing
+// swithed over to returning a bool
+//   if((strpos($lastline , "STATUS:SUCCESS") != FALSE || strpos($lastline, "time:")!= FALSE))
+        return TRUE;//DMO orig. code assumed 'success'?  "ICM program done (can't tell if its actually successful!!!)";
 }
 
 function setFlag($strFlagName)
@@ -342,7 +343,12 @@ if (isset($_FILES["0"]) && $_FILES["0"]["error"] == UPLOAD_ERR_OK)
         if ($bManualUpgrade)
         {
             // Open the XML file and read the bob and nano filename fields...
-            $XMLFilename = $strFirmwareDir."/HBoxVersionInfo.xml";
+			if($eyeLockINI->HardwareType === '0')
+				$XMLFilename = $strFirmwareDir."/NanoNXTVersionInfo.xml";
+			else if ($eyeLockINI->HardwareType === '1')
+				$XMLFilename = $strFirmwareDir."/EXTVersionInfo.xml";
+			else
+            	$XMLFilename = $strFirmwareDir."/HBoxVersionInfo.xml";
             if (file_exists($XMLFilename))
             {
                 $upgradexml = simplexml_load_file($XMLFilename);
@@ -640,13 +646,39 @@ function RunSDKUpgrade()
 */
  echo '|5';
 	NXTW_shell_exec("401"); // /home/root/KeyMgr -d -i fwHandler.tar.gz -o /home/firmware/fwHandlerExc.tar.gz
-	NXTW_shell_exec("402"); // tar xvf fwHandlerExc.tar.gz
-	NXTW_shell_exec("405");  // chmod 777 /home/firmware/fwHandler/*
-	NXTW_shell_exec("403");  // /home/firmware/fwHandler/MultiChannelLogger -f"/home/updateFw1.log" -S
-	//NXTW_shell_exec("404");  // /home/firmware/fwHandler/fwHandler.sh upgrade
-	updateProgress("404");
-	echo "|success";
-	die;
+    if (!getnxtWResult()) // If the Decrypt fails, we fail the upgrade... necessary for security see ATH-1929
+    {
+   		die("|102");
+    }
+    else
+    { 
+	    NXTW_shell_exec("402"); // tar xvf fwHandlerExc.tar.gz
+	    NXTW_shell_exec("405");  // chmod 777 /home/firmware/fwHandler/*
+	    NXTW_shell_exec("403");  // /home/firmware/fwHandler/MultiChannelLogger -f"/home/updateFw1.log" -S
+	    //NXTW_shell_exec("404");  // /home/firmware/fwHandler/fwHandler.sh upgrade
+	    if (!updateProgress("404"))
+            die("|102");
+        else
+        {
+	        echo "|success";
+    	    die;
+        }
+    }
+}
+
+
+// If '0' does not exist in the result file, it's a failure
+function getnxtWResult()
+{
+    $resultFile = fopen("/home/nxtwResult","r");
+	$resultText = fgets($resultFile);
+	fclose($resultFile);
+
+    $pos = strpos($resultText, "STATUS:DECRYPTFAILURE");
+    if ($pos === FALSE)
+        return TRUE;
+    else
+        return FALSE;
 }
 
 
@@ -1054,21 +1086,24 @@ function copyAndUnpackLinuxPatch($strPatchFileDir, $strPatchFilename)
 	
 	$strCmd = sprintf("208".chr(0x1F)."%s",escapeshellarg(sprintf("mkdir -p %s", $tmpPatchDir)));
 	//"cd %s;chmod a+x install.sh;sh install.sh master update", $tmpPatchDir);
-//DMOHBOXOUT		$strResult = NXTW_shell_exec($strCmd); 
+	if($eyeLockINI->HardwareType === '0')
+		$strResult = NXTW_shell_exec($strCmd); 
 	
    // $strCmd = sprintf("ssh root@192.168.40.2 %s", escapeshellarg(sprintf("mkdir -p %s", $tmpPatchDir)));
     //$strResult = debug_shell_exec($strCmd); 
     
 	$strCmd = "209".chr(0x1F).escapeshellarg($tmpPatchDir.'/'.$strTarFilename).chr(0x1F).$tmpPatchDir.chr(0x1F).$strTarFilename;
 	//"cd %s;chmod a+x install.sh;sh install.sh master update", $tmpPatchDir);
-//DMOHBOXOUT		$strResult = NXTW_shell_exec($strCmd); 
+	if($eyeLockINI->HardwareType === '0')
+		$strResult = NXTW_shell_exec($strCmd); 
 	
   //  $strCmd = sprintf("cat %s | ssh root@192.168.40.2 'cat > %s/%s'", escapeshellarg($tmpPatchDir.'/'.$strTarFilename), $tmpPatchDir, $strTarFilename);
    // $strResult = debug_shell_exec($strCmd); 
         
 		$strCmd = "210".chr(0x1F).escapeshellarg($tmpPatchDir).chr(0x1F).escapeshellarg($strTarFilename);
 	//"cd %s;chmod a+x install.sh;sh install.sh master update", $tmpPatchDir);
-//DMOHBOXOUT		$strResult = NXTW_shell_exec($strCmd); 
+	if($eyeLockINI->HardwareType === '0')
+		$strResult = NXTW_shell_exec($strCmd); 
   //  $strCmd = sprintf("ssh root@192.168.40.2 'cd %s;tar xf %s'", $tmpPatchDir, $strTarFilename);
     //$strResult = debug_shell_exec($strCmd); 
     
@@ -1116,7 +1151,8 @@ function cleanUpLinuxPatchFiles($strPatchFileDir)
 
 $strCmd = "212".chr(0x1F).escapeshellarg($tmpPatchDir);
 	//"cd %s;chmod a+x install.sh;sh install.sh master update", $tmpPatchDir);
-//DMOHBOXOUT		$strResult = NXTW_shell_exec($strCmd); 
+	if($eyeLockINI->HardwareType === '0')
+		$strResult = NXTW_shell_exec($strCmd); 
 	//$strCmd = sprintf("ssh root@192.168.40.2 'rm -R %s'", $tmpPatchDir);
 	//$strResult = debug_shell_exec($strCmd); 
 	
