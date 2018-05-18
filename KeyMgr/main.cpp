@@ -101,6 +101,8 @@ int main(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
+	int nRetval = 0;
+
 	printf("Start Key Management\n");
 	//Let me get a lock as only one executable will be enabled.
 	if (!acquireProcessLock(argv[0])) {
@@ -163,8 +165,13 @@ int main(int argc, char* argv[])
 				{
 					if (decrypt)
 					{
-						cout << "Decrypting file  : Input file :  " << inputFile  << " Output file :  " << outputFile << endl;
-						km1.DecryptFile((char*)inputFile.c_str(), (char*)outputFile.c_str());
+						cout << "Decrypting file  : Input file :  " << inputFile << " Output file :  " << outputFile << endl;
+						if (0 == km1.DecryptFile((char*)inputFile.c_str(), (char*)outputFile.c_str()))
+						{
+							nRetval = 1; //Returning '1' is a failure.  ATH-1929 fix
+										 // Write failure to nxtwResult for WebConfig...
+							cout << "STATUS:DECRYPTFAILURE" << endl;
+						}
 					}
 					if (encrypt)
 					{
