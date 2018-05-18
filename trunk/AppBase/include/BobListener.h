@@ -59,6 +59,11 @@
 #define BOB_COMMAND_READ	 			2
 #define BOB_COMMAND_SEND	 			3
 #define BOB_COMMAND_BLE_CMD	 			4
+#define BOB_COMMAND_RTCREAD_CMD	 		5
+#define BOB_COMMAND_RTCWRITE_CMD	 	6
+#define BOB_COMMAND_SET_LED			 	7
+#define BOB_COMMAND_OIM_ON			 	8
+#define BOB_COMMAND_OIM_OFF			 	9
 
 // ACS Status
 #define BOB_STATUS_IN_CHANGE			0x01
