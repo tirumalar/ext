@@ -147,7 +147,15 @@ upgradeMaster(){
 	cp /home/default/Eyelock.ini /home/Eyelock.default 
 	
 	${logger} -L"Decrypting ..."
-	/home/root/KeyMgr -d -i ${firmwareDir}/$1 -o ${firmwareDir}/out.tar.gz;
+	/home/root/KeyMgr -d -i ${firmwareDir}/$1 -o ${firmwareDir}/out.tar.gz > /dev/null
+	if [[ $? -ne 0 ]]
+	then
+		${logger} -L"Error: Master: decrypting failed."
+		${logger} -L"STATUS:UNSUCCESSFUL"
+		cleanup
+		# TODO: change led color to white. Or reboot?
+		exit 1
+	fi
 	mv ${firmwareDir}/out.tar.gz ${firmwareDir}/$1
 	${logger} -L"Decrypting done."
 
