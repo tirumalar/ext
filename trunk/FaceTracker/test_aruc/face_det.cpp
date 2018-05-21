@@ -13,8 +13,8 @@ using namespace cv;
 void detectAndDisplay( Mat frame );
 
 /** Global variables */
-String face_cascade_name = "/home/ext/workspace/trunk/FaceTracker/haarcascades/haarcascade_frontalface_alt.xml";
-String eyes_cascade_name = "/home/ext/workspace/trunk/FaceTracker/haarcascades/haarcascade_eye.xml";
+String face_cascade_name = "/home/root/data/haarcascades/haarcascade_frontalface_alt.xml";
+String eyes_cascade_name = "/home/root/data/haarcascades/haarcascade_eye.xml";
 CascadeClassifier face_cascade;
 CascadeClassifier eyes_cascade;
 String window_name = "Capture - Face detection";
