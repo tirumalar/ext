@@ -1,10 +1,16 @@
 #!/bin/bash
 
+export ARM_INC="/opt/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux/aarch64-linux-gnu/libc/usr/include"
+export ARM_LIBS="/opt/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux/aarch64-linux-gnu/libc/usr/lib/aarch64-linux-gnu"
+
+export PATH=~/odroid_cross_bin:$PATH
+echo $PATH
+
 export PKG_PATH="${EYELOCK_WS_EXT}/linux/pkg"
 export TUT_INC=${PKG_PATH}/tut-190-trunk/include
 export ANT_HOME=${HOME}/cruisecontrol-bin-2.8.4/apache-ant-1.8.4
 
-export STATIC_LIBS=${PKG_PATH}/lib/x86
+export STATIC_LIBS=${PKG_PATH}/lib/odroidc2_Release
 export COMMON_INC=${PKG_PATH}/common/include
 
 export EYELOCK_INC=${EYELOCK_WS_EXT}/linux/lib/Include
@@ -31,9 +37,9 @@ export POCO_BASE=${PKG_PATH}/poco-1.9.0
 export OPENSSL_102N_BASE=${PKG_PATH}/openssl-1.0.2n
 
 #for test_aruc
-export FACE_INC=${WORKSPACE}/FaceTracker/facetracker/include
-export CLM_EIGEN_INC=${WORKSPACE}/FaceTracker/CLM/Eigen
-export CLM_INC=${WORKSPACE}/FaceTracker/CLM/include
+export FACE_INC=${EYELOCK_WS_EXT}/FaceTracker/facetracker/include
+export CLM_EIGEN_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/Eigen
+export CLM_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/include
 export OPENCV_NEW_INC=${PKG_PATH}/opencv3.4/include
 export OPENCV_NEW_LIBS=${PKG_PATH}/opencv3.4/lib
 
