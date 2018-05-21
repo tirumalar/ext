@@ -3,7 +3,7 @@
 export ARM_INC="/opt/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux/aarch64-linux-gnu/libc/usr/include"
 export ARM_LIBS="/opt/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux/aarch64-linux-gnu/libc/usr/lib/aarch64-linux-gnu"
 
-export PATH=~/odroid_cross_bin:$PATH
+export PATH="${EYELOCK_WS_EXT}/odroid_cross_bin":$PATH
 echo $PATH
 
 export PKG_PATH="${EYELOCK_WS_EXT}/linux/pkg"
@@ -14,7 +14,7 @@ export STATIC_LIBS=${PKG_PATH}/lib/Release
 export COMMON_INC=${PKG_PATH}/common/include
 
 export EYELOCK_INC=${EYELOCK_WS_EXT}/linux/lib/Include
-export EYELOCK_LIB=${EYELOCK_WS_EXT}/linux/lib/x86
+export EYELOCK_LIB=${EYELOCK_WS_EXT}/linux/lib/Release
 
 export OPENSSL_INC=${PKG_PATH}/openssl-1.0.1i/include
 export OPENSSL_ASN_INC=${PKG_PATH}/openssl-1.0.1i/crypto/asn1
