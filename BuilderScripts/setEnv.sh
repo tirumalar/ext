@@ -10,7 +10,7 @@ export PKG_PATH="${EYELOCK_WS_EXT}/linux/pkg"
 export TUT_INC=${PKG_PATH}/tut-190-trunk/include
 export ANT_HOME=${HOME}/cruisecontrol-bin-2.8.4/apache-ant-1.8.4
 
-export STATIC_LIBS=${PKG_PATH}/lib/Release
+export STATIC_LIBS=${PKG_PATH}/lib/odroidc2_Release
 export COMMON_INC=${PKG_PATH}/common/include
 
 export EYELOCK_INC=${EYELOCK_WS_EXT}/linux/lib/Include
