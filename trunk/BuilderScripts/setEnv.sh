@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export ARM_INC="/opt/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux/aarch64-linux-gnu/libc/usr/include"
-export ARM_LIBS="/opt/gcc-linaro-aarch64-linux-gnu-4.9-2014.09_linux/aarch64-linux-gnu/libc/usr/lib/aarch64-linux-gnu"
+export ARM_INC="/opt/gcc-linaro-5.4.1-2017.05-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/usr/include"
+export ARM_LIBS="/opt/gcc-linaro-5.4.1-2017.05-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/usr/lib/aarch64-linux-gnu"
 
 export PATH="/opt/odroid_cross_bin":$PATH
 echo $PATH
