@@ -32,7 +32,7 @@ FW_FILE="EyelockExt_v${FW_VER}_ICM_v${ICM_VER}${NAME_POSTFIX}.tar"
 
 BOARD_FILE="EyelockExt_v${FW_VER}.tar.gz"
 
-ENCRYPTER="${EYELOCK_WS_EXT}/KeyMgr/Release/KeyMgr"
+ENCRYPTER="/home/ubuntu/KeyMgr"
 chmod +x "${ENCRYPTER}"
 
 KEY_FILE='/home/ubuntu/BSkey.pem'
