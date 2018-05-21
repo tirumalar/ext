@@ -16,6 +16,7 @@ void TonePlayer::SetVolume(float volume)
 {
 }
 
+#if 0
 int TonePlayer::Generate(snd_pcm_uframes_t offset, int count, double *_phase)
 {
  return 0;
@@ -42,7 +43,7 @@ int TonePlayer::SetSWParams(snd_pcm_t *handle, snd_pcm_sw_params_t *swparams)
 {
     return 0;
 }
-
+#endif
 TonePlayer::TonePlayer()
 {
 
