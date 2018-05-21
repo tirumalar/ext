@@ -59,6 +59,6 @@ fi
 for i in  ${projects[*]}
 do
 echo "Building ${i}/${configuration}"
-	"${ECLIPSE_CDT}/eclipse" --launcher.suppressErrors -data "${EYELOCK_WS_EXT}" -nosplash -application  org.eclipse.cdt.managedbuilder.core.headlessbuild -cleanBuild "${i}/${configuration}" -vmargs -Xms1024M -Xmx4096M
+	"${ECLIPSE_CDT}/eclipse" --launcher.suppressErrors -data "${EYELOCK_WS_EXT}" -nosplash -application  org.eclipse.cdt.managedbuilder.core.headlessbuild -cleanBuild "${i}/${configuration}"
 done
 
