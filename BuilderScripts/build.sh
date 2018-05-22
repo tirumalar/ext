@@ -28,8 +28,8 @@ nxtW
 KeyMgr
 icm_communicator
 MultiChannelLogger
-#CLM
-#facetracker
+CLM
+facetracker
 #test_aruc
 )
 

@@ -8,7 +8,7 @@
 #ifndef TONEPLAYER_H_
 #define TONEPLAYER_H_
 
-// #include <alsa/asoundlib.h>
+#include <alsa/asoundlib.h>
 #include <string>
 #include "HThread.h"
 #include "Synchronization.h"
@@ -27,7 +27,7 @@ public:
 
   int Init();
   int Term();
-  //int Generate(snd_pcm_uframes_t offset, int count, double *_phase);
+  int Generate(snd_pcm_uframes_t offset, int count, double *_phase);
   int Play();
   void SetVolume(float volume);
 
@@ -38,7 +38,7 @@ public:
 
   void SetDevice(const char *arg)
   {
-   // device = strdup(arg);
+    device = strdup(arg);
   }
 
   void SetBufferTime(int time)
@@ -54,7 +54,6 @@ public:
 
   void SetFormat(const char *arg)
   {
-#if 0
     for (int i = 0; i < SND_PCM_FORMAT_LAST; i++)
     {
       format = (snd_pcm_format_t)i;
@@ -69,7 +68,6 @@ public:
     {
       printf("Invalid (non-linear/float) format %s\n", optarg);
     }
-#endif
   }
 
   void SetChannels(int channels)
@@ -91,22 +89,22 @@ public:
 protected:
 
   int PlaySound(int seconds);
- // int XRunRecovery(snd_pcm_t *handle, int err);
- // int SetHWParams(snd_pcm_t *handle, snd_pcm_hw_params_t *params, snd_pcm_access_t access);
-  //int SetSWParams(snd_pcm_t *handle, snd_pcm_sw_params_t *swparams);
+  int XRunRecovery(snd_pcm_t *handle, int err);
+  int SetHWParams(snd_pcm_t *handle, snd_pcm_hw_params_t *params, snd_pcm_access_t access);
+  int SetSWParams(snd_pcm_t *handle, snd_pcm_sw_params_t *swparams);
 
   Semaphore m_Sem;
   int m_Seconds;
   float m_Volume;
-//  snd_pcm_channel_area_t *areas;
+  snd_pcm_channel_area_t *areas;
   signed short *samples;
-//  snd_pcm_t *handle;
+  snd_pcm_t *handle;
   int err;
- // snd_pcm_hw_params_t *hwparams;
- // snd_pcm_sw_params_t *swparams;
+  snd_pcm_hw_params_t *hwparams;
+  snd_pcm_sw_params_t *swparams;
   unsigned int chn;
   std::string device;
- // snd_pcm_format_t format;
+  snd_pcm_format_t format;
   double m_freq;
   unsigned int rate;
   unsigned int channels;
@@ -115,9 +113,9 @@ protected:
   int verbose;
   int resample;
   int period_event;
- //snd_pcm_sframes_t buffer_size;
-  //snd_pcm_sframes_t period_size;
- // snd_output_t *output;
+  snd_pcm_sframes_t buffer_size;
+  snd_pcm_sframes_t period_size;
+  snd_output_t *output;
 };
 
 #endif /* TONEPLAYER_H_ */
