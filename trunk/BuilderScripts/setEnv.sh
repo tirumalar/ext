@@ -16,6 +16,9 @@ export COMMON_INC=${PKG_PATH}/common/include
 export EYELOCK_INC=${EYELOCK_WS_EXT}/linux/lib/Include
 export EYELOCK_LIB=${EYELOCK_WS_EXT}/linux/lib/Release
 
+export ALSA_INC=${STATIC_LIBS}
+export ALSA_LIB=${STATIC_LIBS}/alsa/lib
+
 export OPENSSL_INC=${PKG_PATH}/openssl-1.0.1i/include
 export OPENSSL_ASN_INC=${PKG_PATH}/openssl-1.0.1i/crypto/asn1
 export OPENCV_INC=${PKG_PATH}/cv/include
