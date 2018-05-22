@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export ARM_INC="/opt/gcc-linaro-5.4.1-2017.05-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/usr/include"
-export ARM_LIBS="/opt/gcc-linaro-5.4.1-2017.05-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/usr/lib/aarch64-linux-gnu"
+export ARM_LIBS="/opt/gcc-linaro-5.4.1-2017.05-x86_64_aarch64-linux-gnu/aarch64-linux-gnu/libc/usr/lib"
 
 export PATH="/opt/odroid_cross_bin":$PATH
 echo $PATH
@@ -36,8 +36,8 @@ export LIBEVENT=${PKG_PATH}/libevent-2.0.21-stable
 export ZLIB=${PKG_PATH}/zlib-1.2.8
 
 # for MultiChannelLogger
-export POCO_BASE=${PKG_PATH}/poco-1.9.0
-export OPENSSL_102N_BASE=${PKG_PATH}/openssl-1.0.2n
+export POCO_BASE=${STATIC_LIBS}/poco-1.9.0
+export OPENSSL_102N_BASE=${STATIC_LIBS}/openssl-1.0.2o
 
 #for test_aruc
 export FACE_INC=${EYELOCK_WS_EXT}/FaceTracker/facetracker/include
