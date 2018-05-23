@@ -109,6 +109,9 @@ ec_read_from_client (int filedes)
     		  match_Lock=0;
 
     	  }
+/*    	  IrisFrameCtr++;		//count detect
+    	  printf("count: ---------------------------------------- %i\n", IrisFrameCtr);*/
+
       }
       else if(buffer[0]=='b')
       {
@@ -153,7 +156,7 @@ ec_read_from_client (int filedes)
           		//MoveTo(CENTER_POS);
           		/*port_com_send("psoc_write(3,0x00)");
           		cvWaitKey(1000);*/
-          		port_com_send("set_audio(2)"); // to play auth sound
+          		//port_com_send("set_audio(2)"); // to play auth sound
           		b_goHome=false;
           	  }
 

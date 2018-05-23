@@ -25,75 +25,91 @@ The views and conclusions contained in the software and documentation are those 
 authors and should not be interpreted as representing official policies, either expressed
 or implied, of Rafael Muñoz Salinas.
 ********************************************************************************************/
+#include <stdlib.h>
 #include <string>
 #include <iostream>
 #include <fstream>
 #include <sstream>
-//#include <time.h>
-
-
+#include <time.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <chrono>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <math.h>
+#include <cmath>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv/cv.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/photo/photo.hpp>
-#include <stdlib.h>
 
-#include <pthread.h>
-#include <unistd.h>
+#ifdef ARUCO
+#include <aruco.h>
+#include <dictionary.h>
+#endif
+
 #include "eyelock_com.h"
+#include "Synchronization.h"
+#include "pstream.h"
 
-#include <chrono>
-#include <time.h>
-#include <fstream>
+
 
 using namespace cv;
 using namespace std::chrono;
 using namespace std;
 
-VideoCapture TheVideoCapturer;
 
-Mat TheInputImage, TheInputImageCopy, outImg, grImage, mask;
+
+VideoStream *vs;
+
+
+
+Mat outImg, r_outImg;
 Mat smallImg;
 Mat frame_gray;
 Mat smallImgBeforeRotate;
-int downScale = 4;
 
-//experiment purposes
-ofstream fileName("processedTimePyr16.csv");
-string t = "Processing time: ";
-double scaling = 8;		//8
+
+double scaling = 8.0;
 
 
 extern int vid_stream_start(int port);
 extern int vid_stream_get(int *win,int *hin, char *wbuffer);
 extern int portcom_start();
 extern void port_com_send(char *cmd);
+extern void  *init_tunnel(void *arg);
+extern void *init_ec(void * arg);
+extern int port_com_send_return(char *cmd, char *buffer, int min_len);
+int face_init(  );
+float read_angle(void);
 
 
-int z=0;
 
+int z=0;		//AGC wait key
+
+#define block 0
 #define WIDTH 1200
 #define HEIGHT 960
 
-int face_init(  );
 
-#define NO_EYE_CENTER_FRAMES 15
-#define NO_EYE_HOME_FRAMES 400
+
+
+
 #define CENTER_POS 164		//low fx_abs val is 0 and max is 328. So the center falls in 164
 #define CENTER_POSITION_ANGLE 95
-#define MIN_POS 0
+#define MIN_POS 25
 #define MAX_POS 328			//previous val was 200
-#define POS_threshold 28
-//#define MOTOR_STEP 5  //For 8mm Lens
-#define MOTOR_STEP 1 //For 3mm Lens, value was 3
-#define MOTOR_STEP_MO 2
-#define BRIGHTNESS_MAX 10
-#define BRIGHTNESS_MIN 10
+#define WAIT 800
+
+
+
 #define MODE_CHANGE_FREEZE 10
 int cur_pos=CENTER_POS;
-#define MOVE_COUNTS_REHOME 7
-#define MIN_IRIS_FRAMES 100
+
+#define MIN_IRIS_FRAMES 10
 int fileNum=0;
 int move_counts=0;
 #define FRAME_DELAY 40
@@ -101,22 +117,43 @@ int move_counts=0;
 // this defines how many frames without a face will cause a switch back to face mode ie look for faces
 #define NO_FACE_SWITCH_FACE 10
 
-
-float read_angle(void);
-
-float home_angle=90.0;
+string fileName = "output.csv";
 int noeyesframe = 0;
-
 #define ANGLE_TO_STEPS 5
 
 
 
-void faceSettings();
-void AuxIrisSettings();
 void MainIrisSettings();
+void SetExp(int cam, int val);
+void MoveToAngle(float a);
+void MoveTo(int v);
+void accelStatus();
+void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
+void SelLedDistance(int val);
+char* GetTimeStamp();
+void RecoverModeDrop();
+void SwitchIrisCameras(bool mode);
+void SetFaceMode();
+
+
+
+void writeStringData(string fileName, string v);
+void writeFloatData(string fileName, float v);
+void writeStartNewLine(string fileName);
+void clearData(string fileName);
+
+
+//Temp test purpose
+void motorMove();
+double parsingIntfromHex(string str1);
+int calTemp(int i);
+
+
 
 
 #define PIXEL_TOTAL 900
+
+
 
 void SetExp(int cam, int val)
 {
@@ -124,14 +161,20 @@ void SetExp(int cam, int val)
 	int coarse = val/PIXEL_TOTAL;
 	int fine = val - coarse*PIXEL_TOTAL;
 
-	sprintf(buff,"wcr(%d,0x3012,%d) | wcr(%d,0x3014,%d)",cam,coarse,cam,fine);
+	//sprintf(buff,"wcr(%d,0x3012,%d) | wcr(%d,0x3014,%d)",cam,coarse,cam,fine);
 	sprintf(buff,"wcr(%d,0x3012,%d)",cam,coarse);
+	//printf("Setting Gain %d\n",coarse);
 	port_com_send(buff);
 
 
 
 }
 
+
+
+
+
+#define smallMoveTo 2		//limiting motor movement
 void MoveToAngle(float a)
 {
 	char buff[100];
@@ -140,50 +183,32 @@ void MoveToAngle(float a)
 		return;
 	float move;
 	move = current_a-a;
-	printf("angle diff %3.3f\n",move);
+	//printf("angle diff %3.3f\n",move);
 	move=-1*move*ANGLE_TO_STEPS;
 
+
 	sprintf(buff,"fx_rel(%d)",(int)(move+0.5));
-	printf("Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
-	port_com_send(buff);
-}
-void MoveRelAngle(float a)
-{
-
-	// add a limit check to make sure we are not out of bounds
-	char buff[100];
-	float move;
-	float current_a = read_angle();
-	printf("Current_a=%f; next_a=%f\n",current_a,a);
-
-	/*if (a > 0){
-		if ((current_a + (-a)) > 120){
-			printf("Hitting Max!!\n");
-			sprintf(buff,"fx_abs(%d)",MAX_POS);
-			port_com_send(buff);
-			return;
-		}
-	}
-	else
-	{
-		if ((current_a-(-a)) < 69)
-		{
-			sprintf(buff,"fx_home()");
-			port_com_send(buff);
-			return;
-		}
-	}*/
-
-
-
-
-	move=-1*a*ANGLE_TO_STEPS;
-
-
-	sprintf(buff,"fx_rel(%d)",(int)move);
 	//printf("Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
+
+	writeFloatData(fileName, current_a); 	//current angle
+	writeStringData(fileName,",");
+	writeFloatData(fileName, a); 	//move to angle
+	writeStringData(fileName,",");
+
+	float t_start=clock();
 	port_com_send(buff);
+	float t_result = (float)(clock()-t_start)/CLOCKS_PER_SEC;
+
+	writeFloatData(fileName, t_result); //required time to move
+	writeStringData(fileName,",");
+
 }
+
+
+
+
+
+
 
 void MoveTo(int v)
 {
@@ -199,12 +224,18 @@ void MoveTo(int v)
 	//cvWaitKey(100);
 	 */
 
-	printf("Move to %d ",v);
+	//printf("Move to %d ",v);
+
+	writeFloatData(fileName, v); 	//move to command
+	writeStringData(fileName,",");
+
+
 	v=v-CENTER_POS;
 	v=v/ANGLE_TO_STEPS+CENTER_POSITION_ANGLE;
-	printf("angle = %d",v);
+	//printf("angle = %d",v);
 	MoveToAngle((float) v);
 }
+
 
 void accelStatus(){
 #if 0
@@ -219,39 +250,6 @@ void accelStatus(){
 	}*/
 
 #endif
-}
-void motorMoveTo(int v)
-{
-	char buff[100];
-	char buffRe[100];
-	if (v<MIN_POS) v= MIN_POS;
-	if (v>MAX_POS) v=MAX_POS;
-	//cvWaitKey(100);
-	sprintf(buffRe,"fx_home()");
-	port_com_send(buffRe);
-	sprintf(buff,"fx_abs(%d)",v);
-	printf("Sending move: %s\n",buff);
-	port_com_send(buff);
-	move_counts++;
-	//cvWaitKey(100);
-}
-
-//cycle experiment. This code is not part of the main code
-void motorCycleTest(int up){
-	int center = up/2;	//center calc
-
-	char bufferBottom[100], buffCent[100], bufferUp[100];
-
-	//cvWaitKey(100);
-	sprintf(bufferBottom,"fx_home()");
-	sprintf(buffCent,"fx_abs(%d)",center);
-	sprintf(bufferUp,"fx_abs(%d)",up);
-	sprintf(buffCent,"fx_abs(%d)",center);
-
-	port_com_send(bufferBottom);	//go to bottom or home
-	port_com_send(buffCent);		// go to center
-	port_com_send(bufferUp);		// go up
-
 }
 
 
@@ -275,13 +273,11 @@ void HandleEyelockIO(void)
 */
 
 
-int no_eye_counter =0;
 
-extern void  *init_tunnel(void *arg);
-extern void *init_ec(void * arg);
 
-int IrisFrameCtr=0;
-#include <sys/time.h>
+
+int IrisFrameCtr = 0;
+
 
 void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask)
 {
@@ -350,6 +346,11 @@ char* GetTimeStamp()
 	return(timeVar);
 }
 
+
+
+
+
+
 #define RUN_STATE_FACE 0
 #define RUN_STATE_EYES 1
 
@@ -357,9 +358,10 @@ char* GetTimeStamp()
 #define FACE_GAIN_DEFAULT   (PIXEL_TOTAL*10)
 #define FACE_GAIN_MAX       (PIXEL_TOTAL*80)
 #define FACE_GAIN_MIN       (PIXEL_TOTAL*8)
-#define FACE_GAIN_PER_GOAL   1
-#define FACE_GAIN_HIST_GOAL  0
-#define FACE_CONTROL_GAIN   100.0
+#define FACE_GAIN_PER_GOAL   10
+#define FACE_GAIN_HIST_GOAL  .1
+#define FACE_CONTROL_GAIN   500.0
+//#define FACE_CONTROL_GAIN   1000.0
 
 int agc_val= FACE_GAIN_DEFAULT;
 int agc_set_gain =0;
@@ -369,40 +371,23 @@ int run_state=RUN_STATE_FACE;
 
 
 
-//Mohammad
-void faceSettings(){
-
-	//printf("configuring face settings\n");
-//	return;
-	//Face configuration of LED
-	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,1)");
-	//Face cameras configuration
-	port_com_send("wcr(4,0x3012,12) | wcr(4,0x301e,0) | wcr(4,0x305e,160)");
-}
-
-void AuxIrisSettings(){
-
-	//printf("configuring Aux Iris settings\n");
-	//Iris configuration of LED
-	port_com_send("psoc_write(2,40) | psoc_write(1,1) | psoc_write(5,40) | psoc_write(4,3) | psoc_write(3,0x31)| psoc_write(6,4)");
-	//Face cameras configuration
-	/*port_com_send("wcr(3,0x3012,12) | wcr(3,0x301e,0) | wcr(3,0x305e,128)");
-	port_com_send("wcr(3,0x3040,0xC000)"); //Flipping of iris images*/
-
-}
-
 
 void MainIrisSettings(){
 
 	//return;
 	printf("configuring Main Iris settings\n");
 	//Iris configuration of LED
-	port_com_send("psoc_write(2,40) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,3) | psoc_write(3,0x31)| psoc_write(6,1)");
+	port_com_send("psoc_write(3,0x31)| psoc_write(2,30) | psoc_write(5,40) | psoc_write(4,3) | psoc_write(6,4)");
 	//Face cameras configuration
 	//port_com_send("wcr(0x83,0x3012,12) | wcr(0x83,0x301e,0) | wcr(0x83,0x305e,128)");
 }
 
+
+
+
 std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
+
+
 void RecoverModeDrop()
 {
 	//If no mode change happens for a set amount of time then set face mode to recover from
@@ -422,6 +407,9 @@ void RecoverModeDrop()
 	}
 }
 
+
+
+
 void SwitchIrisCameras(bool mode)
 {
 	printf("SWITCHING cameras------------------->");
@@ -434,119 +422,161 @@ void SwitchIrisCameras(bool mode)
 	port_com_send(cmd);
 }
 
-#define MODE_FACE 1
-#define MODE_EYES 2
-int currnet_mode =0;
+#define MODE_FACE 0
+#define MODE_EYES_MAIN 1
+#define MODE_EYES_AUX 2
+int currnet_mode = 0;
+
+
 void SetFaceMode()
 {
-	// enable face camera only
-	// was 70
-	//printf("switching to face mode : %s\n",GetTimeStamp());
-	//port_com_send("grab_send(3)");
-	//port_com_send("b_on_time(2,0,\"\")");
-	//port_com_send("b_on_time(1,70,\"grab_send(4)\")");
 
-	//port_com_send("fixed_set_rgb(10,10,10)");
-	//setRGBled(20,20,20,1000,0,0x1F);
 	if (currnet_mode==MODE_FACE)
+	{
+		printf("Dont need to change Face cam");
 		return;
+	}
 //	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
 	port_com_send("psoc_write(2,30) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)");
-	port_com_send("wcr(4,0x3012,12) | wcr(4,0x305e,0xF0)"); //| wcr(4,0x301e,0)
+
+	port_com_send("wcr(4,0x3012,7)  | wcr(4,0x305e,0xfe)");
+
+	agc_val= FACE_GAIN_DEFAULT;
+
 	start_mode_change = std::chrono::system_clock::now();
 	currnet_mode = MODE_FACE;
+	//port_com_send("fixed_set_rgb(100,100,100)");
 }
 
 #define IRIS_FRAME_TIME 180
+#define switchThreshold 37		// previous val was 40
+#define errSwitchThreshold 6
+int previousEye_distance = 0;
 
-void SetIrisMode(int eye_distance)
+void MoveRelAngle(float a, int diffEyedistance);
+void SetIrisMode(int CurrentEye_distance, int diffEyedistance);
+void DoStartCmd();
+
+
+
+
+
+void MoveRelAngle(float a, int diffEyedistance)
 {
-	// later switch cameras
 
-	if (currnet_mode==MODE_EYES)
-		return;
-	IrisFrameCtr=0;
-	printf("Set Iris Mode is Active!!!");
-	AuxIrisSettings();
+	// add a limit check to make sure we are not out of bounds
+	char buff[100];
+	float move;
+	float current_a = read_angle();
+	//printf("Current_a=%f ; next_a=%f\n",current_a,a);
 
+	move=-1*a*ANGLE_TO_STEPS;
 
-/*	//switching cameras
-	if (eye_distance > 40)
+	//limiting small movements based on relative changes and face size changes
+	if (abs(move) > smallMoveTo)	//&& diffEyedistance >= errSwitchThreshold
 	{
-		SwitchIrisCameras(true);
-		MainIrisSettings();
-		printf("Main Cameras\n");
+	sprintf(buff,"fx_rel(%d)",(int)move);
+	printf("Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
+	port_com_send(buff);
 	}
-	else
+}
+
+
+
+void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
+{
+	printf("Dimming face cameras!!!");
+	port_com_send("wcr(4,0x3012,4) | wcr(4,0x305e,0x20)");
+
+
+	agc_val = FACE_GAIN_MIN;
+
+
+
+
+	//switching cameras
+	printf("previousEye_distance: %i; CurrentEye_distance: %i; diffEyedistance: %i\n", previousEye_distance, CurrentEye_distance, diffEyedistance);
+	if (CurrentEye_distance >= switchThreshold && diffEyedistance <= errSwitchThreshold)
 	{
+		if(currnet_mode==MODE_EYES_MAIN)
+		{
+			printf("Dont need to change Main cam");
+			return;
+		}
+
+		MainIrisSettings();											//change to Iris settings
+		SwitchIrisCameras(true);									//switch cameras
+		currnet_mode = MODE_EYES_MAIN;								//set current mode
+		previousEye_distance = CurrentEye_distance;					//save current eye distance for later use
+		printf("Turning on Main Cameras\n");
+		//port_com_send("fixed_set_rgb(100,0,0)");
+
+	}
+	else if (CurrentEye_distance < switchThreshold && diffEyedistance <= errSwitchThreshold)
+	{
+		if(currnet_mode==MODE_EYES_AUX)
+		{
+			printf("Dont need to change Aux cam");
+			return;
+		}
+
+
+		MainIrisSettings();
 		SwitchIrisCameras(false);
-		AuxIrisSettings();
-		printf("AUX Cameras\n");
-	}*/
+		currnet_mode = MODE_EYES_AUX;
+		previousEye_distance = CurrentEye_distance;
+		printf("Turning on AUX Cameras\n");
+		//port_com_send("fixed_set_rgb(100,100,0)");
+	}
+	else if (CurrentEye_distance >= switchThreshold && diffEyedistance > errSwitchThreshold)
+	{
+		if(currnet_mode==MODE_EYES_MAIN)
+		{
+			printf("Dont need to change Main cam");
+			return;
+		}
 
 
-/*
-	port_com_send("psoc_write(2,40) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,7) | psoc_write(3,0x31)| psoc_write(6,4)");
-	port_com_send("wcr(4,0x3012,1) | wcr(4,0x301e,0) | wcr(4,0x305e,10)");
-*/
-//| wcr(4,0x301e,0)
-	//printf("Dimming face cameras!!!");
-	port_com_send("wcr(4,0x3012,1)  | wcr(4,0x305e,40)");
+		MainIrisSettings();
+		SwitchIrisCameras(true);
+		currnet_mode = MODE_EYES_MAIN;
+		previousEye_distance = CurrentEye_distance;
+		printf("Turning on Main Cameras\n");
+		//port_com_send("fixed_set_rgb(100,0,0)");
+	}
+	else if (CurrentEye_distance < switchThreshold && diffEyedistance > errSwitchThreshold)
+	{
+		if(currnet_mode==MODE_EYES_AUX)
+		{
+			printf("Dont need to change Aux cam");
+			return;
+		}
 
-	//cvWaitKey(200);
+		//AuxIrisSettings();			//use this function if we have different settings for aux and main cameras
+		// AS we are using same LED setting for aux and main, Im calling this function at the very beginning
+		MainIrisSettings();
+		SwitchIrisCameras(false);
+		currnet_mode = MODE_EYES_AUX;
+		previousEye_distance = CurrentEye_distance;
+		printf("Turning on AUX Cameras\n");
+		//port_com_send("fixed_set_rgb(100,100,0)");
+	}
+
 	IrisFrameCtr=0;
 	start_mode_change = std::chrono::system_clock::now();
-	currnet_mode = MODE_EYES;
+
 }
 
 
 
-void SetIrisMode_a()
-{
-	//return;
-	printf("Set Iris Mode is Active!!!");
-	AuxIrisSettings();
-
-
-/*
-	port_com_send("psoc_write(2,40) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,7) | psoc_write(3,0x31)| psoc_write(6,4)");
-	port_com_send("wcr(4,0x3012,1) | wcr(4,0x301e,0) | wcr(4,0x305e,10)");
-*/
-	printf("Dimming face cameras!!!");
-	port_com_send("wcr(4,0x3012,1) | wcr(4,0x301e,0) | wcr(4,0x305e,10)");
-	//cvWaitKey(200);
-	IrisFrameCtr=0;
-	start_mode_change = std::chrono::system_clock::now();
-}
-
-
-
-
-void SetIrisMode_m()
-{
-	//return;
-	printf("Set Iris Mode is Active!!!");
-	AuxIrisSettings();
-
-
-/*
-	port_com_send("psoc_write(2,40) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,7) | psoc_write(3,0x31)| psoc_write(6,4)");
-	port_com_send("wcr(4,0x3012,1) | wcr(4,0x301e,0) | wcr(4,0x305e,10)");
-*/
-	printf("Dimming face cameras!!!");
-	port_com_send("wcr(4,0x3012,1) | wcr(4,0x301e,0) | wcr(4,0x305e,10)");
-	//cvWaitKey(200);
-	IrisFrameCtr=0;
-	start_mode_change = std::chrono::system_clock::now();
-}
-
-
-void DoStartCmd()
+#if 0
+//DoStartCmd ISCwest Demo
+void m2_DoStartCmd()
 {
 	//setRGBled(BRIGHTNESS_MIN,BRIGHTNESS_MIN,BRIGHTNESS_MIN,10,0,0x1F);
 
 
-char cmd[100];
+	char cmd[100];
 	//port_com_send("set_audio(1)");
 	//port_com_send("/home/root/tones/auth.wav");
 	//start_mode_change = std::chrono::system_clock::now();
@@ -607,7 +637,7 @@ char cmd[100];
 	//this is before ilya mucked with it
 	//printf("configuring Main Iris settings\n");
 	//Main Iris cameras configuration
-	//port_com_send("wcr(0x18,0x3012,12) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,64)");
+	port_com_send("wcr(0x18,0x3012,12) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,64)");
 	//port_com_send("wcr(0x18,0x3040,0xC000)"); //Flipping of iris images
 
 	//Aux Iris Cameras Configuration
@@ -652,47 +682,197 @@ char cmd[100];
 	//cvWaitKey(6000);
 	port_com_send(cmd);
 
+/*	//This code is for playing sound
+	if(1)
+	{
+		port_com_send("set_audio(1)");
+		system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
+		sleep(2);
+	}*/
+
+}
+#endif
+
+
+
+
+
+// Main DoStartCmd configuration for Eyelock matching
+#if 1
+void DoStartCmd()
+{
+
+	char cmd[100];
+
+	//Homing
+	printf("Re Homing\n");
+	port_com_send("fx_home()\n");
+	usleep(100000);
+
+	//Reset the lower motion
+	port_com_send("fx_abs(25)\n");
+
+	//move to center position
+	printf("Moving to Center\n");
+	MoveTo(CENTER_POS);
+	read_angle();		//read current angle
+
+
+	printf("configuring face LEDs\n");
+	//Face configuration of LED
+	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
+
+
+	//port_com_send("psoc_write(9,90)");	// charge cap for max current 60 < range < 95
+	port_com_send("psoc_write(9,85)");	// charge cap for max current 60 < range < 95
+
+	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
+	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
+
+
+	//Face cameras configuration
+	printf("configuring face Cameras\n");
+	//port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xFE)");
+	port_com_send("wcr(0x04,0x3012,12) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xF0)");	//Demo Config
+
+
+
+	//Main Iris cameras configuration
+	printf("configuring Aux Iris Cameras\n");
+	//port_com_send("wcr(0x18,0x3012,8) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x80)");
+	port_com_send("wcr(0x18,0x3012,8) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,80)"); //DEMO Config
+
+
+	//Aux Iris Cameras Configuration
+	printf("configuring Main Iris Cameras\n");
+	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0xB0)"); // was 128 Anita chnaged my Mo
+	port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,128)");	//Demo Config
+
+
+	// setup up all pll values
+	printf("setting up PLL\n");
+
+	//following process will activate PLL for all cameras
+
+	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
+	cvWaitKey(100);								//Wait for 100 msec
+	port_com_send("wcr(0x1f,0x302e,2) | wcr(0x1f,0x3030,44) | wcr(0x1f,0x302c,2) | wcr(0x1f,0x302a,6)");
+	cvWaitKey(10);								//Wait for 10 msec
+
+	//Turn on analog gain
+	port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
+	port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
+
+
+	printf("Turning on Alternate cameras");
+	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Turn on Alternate cameras
+	port_com_send(cmd);
+
+
+/*
 	//This code is for playing sound
 	if(1)
 	{
 		port_com_send("set_audio(1)");
 		system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
 		sleep(2);
-	}
+	}*/
 
-#if 0
-	while (1)
-	{
-	 char b[100];
-	 int a;
-	 printf("Enter angle\n");
-	 scanf("%d",&a);
-	 printf("Moving to %d\n",a);
-	 MoveTo(a);
-	}
-#endif
 }
+
+#endif
+
+
+
+void DoStartCmd_CamCal(){
+
+	char cmd[100];
+
+	//Homing
+	printf("Re Homing\n");
+	port_com_send("fx_home()\n");
+	usleep(100000);
+
+	//Reset the lower motion
+	port_com_send("fx_abs(25)\n");
+
+	//move to center position
+	printf("Moving to Center\n");
+	//MoveTo(CENTER_POS); // Original comment
+	MoveTo(CENTER_POS + 20);
+	read_angle();		//read current angle
+
+
+	printf("configuring face LEDs\n");
+	//Face configuration of LED
+	port_com_send("psoc_write(3,1)| psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,40) | psoc_write(4,1) | psoc_write(6,4)");
+
+
+	//port_com_send("psoc_write(9,90)");	// charge cap for max current 60 < range < 95
+	port_com_send("psoc_write(9,70)");	// charge cap for max current 60 < range < 95
+
+	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
+	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
+
+
+	//Face cameras configuration
+	printf("configuring face Cameras\n");
+	port_com_send("wcr(0x04,0x3012,6) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0x40)");
+
+
+
+	//Main Iris cameras configuration
+	printf("configuring Main Iris Cameras\n");
+	port_com_send("wcr(0x18,0x3012,14) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x80)");
+
+
+	//Aux Iris Cameras Configuration
+	printf("configuring Alternate Iris Cameras\n");
+	port_com_send("wcr(0x03,0x3012,12) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0x80)"); // was 128 Anita chnaged my Mo
+
+
+	// setup up all pll values
+	printf("setting up PLL\n");
+
+	//following process will activate PLL for all cameras
+
+	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
+	cvWaitKey(100);								//Wait for 100 msec
+	port_com_send("wcr(0x1f,0x302e,2) | wcr(0x1f,0x3030,44) | wcr(0x1f,0x302c,2) | wcr(0x1f,0x302a,6)");
+	cvWaitKey(10);								//Wait for 10 msec
+
+	//Turn on analog gain
+	port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
+	port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
+
+
+	printf("Turning on Alternate cameras");
+	sprintf(cmd,"set_cam_mode(0x87,100)");		//Turn on Alternate cameras
+	port_com_send(cmd);
+
+}
+
+
+
+
+
+
 
 
 //Old
 #define SCALE 3
-Rect detect_area(30/SCALE,30/SCALE,(960-30*2)/(SCALE*SCALE),(1200-30*2)/(SCALE*SCALE));
-//Rect no_move_area(0,200/SCALE,600/SCALE,50/SCALE);  //Old
-//Rect no_move_area(0,220/SCALE,600/SCALE,50/SCALE);  //Mihir - 8mm Face Camera Lens
-//Rect no_move_area(0,450/scaling,1200/scaling,100/scaling);  //Mihir - 3mm Face Camera Lens
-Rect centerLine(1200/scaling, 960/scaling, 0, 0); //Mohammad center of the display
-//Rect no_move_area(0,560/scaling,960/scaling,80/scaling); //Mohammad rect at the center
-//Rect no_move_area(0,660/scaling,960/scaling,160/scaling); //Mohammad rect at the center 580, the value 80 we moved to 160
-//Rect no_move_area(0,580/scaling,960/scaling,80/scaling); //Mohammad rect at the center 580, the value 80 we moved to 160
-
-//follwoing command is for test demo 1 no_move_area
-Rect no_move_area(0,52,120,14); //Mohammad rect at the center 580, the value 80 we moved to 160
+Rect detect_area(15/SCALE,15/SCALE,(960/(SCALE*SCALE))+15/SCALE,(1200/(SCALE*SCALE))+15/SCALE); //15 was 30
 
 /*
+//follwoing command is for test demo 1 no_move_area
+Rect no_move_area(0,52,120,14);
+*/
 
 //follwoing command is for test demo 2 no_move_area
-Rect no_move_area(0,64,120,14); //Mohammad rect at the center 580, the value 80 we moved to 160
-*/
+Rect no_move_area(0,64,120,14);
+
+//follwoing command is for test demo 3 no_move_area
+//Rect no_move_area(0,68,120,12);
 
 
 //Rect detect_area_center(120/SCALE,120/SCALE,(960-120*2)/(SCALE*SCALE),1200/SCALE)
@@ -707,7 +887,7 @@ Point eyes;
 
 //at 40inch or 106cm distance
 #define MIN_FACE_SIZE 20		// previous val 40
-#define MAX_FACE_SIZE 65		//// previous val 60
+#define MAX_FACE_SIZE 70		//// previous val 60
 
 
 
@@ -724,7 +904,7 @@ float AGC(int width, int height,unsigned char *dsty)
 	double total = 0,Ptotal = 0,percentile = 0,hist[256]={0},average=0;
 	int pix=0,i;
 	int n = width * height;
-	int limit = 200;    // Lower limit for percentile calculation
+	int limit = 180;    // Lower limit for percentile calculation
 	for (; n > 0; n--)
 	{
 		pix =(int) *dy;
@@ -836,7 +1016,7 @@ void DoRunMode()
 				static int agc_val_old=0;
 				  if (abs(agc_val-agc_val_old)>300)
 				  	  {
-					//  printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
+					  printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
 					  SetExp(4,agc_val);
 					  agc_val_old= agc_val;
 				  	  }
@@ -856,10 +1036,11 @@ void DoRunMode()
 					{
 					printf("eyes found\n");
 
-					no_eye_counter=0;
 					noFaceCounter=0;
 
 					#define ERROR_LOOP_GAIN 0.08
+					int CurrentEye_distance = eye_size;
+					int diffEyedistance = abs(CurrentEye_distance - previousEye_distance);
 
 					//if (!no_move_area.contains(eyes))
 					if (!no_move_area.contains(eyes))
@@ -870,31 +1051,24 @@ void DoRunMode()
 							int constant = 10;
 							int MoveToLimitBound = 1;
 							err = (no_move_area.y+no_move_area.height/2) - eyes.y;
-							//printf("err: %i\n", err);
+							printf("abs err----------------------------------->  %d\n", abs(err));
 							err = (float)err * (float)SCALE * (float)ERROR_LOOP_GAIN;
-							//err=err/MOTOR_STEP_MO;
-							//cur_pos = err + CENTER_POS;
-							//if (cur_pos<MIN_POS) cur_pos= POS_threshold + MIN_POS;
-							//if (cur_pos>MAX_POS) cur_pos=MAX_POS - POS_threshold;
-
-							////Draw images on the eyes
-							//cv::rectangle(smallImg,Rect(eyes.x-5,eyes.y-5,10,10),Scalar( 255, 0, 0 ), 5, 0);
-
 
 							// if we need to move
 							if (abs(err) > MoveToLimitBound)
 								{
 									int x,w,h;
 
-									MoveRelAngle(-1*err);
+									MoveRelAngle(-1*err, diffEyedistance);
 								//	while (waitKey(10) != 'z');
 								//	printf("fx_abs val: %i\n", -1*err);
 								//	printf("Face is IN RANGE!!!!\n");
 
 									//flush the video buffer to get rid of frames from motion
 									{
-										int vid_stream_flush(void);
-										vid_stream_flush();
+										//int vid_stream_flush(void);
+										//vid_stream_flush();
+										vs->flush();
 									}
 									// might need this vid_stream_get(&w,&h,(char *)outImg.data);
 								}
@@ -908,10 +1082,12 @@ void DoRunMode()
 						}
 					else
 						{
+
 						cv::rectangle(smallImg,Rect(eyes.x-5,eyes.y-5,10,10),Scalar( 255, 0, 0 ), 2, 0);
-						SetIrisMode(eye_size);
-						run_state = RUN_STATE_EYES;
 						printf("Switching ON IRIS LEDs!!!!\n");
+						SetIrisMode(eye_size, diffEyedistance);
+						run_state = RUN_STATE_EYES;
+
 
 						//port_com_send("fixed_set_rgb(0,0,50)");
 						}
@@ -921,15 +1097,26 @@ void DoRunMode()
 				}
 			{
 //				noeyesframe++;
+				//Sarvesh
 				if (noFaceCounter<(NO_FACE_SWITCH_FACE+2))
 					noFaceCounter++;
 
 				if (noFaceCounter==NO_FACE_SWITCH_FACE)
 			  	  {
+					MoveTo(CENTER_POS);
+					run_state = RUN_STATE_FACE;
+					SetFaceMode();
+
+			  	  }
+
+				//MOhammad
+/*				if (IrisFrameCtr==MIN_IRIS_FRAMES)
+			  	  {
+					printf("Iris number reach to %i\n and it will go to home now", IrisFrameCtr);
 					run_state = RUN_STATE_FACE;
 					SetFaceMode();
 					MoveTo(CENTER_POS);
-			  	  }
+			  	  }*/
 
 			}
 
@@ -970,13 +1157,706 @@ void DoRunMode()
 
 }
 
+Mat outImgLast,outImg1,outImg1s;
+void MeasureSnr()
+{
+				 Mat s1;
+
+			     static int once=0;
+				 if (once==10)
+					 {
+					 printf("id ===%x %x %x %x\n",outImg.at <char> (0,0),outImg.at <char> (0,1),outImg.at <char> (0,2),outImg.at <char> (0,3));
+					 absdiff(outImg, outImgLast, s1);       // |I1 - I2|
+
+
+					 imshow("Signal",outImg-outImg1s);
+					 float pixels = s1.cols*s1.rows;
+					// imshow("other",outImg-outImg1);  //Time debug
+					 s1=s1-(Scalar(sum(s1).val[0])/pixels); // remove exposure noise
+					 imshow("Noise",s1*10);
+
+
+					 s1.convertTo(s1, CV_32F);  // cannot make a square on 8 bits
+					 s1 = s1.mul(s1);
+					  Scalar s = sum(s1);         // sum elements per channel
+
+
+					  Scalar s2 = sum(outImg);
+
+					   double rms_noise = sqrt(s.val[0]/pixels);
+					   double sse = s.val[0];
+					   double mid= s1.cols*s1.rows*128*128;
+					   double avg = s2.val[0]/pixels;
+					   float psnr = 20.0*log10((128.0)/rms_noise);
+					   float psnr_avg = 20.0*log10((avg)/rms_noise);
+					   printf("Snr = %3.3f avg = %3.3f snravg %3.3f\n", psnr,avg,psnr_avg);
+					 }
+				 else
+					 {
+					 if (once ==0)
+						 {
+						 outImg.convertTo(outImg1,CV_32FC1 );
+						 //outImg.copyTo(outImg1);
+						 }
+					 else
+					 {
+						 Mat cc;
+						 outImg.convertTo(cc,CV_32FC1 );
+						 outImg1=outImg1+cc;
+					 }
+						 once ++;
+					 if (once==10)
+					 	 {
+						 outImg1=outImg1/10;
+						 outImg1.convertTo(outImg1s,CV_8UC1);
+						 Scalar av = mean(outImg1s);
+						 outImg1s=outImg1s+10-av.val[0];
+						 imshow("offs",outImg1s*10);
+						 }
+					 }
+
+
+					 outImg.copyTo(outImgLast);
+
+}
+
+#define NUM_AVG_CAL 20
+#define  MAX_CAL_CURENT 20
+void DoImageCal(int cam_id_ignore)
+
+{
+	printf("Inside DoImageCal\n");
+    int w,h;
+	char temp[100];
+   // vid_stream_get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	Scalar a;
+    int  cam_id =(int)outImg.at<char>(0,2)&0xff;
+	printf("Calibrating camera %x\n",cam_id);
+    for (int current=1;current<MAX_CAL_CURENT;current++)
+    	{
+    	sprintf(temp,"psoc_write(5,%d)",current);
+    	printf("Sending %s>\n",temp);
+    	port_com_send(temp);
+    	vs->get(&w,&h,(char *)outImg.data);
+    	vs->get(&w,&h,(char *)outImg.data);
+
+    	a=mean(outImg);
+        printf("Mean is %f\n",a.val[0]);
+    	if (a.val[0]>40)
+    		break;
+    	}
+    if (a.val[0]<40)
+    {
+    	printf("Error Not enough light");
+    	exit(0);
+    }
+    if (a.val[0]>220)
+       {
+       	printf("Too much light");
+       	exit(0);
+       }
+	outImg.convertTo(outImg1,CV_32FC1 );
+    for (int x=1; x< NUM_AVG_CAL;x++)
+    {
+		 Mat cc;
+		 	vs->get(&w,&h,(char *)outImg.data);
+		 	//vid_stream_get(&w,&h,(char *)outImg.data);
+		outImg.convertTo(cc,CV_32FC1 );
+		outImg1=outImg1+cc;
+		printf("collecting image %d / %d\n",x,NUM_AVG_CAL);
+
+    }
+	outImg1=outImg1/NUM_AVG_CAL;
+	outImg1.convertTo(outImg1s,CV_8UC1);
+	Scalar av = mean(outImg1s);
+	outImg1s=outImg1s+10-av.val[0];
+	imshow("Imagex10 ",outImg1s*10);
+
+	// save the image
+	sprintf(temp,"cal%02x.pgm",cam_id);
+	imwrite(temp,outImg1s);
+	sprintf(temp,"cal%02xx10.pgm",cam_id);
+	imwrite(temp,outImg1s*10);
+
+	sprintf(temp,"cal%02x.bin",cam_id);
+	FILE *f = fopen(temp, "wb");
+	if (f)
+	{
+	int length = outImg1s.cols*outImg1s.rows;
+	fwrite(outImg1s.data, length, 1, f);
+	fclose(f);
+	}
+	else
+		printf("cant write output file %s\n",temp);
+	printf("All done press q to quit\n");
+	while (1)
+		{
+		char c=cvWaitKey(200);
+		if (c=='q')
+			return;
+		}
+}
+
+void CalAll()
+{
+	DoStartCmd();
+	port_com_send("set_cam_mode(0x83,100");
+	port_com_send("psoc_write(3,3)");
+	//delete (vs);
+	vs = new VideoStream(8192);
+	DoImageCal(0);
+	delete (vs);
+
+	vs = new VideoStream(8193);
+	DoImageCal(0);
+	delete (vs);
+
+	port_com_send("set_cam_mode(0x3,100");
+	vs = new VideoStream(8192);
+	DoImageCal(0);
+	delete (vs);
+
+	vs = new VideoStream(8193);
+	DoImageCal(0);
+	delete (vs);
+
+
+}
+
+
+#ifdef ARUCO
+int arucoMarkerTracking(Mat InImage){
+
+	 //cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
+	//cv::Ptr<cv::aruco::Dictionary> dictionary;// = aruco::getPredefinedDictionary(aruco::DICT_6X6_250);;
+
+	//dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50);
+
+//	cv::Ptr<aruco::DetectorParameters> parameters;
+	//cv::Ptr<aruco::Dictionary> dictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME::DICT_4X4_100);
+
+		//for (int i = 0; i < 50; i++){
+		//aruco::drawMarker(markerDict, i , 500, oMarker, 1);
+	aruco::MarkerDetector MDetector;
+
+//	 MDetector.setDictionary("ARUCO_MIP_36h12");
+	 MDetector.setDictionary("ARUCO");
+	       auto Markers=MDetector.detect(InImage);
+	       //for each marker, draw info and its boundaries in the image
+	       for(auto m:MDetector.detect(InImage)){
+	           std::cout<<m<<std::endl;
+	           m.draw(InImage);
+		       cv::imshow("in",InImage);
+	       }
+	       //cv::waitKey(0);//wait for key to be pressed
+
+//	}
+	       return 1;
+}
+
+std::vector<aruco::Marker> gridBooardMarker(Mat img){
+	//VideoCapture inputVideo;
+	//inputVideo.open(0);
+	int imgCount = 0;
+
+	printf("Inside gridBooardMarker\n");
+    int w,h;
+
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	int portNum = vs->m_port;
+	Mat imgCopy;
+
+	//float scale = 1.0;
+	if (portNum == 8194){
+		//cv::resize(outImg, smallImgBeforeRotate, cv::Size(),(1.0/scale),(1.0/scale), INTER_NEAREST);	//Mohammad
+		smallImg = rotation90(outImg);
+
+		smallImg.copyTo(imgCopy);
+	}
+	else{
+		outImg.copyTo(imgCopy);
+	}
+
+	aruco::MarkerDetector mDetector;
+	aruco::MarkerDetector::MarkerCandidate mCandidate;
+	mDetector.setDictionary("ARUCO_MIP_36h12");
+	std::vector<aruco::Marker> markers;
+
+	char buffer[512];
+
+#if 1
+	if(!img.empty()){
+		markers = mDetector.detect(imgCopy);
+		//cv::imshow("streaming without marker", imgCopy);
+
+		if (markers.size() < 2){
+			printf("%i can not detect any markers!\n", portNum);
+			cv::imshow("marker Detects", imgCopy);
+			sprintf(buffer, "No_marker_detect%i.png", portNum);
+			imwrite(buffer, imgCopy);
+			exit(EXIT_FAILURE);
+		}
+
+		for(size_t i = 0; i < markers.size(); i++){
+			//cout << markers[i] << endl;
+			cout << "IDs ::: " << markers[i].id << "    center  ::: " << markers[i].getCenter() << endl;
+			markers[i].draw(imgCopy);
+
+		}
+		//namedWindow("marker Detects", WINDOW_NORMAL);
+		sprintf(buffer, "imgAruco%i.png", portNum);
+		cv::imshow("marker Detects", imgCopy);
+		imwrite(buffer, imgCopy);
+
+	}
+	else{
+		printf("There is no Image to detect Aruco-markers!!!\n");
+		exit(EXIT_FAILURE);
+
+	}
+	//comment the following lines it you want continue streaming
+	while (1)
+	{
+		char c=cvWaitKey(200);
+		if (c=='q')
+			return markers;
+		if (c == 's'){
+			char fName[50];
+			sprintf(fName,"%d_%d.pgm",portNum,imgCount++);
+			cv::imwrite(fName,imgCopy);
+			printf("savedAruco %s\n",fName);
+
+		}
+	}
+
+#endif
+	//return markers;
+
+}
+
+vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<aruco::Marker> markerFace){
+	std::vector<cv::Point2f> pointsIris, pointsFace;
+	vector<float> rectResult;
+	int row = outImg.rows;
+	int col = outImg.cols;
+	int count = 0;
+
+
+	//Search max distance between points and collect marker Id which has max distact between them
+	cv::Point2f ptr1, ptr2;
+	std::vector<int> targetID;
+	float maxDis = 0.0;
+	for(int i = 0; i < markerIris.size(); i++){
+
+		ptr1 = markerIris[i].getCenter();
+
+		for(int j = i + 1; j < markerIris.size(); j++){
+
+			ptr2 = markerIris[j].getCenter();
+			cout << markerIris[i].id << " VS " << markerIris[j].id << endl;
+
+			if (std::abs(float(ptr1.y - ptr2.y)) < 20 || std::abs(float(ptr1.x - ptr2.x)) < 20){
+				continue;
+			}
+			else{
+				float dis = sqrt(pow((ptr1.x - ptr2.x),2) + pow((ptr1.y - ptr2.y),2));
+
+				if (dis > maxDis){
+					maxDis = dis;
+					if(targetID.empty())
+					{
+						targetID.push_back(markerIris[i].id);
+						targetID.push_back(markerIris[j].id);
+					}
+					else{
+						targetID.pop_back();
+						targetID.pop_back();
+						targetID.push_back(markerIris[i].id);
+						targetID.push_back(markerIris[j].id);
+					}
+				}
+				cout << "Dist ::::::::: " << dis << endl;
+			}
+		}
+	}
+
+
+	//Search target ID's center in iris camera
+	for (int i = 0; i < targetID.size(); i++){
+		int id = targetID[i];
+		for (int j = 0; j < markerIris.size(); j++){
+			int idIris = markerIris[j].id;
+			if (id == idIris){
+				pointsIris.push_back(markerIris[j].getCenter());
+			}
+		}
+	}
+
+
+	//Search target ID's center in Face camera
+	for (int i = 0; i < targetID.size(); i++){
+		int id = targetID[i];
+		for (int j = 0; j < markerFace.size(); j++){
+			int idFace = markerFace[j].id;
+			if (id == idFace){
+				pointsFace.push_back(markerFace[j].getCenter());
+			}
+		}
+	}
+
+
+
+	//check whether it was successfully detected atleast two target points from both camera
+	if (pointsIris.size() <= 1){
+		printf("Fail to detect two aruco markers in horizental direction!\n");
+		exit(EXIT_FAILURE);
+	}
+
+	cout << pointsIris[0].x << "-------------" << pointsIris[0].y << endl;
+	cout << pointsIris[1].x << "-------------" << pointsIris[1].y << endl;
+	cout << pointsFace[0].x << "-------------" << pointsFace[0].y << endl;
+	cout << pointsFace[1].x << "-------------" << pointsFace[1].y << endl;
+	cout << endl;
+
+	//calculate the zoom offset or slope
+	float mx = (pointsFace[1].x - pointsFace[0].x) / (pointsIris[1].x - pointsIris[0].x);
+	float my = (pointsFace[1].y - pointsFace[0].y) / (pointsIris[1].y - pointsIris[0].y);
+
+	cout << "row::::: " << row << "   col:::::" << col << endl;
+
+	//measure the x , x_offset and y, y_offset
+	float x_offset = pointsFace[0].x - (mx * pointsIris[0].x);
+	float xMax_offset = (mx * col) + x_offset;
+	float y_offset = pointsFace[0].y - (my * pointsIris[0].y);
+	float yMax_offset = (my * row) + y_offset;
+
+
+	cout << x_offset << "*********************" << xMax_offset << endl;
+	cout << y_offset << "  **********************   " << yMax_offset << endl;
+
+
+
+	cout << "success" << endl;
+
+	rectResult.push_back(x_offset);
+	rectResult.push_back(y_offset);
+	rectResult.push_back(xMax_offset);
+	rectResult.push_back(yMax_offset);
+
+	return rectResult;
+
+/*	//draw a rect to verify the rect
+	cv::Point pt1(x_offset, y_offset);
+	cv::Point pt2(xMax_offset, yMax_offset);
+	smallImg = rotation90(outImg);
+	cv::rectangle(smallImg, pt1, pt2, cv::Scalar(255, 255, 255));
+	imwrite("imgArucoRect.png", smallImg);*/
+
+}
+
+void CalCam(){
+
+	//DoStartCmd_CamCal();
+	char buff[512];
+	vs = new VideoStream(8193);
+	int camID = vs->cam_id;
+	//sprintf(buff, "MarkerRucoDetectof%i_cam.png", camID);		for New firmware
+	sprintf(buff, "MarkerRucoDetectof%i_cam.png", camID);
+	std::vector<aruco::Marker> markerIris = gridBooardMarker(outImg);
+	delete (vs);
+
+
+	vs = new VideoStream(8194);
+	std::vector<aruco::Marker> markerFace = gridBooardMarker(outImg);
+	//delete (vs);
+
+
+	vector<float> rectLeftAux;
+	rectLeftAux = calibratedRect(markerIris, markerFace);
+
+
+	float x_offset, y_offset, xMax_offset, yMax_offset;
+	x_offset = rectLeftAux[0];
+	y_offset = rectLeftAux[1];
+	xMax_offset = rectLeftAux[2];
+	yMax_offset = rectLeftAux[3];
+
+
+	cv::Point pt1(x_offset, y_offset);
+	cv::Point pt2(xMax_offset, yMax_offset);
+	smallImg = rotation90(outImg);
+	cv::rectangle(smallImg, pt1, pt2, cv::Scalar(255, 255, 255));
+	imwrite(buff, smallImg);
+
+
+
+
+
+
+	delete (vs);
+}
+
+#endif
+/*
+void createArucoMarkers()
+{
+
+    // Create image to hold the marker plus surrounding white space
+    Mat outputImage(700, 700, CV_8UC1);
+    // Fill the image with white
+    outputImage = Scalar(255);
+    // Define an ROI to write the marker into
+    Rect markerRect(100, 100, 500, 500);
+    Mat outputMarker(outputImage, markerRect);
+
+    // Choose a predefined Dictionary of markers
+    Ptr< aruco::Dictionary> markerDictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME::DICT_4X4_50);
+    // Write each of the markers to a '.jpg' image file
+    for (int i = 0; i < 50; i++)
+    {
+        //Draw the marker into the ROI
+        aruco::drawMarker(markerDictionary, i, 500, outputMarker, 1);
+        ostringstream convert;
+        string imageName = "4x4Marker_";
+        convert << imageName << i << ".jpg";
+        // Note we are writing outputImage, not outputMarker
+        imwrite(convert.str(), outputImage);
+
+    }
+}
+*/
+
+double parsingIntfromHex(string str1){
+
+    int loc1 = str1.find_first_of('=');
+
+    string str2 = str1.substr(loc1+1,str1.length());
+
+    int loc2 = str2.find_first_of('(');
+    string str3 = str2.substr(0,loc2);
+    //cout << str3 << endl;
+
+    unsigned int intVal;
+    std::stringstream ss;
+    ss << std::hex << str3;
+    ss >> intVal;
+    //cout << intVal << endl;
+
+    return intVal;
+}
+
+
+int calTemp(int i){
+    int len;
+    char buffer[512];
+    char cmd[512];
+	float t_start=clock();
+
+    //Temp reading commands from camera sensor
+	sprintf(cmd, "wcr(0x0%i,0x30b4,0x01)", i);
+	port_com_send(cmd);
+    //port_com_send("wcr(0x1f,0x30b4,0x01)");
+    //cvWaitKey(3000);
+	sprintf(cmd, "wcr(0x0%i,0x30b4,0x31)", i);
+	port_com_send(cmd);
+    //port_com_send("wcr(0x1f,0x30b4,0x31)");
+    //cvWaitKey(3000);
+	sprintf(cmd, "wcr(0x0%i,0x30b4,0x11)", i);
+	port_com_send(cmd);
+    //port_com_send("wcr(0x1f,0x30b4,0x11)");
+    //cvWaitKey(300);
+	sprintf(cmd, "rcr(0x0%i,0x30b2)", i);
+    if (!(len = port_com_send_return(cmd, buffer, 20) > 0))
+    {
+    	printf("failed to read temp register!\n");
+    }
+    //cvWaitKey(3000);
+    //printf("Temp val: %s\n", buffer);
+    string str1(buffer);
+
+    double tempRead = parsingIntfromHex(str1);
+
+	sprintf(cmd, "rcr(0x0%i,0x30cc)", i);
+    //70C calibration data read
+    if (!(len = port_com_send_return(cmd, buffer, 20) > 0))
+    {
+    	printf("failed to read temp register!\n");
+    }
+    //printf("Temp val 120: %s\n", buffer);
+    string str2(buffer);
+    double cal120 = parsingIntfromHex(str2);
+
+    sprintf(cmd, "rcr(0x0%i,0x30c8)", i);
+    //55C calibration data read
+    if (!(len = port_com_send_return(cmd, buffer, 20) > 0))
+    {
+    	printf("failed to read temp register!\n");
+    }
+    //printf("Temp val 50: %s\n", buffer);
+    string str3(buffer);
+    double cal55 = parsingIntfromHex(str3);
+
+    double slope = (120.0 - 55.0)/(cal120 - cal55);
+    double constant = 55.0 - (slope * double(cal55));
+
+    double tempInC = (slope * tempRead)  + constant;
+
+	float t_result = (float)(clock()-t_start)/CLOCKS_PER_SEC;
+	//cout << tempRead << " " << cal120 << " " << cal55 << endl;
+	//cout << "Slope::: " << slope << "Constant:::" << constant << endl;
+    cout << "TempData of " << i << " Cam:::" << tempInC << endl;
+
+	writeFloatData(fileName, tempInC); //curremt temparature reading
+	writeStringData(fileName,",");
+
+
+	writeFloatData(fileName, t_result); //curremt temparature reading
+	writeStringData(fileName,",");
+
+	sprintf(cmd, "wcr(0x0%i,0x30b4,0x21)", i);
+    port_com_send(cmd);
+
+    //writeStartNewLine(fileName);
+
+
+    return tempInC;
+
+}
+
+void motorMove(){
+	int temp;
+/*    MoveTo(CENTER_POS);
+    temp = calTemp();*/
+	printf("\nStart temp expermiment process-----------------> \n");
+	char cmd[512];
+    while(1){
+        MoveTo(MAX_POS);
+        cvWaitKey(WAIT);
+        //sprinf(cmd, "")
+        temp = calTemp(1);
+        temp = calTemp(2);
+        temp = calTemp(4);
+        temp = calTemp(8);
+        temp = calTemp(10);
+        writeStartNewLine(fileName);
+
+        MoveTo(CENTER_POS);
+        cvWaitKey(WAIT);
+        temp = calTemp(1);
+        temp = calTemp(2);
+        temp = calTemp(4);
+        temp = calTemp(8);
+        temp = calTemp(10);
+        writeStartNewLine(fileName);
+
+        MoveTo(MIN_POS);
+        cvWaitKey(WAIT);
+        temp = calTemp(1);
+        temp = calTemp(2);
+        temp = calTemp(4);
+        temp = calTemp(8);
+        temp = calTemp(10);
+        writeStartNewLine(fileName);
+
+        MoveTo(CENTER_POS);
+        cvWaitKey(WAIT);
+        temp = calTemp(1);
+        temp = calTemp(2);
+        temp = calTemp(4);
+        temp = calTemp(8);
+        temp = calTemp(10);
+        writeStartNewLine(fileName);
+
+    }
+}
+
+
+void writeStringData(string fileName, string v){
+	ofstream file(fileName, std::ios_base::out | std::ios_base::app);
+	file << v;
+
+	file.close();
+}
+
+
+
+void writeFloatData(string fileName, float v){
+	ofstream file(fileName, std::ios_base::out | std::ios_base::app);
+	file << v;
+
+	file.close();
+}
+
+
+void writeStartNewLine(string fileName){
+	ofstream file(fileName, std::ios_base::out | std::ios_base::app);
+	file << std::endl;
+
+	file.close();
+}
+
+
+
+void clearData(string fileName){
+	ofstream file(fileName);
+	file.clear();
+	file.close();
+}
+
+
+
 int main(int argc, char **argv)
 {
+/*	temp_log = fopen("tempLog", "a");
+	//temp_log << "a " << ";" << "b" << endl;
+	//temp_log << "c " << ";" << "d" << endl;
+	fclose(temp_log);*/
+
+	fstream infile(fileName);
+	if(infile.good()){
+		cout << "File exist and keep writing in it!" << endl;
+	}
+	else{
+		cout << "Create log file!" << endl;
+		ofstream file(fileName);
+	}
+
+	clearData(fileName);
+	writeStringData(fileName,"Move to command"); writeStringData(fileName,",");
+	writeStringData(fileName,"Current angle"); writeStringData(fileName,",");
+	writeStringData(fileName,"Move to angle "); writeStringData(fileName,",");
+	writeStringData(fileName,"required time to move"); writeStringData(fileName,",");
+	writeStringData(fileName,"Measure temp of Cam1"); writeStringData(fileName,",");
+	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
+	writeStringData(fileName,"Measure temp of Cam2"); writeStringData(fileName,",");
+	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
+	writeStringData(fileName,"Measure temp of Cam3"); writeStringData(fileName,",");
+	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
+	writeStringData(fileName,"Measure temp of Cam4"); writeStringData(fileName,",");
+	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
+	writeStringData(fileName,"Measure temp of CamFace"); writeStringData(fileName,",");
+	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
+	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
+	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
+
+	writeStartNewLine(fileName);
+	//writeData("std::endl");
+
+	//file.close();
+
     int w,h;
     char key;
 
     int face_mode;
     int run_mode;
+    int cal_mode=0;
+    int cal_cam_mode = 0;
+    int temp_mode = 0;
     pthread_t threadId;
     pthread_t thredEcId;
 
@@ -988,22 +1868,72 @@ int main(int argc, char **argv)
 		printf("error params\n");
 		exit (0);
 	}
+
+
 	if (argc== 3)
 		run_mode=1;
 	else
 		run_mode =0;
+
+
+	if (strcmp(argv[1],"cal")==0)
+	{
+		run_mode =1;
+		cal_mode=1;
+	}
+
+	if (strcmp(argv[1],"calcam")==0)
+	{
+		run_mode =1;
+		cal_cam_mode=1;
+	}
+
+
+	if (strcmp(argv[1],"temp")==0)
+	{
+		run_mode =1;
+		temp_mode=1;
+	}
+
+
+
 
 	if (run_mode)
 		pthread_create(&threadId,NULL,init_tunnel,NULL);
 	if (run_mode)
 		pthread_create(&threadId,NULL,init_ec,NULL);
 
-	vid_stream_start(atoi(argv[1]));
+
+	if (cal_mode)
+	{
+		portcom_start();
+		CalAll();
+		return 0;
+	}
+
+	if (cal_cam_mode){
+		portcom_start();
+		DoStartCmd_CamCal();
+#ifdef ARUCO
+		CalCam();
+#endif
+		return 0;
+
+	}
+
+
+	if (temp_mode){
+		portcom_start();
+		//DoStartCmd();
+		motorMove();
+		return 0;
+
+	}
+
+
+	//vid_stream_start(atoi(argv[1]));
+	vs= new VideoStream(atoi(argv[1]));
 	sprintf(temp,"Disp %d",atoi (argv[1]) );
-
-
-
-
 
 	if (run_mode)
 		{
@@ -1014,6 +1944,8 @@ int main(int argc, char **argv)
 
 	cv::namedWindow(temp);
 
+/*	if (vs->m_port!=8194)
+		vs->offset_sub_enable=1;*/
 
 	while (1)
 	{
@@ -1024,7 +1956,8 @@ int main(int argc, char **argv)
 		//if ((run_mode==0) || (run_state == RUN_STATE_FACE))
 		{
 		//	printf("******calling vid_stream_get***********\n");
-			vid_stream_get(&w,&h,(char *)outImg.data);
+			//vid_stream_get(&w,&h,(char *)outImg.data);
+			vs->get(&w,&h,(char *)outImg.data);
 		}
 		//else
 		{
@@ -1050,20 +1983,63 @@ int main(int argc, char **argv)
 			}
 			else
 				cv::resize(outImg, smallImg, cv::Size(), 1, 1, INTER_NEAREST); //Time debug
-
+		//	MeasureSnr();
 			imshow(temp,smallImg);  //Time debug
 			}
 	    key = cv::waitKey(1);
 	    //printf("Key pressed : %u\n",key);
 		if (key=='q')
 			break;
-		if(key=='s')
+		if (key=='c')
+		{
+			portcom_start();
+			DoImageCal(1);
+		}
+			if(key=='s')
 		{
 			char fName[50];
 			sprintf(fName,"%d_%d.pgm",atoi(argv[1]),fileNum++);
 			cv::imwrite(fName,outImg);
 			printf("saved %s\n",fName);
 
+		}
+		static int aruc_on=0;
+
+
+
+		if (key=='a')
+			{
+			aruc_on=~aruc_on;
+			printf("set aruc %d\n",aruc_on);
+
+			portcom_start();
+			DoStartCmd_CamCal();
+
+
+/*			//Homing
+			printf("Re Homing\n");
+			port_com_send("fx_home()\n");
+			usleep(100000);
+
+			port_com_send("fx_abs(168)\n");
+			port_com_send("wcr(0x04,0x3012,12)");*/
+
+			//r_outImg = rotation90(outImg);
+
+			}
+		if(aruc_on){
+			//scaling = 2;
+		    //cv::resize(outImg, smallImgBeforeRotate, cv::Size(),(1/scaling),(1/scaling), INTER_NEAREST);	//Mohammad
+		    //smallImg = rotation90(smallImgBeforeRotate);
+		    //cv::resize(smallImg, r_outImg, cv::Size(),(scaling),(scaling), INTER_NEAREST);
+			//gridBooardMarker(smallImg);
+
+			vs = new VideoStream(8194);
+#ifdef ARUCO
+			gridBooardMarker(outImg);
+#endif
+			delete (vs);
+			//arucoMarkerTracking(outImg);
 		}
 		if(key=='b')
 			{
@@ -1076,9 +2052,13 @@ int main(int argc, char **argv)
 				printf("saved %s\n",fName);
 
 			}
+
 	}
 
- }
+
+}
+
+
 
 /************************************
  *

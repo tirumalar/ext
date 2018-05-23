@@ -64,12 +64,8 @@ void port_com_send(char *cmd)
 	int rv,ret;
 	//printf("In port com");
 	FILE *file;
-	file = fopen("port.log","at");
-	if (file)
-	{
-		fprintf(file,"<%s>\n",cmd);
-		fclose(file);
-	}
+
+
 
 	if (strncmp(cmd,"ixed",strlen("ixed"))==0)
 			{
@@ -90,7 +86,7 @@ void port_com_send(char *cmd)
 	sprintf(buffer,"%s\n",cmd);
 	rv= send(sockfd,buffer,strlen(buffer), 0);
 	if(rv!=(int)strlen(buffer))
-		printf("rv & command length don't match\n");
+		printf("rv & command length don't match %d %d\n",rv,strlen(buffer));
 	//printf("%d rv send %d\n",x,rv);
 
 //	printf("# ");
@@ -120,6 +116,15 @@ void port_com_send(char *cmd)
 			break;
 			}
 		}
+
+	file = fopen("port.log","at");
+	if (file)
+	{
+		fprintf(file,"Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n",(float)clock()/CLOCKS_PER_SEC, (float)(clock()-t)/CLOCKS_PER_SEC, cmd);
+		fclose(file);
+	}
+
+
 	//usleep(5000);
    in_send =0;
   // printf("%u & \n",counter);
