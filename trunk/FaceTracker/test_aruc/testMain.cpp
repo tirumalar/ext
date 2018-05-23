@@ -187,6 +187,7 @@ void MoveTo_R(int v)
 	port_com_send(buff);
 }
 
+#if 0
 int Rahman_main (int argc, char **argv)
 {
 
@@ -504,3 +505,6 @@ int Rahman_main (int argc, char **argv)
 }
 return 0;
 }
+
+
+#endif
