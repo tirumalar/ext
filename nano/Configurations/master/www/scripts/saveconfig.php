@@ -33,7 +33,7 @@ $IEEE802Settings = new IEEE802Details();
 
 $eyeLockINI->LoadIniSettings(); // Need to load what it was, so that we can compare things for saving out... (maybe rethink this code... why check at all here?)
 $eyeLockINI->SaveIniSettings($_POST);
-$interfaceSettings->LoadInterfaceSettings($eyeLockINI->HardwareType === '2'); // Must load the current state so we know how to process things when we write the new stuff out.
+$interfaceSettings->LoadInterfaceSettings($eyeLockINI->HardwareType); // Must load the current state so we know how to process things when we write the new stuff out.
 //$IEEE802Settings->LoadIEEE802Config();
 
 
@@ -49,7 +49,7 @@ else
     $prevStaticIP = $interfaceSettings->IpOfBoard;
     $prevDeviceName = $interfaceSettings->DeviceName;
 
-    if (!$interfaceSettings->SaveInterfaceSettings($_POST, false, $eyeLockINI->HardwareType === '2')) // This is simpler, just rewrites the script with the updated values... (no matter what)
+    if (!$interfaceSettings->SaveInterfaceSettings($_POST, false, $eyeLockINI->HardwareType)) // This is simpler, just rewrites the script with the updated values... (no matter what)
     {
         // DMOTODO
         // For now, this is just a static IP in use failure!  Add enhanced error reporting later!

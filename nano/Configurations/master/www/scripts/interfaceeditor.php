@@ -91,10 +91,27 @@ class InterfaceEditor
 	file_put_contents($this->resolvFile, $current);
     }
 
-    function LoadInterfaceSettings($bIsHBOX)
+    function LoadInterfaceSettings($HardwareType)
     {
+        $cmdString = "";
+        $InterfaceName = "";
+
         //Ok, retrieve the Mac Address of the device...
-        $cmdString = "echo $(ifconfig enp10s0 |";
+        if ($HardwareType === '0') // nxt
+        {
+            $InterfaceName = "eth0";
+            $cmdString .= "echo $(ifconfig eth0 |";
+        }
+        else if ($HardwareType === '1') // ext
+        {
+            $InterfaceName = "usbnet0";
+            $cmdString .= "echo $(ifconfig usbnet0 |";
+        }
+        else if ($HardwareType === '2') // hbox
+        {
+            $InterfaceName = "enp10s0";
+            $cmdString .= "echo $(ifconfig enp10s0 |";
+        }
         $cmdString .= "grep \"HWaddr\" |";
         $cmdString .= "tr -s ' ' |";
         $cmdString .= "cut -d ' ' -f5 |";
@@ -225,9 +242,9 @@ class InterfaceEditor
 */
 
 	// Now extract IP information
-	$IPString = shell_exec("ifconfig enp10s0| grep 'inet addr:'");
+	$IPString = shell_exec(sprintf("ifconfig %s| grep 'inet addr:'", $InterfaceName));
   	if (!isset($IPString)) 
-	     $IPString = shell_exec("ifconfig enp10s0:avahi| grep 'inet addr:'"); 
+	     $IPString = shell_exec(sprintf("ifconfig %s:avahi| grep 'inet addr:'", $InterfaceName)); 
 
         if (isset($IPString))
         {
@@ -288,7 +305,7 @@ class InterfaceEditor
                 $sFlags = trim(substr($theString, 48, 7));
                 $sIface = trim(substr($theString, 73, strlen($theString) - 73));
 
-                if (($sFlags === "UG") && ($sIface === "enp10s0"))
+                if (($sFlags === "UG") && ($sIface === $InterfaceName))
                 {
                     $this->Gateway = $sGateway;
                     // DMOTODO - enuser this is a valid IP!!!
@@ -298,7 +315,7 @@ class InterfaceEditor
 //                    }
                 }
 
-                if (($sFlags === "U") && ($sIface === "enp10s0"))
+                if (($sFlags === "U") && ($sIface === $InterfaceName))
                 {
                     $this->Network = $sDestination;
                     // DMOTODO - enuser this is a valid IP!!!
@@ -311,10 +328,10 @@ class InterfaceEditor
         }
 
         // This flag determines dhcp status
-        $this->IsStatic = $this->IsIPStatic($this->IpOfBoard);
+        $this->IsStatic = $this->IsIPStatic($this->IpOfBoard, $InterfaceName);
 
         // Load up the DHCP Settings
-        $this->LoadReloadInterfacesSettings($bIsHBOX);
+        $this->LoadReloadInterfacesSettings($HardwareType);
 
         // Determine Tamper flag
         $tampered = shell_exec("ls -la /home/root | grep tamper");
@@ -327,28 +344,28 @@ class InterfaceEditor
     }
 
 
-    function SaveInterfaceSettings($row, $bForceUpdate, $bIsHBOX)
+    function SaveInterfaceSettings($row, $bForceUpdate, $theHardwareType)
     {
         // These 2 calls are smart enough to only update what is necessary.
         $bWasStaticIP = $this->IsStatic;
    
         // Now update/create our changed interfaces file, but only if something has changed
-        if (!$this->UpdateInterfacesFile($row, (!$bWasStaticIP && ($row['deviceipmode'] === "staticip")), $bForceUpdate, $bIsHBOX)) // Internally checks for changes and only updates as necessary... so we always call it...
+        if (!$this->UpdateInterfacesFile($row, (!$bWasStaticIP && ($row['deviceipmode'] === "staticip")), $bForceUpdate, $theHardwareType)) // Internally checks for changes and only updates as necessary... so we always call it...
             return FALSE;
 	//		WriteToTempFile("interfaces write done\n");
 	//	error_log("update interfaces done");
         // This function only updates what is necessary...
         // If we are switching from Static, to DHCP then we need to delete some files...
-        $this->ConfigureAsDHCP($row, ($bWasStaticIP && ($row['deviceipmode'] !== "staticip")), $bForceUpdate, $bIsHBOX);
+        $this->ConfigureAsDHCP($row, ($bWasStaticIP && ($row['deviceipmode'] !== "staticip")), $bForceUpdate, $theHardwareType);
 	//	WriteToTempFile("configure as php done\n");
 
         return TRUE;
     }
 
     //DMOHBOX New if HBOX, this is a no op .... just return
-    function LoadReloadInterfacesSettings($bIsHBOX)
+    function LoadReloadInterfacesSettings($theHardwareType)
     {
-        if (!$bIsHBOX)
+        if ($theHardwareType === '0')
         {
             // Parse reloadinterfaces.sh for dhcp settings
             $strUdhcpc = shell_exec(sprintf("grep udhcpc %s", escapeshellarg($this->RootFolder.'/'.$this->ReloadInterfacesFile)));
@@ -388,7 +405,7 @@ class InterfaceEditor
     }
 
     //DMOHBOX New if HBOX, this is a no op .... just return
-    function SaveReloadInterfacesSettings($row, $bForceUpdate, $bIsHBOX)
+    function SaveReloadInterfacesSettings($row, $bForceUpdate, $theHardwareType)
     {
         // Update reloadinterfaces.sh with dhcp settings
         // Build up our new string using the supplied values...
@@ -397,8 +414,16 @@ class InterfaceEditor
         $strDHCPTimeout = "";
         $strDHCPRetries = "0";
         $strDHCPRetryDelay = "";
+        $InterfaceName = "";
 
-        if (!$bIsHBOX)
+        if ($theHardwareType === '0')
+            $InterfaceName = "eth0";
+        else if ($theHardwareType === '1')
+            $InterfaceName = "usbnet0";
+        else if ($theHardwareType === '2')
+            $InterfaceName = "enp10s0";
+
+        if ($theHardwareType === '0')
         {
             if (!$bForceUpdate)
             {
@@ -439,7 +464,7 @@ class InterfaceEditor
                 else
                     $strDHCPRetries = sprintf(" -t %s", $strDHCPRetries);
 
-                $strUdhcpc = sprintf("\t\tudhcpc -i enp10s0 -b -T %s%s -A %s -S\n", $strDHCPTimeout, $strDHCPRetries, $strDHCPRetryDelay);
+                $strUdhcpc = sprintf("\t\tudhcpc -i %s -b -T %s%s -A %s -S\n", $InterfaceName, $strDHCPTimeout, $strDHCPRetries, $strDHCPRetryDelay);
 
 
                 // Ok, that's our string...  Now write it back out to the correct spot in the file... sed could be used...
@@ -479,7 +504,7 @@ class InterfaceEditor
     /////////////////////////////////////////////////
     // Helper functions
     /////////////////////////////////////////////////
-    private function IsIPStatic($boardIP)
+    private function IsIPStatic($boardIP, $theInterfaceName)
     {
         $bIsStatic = false;
 	
@@ -487,7 +512,7 @@ class InterfaceEditor
 	// TODO: properly identify device type
 	//if ($this->uname == "4.13.0-36-generic")
 	{
-		$strInterfaces = shell_exec('grep enp10s0 /etc/network/interfaces | grep static'); 
+		$strInterfaces = shell_exec(sprintf("grep %s /etc/network/interfaces | grep static", $theInterfaceName)); 
           	if(strlen($strInterfaces) == 0)
 		{
 			$bIsStatic = false;
@@ -527,12 +552,12 @@ class InterfaceEditor
 
 
 
-    function UpdateInterfacesFile($row, $bSwitchedToStatic, $bForceUpdate)
+    function UpdateInterfacesFile($row, $bSwitchedToStatic, $bForceUpdate, $theHardwareType)
     {
 	//	error_log("updateInterfacesFile...");
         $bChanged = $bSwitchedToStatic;
         $bDeviceNameChanged = FALSE;
-	 $NewDeviceName = "";
+	    $NewDeviceName = "";
         $NewIpOfBoard = "";
         $NewNetwork = "";
         $NewSubNetMask = "";
@@ -541,11 +566,19 @@ class InterfaceEditor
         $NewMacAddress = "";
         $NewFactorySerialNumber = "";
         $NewSerialNumber = "";
+        $InterfaceName = "";
 
+        if ($theHardwareType === '0')
+            $InterfaceName = "eth0";
+        else if ($theHardwareType === '1')
+            $InterfaceName = "usbnet0";
+        else if ($theHardwareType === '2')
+            $InterfaceName = "enp10s0";
 
         // Using our current settings, create our backup string, in case we need to make the backup files...
-        $strCurrentInterfaces = "auto lo enp10s0\n";
-        $strCurrentInterfaces .= "iface lo inet loopback\n\n";
+        $strCurrentInterfaces = "auto lo ";
+        $strCurrentInterfaces .= $InterfaceName;
+        $strCurrentInterfaces .= "\niface lo inet loopback\n\n";
         $strCurrentInterfaces .= "iface enp10s0 inet static\n";
         $strCurrentInterfaces .= sprintf("address %s\n", $this->IpOfBoard);
         $strCurrentInterfaces .= sprintf("network %s\n", $this->Network);
@@ -762,12 +795,12 @@ class InterfaceEditor
     
 
 
-    function ConfigureAsDHCP($row, $bSwitchingtoDHCP, $bForceUpdate, $bIsHBOX)
+    function ConfigureAsDHCP($row, $bSwitchingtoDHCP, $bForceUpdate, $theHardwareType)
     {
         $bSuccess = true;
 
         // Update DHCP timeout and retries (just do it always)
-        $this->SaveReloadInterfacesSettings($row, $bForceUpdate, $bIsHBOX);
+        $this->SaveReloadInterfacesSettings($row, $bForceUpdate, $theHardwareType);
 
         // If moving into DHCP mode from static... we need to do more...
         if ($bSwitchingtoDHCP)
@@ -779,8 +812,8 @@ class InterfaceEditor
 	    
             $this->SaveDNSSettings($this->Gateway,$this->Gateway);
 
-            if ($this->DeleteFileAndReboot($this->RootFolder, $this->InterfacesFile, false, $bIsHBOX))
-                $bSuccess = $this->DeleteFileAndReboot($this->RootFolder, $this->InterfacesFile . ".md5", true, $bIsHBOX);
+            if ($this->DeleteFileAndReboot($this->RootFolder, $this->InterfacesFile, false, $theHardwareType))
+                $bSuccess = $this->DeleteFileAndReboot($this->RootFolder, $this->InterfacesFile . ".md5", true, $theHardwareType);
             else
                 $bSuccess = false;
         }
@@ -789,7 +822,7 @@ class InterfaceEditor
     }
 
 
-    function DeleteFileAndReboot($RemoteFolder, $RemoteFile, $bShouldReboot, $bIsHBOX)
+    function DeleteFileAndReboot($RemoteFolder, $RemoteFile, $bShouldReboot, $theHardwareType)
     {
         $bSuccess = true;
 
@@ -803,7 +836,7 @@ class InterfaceEditor
 
 
             // DMOHBOX -- this should NOT execute in an HBOX environment... the file won't exist...
-            if (!$bIsHBOX)
+            if ($theHardwareType === '0')
                 NXTW_shell_exec(sprintf("20".chr(0x1F)."%s".chr(0x1F)."%s", $this->RootFolder, $this->ReloadInterfacesFile));//"%s/%s", $this->RootFolder, $this->ReloadInterfacesFile));
                 //set the DHCP in the rc.conf
             

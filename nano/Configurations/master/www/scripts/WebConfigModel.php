@@ -52,7 +52,7 @@ class Model
         // Do not remove these loads!  These are 'reloads' that occur AFTER a successful SAVE operation!
         $this->eyeLockINI->LoadIniSettings();
         $this->IEEE802Settings->LoadIEEE802Config();
-        $this->interfaceSettings->LoadInterfaceSettings($this->eyeLockINI->HardwareType === '2');
+        $this->interfaceSettings->LoadInterfaceSettings($this->eyeLockINI->HardwareType);
 
         // Get the local nano time, and kickoff our clock...
 //         echo '<script> startTime(); </script>';
@@ -70,7 +70,7 @@ class Model
         $this->IEEE802Settings->SaveIEEE802Config($thePost);
 
         // This function might cause a device reboot to be invoked...
-        $this->interfaceSettings->SaveInterfaceSettings($thePost, false);
+        $this->interfaceSettings->SaveInterfaceSettings($thePost, false, $eyeLockINI->HardwareType);
     }
 
     ///////////////////////////////////////////////////////
