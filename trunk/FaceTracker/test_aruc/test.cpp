@@ -46,7 +46,7 @@ or implied, of Rafael Muñoz Salinas.
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/photo/photo.hpp>
 
-#ifdef ARUCO
+#ifdef CAMERACALIBRATION
 #include <aruco.h>
 #include <dictionary.h>
 #endif
@@ -118,6 +118,7 @@ int move_counts=0;
 #define NO_FACE_SWITCH_FACE 10
 
 string fileName = "output.csv";
+string a_calibFile = "/home/ext/TESTWorkspace/trunk/FaceTracker/test_aruc/Debug/auxRect.csv";
 int noeyesframe = 0;
 #define ANGLE_TO_STEPS 5
 
@@ -371,6 +372,10 @@ int run_state=RUN_STATE_FACE;
 
 
 
+#define CAL_BRIGHT       85
+
+
+
 
 void MainIrisSettings(){
 
@@ -490,8 +495,6 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 
 
 	agc_val = FACE_GAIN_MIN;
-
-
 
 
 	//switching cameras
@@ -696,6 +699,31 @@ void m2_DoStartCmd()
 
 
 
+//Old
+#define SCALE 3
+Rect detect_area(15/SCALE,15/SCALE,(960/(SCALE*SCALE))+15/SCALE,(1200/(SCALE*SCALE))+15/SCALE); //15 was 30
+
+/*
+//follwoing command is for test demo 1 no_move_area
+Rect no_move_area(0,52,120,14);
+*/
+
+//follwoing command is for test demo 2 no_move_area
+//Rect no_move_area(0,64,120,14);
+
+//follwoing command is for test demo 3 no_move_area
+//Rect no_move_area(0,68,120,12);
+
+//Test rect after camera to camera calibration
+//Rect no_move_area(0,460/scaling,960/scaling,231/scaling);
+Rect no_move_area;
+
+
+//Rect detect_area_center(120/SCALE,120/SCALE,(960-120*2)/(SCALE*SCALE),1200/SCALE)
+//Rect no_move_area_aux(0,660/scaling,960/scaling,160/scaling); //Mohammad rect at the center 580
+
+
+
 
 // Main DoStartCmd configuration for Eyelock matching
 #if 1
@@ -724,7 +752,7 @@ void DoStartCmd()
 
 
 	//port_com_send("psoc_write(9,90)");	// charge cap for max current 60 < range < 95
-	port_com_send("psoc_write(9,85)");	// charge cap for max current 60 < range < 95
+	port_com_send("psoc_write(9,80)");	// charge cap for max current 60 < range < 95
 
 	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
 	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
@@ -764,9 +792,11 @@ void DoStartCmd()
 	port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
 
 
-	printf("Turning on Alternate cameras");
+	printf("Turning on Alternate cameras\n");
 	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Turn on Alternate cameras
 	port_com_send(cmd);
+
+	port_com_send("wcr(0x1f,0x301a,0x1998)"); // ilya added to leave the pll on always
 
 
 /*
@@ -777,6 +807,32 @@ void DoStartCmd()
 		system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
 		sleep(2);
 	}*/
+
+
+	//Reading the calibrated Rect
+	ifstream m_AuxRect(a_calibFile);
+	vector<int> a_rect;
+	string line;
+	unsigned int value;
+	int targetOffset = 3;
+
+	if (m_AuxRect.is_open()){
+		while(getline(m_AuxRect, line)){
+			value = atoi(line.c_str());
+			a_rect.push_back(value);
+		}
+	}
+	else
+		printf("Can't find auxRect.csv File! Possibly the device is not calibrated!\n");
+
+
+	no_move_area.x = a_rect[0]/scaling;
+	no_move_area.y = a_rect[1]/scaling + targetOffset;
+	no_move_area.width = a_rect[2]/scaling;
+	no_move_area.height = (a_rect[3])/scaling -targetOffset*2;
+
+
+
 
 }
 
@@ -796,12 +852,6 @@ void DoStartCmd_CamCal(){
 	//Reset the lower motion
 	port_com_send("fx_abs(25)\n");
 
-	//move to center position
-	printf("Moving to Center\n");
-	//MoveTo(CENTER_POS); // Original comment
-	MoveTo(CENTER_POS + 20);
-	read_angle();		//read current angle
-
 
 	printf("configuring face LEDs\n");
 	//Face configuration of LED
@@ -809,26 +859,27 @@ void DoStartCmd_CamCal(){
 
 
 	//port_com_send("psoc_write(9,90)");	// charge cap for max current 60 < range < 95
-	port_com_send("psoc_write(9,70)");	// charge cap for max current 60 < range < 95
+	port_com_send("psoc_write(9,60)");	// charge cap for max current 60 < range < 95
 
 	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
 	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
 
 
+
 	//Face cameras configuration
 	printf("configuring face Cameras\n");
-	port_com_send("wcr(0x04,0x3012,6) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0x40)");
+	port_com_send("wcr(0x04,0x3012,3) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0x32)");
 
 
 
 	//Main Iris cameras configuration
 	printf("configuring Main Iris Cameras\n");
-	port_com_send("wcr(0x18,0x3012,14) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x80)");
+	port_com_send("wcr(0x18,0x3012,3) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x80)");
 
 
 	//Aux Iris Cameras Configuration
 	printf("configuring Alternate Iris Cameras\n");
-	port_com_send("wcr(0x03,0x3012,12) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0x80)"); // was 128 Anita chnaged my Mo
+	port_com_send("wcr(0x03,0x3012,3) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0x80)"); // was 128 Anita chnaged my Mo
 
 
 	// setup up all pll values
@@ -846,9 +897,8 @@ void DoStartCmd_CamCal(){
 	port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
 
 
-	printf("Turning on Alternate cameras");
-	sprintf(cmd,"set_cam_mode(0x87,100)");		//Turn on Alternate cameras
-	port_com_send(cmd);
+	port_com_send("wcr(0x1f,0x301a,0x1998)"); // ilya added to leave the pll on always
+
 
 }
 
@@ -858,25 +908,6 @@ void DoStartCmd_CamCal(){
 
 
 
-
-//Old
-#define SCALE 3
-Rect detect_area(15/SCALE,15/SCALE,(960/(SCALE*SCALE))+15/SCALE,(1200/(SCALE*SCALE))+15/SCALE); //15 was 30
-
-/*
-//follwoing command is for test demo 1 no_move_area
-Rect no_move_area(0,52,120,14);
-*/
-
-//follwoing command is for test demo 2 no_move_area
-Rect no_move_area(0,64,120,14);
-
-//follwoing command is for test demo 3 no_move_area
-//Rect no_move_area(0,68,120,12);
-
-
-//Rect detect_area_center(120/SCALE,120/SCALE,(960-120*2)/(SCALE*SCALE),1200/SCALE)
-//Rect no_move_area_aux(0,660/scaling,960/scaling,160/scaling); //Mohammad rect at the center 580
 
 
 void detectAndDisplay( Mat frame );
@@ -896,7 +927,7 @@ char temp[100];
 
 
 
-float AGC(int width, int height,unsigned char *dsty)
+float AGC(int width, int height,unsigned char *dsty, int limit)
 {
 
 	//Percentile and Average Calculation
@@ -904,7 +935,7 @@ float AGC(int width, int height,unsigned char *dsty)
 	double total = 0,Ptotal = 0,percentile = 0,hist[256]={0},average=0;
 	int pix=0,i;
 	int n = width * height;
-	int limit = 180;    // Lower limit for percentile calculation
+	//int limit = 180;    // Lower limit for percentile calculation
 	for (; n > 0; n--)
 	{
 		pix =(int) *dy;
@@ -962,6 +993,7 @@ int IrisFramesHaveEyes()
 }
 
 int noFaceCounter =0;
+
 void DoRunMode()
 {
   float eye_size;
@@ -993,7 +1025,7 @@ void DoRunMode()
 //int agc_set_gain =0;
 
 
-		    p = AGC(smallImg.cols,smallImg.rows,(unsigned char *)(smallImg.data));
+		    p = AGC(smallImg.cols,smallImg.rows,(unsigned char *)(smallImg.data),180);
 
 
 			if (p<FACE_GAIN_PER_GOAL-FACE_GAIN_HIST_GOAL)
@@ -1059,6 +1091,14 @@ void DoRunMode()
 								{
 									int x,w,h;
 
+									//Experiment
+									/////////////////////////////////////////////////
+									printf("Switching ON IRIS LEDs!!!!\n");
+									SetIrisMode(eye_size, diffEyedistance);
+									run_state = RUN_STATE_EYES;
+									////////////////////////////////////////////////
+
+
 									MoveRelAngle(-1*err, diffEyedistance);
 								//	while (waitKey(10) != 'z');
 								//	printf("fx_abs val: %i\n", -1*err);
@@ -1084,9 +1124,9 @@ void DoRunMode()
 						{
 
 						cv::rectangle(smallImg,Rect(eyes.x-5,eyes.y-5,10,10),Scalar( 255, 0, 0 ), 2, 0);
-						printf("Switching ON IRIS LEDs!!!!\n");
+/*						printf("Switching ON IRIS LEDs!!!!\n");
 						SetIrisMode(eye_size, diffEyedistance);
-						run_state = RUN_STATE_EYES;
+						run_state = RUN_STATE_EYES;*/
 
 
 						//port_com_send("fixed_set_rgb(0,0,50)");
@@ -1305,7 +1345,7 @@ void CalAll()
 	DoStartCmd();
 	port_com_send("set_cam_mode(0x83,100");
 	port_com_send("psoc_write(3,3)");
-	//delete (vs);
+
 	vs = new VideoStream(8192);
 	DoImageCal(0);
 	delete (vs);
@@ -1327,7 +1367,7 @@ void CalAll()
 }
 
 
-#ifdef ARUCO
+#ifdef CAMERACALIBRATION
 int arucoMarkerTracking(Mat InImage){
 
 	 //cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
@@ -1395,23 +1435,24 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 		//cv::imshow("streaming without marker", imgCopy);
 
 		if (markers.size() < 2){
-			printf("%i can not detect any markers!\n", portNum);
+			printf("%i camera detected %i markers!\n", portNum, markers.size());
 			cv::imshow("marker Detects", imgCopy);
-			sprintf(buffer, "No_marker_detect%i.png", portNum);
-			imwrite(buffer, imgCopy);
-			exit(EXIT_FAILURE);
+			//sprintf(buffer, "No_marker_detect%i.png", portNum);
+			//imwrite(buffer, imgCopy);
+			return markers;
+			//exit(EXIT_FAILURE);
 		}
 
 		for(size_t i = 0; i < markers.size(); i++){
 			//cout << markers[i] << endl;
-			cout << "IDs ::: " << markers[i].id << "    center  ::: " << markers[i].getCenter() << endl;
+			//cout << "IDs ::: " << markers[i].id << "    center  ::: " << markers[i].getCenter() << endl;
 			markers[i].draw(imgCopy);
 
 		}
 		//namedWindow("marker Detects", WINDOW_NORMAL);
-		sprintf(buffer, "imgAruco%i.png", portNum);
+		//sprintf(buffer, "imgAruco%i.png", portNum);
 		cv::imshow("marker Detects", imgCopy);
-		imwrite(buffer, imgCopy);
+		//imwrite(buffer, imgCopy);
 
 	}
 	else{
@@ -1419,7 +1460,10 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 		exit(EXIT_FAILURE);
 
 	}
-	//comment the following lines it you want continue streaming
+
+
+
+	//comment the following lines it you want continue streaming and finish calibration!
 	while (1)
 	{
 		char c=cvWaitKey(200);
@@ -1433,6 +1477,8 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 
 		}
 	}
+
+
 
 #endif
 	//return markers;
@@ -1458,7 +1504,7 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 		for(int j = i + 1; j < markerIris.size(); j++){
 
 			ptr2 = markerIris[j].getCenter();
-			cout << markerIris[i].id << " VS " << markerIris[j].id << endl;
+			//cout << markerIris[i].id << " VS " << markerIris[j].id << endl;
 
 			if (std::abs(float(ptr1.y - ptr2.y)) < 20 || std::abs(float(ptr1.x - ptr2.x)) < 20){
 				continue;
@@ -1480,7 +1526,7 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 						targetID.push_back(markerIris[j].id);
 					}
 				}
-				cout << "Dist ::::::::: " << dis << endl;
+				//cout << "Dist ::::::::: " << dis << endl;
 			}
 		}
 	}
@@ -1514,20 +1560,21 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 	//check whether it was successfully detected atleast two target points from both camera
 	if (pointsIris.size() <= 1){
 		printf("Fail to detect two aruco markers in horizental direction!\n");
-		exit(EXIT_FAILURE);
+		return rectResult;
+		//exit(EXIT_FAILURE);
 	}
 
-	cout << pointsIris[0].x << "-------------" << pointsIris[0].y << endl;
-	cout << pointsIris[1].x << "-------------" << pointsIris[1].y << endl;
-	cout << pointsFace[0].x << "-------------" << pointsFace[0].y << endl;
-	cout << pointsFace[1].x << "-------------" << pointsFace[1].y << endl;
-	cout << endl;
+	//cout << pointsIris[0].x << "-------------" << pointsIris[0].y << endl;
+	//cout << pointsIris[1].x << "-------------" << pointsIris[1].y << endl;
+	//cout << pointsFace[0].x << "-------------" << pointsFace[0].y << endl;
+	//cout << pointsFace[1].x << "-------------" << pointsFace[1].y << endl;
+	//cout << endl;
 
 	//calculate the zoom offset or slope
 	float mx = (pointsFace[1].x - pointsFace[0].x) / (pointsIris[1].x - pointsIris[0].x);
 	float my = (pointsFace[1].y - pointsFace[0].y) / (pointsIris[1].y - pointsIris[0].y);
 
-	cout << "row::::: " << row << "   col:::::" << col << endl;
+	//cout << "row::::: " << row << "   col:::::" << col << endl;
 
 	//measure the x , x_offset and y, y_offset
 	float x_offset = pointsFace[0].x - (mx * pointsIris[0].x);
@@ -1536,12 +1583,12 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 	float yMax_offset = (my * row) + y_offset;
 
 
-	cout << x_offset << "*********************" << xMax_offset << endl;
-	cout << y_offset << "  **********************   " << yMax_offset << endl;
+	//cout << x_offset << "*********************" << xMax_offset << endl;
+	//cout << y_offset << "  **********************   " << yMax_offset << endl;
 
 
 
-	cout << "success" << endl;
+	cout << "successfully calculated co-orinates! \n" << endl;
 
 	rectResult.push_back(x_offset);
 	rectResult.push_back(y_offset);
@@ -1559,27 +1606,203 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 
 }
 
-void CalCam(){
+#endif
 
-	//DoStartCmd_CamCal();
+int agc_val_cal=3;
+
+void brightnessAdjust(Mat outImg, int cam){
+	float p, p_old;
+	int w,h;
+
+	vs->flush();
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	//vs = new VideoStream(8193);
+	p = AGC(outImg.cols,outImg.rows,(unsigned char *)(outImg.data),128);
+	//imwrite("b_ad_a8193Img.png",outImg);
+	//printf("percentile::: %f\n", p);
+	//outImg.release();
+	//delete (vs);
+
+	//cout << "Cam ID:::::" << vs->cam_id << endl;
+	//int agc_val_cal=5;
 	char buff[512];
+
+	float bThreshold;
+	if (cam == 4){
+		agc_val_cal = 3;
+		bThreshold = 20.00;
+	}
+	else
+		bThreshold = 65.00;
+
+
+	while(!(p >= bThreshold)){
+		agc_val_cal++;
+		sprintf(buff,"wcr(%d,0x3012,%d)",cam,agc_val_cal);
+		//printf(buff);
+		//printf("Setting Gain %d\n",coarse);
+		port_com_send(buff);
+		p_old = p;
+
+		vs->get(&w,&h,(char *)outImg.data);
+		vs->get(&w,&h,(char *)outImg.data);
+		vs->get(&w,&h,(char *)outImg.data);
+
+		p = AGC(outImg.cols,outImg.rows,(unsigned char *)(outImg.data),128);
+		//printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Percentile::: %3.3f Agc value = %d\n",p,agc_val_cal);
+		//imshow("AGC change", outImg);
+		//cvWaitKey();
+
+		if(!(abs(p - p_old) > 1)){
+			sprintf(buff,"wcr(%d,0x3012,%d)",cam,agc_val_cal + 4);
+			port_com_send(buff);
+			break;
+		}
+
+
+	}
+
+	printf("Brightness adjustment is completed!\n");
+
+}
+
+
+#ifdef CAMERACALIBRATION
+
+bool CalCam(){
+
+	char cmd[512];
+
+	//Turn on Alternate cameras
+	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);
+	port_com_send(cmd);
+
+
+	//Fetching images from Aux right
 	vs = new VideoStream(8193);
-	int camID = vs->cam_id;
-	//sprintf(buff, "MarkerRucoDetectof%i_cam.png", camID);		for New firmware
-	sprintf(buff, "MarkerRucoDetectof%i_cam.png", camID);
-	std::vector<aruco::Marker> markerIris = gridBooardMarker(outImg);
+
+	//adjusting brightness
+	brightnessAdjust(outImg,3);
+	printf("Detecting marker of aux 8193 cam\n");
+
+	//Detecting markers
+	std::vector<aruco::Marker> markerIrisAuxRight = gridBooardMarker(outImg);
+
+	//If detected markers less then 2
+	if (markerIrisAuxRight.size() < 2){
+		delete (vs);
+		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
+		return true;
+	}
 	delete (vs);
 
 
+
+	//Fetching images from Aux left
+	vs = new VideoStream(8192);
+
+	//adjusting brightness
+	brightnessAdjust(outImg,3);
+	printf("Detecting marker of aux 8192 cam\n");
+
+	//Detecting markers
+	std::vector<aruco::Marker> markerIrisAuxleft = gridBooardMarker(outImg);
+	if (markerIrisAuxleft.size() < 2){
+		delete (vs);
+		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
+		return true;
+	}
+	delete (vs);
+
+
+
+	//Turn on Main cameras
+	sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY);
+	port_com_send(cmd);
+
+	//Fetching images from Main Right
+	vs = new VideoStream(8193);
+
+	//adjusting brightness
+	brightnessAdjust(outImg,24);
+	printf("Detecting marker of main 8193 cam\n");
+
+	//Detecting markers
+	std::vector<aruco::Marker> markerIrisMainRight = gridBooardMarker(outImg);
+	if (markerIrisMainRight.size() < 2){
+		delete (vs);
+		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
+		return true;
+	}
+	delete (vs);
+
+	//Fetching images from Main Left
+	vs = new VideoStream(8192);
+
+	//adjusting brightness
+	brightnessAdjust(outImg,24);
+	printf("Detecting marker of main 8192 cam\n");
+
+	//Detecting markers
+	std::vector<aruco::Marker> markerIrisMainleft = gridBooardMarker(outImg);
+	if (markerIrisMainleft.size() < 2){
+		delete (vs);
+		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
+		return true;
+	}
+	delete (vs);
+
+
+	//Fetching images from Face camera
 	vs = new VideoStream(8194);
+
+	//adjusting brightness
+	brightnessAdjust(outImg,4);
+	printf("Detecting marker of Face 8194 cam\n");
+
+	//Detecting markers
 	std::vector<aruco::Marker> markerFace = gridBooardMarker(outImg);
-	//delete (vs);
+	if (markerFace.size() < 2){
+		delete (vs);
+		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
+		return true;
+	}
 
 
-	vector<float> rectLeftAux;
-	rectLeftAux = calibratedRect(markerIris, markerFace);
+	//initializing vectors for co-ordinate calc
+	vector<float> rectLeftAux, rectRightAux, rectLeftMain, rectRightMain;
 
+	printf("Processing Right aux camera rect-----------------> \n");
+	rectRightAux = calibratedRect(markerIrisAuxRight, markerFace);		//calculating xy cordinate
+	if (rectRightAux.empty()){
+		delete (vs);
+		return true;
+	}
 
+	printf("Processing Left aux camera rect-----------------> \n");
+	rectLeftAux = calibratedRect(markerIrisAuxleft, markerFace);	//calculating xy cordinate
+	if (rectLeftAux.empty()){
+		delete (vs);
+		return true;
+	}
+
+	printf("Processing Right main camera rect-----------------> \n");
+	rectRightMain = calibratedRect(markerIrisMainRight, markerFace);	//calculating xy cordinate
+	if (rectRightMain.empty()){
+		delete (vs);
+		return true;
+	}
+
+	printf("Processing Left main camera rect-----------------> \n");
+	rectLeftMain = calibratedRect(markerIrisMainleft, markerFace);	//calculating xy cordinate
+	if (rectLeftMain.empty()){
+		delete (vs);
+		return true;
+	}
+
+	//Aux Left sorting
 	float x_offset, y_offset, xMax_offset, yMax_offset;
 	x_offset = rectLeftAux[0];
 	y_offset = rectLeftAux[1];
@@ -1590,46 +1813,112 @@ void CalCam(){
 	cv::Point pt1(x_offset, y_offset);
 	cv::Point pt2(xMax_offset, yMax_offset);
 	smallImg = rotation90(outImg);
-	cv::rectangle(smallImg, pt1, pt2, cv::Scalar(255, 255, 255));
-	imwrite(buff, smallImg);
+	//For exp purpose
+	Mat smallImgX;
+	smallImg.copyTo(smallImgX);
+
+	cv::rectangle(smallImg, pt1, pt2, cv::Scalar(255, 255, 255), 3);
+
+	//Aux Right sorting
+	x_offset = rectRightAux[0];
+	y_offset = rectRightAux[1];
+	xMax_offset = rectRightAux[2];
+	yMax_offset = rectRightAux[3];
+
+	cv::Point pt3(x_offset, y_offset);
+	cv::Point pt4(xMax_offset, yMax_offset);
+	cv::rectangle(smallImg, pt3, pt4, cv::Scalar(255, 255, 255), 3);
 
 
 
 
+	//Main Left sorting
+	x_offset = rectLeftMain[0];
+	y_offset = rectLeftMain[1];
+	xMax_offset = rectLeftMain[2];
+	yMax_offset = rectLeftMain[3];
 
 
+	cv::Point pt5(x_offset, y_offset);
+	cv::Point pt6(xMax_offset, yMax_offset);
+	cv::rectangle(smallImg, pt5, pt6, cv::Scalar(0, 255, 0), 3);
+
+	//Main Right sorting
+	x_offset = rectRightMain[0];
+	y_offset = rectRightMain[1];
+	xMax_offset = rectRightMain[2];
+	yMax_offset = rectRightMain[3];
+
+	cv::Point pt7(x_offset, y_offset);
+	cv::Point pt8(xMax_offset, yMax_offset);
+	cv::rectangle(smallImg, pt7, pt8, cv::Scalar(0, 255, 0), 3);
+
+
+	printf("Finished calibration process------------------->\n");
+	imwrite("MarkerRucoDetectofLeftRightAUX_Main.png", smallImg);
 	delete (vs);
+
+
+	//Data saved for Aux Rect
+	int x, y, width, height;
+	x = 0; y = pt1.y; width = int(smallImg.cols); height = int(abs(pt1.y - pt4.y));
+	Rect auxRect(x, y,width, height);
+
+	ofstream auxfile("auxRect.csv");
+	auxfile << x << endl;
+	auxfile << y << endl;
+	auxfile << width << endl;
+	auxfile << height << endl;
+	auxfile.close();
+
+
+
+	//Data saved for Main Rect
+	x = 0; y = pt5.y; width = int(smallImg.cols); height = int(abs(pt5.y - pt8.y));
+	Rect mainRect(x, y,width, height);
+
+	ofstream mainfile("mainRect.csv");
+	mainfile << 0 << endl;
+	mainfile << int(pt7.y) << endl;
+	mainfile << int(smallImg.cols) << endl;
+	mainfile << int(abs(pt7.y - pt6.y)) << endl;
+	mainfile.close();
+
+	cv::rectangle(smallImgX, auxRect,cv::Scalar( 255, 255, 255 ), 4);
+	cv::rectangle(smallImgX, mainRect,cv::Scalar( 0, 255, 0 ), 4);
+	imwrite("MarkerRucoDetectofLeftRightAUX_Main_testRect.png", smallImgX);
+
+
+
+	return false;
 }
 
+
+
+
+void runCalCam(){
+	bool check = true;
+	int step = 10;		//initialize increment step
+	int newPos = MIN_POS + step;
+
+	while(check){
+		printf("Motor is moving to %i and conducting calibration\n", newPos);
+		MoveTo(newPos);
+		usleep(1000);
+
+		check = CalCam();	// Rum calibration, return false if fail
+		newPos = newPos + step;
+
+		//If Motor reach to max position and failt to calibrate
+		if (newPos > MAX_POS){
+			printf("Fail Camera to Camera geometric calibration process due to no good images!!! \n");
+			check = false;
+		}
+	}
+
+}
 #endif
-/*
-void createArucoMarkers()
-{
 
-    // Create image to hold the marker plus surrounding white space
-    Mat outputImage(700, 700, CV_8UC1);
-    // Fill the image with white
-    outputImage = Scalar(255);
-    // Define an ROI to write the marker into
-    Rect markerRect(100, 100, 500, 500);
-    Mat outputMarker(outputImage, markerRect);
-
-    // Choose a predefined Dictionary of markers
-    Ptr< aruco::Dictionary> markerDictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME::DICT_4X4_50);
-    // Write each of the markers to a '.jpg' image file
-    for (int i = 0; i < 50; i++)
-    {
-        //Draw the marker into the ROI
-        aruco::drawMarker(markerDictionary, i, 500, outputMarker, 1);
-        ostringstream convert;
-        string imageName = "4x4Marker_";
-        convert << imageName << i << ".jpg";
-        // Note we are writing outputImage, not outputMarker
-        imwrite(convert.str(), outputImage);
-
-    }
-}
-*/
 
 double parsingIntfromHex(string str1){
 
@@ -1855,7 +2144,7 @@ int main(int argc, char **argv)
     int face_mode;
     int run_mode;
     int cal_mode=0;
-    int cal_cam_mode = 0;
+    int cal_cam_mode = 0;		//initializing camera to camera calibration
     int temp_mode = 0;
     pthread_t threadId;
     pthread_t thredEcId;
@@ -1911,16 +2200,16 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+#ifdef CAMERACALIBRATION
+	//for camera to camera calibration
 	if (cal_cam_mode){
 		portcom_start();
 		DoStartCmd_CamCal();
-#ifdef ARUCO
-		CalCam();
-#endif
+		runCalCam();
 		return 0;
 
 	}
-
+#endif
 
 	if (temp_mode){
 		portcom_start();
@@ -1944,8 +2233,10 @@ int main(int argc, char **argv)
 
 	cv::namedWindow(temp);
 
-/*	if (vs->m_port!=8194)
-		vs->offset_sub_enable=1;*/
+	//if (vs->m_port==8192)
+		vs->offset_sub_enable=0;
+	if (vs->m_port==8192)
+			vs->offset_sub_enable=1;
 
 	while (1)
 	{
@@ -2027,6 +2318,7 @@ int main(int argc, char **argv)
 			//r_outImg = rotation90(outImg);
 
 			}
+#ifdef CAMERACALIBRATION
 		if(aruc_on){
 			//scaling = 2;
 		    //cv::resize(outImg, smallImgBeforeRotate, cv::Size(),(1/scaling),(1/scaling), INTER_NEAREST);	//Mohammad
@@ -2035,12 +2327,11 @@ int main(int argc, char **argv)
 			//gridBooardMarker(smallImg);
 
 			vs = new VideoStream(8194);
-#ifdef ARUCO
 			gridBooardMarker(outImg);
-#endif
 			delete (vs);
 			//arucoMarkerTracking(outImg);
 		}
+#endif
 		if(key=='b')
 			{
 				char fName[50];
