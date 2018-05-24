@@ -18,7 +18,7 @@ $interfaceSettings = new InterfaceEditor();
 
 // Load all of our existing settings so that we can replace them later...
 $eyeLockINI->LoadIniSettings();
-$interfaceSettings->LoadInterfaceSettings($eyeLockINI->HardwareType === '2');
+$interfaceSettings->LoadInterfaceSettings($eyeLockINI->HardwareType);
 
 
 if (isset($_REQUEST['action']))
