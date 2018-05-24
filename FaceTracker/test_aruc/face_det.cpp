@@ -38,7 +38,8 @@ int face_init(  )
 
 
 
-#define EYES_MULT .3
+#define EYES_MULT 0.3		// previous val is 0.3
+
 /** Find face and eye locaiton */
 int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size)
 {
