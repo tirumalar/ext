@@ -121,7 +121,11 @@ void EyelockNanoSdkThread::Setup()
 	boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
 	boost::shared_ptr<ThreadManager> threadManager(ThreadManager::newSimpleThreadManager(5, 1) );
+#ifdef CMX_C1
+	boost::shared_ptr<ThreadFactory> threadFactory(new PosixThreadFactory(PosixThreadFactory::ROUND_ROBIN, PosixThreadFactory::NORMAL, 10));
+#else
 	boost::shared_ptr<ThreadFactory> threadFactory(new PosixThreadFactory());
+#endif
 	threadManager->threadFactory(threadFactory);
 	threadManager->start();
 	m_server.reset(new TThreadPoolServer(processor,m_transPort,transportFactory,protocolFactory,threadManager));
