@@ -43,7 +43,7 @@ export OPENSSL_102N_BASE=${STATIC_LIBS}/openssl-1.0.2o
 export FACE_INC=${EYELOCK_WS_EXT}/FaceTracker/facetracker/include
 export CLM_EIGEN_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/Eigen
 export CLM_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/include
-export OPENCV_NEW_INC=${PKG_PATH}/opencv3.4/include
-export OPENCV_NEW_LIBS=${PKG_PATH}/opencv3.4/lib
+export OPENCV_NEW_INC=${STATIC_LIBS}/opencv3.4/include
+export OPENCV_NEW_LIBS=${STATIC_LIBS}/opencv3.4/lib
 
 export ARCH_PROCESSOR="_ARM_"
