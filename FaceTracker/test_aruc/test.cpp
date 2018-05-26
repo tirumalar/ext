@@ -38,22 +38,24 @@ or implied, of Rafael Muñoz Salinas.
 #include <stdlib.h>
 #include <math.h>
 #include <cmath>
-
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv/cv.h>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/photo/photo.hpp>
-
-#ifdef CAMERACALIBRATION
-#include <aruco.h>
-#include <dictionary.h>
-#endif
-
 #include "eyelock_com.h"
 #include "Synchronization.h"
 #include "pstream.h"
+#include "FileConfiguration.h"
+#include "Configuration.h"
+
+// #define CAMERA_CALIBERATION
+
+#ifdef CAMERA_CALIBERATION
+#include <aruco.h>
+#include <dictionary.h>
+#endif
 
 
 
@@ -61,20 +63,14 @@ using namespace cv;
 using namespace std::chrono;
 using namespace std;
 
-
-
 VideoStream *vs;
-
-
 
 Mat outImg, r_outImg;
 Mat smallImg;
 Mat frame_gray;
 Mat smallImgBeforeRotate;
 
-
 double scaling = 8.0;
-
 
 extern int vid_stream_start(int port);
 extern int vid_stream_get(int *win,int *hin, char *wbuffer);
@@ -98,7 +94,7 @@ int z=0;		//AGC wait key
 
 
 
-#define CENTER_POS 164		//low fx_abs val is 0 and max is 328. So the center falls in 164
+int CENTER_POS;		//low fx_abs val is 0 and max is 328. So the center falls in 164
 #define CENTER_POSITION_ANGLE 95
 #define MIN_POS 25
 #define MAX_POS 328			//previous val was 200
@@ -118,7 +114,7 @@ int move_counts=0;
 #define NO_FACE_SWITCH_FACE 10
 
 string fileName = "output.csv";
-string a_calibFile = "/home/ext/TESTWorkspace/trunk/FaceTracker/test_aruc/Debug/auxRect.csv";
+string a_calibFile = "/home/root/data/calibration/auxRect.csv";
 int noeyesframe = 0;
 #define ANGLE_TO_STEPS 5
 
@@ -165,7 +161,7 @@ void SetExp(int cam, int val)
 	//sprintf(buff,"wcr(%d,0x3012,%d) | wcr(%d,0x3014,%d)",cam,coarse,cam,fine);
 	sprintf(buff,"wcr(%d,0x3012,%d)",cam,coarse);
 	//printf("Setting Gain %d\n",coarse);
-	port_com_send(buff);
+	//port_com_send(buff);
 
 
 
@@ -252,30 +248,6 @@ void accelStatus(){
 
 #endif
 }
-
-
-
-
-/*
-#define IO_FILENAME "/home/root/"
-void HandleEyelockIO(void)
-
-{
-	FILE *in;
-	in = fopen(IO_FILENAME,"rt");
-	if (in)
-	{
-		char temp[512];
-		int len = fread(temp,sizeof(char),sizeof(temp),in);
-		temp[len]=0;
-		port_com_send(temp);
-	}
-}
-*/
-
-
-
-
 
 int IrisFrameCtr = 0;
 
@@ -378,11 +350,22 @@ int run_state=RUN_STATE_FACE;
 
 
 void MainIrisSettings(){
+	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
+	char cmd[512];
+
+	int IrisLEDVolt = fconfig.getValue("FTracker.IrisLEDVolt",30);
+	int IrisLEDcurrentSet = fconfig.getValue("FTracker.IrisLEDcurrentSet",40);
+	int IrisLEDtrigger = fconfig.getValue("FTracker.IrisLEDtrigger",3);
+	int IrisLEDEnable = fconfig.getValue("FTracker.IrisLEDEnable",49);
+	int IrisLEDmaxTime = fconfig.getValue("FTracker.IrisLEDmaxTime",4);
 
 	//return;
 	printf("configuring Main Iris settings\n");
 	//Iris configuration of LED
-	port_com_send("psoc_write(3,0x31)| psoc_write(2,30) | psoc_write(5,40) | psoc_write(4,3) | psoc_write(6,4)");
+	sprintf(cmd,"psoc_write(3,%i)| psoc_write(2,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(6,%i)\n", IrisLEDEnable, IrisLEDVolt, IrisLEDcurrentSet, IrisLEDtrigger, IrisLEDmaxTime);
+	//printf(cmd);
+	port_com_send(cmd);
+	//port_com_send("psoc_write(3,0x31)| psoc_write(2,30) | psoc_write(5,40) | psoc_write(4,3) | psoc_write(6,4)");
 	//Face cameras configuration
 	//port_com_send("wcr(0x83,0x3012,12) | wcr(0x83,0x301e,0) | wcr(0x83,0x305e,128)");
 }
@@ -445,7 +428,12 @@ void SetFaceMode()
 	port_com_send("psoc_write(2,30) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)");
 
 	port_com_send("wcr(4,0x3012,7)  | wcr(4,0x305e,0xfe)");
+	{
+		char cmd[512];
 
+		sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((1&0x3)<<4) | 0X80);
+		port_com_send(cmd);
+	}
 	agc_val= FACE_GAIN_DEFAULT;
 
 	start_mode_change = std::chrono::system_clock::now();
@@ -491,7 +479,14 @@ void MoveRelAngle(float a, int diffEyedistance)
 void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 {
 	printf("Dimming face cameras!!!");
-	port_com_send("wcr(4,0x3012,4) | wcr(4,0x305e,0x20)");
+	port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
+
+	{
+			char cmd[512];
+
+			sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((0&0x3)<<4) | 0X80);
+			port_com_send(cmd);
+		}
 
 
 	agc_val = FACE_GAIN_MIN;
@@ -506,6 +501,9 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 			printf("Dont need to change Main cam");
 			return;
 		}
+
+		printf("Dimming face cameras!!!");
+		port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
 
 		MainIrisSettings();											//change to Iris settings
 		SwitchIrisCameras(true);									//switch cameras
@@ -522,6 +520,9 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 			printf("Dont need to change Aux cam");
 			return;
 		}
+
+		printf("Dimming face cameras!!!");
+		port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
 
 
 		MainIrisSettings();
@@ -540,6 +541,10 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 		}
 
 
+		printf("Dimming face cameras!!!");
+		port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
+
+
 		MainIrisSettings();
 		SwitchIrisCameras(true);
 		currnet_mode = MODE_EYES_MAIN;
@@ -554,6 +559,10 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 			printf("Dont need to change Aux cam");
 			return;
 		}
+
+
+		printf("Dimming face cameras!!!");
+		port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
 
 		//AuxIrisSettings();			//use this function if we have different settings for aux and main cameras
 		// AS we are using same LED setting for aux and main, Im calling this function at the very beginning
@@ -727,18 +736,60 @@ Rect no_move_area;
 
 // Main DoStartCmd configuration for Eyelock matching
 #if 1
-void DoStartCmd()
-{
+void DoStartCmd(){
 
-	char cmd[100];
+	FileConfiguration fconfig("/home/ext/TESTWorkspace/trunk/FaceTracker/test_aruc/Debug/faceConfig.ini");
+
+	int minPos = fconfig.getValue("FTracker.minPos",0);
+	CENTER_POS = fconfig.getValue("FTracker.centerPos",164);
+	int allLEDhighVoltEnable = fconfig.getValue("FTracker.allLEDhighVoltEnable",1);
+
+	int faceLEDVolt = fconfig.getValue("FTracker.faceLEDVolt",30);
+	int faceLEDcurrentSet = fconfig.getValue("FTracker.faceLEDcurrentSet",20);
+	int faceLEDtrigger = fconfig.getValue("FTracker.faceLEDtrigger",4);
+	int faceLEDEnable = fconfig.getValue("FTracker.faceLEDEnable",4);
+	int faceLEDmaxTime = fconfig.getValue("FTracker.faceLEDmaxTime",4);
+
+
+/*	int IrisLEDVolt = fconfig.getValue("FTracker.IrisLEDVolt",30);
+	int IrisLEDcurrentSet = fconfig.getValue("FTracker.IrisLEDcurrentSet",40);
+	int IrisLEDtrigger = fconfig.getValue("FTracker.IrisLEDtrigger",3);
+	int IrisLEDEnable = fconfig.getValue("FTracker.IrisLEDEnable",49);
+	int IrisLEDmaxTime = fconfig.getValue("FTracker.IrisLEDmaxTime",4);*/
+
+
+	int faceCamExposureTime = fconfig.getValue("FTracker.faceCamExposureTime",12);
+	int faceCamDigitalGain = fconfig.getValue("FTracker.faceCamDigitalGain",240);
+	int faceCamDataPedestal = fconfig.getValue("FTracker.faceCamDataPedestal",0);
+
+	int AuxIrisCamExposureTime = fconfig.getValue("FTracker.AuxIrisCamExposureTime",8);
+	int AuxIrisCamDigitalGain = fconfig.getValue("FTracker.AuxIrisCamDigitalGain",80);
+
+	int AuxIrisCamDataPedestal = fconfig.getValue("FTracker.AuxIrisCamDataPedestal",0);
+
+	int MainIrisCamExposureTime = fconfig.getValue("FTracker.MainIrisCamExposureTime",8);
+	int MainIrisCamDigitalGain = fconfig.getValue("FTracker.MainIrisCamDigitalGain",128);
+	int MainIrisCamDataPedestal = fconfig.getValue("FTracker.MainIrisCamDataPedestal",0);
+
+	int irisAnalogGain = fconfig.getValue("FTracker.irisAnalogGain",144);
+	int faceAnalogGain = fconfig.getValue("FTracker.faceAnalogGain",128);
+
+	int capacitorChargeCurrent = fconfig.getValue("FTracker.capacitorChargeCurrent",60);
+
+  //printf("AuxIrisCamDigitalGain = %d\n",AuxIrisCamDigitalGain);
+
+	char cmd[512];
 
 	//Homing
 	printf("Re Homing\n");
 	port_com_send("fx_home()\n");
+#ifdef NOOPTIMIZE
 	usleep(100000);
+#endif
 
 	//Reset the lower motion
-	port_com_send("fx_abs(25)\n");
+	sprintf(cmd, "fx_abs(%i)",minPos);
+	port_com_send(cmd);
 
 	//move to center position
 	printf("Moving to Center\n");
@@ -748,11 +799,17 @@ void DoStartCmd()
 
 	printf("configuring face LEDs\n");
 	//Face configuration of LED
-	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
+	sprintf(cmd, "psoc_write(2,%i) | psoc_write(1,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)| psoc_write(6,%i)\n",faceLEDVolt, allLEDhighVoltEnable, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable, faceLEDmaxTime);
+	printf(cmd);
+	port_com_send(cmd);
+	//port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
 
 
 	//port_com_send("psoc_write(9,90)");	// charge cap for max current 60 < range < 95
-	port_com_send("psoc_write(9,80)");	// charge cap for max current 60 < range < 95
+	sprintf(cmd, "psoc_write(9,%i)\n", capacitorChargeCurrent);
+	//printf(cmd);
+	port_com_send(cmd);	// charge cap for max current 60 < range < 95
+	//port_com_send("psoc_write(9,80)");	// charge cap for max current 60 < range < 95
 
 	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
 	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
@@ -760,21 +817,30 @@ void DoStartCmd()
 
 	//Face cameras configuration
 	printf("configuring face Cameras\n");
+	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x301e,%i) | wcr(0x04,0x305e,%i)\n",faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
+	//printf(cmd);
+	port_com_send(cmd);
 	//port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xFE)");
-	port_com_send("wcr(0x04,0x3012,12) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xF0)");	//Demo Config
+	//port_com_send("wcr(0x04,0x3012,12) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xF0)");	//Demo Config
 
 
 
 	//Main Iris cameras configuration
 	printf("configuring Aux Iris Cameras\n");
+	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x301e,%i) | wcr(0x04,0x305e,%i)\n",AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
+	//printf(cmd);
+	port_com_send(cmd);
 	//port_com_send("wcr(0x18,0x3012,8) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x80)");
-	port_com_send("wcr(0x18,0x3012,8) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,80)"); //DEMO Config
+	//port_com_send("wcr(0x18,0x3012,8) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,80)"); //DEMO Config
 
 
 	//Aux Iris Cameras Configuration
 	printf("configuring Main Iris Cameras\n");
+	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x301e,%i) | wcr(0x04,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
+	//printf(cmd);
+	port_com_send(cmd);
 	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0xB0)"); // was 128 Anita chnaged my Mo
-	port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,128)");	//Demo Config
+	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,128)");	//Demo Config
 
 
 	// setup up all pll values
@@ -788,12 +854,22 @@ void DoStartCmd()
 	cvWaitKey(10);								//Wait for 10 msec
 
 	//Turn on analog gain
-	port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
-	port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
+	//printf("Analog gain is %d\n",analogGain);
+	sprintf(cmd,"wcr(0x1b,0x30b0,%i)\n",((irisAnalogGain&0x3)<<4) | 0X80);
+	printf("Iris analog gain\n");
+	printf(cmd);
+	port_com_send(cmd);
+	sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((faceAnalogGain&0x3)<<4) | 0X80);
+	printf("Face analog gain\n");
+	printf(cmd);
+	port_com_send(cmd);
+	//port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
+	//port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
 
 
 	printf("Turning on Alternate cameras\n");
-	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Turn on Alternate cameras
+//	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Turn on Alternate cameras
+	sprintf(cmd,"set_cam_mode(0x4,%d)",FRAME_DELAY);		//Turn on Alternate cameras
 	port_com_send(cmd);
 
 	port_com_send("wcr(0x1f,0x301a,0x1998)"); // ilya added to leave the pll on always
@@ -831,8 +907,8 @@ void DoStartCmd()
 	no_move_area.width = a_rect[2]/scaling;
 	no_move_area.height = (a_rect[3])/scaling -targetOffset*2;
 
-
-
+	currnet_mode = -1;
+	SetFaceMode();		// just for now
 
 }
 
@@ -847,15 +923,15 @@ void DoStartCmd_CamCal(){
 	//Homing
 	printf("Re Homing\n");
 	port_com_send("fx_home()\n");
+#ifdef NOOPTIMIZE
 	usleep(100000);
-
-	//Reset the lower motion
+#endif
 	port_com_send("fx_abs(25)\n");
 
 
 	printf("configuring face LEDs\n");
 	//Face configuration of LED
-	port_com_send("psoc_write(3,1)| psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,40) | psoc_write(4,1) | psoc_write(6,4)");
+	port_com_send("psoc_write(3,1)| psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,1) | psoc_write(6,4)");
 
 
 	//port_com_send("psoc_write(9,90)");	// charge cap for max current 60 < range < 95
@@ -868,18 +944,18 @@ void DoStartCmd_CamCal(){
 
 	//Face cameras configuration
 	printf("configuring face Cameras\n");
-	port_com_send("wcr(0x04,0x3012,3) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0x32)");
+	port_com_send("wcr(0x04,0x3012,2) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0x30)");
 
 
 
 	//Main Iris cameras configuration
 	printf("configuring Main Iris Cameras\n");
-	port_com_send("wcr(0x18,0x3012,3) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x80)");
+	port_com_send("wcr(0x18,0x3012,3) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x40)");
 
 
 	//Aux Iris Cameras Configuration
 	printf("configuring Alternate Iris Cameras\n");
-	port_com_send("wcr(0x03,0x3012,3) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0x80)"); // was 128 Anita chnaged my Mo
+	port_com_send("wcr(0x03,0x3012,3) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0x40)"); // was 128 Anita chnaged my Mo
 
 
 	// setup up all pll values
@@ -894,7 +970,7 @@ void DoStartCmd_CamCal(){
 
 	//Turn on analog gain
 	port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
-	port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
+	port_com_send("wcr(0x4,0x30b0,0x80");		//Only face camera gain is x90
 
 
 	port_com_send("wcr(0x1f,0x301a,0x1998)"); // ilya added to leave the pll on always
@@ -996,7 +1072,8 @@ int noFaceCounter =0;
 
 void DoRunMode()
 {
-  float eye_size;
+	// usleep(50000);
+	float eye_size;
 
 	// if (run_state == RUN_STATE_FACE)
 	{
@@ -1024,7 +1101,7 @@ void DoRunMode()
 //int agc_val= FACE_GAIN_DEFAULT;		128
 //int agc_set_gain =0;
 
-
+#if 0
 		    p = AGC(smallImg.cols,smallImg.rows,(unsigned char *)(smallImg.data),180);
 
 
@@ -1057,7 +1134,7 @@ void DoRunMode()
 				agc_set_gain=agc_val;
 				}
 
-
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////
 			if (FindEyeLocation( smallImg, eyes,eye_size))
@@ -1180,7 +1257,7 @@ void DoRunMode()
 
 			cv::rectangle(smallImg,no_move_area,Scalar( 255, 0, 0 ), 1, 0);
 			cv::rectangle(smallImg,detect_area,Scalar( 255, 0, 0 ), 1, 0);
-			imshow(temp,smallImg);
+			// imshow(temp,smallImg);
 	}
 
 /*
@@ -1205,12 +1282,17 @@ void MeasureSnr()
 			     static int once=0;
 				 if (once==10)
 					 {
+					  Scalar s2 = sum(outImg);
+					  float pixels = outImg.cols*outImg.rows;
+					  double avg = s2.val[0]/pixels;
+					  printf("a = %3.3f\n",avg);
+					  /*
 					 printf("id ===%x %x %x %x\n",outImg.at <char> (0,0),outImg.at <char> (0,1),outImg.at <char> (0,2),outImg.at <char> (0,3));
 					 absdiff(outImg, outImgLast, s1);       // |I1 - I2|
 
 
 					 imshow("Signal",outImg-outImg1s);
-					 float pixels = s1.cols*s1.rows;
+
 					// imshow("other",outImg-outImg1);  //Time debug
 					 s1=s1-(Scalar(sum(s1).val[0])/pixels); // remove exposure noise
 					 imshow("Noise",s1*10);
@@ -1229,7 +1311,7 @@ void MeasureSnr()
 					   double avg = s2.val[0]/pixels;
 					   float psnr = 20.0*log10((128.0)/rms_noise);
 					   float psnr_avg = 20.0*log10((avg)/rms_noise);
-					   printf("Snr = %3.3f avg = %3.3f snravg %3.3f\n", psnr,avg,psnr_avg);
+					   printf("Snr = %3.3f avg = %3.3f snravg %3.3f\n", psnr,avg,psnr_avg);*/
 					 }
 				 else
 					 {
@@ -1367,7 +1449,7 @@ void CalAll()
 }
 
 
-#ifdef CAMERACALIBRATION
+#ifdef CAMERA_CALIBERATION
 int arucoMarkerTracking(Mat InImage){
 
 	 //cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
@@ -1605,7 +1687,6 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 	imwrite("imgArucoRect.png", smallImg);*/
 
 }
-
 #endif
 
 int agc_val_cal=3;
@@ -1651,9 +1732,9 @@ void brightnessAdjust(Mat outImg, int cam){
 		vs->get(&w,&h,(char *)outImg.data);
 
 		p = AGC(outImg.cols,outImg.rows,(unsigned char *)(outImg.data),128);
-		//printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Percentile::: %3.3f Agc value = %d\n",p,agc_val_cal);
-		//imshow("AGC change", outImg);
-		//cvWaitKey();
+/*		printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Percentile::: %3.3f Agc value = %d\n",p,agc_val_cal);
+		imshow("AGC change", outImg);
+		cvWaitKey();*/
 
 		if(!(abs(p - p_old) > 1)){
 			sprintf(buff,"wcr(%d,0x3012,%d)",cam,agc_val_cal + 4);
@@ -1669,8 +1750,8 @@ void brightnessAdjust(Mat outImg, int cam){
 }
 
 
-#ifdef CAMERACALIBRATION
 
+#ifdef CAMERA_CALIBERATION
 bool CalCam(){
 
 	char cmd[512];
@@ -1894,8 +1975,8 @@ bool CalCam(){
 }
 
 
-
-
+#endif
+#if 0
 void runCalCam(){
 	bool check = true;
 	int step = 10;		//initialize increment step
@@ -2171,6 +2252,38 @@ int main(int argc, char **argv)
 		cal_mode=1;
 	}
 
+	if (strcmp(argv[1],"send")==0)
+	{
+		void SendUdpImage(int port, char *image, int bytes_left);
+		Mat imageIn, image;
+		int x;
+
+
+		image=imread("send_bad.pgm",0);
+				image.convertTo(image,CV_8UC1);
+				printf("sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
+
+				for (x=0; x< 20;x++)
+				{
+					printf("send bad\n");
+					SendUdpImage(8192, (char *)image.data, image.cols*image.rows);
+					usleep(40000);
+				}
+
+		image=imread("send.pgm",0);
+		image.convertTo(image,CV_8UC1);
+		printf("sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
+
+		for (x=0; x< atoi(argv[2]);x++)
+		{
+			printf("send good\n");
+			SendUdpImage(8192, (char *)image.data, image.cols*image.rows);
+			usleep(40000);
+		}
+		return 0;
+
+	}
+
 	if (strcmp(argv[1],"calcam")==0)
 	{
 		run_mode =1;
@@ -2199,8 +2312,7 @@ int main(int argc, char **argv)
 		CalAll();
 		return 0;
 	}
-
-#ifdef CAMERACALIBRATION
+#ifdef CAMERA_CALIBERATION
 	//for camera to camera calibration
 	if (cal_cam_mode){
 		portcom_start();
@@ -2209,7 +2321,7 @@ int main(int argc, char **argv)
 		return 0;
 
 	}
-#endif
+
 
 	if (temp_mode){
 		portcom_start();
@@ -2218,7 +2330,7 @@ int main(int argc, char **argv)
 		return 0;
 
 	}
-
+#endif
 
 	//vid_stream_start(atoi(argv[1]));
 	vs= new VideoStream(atoi(argv[1]));
@@ -2231,12 +2343,16 @@ int main(int argc, char **argv)
 		DoStartCmd();
 		}
 
-	cv::namedWindow(temp);
+	// cv::namedWindow(temp);
 
+
+/*
 	//if (vs->m_port==8192)
 		vs->offset_sub_enable=0;
 	if (vs->m_port==8192)
 			vs->offset_sub_enable=1;
+*/
+
 
 	while (1)
 	{
@@ -2248,6 +2364,7 @@ int main(int argc, char **argv)
 		{
 		//	printf("******calling vid_stream_get***********\n");
 			//vid_stream_get(&w,&h,(char *)outImg.data);
+
 			vs->get(&w,&h,(char *)outImg.data);
 		}
 		//else
@@ -2274,8 +2391,8 @@ int main(int argc, char **argv)
 			}
 			else
 				cv::resize(outImg, smallImg, cv::Size(), 1, 1, INTER_NEAREST); //Time debug
-		//	MeasureSnr();
-			imshow(temp,smallImg);  //Time debug
+			MeasureSnr();
+			// imshow(temp,smallImg);  //Time debug
 			}
 	    key = cv::waitKey(1);
 	    //printf("Key pressed : %u\n",key);
@@ -2307,18 +2424,9 @@ int main(int argc, char **argv)
 			DoStartCmd_CamCal();
 
 
-/*			//Homing
-			printf("Re Homing\n");
-			port_com_send("fx_home()\n");
-			usleep(100000);
-
-			port_com_send("fx_abs(168)\n");
-			port_com_send("wcr(0x04,0x3012,12)");*/
-
-			//r_outImg = rotation90(outImg);
 
 			}
-#ifdef CAMERACALIBRATION
+#ifdef CAMERA_CALIBERATION
 		if(aruc_on){
 			//scaling = 2;
 		    //cv::resize(outImg, smallImgBeforeRotate, cv::Size(),(1/scaling),(1/scaling), INTER_NEAREST);	//Mohammad
