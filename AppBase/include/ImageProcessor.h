@@ -225,6 +225,12 @@ protected:
 	volatile bool m_matchingmode,m_lapdebug;
 	bool m_SaveEyeCrops;
 	bool m_SaveFullFrame;
+	bool m_EnableOffsetCorrection;
+	bool m_camera1_offset_image_loaded;
+	bool m_camera2_offset_image_loaded;
+	IplImage *m_OffsetImageCamera1;
+	IplImage *m_OffsetImageCamera2;
+	IplImage *m_OffsetOutputImage;
 #ifdef HBOX_PG	
 	bool m_SPAWAREnable;
 
