@@ -348,6 +348,14 @@ m_LedConsolidator = NULL;
 	}
 	m_SaveFullFrame = pConf->getValue("Eyelock.SaveFullFrames",false);
 	m_SaveEyeCrops = pConf->getValue("Eyelock.SaveEyeCrops",false);
+
+	m_EnableOffsetCorrection = pConf->getValue("Eyelock.EnableGainOffsetCorrection",false);
+	m_camera1_offset_image_loaded = false;
+	m_camera2_offset_image_loaded = false;
+	int Imagewidth = pConf->getValue("FrameSize.width",1200);
+	int Imageheight = pConf->getValue("FrameSize.height",960);
+	// m_OffsetImage = cvCreateImage(cvSize(Imagewidth, Imageheight),IPL_DEPTH_8U,1);
+	m_OffsetOutputImage = cvCreateImage(cvSize(Imagewidth, Imageheight),IPL_DEPTH_8U,1);
 #ifdef HBOX_PG
 	m_SPAWAREnable = pConf->getValue("Eyelock.SPAWAREnable",false);
 	if (m_SPAWAREnable)
@@ -458,6 +466,15 @@ ImageProcessor::~ImageProcessor() {
 	}
 	if(m_centreEyecropEnroll){
 		cvReleaseImage(&m_centreEyecropEnroll);
+	}
+	if(m_OffsetImageCamera1){
+		cvReleaseImage(&m_OffsetImageCamera1);
+	}
+	if(m_OffsetImageCamera2){
+		cvReleaseImage(&m_OffsetImageCamera2);
+	}
+	if(m_OffsetOutputImage){
+		cvReleaseImage(&m_OffsetOutputImage);
 	}
 #ifdef HBOX_PG
 	if(m_pHttpPostSender){
@@ -784,6 +801,65 @@ void ImageProcessor::GenMsgToNormal(BinMessage& msg){
 
 bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 {
+
+	char temp[50];
+#if 0
+	char offset_image[IMAGE_SIZE];
+	int length = frame->width*frame->height;
+	// Loading an offset file - binary file
+	if(m_EnableOffsetCorrection)
+	{
+		if(m_offset_image_loaded == false)
+		{
+			IplImage *DiffImage;
+			int cam_id = frame->imageData[2]&0xff;
+			sprintf(temp,"cal%02x.bin",cam_id);
+			printf("Loading %s offset file\n",temp);
+			FILE *fp = fopen(temp, "rb");
+			if (fp)
+			{
+				fread(offset_image ,length, 1, fp);
+				fclose(fp);
+				m_offset_image_loaded = true;
+				printf("Loading success file\n");
+			}
+		}
+	}
+#endif
+#if 1 // Loading Offset file - PGM
+	if(m_EnableOffsetCorrection){
+		int cam_id = frame->imageData[2]&0xff;
+		// printf("cam_id....%02x\n", cam_id);
+		sprintf(temp,"cal%02x.pgm",cam_id);
+		m_camera1_offset_image_loaded = true;
+		m_camera2_offset_image_loaded = true;
+
+		if(m_camera1_offset_image_loaded == true && (cam_id == 0x81 || cam_id == 0x01))
+		{
+			printf("Loading %s offset pgm file\n",temp);
+			m_OffsetImageCamera1 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
+			m_camera1_offset_image_loaded = true;
+		}
+		if(m_camera2_offset_image_loaded == true && (cam_id == 0x82 || cam_id == 0x02))
+		{
+			printf("Loading %s offset pgm file\n",temp);
+			m_OffsetImageCamera2 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
+			m_camera2_offset_image_loaded = true;
+		}
+		if (m_camera1_offset_image_loaded){
+			printf("Doing Image Subtraction for Camera1\n");
+			cvSub(frame,m_OffsetImageCamera1,m_OffsetOutputImage);
+			cvCopyImage(m_OffsetOutputImage, frame);
+			cvZero(m_OffsetOutputImage);
+		}
+		if (m_camera2_offset_image_loaded){
+			printf("Doing Image Subtraction for Camera2\n");
+			cvSub(frame,m_OffsetImageCamera2,m_OffsetOutputImage);
+			cvCopyImage(m_OffsetOutputImage, frame);
+			cvZero(m_OffsetOutputImage);
+		}
+	}
+#endif
 #if 0 // 27th March to reduce noise
 	IplImage *DiffImage;
 	if (frame->imageData[0] == 0)
