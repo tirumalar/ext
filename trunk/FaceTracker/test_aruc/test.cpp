@@ -502,8 +502,6 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 			return;
 		}
 
-		printf("Dimming face cameras!!!");
-		port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
 
 		MainIrisSettings();											//change to Iris settings
 		SwitchIrisCameras(true);									//switch cameras
@@ -521,8 +519,6 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 			return;
 		}
 
-		printf("Dimming face cameras!!!");
-		port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
 
 
 		MainIrisSettings();
@@ -541,9 +537,6 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 		}
 
 
-		printf("Dimming face cameras!!!");
-		port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
-
 
 		MainIrisSettings();
 		SwitchIrisCameras(true);
@@ -560,9 +553,6 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 			return;
 		}
 
-
-		printf("Dimming face cameras!!!");
-		port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
 
 		//AuxIrisSettings();			//use this function if we have different settings for aux and main cameras
 		// AS we are using same LED setting for aux and main, Im calling this function at the very beginning
@@ -827,7 +817,7 @@ void DoStartCmd(){
 
 	//Main Iris cameras configuration
 	printf("configuring Aux Iris Cameras\n");
-	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x301e,%i) | wcr(0x04,0x305e,%i)\n",AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
+	sprintf(cmd, "wcr(0x03,0x3012,%i) | wcr(0x03,0x301e,%i) | wcr(0x03,0x305e,%i)\n",AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
 	//printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x18,0x3012,8) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x80)");
@@ -836,7 +826,7 @@ void DoStartCmd(){
 
 	//Aux Iris Cameras Configuration
 	printf("configuring Main Iris Cameras\n");
-	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x301e,%i) | wcr(0x04,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
+	sprintf(cmd, "wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
 	//printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0xB0)"); // was 128 Anita chnaged my Mo
@@ -868,21 +858,28 @@ void DoStartCmd(){
 
 
 	printf("Turning on Alternate cameras\n");
-//	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Turn on Alternate cameras
-	sprintf(cmd,"set_cam_mode(0x4,%d)",FRAME_DELAY);		//Turn on Alternate cameras
+	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Turn on Alternate cameras
+	//sprintf(cmd,"set_cam_mode(0x4,%d)",FRAME_DELAY);		//Turn on Alternate cameras
 	port_com_send(cmd);
 
 	port_com_send("wcr(0x1f,0x301a,0x1998)"); // ilya added to leave the pll on always
 
 
-/*
+
 	//This code is for playing sound
 	if(1)
 	{
-		port_com_send("set_audio(1)");
+		port_com_send("set_audio(4)");
+		sleep(1);
+		port_com_send("data_store_set(0)");
+		sleep(1);
 		system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
-		sleep(2);
-	}*/
+		sleep(1);
+		port_com_send("data_store_set(1)");
+		sleep(1);
+		system("nc -O 512 192.168.4.172 35 < /home/root/tones/rej.raw");
+		sleep(1);
+	}
 
 
 	//Reading the calibrated Rect
@@ -1519,9 +1516,12 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 		if (markers.size() < 2){
 			printf("%i camera detected %i markers!\n", portNum, markers.size());
 			cv::imshow("marker Detects", imgCopy);
+			char a = cvWaitKey(200);
+			if (a == 'q')
+				return markers;
 			//sprintf(buffer, "No_marker_detect%i.png", portNum);
 			//imwrite(buffer, imgCopy);
-			return markers;
+
 			//exit(EXIT_FAILURE);
 		}
 
@@ -1713,10 +1713,10 @@ void brightnessAdjust(Mat outImg, int cam){
 	float bThreshold;
 	if (cam == 4){
 		agc_val_cal = 3;
-		bThreshold = 20.00;
+		bThreshold = 40.00;
 	}
 	else
-		bThreshold = 65.00;
+		bThreshold = 60.00;
 
 
 	while(!(p >= bThreshold)){
@@ -1732,9 +1732,9 @@ void brightnessAdjust(Mat outImg, int cam){
 		vs->get(&w,&h,(char *)outImg.data);
 
 		p = AGC(outImg.cols,outImg.rows,(unsigned char *)(outImg.data),128);
-/*		printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Percentile::: %3.3f Agc value = %d\n",p,agc_val_cal);
+	/*	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Percentile::: %3.3f Agc value = %d\n",p,agc_val_cal);
 		imshow("AGC change", outImg);
-		cvWaitKey();*/
+		cvWaitKey(); */
 
 		if(!(abs(p - p_old) > 1)){
 			sprintf(buff,"wcr(%d,0x3012,%d)",cam,agc_val_cal + 4);
@@ -2263,7 +2263,7 @@ int main(int argc, char **argv)
 				image.convertTo(image,CV_8UC1);
 				printf("sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
 
-				for (x=0; x< 20;x++)
+				for (x=0; x<atoi(argv[2]);x++)
 				{
 					printf("send bad\n");
 					SendUdpImage(8192, (char *)image.data, image.cols*image.rows);
@@ -2274,7 +2274,7 @@ int main(int argc, char **argv)
 		image.convertTo(image,CV_8UC1);
 		printf("sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
 
-		for (x=0; x< atoi(argv[2]);x++)
+		for (x=0; x< atoi(argv[3]);x++)
 		{
 			printf("send good\n");
 			SendUdpImage(8192, (char *)image.data, image.cols*image.rows);
@@ -2364,7 +2364,6 @@ int main(int argc, char **argv)
 		{
 		//	printf("******calling vid_stream_get***********\n");
 			//vid_stream_get(&w,&h,(char *)outImg.data);
-
 			vs->get(&w,&h,(char *)outImg.data);
 		}
 		//else
@@ -2424,6 +2423,15 @@ int main(int argc, char **argv)
 			DoStartCmd_CamCal();
 
 
+/*			//Homing
+			printf("Re Homing\n");
+			port_com_send("fx_home()\n");
+			usleep(100000);
+
+			port_com_send("fx_abs(168)\n");
+			port_com_send("wcr(0x04,0x3012,12)");*/
+
+			//r_outImg = rotation90(outImg);
 
 			}
 #ifdef CAMERA_CALIBERATION
