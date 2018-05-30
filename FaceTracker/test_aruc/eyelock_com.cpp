@@ -76,7 +76,7 @@ int ec_read_from_client(int filedes) {
 			//setRGBled(BRIGHTNESS_MAX,0,0,2000,0,0x1F);
 			// system("nc -O 512 192.168.4.172 35 < /home/root/tones/rej.raw");
 			//SetFaceMode();
-    	  port_com_send("play_snd(1)");
+    	 // port_com_send("play_snd(1)");
 		} else if (strstr(buffer, "MATCH")) {
 			fprintf(stderr, "EC Server: got message: `%s  %s'\n", buffer,
 					GetTimeStamp());
@@ -88,7 +88,7 @@ int ec_read_from_client(int filedes) {
 			//setRGBled(0,BRIGHTNESS_MIN,0,2000,1,0x1F);
 //    	  port_com_send("set_audio(1)");
 //    	  system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
-    	  port_com_send("play_snd(0)");
+    	 // port_com_send("play_snd(0)");
 
 			//  MoveTo(CENTER_POS);
 			//sleep(2);
@@ -133,7 +133,7 @@ int ec_read_from_client(int filedes) {
 			EyelockLog(logger, DEBUG, "EC Server: got message: `%s  %s'\n", buffer, GetTimeStamp());
 			port_com_send(buffer);
 
-			if (!(strncmp(temp, "fixed_set_rgb(0,10,0)", 20)) || b_goHome)
+          	if(!(strncmp(temp,"fixed_set_rgb(0,80,0)",20)))
 			//if(0)
 					{
 				EyelockLog(logger, DEBUG, "EC Server: Audio got message: `<%s>  %s'\n", buffer, GetTimeStamp());
