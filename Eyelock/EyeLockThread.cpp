@@ -299,7 +299,7 @@ int EyeLockThread::End()
 EyeLockThread::EyeLockThread(Configuration& conf) :
 	GenericProcessor(conf), m_MatchProcessor(0), m_DetectedMsg(20),m_pEyeDispatcher(0),m_ScoreFactor(0.5),m_spoofEnable(false),m_nwLedDispatcher(NULL),
 			m_MotionMsg(20), m_outQSize(5), m_Debug(false), m_MaxFrames(5),m_HBDestAddr(0),m_shouldProcess(true),m_shouldSegment(true),m_tsDestAddrpresent(false),
-			m_ledConsolidator(0), m_Mode(EyelockDual),m_HBMsg(256),m_ProcessModeMsg(256),m_FuturisticTime(0), m_pNwListener(0),m_doMatching(true),m_sleepTimeFlow(100000),
+			m_ledConsolidator(0), m_Mode(EyelockDual),m_HBMsg(256),m_ProcessModeMsg(256),m_FuturisticTime(0), m_pNwListener(0),m_doMatching(true),m_sleepTimeFlow(100),
 			m_MustDie(false),m_MinTrackedCount(0),m_logging(false),m_segmentationMiliSecSleep(20),m_trackingEnabled(true),m_detectDestAddr(0),m_DetectBinMsg(0)
 {
 	m_PreviousMode = m_Mode;
@@ -321,7 +321,7 @@ EyeLockThread::EyeLockThread(Configuration& conf) :
 	m_usbEnabled = conf.getValue("Eyelock.USBSlaveEnabled",false);
 	m_dualAuth = conf.getValue("GRITrigger.DualAuthenticationMode",false);
 	m_transTOC = conf.getValue("GRITrigger.TransTOCMode", false);
-	m_sleepTimeFlow = conf.getValue("Eyelock.SleepTimeFlow",100000);
+	m_sleepTimeFlow = conf.getValue("Eyelock.SleepTimeFlow",100);
 	m_ledPWMSwitching = conf.getValue("Eyelock.LEDPWMSwitchingAfterDetect",false);
 	m_currentState = false;
 
