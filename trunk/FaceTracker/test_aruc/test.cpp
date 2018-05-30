@@ -38,24 +38,21 @@ or implied, of Rafael Muñoz Salinas.
 #include <stdlib.h>
 #include <math.h>
 #include <cmath>
+
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv/cv.h>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/photo/photo.hpp>
+//#include <aruco.h>
+//#include <dictionary.h>
+
 #include "eyelock_com.h"
 #include "Synchronization.h"
 #include "pstream.h"
 #include "FileConfiguration.h"
 #include "Configuration.h"
-
-// #define CAMERA_CALIBERATION
-
-#ifdef CAMERA_CALIBERATION
-#include <aruco.h>
-#include <dictionary.h>
-#endif
 
 
 
@@ -63,14 +60,20 @@ using namespace cv;
 using namespace std::chrono;
 using namespace std;
 
+
+
 VideoStream *vs;
+
+
 
 Mat outImg, r_outImg;
 Mat smallImg;
 Mat frame_gray;
 Mat smallImgBeforeRotate;
 
+
 double scaling = 8.0;
+
 
 extern int vid_stream_start(int port);
 extern int vid_stream_get(int *win,int *hin, char *wbuffer);
@@ -248,6 +251,30 @@ void accelStatus(){
 
 #endif
 }
+
+
+
+
+/*
+#define IO_FILENAME "/home/root/"
+void HandleEyelockIO(void)
+
+{
+	FILE *in;
+	in = fopen(IO_FILENAME,"rt");
+	if (in)
+	{
+		char temp[512];
+		int len = fread(temp,sizeof(char),sizeof(temp),in);
+		temp[len]=0;
+		port_com_send(temp);
+	}
+}
+*/
+
+
+
+
 
 int IrisFrameCtr = 0;
 
@@ -728,7 +755,7 @@ Rect no_move_area;
 #if 1
 void DoStartCmd(){
 
-	FileConfiguration fconfig("/home/ext/TESTWorkspace/trunk/FaceTracker/test_aruc/Debug/faceConfig.ini");
+	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 
 	int minPos = fconfig.getValue("FTracker.minPos",0);
 	CENTER_POS = fconfig.getValue("FTracker.centerPos",164);
@@ -754,6 +781,9 @@ void DoStartCmd(){
 
 	int AuxIrisCamExposureTime = fconfig.getValue("FTracker.AuxIrisCamExposureTime",8);
 	int AuxIrisCamDigitalGain = fconfig.getValue("FTracker.AuxIrisCamDigitalGain",80);
+
+	//printf("aux gain :::: %i\n", AuxIrisCamDigitalGain);
+	//printf("aux exp :::: %i\n", AuxIrisCamExposureTime);
 
 	int AuxIrisCamDataPedestal = fconfig.getValue("FTracker.AuxIrisCamDataPedestal",0);
 
@@ -869,7 +899,7 @@ void DoStartCmd(){
 	//This code is for playing sound
 	if(1)
 	{
-		port_com_send("set_audio(4)");
+		port_com_send("set_audio(1)");
 		sleep(1);
 		port_com_send("data_store_set(0)");
 		sleep(1);
@@ -1069,8 +1099,7 @@ int noFaceCounter =0;
 
 void DoRunMode()
 {
-	// usleep(50000);
-	float eye_size;
+  float eye_size;
 
 	// if (run_state == RUN_STATE_FACE)
 	{
@@ -1098,7 +1127,7 @@ void DoRunMode()
 //int agc_val= FACE_GAIN_DEFAULT;		128
 //int agc_set_gain =0;
 
-#if 0
+
 		    p = AGC(smallImg.cols,smallImg.rows,(unsigned char *)(smallImg.data),180);
 
 
@@ -1122,7 +1151,7 @@ void DoRunMode()
 				static int agc_val_old=0;
 				  if (abs(agc_val-agc_val_old)>300)
 				  	  {
-					  printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
+					 // printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
 					  SetExp(4,agc_val);
 					  agc_val_old= agc_val;
 				  	  }
@@ -1140,7 +1169,7 @@ void DoRunMode()
 
 				if (detect_area.contains(eyes))
 					{
-					printf("eyes found\n");
+					//printf("eyes found\n");
 
 					noFaceCounter=0;
 
@@ -1157,7 +1186,7 @@ void DoRunMode()
 							int constant = 10;
 							int MoveToLimitBound = 1;
 							err = (no_move_area.y+no_move_area.height/2) - eyes.y;
-							printf("abs err----------------------------------->  %d\n", abs(err));
+							//printf("abs err----------------------------------->  %d\n", abs(err));
 							err = (float)err * (float)SCALE * (float)ERROR_LOOP_GAIN;
 
 							// if we need to move
@@ -1251,10 +1280,11 @@ void DoRunMode()
 					move_counts=0;
 				}*/
 
-
+#ifdef DISP
 			cv::rectangle(smallImg,no_move_area,Scalar( 255, 0, 0 ), 1, 0);
 			cv::rectangle(smallImg,detect_area,Scalar( 255, 0, 0 ), 1, 0);
-			// imshow(temp,smallImg);
+			imshow(temp,smallImg);
+#endif
 	}
 
 /*
@@ -1446,7 +1476,8 @@ void CalAll()
 }
 
 
-#ifdef CAMERA_CALIBERATION
+/*
+
 int arucoMarkerTracking(Mat InImage){
 
 	 //cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
@@ -1516,12 +1547,9 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 		if (markers.size() < 2){
 			printf("%i camera detected %i markers!\n", portNum, markers.size());
 			cv::imshow("marker Detects", imgCopy);
-			char a = cvWaitKey(200);
-			if (a == 'q')
-				return markers;
 			//sprintf(buffer, "No_marker_detect%i.png", portNum);
 			//imwrite(buffer, imgCopy);
-
+			return markers;
 			//exit(EXIT_FAILURE);
 		}
 
@@ -1679,15 +1707,15 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 
 	return rectResult;
 
-/*	//draw a rect to verify the rect
+	//draw a rect to verify the rect
 	cv::Point pt1(x_offset, y_offset);
 	cv::Point pt2(xMax_offset, yMax_offset);
 	smallImg = rotation90(outImg);
 	cv::rectangle(smallImg, pt1, pt2, cv::Scalar(255, 255, 255));
-	imwrite("imgArucoRect.png", smallImg);*/
+	imwrite("imgArucoRect.png", smallImg);
 
 }
-#endif
+
 
 int agc_val_cal=3;
 
@@ -1713,10 +1741,10 @@ void brightnessAdjust(Mat outImg, int cam){
 	float bThreshold;
 	if (cam == 4){
 		agc_val_cal = 3;
-		bThreshold = 40.00;
+		bThreshold = 20.00;
 	}
 	else
-		bThreshold = 60.00;
+		bThreshold = 65.00;
 
 
 	while(!(p >= bThreshold)){
@@ -1732,9 +1760,9 @@ void brightnessAdjust(Mat outImg, int cam){
 		vs->get(&w,&h,(char *)outImg.data);
 
 		p = AGC(outImg.cols,outImg.rows,(unsigned char *)(outImg.data),128);
-	/*	printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Percentile::: %3.3f Agc value = %d\n",p,agc_val_cal);
+		printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Percentile::: %3.3f Agc value = %d\n",p,agc_val_cal);
 		imshow("AGC change", outImg);
-		cvWaitKey(); */
+		cvWaitKey();
 
 		if(!(abs(p - p_old) > 1)){
 			sprintf(buff,"wcr(%d,0x3012,%d)",cam,agc_val_cal + 4);
@@ -1751,7 +1779,7 @@ void brightnessAdjust(Mat outImg, int cam){
 
 
 
-#ifdef CAMERA_CALIBERATION
+
 bool CalCam(){
 
 	char cmd[512];
@@ -1975,8 +2003,8 @@ bool CalCam(){
 }
 
 
-#endif
-#if 0
+
+
 void runCalCam(){
 	bool check = true;
 	int step = 10;		//initialize increment step
@@ -1998,7 +2026,8 @@ void runCalCam(){
 	}
 
 }
-#endif
+
+*/
 
 
 double parsingIntfromHex(string str1){
@@ -2312,12 +2341,12 @@ int main(int argc, char **argv)
 		CalAll();
 		return 0;
 	}
-#ifdef CAMERA_CALIBERATION
+
 	//for camera to camera calibration
 	if (cal_cam_mode){
 		portcom_start();
 		DoStartCmd_CamCal();
-		runCalCam();
+		//runCalCam();
 		return 0;
 
 	}
@@ -2330,7 +2359,7 @@ int main(int argc, char **argv)
 		return 0;
 
 	}
-#endif
+
 
 	//vid_stream_start(atoi(argv[1]));
 	vs= new VideoStream(atoi(argv[1]));
@@ -2343,15 +2372,14 @@ int main(int argc, char **argv)
 		DoStartCmd();
 		}
 
-	// cv::namedWindow(temp);
+	cv::namedWindow(temp);
 
 
-/*
-	//if (vs->m_port==8192)
-		vs->offset_sub_enable=0;
+
 	if (vs->m_port==8192)
-			vs->offset_sub_enable=1;
-*/
+		vs->offset_sub_enable=0;
+	if (vs->m_port==8193)
+			vs->offset_sub_enable=0;
 
 
 	while (1)
@@ -2390,8 +2418,8 @@ int main(int argc, char **argv)
 			}
 			else
 				cv::resize(outImg, smallImg, cv::Size(), 1, 1, INTER_NEAREST); //Time debug
-			MeasureSnr();
-			// imshow(temp,smallImg);  //Time debug
+			//MeasureSnr();
+			imshow(temp,smallImg);  //Time debug
 			}
 	    key = cv::waitKey(1);
 	    //printf("Key pressed : %u\n",key);
@@ -2434,7 +2462,6 @@ int main(int argc, char **argv)
 			//r_outImg = rotation90(outImg);
 
 			}
-#ifdef CAMERA_CALIBERATION
 		if(aruc_on){
 			//scaling = 2;
 		    //cv::resize(outImg, smallImgBeforeRotate, cv::Size(),(1/scaling),(1/scaling), INTER_NEAREST);	//Mohammad
@@ -2443,11 +2470,10 @@ int main(int argc, char **argv)
 			//gridBooardMarker(smallImg);
 
 			vs = new VideoStream(8194);
-			gridBooardMarker(outImg);
+			//gridBooardMarker(outImg);
 			delete (vs);
 			//arucoMarkerTracking(outImg);
 		}
-#endif
 		if(key=='b')
 			{
 				char fName[50];
