@@ -23,6 +23,7 @@
 #include "logging.h"
 #include "SDKDispatcher.h"
 #include "OSDPMessage.h"
+#include "time.h"
 extern "C" {
 #include "include/BobListener.h"
 #include "sqlite3.h"
@@ -302,18 +303,18 @@ void F2FDispatcher::BoBStatusChangeCB()
 {
 	F2FDispatcher * myptr = (F2FDispatcher * )BobGetMyPtr();
 	if (myptr) {
-		if (myptr->m_Debug)
-			EyelockLog(logger, DEBUG, "BoBStatusChangeCB()");
+		//if (myptr->m_Debug)
+			//EyelockLog(logger, DEBUG, "BoBStatusChangeCB()");
 
 		if (BoBStatusChangeAcs()) {
-			if (myptr->m_Debug)
-				EyelockLog(logger, DEBUG, "F2FDispatcher - ACS Input change");
+			//if (myptr->m_Debug)
+				//EyelockLog(logger, DEBUG, "F2FDispatcher - ACS Input change");
 			myptr->m_acsChange = true;
 		}
 
 		if (BoBStatusChangeTamper()) {
-			if (myptr->m_Debug)
-				EyelockLog(logger, DEBUG, "F2FDispatcher - Tamper Input change");
+			//if (myptr->m_Debug)
+				//EyelockLog(logger, DEBUG, "F2FDispatcher - Tamper Input change");
 			myptr->m_tamperChange = true;
 		}
 
@@ -398,8 +399,8 @@ void F2FDispatcher::ProcessTamper(bool value, bool mbTamper)
 }
 void F2FDispatcher::ProcessBoBAcsChange()
 {
-	if (m_Debug)
-		EyelockLog(logger, TRACE, "F2FDispatcher::ProcessBoBAcsChange()");
+	//if (m_Debug)
+		//EyelockLog(logger, TRACE, "F2FDispatcher::ProcessBoBAcsChange()");
 
 	bool value = 0;
 #if 0	// only use PushButton to reset
@@ -519,6 +520,7 @@ void F2FDispatcher::ProcessBoBAcsChange()
 		else if (!m_transTOC)
 			EyelockLog(logger, INFO, "Ready for Eyes");
 		EyelockEvent("System Ready for Authentication");
+		testSend();
 	}
 }
 
@@ -663,7 +665,7 @@ void F2FDispatcher::CheckBoBEvents() {
 		// Check ACS event
 		if (m_acsChange || m_tamperChange) {
 			if(m_Debug)
-				EyelockLog(logger, DEBUG, "\nF2FDispatcher::CheckBoBEvents() - ACS/Tamper  ");
+				//EyelockLog(logger, DEBUG, "\nF2FDispatcher::CheckBoBEvents() - ACS/Tamper  ");
 			ProcessBoBAcsChange();
 		}
 
@@ -677,7 +679,7 @@ void F2FDispatcher::CheckBoBEvents() {
 		// Check OSDP LED Command
 		if (m_osdpACSEnabled && m_ledControlledByInput) {	// check osdp_LED command
 			if(m_Debug)
-				EyelockLog(logger, TRACE, "\nF2FDispatcher::CheckBoBEvents() - OSDP LED  ");
+				//EyelockLog(logger, TRACE, "\nF2FDispatcher::CheckBoBEvents() - OSDP LED  ");
 			m_osdpMessage->ProcessOSDPLedCommandFromACS(m_ledConsolidator);
 		}
 	}
@@ -700,6 +702,7 @@ void F2FDispatcher::ProcessBoBCardReader() {
 	// EyelockLog(logger,  DEBUG, "@@@@@ Check the card on BoB: %d, %d ",m_ledConsolidator->GetState(), m_pMatched->m_dualAuthMatched);
 	if (m_cardRead == CARD_READY)
 	{
+		printf("in ProcessBoBCardReader...\n");
 		bool pinState = false;
 		m_cardRead = CARD_INIT;
 		int len = GetCardData();
@@ -1168,9 +1171,11 @@ bool F2FDispatcher::checkToBeSendToNw( MatchResultState val){
 }
 
 
+
 void F2FDispatcher::SendData(MatchResult *msg)
 {
-	if(m_Debug) {
+	if(m_Debug)
+	{
 		EyelockLog(logger, TRACE, "F2FDispatcher::SendData() start");
 	}
 
@@ -1181,22 +1186,148 @@ void F2FDispatcher::SendData(MatchResult *msg)
 	char *ptr = msg->getF2F(bytes,bitlen);
 	MatchResultState state = msg->getState();
 
-	if (state == FAILED || state == CONFUSION) {
-		/*
-		char * ptr = getACSTestData(bytes, bitlen);
-		msg->setF2F(ptr);
-		if(ptr) delete [] ptr;
-		*/
+	if (state == FAILED || state == CONFUSION)
+	{
 		msg->setF2F(m_testData);
 	}
 
-	if (m_osdpACSEnabled) {
+	if (m_osdpACSEnabled)
+	{
 		m_osdpMessage->SaveMatchData(ptr, bytes, bitlen);
 	}
-	else {
+	else
+	{
 		m_pMatched->Send(msg->getKey());
 	}
 }
+
+#define bcd2bin(x)	(((x) & 0x0f) + ((x) >> 4) * 10)
+#define bin2bcd(x)	((((x) / 10) << 4) + (x) % 10)
+void settime()
+{
+	unsigned char regs[8];
+	time_t rawtime;
+	struct tm* tm1;
+
+	printf("setting time...\n");
+	time(&rawtime);
+	tm1 = localtime(&rawtime);
+
+	printf("setting to %s\n",asctime(tm1));
+
+		regs[0] = 0;
+		/* This will purposely overwrite REG_SECONDS_OS */
+		regs[1] = bin2bcd(tm1->tm_sec);
+		regs[2] = bin2bcd(tm1->tm_min);
+		regs[3] = bin2bcd(tm1->tm_hour);
+		regs[4] = bin2bcd(tm1->tm_mday);
+		regs[5] = tm1->tm_wday;
+		regs[6] = bin2bcd(tm1->tm_mon + 1);
+		regs[7] = bin2bcd(tm1->tm_year - 100);
+		BobSetData(regs,8);
+		printf("setting time to 0x%0x: 0x%0x: 0x%0x,0x%0x: 0x%0x,0x%0x: 0x%0x...\n",regs[1],regs[2],regs[3],regs[4],regs[5],regs[6],regs[7]);
+
+
+}
+void setLED(int x)
+{
+	unsigned char regs[1];
+	printf("setting LED to %d\n",x);
+	regs[0] = x;
+	BobSetData(regs,1);
+}
+void gettime()
+{
+	unsigned char regs[8];
+	time_t rawtime;
+	struct tm* tm1,tm2;
+
+	tm1 = &tm2;
+	printf("getting time...\n");
+	BobGetData(regs,8);
+
+
+	printf("date reced for time: 0x%0x, 0x%0x, 0x%0x, 0x%0x\n",regs[0],regs[1],regs[2],regs[3]);
+		tm1->tm_sec = bcd2bin(regs[1] & 0x7f);
+		tm1->tm_min = bcd2bin(regs[2] & 0x7f);
+		tm1->tm_hour = bcd2bin(regs[3] & 0x3f);
+		tm1->tm_mday = bcd2bin(regs[4] & 0x3f);
+		tm1->tm_wday = regs[5] & 0x7;
+		tm1->tm_mon = bcd2bin(regs[6] & 0x1f) - 1;
+		tm1->tm_year = bcd2bin(regs[7]) + 100;
+		printf("get time : %s\n",asctime(tm1));
+
+
+}
+
+void F2FDispatcher::testSend(void)
+{
+	return;
+	printf("sending test data\n");
+
+	//settime();
+	//BobSetCommand(BOB_COMMAND_RTCWRITE_CMD);
+	//BobSetData(void *ptr, int len);
+	sleep(1);
+	BobSetCommand(BOB_COMMAND_RTCREAD_CMD);
+	usleep(5000);
+	gettime();
+
+	sleep(5);
+	BobSetCommand(BOB_COMMAND_RTCREAD_CMD);
+	usleep(5000);
+	gettime();
+	//BobGetData(void *ptr, int len);
+
+	for(int i=0;i<8 ;i++)
+	{
+		setLED(i);
+		BobSetCommand(BOB_COMMAND_SET_LED);
+		sleep(1);
+	}
+
+	BobSetCommand(BOB_COMMAND_OIM_OFF);
+
+	sleep(2);
+
+	BobSetCommand(BOB_COMMAND_OIM_ON);
+
+	sleep(2);
+
+
+	/*for(int i = 0;i<5;i++)
+	{
+		BoBSetACSLedGreenOut();
+		usleep(200000);
+		BoBClearACSLedGreenOut();
+		usleep(200000);
+		BoBSetACSLedRedOut();
+		usleep(200000);
+		BoBClearACSLedRedOut();
+		usleep(200000);
+		BoBSetACSSoundOut(250, 3);
+		sleep(2);
+		BoBClearACSSoundOut();
+		sleep(1);
+	}*/
+	printf("tests done\n");
+
+}
+
+/*
+void SendTestData(void)
+{
+	MatchResult *msg = new MatchResult;
+	int bytelen, bitlen;
+	char * testData = getACSTestData(bytelen, bitlen);
+	memcpy(testData1, testData, bytelen+2);
+	if (bitlen > 26){
+		m_accessDataLength = bitlen;
+	}
+	msg->setF2F(testData1);
+	m_pMatched->Send(msg->getKey());
+}
+*/
 
 void F2FDispatcher::SetLED(MatchResultState state)
 {
@@ -1310,7 +1441,7 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 	MatchResultState state = msg->getState();
 
 	if (state == PASSED) {
-		if (m_pMatchType->m_duress && m_authMode >= PIN_AND_IRIS_DURESS) {
+			if (m_pMatchType->m_duress && m_authMode >= PIN_AND_IRIS_DURESS) {
 			EyelockEvent("Match success(Duress) ID is %s", msg->getName().c_str());
 			sprintf(tmp, "Match success(Duress) ID is %s", msg->getName().c_str());
 		}

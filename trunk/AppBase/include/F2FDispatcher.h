@@ -59,6 +59,7 @@ public:
 	void ProcessBoBAcsChange();
 	void ProcessTamper(bool value, bool mbTamper);
 	bool addUser(string perid, string name, string acd);
+	void testSend(void);
 
 	int m_cardRead;
 	bool m_acsChange;

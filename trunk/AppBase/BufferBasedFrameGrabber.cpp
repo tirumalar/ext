@@ -31,6 +31,9 @@ void BufferBasedFrameGrabber::init(Configuration *pConf){
 	m_Height=pConf->getValue("FrameSize.height",960);	//1392);
 	m_WidthStep=pConf->getValue("FrameSize.widthstep",0);
 	imagebits=pConf->getValue("FrameSize.bits",8);
+	int buff_size;
+	buff_size = pConf->getValue("BuffFrameGrab.size",2);
+	printf("Queue size = %d\n",buff_size);
 
 	m_ImageSize = m_Width * m_Height;
 	//m_ImageSize = 2 * m_Width * m_Height;
@@ -46,8 +49,8 @@ void BufferBasedFrameGrabber::init(Configuration *pConf){
 	m_numbits = numbits > 8 ? 16 : numbits;
 	SetImageBits(m_numbits);
 #ifndef HBOX_PG
-	m_pRingBuffer = new RingBufferImageQueue(20); /* Allocate ring buffer to be frame buffer - 1 */
-	m_RingBufferOffset = new RingBufferQueueOffset(20);
+	m_pRingBuffer = new RingBufferImageQueue(buff_size); /* Allocate ring buffer to be frame buffer - 1 */
+	m_RingBufferOffset = new RingBufferQueueOffset(buff_size);
 #else
 	m_pRingBuffer = new RingBufferImageQueue(5); /* Allocate ring buffer to be frame buffer - 1 */
 	m_RingBufferOffset = new RingBufferQueueOffset(5);
@@ -104,7 +107,16 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw(){
 	ImageQueue val;
 	//while(!ShouldIQuit()&&!m_pRingBuffer->TryPop(val))
 
-	bool status = m_pRingBuffer->TryPop(val);
+	bool status = false;
+
+	while(1)
+		{
+		status=m_pRingBuffer->TryPop(val);
+		if (status)
+			break;
+		usleep(1000);
+		}
+
 	if (status == true) {
 #if 0
 		if (m_Debug)
@@ -115,6 +127,9 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw(){
 		m_frameIndex = val.m_frameIndex;
 		m_ts = val.m_endTime;
 		memcpy(m_pImageBuffer, ptr, length);
+		int static cntr=0;
+		cntr++;
+//		printf("popped so far .. %d\n",cntr);
 	}
 	else {
 		memset(m_pImageBuffer, 0, length);
@@ -165,7 +180,17 @@ void BufferBasedFrameGrabber::setLatestFrame_raw(char *ptr){
 	val.m_startTime = starttimestamp;
 	val.m_endTime = val.m_startTime;
 
-	m_pRingBuffer->TryPush(val);
+	static int frame_drop = 0;
+	if (m_pRingBuffer->TryPush(val)==false)
+	{
+
+		frame_drop++;
+		//printf("Dropping Frames total %d\n",frame_drop);
+	}
+	int static cntr1=0;
+	cntr1++;
+	//printf("pushed so far .. %d and dropped %d\n",cntr1,frame_drop);
+
 	if (m_Debug)
 		EyelockLog(logger, DEBUG, "setLatestFrame_raw() Push to ring buffer");
 }
