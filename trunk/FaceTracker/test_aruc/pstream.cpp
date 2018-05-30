@@ -23,26 +23,27 @@
 #include "Synchronization.h"
 #include "pstream.h"
 
-void diep(char *s) {
-	perror(s);
-	exit(1);
+void diep(char *s)
+{
+    perror(s);
+    exit(1);
 }
 /*
- struct sockaddr_in si_me, si_other;
- int s, i;
- unsigned int slen=sizeof(si_other);
- int ret;
- int bytes_to_get = WIDTH*(HEIGHT-1);
- char *s_ptr = buf;
- int x;
- int frames;
- int num_frames;
- int wr;
- int bytes_to_write;
- int wait_for_sync;
- pthread_t leftCThread;
- void *leftCServer(void *arg);
- */
+struct sockaddr_in si_me, si_other;
+int s, i;
+unsigned int slen=sizeof(si_other);
+int ret;
+int bytes_to_get = WIDTH*(HEIGHT-1);
+char *s_ptr = buf;
+int x;
+int frames;
+int num_frames;
+int wr;
+int bytes_to_write;
+int wait_for_sync;
+pthread_t leftCThread;
+void *leftCServer(void *arg);
+*/
 int m_port;
 
 void VideoStream::flush() {
@@ -50,21 +51,22 @@ void VideoStream::flush() {
 	while ((m_pRingBuffer->TryPop(val)) != false)
 		usleep(1000);
 }
-VideoStream::~VideoStream() {
-	running = 0;
+VideoStream::~VideoStream()
+{
+	running=0;
 	while (running >= 0)
 		usleep(100);
 
 }
-int VideoStream::get(int *win, int *hin, char *m_pImageBuffer) {
+int VideoStream::get(int *win,int *hin,char *m_pImageBuffer)
+{
 
 	ImageQueue val;
 	bool status;
 	//printf("entering vid_stream_get\n");
-	while ((m_pRingBuffer->TryPop(val)) != true)
+	while((m_pRingBuffer->TryPop(val)) != true)
 		usleep(1000);
 	{
-
 		unsigned char *ptr = val.m_ptr;
 		memcpy(m_pImageBuffer, ptr, length);
 	}
@@ -72,30 +74,35 @@ int VideoStream::get(int *win, int *hin, char *m_pImageBuffer) {
 	return 1;
 }
 
-bool VideoStream::HandleReceiveImage(unsigned char *ptr, int length) {
+
+
+bool VideoStream::HandleReceiveImage(unsigned char *ptr, int length)
+{
 	ImageQueue val;
 	unsigned char *pdata = val.m_ptr;
-	if (offset_sub_enable) {
-		if (offset_image_loaded == 0) {
+	if (offset_sub_enable)
+	{
+		if (offset_image_loaded==0)
+		{
 			//load the offset image
 			char temp[100];
-			sprintf(temp, "cal%02x.bin", cam_id);
-			// EyelockLog(logger, DEBUG, "Loading %s offset file",temp);
-			// printf("Loading %s offset file\n",temp);
+			sprintf(temp,"cal%02x.bin",cam_id);
+			printf("Loading %s offset file\n",temp);
 			FILE *f = fopen(temp, "rb");
-			if (f) {
-				fread(offset_image, length, 1, f);
+				if (f)
+				{
+				fread(offset_image ,length, 1, f);
 				fclose(f);
-				offset_image_loaded = 1;
-				// EyelockLog(logger, DEBUG, "Successfully loaded the cal file");
-				// printf("Loading success file\n");
-			}
+				offset_image_loaded=1;
+				printf("Loading success file\n");
+				}
 		}
 		if (offset_image_loaded)
-			for (int z = 0; z < length; z++) // add underflow logic
-				pdata[z] = max((int)ptr[z]-(int)offset_image[z],0);
-	} else
-		memcpy(pdata, ptr, length);
+			for (int z = 0; z< length;z++) // add underflow logic
+				pdata[z]= max((int)ptr[z]-(int)offset_image[z],0);
+	}
+	else
+	  memcpy(pdata, ptr, length);
 	return m_pRingBuffer->TryPush(val);
 }
 
@@ -106,16 +113,14 @@ int CreateUDPServer(int port) {
 
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sock < 0) {
-		//EyelockLog(logger, ERROR, "CreateUDPServer socket error");
 		return sock;
 	}
 	length = sizeof(server);
-	bzero(&server, length);
-	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = INADDR_ANY;
-	server.sin_port = htons(port);
-	if (bind(sock, (struct sockaddr *) &server, length) < 0) {
-		//EyelockLog(logger, ERROR, "CreateUDPServer socket bind error");
+	bzero(&server,length);
+	server.sin_family=AF_INET;
+	server.sin_addr.s_addr=INADDR_ANY;
+	server.sin_port=htons(port);
+	if (bind(sock,(struct sockaddr *)&server,length)<0) {
 		return -1;
 	}
 	return sock;
@@ -128,118 +133,125 @@ extern int h_errno;
 //struct hostent *gethostbyname(const char *name);
 
 #include <sys/socket.h>
-void SendUdpImage(int port, char *image, int bytes_left) {
+void SendUdpImage(int port, char *image, int bytes_left)
+{
 	int sock;
-	struct hostent *hp; /* host information */
+	 struct hostent *hp; /* host information */
 
 	struct sockaddr_in servaddr; /* server address */
 	char *my_messsage = "this is a test message";
 	char *host = "127.0.0.1";
-	int index = 0;
+	int index=0;
 	int bytes_to_send;
 	int r;
-	int fd; /* our socket */
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		// EyelockLog(logger, ERROR, "SendUdpImage cannot create socket");
-		perror("cannot create socket\n");
-		return;
-	}
+	 int fd; /* our socket */
+	 if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) { perror("cannot create socket\n"); return ; }
 
 	/* fill in the server's address and data */
-	memset((char*) &servaddr, 0, sizeof(servaddr));
+	memset((char*)&servaddr, 0, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(port);
 
 	/* look up the address of the server given its name */
 	hp = gethostbyname(host);
-	if (!hp) {
-		fprintf(stderr, "could not obtain address of %s\n", host);
-		return;
+	if (!hp) { fprintf(stderr, "could not obtain address of %s\n", host); return ;
 	}
 	/* put the host's address into the server address structure */
-	memcpy((void *) &servaddr.sin_addr, hp->h_addr_list[0], hp->h_length);
-	image[0] = 0x55;
-	image[1] = 0x55;
-	memset(&image[2], 0x10, 2000);
-	while (bytes_left) {
-		bytes_to_send = min(bytes_left,1200);
-		r = sendto(fd, &image[index], bytes_to_send, 0,
-				(struct sockaddr *) &servaddr, sizeof(servaddr));
-		index += r;
-		bytes_left -= r;
-		// printf("Bytes left %d %d\n",bytes_left,r);
+	memcpy((void *)&servaddr.sin_addr, hp->h_addr_list[0], hp->h_length);
+    image[0] = 0x55;
+    image[1] = 0x55;
+    memset(&image[2],0x10,2000);
+	while (bytes_left)
+	{
+	bytes_to_send = min(bytes_left,1200);
+	r = sendto(fd, &image[index], bytes_to_send,0, (struct sockaddr *)&servaddr, sizeof(servaddr));
+	index+=r;
+	bytes_left -=r;
+   // printf("Bytes left %d %d\n",bytes_left,r);
 
 	}
+
 
 }
 
-void *VideoStream::ThreadServer(void *arg) {
-	VideoStream *vs = (VideoStream *) arg;
+void *VideoStream::ThreadServer(void *arg)
+{
+		VideoStream *vs=(VideoStream *)arg;
 
-	printf("leftCServer() start\n");
-	int length;
-	int pckcnt = 0;
-	char buf[IMAGE_SIZE];
-	char databuf[IMAGE_SIZE];
-	int datalen = 0;
-	short *pShort = (short *) buf;
-	bool b_syncReceived = false;
-	struct sockaddr_in from;
-	socklen_t fromlen = sizeof(struct sockaddr_in);
+        printf("leftCServer() start\n");
+        int length;
+        int pckcnt=0;
+        char buf[IMAGE_SIZE];
+        char databuf[IMAGE_SIZE];
+        int datalen = 0;
+        short *pShort = (short *)buf;
+        bool b_syncReceived = false;
+        struct sockaddr_in from;
+        socklen_t fromlen = sizeof(struct sockaddr_in);
+        int bytes_to_read=IMAGE_SIZE;
 
-	int leftCSock = CreateUDPServer(vs->m_port);
-	if (leftCSock < 0) {
-		//EyelockLog(logger, ERROR, "Failed to create leftC Server()");
-		// printf("Failed to create leftC Server()\n");
-		return NULL;
-	}
-	vs->running = 1;
-	while (vs->running) {
-		length = recvfrom(leftCSock, buf, 1500, 0, (struct sockaddr *) &from,
-				&fromlen);
-		if (length < 0)
-			printf("recvfrom error in leftCServer()");
-		else {
-			if (!b_syncReceived && pShort[0] == 0x5555) {
-				datalen = 0;
-				memcpy(databuf, buf + 2, length - 2);
-				datalen = length - 2;
-				b_syncReceived = true;
-				pckcnt = 1;
-				vs->cam_id = databuf[2] & 0xff;
-				//printf("vs->cam_id %02x\n", vs->cam_id);
-				// printf("Sync\n");
-			} else if (b_syncReceived) {
-				length =
-						(datalen + length <= IMAGE_SIZE - 4) ?
-								length : IMAGE_SIZE - 4 - datalen;
-				memcpy(databuf + datalen, buf, length);
-				datalen += length;
-				pckcnt++;
-			}
-			if (datalen >= IMAGE_SIZE - 5) {
-				vs->HandleReceiveImage(databuf, datalen);
-				datalen = 0;
-				b_syncReceived = false;
-			}
-		}
-	}
-	vs->running = -1;
-	close(leftCSock);
+        int leftCSock = CreateUDPServer(vs->m_port);
+        if (leftCSock < 0)
+        {
+                printf("Failed to create leftC Server()\n");
+                return NULL;
+        }
+        vs->running=1;
+        while (vs->running)
+        {
+            length = recvfrom(leftCSock, buf, min(1500,bytes_to_read), 0, (struct sockaddr *)&from, &fromlen);
+            if (length < 0)
+                printf("recvfrom error in leftCServer()");
+            else
+            {
+                if(!b_syncReceived && pShort[0] == 0x5555)
+                {
+                        datalen = 0;
+                        memcpy(databuf, buf+2, length-2);
+                        datalen = length - 2;
+                        b_syncReceived = true;
+                        pckcnt=1;
+                        vs->cam_id=databuf[2]&0xff;
+                        //printf("vs->cam_id %02x\n", vs->cam_id);
+                       // printf("Sync\n");
+                }
+                else if(b_syncReceived)
+                {
+                        length = (datalen+length <= IMAGE_SIZE-4) ? length : IMAGE_SIZE-4-datalen;
+                        memcpy(databuf+datalen, buf, length);
+                        datalen += length;
+                        pckcnt++;
+                }
+                bytes_to_read-=  length;
+                if(datalen >= IMAGE_SIZE-5)
+                {
+                    vs->HandleReceiveImage(databuf, datalen);
+                   // printf("Got image bytes to read = %d\n",bytes_to_read);
+                   	datalen = 0;
+                   	b_syncReceived=false;
+                   	bytes_to_read=IMAGE_SIZE;
+               }
+               if(bytes_to_read<=0)
+            	   bytes_to_read=IMAGE_SIZE;
+          }
+      }
+       vs->running =-1;
+      close(leftCSock);
 }
 
-VideoStream::VideoStream(int port) {
+VideoStream ::VideoStream(int port)
+{
 	m_port = port;
-	offset_sub_enable = 0;
-	offset_image_loaded = 0;
+	offset_sub_enable=0;
+	offset_image_loaded=0;
 
 	m_pRingBuffer = new RingBufferImageQueue(2);
 	length = (HEIGHT * WIDTH);
 
-	if (pthread_create(&Thread, NULL, ThreadServer, (void *) this)) {
-		//EyelockLog(logger, ERROR, "MainLoop(): Error creating thread FaceServer");
-		// printf("MainLoop(): Error creating thread FaceServer\n");
-		//return 0;
+	if (pthread_create (&Thread, NULL, ThreadServer, (void *)this))
+	{
+			printf("MainLoop(): Error creating thread FaceServer\n");
+			//return 0;
 	}
 	//return 1;
 }
@@ -247,42 +259,47 @@ VideoStream::VideoStream(int port) {
 #ifdef old_stuff
 
 int vid_stream_start(int port)
-{
+  {
 #if 1
 	m_port = port;
 	if (pthread_create (&leftCThread, NULL, leftCServer, NULL))
 	{
-		printf("MainLoop(): Error creating thread FaceServer\n");
-		return 0;
+			printf("MainLoop(): Error creating thread FaceServer\n");
+			return 0;
 	}
 	m_pRingBuffer = new RingBufferImageQueue(2);
 #else
 	printf("opening port %d\n",port);
-	if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
-	diep("socket");
+    if ((s=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
+      diep("socket");
 
-	memset((char *) &si_me, 0, sizeof(si_me));
-	si_me.sin_family = AF_INET;
-	si_me.sin_port = htons(port);
-	si_me.sin_addr.s_addr = htonl(INADDR_ANY);
-	if (bind(s, (struct sockaddr*)&si_me, sizeof(si_me))==-1)
-	{
-		printf("error\n");
-		return 1;
-	}
+    memset((char *) &si_me, 0, sizeof(si_me));
+    si_me.sin_family = AF_INET;
+    si_me.sin_port = htons(port);
+    si_me.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (bind(s, (struct sockaddr*)&si_me, sizeof(si_me))==-1)
+    {
+    	printf("error\n");
+    	return 1;
+    }
 #endif
-	return 1;
-}
+    return 1;
+  }
+
+
+
+
 
 int vid_stream_flush(void)
 
 {
 	ImageQueue val;
-	while((m_pRingBuffer->TryPop(val)) != false);
+		while((m_pRingBuffer->TryPop(val)) != false);
 
 }
 
-int vid_stream_get(int *win,int *hin,char *m_pImageBuffer) {
+
+int vid_stream_get(int *win,int *hin,char *m_pImageBuffer){
 
 	int length = (HEIGHT * WIDTH);
 //	if (m_numbits != 8)
@@ -310,11 +327,11 @@ int vid_stream_get(int *win,int *hin,char *m_pImageBuffer) {
 
 	{
 		//printf("image poped from queue\n");
-		unsigned char *ptr = val.m_ptr;
+				unsigned char *ptr = val.m_ptr;
 		//		m_ill0 = val.m_ill0;
 		//		m_frameIndex = val.m_frameIndex;
 		//		m_ts = val.m_endTime;
-		memcpy(m_pImageBuffer, ptr, length);
+				memcpy(m_pImageBuffer, ptr, length);
 	}
 
 	return 1;
@@ -325,41 +342,41 @@ int vid_stream_get_old(int *win,int *hin, char *wbuffer)
 	int p_count=0;
 	*hin=HEIGHT;
 	*win=WIDTH;
-	bytes_to_get = WIDTH*HEIGHT-2;		// should investigate the -2
-	wait_for_sync=1;
+	bytes_to_get = WIDTH*HEIGHT-2;// should investigate the -2
+    wait_for_sync=1;
 	while(bytes_to_get>0)
 	{
 		ret = recvfrom(s, buf, min(BUFLEN,bytes_to_get), 0, (struct sockaddr*)&si_other, &slen);
 		if(ret<0)
 		{
-			printf("error read image socket\n");
-			exit(0);
+		    printf("error read image socket\n");
+		    exit(0);
 		}
 		if (wait_for_sync && (buf[0]!=0x55 && buf[1]!=0x55))
-		// if (wait_for_sync && (!memcmp(s_ptr,"5555",2)))
-		//if (wait_for_sync && (s_ptr[0]!=0x5555))//s_ptr
+		 // if (wait_for_sync && (!memcmp(s_ptr,"5555",2)))
+		  //if (wait_for_sync && (s_ptr[0]!=0x5555))//s_ptr
 		{
-			/*for(int j=0;j<10;j++)
-			 {
-			 printf("%x",buf[j]);
-			 }
-			 printf("\n");*/
-			//printf(".");
-			p_count++;
-			continue;
-		}
-		if(p_count > 0)
-		{
+			  	  /*for(int j=0;j<10;j++)
+			  	  {
+				  	  printf("%x",buf[j]);
+			  	  }
+			  	  printf("\n");*/
+			 	  //printf(".");
+			  p_count++;
+			  	  continue;
+		 }
+		 if(p_count > 0)
+		 {
 			//  printf("skipped %d packets\n",p_count);
-		}
-		p_count=0;
-		usleep(100);
-		wait_for_sync=0;
-		//printf("received sync\n");
-		bytes_to_write = min (bytes_to_get,ret);
-		memcpy(wbuffer,buf,bytes_to_write);
-		wbuffer+=bytes_to_write;
-		bytes_to_get-=ret;
+		 }
+		 p_count=0;
+		 usleep(100);
+		 wait_for_sync=0;
+		  //printf("received sync\n");
+		 bytes_to_write = min (bytes_to_get,ret);
+		 memcpy(wbuffer,buf,bytes_to_write);
+		 wbuffer+=bytes_to_write;
+		 bytes_to_get-=ret;
 	}
 }
 
@@ -367,8 +384,8 @@ bool HandleReceiveImage(char *ptr, int length)
 {
 //	printf("in Handle Receive Image %d\n",length);
 	if(ptr)
-	{
-		//	printf("ptr is valid...in Handle Receive Image %d\n",length);
+    {
+	//	printf("ptr is valid...in Handle Receive Image %d\n",length);
 #if 0
 		printf("ptr is valid...in Handle Receive Image %d\n",length);
 
@@ -378,94 +395,94 @@ bool HandleReceiveImage(char *ptr, int length)
 		FILE *f = fopen(filename, "wb");
 		fwrite(ptr, (WIDTH*HEIGHT), 1, f);
 #endif
-		ImageQueue val;
+			ImageQueue val;
 #if 0
-		static int cntr=0;
-		int length = (m_Width * m_Height);
-		if (m_numbits != 8)
-		length = length * 2;
+			static int cntr=0;
+			int length = (m_Width * m_Height);
+			if (m_numbits != 8)
+				length = length * 2;
 
-		if(cntr & 0x1) {
-			val.m_ill0 = 1;
-		} else {
-			val.m_ill0 = 0;
-		}
-		val.m_frameIndex = cntr;
-		cntr++;
+			if(cntr & 0x1){
+				val.m_ill0 = 1;
+			}else{
+				val.m_ill0 = 0;
+			}
+			val.m_frameIndex = cntr;
+			cntr++;
 #endif
-		unsigned char *pdata = val.m_ptr;
-		memcpy(pdata, ptr, length);
+			unsigned char *pdata = val.m_ptr;
+			memcpy(pdata, ptr, length);
 #if 0
-		struct timeval m_timer;
-		gettimeofday(&m_timer, 0);
-		TV_AS_USEC(m_timer,starttimestamp);
-		val.m_startTime = starttimestamp;
-		val.m_endTime = val.m_startTime;
+			struct timeval m_timer;
+			gettimeofday(&m_timer, 0);
+			TV_AS_USEC(m_timer,starttimestamp);
+			val.m_startTime = starttimestamp;
+			val.m_endTime = val.m_startTime;
 #endif
-		bool status;
-		status=m_pRingBuffer->TryPush(val);
-		//if(status != true)
-		//	printf("Queue full\n");
-	}
-	return true;
+			bool status;
+			status=m_pRingBuffer->TryPush(val);
+			//if(status != true)
+			//	printf("Queue full\n");
+    }
+    return true;
 }
 
 void *leftCServer(void *arg)
 {
-	printf("leftCServer() start\n");
-	int length;
-	int pckcnt=0;
-	char buf[IMAGE_SIZE];
-	char databuf[IMAGE_SIZE];
-	int datalen = 0;
-	short *pShort = (short *)buf;
-	bool b_syncReceived = false;
-	struct sockaddr_in from;
-	socklen_t fromlen = sizeof(struct sockaddr_in);
+        printf("leftCServer() start\n");
+        int length;
+        int pckcnt=0;
+        char buf[IMAGE_SIZE];
+        char databuf[IMAGE_SIZE];
+        int datalen = 0;
+        short *pShort = (short *)buf;
+        bool b_syncReceived = false;
+        struct sockaddr_in from;
+        socklen_t fromlen = sizeof(struct sockaddr_in);
 
-	int leftCSock = CreateUDPServer(m_port);
-	if (leftCSock < 0)
-	{
-		printf("Failed to create leftC Server()\n");
-		return NULL;
-	}
-	while (1)
-	{
-		length = recvfrom(leftCSock, buf, 1500, 0, (struct sockaddr *)&from, &fromlen);
-		if (length < 0)
-		printf("recvfrom error in leftCServer()");
-		else
-		{
-			if(!b_syncReceived && pShort[0] == 0x5555)
-			{
-				datalen = 0;
-				memcpy(databuf, buf+2, length-2);
-				datalen = length - 2;
-				b_syncReceived = true;
-				pckcnt=1;
-				// printf("Sync\n");
-			}
-			else if(b_syncReceived)
-			{
-				length = (datalen+length <= IMAGE_SIZE-4) ? length : IMAGE_SIZE-4-datalen;
-				memcpy(databuf+datalen, buf, length);
-				datalen += length;
-				pckcnt++;
-			}
-			if(datalen >= IMAGE_SIZE-5)
-			{
-				HandleReceiveImage(databuf, datalen);
-				datalen = 0;
-				b_syncReceived=false;
-			}
-		}
-	}
-	close(leftCSock);
-	if (leftCThread)
-	{
-		pthread_join(leftCThread, NULL);
-		leftCThread = 0;
-	}
+        int leftCSock = CreateUDPServer(m_port);
+        if (leftCSock < 0)
+        {
+                printf("Failed to create leftC Server()\n");
+                return NULL;
+        }
+        while (1)
+        {
+            length = recvfrom(leftCSock, buf, 1500, 0, (struct sockaddr *)&from, &fromlen);
+            if (length < 0)
+                printf("recvfrom error in leftCServer()");
+            else
+            {
+                if(!b_syncReceived && pShort[0] == 0x5555)
+                {
+                        datalen = 0;
+                        memcpy(databuf, buf+2, length-2);
+                        datalen = length - 2;
+                        b_syncReceived = true;
+                        pckcnt=1;
+                       // printf("Sync\n");
+                }
+                else if(b_syncReceived)
+                {
+                        length = (datalen+length <= IMAGE_SIZE-4) ? length : IMAGE_SIZE-4-datalen;
+                        memcpy(databuf+datalen, buf, length);
+                        datalen += length;
+                        pckcnt++;
+                }
+                if(datalen >= IMAGE_SIZE-5)
+                {
+                    HandleReceiveImage(databuf, datalen);
+                   	datalen = 0;
+                   	b_syncReceived=false;
+               }
+          }
+      }
+      close(leftCSock);
+      if (leftCThread)
+      {
+      		pthread_join(leftCThread, NULL);
+      		leftCThread = 0;
+      }
 }
 
 #endif
