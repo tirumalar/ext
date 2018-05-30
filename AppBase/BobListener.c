@@ -113,6 +113,7 @@ pthread_mutex_t lock;
 int testB=0;
 void bob_thread(void *arg)
 {
+//	return;
 	long int tid = syscall(SYS_gettid);
 	//EyelockLog(logger, INFO, "BoB => *** BobListener thread %ld ***",tid);
 
@@ -574,7 +575,7 @@ int BoBSetACSRelayOut(int relay)
 #if defined(HBOX_PG) || defined(CMX_C1)
 void BoBClearACSRelayOneOut()
 {
-	BobClearACSOutput(BOB_ACS_OUT_RELAY_1 | BOB_ACS_OUT_RELAY_2);
+	BobClearACSOutput(BOB_ACS_OUT_RELAY_1);
 }
 #else
 void BoBClearACSRelayOneOut()
@@ -975,23 +976,7 @@ int i2c_start_transaction()
 		// Baudrate 19200, 8 bits, no parity, 1 stop bit
 		set_interface_attribs(m_i2cdev, B19200);
 	}
-#if 0
-	static int firstEntry = 1;
-	static char *i2cbus;
-	if(firstEntry){
-		i2cbus = LoadEyelockINIFile();
-		firstEntry = 0;
-	}
-	fd = open(_i2c_bus, O_RDWR | O_NOCTTY | O_SYNC);
-	if (fd < 0) {
-		//EyelockLog(logger, ERROR, "BoB => i2c_start_transaction - open %s", strerror(errno));
-		//perror("**************open*************************************");
-		return 0;
-	}
-
-	// Baudrate 19200, 8 bits, no parity, 1 stop bit
-	set_interface_attribs(fd, B19200);
-#endif
+//#endif
 #else
 	fd = open(_i2c_bus, O_RDWR);
 	if (fd < 0) {
