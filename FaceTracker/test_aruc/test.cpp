@@ -1160,7 +1160,7 @@ void DoRunMode()
 				agc_set_gain=agc_val;
 				}
 
-#endif
+
 
 ///////////////////////////////////////////////////////////////////////////////////
 			if (FindEyeLocation( smallImg, eyes,eye_size))
@@ -1476,8 +1476,7 @@ void CalAll()
 }
 
 
-/*
-
+#if 0
 int arucoMarkerTracking(Mat InImage){
 
 	 //cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
@@ -2027,7 +2026,7 @@ void runCalCam(){
 
 }
 
-*/
+#endif
 
 
 double parsingIntfromHex(string str1){
