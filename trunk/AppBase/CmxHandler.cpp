@@ -2314,9 +2314,10 @@ void CmxHandler::SendMessage(char *outMsg, int len)
 		EyelockLog(logger, TRACE, "Send Message %d, len %d", outMsg[0], len);
 
 	//printf("CMX SendMessage: sending %s \n",outMsg);
-	if(!m_sock)
-	{
-		CreateCMDTCPServer(30);
+	if (!m_sock) {
+		if (CreateCMDTCPServer(30) < 0) {
+			return;
+		}
 	}
 	printf("CMX;SendMessage:sending - %s\n",outMsg);
 	if( send(m_sock , outMsg , strlen(outMsg) , 0) < 0)
@@ -2605,7 +2606,7 @@ int CmxHandler::CreateCMDTCPServer(int port) {
 	if (connect(m_sock , (struct sockaddr *)&server , sizeof(server)) < 0)
 	{
 	      perror("connect failed. Error");
-	      return 1;
+	      return -1;
 	}
 	return m_sock;
 }
