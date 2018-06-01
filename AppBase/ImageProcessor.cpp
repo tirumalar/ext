@@ -350,11 +350,8 @@ m_LedConsolidator = NULL;
 	m_SaveEyeCrops = pConf->getValue("Eyelock.SaveEyeCrops",false);
 
 	m_EnableOffsetCorrection = pConf->getValue("Eyelock.EnableGainOffsetCorrection",false);
-	m_camera1_offset_image_loaded = false;
-	m_camera2_offset_image_loaded = false;
 	int Imagewidth = pConf->getValue("FrameSize.width",1200);
 	int Imageheight = pConf->getValue("FrameSize.height",960);
-	// m_OffsetImage = cvCreateImage(cvSize(Imagewidth, Imageheight),IPL_DEPTH_8U,1);
 	m_OffsetOutputImage = cvCreateImage(cvSize(Imagewidth, Imageheight),IPL_DEPTH_8U,1);
 #ifdef HBOX_PG
 	m_SPAWAREnable = pConf->getValue("Eyelock.SPAWAREnable",false);
@@ -467,11 +464,17 @@ ImageProcessor::~ImageProcessor() {
 	if(m_centreEyecropEnroll){
 		cvReleaseImage(&m_centreEyecropEnroll);
 	}
-	if(m_OffsetImageCamera1){
-		cvReleaseImage(&m_OffsetImageCamera1);
+	if(m_OffsetImageMainCamera1){
+		cvReleaseImage(&m_OffsetImageMainCamera1);
 	}
-	if(m_OffsetImageCamera2){
-		cvReleaseImage(&m_OffsetImageCamera2);
+	if(m_OffsetImageMainCamera2){
+		cvReleaseImage(&m_OffsetImageMainCamera2);
+	}
+	if (m_OffsetImageAuxCamera1) {
+		cvReleaseImage(&m_OffsetImageAuxCamera1);
+	}
+	if (m_OffsetImageAuxCamera2) {
+		cvReleaseImage(&m_OffsetImageAuxCamera2);
 	}
 	if(m_OffsetOutputImage){
 		cvReleaseImage(&m_OffsetOutputImage);
@@ -828,36 +831,52 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 #endif
 #if 1 // Loading Offset file - PGM
 	if(m_EnableOffsetCorrection){
-		int cam_id = frame->imageData[2]&0xff;
-		// printf("cam_id....%02x\n", cam_id);
-		sprintf(temp,"cal%02x.pgm",cam_id);
-		m_camera1_offset_image_loaded = true;
-		m_camera2_offset_image_loaded = true;
+		static bool m_OffsetImageLoadedMainCamera1 = false;
+		static bool m_OffsetImageLoadedMainCamera2 = false;
+		static bool m_OffsetImageLoadedAuxCamera1 = false;
+		static bool m_OffsetImageLoadedAuxCamera2 = false;
 
-		if(m_camera1_offset_image_loaded == true && (cam_id == 0x81 || cam_id == 0x01))
-		{
-			printf("Loading %s offset pgm file\n",temp);
-			m_OffsetImageCamera1 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
-			m_camera1_offset_image_loaded = true;
+		int cam_id = frame->imageData[2]&0xff;
+		sprintf(temp,"cal%02x.pgm",cam_id);
+		printf("cam_id....%02x filename...%s\n", cam_id, temp);
+
+		if (m_OffsetImageLoadedMainCamera1 == false && (cam_id == 0x81)) {
+			m_OffsetImageMainCamera1 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
+			m_OffsetImageLoadedMainCamera1 = true;
 		}
-		if(m_camera2_offset_image_loaded == true && (cam_id == 0x82 || cam_id == 0x02))
-		{
-			printf("Loading %s offset pgm file\n",temp);
-			m_OffsetImageCamera2 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
-			m_camera2_offset_image_loaded = true;
+
+		if (m_OffsetImageLoadedMainCamera2 == false && (cam_id == 0x82)) {
+			m_OffsetImageMainCamera2 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
+			m_OffsetImageLoadedMainCamera2 = true;
 		}
-		if (m_camera1_offset_image_loaded){
-			printf("Doing Image Subtraction for Camera1\n");
-			cvSub(frame,m_OffsetImageCamera1,m_OffsetOutputImage);
+
+		if (m_OffsetImageLoadedAuxCamera1 == false && (cam_id == 0x01)) {
+			m_OffsetImageAuxCamera1 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
+			m_OffsetImageLoadedAuxCamera1 = true;
+		}
+
+		if (m_OffsetImageLoadedAuxCamera2 == false && (cam_id == 0x02)) {
+			m_OffsetImageAuxCamera2 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
+			m_OffsetImageLoadedAuxCamera2 = true;
+		}
+
+		if (m_OffsetImageLoadedMainCamera1){
+			cvSub(frame,m_OffsetImageMainCamera1,m_OffsetOutputImage);
 			cvCopyImage(m_OffsetOutputImage, frame);
-			cvZero(m_OffsetOutputImage);
 		}
-		if (m_camera2_offset_image_loaded){
-			printf("Doing Image Subtraction for Camera2\n");
-			cvSub(frame,m_OffsetImageCamera2,m_OffsetOutputImage);
+		if (m_OffsetImageLoadedMainCamera2){
+			cvSub(frame,m_OffsetImageMainCamera2,m_OffsetOutputImage);
 			cvCopyImage(m_OffsetOutputImage, frame);
-			cvZero(m_OffsetOutputImage);
 		}
+		if (m_OffsetImageLoadedAuxCamera1){
+			cvSub(frame,m_OffsetImageAuxCamera1,m_OffsetOutputImage);
+			cvCopyImage(m_OffsetOutputImage, frame);
+		}
+		if (m_OffsetImageLoadedAuxCamera2){
+			cvSub(frame,m_OffsetImageAuxCamera2,m_OffsetOutputImage);
+			cvCopyImage(m_OffsetOutputImage, frame);
+		}
+		cvZero(m_OffsetOutputImage);
 	}
 #endif
 #if 0 // 27th March to reduce noise
