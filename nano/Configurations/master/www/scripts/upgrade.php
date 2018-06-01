@@ -346,7 +346,7 @@ if (isset($_FILES["0"]) && $_FILES["0"]["error"] == UPLOAD_ERR_OK)
 			if($eyeLockINI->HardwareType === '0')
 				$XMLFilename = $strFirmwareDir."/NanoNXTVersionInfo.xml";
 			else if ($eyeLockINI->HardwareType === '1')
-				$XMLFilename = $strFirmwareDir."/EXTVersionInfo.xml";
+				$XMLFilename = $strFirmwareDir."/NanoEXTVersionInfo.xml";
 			else
             	$XMLFilename = $strFirmwareDir."/HBoxVersionInfo.xml";
             if (file_exists($XMLFilename))
