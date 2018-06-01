@@ -511,42 +511,43 @@ upgrade()
 		${logger} -L"FW files not found."
 	fi
 	
-	if [[ -n "${bobFileName}" && -e ${bobFileName} ]]
-	then
-		checkIcmVersion
-		if [[ $? -ne 0 ]]
-		then
-			${logger} -L"New ICM version matches with current."
-		else
-			${logger} -L"Upgrading ICM..."
-			touch /home/icmupdate.txt
-			rm /home/bobupdate.txt
-		
-			icmCommunicator="/home/root/icm_communicator"
-		
-			chmod 777 ${icmCommunicator}
-		
-			programIcm ${icmCommunicator} ${bobFileName} 20 || programIcm ${icmCommunicator} ${bobFileName} 30 || programIcm ${icmCommunicator} ${bobFileName} 40
-			upgradeIcmStatus=$?
-			if [[ ${upgradeIcmStatus} -ne 0 ]]
-			then 
-				${logger} -L"Error: ICM upgrade failed."
-				${logger} -L"STATUS:UNSUCCESSFUL"
-				${logger} -L"Device will be rebooted."
-				cleanup
-				rebootDevice
-				exit 6
-			fi
-		
-			# time format is different from WebConfig. Is it OK?	
-			NOW=$(date -u)
-			changeIniValue /home/root/Eyelock.ini "Eyelock.SoftwareUpdateDateBob" "${NOW}"
-			date -u > /home/bobupdate.txt
-		
-			rm /home/icmupdate.txt
-			${logger} -L"ICM upgrade done."
-		fi
-	fi
+	# TODO: uncomment ICM upgrade when ICM communicator will be ready
+	#if [[ -n "${bobFileName}" && -e ${bobFileName} ]]
+	#then
+	#	checkIcmVersion
+	#	if [[ $? -ne 0 ]]
+	#	then
+	#		${logger} -L"New ICM version matches with current."
+	#	else
+	#		${logger} -L"Upgrading ICM..."
+	#		touch /home/icmupdate.txt
+	#		rm /home/bobupdate.txt
+	#	
+	#		icmCommunicator="/home/root/icm_communicator"
+	#	
+	#		chmod 777 ${icmCommunicator}
+	#	
+	#		programIcm ${icmCommunicator} ${bobFileName} 20 || programIcm ${icmCommunicator} ${bobFileName} 30 || programIcm ${icmCommunicator} ${bobFileName} 40
+	#		upgradeIcmStatus=$?
+	#		if [[ ${upgradeIcmStatus} -ne 0 ]]
+	#		then 
+	#			${logger} -L"Error: ICM upgrade failed."
+	#			${logger} -L"STATUS:UNSUCCESSFUL"
+	#			${logger} -L"Device will be rebooted."
+	#			cleanup
+	#			rebootDevice
+	#			exit 6
+	#		fi
+	#	
+	#		# time format is different from WebConfig. Is it OK?	
+	#		NOW=$(date -u)
+	#		changeIniValue /home/root/Eyelock.ini "Eyelock.SoftwareUpdateDateBob" "${NOW}"
+	#		date -u > /home/bobupdate.txt
+	#	
+	#		rm /home/icmupdate.txt
+	#		${logger} -L"ICM upgrade done."
+	#	fi
+	#fi
 
 	# adding upgrade event to logs
 	NOW=$(date -u +"%Y-%m-%d %T, %Z")
@@ -620,36 +621,37 @@ restore(){
 	${logger} -L"Extracting done."
 	# ===============================================================================
 
+	# TODO: uncomment ICM restoring when ICM communicator will be ready	
 	# ICM
 	# ===============================================================================
-	bobFileName=$(find /home/restoreTemp/root -type f -name '*.cyacd' | sort | sed q)
-	if [[ -z ${bobFileName} ]]
-	then
-		${logger} -L"Error: ICM file not found."		
-		${logger} -L"STATUS:UNSUCCESSFUL"
-		cleanupRestore
-		exit 1
-	fi
-
-	bobVersion=$(echo ${bobFileName} | sed -n "s/\(.*\)v\(.*\)\.cyacd/\2/p")
-
-	${logger} -L"Restoring ICM (${bobFileName})..."
-
-	# using .cyacd and icm_communicator from the restore point
-	icmCommunicator="/home/restoreTemp/root/icm_communicator"
-
-	chmod 777 ${icmCommunicator}
-
-	programIcm ${icmCommunicator} ${bobFileName} 20 || programIcm ${icmCommunicator} ${bobFileName} 30 || programIcm ${icmCommunicator} ${bobFileName} 40
-	restoreIcmStatus=$?
-	if [[ ${restoreIcmStatus} -ne 0 ]]
-	then 
-		${logger} -L"Error: ICM restore failed."
-		${logger} -L"STATUS:UNSUCCESSFUL"
-		cleanupRestore
-		exit 1
-	fi
-	${logger} -L"Restoring ICM done."
+	#bobFileName=$(find /home/restoreTemp/root -type f -name '*.cyacd' | sort | sed q)
+	#if [[ -z ${bobFileName} ]]
+	#then
+	#	${logger} -L"Error: ICM file not found."		
+	#	${logger} -L"STATUS:UNSUCCESSFUL"
+	#	cleanupRestore
+	#	exit 1
+	#fi
+	#
+	#bobVersion=$(echo ${bobFileName} | sed -n "s/\(.*\)v\(.*\)\.cyacd/\2/p")
+	#
+	#${logger} -L"Restoring ICM (${bobFileName})..."
+	#
+	## using .cyacd and icm_communicator from the restore point
+	#icmCommunicator="/home/restoreTemp/root/icm_communicator"
+	#
+	#chmod 777 ${icmCommunicator}
+	#
+	#programIcm ${icmCommunicator} ${bobFileName} 20 || programIcm ${icmCommunicator} ${bobFileName} 30 || programIcm ${icmCommunicator} ${bobFileName} 40
+	#restoreIcmStatus=$?
+	#if [[ ${restoreIcmStatus} -ne 0 ]]
+	#then 
+	#	${logger} -L"Error: ICM restore failed."
+	#	${logger} -L"STATUS:UNSUCCESSFUL"
+	#	cleanupRestore
+	#	exit 1
+	#fi
+	#${logger} -L"Restoring ICM done."
 	# ===============================================================================
 
 	${logger} -L"Master: applying changes..."
