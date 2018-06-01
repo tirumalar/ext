@@ -88,7 +88,7 @@ EyelockNanoDeviceHandler::EyelockNanoDeviceHandler(Configuration * conf) :m_conf
 	m_dataDir = "/home/root/data";
 
 	m_passStorageDefault = "/etc/shadow";
-	m_passStorageCustom = "/home/shadow";
+	m_passStorageCustom = "/home/www-internal/shadow";
 	m_passStorage = m_passStorageDefault;
 	m_unameRoFs = "3.0.0-BSP-dm37x-2.4-2Eyelock_NXT_6.0";
 	m_bIsRoFs = false;
@@ -181,7 +181,8 @@ int32_t EyelockNanoDeviceHandler::stopImageStream(const std::string& ipaddress,
 
 void EyelockNanoDeviceHandler::SetEyelockFirmwareVersion(
 		std::string firmwareRevision) {
-	m_sVersion = firmwareRevision;
+	//m_sVersion = firmwareRevision;
+	m_sVersion = "5.05.1905";
 }
 
 std::string EyelockNanoDeviceHandler::GetIcmVersion()
@@ -1538,22 +1539,11 @@ void EyelockNanoDeviceHandler::RemoveTempDbFiles()
 
 void EyelockNanoDeviceHandler::InitPasswordStorage()
 {
-	struct utsname sysInfo;
-	if (uname(&sysInfo))
-	{
-		EyelockLog(logger, ERROR, "Failed to retrieve system info (%s). Default configuration will be used for password validation", strerror(errno));
-		m_bIsRoFs = false;
-		m_passStorage = m_passStorageDefault;
-		return;
-	}
+	m_passStorage = m_passStorageDefault;
 
-	string uname(sysInfo.release);
-	m_bIsRoFs = uname.compare(m_unameRoFs) == 0;
-
-	if (!m_bIsRoFs)
+	if (m_conf->getValue("Eyelock.HardwareType", 0) == 0) // 0 = NXT, 1 = EXT, 2 = HBOX
 	{
 		EyelockLog(logger, DEBUG, "Filesystem is not read-only");
-		m_passStorage = m_passStorageDefault;
 		return;
 	}
 
@@ -1571,7 +1561,6 @@ void EyelockNanoDeviceHandler::InitPasswordStorage()
 	if (!passStorageDefaultIfs.good())
 	{
 		EyelockLog(logger, ERROR, "Cannot access default password storage");
-		m_bIsRoFs = false;
 		m_passStorage = m_passStorageDefault; // should not be the case. If it does happen, let further code to try again
 
 		return;
@@ -1580,7 +1569,6 @@ void EyelockNanoDeviceHandler::InitPasswordStorage()
 	ofstream passStorageCustomOfs(m_passStorageCustom.c_str(), ofstream::out);
 	if (!passStorageCustomOfs.good())
 	{
-		m_bIsRoFs = false;
 		m_passStorage = m_passStorageDefault;
 		EyelockLog(logger, ERROR, "Cannot create custom password storage");
 		// TODO: signal to WebConfig to notify user about the problem: device must be fixed and password must be changed
@@ -1677,7 +1665,7 @@ int32_t EyelockNanoDeviceHandler::SetPassword(const std::string& userName, const
 		return ACCESS_DENIED;
 	}
 
-	if (m_bIsRoFs)
+	if (m_conf->getValue("Eyelock.HardwareType", 0) > 0)
 	{
 		string salt;
 		int32_t saltStat = GenerateSaltStr(salt);
