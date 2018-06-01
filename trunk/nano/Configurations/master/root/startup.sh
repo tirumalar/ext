@@ -1,10 +1,4 @@
 #!/bin/bash
-stty -F /dev/ttyUSB1 speed 9600 cs8 
-chmod o+rw /dev/ttyUSB1 
-echo "A0" > /dev/ttyUSB1 
-echo "p&" > /dev/ttyUSB1
-echo "w~" > /dev/ttyUSB1
-echo "i9" > /dev/ttyUSB1
 
 #cp /home/www/nxtW /home/
 
@@ -60,14 +54,14 @@ export NTP_SERVER=`grep -e "GRI\.InternetTimeAddr\=.*" Eyelock.ini | cut -f2 -d'
 # Only run Eyelock when Eyelock.run exists
 chmod a+x ./icm_communicator
 chmod a+x ./Eyelock
-chmod a+x ./cvPreview
 touch Eyelock.run
-touch cvPreview.run
 #bash -c "while true; do if [ -f /home/root/cvPreview.run ]; then /home/root/cvPreview; fi; sleep 6; done" &
 bash -c "while true; do if [ -f /home/root/Eyelock.run ]; then /home/root/Eyelock; fi; sleep 6; done" &
-chmod a+x knockd
-/usr/sbin/knockd -d -c /home/root/knockd.conf 
+#chmod a+x knockd
+#/usr/sbin/knockd -d -c /home/root/knockd.conf 
 #add firewall rules
-chmod a+x firewall.sh
+#chmod a+x firewall.sh
 #bash -c "while true; do sleep 1; ./firewall.sh; break; done" &
 echo "******************************script finished ************************"
+
+
