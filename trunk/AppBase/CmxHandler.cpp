@@ -2344,7 +2344,7 @@ bool bSend=false;
 
 
 
-void CmxHandler::HandleSendMsg(char *msg)
+void CmxHandler::HandleSendMsg(char *msg){
 	unsigned char regs[1];	
 	regs[0] = white;
 #ifndef HBOX_PG
