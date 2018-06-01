@@ -820,7 +820,7 @@ namespace EyelockConfigurationNS
 	{
 		if (isNetworkMatcherEnabled())
 		{
-			return conf.getStr(string("GRI.HDMatcher.2.Address"), "");
+			return conf.getStr(string("GRI.HDMatcher.1.Address"), "");
 		}
 
 		return conf.getStr(string("HighLevel.NetworkMatcherAddress"), "");
@@ -855,12 +855,12 @@ namespace EyelockConfigurationNS
 			}
 			else
 			{
-				if (setGRI_HDMatcher_2_Address(nwmEndpoint.c_str()))
+				if (setGRI_HDMatcher_1_Address(nwmEndpoint.c_str()))
 				{
-					conf.setValue("GRI.HDMatcherID", 2);
-					conf.setValue("GRI.HDMatcherCount", 3);
-					conf.setValue("GRI.HDMatcher.2.Type", "PCMATCHER");
-					conf.setValue("GRI.HDMatcher.2.BuffSize", 0);
+					conf.setValue("GRI.HDMatcherID", 1);
+					conf.setValue("GRI.HDMatcherCount", 2);
+					conf.setValue("GRI.HDMatcher.1.Type", "PCMATCHER");
+					conf.setValue("GRI.HDMatcher.1.BuffSize", 0);
 
 					conf.setValue("HighLevel.NetworkMatcherEnabled", true);
 
@@ -870,12 +870,12 @@ namespace EyelockConfigurationNS
 		}
 		else
 		{
-			conf.setValue("GRI.HDMatcherID", 1);
-			conf.setValue("GRI.HDMatcherCount", 2);
+			conf.setValue("GRI.HDMatcherID", 0);
+			conf.setValue("GRI.HDMatcherCount", 1);
 
-			conf.remove("GRI.HDMatcher.2.Address");
-			conf.remove("GRI.HDMatcher.2.Type");
-			conf.remove("GRI.HDMatcher.2.BuffSize");
+			conf.remove("GRI.HDMatcher.1.Address");
+			conf.remove("GRI.HDMatcher.1.Type");
+			conf.remove("GRI.HDMatcher.1.BuffSize");
 
 			conf.setValue("HighLevel.NetworkMatcherEnabled", false);
 
@@ -888,30 +888,30 @@ namespace EyelockConfigurationNS
 	bool EyelockConfiguration::isNetworkMatcherEnabled()
 	{
 		//check is based on keys used by FW classes instead of HighLevel keys for more reliability
-		return (conf.getInt("GRI.HDMatcherID") == 2 && conf.getInt("GRI.HDMatcherCount") == 3 && conf.has("GRI.HDMatcher.2.Address"));
+		return (conf.getInt("GRI.HDMatcherID") == 1 && conf.getInt("GRI.HDMatcherCount") == 2 && conf.has("GRI.HDMatcher.1.Address"));
 	}
 
-	const int GRI_HDMatcherIDDefault = 1;
+	const int GRI_HDMatcherIDDefault = 0;
 	int EyelockConfiguration::getGRI_HDMatcherID()
 	{
 		return conf.getInt(string("GRI.HDMatcherID"), GRI_HDMatcherIDDefault);
 	}
 
-	const int GRI_HDMatcherCountDefault = 2;
+	const int GRI_HDMatcherCountDefault = 1;
 	int EyelockConfiguration::getGRI_HDMatcherCount()
 	{
 		return conf.getInt(string("GRI.HDMatcherCount"), GRI_HDMatcherCountDefault);
 	}
 
-	const char* EyelockConfiguration::getGRI_HDMatcher_2_Type()
+	const char* EyelockConfiguration::getGRI_HDMatcher_1_Type()
 	{
-		return conf.getCStr(string("GRI.HDMatcher.2.Type"), "");
+		return conf.getCStr(string("GRI.HDMatcher.1.Type"), "");
 	}
 
-	const int GRI_HDMatcher_2_BuffSizeDefault = 1;
-	int EyelockConfiguration::getGRI_HDMatcher_2_BuffSize()
+	const int GRI_HDMatcher_1_BuffSizeDefault = 1;
+	int EyelockConfiguration::getGRI_HDMatcher_1_BuffSize()
 	{
-		return conf.getInt(string("GRI.HDMatcher.2.BuffSize"), GRI_HDMatcher_2_BuffSizeDefault);
+		return conf.getInt(string("GRI.HDMatcher.1.BuffSize"), GRI_HDMatcher_1_BuffSizeDefault);
 	}
 
 
@@ -939,23 +939,23 @@ namespace EyelockConfigurationNS
 		return true;
 	}
 
-	bool EyelockConfiguration::setGRI_HDMatcher_2_Type(const char* newValue)
+	bool EyelockConfiguration::setGRI_HDMatcher_1_Type(const char* newValue)
 	{
 		// TODO: validate (however, it is protected)
 
-		conf.setValue("GRI.HDMatcher.2.Type", newValue);
+		conf.setValue("GRI.HDMatcher.1.Type", newValue);
 
 		return true;
 	}
 
-	bool EyelockConfiguration::setGRI_HDMatcher_2_BuffSize(int newValue)
+	bool EyelockConfiguration::setGRI_HDMatcher_1_BuffSize(int newValue)
 	{
 		if (!ParameterValidator::validateRange(newValue, 0, INT_MAX))
 		{
 			return false;
 		}
 
-		conf.setValue("GRI.HDMatcher.2.BuffSize", newValue);
+		conf.setValue("GRI.HDMatcher.1.BuffSize", newValue);
 
 		return true;
 	}
@@ -977,22 +977,22 @@ namespace EyelockConfigurationNS
 		}
 	}
 
-	void EyelockConfiguration::ensureGRI_HDMatcher_2_Type()
+	void EyelockConfiguration::ensureGRI_HDMatcher_1_Type()
 	{
 		// not required
 	}
 
-	void EyelockConfiguration::ensureGRI_HDMatcher_2_BuffSize()
+	void EyelockConfiguration::ensureGRI_HDMatcher_1_BuffSize()
 	{
 		// not required
 	}
 
-	const char* EyelockConfiguration::getGRI_HDMatcher_2_Address()
+	const char* EyelockConfiguration::getGRI_HDMatcher_1_Address()
 	{
-		return conf.getCStr(string("GRI.HDMatcher.2.Address"), "");
+		return conf.getCStr(string("GRI.HDMatcher.1.Address"), "");
 	}
 
-	bool EyelockConfiguration::setGRI_HDMatcher_2_Address(const char* newValue)
+	bool EyelockConfiguration::setGRI_HDMatcher_1_Address(const char* newValue)
 	{
 		string endpointRegex = "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])[.]){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9]):(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3})$";
 
@@ -1002,12 +1002,12 @@ namespace EyelockConfigurationNS
 			return false;
 		}
 
-		conf.setValue("GRI.HDMatcher.2.Address", newValue);
+		conf.setValue("GRI.HDMatcher.1.Address", newValue);
 
 		return true;
 	}
 
-	void EyelockConfiguration::ensureGRI_HDMatcher_2_Address()
+	void EyelockConfiguration::ensureGRI_HDMatcher_1_Address()
 	{
 		// not required
 	}
@@ -2474,9 +2474,9 @@ namespace EyelockConfigurationNS
 					updateConf.remove(*it);
 				}
 			}
-			else if (*it == "GRI.HDMatcher.2.Address")
+			else if (*it == "GRI.HDMatcher.1.Address")
 			{
-				if (setGRI_HDMatcher_2_Address(updateConf.getCStr("GRI.HDMatcher.2.Address")))
+				if (setGRI_HDMatcher_1_Address(updateConf.getCStr("GRI.HDMatcher.1.Address")))
 				{
 					updateConf.remove(*it);
 				}
