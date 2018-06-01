@@ -30,6 +30,7 @@ using namespace std;
 
 extern "C" {
 #include "file_manip.h"
+#include "include/BobListener.h"
 }
 #include "NetworkUtilities.h"
 //#include "NwMatcherSerialzer.h"
@@ -40,6 +41,17 @@ const char logger[30] = "CmxHandler";
 CMXMESSAGETYPE Prev_mesg;
 #define BUFLEN 1500
 #define min(a,b)((a<b)?(a):(b))
+
+enum PIM_BoardRGBLed{
+	Black = 0,
+	Blue = 1,
+	Red = 2,
+	Purple =3,
+	Green = 4,
+	Cyan = 5,
+	yellow = 6,
+	white = 7,
+};
 
 #ifdef HBOX_PG
 #if 0
@@ -2333,7 +2345,8 @@ bool bSend=false;
 
 
 void CmxHandler::HandleSendMsg(char *msg)
-{
+	unsigned char regs[1];	
+	regs[0] = white;
 #ifndef HBOX_PG
 	if(m_debug)
 		EyelockLog(logger, TRACE, "CmxHandler::HandleSendMsg() %d", msg[0]);
@@ -2372,19 +2385,31 @@ void CmxHandler::HandleSendMsg(char *msg)
 				len = sprintf(buf, "fixed_set_rgb(%d,%d,%d)\n", msg[2], msg[3], msg[4]);	// set_rgb(r,g,b)
 				printf("CMX: sending %s\n",buf);
 				SendMessage(buf, len);
-				if((msg[2]==0) && (msg[4]==0))
-				{
+			if ((msg[2] == 0) && (msg[4] == 0)) {
+				regs[0] = Green;
 				//	len = sprintf(buf, "play_snd(0)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
 				//	SendMessage(buf, len);
-				}
-				if((msg[3]==0) && (msg[4]==0))
-				{
-					//len = sprintf(buf, "play_snd(1)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
-					//SendMessage(buf, len);
-				}
 			}
-			else
-			{
+			if ((msg[3] == 0) && (msg[4] == 0)) {
+				regs[0] = Red;
+				//len = sprintf(buf, "play_snd(1)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
+				//SendMessage(buf, len);
+			}
+			if ((msg[2] == 0) && (msg[3] == 0)) {
+				regs[0] = Blue;
+				//len = sprintf(buf, "play_snd(1)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
+				//SendMessage(buf, len);
+			}
+			if ((msg[2] == 1) && (msg[3] == 1) && (msg[4] == 1)) {
+				regs[0] = Cyan;
+				//len = sprintf(buf, "play_snd(1)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
+				//SendMessage(buf, len);
+			}
+
+			BobSetData(regs, 1);
+			BobSetCommand (BOB_COMMAND_SET_LED);
+
+		} else {
 				printf("SKIPPING AN LED COMMAND\n");
 				len = sprintf(buf, "fixed_set_rgb(%d,%d,%d)\n", msg[2], msg[3], msg[4]);	// set_rgb(r,g,b)
 				printf("CMX: NOT sending %s\n",buf);
