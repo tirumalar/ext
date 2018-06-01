@@ -35,7 +35,7 @@ once_temp_type & once_temp_type::operator=(once_temp_type const & o)
     return *this;
 }
 
-once_temp_type::~once_temp_type()
+once_temp_type::~once_temp_type() noexcept(false)
 {
     rcst_->dec_ref();
 }
