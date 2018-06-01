@@ -84,7 +84,7 @@ function defineStrings($HardwareType)
             define ("HOME_HARDWARE_BOBVER", "ICM Hardware Ver.: ");
              define ("HOME_SOFTWARE_LINUXVER", "Linux OS Ver.: ");
              define ("HOME_HARDWARE_PSOCVER", "M.B. PSOC Ver.: ");
-            define ("HOME_SOFTWARE_NANOLABEL", .$NXTText." Updated: ");
+            define ("HOME_SOFTWARE_NANOLABEL", $NXTText." Updated: ");
             define ("HOME_SOFTWARE_BOBLABEL", "ICM Updated: ");
 
        
