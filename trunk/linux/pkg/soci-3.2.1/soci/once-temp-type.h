@@ -30,7 +30,7 @@ public:
     once_temp_type(once_temp_type const & o);
     once_temp_type & operator=(once_temp_type const & o);
 
-    ~once_temp_type();
+    ~once_temp_type() noexcept(false);
 
     template <typename T>
     once_temp_type & operator<<(T const & t)
