@@ -39,7 +39,7 @@ KEY_FILE='/home/ubuntu/BSkey.pem'
 
 # -----------------------------------------------------------------------------------------------------------
 # edit the VersionInfo.xml
-XML_FILE='ExtVersionInfo.xml'
+XML_FILE='NanoEXTVersionInfo.xml'
 XML_FILE_PATH="${TARGET_DIR}/${XML_FILE}"
 
 cp "${EYELOCK_WS_EXT}/Eyelock/AppTemplate.xml" "${XML_FILE_PATH}"

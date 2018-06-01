@@ -402,10 +402,10 @@ changeIniValue()
 upgrade()
 {
 	firmwareDir=/home/firmware
-	bobVersion=$(getXmlTag ${firmwareDir}/fwHandler/HBoxVersionInfo.xml bobversion)
-	nanoVersion=$(getXmlTag ${firmwareDir}/fwHandler/HBoxVersionInfo.xml nanoversion)
-	bobFileName=$(getXmlTag ${firmwareDir}/fwHandler/HBoxVersionInfo.xml bobfilename)
-	masterFileName=$(getXmlTag ${firmwareDir}/fwHandler/HBoxVersionInfo.xml nanofilename)
+	bobVersion=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml bobversion)
+	nanoVersion=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml nanoversion)
+	bobFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml bobfilename)
+	masterFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml nanofilename)
 
 	mv ${firmwareDir}/fwHandler/MultiChannelLogger ${firmwareDir}
 	mv ${firmwareDir}/fwHandler/MultiChannelLoggerSettings.xml ${firmwareDir}
