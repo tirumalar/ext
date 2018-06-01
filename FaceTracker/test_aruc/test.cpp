@@ -94,7 +94,7 @@ int z=0;		//AGC wait key
 #define HEIGHT 960
 
 
-
+#define DISP
 
 
 int CENTER_POS;		//low fx_abs val is 0 and max is 328. So the center falls in 164
@@ -451,22 +451,56 @@ void SetFaceMode()
 		printf("Dont need to change Face cam");
 		return;
 	}
+
+
+	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
+
+	int minPos = fconfig.getValue("FTracker.minPos",0);
+	CENTER_POS = fconfig.getValue("FTracker.centerPos",164);
+	int allLEDhighVoltEnable = fconfig.getValue("FTracker.allLEDhighVoltEnable",1);
+
+	int faceLEDVolt = fconfig.getValue("FTracker.faceLEDVolt",30);
+	int faceLEDcurrentSet = fconfig.getValue("FTracker.faceLEDcurrentSet",20);
+	int faceLEDtrigger = fconfig.getValue("FTracker.faceLEDtrigger",4);
+	int faceLEDEnable = fconfig.getValue("FTracker.faceLEDEnable",4);
+	int faceLEDmaxTime = fconfig.getValue("FTracker.faceLEDmaxTime",4);
+
+
+	int faceCamExposureTime = fconfig.getValue("FTracker.faceCamExposureTime",12);
+	int faceCamDigitalGain = fconfig.getValue("FTracker.faceCamDigitalGain",240);
+
+	int faceAnalogGain = fconfig.getValue("FTracker.faceAnalogGain",128);
+
+
+	char cmd[512];
+
+	printf("Setting Face Mode\n");
+	sprintf(cmd, "psoc_write(2,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)\n",faceLEDVolt, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable);
+	//printf(cmd);
+	port_com_send(cmd);
+
 //	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
-	port_com_send("psoc_write(2,30) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)");
+//	port_com_send("psoc_write(2,30) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)");
 
-	port_com_send("wcr(4,0x3012,7)  | wcr(4,0x305e,0xfe)");
+
+	sprintf(cmd, "wcr(4,0x3012,%i)  | wcr(4,0x305e,%i)", faceCamExposureTime, faceCamDigitalGain);
+	port_com_send(cmd);
+
+
+	//port_com_send("wcr(4,0x3012,7)  | wcr(4,0x305e,0xfe)");
+
 	{
-		char cmd[512];
-
-		sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((1&0x3)<<4) | 0X80);
+		sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((faceAnalogGain&0x3)<<4) | 0X80);
 		port_com_send(cmd);
 	}
+
 	agc_val= FACE_GAIN_DEFAULT;
 
 	start_mode_change = std::chrono::system_clock::now();
 	currnet_mode = MODE_FACE;
 	//port_com_send("fixed_set_rgb(100,100,100)");
 }
+
 
 #define IRIS_FRAME_TIME 180
 #define switchThreshold 37		// previous val was 40
@@ -505,13 +539,23 @@ void MoveRelAngle(float a, int diffEyedistance)
 
 void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 {
+	char cmd[512];
+
+	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
+
+	int DimmingfaceAnalogGain = fconfig.getValue("FTracker.DimmingfaceAnalogGain",0);
+	int DimmingfaceExposureTime = fconfig.getValue("FTracker.DimmingfaceExposureTime",7);
+	int DimmingfaceDigitalGain = fconfig.getValue("FTracker.DimmingfaceDigitalGain",32);
+
 	printf("Dimming face cameras!!!");
-	port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
+	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x305e,%i)", DimmingfaceExposureTime, DimmingfaceDigitalGain);
+	port_com_send(cmd);
+	//port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
 
 	{
 			char cmd[512];
 
-			sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((0&0x3)<<4) | 0X80);
+			sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((DimmingfaceAnalogGain&0x3)<<4) | 0X80);
 			port_com_send(cmd);
 		}
 
@@ -1020,7 +1064,7 @@ int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size);
 Point eyes;
 
 //at 40inch or 106cm distance
-#define MIN_FACE_SIZE 20		// previous val 40
+#define MIN_FACE_SIZE 10		// previous val 40
 #define MAX_FACE_SIZE 70		//// previous val 60
 
 
