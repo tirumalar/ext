@@ -52,7 +52,7 @@ public:
 		const HTTPPOSTMsg& other=(const HTTPPOSTMsg&)_other;
 		Timestamp=other.Timestamp;
 		char *image=other.getImage();
-		int alignement= ((int)image) & 0x3;
+		long long int alignement= ((long long int)image) & 0x3;
 		if(alignement == 0){
 			SetData(other.Buffer,other.Size);
 			return;
