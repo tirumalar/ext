@@ -227,23 +227,23 @@ namespace EyelockConfigurationNS
 
 		int getGRI_HDMatcherID();
 		int getGRI_HDMatcherCount();
-		const char* getGRI_HDMatcher_2_Address();
-		const char* getGRI_HDMatcher_2_Type();
-		int getGRI_HDMatcher_2_BuffSize();
+		const char* getGRI_HDMatcher_1_Address();
+		const char* getGRI_HDMatcher_1_Type();
+		int getGRI_HDMatcher_1_BuffSize();
 
 	protected:
 
 		bool setGRI_HDMatcherID(int newValue);
 		bool setGRI_HDMatcherCount(int newValue);
-		bool setGRI_HDMatcher_2_Address(const char* newValue);
-		bool setGRI_HDMatcher_2_Type(const char* newValue);
-		bool setGRI_HDMatcher_2_BuffSize(int newValue);
+		bool setGRI_HDMatcher_1_Address(const char* newValue);
+		bool setGRI_HDMatcher_1_Type(const char* newValue);
+		bool setGRI_HDMatcher_1_BuffSize(int newValue);
 
 		void ensureGRI_HDMatcherID();
 		void ensureGRI_HDMatcherCount();
-		void ensureGRI_HDMatcher_2_Address();
-		void ensureGRI_HDMatcher_2_Type();
-		void ensureGRI_HDMatcher_2_BuffSize();
+		void ensureGRI_HDMatcher_1_Address();
+		void ensureGRI_HDMatcher_1_Type();
+		void ensureGRI_HDMatcher_1_BuffSize();
 
 		void ensureNetworkMatcher();
 		// ****** ******
