@@ -40,9 +40,9 @@ export POCO_BASE=${STATIC_LIBS}/poco-1.9.0
 export OPENSSL_102N_BASE=${STATIC_LIBS}/openssl-1.0.2o
 
 #for test_aruc
-export FACE_INC=${EYELOCK_WS_EXT}/FaceTracker/facetracker/include
-export CLM_EIGEN_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/Eigen
-export CLM_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/include
+export FACE_INC=${EYELOCK_WS_EXT}/EXTFaceDetection/facedetect/include
+export CLM_EIGEN_INC=${EYELOCK_WS_EXT}/EXTFaceDetection/CLM/Eigen
+export CLM_INC=${EYELOCK_WS_EXT}/EXTFaceDetection/CLM/include
 export OPENCV_NEW_INC=${STATIC_LIBS}/opencv3.4/include
 export OPENCV_NEW_LIBS=${STATIC_LIBS}/opencv3.4/lib
 
