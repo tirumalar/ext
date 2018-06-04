@@ -45,8 +45,11 @@ or implied, of Rafael Muñoz Salinas.
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/photo/photo.hpp>
+
+#ifdef ARUCO
 //#include <aruco.h>
 //#include <dictionary.h>
+#endif
 
 #include "eyelock_com.h"
 #include "Synchronization.h"
@@ -54,13 +57,13 @@ or implied, of Rafael Muñoz Salinas.
 #include "FileConfiguration.h"
 #include "Configuration.h"
 
-
+#include "log.h"
 
 using namespace cv;
 using namespace std::chrono;
 using namespace std;
 
-
+const char logger[30] = "test";
 
 VideoStream *vs;
 
@@ -93,8 +96,7 @@ int z=0;		//AGC wait key
 #define WIDTH 1200
 #define HEIGHT 960
 
-
-#define DISP
+#define DISP // To show the image display
 
 
 int CENTER_POS;		//low fx_abs val is 0 and max is 328. So the center falls in 164
@@ -143,7 +145,7 @@ void writeStartNewLine(string fileName);
 void clearData(string fileName);
 
 
-//Temp test purpose
+// Temperature test purpose
 void motorMove();
 double parsingIntfromHex(string str1);
 int calTemp(int i);
@@ -157,13 +159,14 @@ int calTemp(int i);
 
 void SetExp(int cam, int val)
 {
+	EyelockLog(logger, TRACE, "SetExp");
 	char buff[100];
 	int coarse = val/PIXEL_TOTAL;
 	int fine = val - coarse*PIXEL_TOTAL;
 
 	//sprintf(buff,"wcr(%d,0x3012,%d) | wcr(%d,0x3014,%d)",cam,coarse,cam,fine);
 	sprintf(buff,"wcr(%d,0x3012,%d)",cam,coarse);
-	//printf("Setting Gain %d\n",coarse);
+	EyelockLog(logger, DEBUG, "Setting Gain %d\n",coarse);
 	//port_com_send(buff);
 
 
@@ -177,18 +180,19 @@ void SetExp(int cam, int val)
 #define smallMoveTo 2		//limiting motor movement
 void MoveToAngle(float a)
 {
+	EyelockLog(logger, TRACE, "Motor: MoveToAngle");
 	char buff[100];
 	float current_a = read_angle();
 	if (current_a == 0)
 		return;
 	float move;
 	move = current_a-a;
-	//printf("angle diff %3.3f\n",move);
+	EyelockLog(logger, DEBUG,"Move angle diff %3.3f\n",move);
 	move=-1*move*ANGLE_TO_STEPS;
 
 
 	sprintf(buff,"fx_rel(%d)",(int)(move+0.5));
-	//printf("Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
+	EyelockLog(logger, DEBUG, "Sending by current angle %3.3f dest %3.3f: %s\n",current_a,a,buff);
 
 	writeFloatData(fileName, current_a); 	//current angle
 	writeStringData(fileName,",");
@@ -198,7 +202,7 @@ void MoveToAngle(float a)
 	float t_start=clock();
 	port_com_send(buff);
 	float t_result = (float)(clock()-t_start)/CLOCKS_PER_SEC;
-
+	EyelockLog(logger, DEBUG, "Time required to move to angle:%3.3f", t_result);
 	writeFloatData(fileName, t_result); //required time to move
 	writeStringData(fileName,",");
 
@@ -212,6 +216,7 @@ void MoveToAngle(float a)
 
 void MoveTo(int v)
 {
+	EyelockLog(logger, TRACE, "MoveTo");
 	/*
 	char buff[100];
 	if (v<MIN_POS) v= MIN_POS;
@@ -224,7 +229,7 @@ void MoveTo(int v)
 	//cvWaitKey(100);
 	 */
 
-	//printf("Move to %d ",v);
+	EyelockLog(logger, DEBUG,"Move to command %d ",v);
 
 	writeFloatData(fileName, v); 	//move to command
 	writeStringData(fileName,",");
@@ -232,7 +237,7 @@ void MoveTo(int v)
 
 	v=v-CENTER_POS;
 	v=v/ANGLE_TO_STEPS+CENTER_POSITION_ANGLE;
-	//printf("angle = %d",v);
+	EyelockLog(logger, DEBUG,"Value to MoveToAngle:angle = %d",v);
 	MoveToAngle((float) v);
 }
 
@@ -281,6 +286,7 @@ int IrisFrameCtr = 0;
 
 void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask)
 {
+	EyelockLog(logger, TRACE, "setRGBled");
 	static int free = 1;
 	static int setTime = 0;
 
@@ -293,25 +299,25 @@ void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask)
 		free=1;
 
 	}
-
-
-	//printf("Current time : %u",start);
+	EyelockLog(logger, DEBUG, "Current time : %u",start);
 	if(free)
 	{
 		char temp[40];
 		//sprintf(temp,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+		EyelockLog(logger, DEBUG, "fixed_set_rgbm:%d,%d,%d,%d",R,G,B,mask);
 		sprintf(temp,"fixed_set_rgb(%d,%d,%d)",R,G,B);
 		port_com_send(temp);
 		free = 0;
 		start = std::chrono::system_clock::now();
 		setTime = (double)mtime/1000;
+		EyelockLog(logger, DEBUG, "time set for setREGLed: settime : %u",setTime);
 	}
 
 }
 
 void SelLedDistance(int val) // val between 0 and 100
 {
-
+	EyelockLog(logger, TRACE, "SelLedDistance");
 	int set_val;
 	set_val = MIN(val,33);
 	setRGBled(set_val*0,set_val*0,set_val*3,10,0,0x11);
@@ -330,10 +336,11 @@ void SelLedDistance(int val) // val between 0 and 100
 		set_val = MIN(val,3);
 		setRGBled(set_val*0,set_val*0,set_val*3,10,0,0x4);
 	}
-
+	EyelockLog(logger, DEBUG, "Value for LedDistance: set_val %d", set_val);
 }
 char* GetTimeStamp()
 {
+	EyelockLog(logger, TRACE, "GetTimeStamp");
 	static char timeVar[100];
 	//sprintf(timeVar,"%3.3f",(float)clock()/CLOCKS_PER_SEC);
     static long int oldms;
@@ -373,10 +380,9 @@ int run_state=RUN_STATE_FACE;
 
 #define CAL_BRIGHT       85
 
-
-
-
-void MainIrisSettings(){
+void MainIrisSettings()
+{
+	EyelockLog(logger, TRACE, "MainIrisSettings");
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 	char cmd[512];
 
@@ -387,7 +393,8 @@ void MainIrisSettings(){
 	int IrisLEDmaxTime = fconfig.getValue("FTracker.IrisLEDmaxTime",4);
 
 	//return;
-	printf("configuring Main Iris settings\n");
+	EyelockLog(logger, DEBUG, "configuring Main Iris settings");
+	// printf("configuring Main Iris settings\n");
 	//Iris configuration of LED
 	sprintf(cmd,"psoc_write(3,%i)| psoc_write(2,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(6,%i)\n", IrisLEDEnable, IrisLEDVolt, IrisLEDcurrentSet, IrisLEDtrigger, IrisLEDmaxTime);
 	//printf(cmd);
@@ -395,6 +402,8 @@ void MainIrisSettings(){
 	//port_com_send("psoc_write(3,0x31)| psoc_write(2,30) | psoc_write(5,40) | psoc_write(4,3) | psoc_write(6,4)");
 	//Face cameras configuration
 	//port_com_send("wcr(0x83,0x3012,12) | wcr(0x83,0x301e,0) | wcr(0x83,0x305e,128)");
+
+	EyelockLog(logger, DEBUG, "Values in MainIrisSettings IrisLEDEnable:%d, IrisLEDVolt:%d, IrisLEDcurrentSet:%d, IrisLEDtrigger:%d, IrisLEDmaxTime:%d ", IrisLEDEnable, IrisLEDVolt, IrisLEDcurrentSet, IrisLEDtrigger, IrisLEDmaxTime);
 }
 
 
@@ -405,6 +414,7 @@ std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
 
 void RecoverModeDrop()
 {
+	EyelockLog(logger, TRACE, "RecoverModeDrop");
 	//If no mode change happens for a set amount of time then set face mode to recover from
 	//from possible condition of losing the mode change message
 
@@ -427,7 +437,7 @@ void RecoverModeDrop()
 
 void SwitchIrisCameras(bool mode)
 {
-	printf("SWITCHING cameras------------------->");
+	EyelockLog(logger, TRACE, "SwitchIrisCameras");
 	char cmd[100];
 	if (mode)
 		sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY);
@@ -445,10 +455,10 @@ int currnet_mode = 0;
 
 void SetFaceMode()
 {
-
+	EyelockLog(logger, TRACE, "SetFaceMode");
 	if (currnet_mode==MODE_FACE)
 	{
-		printf("Dont need to change Face cam");
+		EyelockLog(logger, DEBUG, "Don't need to change Face camera");
 		return;
 	}
 
@@ -474,8 +484,9 @@ void SetFaceMode()
 
 	char cmd[512];
 
-	printf("Setting Face Mode\n");
+	EyelockLog(logger, DEBUG, "Setting Face Mode\n");
 	sprintf(cmd, "psoc_write(2,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)\n",faceLEDVolt, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable);
+	EyelockLog(logger, DEBUG, "Face camera settings-faceLEDVolt:%d, faceLEDcurrentSet:%d, faceLEDtrigger:%d, faceLEDEnable:%d",faceLEDVolt, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable);
 	//printf(cmd);
 	port_com_send(cmd);
 
@@ -484,6 +495,7 @@ void SetFaceMode()
 
 
 	sprintf(cmd, "wcr(4,0x3012,%i)  | wcr(4,0x305e,%i)", faceCamExposureTime, faceCamDigitalGain);
+	EyelockLog(logger, DEBUG, "Face camera exposure and gain settings -faceCamExposureTime:%d, faceCamDigitalGain:%d",faceCamExposureTime, faceCamDigitalGain);
 	port_com_send(cmd);
 
 
@@ -492,9 +504,11 @@ void SetFaceMode()
 	{
 		sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((faceAnalogGain&0x3)<<4) | 0X80);
 		port_com_send(cmd);
+		EyelockLog(logger, DEBUG, "Face camera Analog gain:%d",(((faceAnalogGain&0x3)<<4) | 0X80));
 	}
 
 	agc_val= FACE_GAIN_DEFAULT;
+	EyelockLog(logger, DEBUG, "Face camera gain default:%d", FACE_GAIN_DEFAULT);
 
 	start_mode_change = std::chrono::system_clock::now();
 	currnet_mode = MODE_FACE;
