@@ -1413,7 +1413,7 @@ void MeasureSnr()
 
 }
 
-#define NUM_AVG_CAL 20
+#define NUM_AVG_CAL 10
 #define  MAX_CAL_CURENT 20
 void DoImageCal(int cam_id_ignore)
 
@@ -1472,7 +1472,7 @@ void DoImageCal(int cam_id_ignore)
 	sprintf(temp,"cal%02x.pgm",cam_id);
 	imwrite(temp,outImg1s);
 	sprintf(temp,"cal%02xx10.pgm",cam_id);
-	imwrite(temp,outImg1s*10);
+	//imwrite(temp,outImg1s*10);
 
 	sprintf(temp,"cal%02x.bin",cam_id);
 	FILE *f = fopen(temp, "wb");
