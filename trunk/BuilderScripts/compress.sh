@@ -53,7 +53,7 @@ sed -i "s/@@ICMFilename@@/${ICM_FILE}/" "${XML_FILE_PATH}"
 # temporary workaround for upgrade via SDK (client side requires specific xml file in tar)
 XML_FILE_LEGACY='NanoNXTVersionInfo.xml'
 XML_FILE_PATH_LEGACY="${TARGET_DIR}/${XML_FILE_LEGACY}" 
-cp "${XML_FILE_PATH}" "${TARGET_DIR}/${XML_FILE_PATH_LEGACY}"
+cp "${XML_FILE_PATH}" "${XML_FILE_PATH_LEGACY}"
 BOARD_FILE_LEGACY="EyelockExt_v${FW_VER}_Master.tar.gz"
 sed -i "s/@@MasterFilename@@/${BOARD_FILE_LEGACY}/" "${XML_FILE_PATH_LEGACY}"
 
