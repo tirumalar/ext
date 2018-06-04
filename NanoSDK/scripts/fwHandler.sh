@@ -353,9 +353,7 @@ rebootDevice(){
 	sync
 	sleep 3
 	
-	# when not connected to ICM, reboot hangs if Eyelock app is running
-	killall -KILL Eyelock 
-	reboot
+	/sbin/reboot
 }
 
 getXmlTag()
