@@ -51,6 +51,9 @@ sed -i "s/@@tarfilename@@/${FW_FILE}/" "${XML_FILE_PATH}"
 sed -i "s/@@MasterFilename@@/${BOARD_FILE}/" "${XML_FILE_PATH}"
 sed -i "s/@@ICMFilename@@/${ICM_FILE}/" "${XML_FILE_PATH}"
 
+# temporary workaround for upgrade via SDK (client side requires xml file in tar) 
+cp "${XML_FILE_PATH}" "${TARGET_DIR}/NanoNXTVersionInfo.xml"
+
 # -----------------------------------------------------------------------------------------------------------
 BOARD_DIR="${TARGET_DIR}/board" # analog of "master" and "slave" on the NXT for EXT (being single board device)
 mkdir "${BOARD_DIR}"
