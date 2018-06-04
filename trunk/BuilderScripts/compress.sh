@@ -51,7 +51,9 @@ sed -i "s/@@tarfilename@@/${FW_FILE}/" "${XML_FILE_PATH}"
 sed -i "s/@@MasterFilename@@/${BOARD_FILE}/" "${XML_FILE_PATH}"
 sed -i "s/@@ICMFilename@@/${ICM_FILE}/" "${XML_FILE_PATH}"
 
-# temporary workaround for upgrade via SDK (client side requires xml file in tar) 
+# temporary workaround for upgrade via SDK (client side requires xml file in tar)
+XML_FILE_LEGACY='NanoNXTVersionInfo.xml'
+XML_FILE_PATH_LEGACY="${TARGET_DIR}/${XML_FILE_LEGACY}" 
 cp "${XML_FILE_PATH}" "${TARGET_DIR}/NanoNXTVersionInfo.xml"
 
 # -----------------------------------------------------------------------------------------------------------
@@ -119,7 +121,7 @@ openssl dgst -sha256 -sign "${KEY_FILE}" -out "${TARGET_DIR}/${FWHANDLER_FILE}.s
 # -----------------------------------------------------------------------------------------------------------
 cp "${EYELOCK_WS_EXT}/ICMBinary/nanoNxt_ICM.cyacd" "${TARGET_DIR}/${ICM_FILE}"
 
-tar -cf "${EYELOCK_WS_EXT}/dist/${FW_FILE}" -C "${TARGET_DIR}" "${BOARD_FILE}" "${BOARD_FILE}.md5" "${ICM_FILE}" "${FWHANDLER_FILE}" "${FWHANDLER_FILE}.sig" "${XML_FILE}"
+tar -cf "${EYELOCK_WS_EXT}/dist/${FW_FILE}" -C "${TARGET_DIR}" "${BOARD_FILE}" "${BOARD_FILE}.md5" "${ICM_FILE}" "${FWHANDLER_FILE}" "${FWHANDLER_FILE}.sig" "${XML_FILE}" "${XML_FILE_LEGACY}"
 
 # -----------------------------------------------------------------------------------------------------------
 # encrypted version
@@ -132,7 +134,7 @@ md5sum "${TARGET_DIR}/${BOARD_FILE}" | awk ' { print $1 } ' > "${TARGET_DIR}/${B
 mv "${TARGET_DIR}/tmp" "${TARGET_DIR}/${FWHANDLER_FILE}"
 openssl dgst -sha256 -sign "${KEY_FILE}" -out "${TARGET_DIR}/${FWHANDLER_FILE}.sig" "${TARGET_DIR}/${FWHANDLER_FILE}"
 
-tar -cf "${EYELOCK_WS_EXT}/dist/${FW_FILE}.enc" -C "${TARGET_DIR}" "${BOARD_FILE}" "${BOARD_FILE}.md5" "${ICM_FILE}" "${FWHANDLER_FILE}" "${FWHANDLER_FILE}.sig" "${XML_FILE}"
+tar -cf "${EYELOCK_WS_EXT}/dist/${FW_FILE}.enc" -C "${TARGET_DIR}" "${BOARD_FILE}" "${BOARD_FILE}.md5" "${ICM_FILE}" "${FWHANDLER_FILE}" "${FWHANDLER_FILE}.sig" "${XML_FILE}" "${XML_FILE_LEGACY}"
 
 rm -r "${TARGET_DIR}"
 # -----------------------------------------------------------------------------------------------------------
