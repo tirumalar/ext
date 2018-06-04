@@ -168,9 +168,6 @@ void SetExp(int cam, int val)
 	sprintf(buff,"wcr(%d,0x3012,%d)",cam,coarse);
 	EyelockLog(logger, DEBUG, "Setting Gain %d\n",coarse);
 	//port_com_send(buff);
-
-
-
 }
 
 
@@ -452,7 +449,6 @@ void SwitchIrisCameras(bool mode)
 #define MODE_EYES_AUX 2
 int currnet_mode = 0;
 
-
 void SetFaceMode()
 {
 	EyelockLog(logger, TRACE, "SetFaceMode");
@@ -462,59 +458,40 @@ void SetFaceMode()
 		return;
 	}
 
-
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 
 	int minPos = fconfig.getValue("FTracker.minPos",0);
 	CENTER_POS = fconfig.getValue("FTracker.centerPos",164);
 	int allLEDhighVoltEnable = fconfig.getValue("FTracker.allLEDhighVoltEnable",1);
-
 	int faceLEDVolt = fconfig.getValue("FTracker.faceLEDVolt",30);
 	int faceLEDcurrentSet = fconfig.getValue("FTracker.faceLEDcurrentSet",20);
 	int faceLEDtrigger = fconfig.getValue("FTracker.faceLEDtrigger",4);
 	int faceLEDEnable = fconfig.getValue("FTracker.faceLEDEnable",4);
 	int faceLEDmaxTime = fconfig.getValue("FTracker.faceLEDmaxTime",4);
-
-
 	int faceCamExposureTime = fconfig.getValue("FTracker.faceCamExposureTime",12);
 	int faceCamDigitalGain = fconfig.getValue("FTracker.faceCamDigitalGain",240);
-
 	int faceAnalogGain = fconfig.getValue("FTracker.faceAnalogGain",128);
-
-
 	char cmd[512];
-
 	EyelockLog(logger, DEBUG, "Setting Face Mode\n");
 	sprintf(cmd, "psoc_write(2,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)\n",faceLEDVolt, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable);
 	EyelockLog(logger, DEBUG, "Face camera settings-faceLEDVolt:%d, faceLEDcurrentSet:%d, faceLEDtrigger:%d, faceLEDEnable:%d",faceLEDVolt, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable);
 	//printf(cmd);
 	port_com_send(cmd);
-
 //	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
 //	port_com_send("psoc_write(2,30) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)");
-
-
 	sprintf(cmd, "wcr(4,0x3012,%i)  | wcr(4,0x305e,%i)", faceCamExposureTime, faceCamDigitalGain);
 	EyelockLog(logger, DEBUG, "Face camera exposure and gain settings -faceCamExposureTime:%d, faceCamDigitalGain:%d",faceCamExposureTime, faceCamDigitalGain);
 	port_com_send(cmd);
-
-
 	//port_com_send("wcr(4,0x3012,7)  | wcr(4,0x305e,0xfe)");
-
-	{
-		sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((faceAnalogGain&0x3)<<4) | 0X80);
-		port_com_send(cmd);
-		EyelockLog(logger, DEBUG, "Face camera Analog gain:%d",(((faceAnalogGain&0x3)<<4) | 0X80));
-	}
-
+	sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((faceAnalogGain&0x3)<<4) | 0X80);
+	port_com_send(cmd);
+	EyelockLog(logger, DEBUG, "Face camera Analog gain:%d",(((faceAnalogGain&0x3)<<4) | 0X80));
 	agc_val= FACE_GAIN_DEFAULT;
 	EyelockLog(logger, DEBUG, "Face camera gain default:%d", FACE_GAIN_DEFAULT);
-
 	start_mode_change = std::chrono::system_clock::now();
 	currnet_mode = MODE_FACE;
 	//port_com_send("fixed_set_rgb(100,100,100)");
 }
-
 
 #define IRIS_FRAME_TIME 180
 #define switchThreshold 37		// previous val was 40
@@ -525,34 +502,30 @@ void MoveRelAngle(float a, int diffEyedistance);
 void SetIrisMode(int CurrentEye_distance, int diffEyedistance);
 void DoStartCmd();
 
-
-
-
-
 void MoveRelAngle(float a, int diffEyedistance)
 {
-
+	EyelockLog(logger, TRACE, "MoveRelAngle");
 	// add a limit check to make sure we are not out of bounds
 	char buff[100];
 	float move;
 	float current_a = read_angle();
-	//printf("Current_a=%f ; next_a=%f\n",current_a,a);
+	EyelockLog(logger, DEBUG, "Current_a=%f ; next_a=%f\n",current_a,a);
 
 	move=-1*a*ANGLE_TO_STEPS;
 
+	EyelockLog(logger, DEBUG, "limiting small movements based on relative changes and face size changes:diffEyedistance %f", move);
 	//limiting small movements based on relative changes and face size changes
 	if (abs(move) > smallMoveTo)	//&& diffEyedistance >= errSwitchThreshold
 	{
-	sprintf(buff,"fx_rel(%d)",(int)move);
-	printf("Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
-	port_com_send(buff);
+		sprintf(buff,"fx_rel(%d)",(int)move);
+		EyelockLog(logger, DEBUG, "Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
+		port_com_send(buff);
 	}
 }
 
-
-
 void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 {
+	EyelockLog(logger, TRACE, "SetIrisMode");
 	char cmd[512];
 
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
@@ -561,56 +534,53 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 	int DimmingfaceExposureTime = fconfig.getValue("FTracker.DimmingfaceExposureTime",7);
 	int DimmingfaceDigitalGain = fconfig.getValue("FTracker.DimmingfaceDigitalGain",32);
 
-	printf("Dimming face cameras!!!");
+	// printf("Dimming face cameras!!!");
 	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x305e,%i)", DimmingfaceExposureTime, DimmingfaceDigitalGain);
+	EyelockLog(logger, DEBUG, "Dimming face cameras -DimmingfaceExposureTime:%d, DimmingfaceDigitalGain:%d",DimmingfaceExposureTime, DimmingfaceDigitalGain);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
-
 	{
-			char cmd[512];
-
-			sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((DimmingfaceAnalogGain&0x3)<<4) | 0X80);
-			port_com_send(cmd);
-		}
-
-
+		char cmd[512];
+		sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((DimmingfaceAnalogGain&0x3)<<4) | 0X80);
+		EyelockLog(logger, DEBUG, "FACE_GAIN_MIN:%d DimmingfaceAnalogGain:%d", FACE_GAIN_MIN, (((DimmingfaceAnalogGain&0x3)<<4) | 0X80));
+		port_com_send(cmd);
+	}
 	agc_val = FACE_GAIN_MIN;
 
-
 	//switching cameras
-	printf("previousEye_distance: %i; CurrentEye_distance: %i; diffEyedistance: %i\n", previousEye_distance, CurrentEye_distance, diffEyedistance);
+	EyelockLog(logger, DEBUG, "previousEye_distance: %i; CurrentEye_distance: %i; diffEyedistance: %i\n", previousEye_distance, CurrentEye_distance, diffEyedistance);
 	if (CurrentEye_distance >= switchThreshold && diffEyedistance <= errSwitchThreshold)
 	{
 		if(currnet_mode==MODE_EYES_MAIN)
 		{
 			printf("Dont need to change Main cam");
+			EyelockLog(logger, DEBUG, "Don't need to change Main cameras");
 			return;
 		}
-
 
 		MainIrisSettings();											//change to Iris settings
 		SwitchIrisCameras(true);									//switch cameras
 		currnet_mode = MODE_EYES_MAIN;								//set current mode
 		previousEye_distance = CurrentEye_distance;					//save current eye distance for later use
 		printf("Turning on Main Cameras\n");
+		EyelockLog(logger, DEBUG, "Turning on Main Cameras");
 		//port_com_send("fixed_set_rgb(100,0,0)");
-
 	}
 	else if (CurrentEye_distance < switchThreshold && diffEyedistance <= errSwitchThreshold)
 	{
 		if(currnet_mode==MODE_EYES_AUX)
 		{
 			printf("Dont need to change Aux cam");
+			EyelockLog(logger, DEBUG, "Dont need to change Aux camera");
 			return;
 		}
-
-
 
 		MainIrisSettings();
 		SwitchIrisCameras(false);
 		currnet_mode = MODE_EYES_AUX;
 		previousEye_distance = CurrentEye_distance;
 		printf("Turning on AUX Cameras\n");
+		EyelockLog(logger, DEBUG, "Turning on AUX Cameras");
 		//port_com_send("fixed_set_rgb(100,100,0)");
 	}
 	else if (CurrentEye_distance >= switchThreshold && diffEyedistance > errSwitchThreshold)
@@ -618,16 +588,15 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 		if(currnet_mode==MODE_EYES_MAIN)
 		{
 			printf("Dont need to change Main cam");
+			EyelockLog(logger, DEBUG, "Don't need to change Main cameras");
 			return;
 		}
-
-
-
 		MainIrisSettings();
 		SwitchIrisCameras(true);
 		currnet_mode = MODE_EYES_MAIN;
 		previousEye_distance = CurrentEye_distance;
 		printf("Turning on Main Cameras\n");
+		EyelockLog(logger, DEBUG, "Turning on Main cameras");
 		//port_com_send("fixed_set_rgb(100,0,0)");
 	}
 	else if (CurrentEye_distance < switchThreshold && diffEyedistance > errSwitchThreshold)
@@ -635,10 +604,9 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 		if(currnet_mode==MODE_EYES_AUX)
 		{
 			printf("Dont need to change Aux cam");
+			EyelockLog(logger, DEBUG, "Dont need to change Aux camera");
 			return;
 		}
-
-
 		//AuxIrisSettings();			//use this function if we have different settings for aux and main cameras
 		// AS we are using same LED setting for aux and main, Im calling this function at the very beginning
 		MainIrisSettings();
@@ -646,15 +614,12 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 		currnet_mode = MODE_EYES_AUX;
 		previousEye_distance = CurrentEye_distance;
 		printf("Turning on AUX Cameras\n");
+		EyelockLog(logger, DEBUG, "Turning on AUX cameras");
 		//port_com_send("fixed_set_rgb(100,100,0)");
 	}
-
 	IrisFrameCtr=0;
 	start_mode_change = std::chrono::system_clock::now();
-
 }
-
-
 
 #if 0
 //DoStartCmd ISCwest Demo
@@ -813,6 +778,7 @@ Rect no_move_area;
 #if 1
 void DoStartCmd(){
 
+	EyelockLog(logger, TRACE, "DoStartCmd");
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 
 	int minPos = fconfig.getValue("FTracker.minPos",0);
@@ -859,32 +825,41 @@ void DoStartCmd(){
 	char cmd[512];
 
 	//Homing
+	EyelockLog(logger, DEBUG, "Re Homing");
 	printf("Re Homing\n");
-	port_com_send("fx_home()\n");
+
+	EyelockLog(logger, DEBUG, "port_com_send fx_home command is issued");
 #ifdef NOOPTIMIZE
 	usleep(100000);
 #endif
 
 	//Reset the lower motion
 	sprintf(cmd, "fx_abs(%i)",minPos);
+	EyelockLog(logger, DEBUG, "Reset to lower position minPos:%d", minPos);
 	port_com_send(cmd);
 
 	//move to center position
-	printf("Moving to Center\n");
+	// printf("Moving to Center\n");
+	EyelockLog(logger, DEBUG, "Moving to center position");
 	MoveTo(CENTER_POS);
 	read_angle();		//read current angle
 
 
-	printf("configuring face LEDs\n");
+	//printf("configuring face LEDs\n");
+	EyelockLog(logger, DEBUG, "Configuring face LEDs");
 	//Face configuration of LED
 	sprintf(cmd, "psoc_write(2,%i) | psoc_write(1,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)| psoc_write(6,%i)\n",faceLEDVolt, allLEDhighVoltEnable, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable, faceLEDmaxTime);
-	printf(cmd);
+
+	EyelockLog(logger, DEBUG, "Configuring face LEDs faceLEDVolt:%d, allLEDhighVoltEnable:%d, faceLEDcurrentSet:%d, faceLEDtrigger:%d, faceLEDEnable:%d, faceLEDmaxTime:%d", faceLEDVolt, allLEDhighVoltEnable, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable, faceLEDmaxTime);
+
+	// printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
 
 
 	//port_com_send("psoc_write(9,90)");	// charge cap for max current 60 < range < 95
 	sprintf(cmd, "psoc_write(9,%i)\n", capacitorChargeCurrent);
+	EyelockLog(logger, DEBUG, "capacitorChargeCurrent:%d", capacitorChargeCurrent);
 	//printf(cmd);
 	port_com_send(cmd);	// charge cap for max current 60 < range < 95
 	//port_com_send("psoc_write(9,80)");	// charge cap for max current 60 < range < 95
@@ -894,8 +869,10 @@ void DoStartCmd(){
 
 
 	//Face cameras configuration
-	printf("configuring face Cameras\n");
+	//printf("configuring face Cameras\n");
+	EyelockLog(logger, DEBUG, "Configuring face Cameras");
 	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x301e,%i) | wcr(0x04,0x305e,%i)\n",faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
+	EyelockLog(logger, DEBUG, "faceCamExposureTime:%d faceCamDataPedestal:%d faceCamDigitalGain:%d", faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
 	//printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xFE)");
@@ -904,8 +881,11 @@ void DoStartCmd(){
 
 
 	//Main Iris cameras configuration
-	printf("configuring Aux Iris Cameras\n");
+	//printf("configuring Aux Iris Cameras\n");
+	EyelockLog(logger, DEBUG, "Configuring AUX Iris Cameras");
 	sprintf(cmd, "wcr(0x03,0x3012,%i) | wcr(0x03,0x301e,%i) | wcr(0x03,0x305e,%i)\n",AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
+	EyelockLog(logger, DEBUG, "AuxIrisCamExposureTime:%d AuxIrisCamDataPedestal:%d AuxIrisCamDigitalGain:%d", AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
+
 	//printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x18,0x3012,8) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x80)");
@@ -913,8 +893,10 @@ void DoStartCmd(){
 
 
 	//Aux Iris Cameras Configuration
-	printf("configuring Main Iris Cameras\n");
+	//printf("configuring Main Iris Cameras\n");
+	EyelockLog(logger, DEBUG, "Configuring Main Iris Cameras");
 	sprintf(cmd, "wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
+	EyelockLog(logger, DEBUG, "MainIrisCamExposureTime:%d MainIrisCamDataPedestal:%d MainIrisCamDigitalGain:%d", faceCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
 	//printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0xB0)"); // was 128 Anita chnaged my Mo
@@ -922,8 +904,8 @@ void DoStartCmd(){
 
 
 	// setup up all pll values
-	printf("setting up PLL\n");
-
+	//printf("setting up PLL\n");
+	EyelockLog(logger, DEBUG, "Setting up PLL");
 	//following process will activate PLL for all cameras
 
 	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
@@ -934,29 +916,29 @@ void DoStartCmd(){
 	//Turn on analog gain
 	//printf("Analog gain is %d\n",analogGain);
 	sprintf(cmd,"wcr(0x1b,0x30b0,%i)\n",((irisAnalogGain&0x3)<<4) | 0X80);
-	printf("Iris analog gain\n");
-	printf(cmd);
+	EyelockLog(logger, DEBUG, "Iris analog gain: %d", (((irisAnalogGain&0x3)<<4) | 0X80));
+	// printf(cmd);
 	port_com_send(cmd);
 	sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((faceAnalogGain&0x3)<<4) | 0X80);
-	printf("Face analog gain\n");
-	printf(cmd);
+	EyelockLog(logger, DEBUG, "Face analog gain: %d", (((faceAnalogGain&0x3)<<4) | 0X80));
+	// printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
 	//port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
 
 
-	printf("Turning on Alternate cameras\n");
+	// printf("Turning on Alternate cameras\n");
+	EyelockLog(logger, DEBUG, "Turning on Alternate cameras");
 	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Turn on Alternate cameras
 	//sprintf(cmd,"set_cam_mode(0x4,%d)",FRAME_DELAY);		//Turn on Alternate cameras
 	port_com_send(cmd);
 
 	port_com_send("wcr(0x1f,0x301a,0x1998)"); // ilya added to leave the pll on always
 
-
-
 	//This code is for playing sound
 	if(1)
 	{
+		EyelockLog(logger, DEBUG, "playing audio -set_audio(1)");
 		port_com_send("set_audio(1)");
 		sleep(1);
 		port_com_send("data_store_set(0)");
@@ -983,8 +965,10 @@ void DoStartCmd(){
 			a_rect.push_back(value);
 		}
 	}
-	else
+	else{
 		printf("Can't find auxRect.csv File! Possibly the device is not calibrated!\n");
+		EyelockLog(logger, DEBUG, "Can't find auxRect.csv File! Possibly the device is not calibrated!");
+	}
 
 
 	no_move_area.x = a_rect[0]/scaling;
@@ -996,25 +980,22 @@ void DoStartCmd(){
 	SetFaceMode();		// just for now
 
 }
-
 #endif
-
-
 
 void DoStartCmd_CamCal(){
 
+	EyelockLog(logger, TRACE, "DoStartCmd_CamCal");
 	char cmd[100];
 
 	//Homing
-	printf("Re Homing\n");
+	EyelockLog(logger, DEBUG, "Re Homing");
 	port_com_send("fx_home()\n");
 #ifdef NOOPTIMIZE
 	usleep(100000);
 #endif
 	port_com_send("fx_abs(25)\n");
 
-
-	printf("configuring face LEDs\n");
+	EyelockLog(logger, DEBUG, "Configuring face LEDs");
 	//Face configuration of LED
 	port_com_send("psoc_write(3,1)| psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,1) | psoc_write(6,4)");
 
@@ -1028,24 +1009,23 @@ void DoStartCmd_CamCal(){
 
 
 	//Face cameras configuration
-	printf("configuring face Cameras\n");
+	EyelockLog(logger, DEBUG, "Configuring face Cameras");
 	port_com_send("wcr(0x04,0x3012,2) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0x30)");
 
 
 
 	//Main Iris cameras configuration
-	printf("configuring Main Iris Cameras\n");
+	EyelockLog(logger, DEBUG, "Configuring Main Iris Cameras");
 	port_com_send("wcr(0x18,0x3012,3) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x40)");
 
 
 	//Aux Iris Cameras Configuration
-	printf("configuring Alternate Iris Cameras\n");
+	EyelockLog(logger, DEBUG, "Configuring Alternate Iris Cameras");
 	port_com_send("wcr(0x03,0x3012,3) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0x40)"); // was 128 Anita chnaged my Mo
 
 
 	// setup up all pll values
-	printf("setting up PLL\n");
-
+	EyelockLog(logger, DEBUG, "setting up PLL");
 	//following process will activate PLL for all cameras
 
 	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
@@ -1057,18 +1037,9 @@ void DoStartCmd_CamCal(){
 	port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
 	port_com_send("wcr(0x4,0x30b0,0x80");		//Only face camera gain is x90
 
-
 	port_com_send("wcr(0x1f,0x301a,0x1998)"); // ilya added to leave the pll on always
 
-
 }
-
-
-
-
-
-
-
 
 
 void detectAndDisplay( Mat frame );
@@ -1086,11 +1057,9 @@ Point eyes;
 extern int IrisFramesHaveEyes();
 char temp[100];
 
-
-
 float AGC(int width, int height,unsigned char *dsty, int limit)
 {
-
+	EyelockLog(logger, TRACE, "AGC");
 	//Percentile and Average Calculation
 	unsigned char *dy = (unsigned char *)dsty;
 	double total = 0,Ptotal = 0,percentile = 0,hist[256]={0},average=0;
@@ -1115,25 +1084,26 @@ float AGC(int width, int height,unsigned char *dsty, int limit)
 	percentile = (Ptotal*100)/total;
 	average=average/(width*height);
 
-	//printf("average : %3.1f percentile : %3.1f\n",average,percentile);
+	EyelockLog(logger, DEBUG, "average : %3.1f percentile : %3.1f\n",average,percentile);
 	return (float)percentile;
 }
 
 int AGC_Counter = 0;
 
-Mat rotate(Mat src, double angle){
+Mat rotate(Mat src, double angle)
+{
+	EyelockLog(logger, TRACE, "rotate");
 	Mat dst;
     Point2f pt(src.cols*0.5, src.rows*0.5);
     Mat M = cv::getRotationMatrix2D(pt, angle, 1.0);
     cv::warpAffine(src, dst, M, src.size());
     //cv::warpAffine(src, dst, M, smallImgBeforeRotate.size(),cv::INTER_CUBIC);
-
     M.release();
-
     return dst;
 }
 
 Mat rotation90(Mat src){
+	EyelockLog(logger, TRACE, "rotation90");
 	Mat dst;
 	transpose(src, dst);
 	flip(dst,dst,0);
@@ -1144,6 +1114,7 @@ Mat rotation90(Mat src){
 
 int IrisFramesHaveEyes()
 {
+	EyelockLog(logger, TRACE, "IrisFramesHaveEyes");
 	IrisFrameCtr++;
 	//printf("Iris with eyes %d\n",IrisFrameCtr);
 	//cvWaitKey(30);
@@ -1157,23 +1128,20 @@ int noFaceCounter =0;
 
 void DoRunMode()
 {
-  float eye_size;
+	EyelockLog(logger, TRACE, "DoRunMode");
+	float eye_size;
 
 	// if (run_state == RUN_STATE_FACE)
 	{
-		    float p;
-		    char temp_str[40];
+		float p;
+		char temp_str[40];
 
+		int64 startTime = cv::getTickCount();
+		EyelockLog(logger, DEBUG, "image resize");
+		cv::resize(outImg, smallImgBeforeRotate, cv::Size(), (1 / scaling),
+				(1 / scaling), INTER_NEAREST);	//Mohammad
 
-
-		    int64 startTime = cv::getTickCount();
-
-		    cv::resize(outImg, smallImgBeforeRotate, cv::Size(),(1/scaling),(1/scaling), INTER_NEAREST);	//Mohammad
-
-
-		    smallImg = rotation90(smallImgBeforeRotate);
-
-
+		smallImg = rotation90(smallImgBeforeRotate);
 
 //FACE_GAIN_DEFAULT   0x80		128
 //       0xe0		224
@@ -1184,255 +1152,230 @@ void DoRunMode()
 
 //int agc_val= FACE_GAIN_DEFAULT;		128
 //int agc_set_gain =0;
+		EyelockLog(logger, DEBUG, "AGC Calculation");
+		p = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),
+				180);
 
-
-		    p = AGC(smallImg.cols,smallImg.rows,(unsigned char *)(smallImg.data),180);
-
-
-			if (p<FACE_GAIN_PER_GOAL-FACE_GAIN_HIST_GOAL)
-				agc_val= agc_val + (FACE_GAIN_PER_GOAL-p)*FACE_CONTROL_GAIN;
-			if (p>FACE_GAIN_PER_GOAL+FACE_GAIN_HIST_GOAL)
-				agc_val= agc_val + (FACE_GAIN_PER_GOAL-p)*FACE_CONTROL_GAIN;
-			agc_val = MAX(FACE_GAIN_MIN,agc_val);
-			agc_val = MIN(agc_val,FACE_GAIN_MAX);
-			//Too close
+		if (p < FACE_GAIN_PER_GOAL - FACE_GAIN_HIST_GOAL)
+			agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
+		if (p > FACE_GAIN_PER_GOAL + FACE_GAIN_HIST_GOAL)
+			agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
+		agc_val = MAX(FACE_GAIN_MIN,agc_val);
+		agc_val = MIN(agc_val,FACE_GAIN_MAX);
+		//Too close
 //			if(agc_val==FACE_GAIN_MIN)
 //			{
 //				//SelLedDistance(150);
 //				setRGBled(120,0,0,500,0,0x4);
 //			}
-			AGC_Counter++;
-			if (agc_set_gain!=agc_val);// && AGC_Counter%2==0)
-				{
+		AGC_Counter++;
+		if (agc_set_gain != agc_val)
+			;	// && AGC_Counter%2==0)
+		{
 			//	while (waitKey(10) != 'z');
-				{
-				static int agc_val_old=0;
-				  if (abs(agc_val-agc_val_old)>300)
-				  	  {
-					 // printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
-					  SetExp(4,agc_val);
-					  agc_val_old= agc_val;
-				  	  }
+			{
+				static int agc_val_old = 0;
+				if (abs(agc_val - agc_val_old) > 300) {
+					// printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
+					SetExp(4, agc_val);
+					agc_val_old = agc_val;
 				}
+			}
 
-				agc_set_gain=agc_val;
-				}
+			agc_set_gain = agc_val;
+		}
 
+		EyelockLog(logger, DEBUG, "FindEyeLocation");
+		if (FindEyeLocation(smallImg, eyes, eye_size)) {
+			noeyesframe = 0;
 
+			if (detect_area.contains(eyes)) {
+				EyelockLog(logger, DEBUG, "eyes found");
 
-///////////////////////////////////////////////////////////////////////////////////
-			if (FindEyeLocation( smallImg, eyes,eye_size))
-				{
-				noeyesframe = 0;
+				noFaceCounter = 0;
 
-				if (detect_area.contains(eyes))
-					{
-					//printf("eyes found\n");
+#define ERROR_LOOP_GAIN 0.08
+				int CurrentEye_distance = eye_size;
+				int diffEyedistance = abs(
+						CurrentEye_distance - previousEye_distance);
 
-					noFaceCounter=0;
+				//if (!no_move_area.contains(eyes))
+				if (!no_move_area.contains(eyes)) {
+					if ((eye_size >= MIN_FACE_SIZE)
+							&& (eye_size <= MAX_FACE_SIZE)) {
+						float err;
+						int constant = 10;
+						int MoveToLimitBound = 1;
+						err = (no_move_area.y + no_move_area.height / 2)
+								- eyes.y;
+						EyelockLog(logger, DEBUG, "abs err----------------------------------->  %d\n", abs(err));
+						err = (float) err * (float) SCALE
+								* (float) ERROR_LOOP_GAIN;
 
-					#define ERROR_LOOP_GAIN 0.08
-					int CurrentEye_distance = eye_size;
-					int diffEyedistance = abs(CurrentEye_distance - previousEye_distance);
+						// if we need to move
+						if (abs(err) > MoveToLimitBound) {
+							int x, w, h;
 
-					//if (!no_move_area.contains(eyes))
-					if (!no_move_area.contains(eyes))
-						{
-						if ((eye_size>= MIN_FACE_SIZE) && (eye_size<= MAX_FACE_SIZE))
+							//Experiment
+							/////////////////////////////////////////////////
+							EyelockLog(logger, DEBUG, "Switching ON IRIS LEDs!!!!\n");
+							SetIrisMode(eye_size, diffEyedistance);
+							run_state = RUN_STATE_EYES;
+							////////////////////////////////////////////////
+
+							MoveRelAngle(-1 * err, diffEyedistance);
+							//	while (waitKey(10) != 'z');
+							//	printf("fx_abs val: %i\n", -1*err);
+							//	printf("Face is IN RANGE!!!!\n");
+
+							//flush the video buffer to get rid of frames from motion
 							{
-							float err;
-							int constant = 10;
-							int MoveToLimitBound = 1;
-							err = (no_move_area.y+no_move_area.height/2) - eyes.y;
-							//printf("abs err----------------------------------->  %d\n", abs(err));
-							err = (float)err * (float)SCALE * (float)ERROR_LOOP_GAIN;
-
-							// if we need to move
-							if (abs(err) > MoveToLimitBound)
-								{
-									int x,w,h;
-
-									//Experiment
-									/////////////////////////////////////////////////
-									printf("Switching ON IRIS LEDs!!!!\n");
-									SetIrisMode(eye_size, diffEyedistance);
-									run_state = RUN_STATE_EYES;
-									////////////////////////////////////////////////
-
-
-									MoveRelAngle(-1*err, diffEyedistance);
-								//	while (waitKey(10) != 'z');
-								//	printf("fx_abs val: %i\n", -1*err);
-								//	printf("Face is IN RANGE!!!!\n");
-
-									//flush the video buffer to get rid of frames from motion
-									{
-										//int vid_stream_flush(void);
-										//vid_stream_flush();
-										vs->flush();
-									}
-									// might need this vid_stream_get(&w,&h,(char *)outImg.data);
-								}
-
-
-
-
+								//int vid_stream_flush(void);
+								//vid_stream_flush();
+								vs->flush();
 							}
-						else
-							printf("Face out of range\n");
-						}
-					else
-						{
-
-						cv::rectangle(smallImg,Rect(eyes.x-5,eyes.y-5,10,10),Scalar( 255, 0, 0 ), 2, 0);
-/*						printf("Switching ON IRIS LEDs!!!!\n");
-						SetIrisMode(eye_size, diffEyedistance);
-						run_state = RUN_STATE_EYES;*/
-
-
-						//port_com_send("fixed_set_rgb(0,0,50)");
+							// might need this vid_stream_get(&w,&h,(char *)outImg.data);
 						}
 
-					}
+					} else
+						EyelockLog(logger, DEBUG, "Face out of range\n");
+				} else {
 
+					cv::rectangle(smallImg,
+							Rect(eyes.x - 5, eyes.y - 5, 10, 10),
+							Scalar(255, 0, 0), 2, 0);
+					/*						printf("Switching ON IRIS LEDs!!!!\n");
+					 SetIrisMode(eye_size, diffEyedistance);
+					 run_state = RUN_STATE_EYES;*/
+
+					//port_com_send("fixed_set_rgb(0,0,50)");
 				}
-			{
+
+			}
+
+		}
+		{
 //				noeyesframe++;
-				//Sarvesh
-				if (noFaceCounter<(NO_FACE_SWITCH_FACE+2))
-					noFaceCounter++;
+			//Sarvesh
+			if (noFaceCounter < (NO_FACE_SWITCH_FACE + 2))
+				noFaceCounter++;
 
-				if (noFaceCounter==NO_FACE_SWITCH_FACE)
-			  	  {
-					MoveTo(CENTER_POS);
-					run_state = RUN_STATE_FACE;
-					SetFaceMode();
-
-			  	  }
-
-				//MOhammad
-/*				if (IrisFrameCtr==MIN_IRIS_FRAMES)
-			  	  {
-					printf("Iris number reach to %i\n and it will go to home now", IrisFrameCtr);
-					run_state = RUN_STATE_FACE;
-					SetFaceMode();
-					MoveTo(CENTER_POS);
-			  	  }*/
-
-			}
-
-			/*if (noeyesframe == 10)
-			{
-				SetFaceMode();
+			if (noFaceCounter == NO_FACE_SWITCH_FACE) {
 				MoveTo(CENTER_POS);
+				run_state = RUN_STATE_FACE;
+				SetFaceMode();
+
 			}
-*/
-/*				if (move_counts> MOVE_COUNTS_REHOME)
-				{
-					printf("Re Homing\n");
-					setRGBled(0,0,0,100,0,0x1F);
-					port_com_send("fx_home()\n");
-					cvWaitKey(6000);
-					MoveTo(CENTER_POS);
-					setRGBled(20,20,20,100,0,0x1F);
-					move_counts=0;
-				}*/
+
+			//MOhammad
+			/*				if (IrisFrameCtr==MIN_IRIS_FRAMES)
+			 {
+			 printf("Iris number reach to %i\n and it will go to home now", IrisFrameCtr);
+			 run_state = RUN_STATE_FACE;
+			 SetFaceMode();
+			 MoveTo(CENTER_POS);
+			 }*/
+
+		}
+
+		/*if (noeyesframe == 10)
+		 {
+		 SetFaceMode();
+		 MoveTo(CENTER_POS);
+		 }
+		 */
+		/*				if (move_counts> MOVE_COUNTS_REHOME)
+		 {
+		 printf("Re Homing\n");
+		 setRGBled(0,0,0,100,0,0x1F);
+		 port_com_send("fx_home()\n");
+		 cvWaitKey(6000);
+		 MoveTo(CENTER_POS);
+		 setRGBled(20,20,20,100,0,0x1F);
+		 move_counts=0;
+		 }*/
 
 #ifdef DISP
-			cv::rectangle(smallImg,no_move_area,Scalar( 255, 0, 0 ), 1, 0);
-			cv::rectangle(smallImg,detect_area,Scalar( 255, 0, 0 ), 1, 0);
-			imshow(temp,smallImg);
+		EyelockLog(logger, DEBUG, "Imshow");
+		cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
+		cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
+		imshow(temp, smallImg);
 #endif
 	}
 
-/*
-  if (run_state == RUN_STATE_EYES)
-  	  {
-	  if (IrisFramesHaveEyes()==0)
-	  	  {
-			run_state = RUN_STATE_FACE;
-			SetFaceMode();
-			MoveTo(CENTER_POS);
-	  	  }
-  	  }
-*/
+	/*
+	 if (run_state == RUN_STATE_EYES)
+	 {
+	 if (IrisFramesHaveEyes()==0)
+	 {
+	 run_state = RUN_STATE_FACE;
+	 SetFaceMode();
+	 MoveTo(CENTER_POS);
+	 }
+	 }
+	 */
 
 }
 
-Mat outImgLast,outImg1,outImg1s;
-void MeasureSnr()
-{
-				 Mat s1;
-
-			     static int once=0;
-				 if (once==10)
-					 {
-					  Scalar s2 = sum(outImg);
-					  float pixels = outImg.cols*outImg.rows;
-					  double avg = s2.val[0]/pixels;
-					  printf("a = %3.3f\n",avg);
-					  /*
-					 printf("id ===%x %x %x %x\n",outImg.at <char> (0,0),outImg.at <char> (0,1),outImg.at <char> (0,2),outImg.at <char> (0,3));
-					 absdiff(outImg, outImgLast, s1);       // |I1 - I2|
+Mat outImgLast, outImg1, outImg1s;
+void MeasureSnr() {
+	EyelockLog(logger, TRACE, "MeasureSnr");
+	Mat s1;
+	static int once = 0;
+	if (once == 10) {
+	Scalar s2 = sum(outImg);
+	float pixels = outImg.cols * outImg.rows;
+	double avg = s2.val[0] / pixels;
+	EyelockLog(logger, DEBUG, "a = %3.3f\n", avg);
+	/*
+		printf("id ===%x %x %x %x\n",outImg.at <char> (0,0),outImg.at <char> (0,1),outImg.at <char> (0,2),outImg.at <char> (0,3));
+		absdiff(outImg, outImgLast, s1);       // |I1 - I2|
 
 
-					 imshow("Signal",outImg-outImg1s);
+		imshow("Signal",outImg-outImg1s);
+		// imshow("other",outImg-outImg1);  //Time debug
+	 	s1=s1-(Scalar(sum(s1).val[0])/pixels); // remove exposure noise
+		imshow("Noise",s1*10);
+	 	 s1.convertTo(s1, CV_32F);  // cannot make a square on 8 bits
+		 s1 = s1.mul(s1);
+		 Scalar s = sum(s1);         // sum elements per channel
 
-					// imshow("other",outImg-outImg1);  //Time debug
-					 s1=s1-(Scalar(sum(s1).val[0])/pixels); // remove exposure noise
-					 imshow("Noise",s1*10);
+		 Scalar s2 = sum(outImg);
+		 double rms_noise = sqrt(s.val[0]/pixels);
+		 double sse = s.val[0];
+		 double mid= s1.cols*s1.rows*128*128;
+		 double avg = s2.val[0]/pixels;
+		 float psnr = 20.0*log10((128.0)/rms_noise);
+		 float psnr_avg = 20.0*log10((avg)/rms_noise);
+	     printf("Snr = %3.3f avg = %3.3f snravg %3.3f\n", psnr,avg,psnr_avg);*/
+	} else {
+		if (once == 0) {
+			outImg.convertTo(outImg1, CV_32FC1);
+			//outImg.copyTo(outImg1);
+		} else {
+				Mat cc;
+				outImg.convertTo(cc, CV_32FC1);
+				outImg1 = outImg1 + cc;
+		}
+			once++;
+			if (once == 10) {
+				outImg1 = outImg1 / 10;
+				outImg1.convertTo(outImg1s, CV_8UC1);
+				Scalar av = mean(outImg1s);
+				outImg1s = outImg1s + 10 - av.val[0];
+				imshow("offs", outImg1s * 10);
+		}
+	}
 
-
-					 s1.convertTo(s1, CV_32F);  // cannot make a square on 8 bits
-					 s1 = s1.mul(s1);
-					  Scalar s = sum(s1);         // sum elements per channel
-
-
-					  Scalar s2 = sum(outImg);
-
-					   double rms_noise = sqrt(s.val[0]/pixels);
-					   double sse = s.val[0];
-					   double mid= s1.cols*s1.rows*128*128;
-					   double avg = s2.val[0]/pixels;
-					   float psnr = 20.0*log10((128.0)/rms_noise);
-					   float psnr_avg = 20.0*log10((avg)/rms_noise);
-					   printf("Snr = %3.3f avg = %3.3f snravg %3.3f\n", psnr,avg,psnr_avg);*/
-					 }
-				 else
-					 {
-					 if (once ==0)
-						 {
-						 outImg.convertTo(outImg1,CV_32FC1 );
-						 //outImg.copyTo(outImg1);
-						 }
-					 else
-					 {
-						 Mat cc;
-						 outImg.convertTo(cc,CV_32FC1 );
-						 outImg1=outImg1+cc;
-					 }
-						 once ++;
-					 if (once==10)
-					 	 {
-						 outImg1=outImg1/10;
-						 outImg1.convertTo(outImg1s,CV_8UC1);
-						 Scalar av = mean(outImg1s);
-						 outImg1s=outImg1s+10-av.val[0];
-						 imshow("offs",outImg1s*10);
-						 }
-					 }
-
-
-					 outImg.copyTo(outImgLast);
+	outImg.copyTo(outImgLast);
 
 }
 
 #define NUM_AVG_CAL 10
 #define  MAX_CAL_CURENT 20
 void DoImageCal(int cam_id_ignore)
-
 {
-	printf("Inside DoImageCal\n");
+	EyelockLog(logger, TRACE, "Inside DoImageCal");
     int w,h;
 	char temp[100];
    // vid_stream_get(&w,&h,(char *)outImg.data);
@@ -1441,28 +1384,28 @@ void DoImageCal(int cam_id_ignore)
 	vs->get(&w,&h,(char *)outImg.data);
 	Scalar a;
     int  cam_id =(int)outImg.at<char>(0,2)&0xff;
-	printf("Calibrating camera %x\n",cam_id);
+    EyelockLog(logger, DEBUG, "Calibrating camera %x\n",cam_id);
     for (int current=1;current<MAX_CAL_CURENT;current++)
     	{
     	sprintf(temp,"psoc_write(5,%d)",current);
-    	printf("Sending %s>\n",temp);
+    	EyelockLog(logger, DEBUG, "Sending %s>\n",temp);
     	port_com_send(temp);
     	vs->get(&w,&h,(char *)outImg.data);
     	vs->get(&w,&h,(char *)outImg.data);
 
     	a=mean(outImg);
-        printf("Mean is %f\n",a.val[0]);
+    	EyelockLog(logger, DEBUG, "Mean is %f\n",a.val[0]);
     	if (a.val[0]>40)
     		break;
     	}
     if (a.val[0]<40)
     {
-    	printf("Error Not enough light");
+    	EyelockLog(logger, DEBUG, "Error Not enough light");
     	exit(0);
     }
     if (a.val[0]>220)
        {
-       	printf("Too much light");
+    	EyelockLog(logger, DEBUG, "Too much light");
        	exit(0);
        }
 	outImg.convertTo(outImg1,CV_32FC1 );
@@ -1473,7 +1416,7 @@ void DoImageCal(int cam_id_ignore)
 		 	//vid_stream_get(&w,&h,(char *)outImg.data);
 		outImg.convertTo(cc,CV_32FC1 );
 		outImg1=outImg1+cc;
-		printf("collecting image %d / %d\n",x,NUM_AVG_CAL);
+		EyelockLog(logger, DEBUG, "collecting image %d / %d\n",x,NUM_AVG_CAL);
 
     }
 	outImg1=outImg1/NUM_AVG_CAL;
@@ -1497,7 +1440,7 @@ void DoImageCal(int cam_id_ignore)
 	fclose(f);
 	}
 	else
-		printf("cant write output file %s\n",temp);
+		EyelockLog(logger, DEBUG, "cant write output file %s\n",temp);
 	printf("All done press q to quit\n");
 	while (1)
 		{
@@ -1509,10 +1452,12 @@ void DoImageCal(int cam_id_ignore)
 
 void CalAll()
 {
+	EyelockLog(logger, TRACE, "CalAll");
 	DoStartCmd();
 	port_com_send("set_cam_mode(0x83,100");
 	port_com_send("psoc_write(3,3)");
 
+	EyelockLog(logger, DEBUG, "CalAll AUX Cameras");
 	vs = new VideoStream(8192);
 	DoImageCal(0);
 	delete (vs);
@@ -1521,6 +1466,7 @@ void CalAll()
 	DoImageCal(0);
 	delete (vs);
 
+	EyelockLog(logger, DEBUG, "CalAll Main Cameras");
 	port_com_send("set_cam_mode(0x3,100");
 	vs = new VideoStream(8192);
 	DoImageCal(0);
@@ -2088,6 +2034,7 @@ void runCalCam(){
 
 
 double parsingIntfromHex(string str1){
+	EyelockLog(logger, TRACE, "parsingIntfromHex");
 
     int loc1 = str1.find_first_of('=');
 
@@ -2107,7 +2054,9 @@ double parsingIntfromHex(string str1){
 }
 
 
-int calTemp(int i){
+int calTemp(int i)
+{
+	EyelockLog(logger, TRACE, "calTemp");
     int len;
     char buffer[512];
     char cmd[512];
@@ -2129,7 +2078,7 @@ int calTemp(int i){
 	sprintf(cmd, "rcr(0x0%i,0x30b2)", i);
     if (!(len = port_com_send_return(cmd, buffer, 20) > 0))
     {
-    	printf("failed to read temp register!\n");
+    	EyelockLog(logger, DEBUG, "failed to read temp register!\n");
     }
     //cvWaitKey(3000);
     //printf("Temp val: %s\n", buffer);
@@ -2141,7 +2090,7 @@ int calTemp(int i){
     //70C calibration data read
     if (!(len = port_com_send_return(cmd, buffer, 20) > 0))
     {
-    	printf("failed to read temp register!\n");
+    	EyelockLog(logger, DEBUG, "failed to read temp register!\n");
     }
     //printf("Temp val 120: %s\n", buffer);
     string str2(buffer);
@@ -2151,7 +2100,7 @@ int calTemp(int i){
     //55C calibration data read
     if (!(len = port_com_send_return(cmd, buffer, 20) > 0))
     {
-    	printf("failed to read temp register!\n");
+    	EyelockLog(logger, DEBUG, "failed to read temp register!\n");
     }
     //printf("Temp val 50: %s\n", buffer);
     string str3(buffer);
@@ -2185,10 +2134,11 @@ int calTemp(int i){
 }
 
 void motorMove(){
+	EyelockLog(logger, TRACE, "motorMove");
 	int temp;
 /*    MoveTo(CENTER_POS);
     temp = calTemp();*/
-	printf("\nStart temp expermiment process-----------------> \n");
+	EyelockLog(logger, DEBUG, "\nStart temp expermiment process-----------------> \n");
 	char cmd[512];
     while(1){
         MoveTo(MAX_POS);
@@ -2268,6 +2218,7 @@ void clearData(string fileName){
 
 int main(int argc, char **argv)
 {
+	EyelockLog(logger, TRACE, "Inside main function");
 /*	temp_log = fopen("tempLog", "a");
 	//temp_log << "a " << ";" << "b" << endl;
 	//temp_log << "c " << ";" << "d" << endl;
@@ -2275,10 +2226,12 @@ int main(int argc, char **argv)
 
 	fstream infile(fileName);
 	if(infile.good()){
-		cout << "File exist and keep writing in it!" << endl;
+		// cout << "File exist and keep writing in it!" << endl;
+		EyelockLog(logger, DEBUG, "File exist and keep writing in it");
 	}
 	else{
-		cout << "Create log file!" << endl;
+		EyelockLog(logger, DEBUG, "Create Log file");
+		// cout << "Create log file!" << endl;
 		ofstream file(fileName);
 	}
 
@@ -2321,7 +2274,8 @@ int main(int argc, char **argv)
 
 	if (argc<2)
 	{
-		printf("error params\n");
+		EyelockLog(logger, DEBUG, "error params");
+		// printf("error params\n");
 		exit (0);
 	}
 
@@ -2347,22 +2301,22 @@ int main(int argc, char **argv)
 
 		image=imread("send_bad.pgm",0);
 				image.convertTo(image,CV_8UC1);
-				printf("sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
+				EyelockLog(logger, DEBUG, "sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
 
 				for (x=0; x<atoi(argv[2]);x++)
 				{
-					printf("send bad\n");
+					EyelockLog(logger, DEBUG, "send bad\n");
 					SendUdpImage(8192, (char *)image.data, image.cols*image.rows);
 					usleep(40000);
 				}
 
 		image=imread("send.pgm",0);
 		image.convertTo(image,CV_8UC1);
-		printf("sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
+		EyelockLog(logger, DEBUG, "sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
 
 		for (x=0; x< atoi(argv[3]);x++)
 		{
-			printf("send good\n");
+			EyelockLog(logger, DEBUG, "send good\n");
 			SendUdpImage(8192, (char *)image.data, image.cols*image.rows);
 			usleep(40000);
 		}
@@ -2372,6 +2326,7 @@ int main(int argc, char **argv)
 
 	if (strcmp(argv[1],"calcam")==0)
 	{
+		EyelockLog(logger, DEBUG, "calcam mode is running");
 		run_mode =1;
 		cal_cam_mode=1;
 	}
@@ -2379,12 +2334,10 @@ int main(int argc, char **argv)
 
 	if (strcmp(argv[1],"temp")==0)
 	{
+		EyelockLog(logger, DEBUG, "temperature test mode is running");
 		run_mode =1;
 		temp_mode=1;
 	}
-
-
-
 
 	if (run_mode)
 		pthread_create(&threadId,NULL,init_tunnel,NULL);
@@ -2423,22 +2376,19 @@ int main(int argc, char **argv)
 	sprintf(temp,"Disp %d",atoi (argv[1]) );
 
 	if (run_mode)
-		{
+	{
+		EyelockLog(logger, DEBUG, "run_mode");
 		face_init();
 		portcom_start();
 		DoStartCmd();
-		}
+	}
 
 	cv::namedWindow(temp);
-
-
 
 	if (vs->m_port==8192)
 		vs->offset_sub_enable=0;
 	if (vs->m_port==8193)
 			vs->offset_sub_enable=0;
-
-
 	while (1)
 	{
 		//printf("******before Recover***********\n");
@@ -2471,7 +2421,7 @@ int main(int argc, char **argv)
 			{
 				dstImage=outImg-DiffImage;
 				cv::resize(dstImage, smallImg, cv::Size(), 1, 1, INTER_NEAREST); //Time debug
-				printf("sub\n");
+				EyelockLog(logger, DEBUG, "sub\n");
 			}
 			else
 				cv::resize(outImg, smallImg, cv::Size(), 1, 1, INTER_NEAREST); //Time debug
@@ -2548,11 +2498,3 @@ int main(int argc, char **argv)
 
 }
 
-
-
-/************************************
- *
- *
- *
- *
- ************************************/
