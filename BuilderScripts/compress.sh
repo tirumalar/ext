@@ -48,13 +48,16 @@ sed -i "s/@@date@@/${NOW}/" "${XML_FILE_PATH}"
 sed -i "s/@@version@@/${FW_VER}/" "${XML_FILE_PATH}"
 sed -i "s/@@bobversion@@/${ICM_VER}/" "${XML_FILE_PATH}"
 sed -i "s/@@tarfilename@@/${FW_FILE}/" "${XML_FILE_PATH}"
-sed -i "s/@@MasterFilename@@/${BOARD_FILE}/" "${XML_FILE_PATH}"
 sed -i "s/@@ICMFilename@@/${ICM_FILE}/" "${XML_FILE_PATH}"
 
-# temporary workaround for upgrade via SDK (client side requires xml file in tar)
+# temporary workaround for upgrade via SDK (client side requires specific xml file in tar)
 XML_FILE_LEGACY='NanoNXTVersionInfo.xml'
 XML_FILE_PATH_LEGACY="${TARGET_DIR}/${XML_FILE_LEGACY}" 
-cp "${XML_FILE_PATH}" "${TARGET_DIR}/NanoNXTVersionInfo.xml"
+cp "${XML_FILE_PATH}" "${TARGET_DIR}/${XML_FILE_PATH_LEGACY}"
+BOARD_FILE_LEGACY="EyelockExt_v${FW_VER}_Master.tar.gz"
+sed -i "s/@@MasterFilename@@/${BOARD_FILE_LEGACY}/" "${XML_FILE_PATH_LEGACY}"
+
+sed -i "s/@@MasterFilename@@/${BOARD_FILE}/" "${XML_FILE_PATH}"
 
 # -----------------------------------------------------------------------------------------------------------
 BOARD_DIR="${TARGET_DIR}/board" # analog of "master" and "slave" on the NXT for EXT (being single board device)
