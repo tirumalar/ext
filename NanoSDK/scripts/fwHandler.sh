@@ -351,10 +351,11 @@ rebootDevice(){
 	echo "Rebooting..."
 
 	sync
-	sleep 10
-	 
-	 # is it OK?
-	 /home/root/startup.sh &
+	sleep 3
+	
+	# when not connected to ICM, reboot hangs if Eyelock app is running
+	killall -KILL Eyelock 
+	reboot
 }
 
 getXmlTag()
