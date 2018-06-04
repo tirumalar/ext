@@ -1,29 +1,11 @@
 #!/bin/bash -e
 echo HOMEDIR  $HOME
-export EYELOCK_WS_EXT="${HOME}/30May/trunk"
-
-if [ "${HOME}/workspace/eclipse" ];
-then
-   export ECLIPSEPATH="${HOME}/workspace/eclipse"
-   echo "NEON PRESENT"
-else
-	if [ -f "${HOME}/workspace/eclipse" ];
-	then
-	   export ECLIPSEPATH="${HOME}/workspace/eclipse"
-	   echo "NEON PRESENT"
-	else
-	   export ECLIPSEPATH="${HOME}/workspace/eclipse_oxygen"
-	   echo "OXYGEN PRESENT"
-	fi
-fi
-echo $PATH
-
- 
+export EYELOCK_WS_EXT="${HOME}/31Mayworkspace/trunk" 
 
 export PKG_PATH="${EYELOCK_WS_EXT}/linux/pkg"
 export TUT_INC=${PKG_PATH}/tut-190-trunk/include
 
-export STATIC_LIBS=${PKG_PATH}/lib/x86
+export STATIC_LIBS=${PKG_PATH}/lib/odroidc2_Release
 export COMMON_INC=${PKG_PATH}/common/include
 
 export EYELOCK_INC=${EYELOCK_WS_EXT}/linux/lib/Include
@@ -53,13 +35,14 @@ export POCO_BASE=${STATIC_LIBS}/poco-1.9.0
 export OPENSSL_102N_BASE=${STATIC_LIBS}/openssl-1.0.2o
 
 #for test_aruc
-export FACE_INC=${EYELOCK_WS_EXT}/FaceTracker/facetracker/include
-export CLM_EIGEN_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/Eigen
-export CLM_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/include
-export OPENCV_NEW_INC=${PKG_PATH}/opencv3.4/include
-export OPENCV_NEW_LIBS=${PKG_PATH}/opencv3.4/lib
+export FACE_INC=${EYELOCK_WS_EXT}/EXTFaceDetection/facedetect/include
+export CLM_EIGEN_INC=${EYELOCK_WS_EXT}/EXTFaceDetection/CLM/Eigen
+export CLM_INC=${EYELOCK_WS_EXT}/EXTFaceDetection/CLM/include
+export OPENCV_NEW_INC=${STATIC_LIBS}/opencv3.4/include
+export OPENCV_NEW_LIBS=${STATIC_LIBS}/opencv3.4/lib
 
-export ARCH_PROCESSOR="x86"
+export ARCH_PROCESSOR="_ARM_"
 
-${ECLIPSEPATH}/eclipse -Xmx2048M -data ${WORKSPACE}&
 
+
+eclipse -Xmx2048M -data ${WORKSPACE}&
