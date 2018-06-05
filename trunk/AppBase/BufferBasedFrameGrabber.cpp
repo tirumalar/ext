@@ -43,7 +43,7 @@ void BufferBasedFrameGrabber::init(Configuration *pConf){
 		EyelockLog(logger, DEBUG, "W H S = %d %d %d ",m_Width,m_Height,m_ImageSize);
 	}
 	m_pImageBuffer = new char[m_ImageSize];
-
+	m_ImageQueue.m_ptr = new unsigned char[m_ImageSize];
 
 	int numbits = pConf->getValue("Eyelock.NumBits", 8);
 	m_numbits = numbits > 8 ? 16 : numbits;
@@ -104,14 +104,14 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw(){
 	if (m_numbits != 8)
 		length = length * 2;
 
-	ImageQueue val;
+	// ImageQueue val;
 	//while(!ShouldIQuit()&&!m_pRingBuffer->TryPop(val))
 
 	bool status = false;
 
 	while(1)
 		{
-		status=m_pRingBuffer->TryPop(val);
+		status=m_pRingBuffer->TryPop(m_ImageQueue);
 		if (status)
 			break;
 		usleep(1000);
@@ -122,11 +122,11 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw(){
 		if (m_Debug)
 			EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::getLatestFrame_raw() get image queue");
 #endif			
-		unsigned char *ptr = val.m_ptr;
-		m_ill0 = val.m_ill0;
-		m_frameIndex = val.m_frameIndex;
-		m_ts = val.m_endTime;
-		memcpy(m_pImageBuffer, ptr, length);
+		// unsigned char *ptr = m_ImageQueue.m_ptr;
+		m_ill0 = m_ImageQueue.m_ill0;
+		m_frameIndex = m_ImageQueue.m_frameIndex;
+		m_ts = m_ImageQueue.m_endTime;
+		memcpy(m_pImageBuffer, m_ImageQueue.m_ptr, length);
 		int static cntr=0;
 		cntr++;
 //		printf("popped so far .. %d\n",cntr);
@@ -157,31 +157,32 @@ void BufferBasedFrameGrabber::setLatestFrame_raw(char *ptr){
 		FILE *f = fopen(filename, "wb");
 		fwrite(ptr, (m_Width * m_Height), 1, f);
 #endif
-	ImageQueue val;
+	// ImageQueue val;
 	static int cntr=0;
 	int length = (m_Width * m_Height);
 	if (m_numbits != 8)
 		length = length * 2;
 
 	if(cntr & 0x1){
-		val.m_ill0 = 1;
+		m_ImageQueue.m_ill0 = 1;
 	}else{
-		val.m_ill0 = 0;
+		m_ImageQueue.m_ill0 = 0;
 	}
-	val.m_frameIndex = cntr;
+	m_ImageQueue.m_frameIndex = cntr;
 	cntr++;
 
-	unsigned char *pdata = val.m_ptr;
-	memcpy(pdata, ptr, length);
+	//unsigned char *pdata = m_ImageQueue.m_ptr;
+	// memcpy(pdata, ptr, length);
+	memcpy(m_ImageQueue.m_ptr, ptr, length);
 
 	struct timeval m_timer;
 	gettimeofday(&m_timer, 0);
 	TV_AS_USEC(m_timer,starttimestamp);
-	val.m_startTime = starttimestamp;
-	val.m_endTime = val.m_startTime;
+	m_ImageQueue.m_startTime = starttimestamp;
+	m_ImageQueue.m_endTime = m_ImageQueue.m_startTime;
 
 	static int frame_drop = 0;
-	if (m_pRingBuffer->TryPush(val)==false)
+	if (m_pRingBuffer->TryPush(m_ImageQueue)==false)
 	{
 
 		frame_drop++;
@@ -202,6 +203,8 @@ void BufferBasedFrameGrabber::term()
 		delete m_RingBufferOffset;
 	if (m_pRingBuffer)
 		delete m_pRingBuffer;
+	if(m_ImageQueue.m_ptr)
+			delete [] m_ImageQueue.m_ptr;
 }
 
 void BufferBasedFrameGrabber::clearFrameBuffer(){

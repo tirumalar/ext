@@ -841,22 +841,22 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		printf("cam_id....%02x filename...%s\n", cam_id, temp);
 
 		if (m_OffsetImageLoadedMainCamera1 == false && (cam_id == 0x81)) {
-			m_OffsetImageMainCamera1 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
+			m_OffsetImageMainCamera1 = cvLoadImage("cal81.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedMainCamera1 = true;
 		}
 
 		if (m_OffsetImageLoadedMainCamera2 == false && (cam_id == 0x82)) {
-			m_OffsetImageMainCamera2 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
+			m_OffsetImageMainCamera2 = cvLoadImage("cal82.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedMainCamera2 = true;
 		}
 
 		if (m_OffsetImageLoadedAuxCamera1 == false && (cam_id == 0x01)) {
-			m_OffsetImageAuxCamera1 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
+			m_OffsetImageAuxCamera1 = cvLoadImage("cal01.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedAuxCamera1 = true;
 		}
 
 		if (m_OffsetImageLoadedAuxCamera2 == false && (cam_id == 0x02)) {
-			m_OffsetImageAuxCamera2 = cvLoadImage(temp, CV_LOAD_IMAGE_GRAYSCALE);
+			m_OffsetImageAuxCamera2 = cvLoadImage("cal02.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedAuxCamera2 = true;
 		}
 
