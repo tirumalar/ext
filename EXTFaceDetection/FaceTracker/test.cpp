@@ -96,9 +96,6 @@ int z=0;		//AGC wait key
 #define WIDTH 1200
 #define HEIGHT 960
 
-#define DISP // To show the image display
-
-
 int CENTER_POS;		//low fx_abs val is 0 and max is 328. So the center falls in 164
 #define CENTER_POSITION_ANGLE 95
 #define MIN_POS 25
@@ -1126,7 +1123,7 @@ int IrisFramesHaveEyes()
 
 int noFaceCounter =0;
 
-void DoRunMode()
+void DoRunMode(bool bShowFaceTracking)
 {
 	EyelockLog(logger, TRACE, "DoRunMode");
 	float eye_size;
@@ -1295,12 +1292,12 @@ void DoRunMode()
 		 move_counts=0;
 		 }*/
 
-#ifdef DISP
-		EyelockLog(logger, DEBUG, "Imshow");
-		cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
-		cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
-		imshow(temp, smallImg);
-#endif
+		if(bShowFaceTracking){
+			EyelockLog(logger, DEBUG, "Imshow");
+			cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
+			cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
+			imshow(temp, smallImg);
+		}
 	}
 
 	/*
@@ -2219,6 +2216,10 @@ void clearData(string fileName){
 int main(int argc, char **argv)
 {
 	EyelockLog(logger, TRACE, "Inside main function");
+
+	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
+	bool bShowFaceTracking = fconfig.getValue("FTracker.ShowFaceTracking", false);
+
 /*	temp_log = fopen("tempLog", "a");
 	//temp_log << "a " << ";" << "b" << endl;
 	//temp_log << "c " << ";" << "d" << endl;
@@ -2383,7 +2384,8 @@ int main(int argc, char **argv)
 		DoStartCmd();
 	}
 
-	cv::namedWindow(temp);
+	if(bShowFaceTracking)
+		cv::namedWindow(temp);
 
 	if (vs->m_port==8192)
 		vs->offset_sub_enable=0;
@@ -2411,7 +2413,7 @@ int main(int argc, char **argv)
 
 		if (run_mode)
 			{
-			 DoRunMode();
+			 DoRunMode(bShowFaceTracking);
 			}
 		else
 			{
@@ -2426,7 +2428,8 @@ int main(int argc, char **argv)
 			else
 				cv::resize(outImg, smallImg, cv::Size(), 1, 1, INTER_NEAREST); //Time debug
 			//MeasureSnr();
-			imshow(temp,smallImg);  //Time debug
+				if(bShowFaceTracking)
+					imshow(temp,smallImg);  //Time debug
 			}
 	    key = cv::waitKey(1);
 	    //printf("Key pressed : %u\n",key);
