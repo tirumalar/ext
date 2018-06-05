@@ -22,6 +22,8 @@ nxtW
 KeyMgr
 icm_communicator
 MultiChannelLogger
+EXTFaceDetection/CLM
+EXTFaceDetection/facedetect
 EXTFaceDetection/FaceTracker
 )
 

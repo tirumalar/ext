@@ -28,7 +28,7 @@ nxtW
 KeyMgr
 icm_communicator
 MultiChannelLogger
-EXTFaceDetection/FaceTracker
+FaceTracker
 )
 
 NANOSDK_PATH="${EYELOCK_WS_EXT}/NanoSDK"
