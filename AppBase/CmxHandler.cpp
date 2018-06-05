@@ -2187,11 +2187,12 @@ CmxHandler::CmxHandler(Configuration& conf)
 		m_resultDestAddr = HostAddress::MakeHost(cmxOIMAddr, eIPv4, false);
 	}
 
+	/*
 	m_rcvdMsg = new BinMessage(4*1024*1023);
 	if (m_rcvdMsg == NULL) {
 		EyelockLog(logger, ERROR, "CmxHandler - malloc failed ");
 	}
-
+	*/
 	int timeOutms = 200;	// 200 ms
 	m_timeOutSend.tv_sec = timeOutms / 1000;
 	m_timeOutSend.tv_usec = (timeOutms % 1000) * 1000;

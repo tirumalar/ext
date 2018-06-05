@@ -12,7 +12,8 @@
 #include "Synchronization.h"
 
 typedef struct ImageQueue{
-	unsigned char m_ptr[5038848];	// image size 1152000
+	// unsigned char m_ptr[5038848];	// image size 1152000
+	unsigned char *m_ptr;	// image size 1152000
 	int m_ill0;
 	int m_frameIndex;
 	__int64_t m_startTime,m_endTime;
@@ -43,7 +44,7 @@ private:
 	int m_numbits;
 	RingBufferImageQueue *m_pRingBuffer;
 	RingBufferQueueOffset *m_RingBufferOffset;
-
+	ImageQueue m_ImageQueue;
 };
 
 #endif /* BUFFERBASEDFRAMEGRABBER_H_ */
