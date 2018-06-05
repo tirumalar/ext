@@ -906,10 +906,17 @@ void DoStartCmd(){
 	//following process will activate PLL for all cameras
 
 	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
+#ifdef OPENCVWAIT
 	cvWaitKey(100);								//Wait for 100 msec
+#else
+	usleep(100);
+#endif
 	port_com_send("wcr(0x1f,0x302e,2) | wcr(0x1f,0x3030,44) | wcr(0x1f,0x302c,2) | wcr(0x1f,0x302a,6)");
+#ifdef OPENCVWAIT
 	cvWaitKey(10);								//Wait for 10 msec
-
+#else
+	usleep(10);
+#endif
 	//Turn on analog gain
 	//printf("Analog gain is %d\n",analogGain);
 	sprintf(cmd,"wcr(0x1b,0x30b0,%i)\n",((irisAnalogGain&0x3)<<4) | 0X80);
@@ -1026,10 +1033,17 @@ void DoStartCmd_CamCal(){
 	//following process will activate PLL for all cameras
 
 	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
+#ifdef OPENCVWAIT
 	cvWaitKey(100);								//Wait for 100 msec
+#else
+	usleep(100);
+#endif						//Wait for 100 msec
 	port_com_send("wcr(0x1f,0x302e,2) | wcr(0x1f,0x3030,44) | wcr(0x1f,0x302c,2) | wcr(0x1f,0x302a,6)");
+#ifdef OPENCVWAIT
 	cvWaitKey(10);								//Wait for 10 msec
-
+#else
+	usleep(10);
+#endif
 	//Turn on analog gain
 	port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
 	port_com_send("wcr(0x4,0x30b0,0x80");		//Only face camera gain is x90
@@ -1441,10 +1455,17 @@ void DoImageCal(int cam_id_ignore)
 	printf("All done press q to quit\n");
 	while (1)
 		{
+#ifdef OPENCVWAIT
 		char c=cvWaitKey(200);
 		if (c=='q')
 			return;
 		}
+#else
+	char c=getchar();
+	if (c=='q')
+		return;
+	}
+#endif
 }
 
 void CalAll()
@@ -2139,7 +2160,11 @@ void motorMove(){
 	char cmd[512];
     while(1){
         MoveTo(MAX_POS);
+#ifdef OPENCVWAIT
         cvWaitKey(WAIT);
+#else
+        usleep(WAIT);
+#endif
         //sprinf(cmd, "")
         temp = calTemp(1);
         temp = calTemp(2);
@@ -2149,7 +2174,11 @@ void motorMove(){
         writeStartNewLine(fileName);
 
         MoveTo(CENTER_POS);
+#ifdef OPENCVWAIT
         cvWaitKey(WAIT);
+#else
+        usleep(WAIT);
+#endif
         temp = calTemp(1);
         temp = calTemp(2);
         temp = calTemp(4);
@@ -2158,7 +2187,11 @@ void motorMove(){
         writeStartNewLine(fileName);
 
         MoveTo(MIN_POS);
+#ifdef OPENCVWAIT
         cvWaitKey(WAIT);
+#else
+        usleep(WAIT);
+#endif
         temp = calTemp(1);
         temp = calTemp(2);
         temp = calTemp(4);
@@ -2167,7 +2200,11 @@ void motorMove(){
         writeStartNewLine(fileName);
 
         MoveTo(CENTER_POS);
+#ifdef OPENCVWAIT
         cvWaitKey(WAIT);
+#else
+        usleep(WAIT);
+#endif
         temp = calTemp(1);
         temp = calTemp(2);
         temp = calTemp(4);
