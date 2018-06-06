@@ -2388,8 +2388,8 @@ void CmxHandler::HandleSendMsg(char *msg){
 				SendMessage(buf, len);
 			if ((msg[2] == 0) && (msg[4] == 0)) {
 				regs[0] = Green;
-				//	len = sprintf(buf, "play_snd(0)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
-				//	SendMessage(buf, len);
+					len = sprintf(buf, "play_snd(0)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
+					SendMessage(buf, len);
 			}
 			if ((msg[3] == 0) && (msg[4] == 0)) {
 				regs[0] = Red;
@@ -2407,8 +2407,8 @@ void CmxHandler::HandleSendMsg(char *msg){
 				//SendMessage(buf, len);
 			}
 
-			BobSetData(regs, 1);
-			BobSetCommand (BOB_COMMAND_SET_LED);
+			//BobSetData(regs, 1);
+			//BobSetCommand (BOB_COMMAND_SET_LED);
 
 		} else {
 				printf("SKIPPING AN LED COMMAND\n");
