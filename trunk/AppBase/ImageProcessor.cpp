@@ -838,45 +838,76 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 
 		int cam_id = frame->imageData[2]&0xff;
 		sprintf(temp,"cal%02x.pgm",cam_id);
-		printf("cam_id....%02x filename...%s\n", cam_id, temp);
+		// printf("cam_id....%02x filename...%s\n", cam_id, temp);
 
-		if (m_OffsetImageLoadedMainCamera1 == false && (cam_id == 0x81)) {
-			m_OffsetImageMainCamera1 = cvLoadImage("cal81.pgm", CV_LOAD_IMAGE_GRAYSCALE);
+		if (m_OffsetImageLoadedMainCamera1 == false && (cam_id == 0x01)) {
+			m_OffsetImageMainCamera1 = cvLoadImage("cal01.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedMainCamera1 = true;
 		}
 
-		if (m_OffsetImageLoadedMainCamera2 == false && (cam_id == 0x82)) {
-			m_OffsetImageMainCamera2 = cvLoadImage("cal82.pgm", CV_LOAD_IMAGE_GRAYSCALE);
+		if (m_OffsetImageLoadedMainCamera2 == false && (cam_id == 0x02)) {
+			m_OffsetImageMainCamera2 = cvLoadImage("cal02.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedMainCamera2 = true;
 		}
 
-		if (m_OffsetImageLoadedAuxCamera1 == false && (cam_id == 0x01)) {
-			m_OffsetImageAuxCamera1 = cvLoadImage("cal01.pgm", CV_LOAD_IMAGE_GRAYSCALE);
+		if (m_OffsetImageLoadedAuxCamera1 == false && (cam_id == 0x81)) {
+			m_OffsetImageAuxCamera1 = cvLoadImage("cal81.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedAuxCamera1 = true;
 		}
 
-		if (m_OffsetImageLoadedAuxCamera2 == false && (cam_id == 0x02)) {
-			m_OffsetImageAuxCamera2 = cvLoadImage("cal02.pgm", CV_LOAD_IMAGE_GRAYSCALE);
+		if (m_OffsetImageLoadedAuxCamera2 == false && (cam_id == 0x82)) {
+			m_OffsetImageAuxCamera2 = cvLoadImage("cal82.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedAuxCamera2 = true;
 		}
 
-		if (m_OffsetImageLoadedMainCamera1){
+		if (m_OffsetImageLoadedMainCamera1  && (cam_id == 0x01)){
+#if 0
+			cvZero(m_OffsetOutputImage);
 			cvSub(frame,m_OffsetImageMainCamera1,m_OffsetOutputImage);
 			cvCopyImage(m_OffsetOutputImage, frame);
+#else
+			cvSub(frame,m_OffsetImageMainCamera1,frame);
+#endif
+			//cvSaveImage("0x01.pgm", m_OffsetOutputImage);
+			//cvSaveImage("0x01_Corrected.pgm", frame);
+
 		}
-		if (m_OffsetImageLoadedMainCamera2){
+		if (m_OffsetImageLoadedMainCamera2  && (cam_id == 0x02)){
+#if 0
+			cvZero(m_OffsetOutputImage);
 			cvSub(frame,m_OffsetImageMainCamera2,m_OffsetOutputImage);
 			cvCopyImage(m_OffsetOutputImage, frame);
+#else
+			cvSub(frame,m_OffsetImageMainCamera2,frame);
+#endif
+			//cvSaveImage("0x02.pgm", m_OffsetOutputImage);
+			//cvSaveImage("0x02_Corrected.pgm", frame);
+
 		}
-		if (m_OffsetImageLoadedAuxCamera1){
+		if (m_OffsetImageLoadedAuxCamera1  && (cam_id == 0x81)){
+#if 0
+			cvZero(m_OffsetOutputImage);
 			cvSub(frame,m_OffsetImageAuxCamera1,m_OffsetOutputImage);
 			cvCopyImage(m_OffsetOutputImage, frame);
+#else
+			cvSub(frame,m_OffsetImageAuxCamera1,frame);
+#endif
+			//cvSaveImage("0x81.pgm", m_OffsetOutputImage);
+			//cvSaveImage("0x81_Corrected.pgm", frame);
+
 		}
-		if (m_OffsetImageLoadedAuxCamera2){
+		if (m_OffsetImageLoadedAuxCamera2  && (cam_id == 0x82)){
+#if 0
+			cvZero(m_OffsetOutputImage);
 			cvSub(frame,m_OffsetImageAuxCamera2,m_OffsetOutputImage);
 			cvCopyImage(m_OffsetOutputImage, frame);
+#else
+			cvSub(frame,m_OffsetImageAuxCamera2,frame);
+#endif
+			//cvSaveImage("0x82.pgm", m_OffsetOutputImage);
+			//cvSaveImage("0x82_Corrected.pgm", frame);
 		}
-		cvZero(m_OffsetOutputImage);
+
 	}
 #endif
 #if 0 // 27th March to reduce noise
