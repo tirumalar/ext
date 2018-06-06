@@ -66,7 +66,6 @@ bash -c "while true; do if [ -f /home/root/FaceTracker.run ]; then /home/root/Fa
 
 # Only run Eyelock when Eyelock.run exists
 chmod a+x ./Eyelock
-touch Eyelock.run
 bash -c "while true; do if [ -f /home/root/Eyelock.run ]; then /home/root/Eyelock; fi; sleep 6; done" &
 
 #chmod a+x knockd
