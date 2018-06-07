@@ -1148,7 +1148,7 @@ function updateTime()
 	mins = curDate.getUTCMinutes();
 	secs = curDate.getUTCSeconds();
 
-        var arParameters = [["localtime", "'"+year+"-"+twoDigit(month)+"-"+twoDigit(date)+" "+twoDigit(hour)+":"+twoDigit(mins)+":"+twoDigit(secs)+"'"]];
+        var arParameters = [["localtime", year+"-"+twoDigit(month)+"-"+twoDigit(date)+" "+twoDigit(hour)+":"+twoDigit(mins)+":"+twoDigit(secs)]];
 
         sndReqParams('/scripts/rpc.php', 'updatelocaltime', arParameters, GlobalStrings.DeviceTimeSynchronizing);
     });

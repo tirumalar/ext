@@ -225,8 +225,7 @@ if (isset($_REQUEST['action']))
 		
 			//we'll call this function from two locations, first from the button, then from the save settings part before we submit.  We'll need to validate the timeserver, IF IT CHANGES, to make sure that the new server is valid.  Call to 42 should respond with a 0.  
 			//if this RPC call fails, we need to block the settings save and call up an error message.
-			$strServer = escapeshellarg($_REQUEST['timeserver']);
-            $strDate = NXTW_shell_exec(sprintf("42".chr(0x1F)."%s", escapeshellarg($_REQUEST['timeserver'])));//"rdate -s {$_REQUEST['timeserver']} 2>&1");
+			$strDate = NXTW_shell_exec(sprintf("42".chr(0x1F)."%s", escapeshellarg($_REQUEST['timeserver'])));//"rdate -s {$_REQUEST['timeserver']} 2>&1");
 		    $resfile = fopen("/home/root/scripts/mynxtw", "r");
 			$strDate = fread($resfile,1);
 			$strintDate = intval($strDate);
@@ -253,11 +252,10 @@ if (isset($_REQUEST['action']))
 
 	    case 'updatelocaltime':
         {
-	     // do something, the put our response in the response field...
-            $strDate = NXTW_shell_exec(sprintf("45".chr(0x1F)."%s", escapeshellarg($_REQUEST['localtime'])));//"date -s '{$_REQUEST['localtime']}' 2>&1");
-	//        error_log("result of local time sync attempt >".$strDate);
-            // set the hardware clock
-            $strResult = NXTW_shell_exec("46");//"/sbin/hwclock -w"); // Does no harm to call this even on failure...
+	        $strDate = NXTW_shell_exec(sprintf("45".chr(0x1F)."%s", escapeshellarg($_REQUEST['localtime'])));//"date -s '{$_REQUEST['localtime']}' 2>&1");
+
+            $strSyncHwTime = "TIMESYNC_MSG";
+            $strSyncHwTimeResult = SendTCPMessage($strSyncHwTime);
 
             $strtheDate = NXTW_shell_exec("44");//"date 2>&1");
 
