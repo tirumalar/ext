@@ -1203,8 +1203,9 @@ void F2FDispatcher::SendData(MatchResult *msg)
 
 #define bcd2bin(x)	(((x) & 0x0f) + ((x) >> 4) * 10)
 #define bin2bcd(x)	((((x) / 10) << 4) + (x) % 10)
-void settime()
+void F2FDispatcher::settime()
 {
+	EyelockLog(logger, TRACE, "Hardware clock sync");
 	unsigned char regs[8];
 	time_t rawtime;
 	struct tm* tm1;
@@ -1236,8 +1237,9 @@ void setLED(int x)
 	regs[0] = x;
 	BobSetData(regs,1);
 }
-void gettime()
+void F2FDispatcher::gettime()
 {
+	EyelockLog(logger, TRACE, "Retrieving hardware time");
 	unsigned char regs[8];
 	time_t rawtime;
 	struct tm* tm1,tm2;

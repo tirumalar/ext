@@ -89,6 +89,8 @@ public:
 	bool addACD(string acd, int acdlen, string acdnop, string name,string pin);
 	bool modifyACD(string acd, int acdlen, string acdnop, string new_acd, string new_acdnop, string ping);
 
+	void gettime();
+	void settime();
 
 protected:
 	bool checkToBeSendToNw( MatchResultState val);

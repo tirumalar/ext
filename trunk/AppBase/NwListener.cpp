@@ -436,6 +436,13 @@ bool NwListener::do_serv_task(Socket& client) {
 			if(testData) delete [] testData;
 
 		}
+		else if (m_HTTPMsg->getMsgType() == TIMESYNC_MSG)
+		{
+			if(m_nwMatchManager){
+				F2FDispatcher * mf2f = m_nwMatchManager->GetF2FDispatcher();
+				mf2f->settime();
+			}
+		}
 		else if (m_HTTPMsg->getMsgType() == TESTMATCH)
 		{
 			if(m_nwMatchManager){
