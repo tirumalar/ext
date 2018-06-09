@@ -78,7 +78,8 @@ cp "${EYELOCK_WS_EXT}/linux/bin/Release/Eyelock" "${ROOT_DIR}"
 cp "${EYELOCK_WS_EXT}/linux/bin/Release/FaceTracker" "${ROOT_DIR}"
 
 cp "${EYELOCK_WS_EXT}/linux/bin/Release/KeyMgr" "${ROOT_DIR}"
-cp "${EYELOCK_WS_EXT}/linux/bin/Release/icm_communicator" "${ROOT_DIR}"
+cp "${EYELOCK_WS_EXT}/icm_communicator_EXT/icm_communicator" "${ROOT_DIR}"
+cp "${EYELOCK_WS_EXT}/linux/bin/Release/time_sync_EXT" "${ROOT_DIR}"
 
 cp "${EYELOCK_WS_EXT}/NanoSDK/scripts/fwHandler.sh" "${ROOT_DIR}"
 
