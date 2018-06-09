@@ -20,11 +20,12 @@ NanoSDK
 NwHDMatcher
 nxtW
 KeyMgr
-icm_communicator
+icm_communicator_EXT
 MultiChannelLogger
 EXTFaceDetection/CLM
 EXTFaceDetection/facedetect
 EXTFaceDetection/FaceTracker
+time_sync_EXT
 )
 
 echo "Importing projects"
