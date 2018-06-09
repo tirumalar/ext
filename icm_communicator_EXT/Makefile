@@ -19,7 +19,7 @@ test4:
 	./cybootload_linux test/CY8CKIT-049-41XX_UART_Example.cyacd
 
 clean:
-	-rm *.o cybootload_linux 
+	-rm *.o icm_communicator 
 
 StringImage.h: "Bootloadable Blinking LED.cyacd"
 	perl conv.pl "$<"
