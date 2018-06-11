@@ -25,7 +25,7 @@ MultiChannelLogger
 EXTFaceDetection/CLM
 EXTFaceDetection/facedetect
 EXTFaceDetection/FaceTracker
-time_sync_EXT
+i2cHandler
 )
 
 echo "Importing projects"
