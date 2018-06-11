@@ -2,8 +2,8 @@
 
 #cp /home/www/nxtW /home/
 
-chmod +x /home/root/time_sync_EXT
-/home/root/time_sync_EXT
+chmod +x /home/root/i2cHandler
+/home/root/i2cHandler -t
 
 NOW=$(date -u +"%Y-%m-%d %T, %Z")
 echo "$NOW > Eyelock NXT Start" >> /home/root/nxtEvent.log

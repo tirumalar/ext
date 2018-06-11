@@ -29,7 +29,7 @@ KeyMgr
 icm_communicator_EXT
 MultiChannelLogger
 ##FaceTracker
-time_sync_EXT
+i2cHandler
 )
 
 NANOSDK_PATH="${EYELOCK_WS_EXT}/NanoSDK"
