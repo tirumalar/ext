@@ -8,6 +8,8 @@ RECOVERY_MIN_INTERVAL=30 # seconds
 TIME_SINCE_LAST_RECOVERY=30 # initialize to 
 COUNTER=0
 MAX_SEQUENTIAL_RECOVERIES=3
+FACETRACKER_RUN_FILE='/home/root/FaceTracker.run'
+EYELOCK_RUN_FILE='/home/root/Eyelock.run'
 
 rm "${FLAG}"
 
@@ -17,6 +19,7 @@ do
 	if ping -c 1 "${OIM_IP}"
 	then
 		echo "OIM ${OIM_IP} is pingable, sleeping ${TIMEOUT} seconds"
+		touch "${FACETRACKER_RUN_FILE}"
 		COUNTER=0		
 	else
 		echo "OIM ${OIM_IP} is NOT pingable!"
@@ -32,6 +35,20 @@ do
 			if [[ ${TIME_SINCE_LAST_RECOVERY} -ge ${RECOVERY_MIN_INTERVAL} ]] 
 			then
 				echo "recovering..."
+				rm "${EYELOCK_RUN_FILE}"				
+				rm "${FACETRACKER_RUN_FILE}"
+
+				FCTKR_PID=$(ps -ef | grep '/FaceTracker$' | awk '{print $2}')
+				if [[ ! -z ${FCTKR_PID} ]]
+				then
+					kill -9 "${FCTKR_PID}"
+				fi
+
+				ELK_PID=$(ps -ef | grep '/Eyelock$' | awk '{print $2}')
+				if [[ ! -z ${ELK_PID} ]]
+				then
+					kill -9 "${ELK_PID}"
+				fi
 
 				ifdown eth0
 				sleep 1

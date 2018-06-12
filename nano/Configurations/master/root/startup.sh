@@ -2,6 +2,8 @@
 
 #cp /home/www/nxtW /home/
 
+sleep 10
+
 chmod +x /home/root/i2cHandler
 /home/root/i2cHandler -t
 
@@ -17,6 +19,10 @@ chmod 777 nxtW
 bash -c "while true; do if [ -f /home/nxtW.run ]; then /home/nxtW; fi; sleep 4; done" &
 #./nxtW &
 cd /home/root
+
+chmod +x hbOIM.sh
+./hbOIM.sh &
+
 rm *.bin
 chmod -R 755 root/
 chmod a+x *
@@ -33,6 +39,9 @@ chown -R www-data:www-data /home/root
 chown -R www-data:www-data /home/www
 chown -R www-data:www-data /home/www-internal
 chown -R www-data:www-data /home/default
+
+chown www-data:www-data /etc/network/interfaces # required on EXT for configuring interfaces from the web config
+
 # on NXT: launchwebserver.sh: /bin/chown -R www:www /home
 # need to be reviewed from security perspective
 
@@ -50,11 +59,12 @@ echo ******************************************
 sysctl -w net.core.rmem_default=3145704
 sysctl -w net.core.rmem_max=3145704
 
-#ifconfig eth0 down
+ifconfig eth0 down
 #ifconfig eth0 hw ether f8:32:e4:9b:39:a2
 #ifconfig eth0 192.168.4.170
-#ifconfig eth0 up
-
+sleep 1
+ifconfig eth0 up
+sleep 1
 ID=`cat /home/root/id.txt`
 sed -i "s/nano.*-1.local/nanonxt${ID}-1.local/g" /home/root/Eyelock.ini
 sed -i "s/nano.*-0.local/nanonxt${ID}.local/g" /home/root/Eyelock.ini
@@ -64,7 +74,6 @@ export NTP_SERVER=`grep -e "GRI\.InternetTimeAddr\=.*" Eyelock.ini | cut -f2 -d'
 chmod a+x ./icm_communicator
 
 chmod a+x ./FaceTracker
-touch FaceTracker.run
 bash -c "while true; do if [ -f /home/root/FaceTracker.run ]; then /home/root/FaceTracker 8194 1; fi; sleep 6; done" &
 
 # Only run Eyelock when Eyelock.run exists
