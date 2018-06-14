@@ -23,6 +23,14 @@ BufferBasedFrameGrabber::BufferBasedFrameGrabber():m_Width(0),m_Height(0),m_Widt
 }
 
 BufferBasedFrameGrabber::~BufferBasedFrameGrabber() {
+	ImageQueueItem qi;
+	while (!m_FreeBuffer->Empty())
+	{
+		if (m_FreeBuffer->TryPop(qi))
+		{
+			delete[] qi.m_ptr;
+		}
+	}
 }
 
 void BufferBasedFrameGrabber::ReleaseProcessBuffer(ImageQueueItem m)
