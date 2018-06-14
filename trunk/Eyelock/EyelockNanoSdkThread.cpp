@@ -155,6 +155,12 @@ void EyelockNanoSdkThread::SetSDKDispatcher(SDKDispatcher *ptr){
 	}
 }
 
+void EyelockNanoSdkThread::SetF2FDispatcher(F2FDispatcher *ptr){
+	if(m_handler.get()){
+		m_handler->SetF2FDispatcher(ptr);
+	}
+}
+
 
 void EyelockNanoSdkThread::SetEyelockFirmwareVersion(std::string firmwareRevision){
 	if(m_handler.get())

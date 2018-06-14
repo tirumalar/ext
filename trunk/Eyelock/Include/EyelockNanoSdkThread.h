@@ -58,6 +58,7 @@ public:
 	    	m_webSocketServer = ws;
 	    }
 	    void SetSDKDispatcher(SDKDispatcher *ptr);
+	    void SetF2FDispatcher(F2FDispatcher *ptr);
 	    virtual ~EyelockNanoSdkThread();
 
 protected:

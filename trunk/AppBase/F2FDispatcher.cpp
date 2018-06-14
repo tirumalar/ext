@@ -1225,10 +1225,8 @@ void F2FDispatcher::settime()
 		regs[5] = tm1->tm_wday;
 		regs[6] = bin2bcd(tm1->tm_mon + 1);
 		regs[7] = bin2bcd(tm1->tm_year - 100);
-		BobSetData(regs,8);
 		printf("setting time to 0x%0x: 0x%0x: 0x%0x,0x%0x: 0x%0x,0x%0x: 0x%0x...\n",regs[1],regs[2],regs[3],regs[4],regs[5],regs[6],regs[7]);
-
-
+		BobSetDataAndRunCommand(regs,8,BOB_COMMAND_RTCWRITE_CMD);
 }
 void setLED(int x)
 {

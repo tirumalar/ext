@@ -37,7 +37,8 @@ enum NWMESSAGETYPE {
 	TESTACS,
 	GETACS,
 	CALIBRATION_MSG,
-	TESTMATCH
+	TESTMATCH,
+	TIMESYNC_MSG
 };
 
 class HTTPPOSTMsg :
@@ -148,6 +149,7 @@ public:
 		if(isGetACS()) return GETACS;
 		if(isTestMATCH()) return TESTMATCH;
 		if(isCalibration()) return CALIBRATION_MSG;
+		if(isHwTimeSync()) return TIMESYNC_MSG;
 		int fr_Len=0;
 		char *frame=getFrameHTTP(&fr_Len);
 		if(fr_Len>0 && frame!=0) return IMG_MSG;
@@ -282,6 +284,10 @@ bool isRecvEncDB(){
 }
 bool isGetCount(){
 	bool ismode = (0==strncmp(Buffer,"GET_USER_COUNT",14));
+	return ismode;
+}
+bool isHwTimeSync(){
+	bool ismode = (0==strncmp(Buffer,"TIMESYNC_MSG",12));
 	return ismode;
 }
 

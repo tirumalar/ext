@@ -362,6 +362,9 @@ void EyelockNanoDeviceHandler::SetConsolidator(LEDConsolidator *ptr) {
 void EyelockNanoDeviceHandler::SetSDKDispatcher(SDKDispatcher  *ptr){
 	m_pSDKDispatcher = ptr;
 }
+void EyelockNanoDeviceHandler::SetF2FDispatcher(F2FDispatcher  *ptr){
+	m_pF2FDispatcher = ptr;
+}
 int32_t EyelockNanoDeviceHandler:: ChangeLedColor(const int8_t mask,const int32_t t) {
 
 	int colorcode = (int) mask;
@@ -614,14 +617,18 @@ int32_t EyelockNanoDeviceHandler::SyncTime(const int64_t nanoTime, const int64_t
 		int64_t milliSeconds = approxTime % 1000;
 
 		struct timeval tv;
-		struct timezone tz;
 		EyelockLog(logger, INFO, "Time synchronization: nano time 1: %ld | nano time 2: %ld | host time: %ld", nanoTime, current, hostTime);
 		tv.tv_sec = seconds;
 		tv.tv_usec = milliSeconds * 1000;
-		int result = settimeofday(&tv, &tz);
+		int result = settimeofday(&tv, NULL);
 		if (result == 0)
 		{
+
+#ifdef CMX_C1
+			m_pF2FDispatcher->settime();
+#else
 			RunSystemCmd("/sbin/hwclock -w");
+#endif
 			int64_t updatedTime = GetEpochMilliseconds();
 			EyelockLog(logger, INFO, "Time was updated, current timestamp is %ld", updatedTime);
 			return SUCCESS;
