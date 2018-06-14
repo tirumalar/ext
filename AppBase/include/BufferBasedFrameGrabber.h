@@ -11,16 +11,17 @@
 #include "FrameGrabber.h"
 #include "Synchronization.h"
 
-typedef struct ImageQueue{
+typedef struct ImageQueueItem{
 	// unsigned char m_ptr[5038848];	// image size 1152000
 	unsigned char *m_ptr;	// image size 1152000
 	int m_ill0;
 	int m_frameIndex;
 	__int64_t m_startTime,m_endTime;
+	int item_id;
 };
 
 
-typedef RingBuffer<ImageQueue> RingBufferImageQueue;
+typedef RingBuffer<ImageQueueItem> RingBufferImageQueue;
 typedef RingBuffer<int> RingBufferQueueOffset;
 
 class BufferBasedFrameGrabber: public FrameGrabber {
@@ -36,6 +37,9 @@ public:
 	virtual char *getLatestFrame_raw();
 	void setLatestFrame_raw(char *ptr);
 	void clearFrameBuffer();
+	ImageQueueItem GetFreeBuffer();
+	void ReleaseProcessBuffer(ImageQueueItem m);
+	void PushProcessBuffer(ImageQueueItem m);
 private:
 	int m_Width,m_Height,m_WidthStep;
 	char *m_pImageBuffer;
@@ -44,7 +48,12 @@ private:
 	int m_numbits;
 	RingBufferImageQueue *m_pRingBuffer;
 	RingBufferQueueOffset *m_RingBufferOffset;
-	ImageQueue m_ImageQueue;
+
+	RingBufferImageQueue *m_FreeBuffer;
+	RingBufferImageQueue *m_ProcessBuffer;
+
+	ImageQueueItem m_ImageQueueItem;
+	ImageQueueItem m_current_process_queue_item;
 };
 
 #endif /* BUFFERBASEDFRAMEGRABBER_H_ */
