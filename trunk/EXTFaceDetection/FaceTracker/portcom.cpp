@@ -22,8 +22,13 @@ static int sockfd;
 
 const char logger[30] = "PortCom";
 
+pthread_mutex_t lock;
+
 int portcom_start() {
 	EyelockLog(logger, TRACE, "portcom_start");
+
+	pthread_mutex_init(&lock,NULL);
+
 	struct sockaddr_in dest;
 
 	// Open socket for streaming
@@ -53,125 +58,101 @@ int portcom_start() {
 
 int in_send = 0;
 
-void port_com_send(char *cmd) {
+void port_com_send(char *cmd)
+{
 	EyelockLog(logger, TRACE, "port_com_send");
+	pthread_mutex_lock(&lock);
 
 	char buffer[512];
-	int rv, ret;
-	//printf("In port com");
+	int rv;
 	FILE *file;
-	if (strncmp(cmd, "ixed", strlen("ixed")) == 0) {
-		printf("I got ixed\n");
-		//scanf("%d",&rv);
-		return;
-	}
-	while (recv(sockfd, buffer, 512, MSG_DONTWAIT) > 0)
-		;
+
+	while (recv(sockfd, buffer, 512, MSG_DONTWAIT) > 0); // clearing input buffer (flush)
 	int t = clock();
 
-	if (in_send) {
-
-		// printf("--------------------------------------->  In send\n");
-#ifdef NOOPTIMIZE
-		while (in_send)
-		usleep(1000);
-#endif
-	}
-	in_send = 1;
 	sprintf(buffer, "%s\n", cmd);
 	rv = send(sockfd, buffer, strlen(buffer), 0);
 	if (rv != (int) strlen(buffer))
 		printf("rv & command length don't match %d %d\n", rv, strlen(buffer));
 	//printf("%d rv send %d\n",x,rv);
 
-//	printf("# ");
-	int counter = 0;
-	while (1) {
-		rv = recv(sockfd, buffer, 512, MSG_DONTWAIT);
-		counter++;
-		// usleep(100);
-		if (counter > 500000) {
-			EyelockLog(logger, ERROR,
-					"port_com_send didnot return from while loop");
-			printf("----------------->error no return\n");
-			//printf(">%s Got K %2.3f\n",cmd,(float)(clock()-t)/CLOCKS_PER_SEC);
-			break;
-		}
-		if (rv <= 0)
-			continue;
-		else {
-			//cmd = buffer;
-			/*		for (int i=0; i < 30; i++)
-			 printf("%c \n",buffer[i]);
-			 */}
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const void*) &tv, sizeof(tv));
+
+	rv = recv(sockfd, buffer, 512, 0);
+
+	if (rv <= 0)
+	{
+		EyelockLog(logger, ERROR, "cannot receive data");
+	}
+	else
+	{
 		buffer[rv] = 0;
-		if (strchr(buffer, 'K')) {
-			//printf(">%s Got K %2.3f\n",cmd,(float)(clock()-t)/CLOCKS_PER_SEC);
-			break;
+		if (!strchr(buffer, 'K'))
+		{
+			EyelockLog(logger, ERROR, "cannot find token");
 		}
 	}
 
 	file = fopen("port.log", "at");
-	if (file) {
+	if (file)
+	{
 		fprintf(file, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n",
 				(float) clock() / CLOCKS_PER_SEC,
 				(float) (clock() - t) / CLOCKS_PER_SEC, cmd);
 		fclose(file);
 	}
 
-	//usleep(5000);
-	in_send = 0;
-	// printf("%u & \n",counter);
+	pthread_mutex_unlock(&lock);
 }
 
 int port_com_send_return(char *cmd, char *buffer, int min_len) {
-	EyelockLog(logger, TRACE, "port_com_send_return");
-	int rv, ret;
+	EyelockLog(logger, TRACE, "port_com_send");
+	pthread_mutex_lock(&lock);
 
-	if (in_send) {
-		EyelockLog(logger, DEBUG, "port_com_send_return inside in_send loop");
-#ifdef NOOPTIMIZE
-		while (in_send)
-		usleep(1000);
-#endif
-	}
-	in_send = 1;
+	int rv;
+	FILE *file;
 
-#ifdef NOOPTIMIZE
-	//usleep(10000);
-#endif
-	while (recv(sockfd, buffer, 512, MSG_DONTWAIT) > 0)
-		;
+	while (recv(sockfd, buffer, 512, MSG_DONTWAIT) > 0); // clearing input buffer (flush)
+	int t = clock();
 
 	sprintf(buffer, "%s\n", cmd);
 	rv = send(sockfd, buffer, strlen(buffer), 0);
 	if (rv != (int) strlen(buffer))
-		printf("rv & command length don't match\n");
+		printf("rv & command length don't match %d %d\n", rv, strlen(buffer));
 	//printf("%d rv send %d\n",x,rv);
 
-	int counter = 0;
-	while (1) {
-		rv = recv(sockfd, buffer, 512, MSG_DONTWAIT);
-		counter++;
-		// usleep(100);
-		if (counter > 2000) {
-			EyelockLog(logger, ERROR, "port_com_send_return timeout error");
-			printf(" timeout error\n");
-			break;
-		}
-		if (rv <= min_len)
-			continue;
-		buffer[rv] = 0;
-		//if (strchr(buffer,'K'))
-		{
-			//printf("Got K\n");
-			break;
-		}
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const void*) &tv, sizeof(tv));
 
+	rv = recv(sockfd, buffer, 512, 0);
+
+	if (rv <= 0)
+	{
+		EyelockLog(logger, ERROR, "cannot receive data");
 	}
-	//usleep(5000);
-	in_send = 0;
-	// printf("%u & \n",counter);
+	else
+	{
+		if (rv < min_len)
+		{
+			EyelockLog(logger, ERROR, "cannot find token");
+		}
+	}
+
+	file = fopen("port.log", "at");
+	if (file)
+	{
+		fprintf(file, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n",
+				(float) clock() / CLOCKS_PER_SEC,
+				(float) (clock() - t) / CLOCKS_PER_SEC, cmd);
+		fclose(file);
+	}
+
+	pthread_mutex_unlock(&lock);
 
 	return rv;
 }

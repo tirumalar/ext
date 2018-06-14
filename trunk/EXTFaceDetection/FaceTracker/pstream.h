@@ -13,14 +13,16 @@
 #define PORT 8193
 
 #define IMAGE_SIZE WIDTH*HEIGHT
-typedef struct ImageQueue {
-	unsigned char m_ptr[IMAGE_SIZE];	// image size 1152000
+
+typedef struct ImageQueueItem {
+	unsigned char *m_ptr;	// image size 1152000
 	int m_ill0;
 	int m_frameIndex;
 	__int64_t m_startTime, m_endTime;
+	int item_id;
 };
 
-typedef RingBuffer<ImageQueue> RingBufferImageQueue;
+typedef RingBuffer<ImageQueueItem> RingBufferImageQueue;
 
 class VideoStream {
 public:
@@ -30,15 +32,27 @@ public:
 	volatile int running;
 	int cam_id;
 	RingBufferImageQueue *m_pRingBuffer;
+
+	RingBufferImageQueue *m_FreeBuffer;
+	RingBufferImageQueue *m_ProcessBuffer;
+
+	ImageQueueItem m_ImageQueueItem;
+	ImageQueueItem m_current_process_queue_item;
+
 	char buf[BUFLEN];
 	char offset_image[IMAGE_SIZE];
 	char offset_sub_enable;
 	char offset_image_loaded;
 	pthread_t Thread;
 	static void *ThreadServer(void *arg);
+
+	ImageQueueItem GetFreeBuffer();
+	void ReleaseProcessBuffer(ImageQueueItem m);
+	void PushProcessBuffer(ImageQueueItem m);
+
 	void flush(void);
 	int get(int *win, int *hin, char *m_pImageBuffer);
-	bool HandleReceiveImage(unsigned char *ptr, int length);
+	//bool HandleReceiveImage(unsigned char *ptr, int length);
 	int GetCamId(void);
 	int length;
 
