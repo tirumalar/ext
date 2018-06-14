@@ -170,7 +170,6 @@ int internal_write_reg(int fd, unsigned char reg, unsigned int val)
 {
 	int result = -1;
 	int response_len = -1;
-	int expected_response_len = 4;
 	unsigned char buff[5];
 
 	if (fd == 0)
@@ -197,7 +196,7 @@ int internal_write_reg(int fd, unsigned char reg, unsigned int val)
 
 	response_len = read(fd, buff, 4);
 	//printf("response length: %d\n", response_len);
-	if (response_len != expected_response_len)
+	if (response_len != 4)
 	{
 		return -3;
 	}
@@ -333,7 +332,7 @@ int get_rtc_time(int fd, struct tm *tm_out)
 	char regs[8];
 	int stat = 0;
 
-	stat = internal_write_reg(fd, BOB_COMMAND_OFFSET, BOB_COMMAND_RTCREAD_CMD); // TODO: after this call every read operation hang
+	stat = internal_write_reg(fd, BOB_COMMAND_OFFSET, BOB_COMMAND_RTCREAD_CMD);
 	if (stat)
 	{
 		return stat;
@@ -358,27 +357,37 @@ int get_rtc_time(int fd, struct tm *tm_out)
 		tm_out->tm_wday = regs[5] & 0x7;
 		tm_out->tm_mon = bcd2bin(regs[6] & 0x1f) - 1;
 		tm_out->tm_year = bcd2bin(regs[7]) + 100;
+		tm_out->tm_isdst = -1;
 		printf("time: %s\n", asctime(tm_out));
 	}
 	return 0;
 }
 
-int reboot_oim(int fd)
+int reboot_oim(int fd, int on)
 {
 	int stat = 0;
-	printf("turning OIM off...\n");
-	stat = internal_write_reg(fd, BOB_COMMAND_OFFSET, BOB_COMMAND_OIM_OFF);
-	if (stat)
+
+	if (!on)
 	{
-		return stat;
+		printf("turning OIM off...\n");
+		stat = internal_write_reg(fd, BOB_COMMAND_OFFSET, BOB_COMMAND_OIM_OFF);
+		if (stat)
+		{
+			return stat;
+		}
+		sleep(2);
 	}
-	sleep(2);
-	printf("turning OIM on...\n");
-	stat = internal_write_reg(fd, BOB_COMMAND_OFFSET, BOB_COMMAND_OIM_ON);
-	if (stat)
+	else
 	{
-		return stat;
+		printf("turning OIM on...\n");
+		stat = internal_write_reg(fd, BOB_COMMAND_OFFSET, BOB_COMMAND_OIM_ON);
+		if (stat)
+		{
+			return stat;
+		}
+		sleep(2);
 	}
+
 	return 0;
 }
 
@@ -396,7 +405,7 @@ int main(int argc, char **argv)
 	set_interface_attribs(fd, B19200);
 	usleep(100);
 
-	while ((opt = getopt(argc, argv, "dvtrhl:")) != -1)
+	while ((opt = getopt(argc, argv, "dvtr:hl:")) != -1)
 	{
 		switch (opt)
 		{
@@ -427,7 +436,7 @@ int main(int argc, char **argv)
 			}
 			break;
 		case 'r':
-			if (reboot_oim(fd))
+			if (reboot_oim(fd, atoi(optarg)))
 			{
 				exit(EXIT_FAILURE);
 			}
