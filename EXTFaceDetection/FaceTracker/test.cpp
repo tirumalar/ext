@@ -1141,7 +1141,7 @@ void DoRunMode(bool bShowFaceTracking)
 {
 	EyelockLog(logger, TRACE, "DoRunMode");
 	float eye_size;
-
+	int t = clock();
 	// if (run_state == RUN_STATE_FACE)
 	{
 		float p;
@@ -1152,7 +1152,11 @@ void DoRunMode(bool bShowFaceTracking)
 		cv::resize(outImg, smallImgBeforeRotate, cv::Size(), (1 / scaling),
 				(1 / scaling), INTER_NEAREST);	//Mohammad
 
+		//printf("image resize %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
+
 		smallImg = rotation90(smallImgBeforeRotate);
+
+		//printf("image rotate %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
 
 //FACE_GAIN_DEFAULT   0x80		128
 //       0xe0		224
@@ -1166,6 +1170,7 @@ void DoRunMode(bool bShowFaceTracking)
 		EyelockLog(logger, DEBUG, "AGC Calculation");
 		p = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),
 				180);
+		//printf("image AGC %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
 
 		if (p < FACE_GAIN_PER_GOAL - FACE_GAIN_HIST_GOAL)
 			agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
@@ -1196,9 +1201,13 @@ void DoRunMode(bool bShowFaceTracking)
 			agc_set_gain = agc_val;
 		}
 
+		//printf("after AGC %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
+
 		EyelockLog(logger, DEBUG, "FindEyeLocation");
 		if (FindEyeLocation(smallImg, eyes, eye_size)) {
 			noeyesframe = 0;
+
+			//printf("after eyedetection %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
 
 			if (detect_area.contains(eyes)) {
 				EyelockLog(logger, DEBUG, "eyes found");
@@ -1306,6 +1315,8 @@ void DoRunMode(bool bShowFaceTracking)
 		 move_counts=0;
 		 }*/
 
+		//printf("before show face %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
+
 		if(bShowFaceTracking){
 			EyelockLog(logger, DEBUG, "Imshow");
 			cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
@@ -1325,7 +1336,7 @@ void DoRunMode(bool bShowFaceTracking)
 	 }
 	 }
 	 */
-
+	//printf("all done \t\t\t\t %3.3f\n",float) (clock() - t) / CLOCKS_PER_SEC );
 }
 
 Mat outImgLast, outImg1, outImg1s;

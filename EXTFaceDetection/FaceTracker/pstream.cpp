@@ -22,6 +22,7 @@
 #include <pthread.h>
 #include "Synchronization.h"
 #include "pstream.h"
+#include <signal.h>
 
 void diep(char *s)
 {
@@ -46,8 +47,10 @@ void *leftCServer(void *arg);
 */
 int m_port;
 
+#define FREE_BUFF_SIZE 5
+
 void VideoStream::flush() {
-	ImageQueue val;
+	ImageQueueItem val;
 	while ((m_pRingBuffer->TryPop(val)) != false)
 		usleep(1000);
 }
@@ -57,29 +60,32 @@ VideoStream::~VideoStream()
 	while (running >= 0)
 		usleep(100);
 
+	// assuming all items from m_ProcessBuffer will be returned back to m_FreeBuffer
+	ImageQueueItem qi;
+	while (!m_FreeBuffer->Empty())
+	{
+		if (m_FreeBuffer->TryPop(qi))
+		{
+			delete[] qi.m_ptr;
+		}
+	}
 }
+
 int VideoStream::get(int *win,int *hin,char *m_pImageBuffer)
 {
-
-	ImageQueue val;
-	bool status;
 	//printf("entering vid_stream_get\n");
-	while((m_pRingBuffer->TryPop(val)) != true)
-		usleep(1000);
+
+	// release the previously processed buffer it it is real;
+    if (m_current_process_queue_item.m_ptr != NULL)
+    {
+    	ReleaseProcessBuffer(m_current_process_queue_item);
+    }
+
+	while((m_ProcessBuffer->TryPop(m_current_process_queue_item)) != true)
 	{
-		unsigned char *ptr = val.m_ptr;
-		memcpy(m_pImageBuffer, ptr, length);
+		usleep(1000);
 	}
 
-	return 1;
-}
-
-
-
-bool VideoStream::HandleReceiveImage(unsigned char *ptr, int length)
-{
-	ImageQueue val;
-	unsigned char *pdata = val.m_ptr;
 	if (offset_sub_enable)
 	{
 		if (offset_image_loaded==0)
@@ -99,12 +105,20 @@ bool VideoStream::HandleReceiveImage(unsigned char *ptr, int length)
 		}
 		if (offset_image_loaded)
 			for (int z = 0; z< length;z++) // add underflow logic
-				pdata[z]= max((int)ptr[z]-(int)offset_image[z],0);
+				m_pImageBuffer[z]= max((int)m_current_process_queue_item.m_ptr[z]-(int)offset_image[z],0);
 	}
 	else
-	  memcpy(pdata, ptr, length);
-	return m_pRingBuffer->TryPush(val);
+		memcpy(m_pImageBuffer, m_current_process_queue_item.m_ptr, length);
+
+	return 1;
 }
+
+//bool VideoStream::HandleReceiveImage(unsigned char *ptr, int length)
+//{
+//	ImageQueueItem val;
+//
+//	return m_pRingBuffer->TryPush(val);
+//}
 
 int CreateUDPServer(int port) {
 
@@ -174,6 +188,42 @@ void SendUdpImage(int port, char *image, int bytes_left)
 
 }
 
+void VideoStream::ReleaseProcessBuffer(ImageQueueItem m)
+{
+	m_FreeBuffer->Push(m);
+}
+
+ImageQueueItem VideoStream::GetFreeBuffer()
+{
+	ImageQueueItem qi;
+	if (m_FreeBuffer->TryPop(qi))
+		return qi;
+	qi.m_ptr=0;
+//	printf("Free buffer returns %d\n",qi.item_id);
+	return qi;
+}
+
+void VideoStream::PushProcessBuffer (ImageQueueItem m)
+{
+//	printf("pushing image buffer %d\n",m.item_id);
+	static int cntr=0;
+
+
+	if(cntr & 0x1){
+		m.m_ill0 = 1;
+	}else{
+		m.m_ill0 = 0;
+	}
+	m.m_frameIndex = cntr;
+	cntr++;
+
+	m.m_startTime = 0;
+	m.m_endTime = m.m_startTime;
+
+	m_ProcessBuffer->Push(m);
+}
+
+
 void *VideoStream::ThreadServer(void *arg)
 {
 		VideoStream *vs=(VideoStream *)arg;
@@ -182,13 +232,20 @@ void *VideoStream::ThreadServer(void *arg)
         int length;
         int pckcnt=0;
         char buf[IMAGE_SIZE];
-        char databuf[IMAGE_SIZE];
+        char dummy_buff[IMAGE_SIZE];
+
         int datalen = 0;
         short *pShort = (short *)buf;
         bool b_syncReceived = false;
         struct sockaddr_in from;
         socklen_t fromlen = sizeof(struct sockaddr_in);
         int bytes_to_read=IMAGE_SIZE;
+
+        int pkgs_received = 0;
+        int pkgs_missed = 0;
+
+        ImageQueueItem queueItem = vs->GetFreeBuffer();
+        char *databuf = (char *)queueItem.m_ptr;
 
         int leftCSock = CreateUDPServer(vs->m_port);
         if (leftCSock < 0)
@@ -204,7 +261,8 @@ void *VideoStream::ThreadServer(void *arg)
                 printf("recvfrom error in leftCServer()");
             else
             {
-                if(!b_syncReceived && pShort[0] == 0x5555)
+            	pkgs_received++;
+            	if(!b_syncReceived && pShort[0] == 0x5555)
                 {
                         datalen = 0;
                         memcpy(databuf, buf+2, length-2);
@@ -225,7 +283,24 @@ void *VideoStream::ThreadServer(void *arg)
                 bytes_to_read-=  length;
                 if(datalen >= IMAGE_SIZE-5)
                 {
-                    vs->HandleReceiveImage(databuf, datalen);
+                    //vs->HandleReceiveImage(databuf, datalen);
+
+                	if (databuf != dummy_buff)
+						vs->PushProcessBuffer(queueItem);
+
+					queueItem = vs->GetFreeBuffer();
+					// if not put data into dummy buffer
+					if (!queueItem.m_ptr)
+					{
+						pkgs_missed++;
+						printf("no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
+						databuf = dummy_buff;
+					}
+					else
+					{
+						databuf = queueItem.m_ptr;
+					}
+
                    // printf("Got image bytes to read = %d\n",bytes_to_read);
                    	datalen = 0;
                    	b_syncReceived=false;
@@ -244,9 +319,20 @@ VideoStream ::VideoStream(int port)
 	m_port = port;
 	offset_sub_enable=0;
 	offset_image_loaded=0;
+	ImageQueueItem imageQueueItem;
 
 	m_pRingBuffer = new RingBufferImageQueue(2);
 	length = (HEIGHT * WIDTH);
+
+	m_current_process_queue_item.m_ptr = NULL;
+	m_FreeBuffer = new RingBufferImageQueue(FREE_BUFF_SIZE);
+	m_ProcessBuffer = new RingBufferImageQueue(FREE_BUFF_SIZE);
+	for (int x = 0 ; x < FREE_BUFF_SIZE; x++)
+	{
+		imageQueueItem.m_ptr = new unsigned char[length];
+		m_FreeBuffer->Push(imageQueueItem);
+	}
+
 
 	if (pthread_create (&Thread, NULL, ThreadServer, (void *)this))
 	{
