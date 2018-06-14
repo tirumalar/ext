@@ -7,6 +7,7 @@
 #include "AudioDispatcher.h"
 #include "NwMatchManager.h"
 #include "SDKDispatcher.h"
+#include "F2FDispatcher.h"
 #include "ELKNS.h"
 #include "EyelockConfiguration.h"
 
@@ -28,6 +29,7 @@ class EyelockNanoDeviceHandler : virtual public EyelockNanoDeviceIf {
   void SetRGBcontrollerNano(RGBController *ptr);
   void SetConsolidator(LEDConsolidator  *ptr);
   void SetSDKDispatcher(SDKDispatcher  *ptr);
+  void SetF2FDispatcher(F2FDispatcher  *ptr);
   int32_t ChangeLedColor(const int8_t mask, const int32_t time);
   void SetAudioDispatcher(AudioDispatcher *ptr);
   AudioDispatcher *GetAudioDispatcher();
@@ -109,6 +111,8 @@ class EyelockNanoDeviceHandler : virtual public EyelockNanoDeviceIf {
   AudioDispatcher* m_pAudioDispatcher;
   NwMatchManager*  m_pNwMatchManager;
   SDKDispatcher*   m_pSDKDispatcher;
+  F2FDispatcher*   m_pF2FDispatcher;
+
   EyelockNanoDeviceClient* m_pSlave;
   float		 m_volume;
   Configuration *m_conf;

@@ -1130,6 +1130,21 @@ int BobSetCommand(int val)
 	return result;
 }
 
+int BobSetDataAndRunCommand(void *ptr, int len, int cmd)
+{
+	int result = 1;
+
+	usleep(100);
+	BobMutexStart();
+	result = BobWriteArray(BOB_ACCESS_DATA_OFFSET, ptr, len);
+	usleep(5000);
+	result = BobWriteReg(BOB_COMMAND_OFFSET, cmd);
+	BobMutexEnd();
+	usleep(100);
+	return result;
+}
+
+
 int BoBGetCommand()
 {
 	int value = 0xFF;

@@ -832,7 +832,7 @@ void EyeLockMain::startTNIListener() {
 	pEyelockNanoSdkThread->SetAudioDispatcher(pAudioDispatcher);
 	pEyelockNanoSdkThread->SetNwMatchManager(pNwMatchManager);
 	pEyelockNanoSdkThread->SetSDKDispatcher(pSDKDispatcher);
-
+	pEyelockNanoSdkThread->SetF2FDispatcher(pF2FDispatcher);
 }
 
 static struct sigaction sa;

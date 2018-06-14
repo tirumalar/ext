@@ -144,6 +144,7 @@ int   BobSetOSDPBaudRate(int rate, int reader);
 int BobSetData(void *ptr, int len);
 int BobSetACSType(int val);
 int BobSetCommand(int val);
+int BobSetDataAndRunCommand(void *ptr, int len, int cmd);
 int BoBGetCommand();
 int BobSetDataLength(int val);
 int BobSetACSOutput(unsigned int value);
