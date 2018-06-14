@@ -631,7 +631,7 @@ int processCommand(char *str)
 		case 45:
 		{
 			// Requires 1 parameters
-			len = sprintf(szTokenBuffer, "date -s %s 2>&1", szParam[1]);
+			len = sprintf(szTokenBuffer, "date -u -s %s 2>&1", szParam[1]);
 			system(szTokenBuffer);
 			return nToken;
 		}
