@@ -49,7 +49,7 @@ using namespace std;
 class Configuration;
 class SocketFactory;
 class ImageProcessor;
-
+struct PortServerInfo;
 
 class CmxHandler: public HThread, public ProcessorChain{
 #ifdef CMX_C1
@@ -82,12 +82,14 @@ public:
 	//Safe<SocketServer *> m_pSockLeftC;
 	SocketFactory *m_socketFactory;
 
+	ImageProcessor *pImageProcessor;
+
 private:
     bool HandleReceiveMsg(Socket & client);
     void SendMessage(char *out_msg, int len);
     bool do_serv_task(Socket& client);
 
-    ImageProcessor *pImageProcessor;
+
     struct timeval m_timeOut,m_timeOutSend;
 
 	//std::vector<HTTPPostMessageHandler *> m_MessageHandlers;
@@ -97,6 +99,9 @@ private:
 	//SocketClient m_cmxclient;         // add it in cmxHandler.h
 	int m_exposureTime;
 	int m_analogGain;
+
+	PortServerInfo *leftCServerInfo;
+	PortServerInfo *rightCServerInfo;
 
 #endif	// CMX_C1
 #ifdef HBOX_PG

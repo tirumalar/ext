@@ -26,6 +26,7 @@
 //#include "ImageProcessor.h"
 //#include "MatchManagerInterface.h"
 
+#include "BufferBasedFrameGrabber.h"
 using namespace std;
 
 extern "C" {
@@ -51,6 +52,12 @@ enum PIM_BoardRGBLed{
 	Cyan = 5,
 	yellow = 6,
 	white = 7,
+};
+
+struct PortServerInfo
+{
+	CmxHandler *pCmxHandler;
+	unsigned short port;
 };
 
 #ifdef HBOX_PG
@@ -2169,6 +2176,8 @@ CmxHandler::CmxHandler(Configuration& conf)
 ,m_Brightness(0.0)
 ,m_bStatus(true)
 ,m_SerialNoCamera1(0), m_SerialNoCamera2(0), m_SerialNoCamera3(0)
+leftCServerInfo(0),
+rightCServerInfo(0)
 #endif
 {
 	if (m_debug)
@@ -2226,6 +2235,13 @@ CmxHandler::~CmxHandler() {
 
 	if (m_socketFactory)
 		delete m_socketFactory;
+
+	if (leftCServerInfo)
+		delete leftCServerInfo;
+
+	if (rightCServerInfo)
+		delete rightCServerInfo;
+
 #ifdef HBOX_PG
 	if(input_image)
 			cvReleaseImage(&input_image);
@@ -2248,7 +2264,16 @@ unsigned int CmxHandler::MainLoop() {
 //	}
 	//CreateCMDTCPServer(30);
 	// create a new thread to get Left Camera images
-	if (pthread_create (&leftCThread, NULL, leftCServer, this)) {
+
+	leftCServerInfo = new PortServerInfo();
+	leftCServerInfo->pCmxHandler = this;
+	leftCServerInfo->port = 8192;
+
+	rightCServerInfo = new PortServerInfo();
+	rightCServerInfo->pCmxHandler = this;
+	rightCServerInfo->port = 8193;
+
+	if (pthread_create (&leftCThread, NULL, leftCServer, leftCServerInfo)) {
 		EyelockLog(logger, ERROR, "MainLoop(): Error creating thread leftCServer");
 	}
 #ifdef HBOX_PG
@@ -2264,7 +2289,7 @@ unsigned int CmxHandler::MainLoop() {
 #endif
 #else
 	// create a new thread to get Right Camera images
-	if (pthread_create (&rightCThread, NULL, rightCServer, this)) {
+	if (pthread_create (&rightCThread, NULL, leftCServer, rightCServerInfo)) {
 		EyelockLog(logger, ERROR, "MainLoop(): Error creating thread rightCServer");
 	}
 	// create a new thread to get Face Camera images
@@ -2730,12 +2755,13 @@ void *leftCServer(void *arg)
         EyelockLog(logger, TRACE, "CmxHandler::leftCServer() start");
 
 
+        PortServerInfo *ps = (PortServerInfo*) arg;
 
-        CmxHandler *me = (CmxHandler *) arg;
+        CmxHandler *me = (CmxHandler *) ps->pCmxHandler;
         int length;
         int pckcnt=0;
         char buf[IMAGE_SIZE];
-        char databuf[IMAGE_SIZE];
+        char dummy_buff[IMAGE_SIZE];
         int datalen = 0;
         int bytes_to_get=IMAGE_SIZE;
         short *pShort = (short *)buf;
@@ -2745,13 +2771,23 @@ void *leftCServer(void *arg)
         socklen_t fromlen = sizeof(struct sockaddr_in);
         int bytes_to_read=IMAGE_SIZE;
 
+        int pkgs_received = 0;
+        int pkgs_missed = 0;
+
+        ImageQueueItem queueItem;
         // me->HandleReceiveImage(databuf, datalen);
 
-        int leftCSock = me->CreateUDPServer(8192);
+        int leftCSock = me->CreateUDPServer(ps->port);
         if (leftCSock < 0) {
                 EyelockLog(logger, ERROR, "Failed to create leftC Server()");
                 return NULL;
         }
+
+        BufferBasedFrameGrabber *pFrameGrabber = (BufferBasedFrameGrabber*)me->pImageProcessor->GetFrameGrabber();
+        queueItem = pFrameGrabber->GetFreeBuffer();
+        char * databuf = (char *)queueItem.m_ptr;
+
+	short sync[] = {0x5555};
 
        //  sleep(2);
         while (!me->ShouldIQuit())
@@ -2762,9 +2798,26 @@ void *leftCServer(void *arg)
         	                printf("recvfrom error in leftCServer()");
         	            else
         	            {
-        	                if(!b_syncReceived && pShort[0] == 0x5555)
+        	            	pkgs_received++;
+
+#if 0
+        	            	if (!b_syncReceived)
         	                {
-        	                        datalen = 0;
+        	                	long long int pos = memmem(pShort,IMAGE_SIZE/2,sync,1);
+        	                	if (!pos)
+        	    				{
+        	    					printf("Sync bytes not FOUND\n");
+        	    				}
+        	    				else
+        	    				{
+        	    					//printf("Sync found at %llu\n", pos-(long long int)(&buf[0]));
+        	    				}
+        	                }
+#endif
+
+        	            	if(!b_syncReceived && pShort[0] == 0x5555)
+        	                {
+      	                		datalen = 0;
         	                        memcpy(databuf, buf+2, length-2);
         	                        datalen = length - 2;
         	                        b_syncReceived = true;
@@ -2783,7 +2836,26 @@ void *leftCServer(void *arg)
         	                bytes_to_read-=  length;
         	                if(datalen >= IMAGE_SIZE-5)
         	                {
-        	                    me->HandleReceiveImage(databuf, datalen);
+        	                	//me->HandleReceiveImage(databuf, datalen);
+
+        	                	// dont push if its a dummy buffer
+        	                	if (databuf != dummy_buff)
+        	                		pFrameGrabber->PushProcessBuffer(queueItem);
+
+
+        	                    queueItem = pFrameGrabber->GetFreeBuffer();
+        	                    // if not put data into dummy buffer
+        	                    if (!queueItem.m_ptr)
+        	                    {
+        	                    	pkgs_missed++;
+        	                    	printf("no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
+        	                    	databuf = dummy_buff;
+        	                    }
+        	                    else
+        	                    {
+        	                    	databuf = queueItem.m_ptr;
+        	                    }
+
         	                   // printf("Got image bytes to read = %d\n",bytes_to_read);
         	                   	datalen = 0;
         	                   	b_syncReceived=false;
