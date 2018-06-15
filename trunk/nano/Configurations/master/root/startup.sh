@@ -6,6 +6,7 @@ sleep 10
 
 chmod +x /home/root/i2cHandler
 /home/root/i2cHandler -t
+sleep 2 
 
 NOW=$(date -u +"%Y-%m-%d %T, %Z")
 echo "$NOW > Eyelock NXT Start" >> /home/root/nxtEvent.log
@@ -35,10 +36,17 @@ if [[ ! -d /home/www-internal ]]
 then
 	mkdir /home/www-internal
 fi
+
+if [[ ! -d /home/firmware ]]
+then
+	mkdir /home/firmware
+fi
+
 chown -R www-data:www-data /home/root
 chown -R www-data:www-data /home/www
 chown -R www-data:www-data /home/www-internal
 chown -R www-data:www-data /home/default
+chown -R www-data:www-data /home/firmware
 
 chown www-data:www-data /etc/network/interfaces # required on EXT for configuring interfaces from the web config
 
@@ -55,16 +63,17 @@ echo ******************************************
 #./reloadinterfaces.sh
 #/etc/init.d/avahi-daemon restart
 
-# configuring network between COTS and OIM boards
-sysctl -w net.core.rmem_default=3145704
-sysctl -w net.core.rmem_max=3145704
+# configuring network between COTS and OIM boards - moved to /etc/sysctl.conf
+#sysctl -w net.core.rmem_default=3145704
+#sysctl -w net.core.rmem_max=3145704
 
-ifconfig eth0 down
+#ifconfig eth0 down
 #ifconfig eth0 hw ether f8:32:e4:9b:39:a2
 #ifconfig eth0 192.168.4.170
-sleep 1
-ifconfig eth0 up
-sleep 1
+#sleep 1
+#ifconfig eth0 up
+#sleep 1
+
 ID=`cat /home/root/id.txt`
 sed -i "s/nano.*-1.local/nanonxt${ID}-1.local/g" /home/root/Eyelock.ini
 sed -i "s/nano.*-0.local/nanonxt${ID}.local/g" /home/root/Eyelock.ini
