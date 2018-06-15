@@ -55,7 +55,7 @@ int set_interface_attribs(int fd, int speed)
 
 	if (fd == 0)
 	{
-		fprintf(stderr, "set_interface_attribs: invalid descriptor\n" );
+		fprintf(stderr, "set_interface_attribs: invalid descriptor\n");
 		return -1;
 	}
 
@@ -108,25 +108,66 @@ int internal_read_array(int fd, unsigned char reg, char *buf, int len)
 	buff[2] = reg;
 	buff[3] = len;
 
-	//printf("writing: %x.%x.%x.%x\n", buff[0], buff[1], buff[2], buff[3]);
-	result = write(fd, buff, 4);
-	if (result != 4)
-	{
-		fprintf(stderr, "internal_read_array: cannot write\n");
-		return -3;
-	}
+	struct timeval timeout;
+	timeout.tv_sec = 10;
+	timeout.tv_usec = 0;
 
-	usleep(100);
-	len = len + 4;
-	//printf("reading...\n");
-	result = read(fd, buff, len);
-	if (result != len)
+	fd_set read_set, write_set;
+	FD_ZERO(&write_set);
+	FD_SET(fd, &write_set);
+
+	int select_result = select(FD_SETSIZE, NULL, &write_set, NULL, &timeout);
+	if (select_result == 1)
 	{
-		fprintf(stderr, "internal_read_array: cannot read\n");
+		//printf("writing: %x.%x.%x.%x\n", buff[0], buff[1], buff[2], buff[3]);
+		result = write(fd, buff, 4);
+		if (result != 4)
+		{
+			fprintf(stderr, "internal_read_array: cannot write\n");
+			return -3;
+		}
+
+		usleep(100);
+		len = len + 4;
+		//printf("reading...\n");
+	}
+	else if (select_result == 0)
+	{
+		fprintf(stderr, "internal_read_array: write timeout\n");
 		return -2;
 	}
-	//printf("response: %x.%x.%x.%x\n", buff[0], buff[1], buff[2], buff[3]);
-	memcpy(buf, buff + 4, len - 4);
+	else
+	{
+		fprintf(stderr, "internal_read_array: select failed on write (%s)\n",
+				strerror(errno));
+		return -2;
+	}
+
+	FD_ZERO(&read_set);
+	FD_SET(fd, &read_set);
+	select_result = select(FD_SETSIZE, &read_set, NULL, NULL, &timeout);
+	if (select_result == 1)
+	{
+		result = read(fd, buff, len);
+		if (result != len)
+		{
+			fprintf(stderr, "internal_read_array: cannot read\n");
+			return -2;
+		}
+		//printf("response: %x.%x.%x.%x\n", buff[0], buff[1], buff[2], buff[3]);
+		memcpy(buf, buff + 4, len - 4);
+	}
+	else if (select_result == 0)
+	{
+		fprintf(stderr, "internal_read_array: read timeout\n");
+		return -2;
+	}
+	else
+	{
+		fprintf(stderr, "internal_read_array: select failed on read (%s)\n",
+				strerror(errno));
+		return -2;
+	}
 
 	return 0;
 }
@@ -155,14 +196,37 @@ int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
 		memset(&buff[4], 0, len);
 	}
 
-	result = write(fd, buff, len + 4);
-	if (result != len + 4)
-	{
-		fprintf(stderr, "internal_write_array: cannot write\n");
-		return -3;
-	}
+	struct timeval timeout;
+	timeout.tv_sec = 10;
+	timeout.tv_usec = 0;
 
-	usleep(50);
+	fd_set write_set;
+	FD_ZERO(&write_set);
+	FD_SET(fd, &write_set);
+
+	int select_result = select(FD_SETSIZE, NULL, &write_set, NULL, &timeout);
+	if (select_result == 1)
+	{
+		result = write(fd, buff, len + 4);
+		if (result != len + 4)
+		{
+			fprintf(stderr, "internal_write_array: cannot write\n");
+			return -3;
+		}
+
+		usleep(50);
+	}
+	else if (select_result == 0)
+	{
+		fprintf(stderr, "internal_write_array: write timeout\n");
+		return -2;
+	}
+	else
+	{
+		fprintf(stderr, "internal_write_array: select failed on write (%s)\n",
+				strerror(errno));
+		return -2;
+	}
 	return 0;
 }
 
@@ -183,24 +247,66 @@ int internal_write_reg(int fd, unsigned char reg, unsigned int val)
 	buff[3] = 0x01;
 	buff[4] = val;
 
+	struct timeval timeout;
+	timeout.tv_sec = 10;
+	timeout.tv_usec = 0;
+
+	fd_set read_set, write_set;
+	FD_ZERO(&write_set);
+	FD_SET(fd, &write_set);
+
+	int select_result = select(FD_SETSIZE, NULL, &write_set, NULL, &timeout);
+	if (select_result == 1)
+	{
+
 //	printf("writing: %x.%x.%x.%x.%x\n", buff[0], buff[1], buff[2], buff[3],
 //			buff[4]);
-	result = write(fd, buff, 5);
-	if (result != 5)
+		result = write(fd, buff, 5);
+		if (result != 5)
+		{
+			fprintf(stderr, "internal_write_reg: cannot write\n");
+			return -2;
+		}
+	}
+	else if (select_result == 0)
 	{
-		fprintf(stderr, "internal_write_reg: cannot write\n");
+		fprintf(stderr, "internal_write_reg: write timeout\n");
 		return -2;
 	}
-
+	else
+	{
+		fprintf(stderr, "internal_write_reg: select failed on write (%s)\n",
+				strerror(errno));
+		return -2;
+	}
 	usleep(50);
 
-	response_len = read(fd, buff, 4);
-	//printf("response length: %d\n", response_len);
-	if (response_len != 4)
+	FD_ZERO(&read_set);
+	FD_SET(fd, &read_set);
+	timeout.tv_sec = 10;
+	timeout.tv_usec = 0;
+	select_result = select(FD_SETSIZE, &read_set, NULL, NULL, &timeout);
+	if (select_result == 1)
 	{
-		return -3;
+		response_len = read(fd, buff, 4);
+		//printf("response length: %d\n", response_len);
+		if (response_len != 4)
+		{
+			return -3;
+		}
+		//printf("response: %x.%x.%x.%x\n", buff[0], buff[1], buff[2], buff[3]);
 	}
-	//printf("response: %x.%x.%x.%x\n", buff[0], buff[1], buff[2], buff[3]);
+	else if (select_result == 0)
+	{
+		fprintf(stderr, "internal_write_reg: read timeout\n");
+		return -2;
+	}
+	else
+	{
+		fprintf(stderr, "internal_write_reg: select failed (%s)\n",
+				strerror(errno));
+		return -2;
+	}
 
 	return 0;
 }
