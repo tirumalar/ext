@@ -541,7 +541,7 @@ void* ProcessforRestartFirmware(void * data) {
 
 	std::string file_cmd;
 	sleep(10);
-	file_cmd.append("sh ");
+	file_cmd.append("bash ");
 	file_cmd.append(filename);
 	RunCmd((char*) file_cmd.c_str());
 #ifndef __ARM__

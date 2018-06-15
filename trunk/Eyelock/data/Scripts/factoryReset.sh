@@ -1,3 +1,4 @@
+#!/bin/bash
 echo "start factory reset"
 
 # specify the correct path for file with factory MAC and id for devices with read-only file system
@@ -7,14 +8,35 @@ UNAME=$(uname -r)
 UNAME_READONLY_FS='3.0.0-BSP-dm37x-2.4-2Eyelock_NXT_6.0'
 
 cd /home/root
-i2cset -y 3 0x2e 4 6
-rm Eyelock.run
-killall -KILL Eyelock;
+
+if grep -qi '^eyelock.hardwaretype=1' '/home/default/Eyelock.ini'
+then
+	# kill OIM heartbeat script
+	OIM_HB_PID=$(ps -ef | grep '/hbOIM.sh$' | awk '{print $2}')
+    if [[ ! -z ${OIM_HB_PID} ]]
+    then
+            kill -9 "${OIM_HB_PID}"
+    fi
+
+	rm Eyelock.run
+	rm FaceTracker.run
+	killall -KILL Eyelock;
+	killall -KILL FaceTracker;
+else
+	i2cset -y 3 0x2e 4 6
+	rm Eyelock.run
+	killall -KILL Eyelock;
+fi
+
 sleep 2 
 cp /home/default/Eyelock.ini .
 #chown eyelock:eyelock Eyelock.ini
-cp /home/default/reloadinterfaces.sh .
-chmod 755 reloadinterfaces.sh
+
+if ! grep -qi '^eyelock.hardwaretype=1' '/home/default/Eyelock.ini'
+then
+	cp /home/default/reloadinterfaces.sh .
+	chmod 755 reloadinterfaces.sh
+fi
 #chown eyelock:eyelock reloadinterfaces.sh
 #required in Master
 cp /home/default/test.db .
@@ -37,28 +59,44 @@ then
     rm SDKRegisterIPs.txt
 fi
 
-if [[ ${UNAME} == ${UNAME_READONLY_FS} ]]
+if grep -qi '^eyelock.hardwaretype=1' '/home/default/Eyelock.ini'
 then
-	grep -oa '^[0-9]\{0,10\}' "${FACTORY_MAC_ID_FILE}" | head -n 1 > "/home/id.txt"
-	grep -oa '\([0-9ABCDEFabcdef]\{2\}:\)\{5\}[0-9ABCDEFabcdef]\{2\}' "${FACTORY_MAC_ID_FILE}" | head -n 1 > "/home/MAC.txt"
-	rm /tmp/etc/rc.conf
-	rm /home/shadow # if no /home/shadow, web config and SDK will use /etc/shadow
-					# assuming the correct default passwords are specified in /etc/shadow
+	# WebConfig passwords
+	# assuming linux passwords for installer and admin users are set to default on factory and never changed
+	grep 'installer' /etc/shadow > /home/www-internal/shadow # overwriting 
+	grep 'admin' /etc/shadow >> /home/www-internal/shadow
+
+	# hostname
+	FACTORY_HOSTNAME=$(cat /home/www-internal/FactoryHostname)
+	hostnamectl set-hostname "${FACTORY_HOSTNAME}"
+	awk -v factoryHostname="${FACTORY_HOSTNAME}" ' BEGIN { OFS = "\t" } ($1 == "127.0.1.1") { $2=factoryHostname; } { print } ' /etc/hosts > /home/www-internal/hosts
+	mv /home/www-internal/hosts /etc/hosts
+
+	# TODO: network interfaces
 else
-	if [ -f /etc/FactoryHostname ]
+	if [[ ${UNAME} == ${UNAME_READONLY_FS} ]]
 	then
-		cp /etc/FactoryHostname /etc/hostname
-		# why? flash.sh will overwrite it anyway
-	fi 
+		grep -oa '^[0-9]\{0,10\}' "${FACTORY_MAC_ID_FILE}" | head -n 1 > "/home/id.txt"
+		grep -oa '\([0-9ABCDEFabcdef]\{2\}:\)\{5\}[0-9ABCDEFabcdef]\{2\}' "${FACTORY_MAC_ID_FILE}" | head -n 1 > "/home/MAC.txt"
+		rm /tmp/etc/rc.conf
+		rm /home/shadow # if no /home/shadow, web config and SDK will use /etc/shadow
+						# assuming the correct default passwords are specified in /etc/shadow
+	else
+		if [ -f /etc/FactoryHostname ]
+		then
+			cp /etc/FactoryHostname /etc/hostname
+			# why? flash.sh will overwrite it anyway
+		fi 
 	
-	cp /home/backup/id.txt /home/id.txt
-	cp /home/backup/MAC.txt /home/MAC.txt
+		cp /home/backup/id.txt /home/id.txt
+		cp /home/backup/MAC.txt /home/MAC.txt
 	
-	cp /home/default/rc.conf /etc/rc.d/rc.conf	
-	echo installer:installer | chpasswd -m
-	echo SiteAdmin:SiteAdmin | chpasswd -m
-	echo admin:admin | chpasswd -m
-fi	
+		cp /home/default/rc.conf /etc/rc.d/rc.conf	
+		echo installer:installer | chpasswd -m
+		echo SiteAdmin:SiteAdmin | chpasswd -m
+		echo admin:admin | chpasswd -m
+	fi	
+fi
 
 rm wpa_supplicant.log*
 
@@ -70,16 +108,26 @@ rm nxtLog*.log*
 NOW=$(date +"%Y-%m-%d, %T.000")
 echo "$NOW, INFO , [Eyelock], - Factory Reset" > nxtLog.log
 
-ping -q -c2 192.168.40.2 > /dev/null
-if [ $? -eq 0 ] 
+if grep -qi '^eyelock.hardwaretype=1' '/home/default/Eyelock.ini'
 then
-	echo "Slave is Pingable"
-	ssh root@192.168.40.2 cp /home/default/Eyelock.ini /home/root/
+	sleep 2
+	sync
+	/sbin/reboot
 else
-	echo "Slave not pingable No point"
+	ping -q -c2 192.168.40.2 > /dev/null
+	if [ $? -eq 0 ] 
+	then
+		echo "Slave is Pingable"
+		ssh root@192.168.40.2 cp /home/default/Eyelock.ini /home/root/
+	else
+		echo "Slave not pingable No point"
+	fi
+	
+	sleep 1
+	touch Eyelock.run
+	reboot
 fi
 
-sleep 1
-touch Eyelock.run
-reboot
+
+
 
