@@ -47,10 +47,17 @@ checkDeviceState(){
 
 
 killApplication(){
-	killall -KILL PushButton
+	# kill OIM heartbeat script
+	OIM_HB_PID=$(ps -ef | grep '/hbOIM.sh$' | awk '{print $2}')
+    if [[ ! -z ${OIM_HB_PID} ]]
+    then
+            kill -9 "${OIM_HB_PID}"
+    fi
+
 	rm /home/root/Eyelock.run
-	sync
-	killall -s SIGKILL Eyelock
+	rm /home/root/FaceTracker.run
+	killall -KILL Eyelock;
+	killall -KILL FaceTracker;
 }
 
 checkApplicationTermination()
@@ -61,7 +68,7 @@ checkApplicationTermination()
 		${logger} -L"Warn: Eyelock app was not terminated"
 	fi
 
-	ps ax | grep -q "PushButton$"
+	ps ax | grep -q "FaceTracker$"
 	if [[ $? -eq 0 ]]
 	then
 		${logger} -L"Warn: Some of FW processes were not terminated on Master"
