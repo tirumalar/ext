@@ -328,7 +328,7 @@ class InterfaceEditor
         }
 
         // This flag determines dhcp status
-        $this->IsStatic = $this->IsIPStatic($this->IpOfBoard, $InterfaceName);
+        $this->IsStatic = $this->IsIPStatic($this->IpOfBoard, $InterfaceName, $HardwareType);
 
         // Load up the DHCP Settings
         $this->LoadReloadInterfacesSettings($HardwareType);
@@ -504,15 +504,17 @@ class InterfaceEditor
     /////////////////////////////////////////////////
     // Helper functions
     /////////////////////////////////////////////////
-    private function IsIPStatic($boardIP, $theInterfaceName)
+    private function IsIPStatic($boardIP, $theInterfaceName, $HardwareType = '0')
     {
         $bIsStatic = false;
 	
 	// Uname is not fixed on Ubuntu
 	// TODO: properly identify device type
 	//if ($this->uname == "4.13.0-36-generic")
+	
+	$interfacesFile = ($HardwareType === '1') ? "/home/www-internal/interfaces" : "/etc/network/interfaces";
 	{
-		$strInterfaces = shell_exec(sprintf("grep %s /etc/network/interfaces | grep static", $theInterfaceName)); 
+		$strInterfaces = shell_exec(sprintf("grep %s ".$interfacesFile." | grep static", $theInterfaceName)); 
           	if(strlen($strInterfaces) == 0)
 		{
 			$bIsStatic = false;
@@ -709,7 +711,27 @@ class InterfaceEditor
 	
 	 if ($bChanged)
         {
-            //DMOTODO
+			if ($theHardwareType === '1')
+			{
+				$strNewInterfaces = sprintf("auto %s\n", $InterfaceName);
+				$strNewInterfaces .= sprintf("iface %s inet static\n", $InterfaceName);
+				$strNewInterfaces .= sprintf("address %s\n", $this->IpOfBoard);
+				$strNewInterfaces .= sprintf("network %s\n", $this->Network);
+				$strNewInterfaces .= sprintf("netmask %s\n", $this->SubNetMask);
+				$strNewInterfaces .= sprintf("broadcast %s\n", $this->BroadcastIp);
+				$strNewInterfaces .= sprintf("gateway %s\n", $this->Gateway);
+				$strNewInterfaces .= sprintf("hwaddress ether %s\n", $this->MacAddress);
+				
+				$f = fopen("/home/www-internal/iftemp","w");
+				fwrite($f, $strNewInterfaces);
+				fclose($f);
+				
+				shell_exec("mv /home/www-internal/iftemp /home/www-internal/interfaces");
+			}
+			else		
+			{
+					
+			//DMOTODO
             // PING new IP and make sure it's not in use... if it is in use, fail with result...
 
             // Now make a backup, etc...
@@ -779,6 +801,7 @@ class InterfaceEditor
             $strCmdResult = NXTW_shell_exec(sprintf("16".chr(0x1F)."%s", escapeshellarg($this->RootFolder.'/Eyelock.run')));//"touch %s/Eyelock.run;echo > /home/eyelock/Eyelock.run", $this->RootFolder));
 	//		WriteToTempFile("16done");
         }
+		}
 
         if ($bDeviceNameChanged || $bChanged)
         {
@@ -798,7 +821,31 @@ class InterfaceEditor
     function ConfigureAsDHCP($row, $bSwitchingtoDHCP, $bForceUpdate, $theHardwareType)
     {
         $bSuccess = true;
-
+		
+		// TODO: move to class members
+		if ($theHardwareType === '0')
+            $InterfaceName = "eth0";
+        else if ($theHardwareType === '1')
+            $InterfaceName = "usbnet0";
+        else if ($theHardwareType === '2')
+            $InterfaceName = "enp10s0";
+		
+		file_put_contents("/home/www-internal/phpdebug.txt", "interfaceeditor ConfigureAsDHCP $theHardwareType\n", FILE_APPEND);
+		
+		if ($theHardwareType === '1')
+		{
+			$strNewInterfaces = sprintf("auto %s\n", $InterfaceName);
+			$strNewInterfaces .= sprintf("iface %s inet dhcp\n", $InterfaceName);
+			$strNewInterfaces .= sprintf("hwaddress ether %s\n", $this->MacAddress);
+			
+			$f = fopen("/home/www-internal/iftemp","w");
+			fwrite($f, $strNewInterfaces);
+			fclose($f);
+			
+			shell_exec("mv /home/www-internal/iftemp /home/www-internal/interfaces");
+		}
+		else
+		{
         // Update DHCP timeout and retries (just do it always)
         $this->SaveReloadInterfacesSettings($row, $bForceUpdate, $theHardwareType);
 
@@ -817,7 +864,7 @@ class InterfaceEditor
             else
                 $bSuccess = false;
         }
-
+		}
         return $bSuccess;
     }
 
