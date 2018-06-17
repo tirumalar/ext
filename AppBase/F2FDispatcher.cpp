@@ -31,6 +31,9 @@ extern "C" {
 #include <unistd.h>
 }
 
+#define DEBUG_SESSION_DIR "DebugSessions"
+
+
 using namespace std;
 
 const char logger[30] = "F2FDispatcher";
@@ -41,6 +44,7 @@ extern char * getACSTestData(int & bytes, int & bitlen);
 F2FDispatcher::F2FDispatcher(Configuration& conf):ResultDispatcher(conf), m_pMatched(0), m_RelayTimeInMs(RELAY_TIME_IN_MS),m_Debug(false),m_ledConsolidator(NULL),
 		m_socketFactory(NULL),m_socketFactoryTamper(NULL),m_tamperDestAddr(NULL),m_resultDestAddr(NULL), m_pMatchType(NULL), m_pinNumberRcvd(0)
 {
+	m_DebugTesting = conf.getValue("Eyelock.TestSystemPerformance",false);
 	m_SendEveryNSec = conf.getValue("Eyelock.SystemReadyInitialState", true);
 	m_PreviousSendTS =0;
 	m_testCode = false;
@@ -1439,6 +1443,17 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 
 	char tmp[256];
 	MatchResultState state = msg->getState();
+	char time_str[100];
+	char filename[100];
+	FILE *file = fopen(filename, "a");
+	if(m_DebugTesting){
+		time_t timer;
+		struct tm* tm1;
+		time(&timer);
+		tm1 = localtime(&timer);
+		strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
+		sprintf(filename, "%s/MatchEventLog.txt",DEBUG_SESSION_DIR);
+	}
 
 	if (state == PASSED) {
 			if (m_pMatchType->m_duress && m_authMode >= PIN_AND_IRIS_DURESS) {
@@ -1449,21 +1464,48 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 			EyelockEvent("Match success ID is %s", msg->getName().c_str());
 			sprintf(tmp, "Match success ID is %s", msg->getName().c_str());
 		}
-		SDKCallbackMsg msg(MATCH, tmp);
+		SDKCallbackMsg msg(MATCH, std::string(tmp));
 		m_sdkDispatcher->enqueMsg(msg);
+		if(m_DebugTesting){
+			if (file){
+				fprintf(file, "[%s] Passed: %s\n", time_str, tmp);
+				fclose(file);
+			}
+		}
 	}
 	else if (state == CONFUSION) {
 		EyelockEvent("Match failed");
 		SDKCallbackMsg msg(MATCH, "Match failed");
 		m_sdkDispatcher->enqueMsg(msg);
+		if(m_DebugTesting){
+			if (file){
+				fprintf(file, "[%s] Match failed\n", time_str);
+				fclose(file);
+			}
+		}
 	}
 	else if (state == FAILED) {
 		char username[NAME_SIZE];
 		m_pMatchType->getUserNameFromCard(m_pMatchType->m_pCardData, username);
 		EyelockEvent("Match failure, iris mismatch - %s", username);
 		sprintf(tmp, "Match failure, iris mismatch - %s", username);
-		SDKCallbackMsg msg(MATCH, tmp);
+		SDKCallbackMsg msg(MATCH, std::string(tmp));
 		m_sdkDispatcher->enqueMsg(msg);
+		if(m_DebugTesting){
+			if (file){
+				fprintf(file, "[%s] Match failed: %s\n", time_str, tmp);
+				fclose(file);
+			}
+		}
+	}
+	else
+	{
+		if(m_DebugTesting){
+			if (file){
+				fprintf(file, "[%s] Unknown message result\n", time_str);
+				fclose(file);
+			}
+		}
 	}
 }
 

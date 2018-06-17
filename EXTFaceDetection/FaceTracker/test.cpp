@@ -1,30 +1,3 @@
-/*****************************************************************************************
-Copyright 2011 Rafael Muñoz Salinas. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are
-permitted provided that the following conditions are met:
-
-   1. Redistributions of source code must retain the above copyright notice, this list of
-      conditions and the following disclaimer.
-
-   2. Redistributions in binary form must reproduce the above copyright notice, this list
-      of conditions and the following disclaimer in the documentation and/or other materials
-      provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY Rafael Muñoz Salinas ''AS IS'' AND ANY EXPRESS OR IMPLIED
-WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL Rafael Muñoz Salinas OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The views and conclusions contained in the software and documentation are those of the
-authors and should not be interpreted as representing official policies, either expressed
-or implied, of Rafael Muñoz Salinas.
-********************************************************************************************/
 #include <stdlib.h>
 #include <string>
 #include <iostream>
@@ -46,9 +19,14 @@ or implied, of Rafael Muñoz Salinas.
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/photo/photo.hpp>
 
-#ifdef ARUCO
-//#include <aruco.h>
-//#include <dictionary.h>
+
+
+
+// #define CAMERACALIBERATION_ARUCO
+
+#ifdef CAMERACALIBERATION_ARUCO
+#include <aruco.h>
+#include <dictionary.h>
 #endif
 
 #include "eyelock_com.h"
@@ -56,26 +34,137 @@ or implied, of Rafael Muñoz Salinas.
 #include "pstream.h"
 #include "FileConfiguration.h"
 #include "Configuration.h"
-
+#if 0
+#include <boost/filesystem.hpp>
+#include "boost/date_time/posix_time/posix_time.hpp"
+#endif
 #include "log.h"
 
 using namespace cv;
 using namespace std::chrono;
 using namespace std;
 
+#define DEBUG_SESSION
+#ifdef DEBUG_SESSION
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#define DEBUG_SESSION_DIR "DebugSessions/Session"
+#define DEBUG_SESSION_INFO "DebugSessions/Session/Info.txt"
+#endif /* DEBUG_SESSION */
+
+//WIDTH and HEIGHT of input image
+#define WIDTH 1200
+#define HEIGHT 960
+
+#define CENTER_POSITION_ANGLE 95
+
+#define SCALE 3
+
+#define MODE_CHANGE_FREEZE 10
+
+#define MIN_IRIS_FRAMES 10
+#define FRAME_DELAY 40
+
+// this defines how many frames without a face will cause a switch back to face mode ie look for faces
+#define NO_FACE_SWITCH_FACE 10
+
+#define ANGLE_TO_STEPS 5
+
+#define smallMoveTo 2		//limiting motor movement
+
+
+//Controlling states between face and Eyes
+#define RUN_STATE_FACE 0
+#define RUN_STATE_EYES 1
+
+//USed to switch cameras and keep it running while changes dont need
+#define MODE_FACE 0
+#define MODE_EYES_MAIN 1
+#define MODE_EYES_AUX 2
+
+//Switching threshold and Hysteresis
+#define switchThreshold 37		// previous val was 40
+#define errSwitchThreshold 6
+
+//USed in DoImageCal function
+#define NUM_AVG_CAL 10
+#define  MAX_CAL_CURENT 20
+
+
+int currnet_mode = 0;
+int previousEye_distance = 0;
+
 const char logger[30] = "test";
 
 VideoStream *vs;
 
+Mat outImg, smallImg, smallImgBeforeRotate;
+
+double scaling = 8.0;		//Used for resizing the images in py lev 3
 
 
-Mat outImg, r_outImg;
-Mat smallImg;
-Mat frame_gray;
-Mat smallImgBeforeRotate;
+//Reading from faceConfig.ini
+int CENTER_POS;
+int MIN_POS;
+int MAX_POS;
 
 
-double scaling = 8.0;
+// detect_area used for finding face in a certain rect area of entire image
+Rect detect_area(15/SCALE,15/SCALE,(960/(SCALE*SCALE))+15/SCALE,(1200/(SCALE*SCALE))+15/SCALE); //15 was 30
+Rect no_move_area;		//Face target area
+
+int IrisFrameCtr = 0;		//used for counting Iris Frame
+
+int cur_pos=CENTER_POS;
+
+int fileNum=0;
+int move_counts=0;
+
+
+string fileName = "output.csv";			//Save temp data
+string a_calibFile = "/home/root/data/calibration/auxRect.csv";		//Read target rect
+int noeyesframe = 0;
+
+
+//AGC parameters
+int PIXEL_TOTAL;
+int FACE_GAIN_DEFAULT;
+int FACE_GAIN_MAX;
+int FACE_GAIN_MIN;
+int FACE_GAIN_PER_GOAL;
+float FACE_GAIN_HIST_GOAL;
+float FACE_CONTROL_GAIN;
+//#define FACE_CONTROL_GAIN   1000.0
+
+int agc_val= FACE_GAIN_DEFAULT;
+int agc_set_gain =0;
+
+float ERROR_LOOP_GAIN;	// used for error cal during face tracking and motor movement
+
+int run_state=RUN_STATE_FACE;
+
+//Face size tracking from 90 to 30cm range if the images are bright enough
+int MIN_FACE_SIZE;
+int MAX_FACE_SIZE;
+
+Point eyes;	// hold eye info from each frame
+char temp[512];
+int AGC_Counter = 0;
+int noFaceCounter =0;
+
+Mat outImgLast, outImg1, outImg1s;		//Used in MeasureSnr function
+
+//Used as increasing exposure time in brightnessAdjust function,
+//mainly used in Camera to Camera Calibration
+int agc_val_cal=3;
+
+//variable used for tempering
+float x, y, z, a;
+int len;
+
+std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
+
 
 
 extern int vid_stream_start(int port);
@@ -85,72 +174,60 @@ extern void port_com_send(char *cmd);
 extern void  *init_tunnel(void *arg);
 extern void *init_ec(void * arg);
 extern int port_com_send_return(char *cmd, char *buffer, int min_len);
+extern int IrisFramesHaveEyes();
+int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size);
+
 int face_init(  );
 float read_angle(void);
-
-
-
-int z=0;		//AGC wait key
-
-#define block 0
-#define WIDTH 1200
-#define HEIGHT 960
-
-int CENTER_POS;		//low fx_abs val is 0 and max is 328. So the center falls in 164
-#define CENTER_POSITION_ANGLE 95
-#define MIN_POS 25
-#define MAX_POS 328			//previous val was 200
-#define WAIT 800
-
-
-
-#define MODE_CHANGE_FREEZE 10
-int cur_pos=CENTER_POS;
-
-#define MIN_IRIS_FRAMES 10
-int fileNum=0;
-int move_counts=0;
-#define FRAME_DELAY 40
-
-// this defines how many frames without a face will cause a switch back to face mode ie look for faces
-#define NO_FACE_SWITCH_FACE 10
-
-string fileName = "output.csv";
-string a_calibFile = "/home/root/data/calibration/auxRect.csv";
-int noeyesframe = 0;
-#define ANGLE_TO_STEPS 5
-
-
-
-void MainIrisSettings();
 void SetExp(int cam, int val);
 void MoveToAngle(float a);
 void MoveTo(int v);
-void accelStatus();
 void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
 void SelLedDistance(int val);
 char* GetTimeStamp();
 void RecoverModeDrop();
+
+
+
+void MainIrisSettings();
 void SwitchIrisCameras(bool mode);
 void SetFaceMode();
 
+void MoveRelAngle(float a, int diffEyedistance);
+void SetIrisMode(int CurrentEye_distance, int diffEyedistance);
+void DoStartCmd();
+void DoStartCmd_CamCal();
+float AGC(int width, int height,unsigned char *dsty, int limit);
+Mat rotate(Mat src, double angle);
+Mat rotation90(Mat src);
+int IrisFramesHaveEyes();
+void DoRunMode(bool bShowFaceTracking);
 
+void MeasureSnr();	//Measuring noise in images
 
-void writeStringData(string fileName, string v);
-void writeFloatData(string fileName, float v);
-void writeStartNewLine(string fileName);
-void clearData(string fileName);
+//image optimization
+void DoImageCal(int cam_id_ignore);
+void CalAll();
 
+#ifdef CAMERACALIBERATION_ARUCO
+//Camera to Camera Calibration
+std::vector<aruco::Marker> gridBooardMarker(Mat img);
+vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<aruco::Marker> markerFace);
+#endif
+
+void brightnessAdjust(Mat outImg, int cam);
+bool CalCam();
+void runCalCam();
 
 // Temperature test purpose
 void motorMove();
 double parsingIntfromHex(string str1);
 int calTemp(int i);
+float AGC_average(int width, int height,unsigned char *dsty, int limit);
 
-
-
-
-#define PIXEL_TOTAL 900
+//Temparing
+double StandardDeviation(std::vector<double> samples);
+double Variance(std::vector<double> samples);
 
 
 
@@ -171,7 +248,7 @@ void SetExp(int cam, int val)
 
 
 
-#define smallMoveTo 2		//limiting motor movement
+
 void MoveToAngle(float a)
 {
 	EyelockLog(logger, TRACE, "Motor: MoveToAngle");
@@ -188,94 +265,29 @@ void MoveToAngle(float a)
 	sprintf(buff,"fx_rel(%d)",(int)(move+0.5));
 	EyelockLog(logger, DEBUG, "Sending by current angle %3.3f dest %3.3f: %s\n",current_a,a,buff);
 
-	writeFloatData(fileName, current_a); 	//current angle
-	writeStringData(fileName,",");
-	writeFloatData(fileName, a); 	//move to angle
-	writeStringData(fileName,",");
 
 	float t_start=clock();
 	port_com_send(buff);
 	float t_result = (float)(clock()-t_start)/CLOCKS_PER_SEC;
 	EyelockLog(logger, DEBUG, "Time required to move to angle:%3.3f", t_result);
-	writeFloatData(fileName, t_result); //required time to move
-	writeStringData(fileName,",");
 
 }
-
-
-
-
 
 
 
 void MoveTo(int v)
 {
 	EyelockLog(logger, TRACE, "MoveTo");
-	/*
-	char buff[100];
-	if (v<MIN_POS) v= MIN_POS;
-	if (v>MAX_POS) v=MAX_POS;
-	//cvWaitKey(100);
-	sprintf(buff,"fx_abs(%d)",v);
-	printf("Sending move: %s\n",buff);
-	port_com_send(buff);
-	move_counts++;
-	//cvWaitKey(100);
-	 */
-
 	EyelockLog(logger, DEBUG,"Move to command %d ",v);
-
-	writeFloatData(fileName, v); 	//move to command
-	writeStringData(fileName,",");
-
 
 	v=v-CENTER_POS;
 	v=v/ANGLE_TO_STEPS+CENTER_POSITION_ANGLE;
+
 	EyelockLog(logger, DEBUG,"Value to MoveToAngle:angle = %d",v);
+
 	MoveToAngle((float) v);
 }
 
-
-void accelStatus(){
-#if 0
-	char buff[100];
-	sprintf(buff,"accel()");
-	printf("Sending accel command\n");
-	port_com_send(buff);
-
-/*	for(int i = 0; i <30; i++){
-		printf("%c \n",buff[i]);
-
-	}*/
-
-#endif
-}
-
-
-
-
-/*
-#define IO_FILENAME "/home/root/"
-void HandleEyelockIO(void)
-
-{
-	FILE *in;
-	in = fopen(IO_FILENAME,"rt");
-	if (in)
-	{
-		char temp[512];
-		int len = fread(temp,sizeof(char),sizeof(temp),in);
-		temp[len]=0;
-		port_com_send(temp);
-	}
-}
-*/
-
-
-
-
-
-int IrisFrameCtr = 0;
 
 
 void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask)
@@ -309,6 +321,8 @@ void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask)
 
 }
 
+
+
 void SelLedDistance(int val) // val between 0 and 100
 {
 	EyelockLog(logger, TRACE, "SelLedDistance");
@@ -332,6 +346,9 @@ void SelLedDistance(int val) // val between 0 and 100
 	}
 	EyelockLog(logger, DEBUG, "Value for LedDistance: set_val %d", set_val);
 }
+
+
+
 char* GetTimeStamp()
 {
 	EyelockLog(logger, TRACE, "GetTimeStamp");
@@ -349,30 +366,28 @@ char* GetTimeStamp()
 
 
 
+void RecoverModeDrop()
+{
+	EyelockLog(logger, TRACE, "RecoverModeDrop");
+	//If no mode change happens for a set amount of time then set face mode to recover from
+	//from possible condition of losing the mode change message
+
+	static std::chrono:: time_point<std::chrono::system_clock> end;
+
+	end = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end-start_mode_change;
+	//printf("Elapsed Time %f\n",elapsed_seconds);
+	if(elapsed_seconds.count()>=MODE_CHANGE_FREEZE)
+	{
+		run_state = RUN_STATE_FACE;
+		agc_val=FACE_GAIN_DEFAULT;
+		//SetFaceMode();
+
+	}
+}
 
 
 
-#define RUN_STATE_FACE 0
-#define RUN_STATE_EYES 1
-
-
-#define FACE_GAIN_DEFAULT   (PIXEL_TOTAL*10)
-#define FACE_GAIN_MAX       (PIXEL_TOTAL*80)
-#define FACE_GAIN_MIN       (PIXEL_TOTAL*8)
-#define FACE_GAIN_PER_GOAL   10
-#define FACE_GAIN_HIST_GOAL  .1
-#define FACE_CONTROL_GAIN   500.0
-//#define FACE_CONTROL_GAIN   1000.0
-
-int agc_val= FACE_GAIN_DEFAULT;
-int agc_set_gain =0;
-
-int run_state=RUN_STATE_FACE;
-
-
-
-
-#define CAL_BRIGHT       85
 
 void MainIrisSettings()
 {
@@ -403,35 +418,10 @@ void MainIrisSettings()
 
 
 
-std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
-
-
-void RecoverModeDrop()
-{
-	EyelockLog(logger, TRACE, "RecoverModeDrop");
-	//If no mode change happens for a set amount of time then set face mode to recover from
-	//from possible condition of losing the mode change message
-
-	static std::chrono:: time_point<std::chrono::system_clock> end;
-
-	end = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_seconds = end-start_mode_change;
-	//printf("Elapsed Time %f\n",elapsed_seconds);
-	if(elapsed_seconds.count()>=MODE_CHANGE_FREEZE)
-	{
-		run_state = RUN_STATE_FACE;
-		agc_val=FACE_GAIN_DEFAULT;
-		//SetFaceMode();
-
-	}
-}
-
-
-
-
 void SwitchIrisCameras(bool mode)
 {
 	EyelockLog(logger, TRACE, "SwitchIrisCameras");
+
 	char cmd[100];
 	if (mode)
 		sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY);
@@ -441,10 +431,9 @@ void SwitchIrisCameras(bool mode)
 	port_com_send(cmd);
 }
 
-#define MODE_FACE 0
-#define MODE_EYES_MAIN 1
-#define MODE_EYES_AUX 2
-int currnet_mode = 0;
+
+
+
 
 void SetFaceMode()
 {
@@ -490,14 +479,7 @@ void SetFaceMode()
 	//port_com_send("fixed_set_rgb(100,100,100)");
 }
 
-#define IRIS_FRAME_TIME 180
-#define switchThreshold 37		// previous val was 40
-#define errSwitchThreshold 6
-int previousEye_distance = 0;
 
-void MoveRelAngle(float a, int diffEyedistance);
-void SetIrisMode(int CurrentEye_distance, int diffEyedistance);
-void DoStartCmd();
 
 void MoveRelAngle(float a, int diffEyedistance)
 {
@@ -520,8 +502,12 @@ void MoveRelAngle(float a, int diffEyedistance)
 	}
 }
 
+
+
+
 void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 {
+
 	EyelockLog(logger, TRACE, "SetIrisMode");
 	char cmd[512];
 
@@ -616,170 +602,30 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 	}
 	IrisFrameCtr=0;
 	start_mode_change = std::chrono::system_clock::now();
+
+
 }
 
-#if 0
-//DoStartCmd ISCwest Demo
-void m2_DoStartCmd()
-{
-	//setRGBled(BRIGHTNESS_MIN,BRIGHTNESS_MIN,BRIGHTNESS_MIN,10,0,0x1F);
-
-
-	char cmd[100];
-	//port_com_send("set_audio(1)");
-	//port_com_send("/home/root/tones/auth.wav");
-	//start_mode_change = std::chrono::system_clock::now();
-
-	//Mohammad
-	//setting up face cameras and motor pos
-	printf("Re Homing\n");
-	port_com_send("fx_home()\n");
-	//port_com_send("wcr(0x1f,0x301a,0x1199)");
-	usleep(100000);
-	//cvWaitKey(6000);
-	port_com_send("fx_abs(25)\n");
-	//cvWaitKey(6000);
-
-	printf("Moving to Center\n");
-	MoveTo(CENTER_POS);
-	read_angle();
-
-
-
-
-
-
-
-	//printf("configuring face settings\n");
-	//Face configuration of LED
-	//port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,1)");
-	//Ilya drive the face LEDs with 4amp and we guess it fried the board
-	//port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,40) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
-	port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
-
-
-
-	// flip
-	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping...recommended by ilya
-	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
-
-
-	// reset colum of all imagers
-#if 0
-	port_com_send("set_cam_mode(0,10)");
-	cvWaitKey(500);
-	port_com_send("wcr(0x1f,0x30b0,0x80) | wcr(0x1f,0x305e,0x20) | wcr(0x1f,0x30d4,0xE007)");
-	port_com_send("set_cam_mode(0x07,10)");
-	cvWaitKey(500);
-	port_com_send("set_cam_mode(0x87,10)");
-	cvWaitKey(500);
-#endif
-
-	//cvWaitKey(6000);
-	//Face cameras configuration
-//	port_com_send("wcr(0x04,0x3012,16) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,160)");
-	port_com_send("wcr(0x04,0x3012,12) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xF0)");
-	//port_com_send("wcr(4,0x30b0,0x4090)");// enable analog gain x2
-	//cvWaitKey(6000);
-
-
-	//this is before ilya mucked with it
-	//printf("configuring Main Iris settings\n");
-	//Main Iris cameras configuration
-	port_com_send("wcr(0x18,0x3012,12) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,64)");
-	//port_com_send("wcr(0x18,0x3040,0xC000)"); //Flipping of iris images
-
-	//Aux Iris Cameras Configuration
-	//port_com_send("wcr(0x03,0x3012,12) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,128)");
-	port_com_send("wcr(0x03,0x3012,12) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,160)"); // was 128 Anita chnaged my Mo
-
-
-	// setup up all pll values
-	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
-	cvWaitKey(100);
-	// port_com_send("wcr(0x1f,0x302e,2) | wcr(0x1f,0x3030,44) | wcr(0x1f,0x302c,2) | wcr(0x1f,0x302a,6))");
-	port_com_send("wcr(0x04,0x302e,2) | wcr(0x04,0x3030,44) | wcr(0x04,0x302c,2) | wcr(0x04,0x302a,6))");
-	cvWaitKey(10);
-
-	port_com_send("wcr(0x04,0x30b0,0x90");	//sarvesh
-
-	// port_com_send("wcr(0x1f,0x30b0,0x4090");
-	// port_com_send("wcr(0x1B,0x30b0,0x80");
-
-	//changes that ilya make
-	//printf("configuring Main Iris settings\n");
-	//Main Iris cameras configuration
-	//port_com_send("wcr(0x18,0x3012,12) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,40)");
-
-
-	//Aux Iris Cameras Configuration
-	//port_com_send("wcr(0x03,0x3012,12) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,128)");
-	//port_com_send("wcr(0x1f,0x3040,0xC000)"); //Flipping of iris images
-
-	//streaming Main and face cameras
-	//port_com_send("set_cam_mode(0x07,40)");
-
-	//Always start with Face and Auxillary Iris Cameras
-	//sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);
-
-
-
-
-
-
-	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);
-	//cvWaitKey(6000);
-	port_com_send(cmd);
-
-/*	//This code is for playing sound
-	if(1)
-	{
-		port_com_send("set_audio(1)");
-		system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
-		sleep(2);
-	}*/
-
-}
-#endif
-
-
-
-
-//Old
-#define SCALE 3
-Rect detect_area(15/SCALE,15/SCALE,(960/(SCALE*SCALE))+15/SCALE,(1200/(SCALE*SCALE))+15/SCALE); //15 was 30
-
-/*
-//follwoing command is for test demo 1 no_move_area
-Rect no_move_area(0,52,120,14);
-*/
-
-//follwoing command is for test demo 2 no_move_area
-//Rect no_move_area(0,64,120,14);
-
-//follwoing command is for test demo 3 no_move_area
-//Rect no_move_area(0,68,120,12);
-
-//Test rect after camera to camera calibration
-//Rect no_move_area(0,460/scaling,960/scaling,231/scaling);
-Rect no_move_area;
-
-
-//Rect detect_area_center(120/SCALE,120/SCALE,(960-120*2)/(SCALE*SCALE),1200/SCALE)
-//Rect no_move_area_aux(0,660/scaling,960/scaling,160/scaling); //Mohammad rect at the center 580
 
 
 
 
 // Main DoStartCmd configuration for Eyelock matching
-#if 1
 void DoStartCmd(){
 
 	EyelockLog(logger, TRACE, "DoStartCmd");
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 
-	int minPos = fconfig.getValue("FTracker.minPos",0);
+	int rectX = fconfig.getValue("FTracker.targetRectX",0);
+	int rectY = fconfig.getValue("FTracker.targetRectY",497);
+	int rectW = fconfig.getValue("FTracker.targetRectWidth",960);
+	int rectH = fconfig.getValue("FTracker.targetRectHeight",121);
+
+
+	MIN_POS = fconfig.getValue("FTracker.minPos",0);
+	MAX_POS = fconfig.getValue("FTracker.maxPos",350);
 	CENTER_POS = fconfig.getValue("FTracker.centerPos",164);
+
 	int allLEDhighVoltEnable = fconfig.getValue("FTracker.allLEDhighVoltEnable",1);
 
 	int faceLEDVolt = fconfig.getValue("FTracker.faceLEDVolt",30);
@@ -788,13 +634,21 @@ void DoStartCmd(){
 	int faceLEDEnable = fconfig.getValue("FTracker.faceLEDEnable",4);
 	int faceLEDmaxTime = fconfig.getValue("FTracker.faceLEDmaxTime",4);
 
+	//Reading AGC parameters
+	PIXEL_TOTAL = fconfig.getValue("FTracker.PIXEL_TOTAL",900);
+	FACE_GAIN_DEFAULT = fconfig.getValue("FTracker.FACE_GAIN_DEFAULT",10);
+	FACE_GAIN_DEFAULT = FACE_GAIN_DEFAULT * PIXEL_TOTAL;
+	FACE_GAIN_MAX = fconfig.getValue("FTracker.FACE_GAIN_MAX",80);
+	FACE_GAIN_MAX = FACE_GAIN_MAX * PIXEL_TOTAL;
+	FACE_GAIN_MIN = fconfig.getValue("FTracker.FACE_GAIN_MIN",8);
+	FACE_GAIN_MIN = FACE_GAIN_MIN * PIXEL_TOTAL;
+	FACE_GAIN_PER_GOAL = fconfig.getValue("FTracker.FACE_GAIN_PER_GOAL",10);
+	FACE_GAIN_HIST_GOAL = fconfig.getValue("FTracker.FACE_GAIN_HIST_GOAL",float(0.1));
+	FACE_CONTROL_GAIN = fconfig.getValue("FTracker.FACE_CONTROL_GAIN",float(500.0));
+	ERROR_LOOP_GAIN = fconfig.getValue("FTracker.ERROR_LOOP_GAIN",float(0.08));
 
-/*	int IrisLEDVolt = fconfig.getValue("FTracker.IrisLEDVolt",30);
-	int IrisLEDcurrentSet = fconfig.getValue("FTracker.IrisLEDcurrentSet",40);
-	int IrisLEDtrigger = fconfig.getValue("FTracker.IrisLEDtrigger",3);
-	int IrisLEDEnable = fconfig.getValue("FTracker.IrisLEDEnable",49);
-	int IrisLEDmaxTime = fconfig.getValue("FTracker.IrisLEDmaxTime",4);*/
-
+	MIN_FACE_SIZE = fconfig.getValue("FTracker.MIN_FACE_SIZE",10);
+	MAX_FACE_SIZE = fconfig.getValue("FTracker.MAX_FACE_SIZE",70);
 
 	int faceCamExposureTime = fconfig.getValue("FTracker.faceCamExposureTime",12);
 	int faceCamDigitalGain = fconfig.getValue("FTracker.faceCamDigitalGain",240);
@@ -802,10 +656,6 @@ void DoStartCmd(){
 
 	int AuxIrisCamExposureTime = fconfig.getValue("FTracker.AuxIrisCamExposureTime",8);
 	int AuxIrisCamDigitalGain = fconfig.getValue("FTracker.AuxIrisCamDigitalGain",80);
-
-	//printf("aux gain :::: %i\n", AuxIrisCamDigitalGain);
-	//printf("aux exp :::: %i\n", AuxIrisCamExposureTime);
-
 	int AuxIrisCamDataPedestal = fconfig.getValue("FTracker.AuxIrisCamDataPedestal",0);
 
 	int MainIrisCamExposureTime = fconfig.getValue("FTracker.MainIrisCamExposureTime",8);
@@ -817,7 +667,6 @@ void DoStartCmd(){
 
 	int capacitorChargeCurrent = fconfig.getValue("FTracker.capacitorChargeCurrent",60);
 
-  //printf("AuxIrisCamDigitalGain = %d\n",AuxIrisCamDigitalGain);
 
 	char cmd[512];
 
@@ -831,25 +680,21 @@ void DoStartCmd(){
 #endif
 
 	//Reset the lower motion
-	sprintf(cmd, "fx_abs(%i)",minPos);
-	EyelockLog(logger, DEBUG, "Reset to lower position minPos:%d", minPos);
+	sprintf(cmd, "fx_abs(%i)",MIN_POS);
+	EyelockLog(logger, DEBUG, "Reset to lower position minPos:%d", MIN_POS);
 	port_com_send(cmd);
 
 	//move to center position
-	// printf("Moving to Center\n");
 	EyelockLog(logger, DEBUG, "Moving to center position");
 	MoveTo(CENTER_POS);
 	read_angle();		//read current angle
 
 
-	//printf("configuring face LEDs\n");
 	EyelockLog(logger, DEBUG, "Configuring face LEDs");
 	//Face configuration of LED
 	sprintf(cmd, "psoc_write(2,%i) | psoc_write(1,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)| psoc_write(6,%i)\n",faceLEDVolt, allLEDhighVoltEnable, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable, faceLEDmaxTime);
 
 	EyelockLog(logger, DEBUG, "Configuring face LEDs faceLEDVolt:%d, allLEDhighVoltEnable:%d, faceLEDcurrentSet:%d, faceLEDtrigger:%d, faceLEDEnable:%d, faceLEDmaxTime:%d", faceLEDVolt, allLEDhighVoltEnable, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable, faceLEDmaxTime);
-
-	// printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,20) | psoc_write(4,4) | psoc_write(3,4)| psoc_write(6,4)");
 
@@ -857,88 +702,64 @@ void DoStartCmd(){
 	//port_com_send("psoc_write(9,90)");	// charge cap for max current 60 < range < 95
 	sprintf(cmd, "psoc_write(9,%i)\n", capacitorChargeCurrent);
 	EyelockLog(logger, DEBUG, "capacitorChargeCurrent:%d", capacitorChargeCurrent);
-	//printf(cmd);
 	port_com_send(cmd);	// charge cap for max current 60 < range < 95
-	//port_com_send("psoc_write(9,80)");	// charge cap for max current 60 < range < 95
+
 
 	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
 	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
 
 
 	//Face cameras configuration
-	//printf("configuring face Cameras\n");
 	EyelockLog(logger, DEBUG, "Configuring face Cameras");
 	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x301e,%i) | wcr(0x04,0x305e,%i)\n",faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
 	EyelockLog(logger, DEBUG, "faceCamExposureTime:%d faceCamDataPedestal:%d faceCamDigitalGain:%d", faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
-	//printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xFE)");
 	//port_com_send("wcr(0x04,0x3012,12) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xF0)");	//Demo Config
 
 
 
-	//Main Iris cameras configuration
-	//printf("configuring Aux Iris Cameras\n");
+	//AUX cameras configuration
 	EyelockLog(logger, DEBUG, "Configuring AUX Iris Cameras");
 	sprintf(cmd, "wcr(0x03,0x3012,%i) | wcr(0x03,0x301e,%i) | wcr(0x03,0x305e,%i)\n",AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
 	EyelockLog(logger, DEBUG, "AuxIrisCamExposureTime:%d AuxIrisCamDataPedestal:%d AuxIrisCamDigitalGain:%d", AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
-
-	//printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x18,0x3012,8) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x80)");
 	//port_com_send("wcr(0x18,0x3012,8) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,80)"); //DEMO Config
 
 
-	//Aux Iris Cameras Configuration
-	//printf("configuring Main Iris Cameras\n");
+	//Main Iris Cameras Configuration
 	EyelockLog(logger, DEBUG, "Configuring Main Iris Cameras");
 	sprintf(cmd, "wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
 	EyelockLog(logger, DEBUG, "MainIrisCamExposureTime:%d MainIrisCamDataPedestal:%d MainIrisCamDigitalGain:%d", faceCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
-	//printf(cmd);
 	port_com_send(cmd);
-	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0xB0)"); // was 128 Anita chnaged my Mo
+	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0xB0)");
 	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,128)");	//Demo Config
 
 
-	// setup up all pll values
-	//printf("setting up PLL\n");
 	EyelockLog(logger, DEBUG, "Setting up PLL");
-	//following process will activate PLL for all cameras
 
+	//following process will activate PLL for all cameras
 	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
-#ifdef OPENCVWAIT
 	cvWaitKey(100);								//Wait for 100 msec
-#else
-	usleep(100);
-#endif
 	port_com_send("wcr(0x1f,0x302e,2) | wcr(0x1f,0x3030,44) | wcr(0x1f,0x302c,2) | wcr(0x1f,0x302a,6)");
-#ifdef OPENCVWAIT
 	cvWaitKey(10);								//Wait for 10 msec
-#else
-	usleep(10);
-#endif
+
 	//Turn on analog gain
-	//printf("Analog gain is %d\n",analogGain);
 	sprintf(cmd,"wcr(0x1b,0x30b0,%i)\n",((irisAnalogGain&0x3)<<4) | 0X80);
 	EyelockLog(logger, DEBUG, "Iris analog gain: %d", (((irisAnalogGain&0x3)<<4) | 0X80));
-	// printf(cmd);
+
 	port_com_send(cmd);
 	sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((faceAnalogGain&0x3)<<4) | 0X80);
 	EyelockLog(logger, DEBUG, "Face analog gain: %d", (((faceAnalogGain&0x3)<<4) | 0X80));
-	// printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
 	//port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
 
 
-	// printf("Turning on Alternate cameras\n");
-	EyelockLog(logger, DEBUG, "Turning on Alternate cameras");
-	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Turn on Alternate cameras
-	//sprintf(cmd,"set_cam_mode(0x4,%d)",FRAME_DELAY);		//Turn on Alternate cameras
-	port_com_send(cmd);
 
-	port_com_send("wcr(0x1f,0x301a,0x1998)"); // ilya added to leave the pll on always
 
+///////////////////ilya///////////////////
 	//This code is for playing sound
 	if(1)
 	{
@@ -956,7 +777,27 @@ void DoStartCmd(){
 	}
 
 
-	//Reading the calibrated Rect
+
+/*	port_com_send("play_snd(0)");
+	printf("Playing sound--------------------------------------------> \n");*/
+
+
+///////////////////////////////////////////////
+
+
+
+
+	EyelockLog(logger, DEBUG, "Turning on Alternate cameras");
+	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Turn on Alternate cameras
+	port_com_send(cmd);
+
+	//Leave the PLL always ON
+	port_com_send("wcr(0x1f,0x301a,0x1998)");
+
+
+
+
+/*	//Reading the calibrated Rect
 	ifstream m_AuxRect(a_calibFile);
 	vector<int> a_rect;
 	string line;
@@ -978,18 +819,53 @@ void DoStartCmd(){
 	no_move_area.x = a_rect[0]/scaling;
 	no_move_area.y = a_rect[1]/scaling + targetOffset;
 	no_move_area.width = a_rect[2]/scaling;
-	no_move_area.height = (a_rect[3])/scaling -targetOffset*2;
+	no_move_area.height = (a_rect[3])/scaling -targetOffset*2;*/
 
-	currnet_mode = -1;
-	SetFaceMode();		// just for now
+	//Reading the calibrated Rect
+	int targetOffset = 3;		//Adding offset
+
+	no_move_area.x = rectX/scaling;
+	no_move_area.y = rectY/scaling + targetOffset;
+	no_move_area.width = rectW/scaling;
+	no_move_area.height = (rectH)/scaling -targetOffset*2;
+
 
 }
-#endif
 
+
+//This settings only need for camera to camera calibration
 void DoStartCmd_CamCal(){
 
 	EyelockLog(logger, TRACE, "DoStartCmd_CamCal");
-	char cmd[100];
+	char cmd[512];
+
+	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
+
+	MIN_POS = fconfig.getValue("FTracker.minPos",0);
+	//MIN_POS = MIN_POS + 75;	// adding 20 offset
+	MAX_POS = fconfig.getValue("FTracker.maxPos",350);
+	CENTER_POS = fconfig.getValue("FTracker.centerPos",164);
+
+	int allLEDhighVoltEnable = fconfig.getValue("FTracker.allLEDhighVoltEnable",1);
+
+	int calibVolt = fconfig.getValue("FTracker.calibVolt",30);
+	int calibCurrent = fconfig.getValue("FTracker.calibCurrent",30);
+	int calibTrigger = fconfig.getValue("FTracker.calibTrigger",1);
+	int calibLEDEnable = fconfig.getValue("FTracker.calibLEDEnable",1);
+	int calibLEDMaxTime = fconfig.getValue("FTracker.calibLEDMaxTime",4);
+
+	int faceCamExposureTime = fconfig.getValue("FTracker.calibFaceCamExposureTime",2);
+	int faceCamDigitalGain = fconfig.getValue("FTracker.calibFaceCamDigitalGain",48);
+	int faceCamDataPedestal = fconfig.getValue("FTracker.calibFaceCamDataPedestal",0);
+
+	int AuxIrisCamExposureTime = fconfig.getValue("FTracker.calibAuxIrisCamExposureTime",3);
+	int AuxIrisCamDigitalGain = fconfig.getValue("FTracker.calibAuxIrisCamDigitalGain",64);
+	int AuxIrisCamDataPedestal = fconfig.getValue("FTracker.calibAuxIrisCamDataPedestal",0);
+
+	int MainIrisCamExposureTime = fconfig.getValue("FTracker.calibMainIrisCamExposureTime",3);
+	int MainIrisCamDigitalGain = fconfig.getValue("FTracker.calibMainIrisCamDigitalGain",64);
+	int MainIrisCamDataPedestal = fconfig.getValue("FTracker.calibMainIrisCamDataPedestal",0);
+
 
 	//Homing
 	EyelockLog(logger, DEBUG, "Re Homing");
@@ -997,35 +873,57 @@ void DoStartCmd_CamCal(){
 #ifdef NOOPTIMIZE
 	usleep(100000);
 #endif
-	port_com_send("fx_abs(25)\n");
+
+
+	//Reset the lower motion
+	sprintf(cmd, "fx_abs(%i)",MIN_POS);
+	EyelockLog(logger, DEBUG, "Reset to lower position minPos:%d", MIN_POS);
+	port_com_send(cmd);
+	printf(cmd);
+	printf("------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 
 	EyelockLog(logger, DEBUG, "Configuring face LEDs");
 	//Face configuration of LED
-	port_com_send("psoc_write(3,1)| psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,30) | psoc_write(4,1) | psoc_write(6,4)");
+	sprintf(cmd, "psoc_write(2,%i) | psoc_write(1,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)| psoc_write(6,%i)\n", calibVolt, allLEDhighVoltEnable, calibCurrent, calibTrigger, calibLEDEnable, calibLEDMaxTime);
+
+	printf("Before EyelockLOG\n");
+	EyelockLog(logger, DEBUG, "Configuring face LEDs faceLEDVolt:%d, allLEDhighVoltEnable:%d, faceLEDcurrentSet:%d, faceLEDtrigger:%d, faceLEDEnable:%d, faceLEDmaxTime:%d", calibVolt, allLEDhighVoltEnable, calibCurrent, calibTrigger, calibLEDEnable, calibLEDMaxTime);
+	port_com_send(cmd);
+
+	printf("faceCamExposureTime:: %d", faceCamExposureTime);
+	printf("faceCamDataPedestal:: %d", faceCamDataPedestal);
+	printf("faceCamDigitalGain:: %d", faceCamDigitalGain);
 
 
-	//port_com_send("psoc_write(9,90)");	// charge cap for max current 60 < range < 95
+	//Setting up cap current
 	port_com_send("psoc_write(9,60)");	// charge cap for max current 60 < range < 95
 
 	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
 	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
 
 
-
+	// faceCamDataPedestal, faceCamDigitalGain);
 	//Face cameras configuration
 	EyelockLog(logger, DEBUG, "Configuring face Cameras");
-	port_com_send("wcr(0x04,0x3012,2) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0x30)");
+	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x301e,%i) | wcr(0x04,0x305e,%i)\n",faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
+	EyelockLog(logger, DEBUG, "faceCamExposureTime:%d faceCamDataPedestal:%d faceCamDigitalGain:%d", faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
+	port_com_send(cmd);
+	//port_com_send("wcr(0x04,0x3012,2) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0x30)");
 
 
+	//AUX cameras configuration
+	EyelockLog(logger, DEBUG, "Configuring AUX Iris Cameras");
+	sprintf(cmd, "wcr(0x03,0x3012,%i) | wcr(0x03,0x301e,%i) | wcr(0x03,0x305e,%i)\n",AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
+	EyelockLog(logger, DEBUG, "AuxIrisCamExposureTime:%d AuxIrisCamDataPedestal:%d AuxIrisCamDigitalGain:%d", AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
+	port_com_send(cmd);
+	//port_com_send("wcr(0x18,0x3012,3) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x40)");
 
-	//Main Iris cameras configuration
+	//Main Iris Cameras Configuration
 	EyelockLog(logger, DEBUG, "Configuring Main Iris Cameras");
-	port_com_send("wcr(0x18,0x3012,3) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x40)");
-
-
-	//Aux Iris Cameras Configuration
-	EyelockLog(logger, DEBUG, "Configuring Alternate Iris Cameras");
-	port_com_send("wcr(0x03,0x3012,3) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0x40)"); // was 128 Anita chnaged my Mo
+	sprintf(cmd, "wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
+	EyelockLog(logger, DEBUG, "MainIrisCamExposureTime:%d MainIrisCamDataPedestal:%d MainIrisCamDigitalGain:%d", faceCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
+	port_com_send(cmd);
+	//port_com_send("wcr(0x03,0x3012,3) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0x40)");
 
 
 	// setup up all pll values
@@ -1033,40 +931,22 @@ void DoStartCmd_CamCal(){
 	//following process will activate PLL for all cameras
 
 	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
-#ifdef OPENCVWAIT
 	cvWaitKey(100);								//Wait for 100 msec
-#else
-	usleep(100);
-#endif						//Wait for 100 msec
 	port_com_send("wcr(0x1f,0x302e,2) | wcr(0x1f,0x3030,44) | wcr(0x1f,0x302c,2) | wcr(0x1f,0x302a,6)");
-#ifdef OPENCVWAIT
 	cvWaitKey(10);								//Wait for 10 msec
-#else
-	usleep(10);
-#endif
+
 	//Turn on analog gain
 	port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
 	port_com_send("wcr(0x4,0x30b0,0x80");		//Only face camera gain is x90
 
 	port_com_send("wcr(0x1f,0x301a,0x1998)"); // ilya added to leave the pll on always
 
+
 }
 
 
-void detectAndDisplay( Mat frame );
-//std::printf("Detect face = %i\n",1);
-
-int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size);
-Point eyes;
-
-//at 40inch or 106cm distance
-#define MIN_FACE_SIZE 10		// previous val 40
-#define MAX_FACE_SIZE 70		//// previous val 60
 
 
-
-extern int IrisFramesHaveEyes();
-char temp[100];
 
 float AGC(int width, int height,unsigned char *dsty, int limit)
 {
@@ -1099,7 +979,40 @@ float AGC(int width, int height,unsigned char *dsty, int limit)
 	return (float)percentile;
 }
 
-int AGC_Counter = 0;
+
+
+float AGC_average(int width, int height,unsigned char *dsty, int limit)
+{
+	EyelockLog(logger, TRACE, "AGC");
+	//Percentile and Average Calculation
+	unsigned char *dy = (unsigned char *)dsty;
+	double total = 0,Ptotal = 0,percentile = 0,hist[256]={0},average=0;
+	int pix=0,i;
+	int n = width * height;
+	//int limit = 180;    // Lower limit for percentile calculation
+	for (; n > 0; n--)
+	{
+		pix =(int) *dy;
+		hist[pix]++;
+		dy++;
+		average=average+pix;
+	}
+
+	for(i=0;i<=255;i++)
+	{
+		float histValue = hist[i];
+		total = total + (double)histValue;
+		if(i>=limit)
+			Ptotal = Ptotal + (double)histValue;
+	}
+	percentile = (Ptotal*100)/total;
+	average=average/(width*height);
+
+	EyelockLog(logger, DEBUG, "average : %3.1f percentile : %3.1f\n",average,percentile);
+	return (float)average;
+}
+
+
 
 Mat rotate(Mat src, double angle)
 {
@@ -1112,6 +1025,8 @@ Mat rotate(Mat src, double angle)
     M.release();
     return dst;
 }
+
+
 
 Mat rotation90(Mat src){
 	EyelockLog(logger, TRACE, "rotation90");
@@ -1135,13 +1050,81 @@ int IrisFramesHaveEyes()
 		return 1;
 }
 
-int noFaceCounter =0;
 
-void DoRunMode(bool bShowFaceTracking)
+
+double StandardDeviation(std::vector<double> samples)
+{
+     return sqrt(Variance(samples));
+}
+
+double Variance(std::vector<double> samples)
+{
+     int size = samples.size();
+
+     double variance = 0;
+     double t = samples[0];
+     for (int i = 1; i < size; i++)
+     {
+    	 printf("Data:::: %3.4f\n", samples[i]);
+          t += samples[i];
+          double diff = ((i + 1) * samples[i]) - t;
+          variance += (diff * diff) / ((i + 1.0) *i);
+     }
+     printf("variance:::: %4.4f\n",variance / (size - 1));
+     return variance / (size - 1);
+}
+
+float StandardDeviation_m1(vector<float> vec){
+
+	float sum  = 0.0;
+	int n = 0;
+	for(int i = 0; i < vec.size(); i++){
+		sum = sum + vec[i];
+		printf("Data:::: %3.4f\n", vec[i]);
+		n++;
+	}
+
+	float mean = sum/n;
+	printf("n:::::%d     MEan:::: %4.4f\n",n,mean);
+
+	float sumPrd = 0.0;
+	for(int i = 0; i < vec.size(); i++){
+		sumPrd = sumPrd + pow(vec[i] - mean,2);
+	}
+	 float std = sqrt(sumPrd/n - 1);
+
+	return std;
+
+}
+
+float average(vector<float> vec){
+
+	float sum  = 0.0;
+	int n = 0;
+	for(int i = 0; i < vec.size(); i++){
+		sum = sum + vec[i];
+		//printf("Data:::: %3.4f\n", vec[i]);
+		n++;
+	}
+
+	float mean = sum/n;
+	printf("n:::::%d     MEan:::: %4.4f\n",n,mean);
+
+	return mean;
+
+}
+
+#define LED_brightness_control
+//#define Tempering
+vector<float> tempDataX,tempDataY,tempDataZ;
+float xp =0,yp = 0,zp =0;
+double difX,difY,difZ;
+
+void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 {
 	EyelockLog(logger, TRACE, "DoRunMode");
 	float eye_size;
-	int t = clock();
+
 	// if (run_state == RUN_STATE_FACE)
 	{
 		float p;
@@ -1150,27 +1133,14 @@ void DoRunMode(bool bShowFaceTracking)
 		int64 startTime = cv::getTickCount();
 		EyelockLog(logger, DEBUG, "image resize");
 		cv::resize(outImg, smallImgBeforeRotate, cv::Size(), (1 / scaling),
-				(1 / scaling), INTER_NEAREST);	//Mohammad
+				(1 / scaling), INTER_NEAREST);	//py level 3
 
-		//printf("image resize %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
+		smallImg = rotation90(smallImgBeforeRotate);	//90 deg rotation
 
-		smallImg = rotation90(smallImgBeforeRotate);
 
-		//printf("image rotate %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
-
-//FACE_GAIN_DEFAULT   0x80		128
-//       0xe0		224
-//FACE_GAIN_MIN       0x10		16
-//FACE_GAIN_PER_GOAL   1
-//FACE_GAIN_HIST_GOAL  0
-//FACE_CONTROL_GAIN   20.0
-
-//int agc_val= FACE_GAIN_DEFAULT;		128
-//int agc_set_gain =0;
+		//AGC control to block wash out images
 		EyelockLog(logger, DEBUG, "AGC Calculation");
-		p = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),
-				180);
-		//printf("image AGC %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
+		p = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),180);
 
 		if (p < FACE_GAIN_PER_GOAL - FACE_GAIN_HIST_GOAL)
 			agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
@@ -1178,12 +1148,7 @@ void DoRunMode(bool bShowFaceTracking)
 			agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
 		agc_val = MAX(FACE_GAIN_MIN,agc_val);
 		agc_val = MIN(agc_val,FACE_GAIN_MAX);
-		//Too close
-//			if(agc_val==FACE_GAIN_MIN)
-//			{
-//				//SelLedDistance(150);
-//				setRGBled(120,0,0,500,0,0x4);
-//			}
+
 		AGC_Counter++;
 		if (agc_set_gain != agc_val)
 			;	// && AGC_Counter%2==0)
@@ -1201,69 +1166,141 @@ void DoRunMode(bool bShowFaceTracking)
 			agc_set_gain = agc_val;
 		}
 
-		//printf("after AGC %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
+
+#ifdef LED_brightness_control
+
+
+		float agcAvg, agcPer;
+		int limit = 0;
+		agcAvg = AGC_average(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),limit);
+		agcPer = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),limit);
+
+		// can be used for saving temp data
+		fstream infile(fileName);
+		if(infile.good()){
+			// cout << "File exist and keep writing in it!" << endl;
+			EyelockLog(logger, DEBUG, "File exist and keep writing in it");
+		}
+		else{
+			EyelockLog(logger, DEBUG, "Create Log file");
+			// cout << "Create log file!" << endl;
+			ofstream file(fileName);
+			file << "Time" << ',' << "image Average" << ',' << "Image percentile" << ',' << "Cutoff Limit" << '\n';
+		}
+
+		ofstream writeFile(fileName, std::ios_base::app);
+
+
+		using std::chrono::system_clock;
+
+		std::chrono::duration<int,std::ratio<60*60*24> > one_day (1);
+
+		system_clock::time_point today = system_clock::now();
+
+		std::time_t tt;
+
+		tt = system_clock::to_time_t ( today );
+
+		writeFile <<  ctime(&tt) << ',';
+		writeFile <<  agcAvg << ',';
+		writeFile <<  agcPer << ',';
+		writeFile <<  limit << '\n';
+
+		if (agcAvg > 100){
+			// SET LED AS high
+
+		}
+		else
+		{
+			//Set default LED
+		}
+
+#endif
+
+
 
 		EyelockLog(logger, DEBUG, "FindEyeLocation");
-		if (FindEyeLocation(smallImg, eyes, eye_size)) {
+		if (FindEyeLocation(smallImg, eyes, eye_size)) {	//Find face
 			noeyesframe = 0;
 
-			//printf("after eyedetection %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
-
-			if (detect_area.contains(eyes)) {
+			if (detect_area.contains(eyes)) {		//Find face/eye into the rect first, Future use of detect face at center
 				EyelockLog(logger, DEBUG, "eyes found");
 
 				noFaceCounter = 0;
 
-#define ERROR_LOOP_GAIN 0.08
-				int CurrentEye_distance = eye_size;
-				int diffEyedistance = abs(
-						CurrentEye_distance - previousEye_distance);
 
-				//if (!no_move_area.contains(eyes))
-				if (!no_move_area.contains(eyes)) {
+				int CurrentEye_distance = eye_size;
+				int diffEyedistance = abs(CurrentEye_distance - previousEye_distance);
+
+
+				if (!no_move_area.contains(eyes)) {		//if target area doesn't have face then move
 					if ((eye_size >= MIN_FACE_SIZE)
-							&& (eye_size <= MAX_FACE_SIZE)) {
+							&& (eye_size <= MAX_FACE_SIZE)) {	// check face size
 						float err;
-						int constant = 10;
+
 						int MoveToLimitBound = 1;
 						err = (no_move_area.y + no_move_area.height / 2)
 								- eyes.y;
 						EyelockLog(logger, DEBUG, "abs err----------------------------------->  %d\n", abs(err));
-						err = (float) err * (float) SCALE
-								* (float) ERROR_LOOP_GAIN;
+						err = (float) err * (float) SCALE * (float) ERROR_LOOP_GAIN;
 
 						// if we need to move
 						if (abs(err) > MoveToLimitBound) {
 							int x, w, h;
 
-							//Experiment
+							//Experiment ----> Turn ON iris cameras before the motor take action
 							/////////////////////////////////////////////////
 							EyelockLog(logger, DEBUG, "Switching ON IRIS LEDs!!!!\n");
+
+#ifdef DEBUG_SESSION
+							if(bDebugSessions){
+								struct stat st = {0};
+								if (stat(DEBUG_SESSION_DIR, &st) == -1) {
+									mkdir(DEBUG_SESSION_DIR, 0777);
+								}
+								// boost::filesystem::path temp_session_dir(DEBUG_SESSION_DIR);
+								// boost::filesystem::create_directory(temp_session_dir);
+
+								time_t timer;
+								struct tm* tm1;
+								time(&timer);
+								tm1 = localtime(&timer);
+								char time_str[100];
+
+								FILE *file = fopen(DEBUG_SESSION_INFO, "w");
+								if (file){
+									strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
+									fprintf(file, "[%s] Session opened\n", time_str);
+									fclose(file);
+								}
+							}
+#endif
+
 							SetIrisMode(eye_size, diffEyedistance);
 							run_state = RUN_STATE_EYES;
 							////////////////////////////////////////////////
 
 							MoveRelAngle(-1 * err, diffEyedistance);
-							//	while (waitKey(10) != 'z');
-							//	printf("fx_abs val: %i\n", -1*err);
-							//	printf("Face is IN RANGE!!!!\n");
+
 
 							//flush the video buffer to get rid of frames from motion
 							{
-								//int vid_stream_flush(void);
-								//vid_stream_flush();
 								vs->flush();
 							}
-							// might need this vid_stream_get(&w,&h,(char *)outImg.data);
+
 						}
 
-					} else
+					} else{
 						EyelockLog(logger, DEBUG, "Face out of range\n");
+					}
 				} else {
 
 					cv::rectangle(smallImg,
 							Rect(eyes.x - 5, eyes.y - 5, 10, 10),
 							Scalar(255, 0, 0), 2, 0);
+
+					//IF we want to turn on the iris cameras after motor take action
+
 					/*						printf("Switching ON IRIS LEDs!!!!\n");
 					 SetIrisMode(eye_size, diffEyedistance);
 					 run_state = RUN_STATE_EYES;*/
@@ -1273,10 +1310,11 @@ void DoRunMode(bool bShowFaceTracking)
 
 			}
 
+
+
 		}
 		{
-//				noeyesframe++;
-			//Sarvesh
+
 			if (noFaceCounter < (NO_FACE_SWITCH_FACE + 2))
 				noFaceCounter++;
 
@@ -1284,40 +1322,149 @@ void DoRunMode(bool bShowFaceTracking)
 				MoveTo(CENTER_POS);
 				run_state = RUN_STATE_FACE;
 				SetFaceMode();
+#ifdef DEBUG_SESSION
+				if(bDebugSessions){
+					struct stat st;
+					if (stat(DEBUG_SESSION_DIR, &st) == 0 && S_ISDIR(st.st_mode)) {
+						time_t timer;
+						struct tm* tm1;
+						time(&timer);
+						tm1 = localtime(&timer);
+						char time_str[100];
 
+						FILE *file = fopen(DEBUG_SESSION_INFO, "a");
+						if (file) {
+							strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
+							fprintf(file, "[%s] Session closed\n", time_str);
+							fclose(file);
+						}
+
+						char session_dir[100];
+						strftime(time_str, 100, "_%Y_%m_%d_%H-%M-%S", tm1);
+						sprintf(session_dir,"%s%s", DEBUG_SESSION_DIR,time_str);
+						rename(DEBUG_SESSION_DIR, session_dir);
+					}
+
+#if 0
+					boost::filesystem::path temp_session_dir(DEBUG_SESSION_DIR);
+					if (boost::filesystem::is_directory(temp_session_dir))
+					{
+						time_t timer;
+						struct tm* tm1;
+						time(&timer);
+						tm1 = localtime(&timer);
+						char time_str[100];
+
+						strftime(time_str, 100, "_%Y_%m_%d_%H-%M-%S", tm1);
+						boost::filesystem::path session_dir(DEBUG_SESSION_DIR+std::string(time_str));
+
+						FILE *file = fopen(DEBUG_SESSION_INFO, "a");
+						if (file){
+							strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
+							fprintf(file, "[%s] Session closed\n", time_str);
+							fclose(file);
+						}
+
+						rename(temp_session_dir.c_str(), session_dir.c_str());
+					}
+#endif
+				}
+#endif /* DEBUG_SESSION */
 			}
-
-			//MOhammad
-			/*				if (IrisFrameCtr==MIN_IRIS_FRAMES)
-			 {
-			 printf("Iris number reach to %i\n and it will go to home now", IrisFrameCtr);
-			 run_state = RUN_STATE_FACE;
-			 SetFaceMode();
-			 MoveTo(CENTER_POS);
-			 }*/
 
 		}
 
-		/*if (noeyesframe == 10)
-		 {
-		 SetFaceMode();
-		 MoveTo(CENTER_POS);
-		 }
-		 */
-		/*				if (move_counts> MOVE_COUNTS_REHOME)
-		 {
-		 printf("Re Homing\n");
-		 setRGBled(0,0,0,100,0,0x1F);
-		 port_com_send("fx_home()\n");
-		 cvWaitKey(6000);
-		 MoveTo(CENTER_POS);
-		 setRGBled(20,20,20,100,0,0x1F);
-		 move_counts=0;
-		 }*/
 
-		//printf("before show face %3.3f\n", float) (clock() - t) / CLOCKS_PER_SEC );
+		//EyelockLog(logger, TRACE, "Just before Tempering ------------------------>>>>>>>>>>>>>>> \n");
+#ifdef Tempering
+		int t = clock();
+		if ((len = port_com_send_return("accel", temp, 20)) > 0) {
+			//printf("Inside tempering ------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+			EyelockLog(logger, TRACE, "got data %d", len);
+			temp[len] = 0;
+			sscanf(temp, "%f %f %f %f", &x, &y, &z, &a);
+			EyelockLog(logger, TRACE, "Buffer =>%s\n", temp);
+			EyelockLog(logger, TRACE, "%3.3f %3.3f %3.3f %3.3f  readTime=%2.4f\n",x, y, z, a, (float) (clock() - t) / CLOCKS_PER_SEC );
+			EyelockLog(logger, TRACE, "ACCEL reading ------------------------------------------------>>>>>>>>>>>>>>>>\n");
+			EyelockLog(logger, TRACE, "x::: %3.3f y::: %3.3f z::: %3.3f a::: %3.3f\n", x,y,z,a);
+
+			ofstream writeFile(fileName, std::ios_base::app);
+
+
+			using std::chrono::system_clock;
+
+			std::chrono::duration<int,std::ratio<60*60*24> > one_day (1);
+
+			system_clock::time_point today = system_clock::now();
+
+			std::time_t tt;
+
+			tt = system_clock::to_time_t ( today );
+
+			//writeFile <<  ctime(&tt) << ',';
+			writeFile <<  x << ',';
+			writeFile <<  y << ',';
+			writeFile <<  z << ',';
+
+
+
+			difX = fabs(x - xp);
+			difY = fabs(y - yp);
+			difZ = fabs(z - zp);
+			xp = x; yp = y; zp = z;
+
+			writeFile <<  difX << ',';
+			writeFile <<  difY << ',';
+			writeFile <<  difZ << ',';
+			writeFile <<  a << '\n';
+
+			int numData = 10;
+			if(tempDataX.size()<=numData)
+			{
+				printf("monitoring temparing-------------->>>>>>>>>! \n");
+				tempDataX.push_back(difX);
+				tempDataY.push_back(difY);
+				tempDataZ.push_back(difZ);
+			}
+			//tempDataX.erase(0,1);
+
+
+			if (tempDataX.size() > numData){
+
+				tempDataX.erase(tempDataX.begin(),tempDataX.begin()+2);
+				tempDataY.erase(tempDataY.begin(),tempDataY.begin()+2);
+				tempDataZ.erase(tempDataZ.begin(),tempDataZ.begin()+2);
+
+				float xAvg = average(tempDataX);
+				float yAvg = average(tempDataY);
+				float zAvg = average(tempDataZ);
+				printf("AVG val :::::: %3.3f, %3.3f, %3.3f -------------->>>>>>>>>! \n", xAvg,yAvg,zAvg);
+				EyelockLog(logger, TRACE, "AVG val :::::: %3.3f, %3.3f, %3.3f -------------->>>>>>>>>! \n", xAvg,yAvg,zAvg);
+				if (xAvg > 0.01 & yAvg > 0.01 & zAvg > 0.08){
+					printf("TEMPER DETECTED!!!!!!!!!!!!!!!!!!!!!!------------------>>>>>>>>>>> \n");
+					system("touch /home/root/tamper");
+					//exit(EXIT_FAILURE);;
+				}
+				char s = cv::waitKey(1);
+/*				if (s == 'q')
+					break;
+				else{}*/
+
+
+				tempDataX.clear();
+				tempDataY.clear();
+				tempDataZ.clear();
+			}
+
+
+		}
+#endif
+		//EyelockLog(logger, TRACE, "Just after Tempering ------------------------>>>>>>>>>>>>>>> \n");
+
+
 
 		if(bShowFaceTracking){
+			sprintf(temp, "Debug facetracker Window\n");
 			EyelockLog(logger, DEBUG, "Imshow");
 			cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
 			cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
@@ -1325,21 +1472,10 @@ void DoRunMode(bool bShowFaceTracking)
 		}
 	}
 
-	/*
-	 if (run_state == RUN_STATE_EYES)
-	 {
-	 if (IrisFramesHaveEyes()==0)
-	 {
-	 run_state = RUN_STATE_FACE;
-	 SetFaceMode();
-	 MoveTo(CENTER_POS);
-	 }
-	 }
-	 */
-	//printf("all done \t\t\t\t %3.3f\n",float) (clock() - t) / CLOCKS_PER_SEC );
 }
 
-Mat outImgLast, outImg1, outImg1s;
+
+//Measure noise from images
 void MeasureSnr() {
 	EyelockLog(logger, TRACE, "MeasureSnr");
 	Mat s1;
@@ -1349,27 +1485,7 @@ void MeasureSnr() {
 	float pixels = outImg.cols * outImg.rows;
 	double avg = s2.val[0] / pixels;
 	EyelockLog(logger, DEBUG, "a = %3.3f\n", avg);
-	/*
-		printf("id ===%x %x %x %x\n",outImg.at <char> (0,0),outImg.at <char> (0,1),outImg.at <char> (0,2),outImg.at <char> (0,3));
-		absdiff(outImg, outImgLast, s1);       // |I1 - I2|
 
-
-		imshow("Signal",outImg-outImg1s);
-		// imshow("other",outImg-outImg1);  //Time debug
-	 	s1=s1-(Scalar(sum(s1).val[0])/pixels); // remove exposure noise
-		imshow("Noise",s1*10);
-	 	 s1.convertTo(s1, CV_32F);  // cannot make a square on 8 bits
-		 s1 = s1.mul(s1);
-		 Scalar s = sum(s1);         // sum elements per channel
-
-		 Scalar s2 = sum(outImg);
-		 double rms_noise = sqrt(s.val[0]/pixels);
-		 double sse = s.val[0];
-		 double mid= s1.cols*s1.rows*128*128;
-		 double avg = s2.val[0]/pixels;
-		 float psnr = 20.0*log10((128.0)/rms_noise);
-		 float psnr_avg = 20.0*log10((avg)/rms_noise);
-	     printf("Snr = %3.3f avg = %3.3f snravg %3.3f\n", psnr,avg,psnr_avg);*/
 	} else {
 		if (once == 0) {
 			outImg.convertTo(outImg1, CV_32FC1);
@@ -1393,17 +1509,22 @@ void MeasureSnr() {
 
 }
 
-#define NUM_AVG_CAL 10
-#define  MAX_CAL_CURENT 20
+
+//Individual camera's offset correction
 void DoImageCal(int cam_id_ignore)
 {
 	EyelockLog(logger, TRACE, "Inside DoImageCal");
     int w,h;
 	char temp[100];
    // vid_stream_get(&w,&h,(char *)outImg.data);
+	vs->flush();
+	usleep(100);
 	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+
 	Scalar a;
     int  cam_id =(int)outImg.at<char>(0,2)&0xff;
     EyelockLog(logger, DEBUG, "Calibrating camera %x\n",cam_id);
@@ -1466,19 +1587,13 @@ void DoImageCal(int cam_id_ignore)
 	printf("All done press q to quit\n");
 	while (1)
 		{
-#ifdef OPENCVWAIT
 		char c=cvWaitKey(200);
 		if (c=='q')
 			return;
 		}
-#else
-	char c=getchar();
-	if (c=='q')
-		return;
-	}
-#endif
 }
 
+//Run offset correction for all cameras
 void CalAll()
 {
 	EyelockLog(logger, TRACE, "CalAll");
@@ -1505,44 +1620,18 @@ void CalAll()
 	DoImageCal(0);
 	delete (vs);
 
-
 }
 
+//Functions require for camera to camera geomatric calibration
 
-#if 0
-int arucoMarkerTracking(Mat InImage){
+#ifdef CAMERACALIBERATION_ARUCO
 
-	 //cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
-	//cv::Ptr<cv::aruco::Dictionary> dictionary;// = aruco::getPredefinedDictionary(aruco::DICT_6X6_250);;
-
-	//dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50);
-
-//	cv::Ptr<aruco::DetectorParameters> parameters;
-	//cv::Ptr<aruco::Dictionary> dictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME::DICT_4X4_100);
-
-		//for (int i = 0; i < 50; i++){
-		//aruco::drawMarker(markerDict, i , 500, oMarker, 1);
-	aruco::MarkerDetector MDetector;
-
-//	 MDetector.setDictionary("ARUCO_MIP_36h12");
-	 MDetector.setDictionary("ARUCO");
-	       auto Markers=MDetector.detect(InImage);
-	       //for each marker, draw info and its boundaries in the image
-	       for(auto m:MDetector.detect(InImage)){
-	           std::cout<<m<<std::endl;
-	           m.draw(InImage);
-		       cv::imshow("in",InImage);
-	       }
-	       //cv::waitKey(0);//wait for key to be pressed
-
-//	}
-	       return 1;
-}
-
+//Detect ARUCO markers
 std::vector<aruco::Marker> gridBooardMarker(Mat img){
 	//VideoCapture inputVideo;
 	//inputVideo.open(0);
 	int imgCount = 0;
+	char c;
 
 	printf("Inside gridBooardMarker\n");
     int w,h;
@@ -1579,8 +1668,12 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 		if (markers.size() < 2){
 			printf("%i camera detected %i markers!\n", portNum, markers.size());
 			cv::imshow("marker Detects", imgCopy);
+			c=cvWaitKey(200);
+			if (c=='q')
+				printf("Continue!\n");
 			//sprintf(buffer, "No_marker_detect%i.png", portNum);
 			//imwrite(buffer, imgCopy);
+
 			return markers;
 			//exit(EXIT_FAILURE);
 		}
@@ -1594,6 +1687,9 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 		//namedWindow("marker Detects", WINDOW_NORMAL);
 		//sprintf(buffer, "imgAruco%i.png", portNum);
 		cv::imshow("marker Detects", imgCopy);
+		c=cvWaitKey(200);
+		if (c=='q')
+			printf("Continue!\n");
 		//imwrite(buffer, imgCopy);
 
 	}
@@ -1608,7 +1704,7 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 	//comment the following lines it you want continue streaming and finish calibration!
 	while (1)
 	{
-		char c=cvWaitKey(200);
+		c=cvWaitKey(200);
 		if (c=='q')
 			return markers;
 		if (c == 's'){
@@ -1623,10 +1719,11 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 
 
 #endif
-	//return markers;
 
 }
 
+
+//Find rect points from detected ARUCO markers
 vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<aruco::Marker> markerFace){
 	std::vector<cv::Point2f> pointsIris, pointsFace;
 	vector<float> rectResult;
@@ -1749,8 +1846,7 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 }
 
 
-int agc_val_cal=3;
-
+//ADjust brightness during calibration
 void brightnessAdjust(Mat outImg, int cam){
 	float p, p_old;
 	int w,h;
@@ -1760,9 +1856,9 @@ void brightnessAdjust(Mat outImg, int cam){
 	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
 	//vs = new VideoStream(8193);
-	p = AGC(outImg.cols,outImg.rows,(unsigned char *)(outImg.data),128);
+	p = AGC(outImg.cols,outImg.rows,(unsigned char *)(outImg.data),50);
 	//imwrite("b_ad_a8193Img.png",outImg);
-	//printf("percentile::: %f\n", p);
+	printf("percentile::: %f\n", p);
 	//outImg.release();
 	//delete (vs);
 
@@ -1773,17 +1869,19 @@ void brightnessAdjust(Mat outImg, int cam){
 	float bThreshold;
 	if (cam == 4){
 		agc_val_cal = 3;
-		bThreshold = 20.00;
+		bThreshold = 15.00;
 	}
+	else if (cam == 81 || cam == 82)
+		bThreshold = 50.00;
 	else
-		bThreshold = 65.00;
+		bThreshold = 52.00;
 
 
 	while(!(p >= bThreshold)){
 		agc_val_cal++;
 		sprintf(buff,"wcr(%d,0x3012,%d)",cam,agc_val_cal);
 		//printf(buff);
-		//printf("Setting Gain %d\n",coarse);
+		printf("bThreshold:::  %3.3f\n",bThreshold);
 		port_com_send(buff);
 		p_old = p;
 
@@ -1791,14 +1889,16 @@ void brightnessAdjust(Mat outImg, int cam){
 		vs->get(&w,&h,(char *)outImg.data);
 		vs->get(&w,&h,(char *)outImg.data);
 
-		p = AGC(outImg.cols,outImg.rows,(unsigned char *)(outImg.data),128);
+		p = AGC(outImg.cols,outImg.rows,(unsigned char *)(outImg.data),50);
 		printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Percentile::: %3.3f Agc value = %d\n",p,agc_val_cal);
 		imshow("AGC change", outImg);
 		cvWaitKey();
 
-		if(!(abs(p - p_old) > 1)){
+		if(agc_val_cal > 26)
+		{
 			sprintf(buff,"wcr(%d,0x3012,%d)",cam,agc_val_cal + 4);
 			port_com_send(buff);
+			printf("Increase brightness");
 			break;
 		}
 
@@ -1811,7 +1911,7 @@ void brightnessAdjust(Mat outImg, int cam){
 
 
 
-
+//Calculate Final Rect from all three cameras
 bool CalCam(){
 
 	char cmd[512];
@@ -2004,13 +2104,47 @@ bool CalCam(){
 	int x, y, width, height;
 	x = 0; y = pt1.y; width = int(smallImg.cols); height = int(abs(pt1.y - pt4.y));
 	Rect auxRect(x, y,width, height);
+	cout << x << "    " << y << "    " << width << "    " << height << "    " <<endl;
 
+	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
+
+
+	string xs,ys,ws,hs;
+	stringstream ssx,ssy,ssw,ssh;
+	ssx << x;
+	ssx >> xs;
+
+	ssy << y;
+	ssy >> ys;
+
+	ssw << width;
+	ssw >> ws;
+
+	ssh << height;
+	ssh >> hs;
+
+	cout << xs << "    " << ys << "    " << ws << "    " << hs << "    " <<endl;
+
+
+	printf("xc:: %s\n", xs.c_str());
+	printf("yc:: %s\n", ys.c_str());
+	printf("widthc:: %s\n", ws.c_str());
+	printf("heightc:: %s\n", hs.c_str());
+
+	fconfig.setValue("FTracker.targetRectX",xs.c_str());
+	fconfig.setValue("FTracker.targetRectY",ys.c_str());
+	fconfig.setValue("FTracker.targetRectWidth",ws.c_str());
+	fconfig.setValue("FTracker.targetRectHeight",hs.c_str());
+
+	fconfig.writeIni("/home/root/data/calibration/faceConfig.ini");
+
+/*	//saving Aux Rect info ---> This is the Rect info we will use for face Tracking
 	ofstream auxfile("auxRect.csv");
 	auxfile << x << endl;
 	auxfile << y << endl;
 	auxfile << width << endl;
 	auxfile << height << endl;
-	auxfile.close();
+	auxfile.close();*/
 
 
 
@@ -2018,12 +2152,13 @@ bool CalCam(){
 	x = 0; y = pt5.y; width = int(smallImg.cols); height = int(abs(pt5.y - pt8.y));
 	Rect mainRect(x, y,width, height);
 
+/*	//Saving Main Rect Info
 	ofstream mainfile("mainRect.csv");
 	mainfile << 0 << endl;
 	mainfile << int(pt7.y) << endl;
 	mainfile << int(smallImg.cols) << endl;
 	mainfile << int(abs(pt7.y - pt6.y)) << endl;
-	mainfile.close();
+	mainfile.close();*/
 
 	cv::rectangle(smallImgX, auxRect,cv::Scalar( 255, 255, 255 ), 4);
 	cv::rectangle(smallImgX, mainRect,cv::Scalar( 0, 255, 0 ), 4);
@@ -2036,17 +2171,22 @@ bool CalCam(){
 
 
 
-
+//Run calibration until meet all the condition based on brightness changes and motor movement
 void runCalCam(){
 	bool check = true;
-	int step = 10;		//initialize increment step
+	int step = 15;		//initialize increment step
 	int newPos = MIN_POS + step;
+	char cmd[512];
 
 	while(check){
 		printf("Motor is moving to %i and conducting calibration\n", newPos);
-		MoveTo(newPos);
+		sprintf(cmd, "fx_abs(%i)\n", newPos);
+		port_com_send(cmd);
+		//MoveTo(newPos);
 		usleep(1000);
-
+		printf("New Pos ::: %i, Max Pos ::: %i   \n",newPos, MAX_POS);
+		printf(cmd);
+		printf("------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 		check = CalCam();	// Rum calibration, return false if fail
 		newPos = newPos + step;
 
@@ -2061,7 +2201,7 @@ void runCalCam(){
 
 #endif
 
-
+//Parsing int and convertng into Hex
 double parsingIntfromHex(string str1){
 	EyelockLog(logger, TRACE, "parsingIntfromHex");
 
@@ -2082,7 +2222,7 @@ double parsingIntfromHex(string str1){
     return intVal;
 }
 
-
+//Read data from temp sensor---> Needs to be updated based on new firmware
 int calTemp(int i)
 {
 	EyelockLog(logger, TRACE, "calTemp");
@@ -2145,119 +2285,67 @@ int calTemp(int i)
 	//cout << "Slope::: " << slope << "Constant:::" << constant << endl;
     cout << "TempData of " << i << " Cam:::" << tempInC << endl;
 
-	writeFloatData(fileName, tempInC); //curremt temparature reading
-	writeStringData(fileName,",");
-
-
-	writeFloatData(fileName, t_result); //curremt temparature reading
-	writeStringData(fileName,",");
 
 	sprintf(cmd, "wcr(0x0%i,0x30b4,0x21)", i);
     port_com_send(cmd);
-
-    //writeStartNewLine(fileName);
 
 
     return tempInC;
 
 }
 
+//Motor Move for each temp measure
 void motorMove(){
 	EyelockLog(logger, TRACE, "motorMove");
 	int temp;
+	int WAIT = 800;
+
 /*    MoveTo(CENTER_POS);
     temp = calTemp();*/
+
 	EyelockLog(logger, DEBUG, "\nStart temp expermiment process-----------------> \n");
 	char cmd[512];
     while(1){
         MoveTo(MAX_POS);
-#ifdef OPENCVWAIT
         cvWaitKey(WAIT);
-#else
-        usleep(WAIT);
-#endif
         //sprinf(cmd, "")
         temp = calTemp(1);
         temp = calTemp(2);
         temp = calTemp(4);
         temp = calTemp(8);
         temp = calTemp(10);
-        writeStartNewLine(fileName);
+        //writeStartNewLine(fileName);
 
         MoveTo(CENTER_POS);
-#ifdef OPENCVWAIT
         cvWaitKey(WAIT);
-#else
-        usleep(WAIT);
-#endif
         temp = calTemp(1);
         temp = calTemp(2);
         temp = calTemp(4);
         temp = calTemp(8);
         temp = calTemp(10);
-        writeStartNewLine(fileName);
+        //writeStartNewLine(fileName);
 
         MoveTo(MIN_POS);
-#ifdef OPENCVWAIT
         cvWaitKey(WAIT);
-#else
-        usleep(WAIT);
-#endif
         temp = calTemp(1);
         temp = calTemp(2);
         temp = calTemp(4);
         temp = calTemp(8);
         temp = calTemp(10);
-        writeStartNewLine(fileName);
+        //writeStartNewLine(fileName);
 
         MoveTo(CENTER_POS);
-#ifdef OPENCVWAIT
         cvWaitKey(WAIT);
-#else
-        usleep(WAIT);
-#endif
         temp = calTemp(1);
         temp = calTemp(2);
         temp = calTemp(4);
         temp = calTemp(8);
         temp = calTemp(10);
-        writeStartNewLine(fileName);
+        //writeStartNewLine(fileName);
 
     }
 }
 
-
-void writeStringData(string fileName, string v){
-	ofstream file(fileName, std::ios_base::out | std::ios_base::app);
-	file << v;
-
-	file.close();
-}
-
-
-
-void writeFloatData(string fileName, float v){
-	ofstream file(fileName, std::ios_base::out | std::ios_base::app);
-	file << v;
-
-	file.close();
-}
-
-
-void writeStartNewLine(string fileName){
-	ofstream file(fileName, std::ios_base::out | std::ios_base::app);
-	file << std::endl;
-
-	file.close();
-}
-
-
-
-void clearData(string fileName){
-	ofstream file(fileName);
-	file.clear();
-	file.close();
-}
 
 
 
@@ -2267,12 +2355,8 @@ int main(int argc, char **argv)
 
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 	bool bShowFaceTracking = fconfig.getValue("FTracker.ShowFaceTracking", false);
-
-/*	temp_log = fopen("tempLog", "a");
-	//temp_log << "a " << ";" << "b" << endl;
-	//temp_log << "c " << ";" << "d" << endl;
-	fclose(temp_log);*/
-
+	bool bDebugSessions = fconfig.getValue("FTracker.DebugSessions",false);
+/*	// can be used for saving temp data
 	fstream infile(fileName);
 	if(infile.good()){
 		// cout << "File exist and keep writing in it!" << endl;
@@ -2282,38 +2366,16 @@ int main(int argc, char **argv)
 		EyelockLog(logger, DEBUG, "Create Log file");
 		// cout << "Create log file!" << endl;
 		ofstream file(fileName);
-	}
+	}*/
 
-	clearData(fileName);
-	writeStringData(fileName,"Move to command"); writeStringData(fileName,",");
-	writeStringData(fileName,"Current angle"); writeStringData(fileName,",");
-	writeStringData(fileName,"Move to angle "); writeStringData(fileName,",");
-	writeStringData(fileName,"required time to move"); writeStringData(fileName,",");
-	writeStringData(fileName,"Measure temp of Cam1"); writeStringData(fileName,",");
-	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
-	writeStringData(fileName,"Measure temp of Cam2"); writeStringData(fileName,",");
-	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
-	writeStringData(fileName,"Measure temp of Cam3"); writeStringData(fileName,",");
-	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
-	writeStringData(fileName,"Measure temp of Cam4"); writeStringData(fileName,",");
-	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
-	writeStringData(fileName,"Measure temp of CamFace"); writeStringData(fileName,",");
-	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
-	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
-	writeStringData(fileName,"Required time to measure temp"); writeStringData(fileName,",");
-
-	writeStartNewLine(fileName);
-	//writeData("std::endl");
-
-	//file.close();
 
     int w,h;
     char key;
 
-    int face_mode;
+
     int run_mode;
-    int cal_mode=0;
-    int cal_cam_mode = 0;		//initializing camera to camera calibration
+    int cal_mode=0;				//initialize image optimization
+    int cal_cam_mode = 0;		//initializing camera to camera geometric calibration
     int temp_mode = 0;
     pthread_t threadId;
     pthread_t thredEcId;
@@ -2328,19 +2390,21 @@ int main(int argc, char **argv)
 		exit (0);
 	}
 
-
+	//Check argc for run face tracker
 	if (argc== 3)
 		run_mode=1;
 	else
 		run_mode =0;
 
 
+	//Image optimization
 	if (strcmp(argv[1],"cal")==0)
 	{
 		run_mode =1;
 		cal_mode=1;
 	}
 
+	//Send raw face/Eyecrop images
 	if (strcmp(argv[1],"send")==0)
 	{
 		void SendUdpImage(int port, char *image, int bytes_left);
@@ -2372,7 +2436,72 @@ int main(int argc, char **argv)
 		return 0;
 
 	}
+	if (strcmp(argv[1],"play")==0)
+	{
+		// char *dir = argv[2];
+		//int imageid = atoi(argv[3]);
 
+		//char filename[100];
+
+		printf("argc: %d\n", argc);
+		printf("argv 0: %s\n", argv[0]);
+		printf("argv 1: %s\n", argv[1]);
+		printf("argv 2: %s\n", argv[2]);
+
+		  for(int i = 2; i < argc-2; i++){
+			// sprintf(filename, "InputImage_%d.pgm", imageid++);
+			void SendUdpImage(int port, char *image, int bytes_left);
+			// Mat imageIn, image;
+			// int x;
+			printf("filename...%s\n", argv[i]);
+			IplImage *image = cvLoadImage(argv[i], CV_LOAD_IMAGE_GRAYSCALE);
+			// image=imread(filename,0);
+			if(image){
+				// cvShowImage("test11", image);
+				// cvWaitKey(1000);
+				// image.convertTo(image,CV_8UC1);
+				// EyelockLog(logger, DEBUG, "sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
+				SendUdpImage(8192, (char *)image->imageData, image->height * image->width);
+
+				usleep(100000);
+
+			}else{
+				printf("No more images to read in the session directory\n");
+				break;
+			}
+		}
+#if 0
+		image=imread(filename,0);
+		image.convertTo(image,CV_8UC1);
+		EyelockLog(logger, DEBUG, "sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
+
+		for (x=0; x< atoi(argv[3]);x++)
+		{
+			EyelockLog(logger, DEBUG, "send good\n");
+			SendUdpImage(8193, (char *)image.data, image.cols*image.rows);
+			usleep(40000);
+		}
+#endif
+		return 0;
+
+	}
+	if (strcmp(argv[1], "show") == 0) {
+		for (int i = 2; i < argc - 2; i++) {
+			void SendUdpImage(int port, char *image, int bytes_left);
+			IplImage *image = cvLoadImage(argv[i], CV_LOAD_IMAGE_GRAYSCALE);
+			if (image) {
+				cvShowImage("Display", image);
+				cvWaitKey(1000);
+			} else {
+				printf("No more images to read in the session directory\n");
+				break;
+			}
+		}
+		return 0;
+
+	}
+
+	//Camera to camera geometric calibration
 	if (strcmp(argv[1],"calcam")==0)
 	{
 		EyelockLog(logger, DEBUG, "calcam mode is running");
@@ -2380,7 +2509,7 @@ int main(int argc, char **argv)
 		cal_cam_mode=1;
 	}
 
-
+	//Run temp test
 	if (strcmp(argv[1],"temp")==0)
 	{
 		EyelockLog(logger, DEBUG, "temperature test mode is running");
@@ -2388,12 +2517,14 @@ int main(int argc, char **argv)
 		temp_mode=1;
 	}
 
+	//pThread for face tracker active
 	if (run_mode)
 		pthread_create(&threadId,NULL,init_tunnel,NULL);
 	if (run_mode)
 		pthread_create(&threadId,NULL,init_ec,NULL);
 
 
+	//Set environment for Image optimization
 	if (cal_mode)
 	{
 		portcom_start();
@@ -2401,16 +2532,19 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	//for camera to camera calibration
+	//Set environment for camera to camera calibration
 	if (cal_cam_mode){
 		portcom_start();
 		DoStartCmd_CamCal();
-		//runCalCam();
+
+#ifdef CAMERACALIBERATION_ARUCO
+		runCalCam();
+#endif
 		return 0;
 
 	}
 
-
+	//Set environment for temp Test
 	if (temp_mode){
 		portcom_start();
 		//DoStartCmd();
@@ -2420,10 +2554,12 @@ int main(int argc, char **argv)
 	}
 
 
-	//vid_stream_start(atoi(argv[1]));
+	//vid_stream_start
 	vs= new VideoStream(atoi(argv[1]));
 	sprintf(temp,"Disp %d",atoi (argv[1]) );
 
+
+	//Setting up Run mode
 	if (run_mode)
 	{
 		EyelockLog(logger, DEBUG, "run_mode");
@@ -2432,39 +2568,33 @@ int main(int argc, char **argv)
 		DoStartCmd();
 	}
 
+	//imshow() face tracking streaming
 	if(bShowFaceTracking)
 		cv::namedWindow(temp);
 
+
+	//Controling Offset correction while normal streaming (used for testing offset correction)
 	if (vs->m_port==8192)
 		vs->offset_sub_enable=0;
 	if (vs->m_port==8193)
 			vs->offset_sub_enable=0;
+
+
 	while (1)
 	{
-		//printf("******before Recover***********\n");
-		//  Ilya removed we dont know what its for
-		//RecoverModeDrop();
-		//printf("******after Recover***********\n");
-		//if ((run_mode==0) || (run_state == RUN_STATE_FACE))
 		{
-		//	printf("******calling vid_stream_get***********\n");
-			//vid_stream_get(&w,&h,(char *)outImg.data);
 			vs->get(&w,&h,(char *)outImg.data);
 		}
-		//else
-		{
-			//printf("waiting for iris frame time\n");
-			//cv::waitKey(IRIS_FRAME_TIME);
-		}
 
-
-
+		//Main Face tracking operation
 		if (run_mode)
 			{
-			 DoRunMode(bShowFaceTracking);
+			 DoRunMode(bShowFaceTracking, bDebugSessions);
 			}
 		else
 			{
+
+			//For testing image optimization (OFFset correction)
 			Mat DiffImage = imread("white.pgm",CV_LOAD_IMAGE_GRAYSCALE);
 			Mat dstImage;
 			if (DiffImage.cols!=0)
@@ -2479,16 +2609,18 @@ int main(int argc, char **argv)
 				if(bShowFaceTracking)
 					imshow(temp,smallImg);  //Time debug
 			}
+
+
 	    key = cv::waitKey(1);
 	    //printf("Key pressed : %u\n",key);
+
+	    //For quit streaming
 		if (key=='q')
 			break;
-		if (key=='c')
-		{
-			portcom_start();
-			DoImageCal(1);
-		}
-			if(key=='s')
+
+
+		//For saving images while streaming individual cameras
+		if(key=='s')
 		{
 			char fName[50];
 			sprintf(fName,"%d_%d.pgm",atoi(argv[1]),fileNum++);
@@ -2496,56 +2628,11 @@ int main(int argc, char **argv)
 			printf("saved %s\n",fName);
 
 		}
-		static int aruc_on=0;
-
-
-
-		if (key=='a')
-			{
-			aruc_on=~aruc_on;
-			printf("set aruc %d\n",aruc_on);
-
-			portcom_start();
-			DoStartCmd_CamCal();
-
-
-/*			//Homing
-			printf("Re Homing\n");
-			port_com_send("fx_home()\n");
-			usleep(100000);
-
-			port_com_send("fx_abs(168)\n");
-			port_com_send("wcr(0x04,0x3012,12)");*/
-
-			//r_outImg = rotation90(outImg);
-
-			}
-		if(aruc_on){
-			//scaling = 2;
-		    //cv::resize(outImg, smallImgBeforeRotate, cv::Size(),(1/scaling),(1/scaling), INTER_NEAREST);	//Mohammad
-		    //smallImg = rotation90(smallImgBeforeRotate);
-		    //cv::resize(smallImg, r_outImg, cv::Size(),(scaling),(scaling), INTER_NEAREST);
-			//gridBooardMarker(smallImg);
-
-			vs = new VideoStream(8194);
-			//gridBooardMarker(outImg);
-			delete (vs);
-			//arucoMarkerTracking(outImg);
-		}
-		if(key=='b')
-			{
-				char fName[50];
-				sprintf(fName,"%d_%d.bin",atoi(argv[1]),fileNum++);
-				FILE *f = fopen("white.bin", "rb");
-				int length = 1200*960;
-				fwrite(outImg.data, length, 1, f);
-				cv::imwrite(fName,outImg);
-				printf("saved %s\n",fName);
-
-			}
-
 	}
 
 
 }
+
+
+
 
