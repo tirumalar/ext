@@ -76,7 +76,7 @@ public:
 	bool m_testCode;
 	//static void GetBoBStatusCB ();
 	bool killCurrentDriver;
-
+	bool m_DebugTesting;
 	//OSDP message data
 
 	int m_OSDPBRate;

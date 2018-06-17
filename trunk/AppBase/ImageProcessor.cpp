@@ -37,6 +37,18 @@ using namespace std;
 #define LOGFILE_PATH "GRIDemo.log"
 #endif
 
+#ifdef DEBUG_SESSION
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#define DEBUG_SESSION_DIR "DebugSessions/Session"
+#endif
+
+
+#if 0
+#include <boost/filesystem.hpp>
+#include "boost/date_time/posix_time/posix_time.hpp"
+#endif
 //#undef TIME_OP
 //#define TIME_OP XTIME_OP
 //int myprintf( char *fmt, ... ) {}
@@ -353,6 +365,7 @@ m_LedConsolidator = NULL;
 	int Imagewidth = pConf->getValue("FrameSize.width",1200);
 	int Imageheight = pConf->getValue("FrameSize.height",960);
 	m_OffsetOutputImage = cvCreateImage(cvSize(Imagewidth, Imageheight),IPL_DEPTH_8U,1);
+	m_DebugTesting = pConf->getValue("Eyelock.TestSystemPerformance",false);
 #ifdef HBOX_PG
 	m_SPAWAREnable = pConf->getValue("Eyelock.SPAWAREnable",false);
 	if (m_SPAWAREnable)
@@ -801,9 +814,35 @@ void ImageProcessor::GenMsgToNormal(BinMessage& msg){
 	msg.SetData(Buffer,len);
 }
 
+void ImageProcessor::setSessionNo(){
+	m_SessionNo = 2;
+}
+
+int ImageProcessor::GetSessionNo(){
+	return m_SessionNo;
+}
 
 bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 {
+	if(m_DebugTesting){
+		static int FrameNo = 0;
+#if 0
+		boost::filesystem::path temp_session_dir(DEBUG_SESSION_DIR);
+		if (boost::filesystem::is_directory(temp_session_dir))
+		{
+			char filename[100];
+			sprintf(filename, "%s/InputImage_%d.pgm", temp_session_dir.c_str(), FrameNo++);
+			cvSaveImage(filename,frame);
+		}
+#else
+		struct stat st = {0};
+		if (stat(DEBUG_SESSION_DIR, &st) == 0 && S_ISDIR(st.st_mode)) {
+			char filename[100];
+			sprintf(filename, "%s/InputImage_%d.pgm", DEBUG_SESSION_DIR, FrameNo++);
+			cvSaveImage(filename,frame);
+		}
+#endif
+	}
 
 	char temp[50];
 #if 0
@@ -861,69 +900,21 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		}
 
 		if (m_OffsetImageLoadedMainCamera1  && (cam_id == 0x01)){
-#if 0
-			cvZero(m_OffsetOutputImage);
-			cvSub(frame,m_OffsetImageMainCamera1,m_OffsetOutputImage);
-			cvCopyImage(m_OffsetOutputImage, frame);
-#else
 			cvSub(frame,m_OffsetImageMainCamera1,frame);
-#endif
-			//cvSaveImage("0x01.pgm", m_OffsetOutputImage);
-			//cvSaveImage("0x01_Corrected.pgm", frame);
-
 		}
 		if (m_OffsetImageLoadedMainCamera2  && (cam_id == 0x02)){
-#if 0
-			cvZero(m_OffsetOutputImage);
-			cvSub(frame,m_OffsetImageMainCamera2,m_OffsetOutputImage);
-			cvCopyImage(m_OffsetOutputImage, frame);
-#else
 			cvSub(frame,m_OffsetImageMainCamera2,frame);
-#endif
-			//cvSaveImage("0x02.pgm", m_OffsetOutputImage);
-			//cvSaveImage("0x02_Corrected.pgm", frame);
-
 		}
 		if (m_OffsetImageLoadedAuxCamera1  && (cam_id == 0x81)){
-#if 0
-			cvZero(m_OffsetOutputImage);
-			cvSub(frame,m_OffsetImageAuxCamera1,m_OffsetOutputImage);
-			cvCopyImage(m_OffsetOutputImage, frame);
-#else
 			cvSub(frame,m_OffsetImageAuxCamera1,frame);
-#endif
-			//cvSaveImage("0x81.pgm", m_OffsetOutputImage);
-			//cvSaveImage("0x81_Corrected.pgm", frame);
-
 		}
 		if (m_OffsetImageLoadedAuxCamera2  && (cam_id == 0x82)){
-#if 0
-			cvZero(m_OffsetOutputImage);
-			cvSub(frame,m_OffsetImageAuxCamera2,m_OffsetOutputImage);
-			cvCopyImage(m_OffsetOutputImage, frame);
-#else
 			cvSub(frame,m_OffsetImageAuxCamera2,frame);
-#endif
-			//cvSaveImage("0x82.pgm", m_OffsetOutputImage);
-			//cvSaveImage("0x82_Corrected.pgm", frame);
 		}
 
 	}
 #endif
-#if 0 // 27th March to reduce noise
-	IplImage *DiffImage;
-	if (frame->imageData[0] == 0)
-		DiffImage = cvLoadImage("white_8192.pgm", CV_LOAD_IMAGE_GRAYSCALE);
-	else
-		DiffImage = cvLoadImage("white_8193.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 
-	IplImage *destframe = cvCreateImage(cvSize(frame->width, frame->height),IPL_DEPTH_8U,1);
-	cvSub(frame,DiffImage,destframe);
-	cvCopyImage(destframe, frame);
-	cvReleaseImage(&DiffImage);
-	cvReleaseImage(&destframe);
-
-#endif
 	// printf("Inside ProcessImage\n");
 	XTIME_OP("SetImage",
 		SetImage(frame)
