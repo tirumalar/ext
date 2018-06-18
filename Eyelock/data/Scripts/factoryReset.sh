@@ -72,7 +72,7 @@ then
 	awk -v factoryHostname="${FACTORY_HOSTNAME}" ' BEGIN { OFS = "\t" } ($1 == "127.0.1.1") { $2=factoryHostname; } { print } ' /etc/hosts > /home/www-internal/hosts
 	mv /home/www-internal/hosts /etc/hosts
 
-	# TODO: network interfaces
+	mv /home/www-internal/interfaces.default /home/www-internal/interfaces
 else
 	if [[ ${UNAME} == ${UNAME_READONLY_FS} ]]
 	then
