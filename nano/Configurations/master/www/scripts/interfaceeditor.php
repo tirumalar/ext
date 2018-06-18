@@ -829,21 +829,22 @@ class InterfaceEditor
             $InterfaceName = "usbnet0";
         else if ($theHardwareType === '2')
             $InterfaceName = "enp10s0";
-		
-		file_put_contents("/home/www-internal/phpdebug.txt", "interfaceeditor ConfigureAsDHCP $theHardwareType\n", FILE_APPEND);
-		
+					
 		if ($theHardwareType === '1')
 		{
-			$strNewInterfaces = sprintf("auto %s\n", $InterfaceName);
-			$strNewInterfaces .= sprintf("iface %s inet dhcp\n", $InterfaceName);
-			$strNewInterfaces .= sprintf("hwaddress ether %s\n", $this->MacAddress);
-			
-			$f = fopen("/home/www-internal/iftemp","w");
-			fwrite($f, $strNewInterfaces);
-			fclose($f);
-			
-			shell_exec("mv /home/www-internal/iftemp /home/www-internal/interfaces");
-		}
+			if ($bSwitchingtoDHCP)
+			{
+				$strNewInterfaces = sprintf("auto %s\n", $InterfaceName);
+				$strNewInterfaces .= sprintf("iface %s inet dhcp\n", $InterfaceName);
+				$strNewInterfaces .= sprintf("hwaddress ether %s\n", $this->MacAddress);
+		
+				$f = fopen("/home/www-internal/iftemp","w");
+				fwrite($f, $strNewInterfaces);
+				fclose($f);
+		
+				shell_exec("mv /home/www-internal/iftemp /home/www-internal/interfaces");
+			}
+        }
 		else
 		{
         // Update DHCP timeout and retries (just do it always)
