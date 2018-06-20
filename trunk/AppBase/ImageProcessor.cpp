@@ -365,7 +365,11 @@ m_LedConsolidator = NULL;
 	int Imagewidth = pConf->getValue("FrameSize.width",1200);
 	int Imageheight = pConf->getValue("FrameSize.height",960);
 	m_OffsetOutputImage = cvCreateImage(cvSize(Imagewidth, Imageheight),IPL_DEPTH_8U,1);
+#ifdef DEBUG_SESSION
 	m_DebugTesting = pConf->getValue("Eyelock.TestSystemPerformance",false);
+	m_sessionDir = string(pConf->getValue("Eyelock.DebugSessionDir","DebugSessions/Session"));
+#endif
+
 #ifdef HBOX_PG
 	m_SPAWAREnable = pConf->getValue("Eyelock.SPAWAREnable",false);
 	if (m_SPAWAREnable)
@@ -814,18 +818,8 @@ void ImageProcessor::GenMsgToNormal(BinMessage& msg){
 	msg.SetData(Buffer,len);
 }
 
-void ImageProcessor::setSessionNo(){
-	m_SessionNo = 2;
-}
-
-int ImageProcessor::GetSessionNo(){
-	return m_SessionNo;
-}
-
 bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 {
-	if(m_DebugTesting){
-		static int FrameNo = 0;
 #if 0
 		boost::filesystem::path temp_session_dir(DEBUG_SESSION_DIR);
 		if (boost::filesystem::is_directory(temp_session_dir))
@@ -834,15 +828,50 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 			sprintf(filename, "%s/InputImage_%d.pgm", temp_session_dir.c_str(), FrameNo++);
 			cvSaveImage(filename,frame);
 		}
-#else
-		struct stat st = {0};
-		if (stat(DEBUG_SESSION_DIR, &st) == 0 && S_ISDIR(st.st_mode)) {
-			char filename[100];
-			sprintf(filename, "%s/InputImage_%d.pgm", DEBUG_SESSION_DIR, FrameNo++);
-			cvSaveImage(filename,frame);
-		}
 #endif
+
+#ifdef DEBUG_SESSION
+	int cam_idd = 0;
+	int frame_number = 0;
+	if(frame->imageData != NULL)
+	{
+		cam_idd = frame->imageData[2]&0xff;
+		frame_number = frame->imageData[3]&0xff;
 	}
+
+	if(m_DebugTesting){
+		struct stat st = {0};
+		if (stat(m_sessionDir.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
+			time_t timer;
+			struct tm* tm1;
+			time(&timer);
+			tm1 = localtime(&timer);
+
+			struct timespec ts;
+			clock_gettime(CLOCK_REALTIME, &ts);
+
+			char time_str[100];
+			strftime(time_str, 100, "_%Y_%m_%d_%H-%M-%S", tm1);
+			char log_time_str[100];
+			strftime(log_time_str, 100, "%Y %m %d %H:%M:%S", tm1);
+
+			if(frame->imageData != NULL)
+			{
+				char filename[100];
+				sprintf(filename, "%s/InputImage_%d_CamID_%d_%s_%lu_%09lu.pgm", m_sessionDir.c_str(), frame_number, cam_idd, time_str, ts.tv_sec, ts.tv_nsec);
+				cvSaveImage(filename,frame); // terminates the application if path doesn't exists
+			}
+
+			char session_match_log[100];
+			sprintf(session_match_log, "%s/Info.txt", m_sessionDir.c_str());
+			FILE *file = fopen(session_match_log, "a");
+			if (file){
+				fprintf(file, "[%s - %lu:%09lu] Image %d received, CamID %d\n", log_time_str, ts.tv_sec, ts.tv_nsec, frame_number, cam_idd);
+				fclose(file);
+			}
+		}
+	}
+#endif
 
 	char temp[50];
 #if 0
@@ -919,7 +948,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	XTIME_OP("SetImage",
 		SetImage(frame)
 	);
-	char filename[50];
+	char filename[150];
 	if(m_SaveFullFrame){
 		static int Index = 0;
 		sprintf(filename,"InputImage_%d.pgm",Index++);
@@ -1000,7 +1029,18 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		if(m_SaveEyeCrops)
 		{
 			static int eyecropIndex = 0;
+#ifdef DEBUG_SESSION
+			struct stat st = {0};
+			if (stat(m_sessionDir.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
+				sprintf(filename,"%s/EyeCrop_PG_CamId_%d_%d.pgm", m_sessionDir.c_str(), cam_idd, eyecropIndex++);
+			}
+			else
+			{
+				sprintf(filename,"EyeCrop_PG_CamId_%d_%d.pgm", cam_idd, eyecropIndex++);
+			}
+#else
 			sprintf(filename,"EyeCrop_PG_%d.pgm",eyecropIndex++);
+#endif
 			cvSaveImage(filename, eye->getEyeCrop());
 		}else{
 			// sprintf(filename,"EyeCrop_PG_%d.pgm",eyeIdx);
