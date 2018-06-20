@@ -56,5 +56,7 @@ public:
 	int GetCamId(void);
 	int length;
 
+	int frameId;
+
 };
 

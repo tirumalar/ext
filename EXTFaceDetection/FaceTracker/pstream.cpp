@@ -270,6 +270,8 @@ void *VideoStream::ThreadServer(void *arg)
                         b_syncReceived = true;
                         pckcnt=1;
                         vs->cam_id=databuf[2]&0xff;
+                        vs->frameId=databuf[3]&0xff;
+                        //printf("vs->frameId %02x %02x %02x %02x\n", databuf[0]&0xff, databuf[1]&0xff, databuf[2]&0xff, databuf[3]&0xff);
                         //printf("vs->cam_id %02x\n", vs->cam_id);
                        // printf("Sync\n");
                 }
@@ -314,7 +316,7 @@ void *VideoStream::ThreadServer(void *arg)
       close(leftCSock);
 }
 
-VideoStream ::VideoStream(int port)
+VideoStream ::VideoStream(int port) : frameId(0)
 {
 	m_port = port;
 	offset_sub_enable=0;

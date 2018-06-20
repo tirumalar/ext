@@ -117,8 +117,6 @@ public:
 	int getFrameType() { return m_testImageSendLevel;}
 	bool getShouldDetectEyes() { return m_shouldDetect;}
 	//void SetCmxHandler(CmxHandler *pCmxHandler) {m_pCmxHandler = pCmxHandler;}
-	int GetSessionNo();
-	void setSessionNo();
 #ifndef UNITTEST    
 protected:
 #endif
@@ -232,8 +230,10 @@ protected:
 	IplImage *m_OffsetImageAuxCamera1;
 	IplImage *m_OffsetImageAuxCamera2;
 	IplImage *m_OffsetOutputImage;
+//#ifdef DEBUG_SESSION
 	bool m_DebugTesting;
-	int m_SessionNo;
+	std::string m_sessionDir;
+//#endif
 #ifdef HBOX_PG	
 	bool m_SPAWAREnable;
 

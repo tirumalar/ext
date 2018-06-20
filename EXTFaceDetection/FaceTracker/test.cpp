@@ -49,8 +49,43 @@ using namespace std;
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#define DEBUG_SESSION_DIR "DebugSessions/Session"
-#define DEBUG_SESSION_INFO "DebugSessions/Session/Info.txt"
+//#define DEBUG_SESSION_DIR "DebugSessions/Session"
+//#define DEBUG_SESSION_INFO "DebugSessions/Session/Info.txt"
+FileConfiguration eyelockConf("");
+std::string m_sessionDir;
+std::string m_sessionInfo;
+bool switchedToIrisMode = false;
+void LogSessionEvent(struct tm* tm1, struct timespec* ts, const char* msg)
+{
+	FILE *file = fopen(m_sessionInfo.c_str(), "a");
+	if (file){
+		char time_str[100];
+		strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
+		fprintf(file, "[%s - %09lu:%09lu] %s\n", time_str, ts->tv_sec, ts->tv_nsec, msg);
+		fclose(file);
+	}
+}
+
+void LogSessionEvent(const char* msg)
+{
+	time_t timer;
+	struct tm* tm1;
+	time(&timer);
+	tm1 = localtime(&timer);
+	char time_str[100];
+
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+
+	FILE *file = fopen(m_sessionInfo.c_str(), "a");
+	if (file){
+		char time_str[100];
+		strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
+		fprintf(file, "[%s - %09lu:%09lu] %s\n", time_str, ts.tv_sec, ts.tv_nsec, msg);
+		fclose(file);
+	}
+}
+
 #endif /* DEBUG_SESSION */
 
 //WIDTH and HEIGHT of input image
@@ -477,6 +512,9 @@ void SetFaceMode()
 	start_mode_change = std::chrono::system_clock::now();
 	currnet_mode = MODE_FACE;
 	//port_com_send("fixed_set_rgb(100,100,100)");
+
+	sprintf(cmd,"set_cam_mode(0x04,%d)",FRAME_DELAY);
+	port_com_send(cmd);
 }
 
 
@@ -1255,23 +1293,17 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 #ifdef DEBUG_SESSION
 							if(bDebugSessions){
 								struct stat st = {0};
-								if (stat(DEBUG_SESSION_DIR, &st) == -1) {
-									mkdir(DEBUG_SESSION_DIR, 0777);
+								if (stat(m_sessionDir.c_str(), &st) == -1) {
+									mkdir(m_sessionDir.c_str(), 0777);
 								}
 								// boost::filesystem::path temp_session_dir(DEBUG_SESSION_DIR);
 								// boost::filesystem::create_directory(temp_session_dir);
 
-								time_t timer;
-								struct tm* tm1;
-								time(&timer);
-								tm1 = localtime(&timer);
-								char time_str[100];
-
-								FILE *file = fopen(DEBUG_SESSION_INFO, "w");
-								if (file){
-									strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
-									fprintf(file, "[%s] Session opened\n", time_str);
-									fclose(file);
+								if (switchedToIrisMode == false)
+								{
+									switchedToIrisMode = true;
+									char logmsg[] = "Switching to iris mode";
+									LogSessionEvent(logmsg);
 								}
 							}
 #endif
@@ -1324,26 +1356,9 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 				SetFaceMode();
 #ifdef DEBUG_SESSION
 				if(bDebugSessions){
-					struct stat st;
-					if (stat(DEBUG_SESSION_DIR, &st) == 0 && S_ISDIR(st.st_mode)) {
-						time_t timer;
-						struct tm* tm1;
-						time(&timer);
-						tm1 = localtime(&timer);
-						char time_str[100];
-
-						FILE *file = fopen(DEBUG_SESSION_INFO, "a");
-						if (file) {
-							strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
-							fprintf(file, "[%s] Session closed\n", time_str);
-							fclose(file);
-						}
-
-						char session_dir[100];
-						strftime(time_str, 100, "_%Y_%m_%d_%H-%M-%S", tm1);
-						sprintf(session_dir,"%s%s", DEBUG_SESSION_DIR,time_str);
-						rename(DEBUG_SESSION_DIR, session_dir);
-					}
+					switchedToIrisMode = false;
+					char logmsg[] = "Switched to face mode";
+					LogSessionEvent(logmsg);
 
 #if 0
 					boost::filesystem::path temp_session_dir(DEBUG_SESSION_DIR);
@@ -1470,6 +1485,36 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 			cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
 			imshow(temp, smallImg);
 		}
+#ifdef DEBUG_SESSION
+		if (bDebugSessions)
+		{
+			if (switchedToIrisMode)
+			{
+				struct stat st = {0};
+				if (stat(m_sessionDir.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
+					time_t timer;
+					struct tm* tm1;
+					time(&timer);
+					tm1 = localtime(&timer);
+					char time_str[100];
+					strftime(time_str, 100, "_%Y_%m_%d_%H-%M-%S", tm1);
+
+					struct timespec ts;
+					clock_gettime(CLOCK_REALTIME, &ts);
+
+					int FrameNo = vs->frameId;
+					char filename[100];
+					sprintf(filename, "%s/FaceImage_%d_%s_%lu_%09lu.pgm", m_sessionDir.c_str(), FrameNo, time_str, ts.tv_sec, ts.tv_nsec);
+
+					imwrite(filename, smallImg);
+
+					char logmsg[300];
+					sprintf(logmsg, "Face image %s saved", filename);
+					LogSessionEvent(logmsg);
+				}
+			}
+		}
+#endif
 	}
 
 }
@@ -2356,6 +2401,11 @@ int main(int argc, char **argv)
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 	bool bShowFaceTracking = fconfig.getValue("FTracker.ShowFaceTracking", false);
 	bool bDebugSessions = fconfig.getValue("FTracker.DebugSessions",false);
+
+	eyelockConf = FileConfiguration("/home/root/Eyelock.ini");
+	m_sessionDir = string(eyelockConf.getValue("Eyelock.DebugSessionDir","DebugSessions/Session"));
+	m_sessionInfo = m_sessionDir + "/Info.txt";
+
 /*	// can be used for saving temp data
 	fstream infile(fileName);
 	if(infile.good()){
@@ -2457,6 +2507,13 @@ int main(int argc, char **argv)
 			IplImage *image = cvLoadImage(argv[i], CV_LOAD_IMAGE_GRAYSCALE);
 			// image=imread(filename,0);
 			if(image){
+				//int camId = image->imageData[2]&0xff;
+				//char camIdText[50];
+				//sprintf(camIdText, "CamID: %d\n", camId);
+				// // void cvPutText(CvArr* img, const char* text, CvPoint org, const CvFont* font, CvScalar color)
+				// // example: putText(result, "Differencing the two images.", cvPoint(30,30), FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(200,200,250), 1, CV_AA);
+				//putText(image, camIdText, cvPoint(30,30), FONT_HERSHEY_COMPLEX_SMALL, cvScalar(200,200,250));
+
 				// cvShowImage("test11", image);
 				// cvWaitKey(1000);
 				// image.convertTo(image,CV_8UC1);
