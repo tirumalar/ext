@@ -1446,7 +1446,7 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 
 #ifdef DEBUG_SESSION
 	char time_str[100];
-	char session_match_log[100];
+	char session_match_log[200];
 	sprintf(session_match_log, "%s/Info.txt", m_sessionDir.c_str());
 	FILE *file = NULL;
 	struct timespec ts;

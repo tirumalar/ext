@@ -855,7 +855,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 			char log_time_str[100];
 			strftime(log_time_str, 100, "%Y %m %d %H:%M:%S", tm1);
 
-			char filename[150];
+			char filename[200];
 			if(frame->imageData != NULL)
 			{
 				sprintf(filename, "%s/InputImage_%s_%lu_%09lu_%d_%d.pgm", m_sessionDir.c_str(), time_str, ts.tv_sec, ts.tv_nsec, frame_number, cam_idd);
