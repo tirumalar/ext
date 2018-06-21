@@ -1476,7 +1476,7 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 		if(m_DebugTesting){
 			file = fopen(session_match_log, "a");
 			if (file){
-				fprintf(file, "[%s - %lu:%09lu] Passed: %s\n", time_str, ts.tv_sec, ts.tv_nsec, tmp);
+				fprintf(file, "%s %lu:%09lu Match_success[%s]\n", time_str, ts.tv_sec, ts.tv_nsec, tmp);
 				fclose(file);
 			}
 		}
@@ -1490,7 +1490,7 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 		if(m_DebugTesting){
 			file = fopen(session_match_log, "a");
 			if (file){
-				fprintf(file, "[%s - %lu:%09lu] Match failed\n", time_str, ts.tv_sec, ts.tv_nsec);
+				fprintf(file, "%s %lu:%09lu Match_failed\n", time_str, ts.tv_sec, ts.tv_nsec);
 				fclose(file);
 			}
 		}
@@ -1507,7 +1507,7 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 		if(m_DebugTesting){
 			file = fopen(session_match_log, "a");
 			if (file){
-				fprintf(file, "[%s - %lu:%09lu] Match failed: %s\n", time_str, ts.tv_sec, ts.tv_nsec, tmp);
+				fprintf(file, "%s %lu:%09lu Match_failed\n", time_str, ts.tv_sec, ts.tv_nsec);
 				fclose(file);
 			}
 		}
@@ -1519,7 +1519,7 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 		if(m_DebugTesting){
 			file = fopen(session_match_log, "a");
 			if (file){
-				fprintf(file, "[%s - %lu:%09lu] Unknown message result\n", time_str, ts.tv_sec, ts.tv_nsec);
+				fprintf(file, "%s %lu:%09lu Unknown_match_result\n", time_str, ts.tv_sec, ts.tv_nsec);
 				fclose(file);
 			}
 		}

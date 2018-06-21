@@ -61,7 +61,7 @@ void LogSessionEvent(struct tm* tm1, struct timespec* ts, const char* msg)
 	if (file){
 		char time_str[100];
 		strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
-		fprintf(file, "[%s - %09lu:%09lu] %s\n", time_str, ts->tv_sec, ts->tv_nsec, msg);
+		fprintf(file, "%s %09lu:%09lu %s\n", time_str, ts->tv_sec, ts->tv_nsec, msg);
 		fclose(file);
 	}
 }
@@ -72,7 +72,6 @@ void LogSessionEvent(const char* msg)
 	struct tm* tm1;
 	time(&timer);
 	tm1 = localtime(&timer);
-	char time_str[100];
 
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
@@ -81,7 +80,7 @@ void LogSessionEvent(const char* msg)
 	if (file){
 		char time_str[100];
 		strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
-		fprintf(file, "[%s - %09lu:%09lu] %s\n", time_str, ts.tv_sec, ts.tv_nsec, msg);
+		fprintf(file, "%s %09lu:%09lu %s\n", time_str, ts.tv_sec, ts.tv_nsec, msg);
 		fclose(file);
 	}
 }
@@ -1302,7 +1301,7 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 								if (switchedToIrisMode == false)
 								{
 									switchedToIrisMode = true;
-									char logmsg[] = "Switching to iris mode";
+									char logmsg[] = "Switching_to_iris_mode";
 									LogSessionEvent(logmsg);
 								}
 							}
@@ -1357,7 +1356,7 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 #ifdef DEBUG_SESSION
 				if(bDebugSessions){
 					switchedToIrisMode = false;
-					char logmsg[] = "Switched to face mode";
+					char logmsg[] = "Switched_to_face_mode";
 					LogSessionEvent(logmsg);
 
 #if 0
@@ -1497,19 +1496,20 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 					time(&timer);
 					tm1 = localtime(&timer);
 					char time_str[100];
-					strftime(time_str, 100, "_%Y_%m_%d_%H-%M-%S", tm1);
+					strftime(time_str, 100, "%Y_%m_%d_%H-%M-%S", tm1);
 
 					struct timespec ts;
 					clock_gettime(CLOCK_REALTIME, &ts);
 
 					int FrameNo = vs->frameId;
+					int CamId = vs->cam_id;
 					char filename[100];
-					sprintf(filename, "%s/FaceImage_%d_%s_%lu_%09lu.pgm", m_sessionDir.c_str(), FrameNo, time_str, ts.tv_sec, ts.tv_nsec);
+					sprintf(filename, "%s/FaceImage_%s_%lu_%09lu_%d_%d.pgm", m_sessionDir.c_str(), time_str, ts.tv_sec, ts.tv_nsec, FrameNo, CamId);
 
 					imwrite(filename, smallImg);
 
 					char logmsg[300];
-					sprintf(logmsg, "Face image %s saved", filename);
+					sprintf(logmsg, "Saved-FaceImage-FrNum%d-CamID%d-%s", FrameNo, CamId, filename);
 					LogSessionEvent(logmsg);
 				}
 			}
