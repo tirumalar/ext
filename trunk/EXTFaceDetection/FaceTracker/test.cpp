@@ -1503,7 +1503,7 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 
 					int FrameNo = vs->frameId;
 					int CamId = vs->cam_id;
-					char filename[100];
+					char filename[200];
 					sprintf(filename, "%s/FaceImage_%s_%lu_%09lu_%d_%d.pgm", m_sessionDir.c_str(), time_str, ts.tv_sec, ts.tv_nsec, FrameNo, CamId);
 
 					imwrite(filename, smallImg);
@@ -2400,11 +2400,13 @@ int main(int argc, char **argv)
 
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 	bool bShowFaceTracking = fconfig.getValue("FTracker.ShowFaceTracking", false);
+#ifdef DEBUG_SESSION
 	bool bDebugSessions = fconfig.getValue("FTracker.DebugSessions",false);
 
 	eyelockConf = FileConfiguration("/home/root/Eyelock.ini");
 	m_sessionDir = string(eyelockConf.getValue("Eyelock.DebugSessionDir","DebugSessions/Session"));
 	m_sessionInfo = m_sessionDir + "/Info.txt";
+#endif
 
 /*	// can be used for saving temp data
 	fstream infile(fileName);
