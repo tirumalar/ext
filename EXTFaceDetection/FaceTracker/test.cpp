@@ -117,9 +117,7 @@ void LogSessionEvent(const char* msg)
 #define MODE_EYES_MAIN 1
 #define MODE_EYES_AUX 2
 
-//Switching threshold and Hysteresis
-#define switchThreshold 37		// previous val was 40
-#define errSwitchThreshold 6
+
 
 //USed in DoImageCal function
 #define NUM_AVG_CAL 10
@@ -142,6 +140,11 @@ double scaling = 8.0;		//Used for resizing the images in py lev 3
 int CENTER_POS;
 int MIN_POS;
 int MAX_POS;
+
+
+//Switching threshold and Hysteresis
+int switchThreshold;		// 37
+int errSwitchThreshold;		//6
 
 
 // detect_area used for finding face in a certain rect area of entire image
@@ -569,7 +572,11 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 
 	//switching cameras
 	EyelockLog(logger, DEBUG, "previousEye_distance: %i; CurrentEye_distance: %i; diffEyedistance: %i\n", previousEye_distance, CurrentEye_distance, diffEyedistance);
-	if (CurrentEye_distance >= switchThreshold && diffEyedistance <= errSwitchThreshold)
+
+	if (currnet_mode==MODE_FACE)
+			errSwitchThreshold =0;
+
+	if (CurrentEye_distance >= (switchThreshold+errSwitchThreshold)) //&& diffEyedistance <= errSwitchThreshold)
 	{
 		if(currnet_mode==MODE_EYES_MAIN)
 		{
@@ -581,12 +588,12 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 		MainIrisSettings();											//change to Iris settings
 		SwitchIrisCameras(true);									//switch cameras
 		currnet_mode = MODE_EYES_MAIN;								//set current mode
-		previousEye_distance = CurrentEye_distance;					//save current eye distance for later use
+	 	previousEye_distance = CurrentEye_distance;					//save current eye distance for later use
 		printf("Turning on Main Cameras\n");
 		EyelockLog(logger, DEBUG, "Turning on Main Cameras");
 		//port_com_send("fixed_set_rgb(100,0,0)");
 	}
-	else if (CurrentEye_distance < switchThreshold && diffEyedistance <= errSwitchThreshold)
+	else if (CurrentEye_distance < (switchThreshold-errSwitchThreshold))// && diffEyedistance <= errSwitchThreshold)
 	{
 		if(currnet_mode==MODE_EYES_AUX)
 		{
@@ -603,7 +610,7 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 		EyelockLog(logger, DEBUG, "Turning on AUX Cameras");
 		//port_com_send("fixed_set_rgb(100,100,0)");
 	}
-	else if (CurrentEye_distance >= switchThreshold && diffEyedistance > errSwitchThreshold)
+/*	else if (CurrentEye_distance >= switchThreshold && diffEyedistance > errSwitchThreshold)
 	{
 		if(currnet_mode==MODE_EYES_MAIN)
 		{
@@ -636,7 +643,7 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 		printf("Turning on AUX Cameras\n");
 		EyelockLog(logger, DEBUG, "Turning on AUX cameras");
 		//port_com_send("fixed_set_rgb(100,100,0)");
-	}
+	}*/
 	IrisFrameCtr=0;
 	start_mode_change = std::chrono::system_clock::now();
 
@@ -704,6 +711,9 @@ void DoStartCmd(){
 
 	int capacitorChargeCurrent = fconfig.getValue("FTracker.capacitorChargeCurrent",60);
 
+
+	switchThreshold = fconfig.getValue("FTracker.switchThreshold",37);
+	errSwitchThreshold = fconfig.getValue("FTracker.errSwitchThreshold",6);
 
 	char cmd[512];
 
@@ -1269,10 +1279,15 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 				int CurrentEye_distance = eye_size;
 				int diffEyedistance = abs(CurrentEye_distance - previousEye_distance);
 
+			//	printf("Switching ON IRIS LEDs!!!!\n");
+				SetIrisMode(eye_size, diffEyedistance);
+				printf("set iris mode\n");
+				run_state = RUN_STATE_EYES;
 
 				if (!no_move_area.contains(eyes)) {		//if target area doesn't have face then move
 					if ((eye_size >= MIN_FACE_SIZE)
 							&& (eye_size <= MAX_FACE_SIZE)) {	// check face size
+
 						float err;
 
 						int MoveToLimitBound = 1;
@@ -1301,14 +1316,13 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 								if (switchedToIrisMode == false)
 								{
 									switchedToIrisMode = true;
-									char logmsg[] = "Switching_to_iris_mode";
+									char logmsg[] = "Switching to iris mode";
 									LogSessionEvent(logmsg);
 								}
 							}
 #endif
 
-							SetIrisMode(eye_size, diffEyedistance);
-							run_state = RUN_STATE_EYES;
+
 							////////////////////////////////////////////////
 
 							MoveRelAngle(-1 * err, diffEyedistance);
@@ -1332,9 +1346,9 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 
 					//IF we want to turn on the iris cameras after motor take action
 
-					/*						printf("Switching ON IRIS LEDs!!!!\n");
-					 SetIrisMode(eye_size, diffEyedistance);
-					 run_state = RUN_STATE_EYES;*/
+				//							printf("Switching ON IRIS LEDs!!!!\n");
+				//	 SetIrisMode(eye_size, diffEyedistance);
+				//	 run_state = RUN_STATE_EYES;
 
 					//port_com_send("fixed_set_rgb(0,0,50)");
 				}
@@ -1346,13 +1360,14 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 		}
 		{
 
-			if (noFaceCounter < (NO_FACE_SWITCH_FACE + 2))
+			if (noFaceCounter < (NO_FACE_SWITCH_FACE))
 				noFaceCounter++;
 
 			if (noFaceCounter == NO_FACE_SWITCH_FACE) {
 				MoveTo(CENTER_POS);
 				run_state = RUN_STATE_FACE;
 				SetFaceMode();
+				printf("Set Face mode\n");
 #ifdef DEBUG_SESSION
 				if(bDebugSessions){
 					switchedToIrisMode = false;

@@ -77,7 +77,7 @@ void port_com_send(char *cmd)
 	//printf("%d rv send %d\n",x,rv);
 
 	struct timeval tv;
-	tv.tv_sec = 1;
+	tv.tv_sec = 5;
 	tv.tv_usec = 0;
 	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const void*) &tv, sizeof(tv));
 
