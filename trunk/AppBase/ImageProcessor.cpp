@@ -851,14 +851,14 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 			clock_gettime(CLOCK_REALTIME, &ts);
 
 			char time_str[100];
-			strftime(time_str, 100, "_%Y_%m_%d_%H-%M-%S", tm1);
+			strftime(time_str, 100, "%Y_%m_%d_%H-%M-%S", tm1);
 			char log_time_str[100];
 			strftime(log_time_str, 100, "%Y %m %d %H:%M:%S", tm1);
 
+			char filename[150];
 			if(frame->imageData != NULL)
 			{
-				char filename[100];
-				sprintf(filename, "%s/InputImage_%d_CamID_%d_%s_%lu_%09lu.pgm", m_sessionDir.c_str(), frame_number, cam_idd, time_str, ts.tv_sec, ts.tv_nsec);
+				sprintf(filename, "%s/InputImage_%s_%lu_%09lu_%d_%d.pgm", m_sessionDir.c_str(), time_str, ts.tv_sec, ts.tv_nsec, frame_number, cam_idd);
 				cvSaveImage(filename,frame); // terminates the application if path doesn't exists
 			}
 
@@ -866,7 +866,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 			sprintf(session_match_log, "%s/Info.txt", m_sessionDir.c_str());
 			FILE *file = fopen(session_match_log, "a");
 			if (file){
-				fprintf(file, "[%s - %lu:%09lu] Image %d received, CamID %d\n", log_time_str, ts.tv_sec, ts.tv_nsec, frame_number, cam_idd);
+				fprintf(file, "%s %lu:%09lu Saved-InputImage-FrNum%d-CamID%d-%s\n", log_time_str, ts.tv_sec, ts.tv_nsec, frame_number, cam_idd, filename);
 				fclose(file);
 			}
 		}
