@@ -20,8 +20,7 @@
 #define BOB_COMMAND_RTCREAD_CMD	 		5
 #define BOB_COMMAND_RTCWRITE_CMD	 	6
 #define BOB_COMMAND_SET_LED			 	7
-#define BOB_COMMAND_OIM_ON			 	8
-#define BOB_COMMAND_OIM_OFF			 	9
+#define BOB_COMMAND_OIM_SWITCH			8
 
 #define BOB_COMMAND_OFFSET				2
 #define BOB_SW_VERSION_OFFSET			67	// 3 bytes
@@ -469,31 +468,30 @@ int get_rtc_time(int fd, struct tm *tm_out)
 	return 0;
 }
 
-int reboot_oim(int fd, int on)
+int reboot_oim(int fd, char on)
 {
 	int stat = 0;
 
-	if (!on)
+	if (on)
 	{
-		printf("turning OIM off...\n");
-		stat = internal_write_reg(fd, BOB_COMMAND_OFFSET, BOB_COMMAND_OIM_OFF);
-		if (stat)
-		{
-			return stat;
-		}
-		sleep(2);
+		printf("turning OIM on...\n");
 	}
 	else
 	{
-		printf("turning OIM on...\n");
-		stat = internal_write_reg(fd, BOB_COMMAND_OFFSET, BOB_COMMAND_OIM_ON);
-		if (stat)
-		{
-			return stat;
-		}
-		sleep(2);
+		printf("turning OIM off...\n");
 	}
 
+	stat = internal_write_array(fd, BOB_ACCESS_DATA_OFFSET, &on, 1);
+	if (stat)
+	{
+		return stat;
+	}
+	sleep(1);
+	stat = internal_write_reg(fd, BOB_COMMAND_OFFSET, BOB_COMMAND_OIM_SWITCH);
+	if (stat)
+	{
+		return stat;
+	}
 	return 0;
 }
 
@@ -542,7 +540,7 @@ int main(int argc, char **argv)
 			}
 			break;
 		case 'r':
-			if (reboot_oim(fd, atoi(optarg)))
+			if (reboot_oim(fd, (char)atoi(optarg)))
 			{
 				exit(EXIT_FAILURE);
 			}
