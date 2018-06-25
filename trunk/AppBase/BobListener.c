@@ -718,7 +718,7 @@ int internal_read_array(int fd, unsigned char reg, char *buf, int len)
 
 	memcpy(buf, buff+4, len-4);
 
-	return result;
+	return len-4;
 }
 #else
 int internal_read_array(int fd, unsigned char reg, char *ptr, int len)
