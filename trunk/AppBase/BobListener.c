@@ -629,7 +629,13 @@ int internal_read_reg(int fd, unsigned char reg, unsigned int *val)
 		return -1;
 	}
 
+//	buff[0] = 0;
+	memset(buff,0,5);
 	buff[0] = 0;
+	buff[1] = 0;
+	buff[2] = 0;
+	buff[3] = 0;
+	buff[4] = 0;
     //usleep(100);
 	usleep(50);
 	result = read(fd, buff, 5);
@@ -706,6 +712,11 @@ int internal_read_array(int fd, unsigned char reg, char *buf, int len)
 	}
 
 	usleep(100);
+	memset(buff,0,6000);
+	buff[0] = 0;
+	buff[1] = 0;
+	buff[2] = 0;
+	buff[3] = 0;
 	//usleep(50);
 	len=len+4;
 	result = read(fd, buff, len);
@@ -792,6 +803,12 @@ int internal_write_reg(int fd, unsigned char reg, unsigned int val)
 		result = 0;
 
 	usleep(50);
+	memset(buff,0,5);
+	buff[0] = 0;
+	buff[1] = 0;
+	buff[2] = 0;
+	buff[3] = 0;
+	buff[4] = 0;
 	read(fd, buff,4);
 	return result;
 }
@@ -868,6 +885,7 @@ int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
 		result = 0;
 
 	usleep(50);
+	read(fd, buff,4);
 	return result;
 }
 #else
@@ -1023,10 +1041,10 @@ int BobSetCardReadAck()
 	BobMutexStart();
 	unsigned int status = 0;
 	BobReadReg(BOB_STATUS_OUT_OFFSET, &status);
-	printf("inside BobSetCardReadAck reading status reg 0x%0x\n",status);
+	//printf("inside BobSetCardReadAck reading status reg 0x%0x\n",status);
 	usleep(100);
 	result = BobWriteReg(BOB_STATUS_OUT_OFFSET, status|BOB_STATUS_OUT_CHANGE|BOB_STATUS_OUT_CARD_ACK);
-	printf("inside BobSetCardReadAck -- writing ack retrun %d\n",result);
+	//printf("inside BobSetCardReadAck -- writing ack retrun %d\n",result);
 
 	BobMutexEnd();
 	return result;
@@ -1106,6 +1124,7 @@ int BobGetData(void *ptr, int len)
 	int result = 0;
 	char tmp[2];
 	usleep(100);
+	printf("BobGetData:data length requesting %d\n", len);
 	BobMutexStart();
 	if (!len) {
 		BobReadArray(BOB_DATA_LENGTH_OFFSET, tmp, 2);
@@ -1113,7 +1132,7 @@ int BobGetData(void *ptr, int len)
 		len = (len << 8) + tmp[1];
 		usleep(100);
 	}
-	//printf("data length in buffer %d\n", len);
+	printf("data length in buffer %d\n", len);
 	if (len > 0 && len <= 6000)
 		result = BobReadArray(BOB_ACCESS_DATA_OFFSET, ptr, len);
 	//usleep(100);
