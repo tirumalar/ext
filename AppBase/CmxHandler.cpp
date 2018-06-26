@@ -2365,7 +2365,7 @@ void CmxHandler::SendMessage(char *outMsg, int len)
 	//printf("CMX SendMessage: sent\n");
 }
 
-int m_prevR=0,m_prevG=0,m_prevB=0;
+int m_prevR=-1,m_prevG=-1,m_prevB=-1;
 bool bSend=false;
 
 
@@ -2411,12 +2411,12 @@ void CmxHandler::HandleSendMsg(char *msg){
 				len = sprintf(buf, "fixed_set_rgb(%d,%d,%d)\n", msg[2], msg[3], msg[4]);	// set_rgb(r,g,b)
 				printf("CMX: sending %s\n",buf);
 				SendMessage(buf, len);
-			if ((msg[2] == 0) && (msg[4] == 0)) {
+			if ((msg[2] == 0) && (msg[3] != 0) && (msg[4] == 0)) {
 				regs[0] = Green;
 					len = sprintf(buf, "play_snd(0)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
 					SendMessage(buf, len);
 			}
-			if ((msg[3] == 0) && (msg[4] == 0)) {
+			if ((msg[2] != 0) && (msg[3] == 0) && (msg[4] == 0)) {
 				regs[0] = Red;
 				//len = sprintf(buf, "play_snd(1)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
 				//SendMessage(buf, len);
@@ -2478,8 +2478,8 @@ void CmxHandler::HandleSendMsg(char *msg){
 					//SendMessage(buf, len);
 					break;
 				case 2:
-				//	len = sprintf(buf, "play_snd(1)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
-				//	SendMessage(buf, len);
+					len = sprintf(buf, "play_snd(1)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
+					SendMessage(buf, len);
 					break;
 				default:
 					break;
