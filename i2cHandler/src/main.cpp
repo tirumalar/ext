@@ -214,6 +214,9 @@ int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
 		}
 
 		usleep(50);
+
+		// read the data that was echoed by PIM. TODO: select or flush the buffer to prevent reading wrong data
+		read(fd, buff, 4);
 	}
 	else if (select_result == 0)
 	{

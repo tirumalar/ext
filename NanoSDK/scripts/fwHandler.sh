@@ -561,8 +561,6 @@ upgrade()
 	NOW=$(date +"%Y-%m-%d, %T.000")
 	echo "$NOW, INFO , [Eyelock], - SW Upgrade: AppVer: ${nanoVersion}; ICM FW: ${bobVersion}" >> /home/root/nxtLog.log
 
-	touch /home/root/Eyelock.run
-
 	${logger} -L"Upgrade done."
 	${logger} -L"STATUS:SUCCESS"
 	${logger} -L"Device will be rebooted."

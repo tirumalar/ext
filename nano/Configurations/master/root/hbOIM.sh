@@ -13,6 +13,9 @@ EYELOCK_RUN_FILE='/home/root/Eyelock.run'
 
 rm "${FLAG}"
 
+rm "${FACETRACKER_RUN_FILE}"
+rm "${EYELOCK_RUN_FILE}"
+
 while true
 do
 	echo "pinging OIM ${OIM_IP}..."

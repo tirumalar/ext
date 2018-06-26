@@ -876,7 +876,7 @@ void DoStartCmd(){
 	no_move_area.width = rectW/scaling;
 	no_move_area.height = (rectH)/scaling -targetOffset*2;
 
-
+	system("touch /home/root/Eyelock.run");
 }
 
 
