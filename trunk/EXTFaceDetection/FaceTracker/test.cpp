@@ -1360,7 +1360,7 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 		}
 		{
 
-			if (noFaceCounter < (NO_FACE_SWITCH_FACE))
+			if (noFaceCounter < (NO_FACE_SWITCH_FACE+2))
 				noFaceCounter++;
 
 			if (noFaceCounter == NO_FACE_SWITCH_FACE) {
