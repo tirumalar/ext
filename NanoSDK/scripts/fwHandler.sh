@@ -356,6 +356,8 @@ cleanupRestore(){
 
 rebootDevice(){
 	echo "Rebooting..."
+	
+	printf 'fixed_set_rgb(100,80,0)\n' | nc -q 1 192.168.4.172 30
 
 	sync
 	sleep 3
@@ -464,6 +466,8 @@ upgrade()
 		fi
 
 		${logger} -L"FW validation done."
+
+		printf 'fixed_set_rgb(100,80,0)\n' | nc -q 1 192.168.4.172 50
 	
 		${logger} -L"Restore point creation..."
 		touch /home/createrestorepoint.txt
