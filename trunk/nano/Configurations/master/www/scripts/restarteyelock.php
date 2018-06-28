@@ -33,7 +33,7 @@ include_once($_SERVER['DOCUMENT_ROOT']."/scripts/debug.php");
 		NXTW_shell_exec("1338");
 		sleep(2);
 
-		shell_exec(printf 'fixed_set_rgb(100,80,0)\n' | nc -q 1 192.168.4.172 50)
+		shell_exec("printf 'fixed_set_rgb(100,80,0)\n' | nc -q 1 192.168.4.172 50");
 
             NXTW_shell_exec("29");//'reboot'); //third and one more step to ensure reboot
 		   sleep(2);
