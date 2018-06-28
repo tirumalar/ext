@@ -58,15 +58,17 @@ int portcom_start() {
 
 int in_send = 0;
 
-void port_com_send(char *cmd)
+void port_com_send(char *cmd_in)
 {
 	EyelockLog(logger, TRACE, "port_com_send");
 	pthread_mutex_lock(&lock);
 
 	char buffer[512];
+	char cmd[512];
 	int rv;
 	FILE *file;
 
+	strcpy(cmd,cmd_in);
 	// REMOVE TRAILING CRS
 	while( cmd[strlen(cmd)-1]=='\n')
 		cmd[strlen(cmd)-1]=0;
