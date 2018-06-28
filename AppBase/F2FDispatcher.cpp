@@ -669,7 +669,9 @@ void F2FDispatcher::CheckBoBEvents() {
 		// Check ACS event
 		if (m_acsChange || m_tamperChange) {
 			if(m_Debug)
+			{
 				//EyelockLog(logger, DEBUG, "\nF2FDispatcher::CheckBoBEvents() - ACS/Tamper  ");
+			}
 			ProcessBoBAcsChange();
 		}
 
@@ -683,7 +685,9 @@ void F2FDispatcher::CheckBoBEvents() {
 		// Check OSDP LED Command
 		if (m_osdpACSEnabled && m_ledControlledByInput) {	// check osdp_LED command
 			if(m_Debug)
+			{
 				//EyelockLog(logger, TRACE, "\nF2FDispatcher::CheckBoBEvents() - OSDP LED  ");
+			}
 			m_osdpMessage->ProcessOSDPLedCommandFromACS(m_ledConsolidator);
 		}
 	}
