@@ -506,7 +506,7 @@ void SetFaceMode()
 	EyelockLog(logger, DEBUG, "Face camera exposure and gain settings -faceCamExposureTime:%d, faceCamDigitalGain:%d",faceCamExposureTime, faceCamDigitalGain);
 	port_com_send(cmd);
 	//port_com_send("wcr(4,0x3012,7)  | wcr(4,0x305e,0xfe)");
-	sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((faceAnalogGain&0x3)<<4) | 0X80);
+	sprintf(cmd,"wcr(0x04,0x30b0,%i)",((faceAnalogGain&0x3)<<4) | 0X80);
 	port_com_send(cmd);
 	EyelockLog(logger, DEBUG, "Face camera Analog gain:%d",(((faceAnalogGain&0x3)<<4) | 0X80));
 	agc_val= FACE_GAIN_DEFAULT;
@@ -2657,7 +2657,7 @@ int main(int argc, char **argv)
 	while (1)
 	{
 		{
-			vs->get(&w,&h,(char *)outImg.data);
+			vs->get(&w,&h,(char *)outImg.data,true);
 		}
 
 		//Main Face tracking operation
