@@ -47,7 +47,7 @@ void *leftCServer(void *arg);
 */
 int m_port;
 
-#define FREE_BUFF_SIZE 5
+#define FREE_BUFF_SIZE 2
 
 void VideoStream::flush() {
 	ImageQueueItem val;
@@ -71,11 +71,24 @@ VideoStream::~VideoStream()
 	}
 }
 
-int VideoStream::get(int *win,int *hin,char *m_pImageBuffer)
+int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, char get_last)
 {
 	//printf("entering vid_stream_get\n");
 
 	// release the previously processed buffer it it is real;
+
+	// pop all but 1 image if get_last is enabled
+	while (get_last && m_ProcessBuffer->Size()>1)
+		{
+		int stat;
+    	ReleaseProcessBuffer(m_current_process_queue_item);
+    	stat=m_ProcessBuffer->TryPop(m_current_process_queue_item);
+    	if (stat == false)
+    		printf("This should never never happen\n");
+		}
+
+
+
     if (m_current_process_queue_item.m_ptr != NULL)
     {
     	ReleaseProcessBuffer(m_current_process_queue_item);
@@ -243,9 +256,11 @@ void *VideoStream::ThreadServer(void *arg)
 
         int pkgs_received = 0;
         int pkgs_missed = 0;
+        int rx_idx=0;
 
         ImageQueueItem queueItem = vs->GetFreeBuffer();
         char *databuf = (char *)queueItem.m_ptr;
+
 
         int leftCSock = CreateUDPServer(vs->m_port);
         if (leftCSock < 0)
@@ -256,16 +271,17 @@ void *VideoStream::ThreadServer(void *arg)
         vs->running=1;
         while (vs->running)
         {
-            length = recvfrom(leftCSock, buf, min(1500,bytes_to_read), 0, (struct sockaddr *)&from, &fromlen);
+            length = recvfrom(leftCSock, &databuf[rx_idx], min(1500,bytes_to_read), 0, (struct sockaddr *)&from, &fromlen);
             if (length < 0)
                 printf("recvfrom error in leftCServer()");
             else
             {
             	pkgs_received++;
-            	if(!b_syncReceived && pShort[0] == 0x5555)
+            	if(!b_syncReceived && ((short *)databuf)[0] == 0x5555)
                 {
                         datalen = 0;
-                        memcpy(databuf, buf+2, length-2);
+                        memcpy(databuf, &databuf[rx_idx+2], length-2);
+                        rx_idx = length-2;
                         datalen = length - 2;
                         b_syncReceived = true;
                         pckcnt=1;
@@ -278,7 +294,8 @@ void *VideoStream::ThreadServer(void *arg)
                 else if(b_syncReceived)
                 {
                         length = (datalen+length <= IMAGE_SIZE-4) ? length : IMAGE_SIZE-4-datalen;
-                        memcpy(databuf+datalen, buf, length);
+//                        memcpy(databuf+datalen, buf, length);
+                        rx_idx+=length;
                         datalen += length;
                         pckcnt++;
                 }
@@ -307,6 +324,7 @@ void *VideoStream::ThreadServer(void *arg)
                    	datalen = 0;
                    	b_syncReceived=false;
                    	bytes_to_read=IMAGE_SIZE;
+                   	rx_idx=0;
                }
                if(bytes_to_read<=0)
             	   bytes_to_read=IMAGE_SIZE;

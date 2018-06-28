@@ -67,6 +67,10 @@ void port_com_send(char *cmd)
 	int rv;
 	FILE *file;
 
+	// REMOVE TRAILING CRS
+	while( cmd[strlen(cmd)-1]=='\n')
+		cmd[strlen(cmd)-1]=0;
+
 	while (recv(sockfd, buffer, 512, MSG_DONTWAIT) > 0); // clearing input buffer (flush)
 	int t = clock();
 
@@ -92,16 +96,15 @@ void port_com_send(char *cmd)
 		buffer[rv] = 0;
 		if (!strchr(buffer, 'K'))
 		{
-			EyelockLog(logger, ERROR, "cannot find token");
 		}
 	}
 
 	file = fopen("port.log", "at");
 	if (file)
 	{
-		fprintf(file, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n",
+		fprintf(file, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
 				(float) clock() / CLOCKS_PER_SEC,
-				(float) (clock() - t) / CLOCKS_PER_SEC, cmd);
+				(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
 		fclose(file);
 	}
 
@@ -111,6 +114,11 @@ void port_com_send(char *cmd)
 int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	EyelockLog(logger, TRACE, "port_com_send");
 	pthread_mutex_lock(&lock);
+
+
+	// REMOVE TRAILING CRS
+	while( cmd[strlen(cmd)-1]=='\n')
+		cmd[strlen(cmd)-1]=0;
 
 	int rv;
 	FILE *file;
@@ -129,26 +137,47 @@ int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	tv.tv_usec = 0;
 	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const void*) &tv, sizeof(tv));
 
-	rv = recv(sockfd, buffer, 512, 0);
 
-	if (rv <= 0)
+	char rx_buffer[512];
+
+	// clear the return buffer
+	buffer[0]=0;
+	int trys = 0;
+   #define MAX_TRYS 4
+
+while (1)
 	{
-		EyelockLog(logger, ERROR, "cannot receive data");
-	}
-	else
-	{
-		if (rv < min_len)
+		rv = recv(sockfd, rx_buffer, 512, 0);
+
+		if (rv <= 0)
 		{
-			EyelockLog(logger, ERROR, "cannot find token");
+			EyelockLog(logger, ERROR, "cannot receive data");
+		}
+		else
+		{
+			rx_buffer[rv]=0;
+			strcat(buffer,rx_buffer);
+			if (strstr(buffer,"OK")==0)
+			{
+
+			if (trys++==MAX_TRYS)
+				{
+				EyelockLog(logger, ERROR, "cannot find token");
+				
+				break;
+				}
+			}
+			else
+				break;
 		}
 	}
 
 	file = fopen("port.log", "at");
 	if (file)
 	{
-		fprintf(file, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n",
+		fprintf(file, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
 				(float) clock() / CLOCKS_PER_SEC,
-				(float) (clock() - t) / CLOCKS_PER_SEC, cmd);
+				(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
 		fclose(file);
 	}
 
