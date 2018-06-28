@@ -2773,6 +2773,7 @@ void *leftCServer(void *arg)
 
         int pkgs_received = 0;
         int pkgs_missed = 0;
+        int rx_idx=0;
 
         ImageQueueItem queueItem;
         // me->HandleReceiveImage(databuf, datalen);
@@ -2787,13 +2788,12 @@ void *leftCServer(void *arg)
         queueItem = pFrameGrabber->GetFreeBuffer();
         char * databuf = (char *)queueItem.m_ptr;
 
-	short sync[] = {0x5555};
 
        //  sleep(2);
         while (!me->ShouldIQuit())
         {
 
-        	 length = recvfrom(leftCSock, buf, min(1500,bytes_to_read), 0, (struct sockaddr *)&from, &fromlen);
+        	 length = recvfrom(leftCSock, &databuf[rx_idx], min(1500,bytes_to_read), 0, (struct sockaddr *)&from, &fromlen);
         	            if (length < 0)
         	                printf("recvfrom error in leftCServer()");
         	            else
@@ -2815,11 +2815,12 @@ void *leftCServer(void *arg)
         	                }
 #endif
 
-        	            	if(!b_syncReceived && pShort[0] == 0x5555)
+        	            	if(!b_syncReceived && ((short *)databuf)[0] == 0x5555)
         	                {
       	                		datalen = 0;
-        	                        memcpy(databuf, buf+2, length-2);
-        	                        datalen = length - 2;
+      	                	    	memcpy(databuf, &databuf[rx_idx+2], length-2);
+      	                	        rx_idx = length-2;
+      	                	        datalen = length - 2;
         	                        b_syncReceived = true;
         	                        pckcnt=1;
         	                        cam_id=databuf[2]&0xff;
@@ -2829,7 +2830,8 @@ void *leftCServer(void *arg)
         	                else if(b_syncReceived)
         	                {
         	                        length = (datalen+length <= IMAGE_SIZE-4) ? length : IMAGE_SIZE-4-datalen;
-        	                        memcpy(databuf+datalen, buf, length);
+        	                       // memcpy(databuf+datalen, buf, length);
+        	                        rx_idx+=length;
         	                        datalen += length;
         	                        pckcnt++;
         	                }
@@ -2860,6 +2862,7 @@ void *leftCServer(void *arg)
         	                   	datalen = 0;
         	                   	b_syncReceived=false;
         	                   	bytes_to_read=IMAGE_SIZE;
+        	                   	rx_idx=0;
         	               }
         	               if(bytes_to_read<=0)
         	            	   bytes_to_read=IMAGE_SIZE;
