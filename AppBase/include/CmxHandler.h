@@ -70,6 +70,9 @@ public:
 	int CreateUDPServer(int port);
 	int CreateCMDTCPServer(int port);
 
+	static int CheckTCPSocketForWriting(int fd);
+	void DestroyCMDTCPServer();
+
 	int m_debug;
 	bool m_waitPong;
 	int m_sock;
