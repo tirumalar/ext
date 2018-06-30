@@ -2242,6 +2242,8 @@ CmxHandler::~CmxHandler() {
 	if (rightCServerInfo)
 		delete rightCServerInfo;
 
+	DestroyCMDTCPServer();
+
 #ifdef HBOX_PG
 	if(input_image)
 			cvReleaseImage(&input_image);
@@ -2344,7 +2346,58 @@ int CmxHandler::End()
 
 }
 
+// currently not in use
+int CmxHandler::CheckTCPSocketForWriting(int fd)
+{
+	if (fd != 0)
+	{
+		struct timeval timeout;
+		timeout.tv_sec = 3;
+		timeout.tv_usec = 0;
 
+		fd_set write_set;
+		FD_ZERO(&write_set);
+		FD_SET(fd, &write_set);
+
+		int select_result = select(FD_SETSIZE, NULL, &write_set, NULL, &timeout);
+		if (select_result == 1)
+		{
+			EyelockLog(logger, TRACE, "TCP socket check: socket is OK for reading"); fflush(stdout);
+			return 0;
+		}
+		else if (select_result == 0)
+		{
+			EyelockLog(logger, ERROR, "TCP socket check: write timeout"); fflush(stdout);
+			return -2;
+		}
+		else
+		{
+			EyelockLog(logger, ERROR, "TCP socket check: select failed on write (%s)", strerror(errno));
+			return -3;
+		}
+	}
+	else
+	{
+		EyelockLog(logger, ERROR, "TCP socket check: descriptor is NULL");
+	}
+	return -1;
+}
+
+void CmxHandler::DestroyCMDTCPServer()
+{
+	if (m_sock) {
+		int result = shutdown(m_sock, SHUT_RDWR);
+		if (result != 0) {
+			EyelockLog(logger, ERROR, "DestroyCMDTCPServer(): Failed to properly shutdown socket (%d)", result);
+		}
+
+		result = close(m_sock);
+		if (result != 0) {
+			EyelockLog(logger, ERROR, "DestroyCMDTCPServer(): Failed to properly close socket (%d)", result);
+		}
+		m_sock = 0;
+	}
+}
 
 void CmxHandler::SendMessage(char *outMsg, int len)
 {
@@ -2352,16 +2405,45 @@ void CmxHandler::SendMessage(char *outMsg, int len)
 		EyelockLog(logger, TRACE, "Send Message %d, len %d", outMsg[0], len);
 
 	//printf("CMX SendMessage: sending %s \n",outMsg);
-	if (!m_sock) {
-		if (CreateCMDTCPServer(30) < 0) {
-			return;
-		}
-	}
-	printf("CMX;SendMessage:sending - %s\n",outMsg);
-	if( send(m_sock , outMsg , strlen(outMsg) , 0) < 0)
+
+	const int max_attempt = 3;
+	int attempt = 0;
+	while (attempt < max_attempt)
 	{
-	      perror("Send failed");
+		attempt++;
+
+		if (m_debug) {
+			EyelockLog(logger, TRACE, "CmxHandler::SendMessage(): attempt %d to send message", attempt);
+		}
+
+		if (!m_sock) {
+			if (CreateCMDTCPServer(30) < 0) {
+				EyelockLog(logger, ERROR, "CmxHandler::SendMessage(): CreateCMDTCPServer failed");
+				continue;
+			}
+		}
+		printf("CMX;SendMessage:sending - %s\n",outMsg);
+		int bytes_sent = send(m_sock , outMsg , strlen(outMsg) , 0);
+		if (bytes_sent < 0) {
+			EyelockLog(logger, ERROR, "CmxHandler::SendMessage(): send failed (%s)", strerror(errno));
+
+			//if (CheckTCPSocketForWriting(m_sock) != 0)
+			if (errno == EPIPE)
+			{
+				EyelockLog(logger, TRACE, "CmxHandler::SendMessage(): reconnecting socket");
+				DestroyCMDTCPServer();
+				continue;
+			}
+		}
+
+		if (bytes_sent < strlen(outMsg))
+		{
+			EyelockLog(logger, ERROR, "CmxHandler::SendMessage(): incomplete send");
+		}
+
+		break;
 	}
+
 	//printf("CMX SendMessage: sent\n");
 }
 
@@ -2657,6 +2739,8 @@ int CmxHandler::CreateCMDTCPServer(int port) {
 	if (connect(m_sock , (struct sockaddr *)&server , sizeof(server)) < 0)
 	{
 	      perror("connect failed. Error");
+	      close(m_sock);
+	      m_sock = 0;
 	      return -1;
 	}
 	return m_sock;
