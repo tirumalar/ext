@@ -92,7 +92,8 @@ bash -c "while true; do if [ -f /home/root/Eyelock.run ]; then /home/root/Eyeloc
 #chmod a+x knockd
 #/usr/sbin/knockd -d -c /home/root/knockd.conf 
 #add firewall rules
-#chmod a+x firewall.sh
+chmod a+x firewall.sh
+./firewall.sh
 #bash -c "while true; do sleep 1; ./firewall.sh; break; done" &
 
 echo "******************************script finished ************************"
