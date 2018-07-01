@@ -88,8 +88,8 @@ int FindEyeLocation(Mat frame, Point &eyes, float &eye_size) {
 
 		//printf("face x = %d  face y = %d face width = %d  face height = %d reject %f levels %d\n",faces[0].x, faces[0].y, faces[0].width, faces[0].height,level_weights[0],reject_levels[0]);
 
-		printf("Face detect tooc %3.3f\n",
-				(float) (clock() - t) / CLOCKS_PER_SEC );
+		//printf("Face detect tooc %3.3f\n",
+		//		(float) (clock() - t) / CLOCKS_PER_SEC );
 		return 1;
 	}
 

@@ -185,7 +185,7 @@ while (1)
 
 	pthread_mutex_unlock(&lock);
 
-	return rv;
+	return strlen(buffer);
 }
 
 float read_angle(void) {
