@@ -18,11 +18,11 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/photo/photo.hpp>
+#include "portcom.h"
 
 
 
-
-// #define CAMERACALIBERATION_ARUCO
+//#define CAMERACALIBERATION_ARUCO
 
 #ifdef CAMERACALIBERATION_ARUCO
 #include <aruco.h>
@@ -39,6 +39,8 @@
 #include "boost/date_time/posix_time/posix_time.hpp"
 #endif
 #include "log.h"
+
+#include "eyelock_com.h"
 
 using namespace cv;
 using namespace std::chrono;
@@ -98,7 +100,7 @@ void LogSessionEvent(const char* msg)
 #define MODE_CHANGE_FREEZE 10
 
 #define MIN_IRIS_FRAMES 10
-#define FRAME_DELAY 40
+#define FRAME_DELAY 100
 
 // this defines how many frames without a face will cause a switch back to face mode ie look for faces
 #define NO_FACE_SWITCH_FACE 10
@@ -128,6 +130,8 @@ int currnet_mode = 0;
 int previousEye_distance = 0;
 
 const char logger[30] = "test";
+const char stateMachineLogger[30] = "StateMachine";
+
 
 VideoStream *vs;
 
@@ -197,8 +201,6 @@ Mat outImgLast, outImg1, outImg1s;		//Used in MeasureSnr function
 int agc_val_cal=3;
 
 //variable used for tempering
-float x, y, z, a;
-int len;
 
 std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
 
@@ -206,11 +208,8 @@ std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
 
 extern int vid_stream_start(int port);
 extern int vid_stream_get(int *win,int *hin, char *wbuffer);
-extern int portcom_start();
-extern void port_com_send(char *cmd);
 extern void  *init_tunnel(void *arg);
 extern void *init_ec(void * arg);
-extern int port_com_send_return(char *cmd, char *buffer, int min_len);
 extern int IrisFramesHaveEyes();
 int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size);
 
@@ -230,8 +229,8 @@ void MainIrisSettings();
 void SwitchIrisCameras(bool mode);
 void SetFaceMode();
 
-void MoveRelAngle(float a, int diffEyedistance);
-void SetIrisMode(int CurrentEye_distance, int diffEyedistance);
+void MoveRelAngle(float a);
+void SetIrisMode(float CurrentEye_distance);
 void DoStartCmd();
 void DoStartCmd_CamCal();
 float AGC(int width, int height,unsigned char *dsty, int limit);
@@ -239,6 +238,7 @@ Mat rotate(Mat src, double angle);
 Mat rotation90(Mat src);
 int IrisFramesHaveEyes();
 void DoRunMode(bool bShowFaceTracking);
+void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions);
 
 void MeasureSnr();	//Measuring noise in images
 
@@ -521,7 +521,7 @@ void SetFaceMode()
 
 
 
-void MoveRelAngle(float a, int diffEyedistance)
+void MoveRelAngle(float a)
 {
 	EyelockLog(logger, TRACE, "MoveRelAngle");
 	// add a limit check to make sure we are not out of bounds
@@ -543,9 +543,35 @@ void MoveRelAngle(float a, int diffEyedistance)
 }
 
 
+void DimmFaceForIris()
+{
+	char cmd[512];
+	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
+	int DimmingfaceAnalogGain = fconfig.getValue("FTracker.DimmingfaceAnalogGain",0);
+	int DimmingfaceExposureTime = fconfig.getValue("FTracker.DimmingfaceExposureTime",7);
+	int DimmingfaceDigitalGain = fconfig.getValue("FTracker.DimmingfaceDigitalGain",32);
+
+	// printf("Dimming face cameras!!!");
+	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x305e,%i)", DimmingfaceExposureTime, DimmingfaceDigitalGain);
+	EyelockLog(logger, DEBUG, "Dimming face cameras -DimmingfaceExposureTime:%d, DimmingfaceDigitalGain:%d",DimmingfaceExposureTime, DimmingfaceDigitalGain);
+	port_com_send(cmd);
+
+	//Need to change this anlog gain setting
+	{
+		char cmd[512];
+		sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((DimmingfaceAnalogGain&0x3)<<4) | 0X80);
+		EyelockLog(logger, DEBUG, "FACE_GAIN_MIN:%d DimmingfaceAnalogGain:%d", FACE_GAIN_MIN, (((DimmingfaceAnalogGain&0x3)<<4) | 0X80));
+		port_com_send(cmd);
+	}
+	agc_val = FACE_GAIN_MIN;
+
+}
 
 
-void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
+
+
+//void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
+void SetIrisMode(float CurrentEye_distance)
 {
 
 	EyelockLog(logger, TRACE, "SetIrisMode");
@@ -571,7 +597,8 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 	agc_val = FACE_GAIN_MIN;
 
 	//switching cameras
-	EyelockLog(logger, DEBUG, "previousEye_distance: %i; CurrentEye_distance: %i; diffEyedistance: %i\n", previousEye_distance, CurrentEye_distance, diffEyedistance);
+	//EyelockLog(logger, DEBUG, "previousEye_distance: %i; CurrentEye_distance: %i; diffEyedistance: %i\n", previousEye_distance, CurrentEye_distance, diffEyedistance);
+	EyelockLog(logger, DEBUG, "previousEye_distance: %i; CurrentEye_distance: %i; \n", previousEye_distance, CurrentEye_distance);
 
 	if (currnet_mode==MODE_FACE)
 			errSwitchThreshold =0;
@@ -651,7 +678,7 @@ void SetIrisMode(int CurrentEye_distance, int diffEyedistance)
 }
 
 
-
+int tempTarget; 		//5 mins = 60*5 = 300s
 
 
 // Main DoStartCmd configuration for Eyelock matching
@@ -659,6 +686,22 @@ void DoStartCmd(){
 
 	EyelockLog(logger, TRACE, "DoStartCmd");
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
+
+/*	double id = fconfig.getValue("FTracker.uintID",0);
+	double idm;
+	cout << "Input the device ID::::: ";
+	cvWaitKey(1);
+	cin >> idm;
+	cout << "Device ID IS ::::::::::::::::::::::: " << idm << endl;
+
+	//check device ID
+	if(id == idm){
+		printf("-------------->>>>>>>>>>>>>>>>>>> Device ID didn't match with calibration file!\n");
+		exit(EXIT_FAILURE);
+	}*/
+
+	tempTarget = fconfig.getValue("FTracker.tempReadingTimeInMinutes",5);
+	tempTarget = tempTarget * 60;	//converting into sec
 
 	int rectX = fconfig.getValue("FTracker.targetRectX",0);
 	int rectY = fconfig.getValue("FTracker.targetRectY",497);
@@ -713,9 +756,15 @@ void DoStartCmd(){
 
 
 	switchThreshold = fconfig.getValue("FTracker.switchThreshold",37);
-	errSwitchThreshold = fconfig.getValue("FTracker.errSwitchThreshold",6);
+	errSwitchThreshold = fconfig.getValue("FTracker.errSwitchThreshold",2);
 
 	char cmd[512];
+
+
+	// first turn off all cameras
+	sprintf(cmd,"set_cam_mode(0x0,%d)",FRAME_DELAY);		//Turn on Alternate cameras
+	port_com_send(cmd);
+
 
 	//Homing
 	EyelockLog(logger, DEBUG, "Re Homing");
@@ -812,13 +861,13 @@ void DoStartCmd(){
 	{
 		EyelockLog(logger, DEBUG, "playing audio -set_audio(1)");
 		port_com_send("set_audio(1)");
-		sleep(1);
+		usleep(100000);
 		port_com_send("data_store_set(0)");
-		sleep(1);
+		usleep(100000);
 		system("nc -O 512 192.168.4.172 35 < /home/root/tones/auth.raw");
 		sleep(1);
 		port_com_send("data_store_set(1)");
-		sleep(1);
+		usleep(100000);
 		system("nc -O 512 192.168.4.172 35 < /home/root/tones/rej.raw");
 		sleep(1);
 	}
@@ -1144,40 +1193,190 @@ float StandardDeviation_m1(vector<float> vec){
 
 }
 
-float average(vector<float> vec){
 
-	float sum  = 0.0;
-	int n = 0;
-	for(int i = 0; i < vec.size(); i++){
-		sum = sum + vec[i];
-		//printf("Data:::: %3.4f\n", vec[i]);
-		n++;
+//#define LED_brightness_control
+//#define Tempering
+
+
+
+Mat preProcessingImg(Mat outImg){
+	float p;
+
+	EyelockLog(logger, DEBUG, "preProcessing");
+	EyelockLog(logger, DEBUG, "resize");
+	cv::resize(outImg, smallImgBeforeRotate, cv::Size(), (1 / scaling),
+			(1 / scaling), INTER_NEAREST);	//py level 3
+
+	smallImg = rotation90(smallImgBeforeRotate);	//90 deg rotation
+
+
+	//AGC control to block wash out images
+	EyelockLog(logger, DEBUG, "AGC Calculation");
+	p = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),180);
+
+	if (p < FACE_GAIN_PER_GOAL - FACE_GAIN_HIST_GOAL)
+		agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
+	if (p > FACE_GAIN_PER_GOAL + FACE_GAIN_HIST_GOAL)
+		agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
+	agc_val = MAX(FACE_GAIN_MIN,agc_val);
+	agc_val = MIN(agc_val,FACE_GAIN_MAX);
+
+	AGC_Counter++;
+
+
+
+	static int agc_val_old = 0;
+	if (abs(agc_val - agc_val_old) > 300) {
+		// printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
+		SetExp(4, agc_val);
+		agc_val_old = agc_val;
 	}
 
-	float mean = sum/n;
-	printf("n:::::%d     MEan:::: %4.4f\n",n,mean);
+	agc_set_gain = agc_val;
 
-	return mean;
+
+	return smallImg;
+}
+
+
+void LEDbrightnessControl(Mat smallImg){
+	float agcAvg, agcPer;
+	int limit = 0;
+	agcAvg = AGC_average(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),limit);
+	agcPer = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),limit);
+
+	// can be used for saving temp data
+	fstream infile(fileName);
+	if(infile.good()){
+		// cout << "File exist and keep writing in it!" << endl;
+		EyelockLog(logger, DEBUG, "File exist and keep writing in it");
+	}
+	else{
+		EyelockLog(logger, DEBUG, "Create Log file");
+		// cout << "Create log file!" << endl;
+		ofstream file(fileName);
+		file << "Time" << ',' << "image Average" << ',' << "Image percentile" << ',' << "Cutoff Limit" << '\n';
+	}
+
+	ofstream writeFile(fileName, std::ios_base::app);
+
+
+	using std::chrono::system_clock;
+
+	std::chrono::duration<int,std::ratio<60*60*24> > one_day (1);
+
+	system_clock::time_point today = system_clock::now();
+
+	std::time_t tt;
+
+	tt = system_clock::to_time_t ( today );
+
+	writeFile <<  ctime(&tt) << ',';
+	writeFile <<  agcAvg << ',';
+	writeFile <<  agcPer << ',';
+	writeFile <<  limit << '\n';
+
+	if (agcAvg > 100){
+		// SET LED AS high
+
+	}
+	else
+	{
+		//Set default LED
+	}
+}
+
+float last_angle_move=0;
+void moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, bool bDebugSessions){
+	if ((eye_size >= MIN_FACE_SIZE) && (eye_size <= MAX_FACE_SIZE)) {	// check face size
+
+		float err;
+		int MoveToLimitBound = 1;
+		err = (no_move_area.y + no_move_area.height / 2) - eyes.y;
+		EyelockLog(logger, DEBUG, "abs err----------------------------------->  %d\n", abs(err));
+		err = (float) err * (float) SCALE * (float) ERROR_LOOP_GAIN;
+
+		// if we need to move
+		if (abs(err) > MoveToLimitBound) {
+			int x, w, h;
+
+			EyelockLog(logger, DEBUG, "Switching ON IRIS LEDs!!!!\n");
+
+#ifdef DEBUG_SESSION
+			if(bDebugSessions){
+				struct stat st = {0};
+				if (stat(m_sessionDir.c_str(), &st) == -1) {
+					mkdir(m_sessionDir.c_str(), 0777);
+				}
+				// boost::filesystem::path temp_session_dir(DEBUG_SESSION_DIR);
+				// boost::filesystem::create_directory(temp_session_dir);
+
+				if (switchedToIrisMode == false)
+				{
+					switchedToIrisMode = true;
+					char logmsg[] = "Switching to iris mode";
+					LogSessionEvent(logmsg);
+				}
+			}
+#endif
+
+			MoveRelAngle(-1 * err);
+			last_angle_move = -1 * err;
+			//Flash the streaming
+			vs->flush();
+		}
+
+	}
+	else{
+		EyelockLog(logger, DEBUG, "Face out of range\n");
+	}
 
 }
 
-#define LED_brightness_control
-//#define Tempering
-vector<float> tempDataX,tempDataY,tempDataZ;
-float xp =0,yp = 0,zp =0;
-double difX,difY,difZ;
+
+void faceModeState(bool bDebugSessions){
+	MoveTo(CENTER_POS);
+	run_state = RUN_STATE_FACE;
+	SetFaceMode();
+#ifdef DEBUG_SESSION
+	if(bDebugSessions){
+		switchedToIrisMode = false;
+		char logmsg[] = "Switched_to_face_mode";
+		LogSessionEvent(logmsg);
+	}
+#endif /* DEBUG_SESSION */
+
+}
+
+void switchStaes(int states, float eye_size, bool bShowFaceTracking, bool bDebugSessions){
+	switch (states){
+		case 1: printf("set Iris mode\n");
+				SetIrisMode(eye_size);
+				break;
+		case 2: printf("Move Motor to face target\n");
+				moveMotorToFaceTarget(eye_size, bShowFaceTracking, bDebugSessions);
+				break;
+		case 3: printf("set Face mode\n");
+				faceModeState(bDebugSessions);
+				break;
+		default:printf("Default---------------------------------\n");
+				break;
+	}
+}
+
+
+float eye_size;
+float p; //AGC
+
 
 void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 {
 	EyelockLog(logger, TRACE, "DoRunMode");
-	float eye_size;
+
 
 	// if (run_state == RUN_STATE_FACE)
 	{
-		float p;
-		char temp_str[40];
 
-		int64 startTime = cv::getTickCount();
 		EyelockLog(logger, DEBUG, "image resize");
 		cv::resize(outImg, smallImgBeforeRotate, cv::Size(), (1 / scaling),
 				(1 / scaling), INTER_NEAREST);	//py level 3
@@ -1223,7 +1422,7 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 		agcPer = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),limit);
 
 		// can be used for saving temp data
-		fstream infile(fileName);
+		fstream infile(fileName);eye_size
 		if(infile.good()){
 			// cout << "File exist and keep writing in it!" << endl;
 			EyelockLog(logger, DEBUG, "File exist and keep writing in it");
@@ -1268,8 +1467,6 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 
 		EyelockLog(logger, DEBUG, "FindEyeLocation");
 		if (FindEyeLocation(smallImg, eyes, eye_size)) {	//Find face
-			noeyesframe = 0;
-
 			if (detect_area.contains(eyes)) {		//Find face/eye into the rect first, Future use of detect face at center
 				EyelockLog(logger, DEBUG, "eyes found");
 
@@ -1278,10 +1475,12 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 
 				int CurrentEye_distance = eye_size;
 				int diffEyedistance = abs(CurrentEye_distance - previousEye_distance);
+				//int diffEyedistance = abs(CurrentEye_distance - previousEye_distance);
 
 			//	printf("Switching ON IRIS LEDs!!!!\n");
-				SetIrisMode(eye_size, diffEyedistance);
+				SetIrisMode(eye_size);
 				printf("set iris mode\n");
+
 				run_state = RUN_STATE_EYES;
 
 				if (!no_move_area.contains(eyes)) {		//if target area doesn't have face then move
@@ -1325,7 +1524,7 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 
 							////////////////////////////////////////////////
 
-							MoveRelAngle(-1 * err, diffEyedistance);
+							MoveRelAngle(-1 * err);
 
 
 							//flush the video buffer to get rid of frames from motion
@@ -1360,7 +1559,7 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 		}
 		{
 
-			if (noFaceCounter < (NO_FACE_SWITCH_FACE+2))
+			if (noFaceCounter < (NO_FACE_SWITCH_FACE + 2))
 				noFaceCounter++;
 
 			if (noFaceCounter == NO_FACE_SWITCH_FACE) {
@@ -1533,6 +1732,368 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 	}
 
 }
+
+
+#define STATE_LOOK_FOR_FACE 1
+#define STATE_MOVE_MOTOR    2
+#define STATE_MAIN_IRIS     3
+#define STATE_AUX_IRIS      4
+#define Tempering
+#define tempRecord
+
+
+void DoTemperatureLog()
+{
+	static time_t start = time(0);
+	double seconds_since_start = difftime( time(0), start);
+	int len;
+
+	//printf ("%3.3f seconds ", seconds_since_start);
+
+	//printf("cumilative time in sec :::::::::::: %d \n", seconds_since_start);
+	if (tempTarget < int(seconds_since_start)){
+
+		//std::string temperatureLogFileName("temperature.log");
+		//ofstream temperatureLogStream(temperatureLogFileName, std::ios_base::app);
+
+		float tempData;
+		char temperatureBuf[512];
+		//float sumST = 0.0;
+
+		if ((len = port_com_send_return("accel_temp()", temperatureBuf, 20)) > 0) {
+			sscanf(temperatureBuf, "%f", &tempData);
+			EyelockLog(logger, TRACE, "temp reading =>%3.3f\n", tempData);
+
+			//printf("cumilative time ::: %3.3f and Temp ::::: %3.3f\n", sumST, tempData);
+			//temperatureLogStream <<  tempData << '\n';
+
+			time_t timer;
+			struct tm* tm1;
+			time(&timer);
+			tm1 = localtime(&timer);
+
+			FILE *file = fopen("temperature.log", "a");
+			if (file){
+				char time_str[100];
+				strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
+				fprintf(file, "[%s] %3.3f\n", time_str, tempData);
+				fclose(file);
+			}
+
+			//sumST = 0.0;
+			start = time(0);
+		}
+	}
+}
+
+
+int system_state = STATE_LOOK_FOR_FACE;
+int last_system_state = STATE_LOOK_FOR_FACE;
+
+int SelectWhichIrisCam(float eye_size, int cur_state)
+{
+	if ((cur_state!=STATE_MAIN_IRIS) &&(cur_state!=STATE_AUX_IRIS))
+		{
+		// this is we are just getting into irises so hard decision not hysterises
+		if (eye_size >= (switchThreshold))
+			return STATE_MAIN_IRIS;
+		else
+			return STATE_AUX_IRIS;
+
+		}
+	if (cur_state==STATE_MAIN_IRIS)
+	   if (eye_size<(switchThreshold-errSwitchThreshold))
+		   return STATE_AUX_IRIS;
+	   else
+		   return STATE_MAIN_IRIS;
+
+	if (cur_state==STATE_AUX_IRIS)
+		if (eye_size >= (switchThreshold+errSwitchThreshold))
+			return STATE_MAIN_IRIS;
+		else
+			return STATE_AUX_IRIS;
+}
+
+char * StateText(int state)
+{
+	switch (state)
+	{
+	    case STATE_LOOK_FOR_FACE: return("FACE");
+		case STATE_MAIN_IRIS: return ("MAIN");
+		case STATE_AUX_IRIS:  return ("AUX");
+		case STATE_MOVE_MOTOR:return ("MOVE");
+	}
+	return "none";
+}
+
+void DoAgc(void)
+{
+	p = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),180);
+
+	if (p < FACE_GAIN_PER_GOAL - FACE_GAIN_HIST_GOAL)
+		agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
+	if (p > FACE_GAIN_PER_GOAL + FACE_GAIN_HIST_GOAL)
+		agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
+	agc_val = MAX(FACE_GAIN_MIN,agc_val);
+	agc_val = MIN(agc_val,FACE_GAIN_MAX);
+
+	AGC_Counter++;
+	if (agc_set_gain != agc_val)
+		;	// && AGC_Counter%2==0)
+	{
+		//	while (waitKey(10) != 'z');
+		{
+			static int agc_val_old = 0;
+			if (abs(agc_val - agc_val_old) > 300) {
+				// printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
+				SetExp(4, agc_val);
+				agc_val_old = agc_val;
+			}
+		}
+
+		agc_set_gain = agc_val;
+	}
+}
+
+
+void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
+	EyelockLog(logger, TRACE, "DoRunMode_test");
+
+	int start_process_time = clock();
+
+	smallImg = preProcessingImg(outImg);
+	bool foundEyes = FindEyeLocation(smallImg, eyes, eye_size);
+
+	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
+
+
+	bool eyesInDetect = foundEyes? detect_area.contains(eyes):false;
+	bool eyesInViewOfIriscam = eyesInDetect ? no_move_area.contains(eyes):false;
+
+
+	if (foundEyes==false)
+		noFaceCounter++;
+	noFaceCounter = min(noFaceCounter,NO_FACE_SWITCH_FACE);
+
+	if (foundEyes)
+		noFaceCounter=0;
+	last_system_state = system_state;
+
+	// figure out our next state
+	switch(system_state)
+	{
+	case STATE_LOOK_FOR_FACE:
+							// we see eyes but need to move to them
+							if (eyesInDetect && !eyesInViewOfIriscam)
+								{
+								system_state = STATE_MOVE_MOTOR;
+								break;
+								}
+							if (eyesInDetect && eyesInViewOfIriscam)			//changed by Mo
+									system_state = SelectWhichIrisCam(eye_size,system_state);
+							DoAgc();
+							//if (eyesInViewOfIriscam)
+							break;
+
+	case STATE_MAIN_IRIS:
+	case STATE_AUX_IRIS:
+						system_state = SelectWhichIrisCam(eye_size,system_state);
+						if (noFaceCounter >= NO_FACE_SWITCH_FACE)
+							{
+							system_state=STATE_LOOK_FOR_FACE;
+							break;
+							}
+						if (eyesInDetect &&  !eyesInViewOfIriscam)
+							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+						break;
+	case STATE_MOVE_MOTOR:
+						//if (eyesInViewOfIriscam)
+						if (eyesInDetect)			//changed by Mo
+							{
+							system_state = SelectWhichIrisCam(eye_size,system_state);
+							break;
+							}
+						if (!foundEyes)
+							{
+							system_state = STATE_LOOK_FOR_FACE;
+							break;
+							}
+						DoAgc();
+						moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+	}
+
+
+	currnet_mode = -1;
+	// handle switching state
+	//if (last_system_state != system_state)
+	EyelockLog(stateMachineLogger, TRACE, "STATE:%8s  NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",StateText(system_state),
+					noFaceCounter,
+				foundEyes?'E':'.',
+				eyesInDetect?'D':'.',
+				eyesInViewOfIriscam?'V':'.',
+						eye_size,
+						eyes.x,
+						eyes.y,
+						last_angle_move,
+						process_time,
+						agc_set_gain,
+						g_MatchState
+						);
+		if (g_MatchState)
+			g_MatchState=0;
+		last_angle_move=0;
+
+
+	if (last_system_state != system_state)
+
+	switch(last_system_state)
+	{
+	case STATE_LOOK_FOR_FACE:
+					switch (system_state)
+					{
+					case STATE_MOVE_MOTOR:
+						// above states switches no action has to be taken
+						moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+						// flush after moving to get more accurate motion on next loop
+						vs->flush();
+						break;
+					case STATE_MAIN_IRIS:
+						// enable main camera and set led currnet
+						DimmFaceForIris();											//Dim face settings
+						MainIrisSettings();											//change to Iris settings
+						SwitchIrisCameras(true);									//switch cameras
+						break;
+					case STATE_AUX_IRIS:
+						// enable aux camera and set led currnet
+						DimmFaceForIris();											//Dim face settings
+						MainIrisSettings();											//change to Iris settings
+						SwitchIrisCameras(false);									//switch cameras
+						break;
+					}
+					break;
+	case STATE_AUX_IRIS:
+					switch (system_state)
+					{
+					case STATE_MOVE_MOTOR: // cannot happen
+					case STATE_LOOK_FOR_FACE:
+						// disable iris camera set current for face camera
+						MoveTo(CENTER_POS);
+						SetFaceMode();
+						break;
+					case STATE_MAIN_IRIS:
+						//if the switch happen from AUX to MAIN then we
+						//dont need to dim down the face cam settings because it is already
+						//dimmed down
+						//DimmFaceForIris();											//Dim face settings
+						MainIrisSettings();											//change to Iris settings
+						SwitchIrisCameras(true);									//switch cameras
+						break;
+					}
+					break;
+	case STATE_MAIN_IRIS:
+						switch (system_state)
+						{
+						case STATE_MOVE_MOTOR:
+							break;
+						case STATE_LOOK_FOR_FACE:
+							// disable iris camera set current for face camera
+							MoveTo(CENTER_POS);
+							SetFaceMode();
+							break;
+						case STATE_AUX_IRIS:
+							//if the switch happen from AUX to MAIN then we
+							//dont need to dim down the face cam settings because it is already
+							//dimmed down
+							//DimmFaceForIris();
+							MainIrisSettings();											//change to Iris settings
+							SwitchIrisCameras(false);									//switch cameras
+							break;
+						}
+						break;
+	case STATE_MOVE_MOTOR:
+					switch (system_state)
+					{
+					case STATE_LOOK_FOR_FACE:
+						// disable iris camera set current for face camera
+						MoveTo(CENTER_POS);
+						SetFaceMode();
+						break;
+					case STATE_AUX_IRIS:
+						// switch only the expusure and camera enables
+						// no need to change voltage or current
+						DimmFaceForIris();											//Dim face settings
+						MainIrisSettings();											//change to Iris settings
+						SwitchIrisCameras(false);									//switch cameras
+						break;
+					case STATE_MAIN_IRIS:
+						// enable main cameras and set
+						DimmFaceForIris();											//Dim face settings
+						MainIrisSettings();											//change to Iris settings
+						SwitchIrisCameras(true);									//switch cameras
+						break;
+					}
+					break;
+	}
+
+	//For dispaying face tracker
+	if(bShowFaceTracking){
+		sprintf(temp, "Debug facetracker Window\n");
+		EyelockLog(logger, DEBUG, "Imshow");
+		cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
+		cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
+		imshow(temp, smallImg);
+	}
+
+//For debug session
+#ifdef DEBUG_SESSION
+	if (bDebugSessions)
+	{
+		if (switchedToIrisMode)
+		{
+			struct stat st = {0};
+			if (stat(m_sessionDir.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
+				time_t timer;
+				struct tm* tm1;
+				time(&timer);
+				tm1 = localtime(&timer);
+				char time_str[100];
+				strftime(time_str, 100, "%Y_%m_%d_%H-%M-%S", tm1);
+
+				struct timespec ts;
+				clock_gettime(CLOCK_REALTIME, &ts);
+
+				int FrameNo = vs->frameId;
+				int CamId = vs->cam_id;
+				char filename[200];
+				sprintf(filename, "%s/FaceImage_%s_%lu_%09lu_%d_%d.pgm", m_sessionDir.c_str(), time_str, ts.tv_sec, ts.tv_nsec, FrameNo, CamId);
+
+				imwrite(filename, smallImg);
+
+				char logmsg[300];
+				sprintf(logmsg, "Saved-FaceImage-FrNum%d-CamID%d-%s", FrameNo, CamId, filename);
+				LogSessionEvent(logmsg);
+			}
+		}
+	}
+#endif
+
+#ifdef tempRecord
+	DoTemperatureLog();
+#endif
+
+
+
+#ifdef Tempering
+	{
+
+	}
+#endif
+
+
+
+}
+
+
 
 
 //Measure noise from images
@@ -2238,6 +2799,26 @@ void runCalCam(){
 	int newPos = MIN_POS + step;
 	char cmd[512];
 
+
+	double id;
+	cout << "Input the device ID::::: ";
+	cin >> id;
+
+	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
+
+	stringstream idss;
+	string ids;
+
+	idss << id;
+	idss >> ids;
+
+
+	printf("Device ID is:: %s\n", ids.c_str());
+	fconfig.setValue("FTracker.uintID",ids.c_str());
+
+	fconfig.writeIni("/home/root/data/calibration/faceConfig.ini");
+
+
 	while(check){
 		printf("Motor is moving to %i and conducting calibration\n", newPos);
 		sprintf(cmd, "fx_abs(%i)\n", newPos);
@@ -2457,6 +3038,23 @@ int main(int argc, char **argv)
 		exit (0);
 	}
 
+	//check device ID with user in
+	float id = 0.0;
+/*	cout << "Give device ID:::: " << endl;
+	cin >> id;
+
+	float idF = fconfig.getValue("FTracker.uintID",0.0f);
+
+	//printf("Device ID:: %3.3f,    Calibration ID :: %3.3f \n", id, idF);
+
+	if (id != idF)
+	{
+		printf("Device ID:: %3.3f,    Calibration ID :: %3.3f \n", id, idF);
+		EyelockLog(logger, DEBUG, "Calibration settings with The device ID doesn't match");
+		printf("Calibration settings with The device ID doesn't match\n");
+		exit (0);
+	}*/
+
 	//Check argc for run face tracker
 	if (argc== 3)
 		run_mode=1;
@@ -2637,6 +3235,21 @@ int main(int argc, char **argv)
 	if (run_mode)
 	{
 		EyelockLog(logger, DEBUG, "run_mode");
+/*		FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
+
+		double id = fconfig.getValue("FTracker.uintID",0);
+		double idm;
+		cout << "Input the device ID::::: ";
+		cvWaitKey(1);
+		cin >> idm;
+		cout << "Device ID IS ::::::::::::::::::::::: " << idm << endl;
+
+		//check device ID
+		if(id == idm){
+			printf("-------------->>>>>>>>>>>>>>>>>>> Device ID didn't match with calibration file!\n");
+			exit(EXIT_FAILURE);
+		}*/
+
 		face_init();
 		portcom_start();
 		DoStartCmd();
@@ -2653,23 +3266,25 @@ int main(int argc, char **argv)
 	if (vs->m_port==8193)
 			vs->offset_sub_enable=0;
 
-
+	int s_canId;
 	while (1)
 	{
 		{
-			vs->get(&w,&h,(char *)outImg.data,true);
+			vs->get(&w,&h,(char *)outImg.data);
+			s_canId=vs->cam_id;
 		}
 
 		//Main Face tracking operation
 		if (run_mode)
 			{
-			 DoRunMode(bShowFaceTracking, bDebugSessions);
+			 //DoRunMode(bShowFaceTracking, bDebugSessions);
+			 DoRunMode_test(bShowFaceTracking, bDebugSessions);
 			}
 		else
 			{
 
 			//For testing image optimization (OFFset correction)
-			Mat DiffImage = imread("white.pgm",CV_LOAD_IMAGE_GRAYSCALE);
+			 Mat DiffImage = imread("white.pgm",CV_LOAD_IMAGE_GRAYSCALE);
 			Mat dstImage;
 			if (DiffImage.cols!=0)
 			{
@@ -2680,8 +3295,16 @@ int main(int argc, char **argv)
 			else
 				cv::resize(outImg, smallImg, cv::Size(), 1, 1, INTER_NEAREST); //Time debug
 			//MeasureSnr();
-				if(bShowFaceTracking)
-					imshow(temp,smallImg);  //Time debug
+			{
+				char text[10];
+				sprintf(text,"CAM %2x %s",s_canId,s_canId&0x80 ?  "AUX":"MAIN" );
+				putText(smallImg,text,Point(10,60), FONT_HERSHEY_SIMPLEX, 1.5,Scalar(255,255,255),2);
+				putText(smallImg,text,Point(10+1,60+1), FONT_HERSHEY_SIMPLEX, 1.5,Scalar(0,0,0),2);
+
+			}
+		//	cv::resize(outImg, smallImg, cv::Size(), 0.25, 0.25, INTER_NEAREST); //Time debug
+		if(bShowFaceTracking)
+			imshow(temp,smallImg);  //Time debug
 			}
 
 

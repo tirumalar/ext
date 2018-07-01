@@ -21,5 +21,10 @@
  #ifdef __cplusplus
      }
  #endif
+#define MATCHER_STAT_MATCH   1
+#define MATCHER_STAT_DETECT  2
+#define MATCHER_STAT_FAIL    3
+#define MATCHER_STAT_UNKNOWN 4
+extern int g_MatchState ;
 
 #endif /* EYELOCK_COM_H_ */

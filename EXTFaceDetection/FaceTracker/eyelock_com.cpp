@@ -9,6 +9,7 @@
 #include <string.h>
 #include "eyelock_com.h"
 #include <ctime>
+#include "eyelock_com.h"
 
 #if 1
 #include "opencv2/highgui/highgui.hpp"
@@ -37,6 +38,9 @@ extern void port_com_send(char *cmd);
 
 const char logger[30] = "eyelock_com";
 
+
+int g_MatchState = 0;
+
 int ec_read_from_client(int filedes) {
 
 	EyelockLog(logger, DEBUG, "ec_read_from_client");
@@ -63,6 +67,16 @@ int ec_read_from_client(int filedes) {
 			*strchr(buffer, '\n') = ' ';
 		if (strchr(buffer, '\r'))
 			*strchr(buffer, '\r') = ' ';
+
+
+		//ilya added this code for testing
+		if (strstr(buffer,"fixed_set_rgb(0,0,80)"))
+			g_MatchState=MATCHER_STAT_DETECT;
+		if (strstr(buffer,"fixed_set_rgb(64,80,80)"))
+			g_MatchState=MATCHER_STAT_MATCH;
+		if (strstr(buffer,"fixed_set_rgb(80,0,0)"))
+			g_MatchState=MATCHER_STAT_FAIL;
+
 		//printf ("EC Server: got message: `%s'\n", buffer);
 
 		//Process the commands sent by EyeLock app
