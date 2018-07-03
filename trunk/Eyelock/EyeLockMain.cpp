@@ -511,7 +511,10 @@ void EyeLockMain::run(){
 		if (m_Master) {
 			if(pF2FDispatcher){
 				// Check tamper
-				if (mbVersion >= 1) {
+#ifndef CMX_C1 // always check for EXT
+				if (mbVersion >= 1)
+#endif
+				{
 					if (pF2FDispatcher->m_tamperEnable && count % 4*5 == 0) { // check tamper every 5 second
 						// check intrusion tamper every second
 						bool tamper = CheckTamperSensor();
