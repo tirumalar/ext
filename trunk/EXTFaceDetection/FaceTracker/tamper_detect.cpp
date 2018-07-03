@@ -13,6 +13,7 @@
 #include <math.h>
 #include <cmath>
 #include "log.h"
+#include <vector>
 
 #include "portcom.h"
 static string fileName = "/home/root/data/calibration/tempOutput.csv";
