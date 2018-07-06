@@ -1,0 +1,144 @@
+/*
+ * F2FDispatcher.h
+ *
+ *  Created on: 26-Nov-2009
+ *      Author: mamigo
+ */
+
+#ifndef F2FDISPATCHER_H_
+#define F2FDISPATCHER_H_
+
+#include "ResultDispatcher.h"
+#include "HTTPPOSTMsg.h"
+#include "socket.h"
+
+class MatchedSignal;
+class SocketFactory;
+class LEDConsolidator;
+
+enum F2FSTATE{eF2FSTART=0,eF2FSTOP};
+enum CRADREAD{CARD_INIT=0,CARD_READY,CARD_TIMEOUT, ACS};
+
+class F2FDispatcher: public ResultDispatcher {
+public:
+	F2FDispatcher(Configuration& conf);
+	void SetLEDConsolidator(LEDConsolidator *ptr){ m_ledConsolidator = ptr;}
+	virtual ~F2FDispatcher();
+	virtual int End();
+	const char *getName(){
+		return "F2FDispatcher";
+	}
+	virtual void RestartDispatcher();
+	virtual void CloseDispatcher();
+	void SetSendingEveryNSec(bool val=false){
+		m_SendEveryNSec = val;
+		if(m_Debug)printf("SetSendingEveryNSec %d \n",val?1:0);
+	}
+	virtual void ProcessOnEmptyQueue();
+	unsigned int getPreviousTS(){ return  m_PreviousSendTS;}
+	void CheckBoBEvents();
+	void ProcessBoBCardReader();
+	void SendTamperMsg();
+	void SendAlarmMsg(char *string);
+	void SetAccessDataLength(int len);
+	static void removeParityBits(char *card, int len);
+	void ProcessBoBAcsChange();
+	void ProcessTamper(bool value, bool mbTamper);
+	int m_cardRead;
+	bool m_acsChange;
+	int m_accessDataLength;
+	bool isTamperSet;
+	bool isMBTamper;
+	bool isBoBTamper;
+	int isLedSet;
+	bool isSoundSet;
+	bool m_Debug;
+	bool m_tamperEnable;
+	bool m_temperature;
+	bool m_testCode;
+	//static void GetBoBStatusCB ();
+	bool killCurrentDriver;
+
+	//OSDP message data
+	//set this to true when the tamper state changes (or when there is something to report to an OSDP_POLL other than ACK
+	bool stateChanged;
+	unsigned char m_OSDPAddr;
+	int m_OSDPBRate;
+	int m_ReaderOSDPBRate;
+	bool m_updateACD;
+
+	LEDConsolidator * getLEDConsolidator() {return m_ledConsolidator;}
+
+protected:
+	bool checkToBeSendToNw( MatchResultState val);
+	bool checkToBeSendToBOB( MatchResultState val);
+	void MakeNwF2FMsg(MatchResult* mr, BinMessage* msg);
+	void SendMsg(MatchResult *mr);
+	virtual int getQueueSize(Configuration* conf);
+	void TriggerRelay(int ms);
+	void SendToBoB(Configuration& conf);
+	virtual void process(MatchResult *msg);
+	bool findCardInDB(char *card);
+	int ExtractAcdFromDB();
+	void setCardMatchState();
+	static void BoBStatusChangeCB();
+	static int BoBODSPCallback(void *, int);
+	static int BoBReaderODSPCallback(void *, int);
+	static void CardMatchTimeoutCB();
+	void PrintCardData(char *card, int accessDataLength);
+	bool SetDualCommand();
+	void SendOSDPCommand(int command, unsigned char *data);
+	static void DumpBuffer(unsigned char *buf, int bytes);
+	void OSDPBuzzerCommand(unsigned char *data, int state);
+	void OSDPLedCommand(unsigned char *data, int state);
+
+	MatchedSignal *m_pMatched;
+	bool m_DoRelay;
+	bool m_pac;
+	bool m_osdp;
+	bool m_wiegand;
+	bool m_f2f;
+	bool m_wiegandLedIn;
+	int m_RelayTimeInMs;
+	int m_DenyRelayTimeInMs;
+	int m_State;
+	int m_ODSPSeq;
+	bool osdpCardDataAvailable;
+	char osdpCardData[256];
+	int osdpBitLength;
+	bool m_dualParity;
+
+
+	void osdpDataReady(MatchResult * msg);
+
+
+	MatchResult m_f2fResult;
+	bool m_SendEveryNSec;
+	int m_NSec;
+	unsigned int m_PreviousSendTS;
+	int m_SleepTime;
+
+    HostAddress *m_resultDestAddr;
+    SocketFactory *m_socketFactory;
+	struct timeval m_timeOut,m_timeOutSend;
+	bool m_sendMatchToBOB,m_sendLoteringToBOB,m_sendHealthToBOB,m_sendConfusionToBOB,m_dbReloadToBOB;
+	bool m_sendMatchToNw,m_sendLoteringToNw,m_sendHealthToNw,m_sendConfusionToNw,m_dbReloadToNw;
+	bool m_dualAuth;
+	int m_dualAuthWaitIrisTime;
+	int m_ledControlledByInput;
+	bool m_RelayWithSignal;
+	LEDConsolidator *m_ledConsolidator;
+	HostAddress *m_tamperDestAddr;
+	SocketFactory *m_socketFactoryTamper;
+	char m_tamperMsg[256];
+	int m_initialState;
+	int m_silencePeriodAfterMatchMs;
+	bool m_pollACS;
+	bool m_tamperBitHighToLow;
+	int m_dbCount;
+	char *m_acd;
+
+	int ReadParityXML(unsigned char *mask);
+};
+
+#endif /* F2FDISPATCHER_H_ */

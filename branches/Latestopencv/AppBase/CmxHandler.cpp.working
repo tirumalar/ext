@@ -1,0 +1,454 @@
+/*
+ * CmxHandler.cpp
+ *
+ *  Created on: 18 Aug, 2009
+ *      Author: akhil
+ */
+
+#include "CmxHandler.h"
+#include "Configuration.h"
+//#include "MatchProcessor.h"
+#include "socket.h"
+#include <arpa/inet.h>
+#include <sys/time.h>
+#include <time.h>
+#include <iostream>
+#include "MessageExt.h"
+#include <unistd.h>
+//#include "DBReceive.h"
+//#include "LEDConsolidator.h"
+//#include "F2FDispatcher.h"
+//#include "NwMatchManager.h"
+//#include "Synchronization.h"
+#include "SocketFactory.h"
+#include "logging.h"
+//#include "MT9P001FrameGrabber.h"
+//#include "ImageProcessor.h"
+//#include "MatchManagerInterface.h"
+
+using namespace std;
+
+extern "C" {
+#include "file_manip.h"
+}
+#include "NetworkUtilities.h"
+//#include "NwMatcherSerialzer.h"
+//#include "EyeDispatcher.h"
+
+const char logger[30] = "CmxHandler";
+
+#ifdef CMX_C1
+CmxHandler::CmxHandler(Configuration& conf)
+:m_debug(0)
+,m_socketFactory(0)
+{
+	if (m_debug)
+		EyelockLog(logger, TRACE, "CmxHandler::CmxHandler() start");
+
+	m_debug = conf.getValue("GRITrigger.CmxDebug",true);
+	m_waitPong = false;
+	m_pingTime = 0;
+	m_sock = 0;
+
+	m_socketFactory = new SocketFactory(conf);
+
+	const char *cmxOIMAddr = "192.168.4.172:30"; // "169.254.1.10:8192");
+	if(strcmp(cmxOIMAddr,"NONE")!= 0){
+		m_resultDestAddr = HostAddress::MakeHost(cmxOIMAddr, eIPv4, false);
+	}
+
+	m_rcvdMsg = new BinMessage(4*1024*1023);
+	if (m_rcvdMsg == NULL) {
+		EyelockLog(logger, ERROR, "CmxHandler - malloc failed ");
+	}
+
+	int timeOutms = 200;	// 200 ms
+	m_timeOutSend.tv_sec = timeOutms / 1000;
+	m_timeOutSend.tv_usec = (timeOutms % 1000) * 1000;
+
+
+
+}
+
+CmxHandler::~CmxHandler() {
+	if (m_socketFactory)
+		delete m_socketFactory;
+
+
+}
+
+unsigned int CmxHandler::MainLoop() {
+
+	if (m_debug)
+		EyelockLog(logger, TRACE, "\n CmxHandler::MainLoop() start");
+	printf("CmxHandler::MainLoop() start\n");
+
+	std::string name = "CmxHandler::";
+
+	// create a new thread to poll CMX OIM status
+//	if (pthread_create (&statusThread, NULL, pingStatus, this)) {
+//		EyelockLog(logger, ERROR, "MainLoop(): Error creating thread pingStatus");
+//	}
+	//CreateCMDTCPServer(30);
+	// create a new thread to get Left Camera images
+	if (pthread_create (&leftCThread, NULL, leftCServer, this)) {
+		EyelockLog(logger, ERROR, "MainLoop(): Error creating thread leftCServer");
+	}
+	// create a new thread to get Right Camera images
+	if (pthread_create (&rightCThread, NULL, rightCServer, this)) {
+		EyelockLog(logger, ERROR, "MainLoop(): Error creating thread rightCServer");
+	}
+	// create a new thread to get Face Camera images
+	if (pthread_create (&faceThread, NULL, faceServer, this)) {
+		EyelockLog(logger, ERROR, "MainLoop(): Error creating thread faceServer");
+	}
+
+		sleep(30);
+		unsigned char buf[256];
+		buf[0] = CMX_INIT_CMD;
+		HandleSendMsg((char *)buf);
+
+		sleep(1);
+
+		buf[0] = CMX_SEND_CMD;
+		HandleSendMsg((char *)buf);
+
+	printf("CmxHandler::MainLoop() End\n");
+	return 0;
+}
+
+
+int CmxHandler::End()
+{
+	m_QuitStatus.lock(); m_QuitStatus.set(true); m_QuitStatus.unlock();
+
+	if (leftCThread){
+		pthread_join (leftCThread, NULL);
+		leftCThread = 0;
+	}
+	if (rightCThread){
+		pthread_join (rightCThread, NULL);
+		rightCThread = 0;
+	}
+	if (faceThread){
+		pthread_join (faceThread, NULL);
+		faceThread = 0;
+	}
+	EyelockLog(logger, DEBUG, "CmxHandler::End() => HThread::End()"); fflush(stdout);
+
+}
+
+
+void CmxHandler::SendMessage(char *outMsg, int len)
+{
+	if (m_debug)
+		EyelockLog(logger, TRACE, "Send Message %d, len %d", outMsg[0], len);
+
+	printf("CMX SendMessage: sending %s \n",outMsg);
+	if(!m_sock)
+	{
+		CreateCMDTCPServer(30);
+	}
+	printf("CMX;SendMessage:sending - %s\n",outMsg);
+	if( send(m_sock , outMsg , strlen(outMsg) , 0) < 0)
+	{
+	      perror("Send failed");
+	}
+	printf("CMX SendMessage: sent\n");
+}
+
+
+
+void CmxHandler::HandleSendMsg(char *msg)
+{
+	if(m_debug)
+		EyelockLog(logger, TRACE, "CmxHandler::HandleSendMsg() %d", msg[0]);
+	//return;
+	CMXMESSAGETYPE msgType = (CMXMESSAGETYPE)msg[0];
+	char buf[256];
+	int len = 0;
+
+	switch(msgType){
+		case CMX_LED_CMD:
+			len = sprintf(buf, "fixed_set_rgb(%d,%d,%d)\n", msg[2], msg[3], msg[4]);	// set_rgb(r,g,b)
+
+			printf("CMX: sending %s\n",buf);
+			SendMessage(buf, len);
+			break;
+		case CMX_SOUND_CMD:
+			len = sprintf(buf, "set_sound(%d)\n", msg[2]);	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
+			SendMessage(buf, len);
+			break;
+		case CMX_PING_CMD:
+			len = sprintf(buf, "status()\n");
+			SendMessage(buf, len);
+			break;
+		case CMX_INIT_CMD:
+			len = sprintf(buf,"psoc_write(2,22) | psoc_write(1,1) | psoc_write(4,7) | psoc_write(3,2) | psoc_write(5,20)\n");
+			SendMessage(buf, len);
+			sleep(1);
+			len = sprintf(buf, "wcr(7,0x3012,9) | wcr(7,0x301e,0) | wcr(7,0x305e,0x35)\n");
+			SendMessage(buf, len);
+			break;
+		case CMX_SEND_CMD:
+			//len = sprintf(buf, "b_on_time(1,1000,\"grab_send(1)\")\n");
+			len = sprintf(buf, "grab_send(1)\n");
+		//	len = sprintf(buf, "b_on_time(1,1000,grab_send(1))\n");
+
+			SendMessage(buf, len);
+			break;
+		default:
+			EyelockLog(logger, ERROR, "Unknown MessageType %d ", msgType);;
+			break;
+	}
+}
+
+void *pingStatus(void *arg)
+{
+	EyelockLog(logger, TRACE, "pingStatus(): start!"); fflush(stdout);
+	CmxHandler *me = (CmxHandler *) arg;
+	sleep(5);
+
+    struct timeval te;
+	while (!me->ShouldIQuit()) {
+	    gettimeofday(&te, NULL); // get current time
+	    unsigned long milliseconds = te.tv_sec*1000 + te.tv_usec/1000; // calculate milliseconds
+	    unsigned long elapsed = milliseconds - me->m_pingTime;
+	    // printf("milliseconds: %lld\n", milliseconds);
+
+	    if ((me->m_waitPong == true) && elapsed > (unsigned long)WAIT_PONG_TIME) {
+	    	EyelockLog(logger, ERROR, "Not received PONG message in %d ms!", WAIT_PONG_TIME); fflush(stdout);
+	    	// No Response
+	    }
+	    else if (!me->m_waitPong && elapsed > SEND_PING_TIME) {
+	    	// send ping message
+	    	char buff[10];
+	    	buff[0] = CMX_PING_CMD;
+	    	buff[1] = 4;
+	    	buff[2] = 'P';
+	    	buff[3] = 'I';
+	    	buff[4] = 'N';
+	    	buff[5] = 'G';
+
+	    	me->HandleSendMsg(buff);
+	    	me->m_pingTime = milliseconds;
+	    }
+
+
+	}
+}
+
+bool CmxHandler::HandleReceiveMsg(Socket& client)
+{
+
+	if(1)
+		return false; //Do not close socket
+	else
+		return true; //Close the socket
+}
+
+bool CmxHandler::HandleReceiveImage(char *buf, int length) {
+	if (m_debug)
+		EyelockLog(logger, TRACE, "CmxHandler::HandleReceiveImage() start");
+    if(buf)
+    {
+    	pImageProcessor->setLatestFrame_raw(buf);
+    }
+    return true;
+
+}
+
+int CmxHandler::CreateUDPServer(int port) {
+	if (m_debug)
+		EyelockLog(logger, TRACE, "CmxHandler::CreateUDPServer() start");
+
+	int sock, length;
+	struct sockaddr_in server;
+
+	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sock < 0) {
+		EyelockLog(logger, ERROR, "Opening socket");
+		return sock;
+	}
+	length = sizeof(server);
+	bzero(&server,length);
+	server.sin_family=AF_INET;
+	server.sin_addr.s_addr=INADDR_ANY;
+	server.sin_port=htons(port);
+	if (bind(sock,(struct sockaddr *)&server,length)<0) {
+		EyelockLog(logger, ERROR, "binding error");
+		return -1;
+	}
+	return sock;
+}
+
+int CmxHandler::CreateCMDTCPServer(int port) {
+	if (m_debug)
+		EyelockLog(logger, TRACE, "CmxHandler::CreateUDPServer() start");
+
+	int sock, length;
+	struct sockaddr_in server;
+
+	m_sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (m_sock < 0) {
+		EyelockLog(logger, ERROR, "Opening socket");
+		return m_sock;
+	}
+	length = sizeof(server);
+	bzero(&server,length);
+	server.sin_family=AF_INET;
+	server.sin_addr.s_addr=inet_addr("192.168.4.172");
+	server.sin_port=htons(30);
+
+	if (connect(m_sock , (struct sockaddr *)&server , sizeof(server)) < 0)
+	{
+	      perror("connect failed. Error");
+	      return 1;
+	}
+	return m_sock;
+}
+void *leftCServer(void *arg)
+{
+        EyelockLog(logger, TRACE, "CmxHandler::leftCServer() start");
+
+        CmxHandler *me = (CmxHandler *) arg;
+        int length;
+        int pckcnt=0;
+        char buf[IMAGE_SIZE];
+        char databuf[IMAGE_SIZE];
+        int datalen = 0;
+        short *pShort = (short *)buf;
+        bool b_syncReceived = false;
+        struct sockaddr_in from;
+        socklen_t fromlen = sizeof(struct sockaddr_in);
+        int leftCSock = me->CreateUDPServer(8192);
+        if (leftCSock < 0) {
+                EyelockLog(logger, ERROR, "Failed to create leftC Server()");
+                return NULL;
+        }
+
+        while (!me->ShouldIQuit()) {
+                length = recvfrom(leftCSock, buf, 1500, 0, (struct sockaddr *)&from, &fromlen);
+            if (length < 0)
+                EyelockLog(logger, ERROR, "recvfrom error in leftCServer()");
+            else {
+                if (me->m_debug)
+                        EyelockLog(logger, DEBUG, "recvfrom msg %d bytes leftCServer()", length);
+                if (!b_syncReceived && pShort[0] == 0x5555){
+                        // the first package
+                	printf("received the sync byte --- new frame\n");
+
+                        datalen = 0;
+                        memcpy(databuf, buf+2, length-2);
+                        datalen = length - 2;
+                        b_syncReceived = true;
+                        pckcnt=1;
+                }
+                else {
+                        length = (datalen+length <= IMAGE_SIZE-4) ? length : IMAGE_SIZE-4-datalen;
+                        memcpy(databuf+datalen, buf, length);
+                        datalen += length;
+                        pckcnt++;
+                }
+
+                if (datalen >= IMAGE_SIZE-5) {
+                	printf("received full image\n");
+              		FILE *fp = fopen("cmxRcvd.pgm","wb");
+                	fwrite(databuf, 1, datalen,fp);
+                		fclose(fp);
+
+                    me->HandleReceiveImage(databuf, datalen);
+
+                    	datalen = 0;
+                    	b_syncReceived=false;
+
+                      buf[0] = CMX_SEND_CMD;
+                      me->HandleSendMsg(buf);
+                      unsigned char cmdbuf[256];
+                      cmdbuf[0] = CMX_SEND_CMD;
+                      me->HandleSendMsg((char *)cmdbuf);
+              }
+          }
+      }
+      close(leftCSock);
+}
+
+void *rightCServer(void *arg)
+{
+	EyelockLog(logger, TRACE, "CmxHandler::rightCServer() start");
+
+	CmxHandler *me = (CmxHandler *) arg;
+	int length;
+	char buf[IMAGE_SIZE];
+	struct sockaddr_in from;
+	socklen_t fromlen = sizeof(struct sockaddr_in);
+	int rightCSock = me->CreateUDPServer(8193);
+	if (rightCSock < 0) {
+		EyelockLog(logger, ERROR, "Failed to create rightC Server()");
+		return NULL;
+	}
+
+	while (!me->ShouldIQuit()) {
+
+			int data_size=0;
+			printf("waiting for image\n");
+			while ( data_size <= 2306000)
+			{
+				length = recvfrom(rightCSock, buf+data_size, (IMAGE_SIZE - data_size), 0, (struct sockaddr *)&from, &fromlen);
+				data_size = data_size + length;
+				printf("received data from left camera with size %d (total recdv) %d\n",length,data_size);
+
+			}
+			if(data_size > 0)
+			{
+				printf("received image from left camera with size %d\n",data_size);
+				me->HandleReceiveImage(buf, data_size);
+				data_size = 0;
+			}
+			sleep(4);
+		}
+	close(rightCSock);
+}
+
+
+void *faceServer(void *arg)
+{
+	EyelockLog(logger, TRACE, "CmxHandler::faceServer() start");
+
+	CmxHandler *me = (CmxHandler *) arg;
+	int length;
+	char buf[IMAGE_SIZE];
+	struct sockaddr_in from;
+	socklen_t fromlen = sizeof(struct sockaddr_in);
+	int faceSock = me->CreateUDPServer(8194);
+	if (faceSock < 0) {
+		EyelockLog(logger, ERROR, "Failed to create rightC Server()");
+		return NULL;
+	}
+
+	while (!me->ShouldIQuit()) {
+
+				int data_size=0;
+				printf("waiting for image\n");
+				while ( data_size <= 307210)
+				{
+					length = recvfrom(faceSock, buf+data_size, (IMAGE_SIZE - data_size), 0, (struct sockaddr *)&from, &fromlen);
+					data_size = data_size + length;
+
+				}
+				if(data_size > 0)
+				{
+					printf("received image from left camera with size %d\n",data_size);
+					me->HandleReceiveImage(buf, data_size);
+					data_size = 0;
+				}
+				sleep(4);
+			}
+	close(faceSock);
+}
+
+#endif
+
+
+
+

@@ -1,0 +1,90 @@
+#!/bin/sh
+
+if [ -e "/home/root/eyestartup" ] ; then
+	echo "nothing to do"
+	if [ -e "/etc/rc5.d/S95Startup" ] ; then
+		rm -rf /etc/rc5.d/S95Startup
+	fi
+else
+	echo "reverting to root-related-user file"
+	rm -rf /etc/rc5.d/S95eyestartup
+	rm -rf /etc/init.d/eyestartup
+	ln -sf /home/root/startup.sh /etc/rc5.d/S95Startup
+	sync; sleep 2
+	/sbin/reboot
+	exit
+fi
+
+EYELOCK_APP_NAME="Eyelock"
+EYELOCK_USER="eyelock"
+EYELOCK_HOME_PATH="/home/$EYELOCK_USER"
+
+cd $EYELOCK_HOME_PATH
+
+/sbin/insmod mt9p001.ko master_mode=2
+/bin/chown eyelock:root /dev/mt9p001
+/bin/chown eyelock:root /dev/i2c-?
+
+/bin/chgrp audio /dev/dsp
+/bin/chgrp audio /dev/spidev1.?
+/bin/chgrp audio /dev/mixer
+/bin/chgrp audio /dev/audio
+/bin/chgrp -R audio /dev/snd
+
+/bin/chmod 650 /dev/mt9p001
+/bin/chmod 650 /dev/i2c-?
+/bin/chmod 777 /dev/dsp
+/bin/chmod 777 /dev/spidev1.?
+/bin/chmod 777 /dev/mixer
+/bin/chmod 777 /dev/audio
+/bin/chmod -R 777 /dev/snd/
+
+./flash.sh
+./reloadinterfaces.sh
+/etc/init.d/avahi-daemon restart
+
+# Only run Eyelock when Eyelock.run exists
+#/bin/chmod a+x Eyelock
+/bin/chmod a+x "$EYELOCK_HOME_PATH/$EYELOCK_APP_NAME"
+
+rm -rf    /home/eyelock/createEyelockUsrAc.sh /home/eyelock/eyestartup /home/eyelock/makeEyelkUsrFile.sh 
+
+pre_eye_startup()
+{
+    if [ -e "$EYELOCK_HOME_PATH/Eyelock.lock" ] ; then
+	    rm -rf "$EYELOCK_HOME_PATH/Eyelock.lock"
+    else
+	    echo "No $EYELOCK_HOME_PATH/Eyelock.lock exist"
+    fi
+
+    touch /var/run/eyelock.pid
+    chown eyelock:eyelock /var/run/eyelock.pid
+    echo "starting the eyelock as services before login as eyelock from terminal ..."
+}
+	
+start_eyelock()
+{
+    /sbin/start-stop-daemon --start --make-pidfile --pidfile /var/run/eyelock.pid --retry 10 --chuid eyelock -v --exec "$EYELOCK_HOME_PATH/Eyelock" -- 
+}
+
+stop_eyelock()
+{
+    echo -e "\t Stopping the service eyelock"
+    rmmod /home/eyelock/mt9p001
+    start-stop-daemon --stop --pidfile "$EYELOCK_HOME_PATH"/pidEyelock --exec "$EYELOCK_HOME_PATH"/Eyelock -- 
+
+}
+
+reload_eyelock()
+{
+    echo -e "\t reloading the eyelock service"
+    stop_eyelock
+    sleep 2
+    start_eyelock
+}
+
+echo > /home/root/Eyelock.run
+echo > /home/eyelock/Eyelock.run
+
+bash -c 'while true ; do if [ -f "Eyelock.run" ] ; then . /home/root/run_eyelock_serv ; fi ; sleep 4 ; done '&
+

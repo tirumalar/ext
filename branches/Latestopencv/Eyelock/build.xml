@@ -1,0 +1,298 @@
+<?xml version="1.0"?>
+<!DOCTYPE project [
+  <!ENTITY commonmacros SYSTEM "../../builder/commonmacros.xml">
+  <!ENTITY linuxbuild SYSTEM "../../builder/linuxbuild.xml">
+]>
+<project name="NanoNxt" basedir="." default="test">
+
+
+&commonmacros;
+  <target name="checkoutLatest">
+    <svn refid="svn.settings">
+      <update revision="HEAD" dir ="../GRIDemo"/>
+      <update revision="HEAD" dir ="../Eyelock"/>
+      <update revision="HEAD" dir ="../AppBase"/>
+      <update revision="HEAD" dir ="../BiOmega"/>
+      <update revision="HEAD" dir ="../mamigoShared"/>
+      <update revision="HEAD" dir ="../NwHDMatcher"/>
+      <update revision="HEAD" dir ="../nano"/>
+      <update revision="HEAD" dir ="../linux"/>	
+      <update revision="HEAD" dir ="../NanoSDK"/>
+      <update revision="HEAD" dir ="../icm_communicator"/>
+      <update revision="HEAD" dir ="../KeyMgr"/>
+      <update revision="HEAD" dir ="../ICMBinary"/>
+      <update revision="HEAD" dir ="../PushButton"/>
+      <update revision="HEAD" dir ="../MultiChannelLogger"/>
+      <update revision="HEAD" dir ="../EyelockConfigurationLib"/>
+      <update revision="HEAD" dir ="../EyelockConfigurator"/>
+	  <update revision="HEAD" dir ="../firmware"/>
+	  <update revision="HEAD" dir ="../nxtW"/>
+    </svn>
+  </target>
+
+   <target name="clean_int">
+     <delete failonerror="false" > 
+ 	<fileset dir="../linux/lib/Release" includes="*"/>
+ 	<fileset dir="../linux/bin/Release" includes="*"/>
+	 </delete>
+   </target>
+
+
+   <target name="clean" depends="clean_int">
+     <delete failonerror="false" > 
+        <fileset dir="buildLogs"/>
+	<fileset dir="dist"/>
+     </delete>
+     <mkdir dir="buildLogs"/>
+     <mkdir dir="dist"/>
+    <svn refid="svn.settings">
+      <revert file="EyeLockMain.cpp"/>
+    </svn>
+     
+   </target>
+
+  <target name="updateBuildVersion">
+	<fix_cppFile cppFile="EyeLockMain.cpp" />
+  </target>
+
+   <target name="build">
+   	<delete includeemptydirs="true">
+	    <fileset dir="../linux/bin/Release" />
+	    <fileset dir="../linux/lib/Release" />
+	</delete>
+	<exec
+        executable="../../builder/eyelock_Nxt_build_arm.sh"
+		failonerror="false"
+		output="buildLogs/build.log"
+		resultproperty="build.rc.arm"
+	/>
+        <property name="build.rc" value="0"/>
+        <text2ccxml srcfile="buildLogs/build.log"
+                    destfile="buildLogs/build.log.xml"
+                    target="build"
+                    task="eclipse_exec"
+                    isError="${build.rc.arm}"
+		    ignore=".*com.analog.gnu.toolchain.blackfin.options.general.*"
+	/>
+        <echo message="Build Errors: ${textToCCXml.errors} Warnings: ${textToCCXml.warnings}"/>
+        <fail message="Eyelock build has errors!">
+          <condition>
+		<isfailure code="${build.rc.arm}"/>
+         </condition>
+        </fail>
+   </target>
+
+<!--   <target name="test" depends="clean,updateBuildVersion,build"> -->
+
+  <target name="build_x86" depends="checkoutLatest,clean">
+	<delete includeemptydirs="true">
+	    <fileset dir="../linux/bin/Release" />
+	    <fileset dir="../linux/lib/Release" />
+	</delete>
+	<exec
+        executable="../../builder/eyelock_Nxt_build_x86.sh"
+		failonerror="false"
+		output="buildLogs/build_x86.log"
+		resultproperty="build.rc"
+	/>
+        <text2ccxml srcfile="buildLogs/build_x86.log"
+                    destfile="buildLogs/build_x86.log.xml"
+                    target="build_x86"
+                    task="eclipse_exec"
+                    isError="${build.rc}"
+		    ignore=".*com.analog.gnu.toolchain.blackfin.options.general.*"
+	/>
+        <echo message="Build Errors: ${textToCCXml.errors} Warnings: ${textToCCXml.warnings}"/>
+        <fail message="Eyelock build has errors!">
+          <condition>
+		<isfailure code="${build.rc}"/>
+         </condition>
+        </fail>
+         <mkdir dir="Encrypter"/>
+		<delete includeemptyDirs="true">
+			<fileset dir="Encrypter" includes="**/*"/>
+		</delete>
+        <copy file="../linux/bin/Release/KeyMgr" todir="Encrypter/" overwrite="true"/>      
+   </target>
+
+   <target name="test_x86" depends="build_x86">
+	<delete>
+	        <fileset dir="." includes="testResults.xml"/>
+	</delete>
+	<echo message="Try run run.sh"/>
+	<exec executable="./run.sh" failonerror="false" output="buildLogs/test_x86.log"	resultproperty="test.rc" />
+        <property name="test.rc" value="0"/>
+        <text2ccxml srcfile="buildLogs/test_x86.log"
+                    destfile="buildLogs/test_x86.log.xml"
+                    target="test_x86"
+                    task="eclipse_exec"
+                    isError="${test.rc}"
+					ignore=".*Error starting interface|open: No such file or directory.*"
+	/>
+        <copy file="${test.dir}/testResults.xml" tofile="buildLogs/testResults.xml"/>
+        <echo message="Test Errors: ${textToCCXml.errors} Warnings: ${textToCCXml.warnings}"/>
+        <fail message=" Unit test has errors!">
+          <condition>
+		<isfailure code="${test.rc}"/>
+         </condition>
+        </fail>
+   </target>
+
+   <target name="test" depends="test_x86,clean,checkoutLatest,updateBuildVersion,build">
+	<echo message="No tests for embedded version"/>
+   </target>
+
+  <target name="publish_arm" depends="publish">
+	<makeversion/>
+	<mkdir dir="dist"/>
+	<delete includeemptydirs="true">
+    	<fileset dir="dist" includes="**/*"/>
+  	</delete>
+
+	<mkdir dir="../TarGz"/>
+	<delete includeemptydirs="true">
+    	<fileset dir="../TarGz" includes="**/*"/>
+  	</delete>
+	<copy todir="../TarGz">
+  		<fileset dir="../nano/Configurations/master"/>   
+	</copy>
+	<copy todir="../TarGz">
+  		<fileset dir="../nano/Configurations/both" followsymlinks="false"/>   
+	</copy>
+
+	<copy todir="../TarGz/root/scripts">
+  		<fileset dir="../Eyelock/data/Scripts" />   
+	</copy>	
+	<copy todir="../TarGz/root/scripts">
+  		<fileset dir="../NanoSDK/scripts">
+			<exclude name="sdk_upgradeSlaveFirmware.sh"/>
+		</fileset>   
+	</copy>
+	<mkdir dir="../TarGz/root/lighttpdlib"/>
+	<copy todir="../TarGz/root/lighttpdlib">
+  		<fileset dir="../linux/pkg/lib/AM3703/lighttpdlib" />   
+	</copy>
+	<mkdir dir="../TarGz/factory"/>
+	<copy todir="../TarGz/factory">
+  		<fileset dir="../firmware/factoryTest"/>   
+	</copy>
+	<copy file="../Eyelock/data/keys.db" todir="../TarGz/root" overwrite="true" failonerror="true"/>	
+	<copy file="../linux/pkg/bin/AM3703/lighttpd" todir="../TarGz/root" overwrite="true" failonerror="true"/>
+	<copy file="../linux/pkg/bin/AM3703/wpa_supplicant" todir="../TarGz" overwrite="true" failonerror="true"/>
+	<copy file="../linux/bin/Release/Eyelock" todir="../TarGz/root" overwrite="true" failonerror="true"/>
+	<copy file="../linux/bin/Release/PushButton" todir="../TarGz/root" overwrite="true" failonerror="true"/>
+	<copy file="../linux/bin/Release/KeyMgr" todir="../TarGz/root" overwrite="true" failonerror="true"/>
+	<copy file="../linux/bin/Release/GRIDemo" todir="../TarGz/root" overwrite="true" failonerror="true"/>
+	<copy file="../linux/bin/Release/icm_communicator" todir="../TarGz/root" overwrite="true" failonerror="true"/>
+	<copy file="../NanoSDK/scripts/fwHandler.sh" todir="../TarGz/root" overwrite="true" failonerror="true"/>	  
+	<copy file="../MultiChannelLogger/Release/MultiChannelLogger" todir="../TarGz/root" overwrite="true" failonerror="true"/> 
+	<copy file="../MultiChannelLogger/MultiChannelLoggerSettings.xml" todir="../TarGz/root" overwrite="true" failonerror="true"/> 
+	<copy file="../TarGz/root/Eyelock.ini" todir="../TarGz/default" overwrite="true" failonerror="true"/>
+	<copy file="../TarGz/root/keys.db" todir="../TarGz/default" overwrite="true" failonerror="true"/>
+	<checksum file="../TarGz/root/Eyelock" property="EyelockMD5"/>
+	<replace file="../TarGz/factory/master_file.data" token="@@EyelockMD5@@" value="${EyelockMD5}"/>
+	<replace file="../TarGz/factory/slave_file.data" token="@@EyelockMD5@@" value="${EyelockMD5}"/>
+	
+	<!--  filling xml file for FW integrity check -->
+	<chmod file="../NanoSDK/scripts/fwIntegrityValidationBs.sh" perm="777"/>
+	<copy file="../NanoSDK/scripts/fwIntegrityValidationList.xml" tofile="../NanoSDK/scripts/fwIntegrityValidationListTemp.xml" overwrite="true" failonerror="true"/>
+	<exec executable="../NanoSDK/scripts/fwIntegrityValidationBs.sh" failonerror="false" output="buildLogs/fwIntegrityValidation.log">
+		<arg value="../NanoSDK/scripts/fwIntegrityValidationListTemp.xml"/>
+		<arg value="../TarGz"/>
+	</exec>
+	
+	<copy file="../NanoSDK/scripts/fwIntegrityValidationListTemp.xml" tofile="../TarGz/root/fwIntegrityValidationList.xml" overwrite="true" failonerror="true"/>		
+		
+	<tar_gz_md5_NXT srcdir="../TarGz" todir="dist" filename="EyelockNxt_v${buildVersion}_Master" enc="${basedir}/Encrypter/KeyMgr" key="${buildVersion}" dec="both" />
+	<delete includeemptydirs="true">
+    	<fileset dir="../TarGz" includes="**/*"/>
+  	</delete>
+	<copy todir="../TarGz">
+  		<fileset dir="../nano/Configurations/slave"/>   
+	</copy>
+	<copy todir="../TarGz">
+  		<fileset dir="../nano/Configurations/both"/>   
+	</copy>
+	
+	<copy todir="../TarGz/root/scripts">
+  		<fileset dir="../Eyelock/data/Scripts" />   
+	</copy>
+	<copy file="../NanoSDK/scripts/sdk_upgradeSlaveFirmware.sh" todir="../TarGz/root/scripts" overwrite="true" failonerror="true"/>
+	<copy file="../nano/Configurations/master/www/scripts/merge.sh" todir="../TarGz/root" overwrite="true" failonerror="true"/>
+	<mkdir dir="../TarGz/factory"/>
+	<copy todir="../TarGz/factory">
+  		<fileset dir="../firmware/factoryTest"/>   
+	</copy>
+	<copy file="../linux/bin/Release/Eyelock" todir="../TarGz/root" overwrite="true" failonerror="true"/>
+	<copy file="../linux/bin/Release/KeyMgr" todir="../TarGz/root" overwrite="true" failonerror="true"/>
+	<copy file="../linux/bin/Release/GRIDemo" todir="../TarGz/root" overwrite="true" failonerror="true"/>
+	<copy file="../TarGz/root/Eyelock.ini" todir="../TarGz/default" overwrite="true" failonerror="true"/>  
+	<replace file="../TarGz/factory/slave_file.data" token="@@EyelockMD5@@" value="${EyelockMD5}"/>
+	<replace file="../TarGz/factory/master_file.data" token="@@EyelockMD5@@" value="${EyelockMD5}"/>
+	<tar_gz_md5_NXT srcdir="../TarGz" todir="dist" filename="EyelockNxt_v${buildVersion}_Slave" enc="${basedir}/Encrypter/KeyMgr" key="${buildVersion}" dec="both"/>
+	<loadfile property="bobver" srcFile="../ICMBinary/icmversion.txt"/>
+  	<tstamp>
+	  <format property="Timest" pattern="yyyy-MM-dd hh:mm:ss"/>
+	</tstamp>
+	<echo message="Timestamp ${Timest}"/>
+	<copy file="AppTemplate.xml" tofile="dist/App.xml"/>
+	<replace file="dist/App.xml" token="@@date@@" value="${Timest}"/>
+	<echo message="Creating xml from Template xml"/>
+	<replace file="dist/App.xml" token="@@version@@" value="${buildVersion}"/>
+	<replace file="dist/App.xml" token="@@bobversion@@" value="${bobver}"/>
+	<replace file="dist/App.xml" token="@@tarfilename@@" value= "EyelockNxt_v${buildVersion}_ICM_v${bobver}.tar"/>
+	<replace file="dist/App.xml" token="@@MasterFilename@@" value="EyelockNxt_v${buildVersion}_Master.tar.gz"/>
+	<replace file="dist/App.xml" token="@@ICMFilename@@" value="nanoNxt_ICM_v${bobver}.cyacd"/>
+	
+	<mkdir dir="../fwHandlerDir"/>
+	<delete includeemptydirs="true">
+		<fileset dir="../fwHandlerDir" includes="**/*"/>
+	</delete>
+	<mkdir dir="../fwHandlerDir/fwHandler"/>
+	<copy file="../NanoSDK/scripts/fwHandler.sh" todir="../fwHandlerDir/fwHandler" overwrite="true" failonerror="true"/>	
+	<copy file="../MultiChannelLogger/Release/MultiChannelLogger" todir="../fwHandlerDir/fwHandler" overwrite="true" failonerror="true"/>
+	<copy file="../MultiChannelLogger/MultiChannelLoggerSettings.xml" todir="../fwHandlerDir/fwHandler" overwrite="true" failonerror="true"/>
+	<copy file="dist/App.xml" tofile="../fwHandlerDir/fwHandler/NanoNXTVersionInfo.xml" overwrite="true" failonerror="true"/>
+	<copy file="../NanoSDK/scripts/fwIntegrityValidationListTemp.xml" tofile="../fwHandlerDir/fwHandler/fwIntegrityValidationList.xml" overwrite="true" failonerror="true"/>
+	<delete file="../NanoSDK/scripts/fwIntegrityValidationListTemp.xml" failonerror="true"/>
+	<tar_gz_md5_NXT srcdir="../fwHandlerDir" todir="dist" filename="fwHandler" enc="${basedir}/Encrypter/KeyMgr" key="${buildVersion}" dec="both" />
+
+	<mkdir dir="dist/NonEnc"/>
+	<move file="dist/EyelockNxt_v${buildVersion}_Master.tar.gz" todir="dist/NonEnc"/>
+	<move file="dist/EyelockNxt_v${buildVersion}_Master.tar.gz.MD5" tofile="dist/NonEnc/EyelockNxt_v${buildVersion}_Master.tar.gz.md5"/>
+	<move file="dist/EyelockNxt_v${buildVersion}_Slave.tar.gz" todir="dist/NonEnc"/>
+	<move file="dist/EyelockNxt_v${buildVersion}_Slave.tar.gz.MD5" tofile="dist/NonEnc/EyelockNxt_v${buildVersion}_Slave.tar.gz.md5"/>
+	<copy file="dist/App.xml" tofile="dist/NonEnc/NanoNXTVersionInfo.xml"/>
+
+	<move file="dist/fwHandler.tar.gz" tofile="dist/NonEnc/fwHandler.tar.gz"/>
+	<sign_file file="dist/NonEnc/fwHandler.tar.gz" sigfile="dist/NonEnc/fwHandler.tar.gz.sig" key="/home/ubuntu/BSkey.pem"/>
+
+	<copy file="../ICMBinary/nanoNxt_ICM.cyacd" tofile="dist/NonEnc/nanoNxt_ICM_v${bobver}.cyacd"/>
+	<tar destfile="dist/EyelockNxt_v${buildVersion}_ICM_v${bobver}.tar" basedir="dist/NonEnc"/>
+	<checksum file="dist/EyelockNxt_v${buildVersion}_ICM_v${bobver}.tar" forceOverwrite="yes"/>
+	<mkdir dir="dist/Enc"/>
+	<move file="dist/EyelockNxt_v${buildVersion}_Master.tar.gz.enc" tofile="dist/Enc/EyelockNxt_v${buildVersion}_Master.tar.gz"/>
+	<move file="dist/EyelockNxt_v${buildVersion}_Master.tar.gz.enc.MD5" tofile="dist/Enc/EyelockNxt_v${buildVersion}_Master.tar.gz.md5"/>
+	<move file="dist/EyelockNxt_v${buildVersion}_Slave.tar.gz.enc" tofile="dist/Enc/EyelockNxt_v${buildVersion}_Slave.tar.gz"/>
+	<move file="dist/EyelockNxt_v${buildVersion}_Slave.tar.gz.enc.MD5" tofile="dist/Enc/EyelockNxt_v${buildVersion}_Slave.tar.gz.md5"/>
+	<copy file="dist/App.xml" tofile="dist/Enc/NanoNXTVersionInfo.xml"/>
+
+	<move file="dist/fwHandler.tar.gz.enc" tofile="dist/Enc/fwHandler.tar.gz"/>
+	<sign_file file="dist/Enc/fwHandler.tar.gz" sigfile="dist/Enc/fwHandler.tar.gz.sig" key="/home/ubuntu/BSkey.pem"/>
+
+	<copy file="../ICMBinary/nanoNxt_ICM.cyacd" tofile="dist/Enc/nanoNxt_ICM_v${bobver}.cyacd"/>
+	<tar destfile="dist/EyelockNxt_v${buildVersion}_ICM_v${bobver}.tar.enc" basedir="dist/Enc"/>
+	<checksum file="dist/EyelockNxt_v${buildVersion}_ICM_v${bobver}.tar.enc" forceOverwrite="yes"/>	
+	<delete dir="dist/Enc"/>
+	<delete dir="dist/NonEnc"/>
+
+  </target>
+<!--  keep the following for testing
+<target name="testPub"> 
+  <htmlMail
+    subject="test mail"
+    fileName="/home/mamigo/cruisecontrol-bin-2.8.4/logs/Eyelock_x86/email.html"/>
+</target>
+-->
+
+</project>
