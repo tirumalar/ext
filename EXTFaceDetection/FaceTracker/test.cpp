@@ -1207,7 +1207,25 @@ Mat preProcessingImg(Mat outImg){
 	cv::resize(outImg, smallImgBeforeRotate, cv::Size(), (1 / scaling),
 			(1 / scaling), INTER_NEAREST);	//py level 3
 
+	//std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
 	smallImg = rotation90(smallImgBeforeRotate);	//90 deg rotation
+/*	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+
+	duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+	std::cout << time_span.count() << endl;;
+
+	// can be used for saving temp data
+	fstream infile(fileName);
+	if(infile.good()){
+		// cout << "File exist and keep writing in it!" << endl;
+		EyelockLog(logger, DEBUG, "File exist and keep writing in it");
+	}
+	else{
+		EyelockLog(logger, DEBUG, "Create Log file");
+	}
+
+	ofstream writeFile(fileName, std::ios_base::app);
+	writeFile <<  time_span.count() << '\n';*/
 
 
 	//AGC control to block wash out images
@@ -1846,7 +1864,7 @@ void DoAgc(void)
 			static int agc_val_old = 0;
 			if (abs(agc_val - agc_val_old) > 300) {
 				// printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
-				SetExp(4, agc_val);
+				//SetExp(4, agc_val);		//comment out if O2 led is connected
 				agc_val_old = agc_val;
 			}
 		}
@@ -1889,7 +1907,8 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 								system_state = STATE_MOVE_MOTOR;
 								break;
 								}
-							if (eyesInDetect && eyesInViewOfIriscam)			//changed by Mo
+							//if (eyesInDetect && eyesInViewOfIriscam)			//changed by Ilya
+							if (eyesInDetect)			//changed by Mo
 									system_state = SelectWhichIrisCam(eye_size,system_state);
 							DoAgc();
 							//if (eyesInViewOfIriscam)
@@ -1907,7 +1926,7 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
 						break;
 	case STATE_MOVE_MOTOR:
-						//if (eyesInViewOfIriscam)
+						//if (eyesInViewOfIriscam)		//by ilya
 						if (eyesInDetect)			//changed by Mo
 							{
 							system_state = SelectWhichIrisCam(eye_size,system_state);
@@ -2800,7 +2819,7 @@ void runCalCam(){
 	char cmd[512];
 
 
-	double id;
+/*	double id;
 	cout << "Input the device ID::::: ";
 	cin >> id;
 
@@ -2816,7 +2835,7 @@ void runCalCam(){
 	printf("Device ID is:: %s\n", ids.c_str());
 	fconfig.setValue("FTracker.uintID",ids.c_str());
 
-	fconfig.writeIni("/home/root/data/calibration/faceConfig.ini");
+	fconfig.writeIni("/home/root/data/calibration/faceConfig.ini");*/
 
 
 	while(check){
