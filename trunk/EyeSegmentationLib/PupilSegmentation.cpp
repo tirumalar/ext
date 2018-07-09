@@ -790,5 +790,5 @@ int segmentation(unsigned char *data, int w, int h, float pupilX, float pupilY, 
 		float score = normErrorLeft > normErrorRight? normErrorLeft: normErrorRight;
 		printf("Total Error:  %f, Time: %f\n",  score, time);
 		//free(data);
-		return score < 0.12 ? 1:0 ;
+		return score < 0.275 ? 1:0 ;
 }
