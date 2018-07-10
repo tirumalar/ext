@@ -1,18 +1,18 @@
 #!/bin/bash -e
 echo HOMEDIR  $HOME
-export EYELOCK_WS_EXT="${HOME}/30May/trunk"
+export EYELOCK_WS_EXT="${HOME}/Anita/Latestopencv"
 
-if [ "${HOME}/workspace/eclipse" ];
+if [ "${HOME}/extworkspace/eclipse" ];
 then
-   export ECLIPSEPATH="${HOME}/workspace/eclipse"
+   export ECLIPSEPATH="${HOME}/extworkspace/eclipse"
    echo "NEON PRESENT"
 else
-	if [ -f "${HOME}/workspace/eclipse" ];
+	if [ -f "${HOME}/extworkspace/eclipse" ];
 	then
-	   export ECLIPSEPATH="${HOME}/workspace/eclipse"
+	   export ECLIPSEPATH="${HOME}/extworkspace/eclipse"
 	   echo "NEON PRESENT"
 	else
-	   export ECLIPSEPATH="${HOME}/workspace/eclipse_oxygen"
+	   export ECLIPSEPATH="${HOME}/extworkspace/eclipse_oxygen"
 	   echo "OXYGEN PRESENT"
 	fi
 fi
@@ -58,6 +58,10 @@ export CLM_EIGEN_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/Eigen
 export CLM_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/include
 export OPENCV_NEW_INC=${PKG_PATH}/opencv3.4/include
 export OPENCV_NEW_LIBS=${PKG_PATH}/opencv3.4/lib
+
+#For OIMCalibration
+export ARUCO_INC=${PKG_PATH}/opencv3.4/arucolibs/include/aruco
+export ARUCO_LIB=${PKG_PATH}/opencv3.4/arucolibs/lib
 
 export ARCH_PROCESSOR="x86"
 
