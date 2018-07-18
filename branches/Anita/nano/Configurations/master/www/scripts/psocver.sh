@@ -1,0 +1,1 @@
+i2cget -y 0x3 0x2e 14 >psocver.txt

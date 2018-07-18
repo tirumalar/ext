@@ -1,0 +1,223 @@
+/*
+ * BobListener.h
+ *
+ *  Created on: Sept 4, 2014
+ *      Author: fjia
+ */
+
+#ifndef BOBLISTENER_H_
+#define BOBLISTENER_H_
+
+// Bob defines
+
+// New BoB I2C Address
+#define NANO_BOB_I2C_ADDR				0x38
+// ACS Address
+#define BOB_STATUS_IN_OFFSET 			0
+#define BOB_STATUS_OUT_OFFSET			1
+#define BOB_COMMAND_OFFSET				2
+#define BOB_ACS_TYPE_OFFSET				3
+#define BOB_ACS_INPUT_OFFSET			4
+#define BOB_ACS_OUTPUT_OFFSET			5
+#define BOB_FACTORY_RESET_OFFSET		6	// Factory Reset
+#define BOB_DATA_LENGTH_OFFSET 			7	// 2 bytes, high=48, low=49
+//#define BOB_DATA_LENGTH_OFFSET 			48	// 2 bytes, high=48, low=49
+#define BOB_ACS_TYPE_BITS_OFFSET 		9
+// Version Address
+#define BOB_SW_VERSION_OFFSET			67	// 3 bytes
+#define BOB_HW_VERSION_OFFSET			70	// 3 bytes
+#define BOB_ACCESS_DATA_OFFSET 			73	// 20 bytes
+//#define BOB_ACCESS_DATA_OFFSET 			50	// 20 bytes
+
+// OSDP Address
+#define BOB_OSDP_CMD_OFFSET 			73+20	//(0x49)
+#define BOB_OSDP_STATUS_OFFSET 			74+20	//(0x4A)
+#define BOB_OSDP_DATA_LENGTH_OFFSET		75+20	//(0x4B)
+#define BOB_OSDP_BAUDRATE_OFFSET 		76+20	//(0x4C)
+#define BOB_OSDP_DATA_OFFSET 			77+20	//(0x4D)	// 128 bytes
+#define BOB_OSDP_READER_CMD_OFFSET		205+20	//(0xCD)
+#define BOB_OSDP_READER_LENGTH_OFFSET	206+20	//(0xCE)
+#define BOB_OSDP_READER_BAUDRATE_OFFSET	207+20	//(0xCF)
+#define BOB_OSDP_READER_DATA_OFFSET		208+20	//(0xD0)	//48 bytes
+
+// Access Type/Protocol
+#define BOB_ACCESS_TYPE_RELAY			1
+#define BOB_ACCESS_TYPE_OSDP			2
+#define BOB_ACCESS_TYPE_HID				3
+#define BOB_ACCESS_TYPE_PAC				4
+#define BOB_ACCESS_TYPE_F2F				5
+#define BOB_ACCESS_TYPE_WIEGAND			6
+
+// Command
+#define BOB_COMMAND_NONE	 			0
+#define BOB_COMMAND_RESERVED			1	// Bootloader
+#define BOB_COMMAND_READ	 			2
+#define BOB_COMMAND_SEND	 			3
+#define BOB_COMMAND_PASS	 			4
+#define BOB_COMMAND_TRANS	 			5
+
+// ACS Status
+#define BOB_STATUS_IN_CHANGE			0x01
+#define BOB_STATUS_IN_CARD_READY		0x02
+#define BOB_STATUS_IN_ACS				0x04
+#define BOB_STATUS_IN_IRIS_DATA			0x08
+
+
+#define BOB_STATUS_OUT_CHANGE			0x01
+#define BOB_STATUS_OUT_ACS				0x02
+#define BOB_STATUS_OUT_CARD_ACK			0x08
+
+#define BOB_ACS_IN_LED_RED   			0x01
+#define BOB_ACS_IN_LED_GRN   			0x02
+#define BOB_ACS_IN_SOUNDER   			0x04
+#define BOB_ACS_IN_TAMPER    			0x08
+#define BOB_ACS_IN_REED_1    			0x10
+#define BOB_ACS_IN_REED_2    			0x20
+#define BOB_ACS_IN_FACTORY_RESET   		0x40
+
+#define BOB_ACS_OUT_LED_RED 			0x01
+#define BOB_ACS_OUT_LED_GRN 			0x02
+#define BOB_ACS_OUT_SOUNDER 			0x04
+#define BOB_ACS_OUT_TAMPER_READER  		0x08	// Eyelock.TamperSignalHighToLow
+#define BOB_ACS_OUT_RELAY_1 			0x10
+#define BOB_ACS_OUT_RELAY_2 			0x20
+#define BOB_ACS_OUT_TAMPER_PANEL  		0x40
+
+// OSDP COMMAND
+#define BOB_OSDP_CMD_DISABLE			0
+#define BOB_OSDP_CMD_BUSY				1
+#define BOB_OSDP_CMD_SEND_DATA			2
+#define BOB_OSDP_CMD_READ_DATA			3
+#define BOB_OSDP_CMD_SET_BAUDRATE		4
+
+
+// OSDP STATUS
+#define BOB_OSDP_STAT_DATA_EMPTY			0x00
+#define BOB_OSDP_STAT_DATA_TO_SEND			0x01
+#define BOB_OSDP_STAT_DATA_TO_READ			0x02
+#define BOB_READER_OSDP_STAT_DATA_EMPTY		0x00
+#define BOB_READER_OSDP_STAT_DATA_TO_SEND	0x10
+#define BOB_READER_OSDP_STAT_DATA_TO_READ	0x20
+
+// OSDP BAUD RATE
+#define BOB_OSDP_BAUDRATE_DISABLE		0
+#define BOB_OSDP_BAUDRATE_9600			1
+#define BOB_OSDP_BAUDRATE_19200			2
+#define BOB_OSDP_BAUDRATE_38400			3
+#define BOB_OSDP_BAUDRATE_115200		4
+
+// functions
+int i2c_start_transaction();
+int  BobGetData(void *ptr, int len);
+
+void  BobSetRelay1(int val);
+void  BobSetRelay2(int val);
+void  BobSetSounderOUT(int val);
+void  BobSetLedROUT(int val);
+void  BobSetLedGOUT(int val);
+void  BobSetTamperOUT(int val);
+int   BobGetAllInputs(void);
+int   BoBSetACSRelayOut(int);
+void  BoBClearACSRelay1Out();
+int   BobSetCardReadAck();
+int   BobSetOSDPBaudRate(int rate, int reader);
+
+
+int BobSetData(void *ptr, int len);
+int BobSetACSType(int val);
+int BobSetCommand(int val);
+int BoBGetCommand();
+int BobSetDataLength(int val);
+int BobSetACSOutput(unsigned int value);
+int BobClearACSOutput(unsigned int value);
+int BobSetACSTypeBits(int val);
+
+// returns NULL len =0 if no data was received
+int Bob_Read_last_Wiegand(char *data,  int *len);
+int Bob_Send_Weigand(char *data, int len);
+int Bob_Set_WeigandMode(int mode);
+
+#define BOB_MODE_WEIGAND 1
+#define BOB_MODE_F2F     2
+
+
+int Bob_Read_UART1(char *data, int len , int timeout);
+int Bob_Send_UART1(char *data, int len );
+
+int Bob_Read_UART2(char *data, int *len , int timeout);
+int Bob_Send_UART2(char *data, int *len );
+
+int Bob_Set_UART1_Mode(int baud, int mode, int parity);
+int Bob_Set_UART2_Mode(int baud, int mode, int parity);
+
+#define BOB_BAUD_300     1
+#define BOB_BAUD_1200    2
+#define BOB_BAUD_2400    3
+#define BOB_BAUD_9600    4
+#define BOB_BAUD_19200   5
+
+#define BOB_UART_MODE_232 1
+#define BOB_UART_MODE_485 2
+
+#define BOB_UART_PARITY_NONE 0
+#define BOB_UART_PARITY_EVEN 0
+#define BOB_UART_PARITY_ODD  1
+
+
+
+int Bob_Read_Local_Tamperl();
+int Bob_Clear_Local_Tamper();
+
+
+void BobInitComs();
+void BobCloseComs();
+void BoBSetQuit();
+void BobSetPollACS(int pollACS);
+
+// callback
+typedef void (*callback)();
+typedef int (*callback2)(void *, int);
+// set call back function which gets called if an input changes
+// ie led in tamper in sound in
+
+void BobSetInputCB(callback cb);
+void BobSetOsdpCB(callback2 cb);
+void BobSetReaderOsdpCB(callback2 cb);
+
+void BoBSendOSDPResponse(void * pData, int length);
+void BoBSendReaderOSDPCommand(void * data, int length);
+void BobClearOSDPStatus(unsigned int value);
+void BoBSetTimer(callback cb, int, int);
+void BoBSetRelayTimer(int);
+void BobSetMyPtr(void *pData);
+void BobSetMyCardStat(void *stat);
+void * BobGetMyPtr();
+// gets called if a weigand input is received
+//int BobSetWeigandCB(callback cb);
+
+int BoBStatusChangeCard();
+int BoBStatusChangeAcs();
+int BoBGetACSTamperIn(int bit);
+int BoBGetACSGreenLedIn();
+int BoBGetACSRedLedIn();
+int BoBGetACSSoundIn();
+int BoBGetACSFactoryReset();
+void BoBClearACSFactoryReset();
+void BoBSetACSTamperPol(int polFlag,int reader);
+void BoBSetACSLedRedOut();
+void BoBClearACSLedRedOut();
+void BoBSetACSLedGreenOut();
+void BoBClearACSLedGreenOut();
+void BoBSetACSSoundOut(int, int);
+void BoBClearACSSoundOut();
+void setinputAcs(int val);
+
+int BobReadReg(unsigned char reg, unsigned int *val);
+int BobWriteReg(unsigned char reg, unsigned int val);
+int BobReadArray(unsigned char reg, char *buf, int len);
+int BobWriteArray(unsigned char reg, void *ptr, int len);
+
+unsigned long BobCurrentTimeInMS();
+
+
+#endif /* BOBLISTENER_H_ */

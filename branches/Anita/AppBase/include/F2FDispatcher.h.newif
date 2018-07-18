@@ -1,0 +1,203 @@
+/*
+ * F2FDispatcher.h
+ *
+ *  Created on: 26-Nov-2009
+ *      Author: mamigo
+ */
+
+#ifndef F2FDISPATCHER_H_
+#define F2FDISPATCHER_H_
+
+#include "ResultDispatcher.h"
+#include "HTTPPOSTMsg.h"
+#include "socket.h"
+
+#define RELAY_TIME_IN_MS 	1000
+#define MAX_USERS			20000
+
+#define osdp_CRC_ENABLE		0
+#define osdp_RESET			1
+
+#define osdp_HEADER 		0x53
+#define osdp_POLL 			0x60
+#define osdp_ID 			0x61
+#define osdp_CAP			0x62
+#define osdp_LSTAT			0x64
+#define osdp_RSTAT			0x67
+#define osdp_OUT			0x68
+#define osdp_LED			0x69
+#define osdp_BUZ			0x6A
+#define osdp_COMSET			0x6E
+
+#define ospd_ACK			0x40
+#define ospd_NACK			0x41
+#define ospd_PDID			0x45
+#define ospd_PDCAP			0x46
+#define ospd_LSTATR			0x48
+#define osdp_RSTATR			0x4B
+#define ospd_RAW			0x50
+#define osdp_COM			0x54
+
+class MatchedSignal;
+class SocketFactory;
+class LEDConsolidator;
+class MatchManagerInterface;
+
+enum F2FSTATE{eF2FSTART=0, eF2FSTOP};
+enum CRADREAD{CARD_INIT=0, CARD_READY, CARD_TIMEOUT, ACS};
+
+typedef struct OsdpACSLEDCommand{
+	bool changeLed;
+	bool ledCommand;
+	char ledData[14];
+	uint64_t timestart;
+	uint64_t onstart;
+	uint64_t offstart;
+};
+typedef struct OsdpReaderCapCommand{
+	char readerID;
+	char ledControl;
+	char buzControl;
+	char ledState;
+	char buzState;
+	char msgSqn;
+};
+
+class F2FDispatcher: public ResultDispatcher {
+public:
+	F2FDispatcher(Configuration& conf);
+	void SetLEDConsolidator(LEDConsolidator *ptr){ m_ledConsolidator = ptr;}
+	void SetMatchManager(MatchManagerInterface *ptr){ m_matchManager = ptr;}
+	virtual ~F2FDispatcher();
+	virtual int End();
+	const char *getName(){
+		return "F2FDispatcher";
+	}
+	virtual void RestartDispatcher();
+	virtual void CloseDispatcher();
+	void SetSendingEveryNSec(bool val=false){
+		m_SendEveryNSec = val;
+		if(m_Debug)printf("SetSendingEveryNSec %d \n",val?1:0);
+	}
+	virtual void ProcessOnEmptyQueue();
+	unsigned int getPreviousTS(){ return  m_PreviousSendTS;}
+	void CheckBoBEvents();
+	void ProcessBoBCardReader();
+	void SendTamperMsg();
+	void SendAlarmMsg(char *string);
+	void SetAccessDataLength(int len);
+	static void removeParityBits(char *card, int len);
+	void ProcessBoBAcsChange();
+	void ProcessTamper(bool value, bool mbTamper);
+	void ProcessOSDPLedCommandFromACS();
+	int m_cardRead;
+	bool m_acsChange;
+	int m_accessDataLength;
+	bool isTamperSet;
+	bool isMBTamper;
+	bool isBoBTamper;
+	int isLedSet;
+	bool isSoundSet;
+	bool m_Debug;
+	bool m_tamperEnable;
+	bool m_temperature;
+	bool m_testCode;
+	//static void GetBoBStatusCB ();
+	bool killCurrentDriver;
+
+	//OSDP message data
+	//set this to true when the tamper state changes (or when there is something to report to an OSDP_POLL other than ACK
+	bool stateChanged;
+	unsigned char m_OSDPAddr;
+	int m_OSDPBRate;
+	int m_ReaderOSDPBRate;
+	bool m_updateACD;
+	OsdpACSLEDCommand m_osdpLedControl; 	// osdp_LED data 14 bytes
+	OsdpReaderCapCommand m_osdpReader;
+	bool m_osdpDebug, m_osdpReaderDebug;
+	char m_osdpACSSqn;
+
+
+	LEDConsolidator * getLEDConsolidator() {return m_ledConsolidator;}
+	bool loadACD();
+	bool addACD(string acd, int acdlen, string acdnop);
+	bool modifyACD(string acd, int acdlen, string acdnop, string new_acd, string new_acdnop);
+	bool getUserNameFromCard(char *card, string& username);
+
+protected:
+	bool checkToBeSendToNw( MatchResultState val);
+	bool checkToBeSendToBOB( MatchResultState val);
+	void MakeNwF2FMsg(MatchResult* mr, BinMessage* msg);
+	void SendMsg(MatchResult *mr);
+	virtual int getQueueSize(Configuration* conf);
+	void TriggerRelay(int ms);
+	void SendToBoB(Configuration& conf);
+	virtual void process(MatchResult *msg);
+	bool findCardInDB(char *card);
+	void setCardMatchState();
+	static void BoBStatusChangeCB();
+	static int BoBOSDPCallback(void *, int);
+	static int BoBReaderOSDPCallback(void *, int);
+	static void CardMatchTimeoutCB();
+	static void LEDTimeoutCB();
+
+	char * PrintCardData(char *card, int accessDataLength);
+	bool SetDualCommand();
+	void SendOSDPCommand(int command, unsigned char *data);
+	static void DumpBuffer(unsigned char *buf, int bytes);
+	void OSDPBuzCommand(int state);
+	void OSDPLedCommand(int state);
+	void osdpUpdateACSChanges();
+
+	MatchedSignal *m_pMatched;
+	bool m_DoRelay;
+	bool m_pac;
+	bool m_osdpACSEnabled;
+	bool m_osdpReaderEnable;
+	bool m_wiegand;
+	bool m_f2f;
+	int m_RelayTimeInMs;
+	int m_DenyRelayTimeInMs;
+	int m_State;
+	int m_ODSPSeq;
+	bool osdpCardDataAvailable;
+	bool osdpStateChange;
+	char osdpCardData[256];
+	int m_osdpByteLength;
+	int m_osdpBitLength;
+	bool m_dualParity;
+	char **m_acdData;
+	int m_acdCount;
+
+	void osdpDataReady(MatchResult * msg);
+
+	MatchResult m_f2fResult;
+	bool m_SendEveryNSec;
+	int m_NSec;
+	unsigned int m_PreviousSendTS;
+	int m_SleepTime;
+
+    HostAddress *m_resultDestAddr;
+    SocketFactory *m_socketFactory;
+	struct timeval m_timeOut,m_timeOutSend;
+	bool m_sendMatchToBOB,m_sendLoteringToBOB,m_sendHealthToBOB,m_sendConfusionToBOB,m_dbReloadToBOB;
+	bool m_sendMatchToNw,m_sendLoteringToNw,m_sendHealthToNw,m_sendConfusionToNw,m_dbReloadToNw;
+	bool m_dualAuth;
+	bool m_passThrough;
+	bool m_transTOC;
+	int m_dualAuthWaitIrisTime;
+	int m_ledControlledByInput;
+	bool m_RelayWithSignal;
+	LEDConsolidator *m_ledConsolidator;
+	HostAddress *m_tamperDestAddr;
+	SocketFactory *m_socketFactoryTamper;
+	MatchManagerInterface *m_matchManager;
+	char m_tamperMsg[256];
+	int m_initialState;
+	int m_silencePeriodAfterMatchMs;
+	bool m_pollACS;
+	bool m_tamperBitHighToLow;
+	bool m_tamperOutBitHighToLow;
+};
+
+#endif /* F2FDISPATCHER_H_ */

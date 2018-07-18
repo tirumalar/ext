@@ -1,0 +1,181 @@
+/*
+ * ControlDispatcher.h
+ *
+ *  Created on: 26-Oct-2016
+ *      Author: fjia
+ */
+
+#ifndef CONTROLDISPATCHER_H_
+#define CONTROLDISPATCHER_H_
+
+#include "ResultDispatcher.h"
+#include "HTTPPOSTMsg.h"
+#include "socket.h"
+
+#define RELAY_TIME_IN_MS 	1000
+#define GUID_SIZE 			36
+#define CHECK_TOC_TIME		1000	// 1 sec
+
+
+
+class MatchedSignal;
+class SocketFactory;
+class LEDConsolidator;
+class MatchManagerInterface;
+class SDKDispatcher;
+class OSDPMessage;
+
+enum F2FSTATE{eF2FSTART=0, eF2FSTOP};
+//enum CRADREAD{CARD_INIT=0, CARD_READY, CARD_TIMEOUT};
+
+
+
+class ControlDispatcher: public ResultDispatcher {
+public:
+	ControlDispatcher(Configuration& conf);
+	void SetLEDConsolidator(LEDConsolidator *ptr){ m_ledConsolidator = ptr;}
+	void SetMatchManager(MatchManagerInterface *ptr){ if (m_pMatchDispatch) m_matchManager = ptr;}
+	void SetSDKDispatcher(SDKDispatcher *ptr){m_sdkDispatcher = ptr;}
+	virtual ~ControlDispatcher();
+	virtual int End();
+	const char *getName(){
+		return "F2FDispatcher";
+	}
+	virtual void RestartDispatcher();
+	virtual void CloseDispatcher();
+	void SetSendingEveryNSec(bool val=false){
+		m_SendEveryNSec = val;
+		if(m_Debug)printf("SetSendingEveryNSec %d \n",val?1:0);
+	}
+	virtual void ProcessOnEmptyQueue();
+	unsigned int getPreviousTS(){ return  m_PreviousSendTS;}
+	void CheckBoBEvents();
+	void ProcessBoBCardReader();
+	void GetCardData(char *cardDate);
+	bool ValidateTOCData();
+	void SendTamperMsg();
+	void SendAlarmMsg(char *string);
+	void SetAccessDataLength(int len);
+	static void removeParityBits(char *card, int len);
+	void ProcessBoBAcsChange();
+	void ProcessTamper(bool value, bool mbTamper);
+
+	bool addUser(string perid);
+	bool deleteUser(string perid);
+	bool timeoutUser();
+	int m_cardRead;
+	bool m_acsChange;
+	bool m_tamperChange;
+	int m_accessDataLength;
+	bool isTamperSet;
+	bool isMBTamper;
+	bool isBoBTamper;
+	int isLedSet;
+	bool isSoundSet;
+	bool m_Debug;
+	bool m_tamperEnable;
+	bool m_temperature;
+	bool m_testCode;
+	//static void GetBoBStatusCB ();
+	bool killCurrentDriver;
+	char m_cardData[20];
+
+	//OSDP message data
+
+	int m_OSDPBRate;
+	int m_ReaderOSDPBRate;
+	bool m_updateACD;
+	OSDPMessage *m_osdpMessage;
+
+	LEDConsolidator * getLEDConsolidator() {return m_ledConsolidator;}
+	bool loadACD();
+	bool addACD(string acd, int acdlen, string acdnop);
+	bool modifyACD(string acd, int acdlen, string acdnop, string new_acd, string new_acdnop);
+	bool getUserNameFromCard(char *card, string& username);
+
+protected:
+	bool checkToBeSendToNw( MatchResultState val);
+	bool checkToBeSendToBOB( MatchResultState val);
+	void MakeNwF2FMsg(MatchResult* mr, BinMessage* msg);
+	void SendMsg(MatchResult *mr);
+	virtual int getQueueSize(Configuration* conf);
+	void TriggerRelay(int ms);
+	void SendToBoB(Configuration& conf);
+	virtual void process(MatchResult *msg);
+	bool findCardInDB(char *card);
+	bool findCardInNwMatch(char *card);
+	bool MatchCard(char *card);
+	void setCardMatchState();
+	static void BoBStatusChangeCB();
+	static int BoBOSDPCallback(void *, int);
+	static int BoBReaderOSDPCallback(void *, int);
+	static void CardMatchTimeoutCB();
+	static void LEDTimeoutCB();
+
+	char * PrintCardData(char *card, int accessDataLength);
+	bool SetDualTransCommand(int command);
+	void SendOSDPCommand(int command, unsigned char *data);
+	static void DumpBuffer(unsigned char *buf, int bytes);
+	void OSDPBuzCommand(int state);
+	void OSDPLedCommand(int state);
+	void osdpUpdateACSChanges();
+	bool checkTOCdata(unsigned char *pData);
+	void TOCReaderBLEConfig();
+	void TOCReaderBLEConfigResp(unsigned char *resp);
+
+	MatchedSignal *m_pMatched;
+	MatchType *m_pMatchType;
+	bool m_DoRelay;
+	bool m_pac;
+	bool m_osdpACSEnabled;
+	bool m_osdpReaderEnable;
+	bool m_wiegand;
+	bool m_f2f;
+	int m_RelayTimeInMs;
+	int m_DenyRelayTimeInMs;
+	int m_State;
+
+	//char **m_userData;
+
+
+
+	void osdpDataReady(MatchResult * msg);
+
+	MatchResult m_f2fResult;
+	bool m_SendEveryNSec;
+	int m_NSec;
+	unsigned int m_PreviousSendTS;
+	int m_SleepTime;
+
+    HostAddress *m_resultDestAddr;
+    SocketFactory *m_socketFactory;
+	struct timeval m_timeOut,m_timeOutSend;
+	bool m_sendMatchToBOB,m_sendLoteringToBOB,m_sendHealthToBOB,m_sendConfusionToBOB,m_dbReloadToBOB;
+	bool m_sendMatchToNw,m_sendLoteringToNw,m_sendHealthToNw,m_sendConfusionToNw,m_dbReloadToNw;
+	bool m_dualAuth;
+	bool m_passThrough;
+	bool m_transTOC;
+	int m_dualAuthWaitIrisTime;
+	int m_tocCardExpiredTime;
+	int m_tocMobileMode;
+	bool m_tocCustomKey;
+	char *m_tocCustFile;
+	char *m_tocCustPW;
+	int m_ledControlledByInput;
+	bool m_RelayWithSignal;
+	LEDConsolidator *m_ledConsolidator;
+	HostAddress *m_tamperDestAddr;
+	SocketFactory *m_socketFactoryTamper;
+	MatchManagerInterface *m_matchManager;
+	SDKDispatcher *m_sdkDispatcher;
+	char m_tamperMsg[256];
+	int m_initialState;
+	int m_silencePeriodAfterMatchMs;
+	bool m_pollACS;
+	bool m_tamperBitHighToLow;
+	bool m_tamperOutBitHighToLow;
+
+	//pthread_t osdp_thread;
+};
+
+#endif /* CONTROLDISPATCHER_H_ */
