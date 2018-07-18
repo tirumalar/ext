@@ -20,9 +20,7 @@
 #include <opencv2/photo/photo.hpp>
 #include "portcom.h"
 
-
-
-//#define CAMERACALIBERATION_ARUCO
+#define CAMERACALIBERATION_ARUCO
 
 #ifdef CAMERACALIBERATION_ARUCO
 #include <aruco.h>
