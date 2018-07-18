@@ -52,12 +52,16 @@ export ZLIB=${PKG_PATH}/zlib-1.2.8
 export POCO_BASE=${STATIC_LIBS}/poco-1.9.0
 export OPENSSL_102N_BASE=${STATIC_LIBS}/openssl-1.0.2o
 
-#for test_aruc
+#for FaceTracker
 export FACE_INC=${EYELOCK_WS_EXT}/FaceTracker/facetracker/include
 export CLM_EIGEN_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/Eigen
 export CLM_INC=${EYELOCK_WS_EXT}/FaceTracker/CLM/include
 export OPENCV_NEW_INC=${PKG_PATH}/opencv3.4/include
 export OPENCV_NEW_LIBS=${PKG_PATH}/opencv3.4/lib
+
+#for OIMCalibration
+export ARUCO_INC=${STATIC_LIBS}/opencv3.4/aruco/include
+export ARUCO_LIBS=${STATIC_LIBS}/opencv3.4/aruco/lib
 
 export ARCH_PROCESSOR="x86"
 
