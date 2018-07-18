@@ -1,0 +1,104 @@
+
+#define COUNTPTR		[FP-12]
+#define COUNTPTRSTEP		[FP-16]
+
+
+.text
+.align 4;
+.global _compute_correlate_gradient_image_eyelid;
+.type _compute_correlate_gradient_image_eyelid, STT_FUNC;
+//usImage *grad, ucImage *img, Point pt, uiImage *out
+_compute_correlate_gradient_image_eyelid:
+LINK 20;
+[ -- SP] = (R7:4,P5:0);
+
+P0 = R2;
+
+R5 = [P0++];
+R7 = [P0++];
+//r5 = r5>>>1(V);
+//r7 = r7>>>1(V);
+
+R2 = [P0++]; //LEFT OFFSET = CNT PTR
+R3 = [P0++]; //RIGHT OFFSET = CNTR PITCH
+R4 = [P0++]; //SX;
+P5 = R4;
+R4 = [P0++]; //SY
+P4 = R4;
+R4 = [P0++]; //INPUT IMAGE
+R6 = [P0++]; //INPUT STEP
+
+M2 = R6;//INPUTSTEP SAVE
+
+P1 = R2; // cptr[pt.left_offset]
+COUNTPTR = R2;
+P2 = R3; // widthstep cptr
+COUNTPTRSTEP = R3;
+
+P0 = R0;
+R0 = [P0++]; // GRADIENT POINTER
+I3 = R0;
+R2 = [P0++]; // GRAD STEP
+M0 = R2;
+
+P0 = R1;
+R0 = [P0++];// OUTPUT PTR
+R1 = [P0++];// OUTPUT STEP
+I2 = R0;
+M1 = R1;
+
+
+/****
+P0	 := output writing pointer
+P1,P2:= cptr,cptrwidthstep
+P4	 := roi.height, counter for outerloop (invariant)
+P5	 := roi.width-1, counter for innerloop (invariant)
+I3	 := rowptr of gradient image
+I0,I1:= ip0, ip1
+M0	 := W
+R5	 := {C00, C01}
+R7	 := {C10, C11}
+****/
+P0 = 0;
+LOOP ROI_HEIGHT_LOOP LC0=P4;
+LOOP_BEGIN ROI_HEIGHT_LOOP;
+
+I0=I3; // GPTR
+P3=I2; // OUTPTR
+R4.L=W[I0++];
+I3+=M0;
+I1=I3;
+R6.L=W[I1++]||R3.L=W[I0++];
+R4=PACK(R3.L,R4.L)||R3.L=W[I1++];
+R6=PACK(R3.L,R6.L);
+
+LOOP ROI_WIDTH_LOOP LC1=P5;
+LOOP_BEGIN ROI_WIDTH_LOOP;
+
+A0=R5.H*R4.H,A1=R5.L*R4.L(FU)||R0.L=W[I0++];
+A0+=R7.H*R6.H,A1+=R7.L*R6.L(FU)||R3 = [P3];
+R4=PACK(R0.L,R4.H)|| R2 = B[P1]; //next teration // READ OUTPUT
+R0=(A0+=A1);
+R2 +=1;//Inc cptr count
+R0 +=0x20;//add 0.5
+R0 = R0>>6;
+R0=R3+R0(NS)||R1.L=W[I1++]||B[P1++] = R2;
+R6=PACK(R1.L,R6.H)||[P3++]=R0; //next itteration
+
+LOOP_END ROI_WIDTH_LOOP;
+
+R0 = COUNTPTR;
+R1 = COUNTPTRSTEP;
+R0 = R0+R1;
+P1 = R0;
+COUNTPTR = R0;
+
+I2+=M1;
+//unsigned int *optr = out->data + i*out->widthStep; //i2
+
+LOOP_END ROI_HEIGHT_LOOP;
+
+(R7:4,P5:0) = [SP ++];
+UNLINK;
+RTS;
+_compute_correlate_gradient_image_eyelid.END:
