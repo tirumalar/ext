@@ -1372,12 +1372,15 @@ bool ImageProcessor::process(bool matchmode) {
 #endif
 	// printf("After GetFrame\n");
 	CURR_TV_AS_USEC(ts);
+#if 0 // Anita on Jul 10 for skipping of first frame
 	bool goodframe=false;
 //	printf("%d %ll %ll %ll \n",m_timestampBeforeGrabbing,m_prevTS,m_timegapForStaleframe);&&((pct - m_timestampBeforeGrabbing) < m_timegapForStaleframe*3)
 	if(/*((m_timestampBeforeGrabbing - m_prevTS) < m_timegapForStaleframe)&&*/(ts - m_timestampBeforeGrabbing < 1000000)){
 		goodframe = true;
 	}
-
+#else
+	bool goodframe=true;
+#endif
 	bool bSentSomething = false;
 	XTIME_OP("Process",
 		if(frame && goodframe) // Deal with potential for NULL frame
