@@ -1862,7 +1862,7 @@ void DoAgc(void)
 			static int agc_val_old = 0;
 			if (abs(agc_val - agc_val_old) > 300) {
 				// printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
-				//SetExp(4, agc_val);		//comment out if O2 led is connected
+				SetExp(4, agc_val);		//comment out if O2 led is connected
 				agc_val_old = agc_val;
 			}
 		}
