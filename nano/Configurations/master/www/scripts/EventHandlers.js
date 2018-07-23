@@ -476,11 +476,9 @@ $(document).ready(function () {
 
             var cSelect = document.getElementById("logintype");
 
-            var arParameters = [["user", userValue],
-                                ["oldpwd", document.getElementById('oldpassword').value],
-                                ["newpwd", document.getElementById('newpassword').value]
-                               ];
-            sndReqParams('/scripts/rpc.php', 'resetpassword', arParameters, GlobalStrings.ResettingPasswordMsg);
+		    var resetPasswdData = { "user": userValue, "oldpwd": document.getElementById('oldpassword').value, "newpwd":document.getElementById('newpassword').value };
+            sndResetPassword(resetPasswdData);
+			
             return true;
         }
         else {

@@ -534,6 +534,41 @@ function sndSubmit(modeChange)
     });
 }
 
+function sndResetPassword(arParameters)
+{
+	$.ajax({
+        cache: false,
+        url: '/scripts/resetPassword.php',
+        type: 'POST',
+        data: arParameters,
+        success: function (data, textStatus, jqXHR) {
+            //data - response from server
+            handleResetPasswordResponse(data);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+
+        }
+    });
+}
+
+function handleResetPasswordResponse(response)
+{
+	if (response.indexOf('|') != -1)
+	{
+		var update = new Array();
+		update = response.split('|');	
+		if (update[0] === 'resetpassword') 
+		{
+			HideOnlyWaitingDlg();
+
+			if (update[1] === 'success')
+				ShowMessageBox(GlobalStrings.ResetPasswordTitle, GlobalStrings.ResetPasswordSuccess, GlobalStrings.ResetPasswordLogout, "MB_ICONINFORMATION", "OK");
+			else
+				ShowMessageBox(GlobalStrings.ResetPasswordTitle, GlobalStrings.ResetPasswordFail, "", "MB_ICONINFORMATION", "OK");
+		}
+	}
+}
+
 
 // When the server completes executing, it sends a response
 // and this function gets called...  we do something with it...
