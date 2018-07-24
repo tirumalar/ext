@@ -59,6 +59,11 @@ int make_socket(uint16_t port) {
 		exit (EXIT_FAILURE);
 	}
 
+	int enable = 1;
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)	{
+		perror("socket: failed to set SO_REUSEADDR");
+	}
+
 	/* Give the socket a name. */
 	name.sin_family = AF_INET;
 	name.sin_port = htons(port);
