@@ -1382,6 +1382,24 @@ void F2FDispatcher::SetLedInitState(int initLed)
 	m_ledConsolidator->GetLedDispatcher()->m_initialState = (char)initLed;
 }
 
+void F2FDispatcher::LocateDevice()
+{
+	EyelockLog(logger, TRACE, "Locate device");
+	const int timeout = 2000;
+	LEDResult l;
+	l.setState(LED_NWSET);
+	l.setGeneratedState(eREMOTEGEN);
+	std::vector<int> colors = {1,5,16};
+	std::vector<int>::iterator it;
+	for (it = colors.begin(); it!=colors.end(); it++)
+	{
+		EyelockLog(logger, TRACE, "Setting LED value %d, timeout: %d", *it, timeout);
+		l.setNwValandSleep(*it, timeout);
+		m_ledConsolidator->enqueMsg(l);
+		sleep((timeout-1000)/1000);
+	}
+}
+
 void F2FDispatcher::SetRelay(MatchResultState state)
 {
 	if (state == PASSED) {
