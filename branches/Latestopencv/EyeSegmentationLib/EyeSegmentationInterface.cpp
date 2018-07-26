@@ -1,13 +1,15 @@
 #include "EyeSegmentServer.h"
 #include "EyeSegmentationInterface.h"
 
-#include <cxcore.h>
-#include "highgui.h"
+#include <opencv/cxcore.h>
+#include "opencv/highgui.h"
 #include "EyeFeatureServer.h"
 #include "EyeMatchServer.h"
 #include "useful.h"
 #include "pupilsegmentation.h"
 
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 //#include "FFTVarSpoofDetector.h"
 
 // #define PROFILE
@@ -39,8 +41,6 @@ extern "C" {
 #ifdef __BFIN__
 #include <bfin_sram.h>
 #endif
-
-
 
 void EyeSegmentationInterface::init(int scale, int w, int h)
 {
@@ -217,7 +217,7 @@ bool EyeSegmentationInterface::GetRandomIrisCode(unsigned char *imageBuffer, int
 	return true;
 }
 
-#include <cv.h>
+#include <opencv/cv.h>
 
 bool EyeSegmentationInterface::GetDefaultMaskCode(unsigned char *IrisCode, unsigned char *Maskcode)
 {

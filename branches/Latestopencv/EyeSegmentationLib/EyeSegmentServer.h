@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cv.h>
+#include <opencv/cv.h>
 #include <map>
 #include <list>
 #include "area_concom.h"

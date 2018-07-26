@@ -1,6 +1,6 @@
 #include "EyeFeatureServer.h"
 #include "EyeMatchServer.h"
-#include <cv.h>
+#include <opencv/cv.h>
 #include <stdio.h>
 #include <map>
 #include <list>
@@ -252,7 +252,9 @@ int EyeFeatureServer::FeatureCoring(unsigned char *feature, unsigned char *tag)
 	printf("\n");
 	return 1;
 }
-
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv/cxcore.h>
+#include <opencv2/imgproc/imgproc.hpp>
 int EyeFeatureServer::ExtractFeatures(IplImage *img, IplImage *mask, unsigned char *feature, unsigned char *tag)
 {
 	int width = mask->width;
@@ -261,6 +263,12 @@ int EyeFeatureServer::ExtractFeatures(IplImage *img, IplImage *mask, unsigned ch
 
 	//Image wrapping for Original Iris Image
 	horizontal_border_wrap(img, imgWrap);	horizontal_border_wrap(mask, maskWrap);	
+
+	cv::Mat MatInputFrame = cv::cvarrToMat( imgWrap);
+	cv::imwrite("imgWrap.pgm", MatInputFrame);
+
+	cv::Mat MatInputFrame1 = cv::cvarrToMat(maskWrap);
+	cv::imwrite("maskWrap.pgm", MatInputFrame1);
 
 	cvIntegral(imgWrap, imgInt);cvIntegral(maskWrap, maskInt);	
 	int start = 0;
