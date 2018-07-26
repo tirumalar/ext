@@ -32,8 +32,8 @@ export LIBEVENT=${PKG_PATH}/libevent-2.0.21-stable
 export ZLIB=${PKG_PATH}/zlib-1.2.8
 
 # for MultiChannelLogger
-export POCO_BASE=${STATIC_LIBS}/poco-1.9.0
-export OPENSSL_102N_BASE=${STATIC_LIBS}/openssl-1.0.2o
+export POCO_BASE=${PKG_PATH}/poco-1.9.0
+export OPENSSL_102N_BASE=${PKG_PATH}/openssl-1.0.2o
 
 #for FaceTracker
 #export FACE_INC=${EYELOCK_WS_EXTLINUX}/EXTFaceDetection/facedetect/include
@@ -43,7 +43,7 @@ export OPENCV_NEW_INC=${PKG_PATH}/opencv3.4/include
 export OPENCV_NEW_LIBS=${PKG_PATH}/opencv3.4/lib
 
 #for OIMCalibration
-export ARUCO_INC=${PKG_PATH}/opencv3.4/aruco/include
+export ARUCO_INC=${PKG_PATH}/opencv3.4/aruco/include/aruco
 export ARUCO_LIBS=${PKG_PATH}/opencv3.4/aruco/lib
 
 export ARCH_PROCESSOR="x86"
