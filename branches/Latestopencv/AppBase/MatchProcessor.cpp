@@ -596,7 +596,7 @@ void MatchProcessor::process(HTTPPOSTMsg *msg) {
 		cout << ex.what() << endl;
 	}
 }
-
+#include <opencv2/highgui/highgui.hpp>
 IrisData * MatchProcessor::SegmentEye(HTTPPOSTMsg *msg,float *variance){
 #ifdef MADHAV
 	int numsec = (1500000+2*m_IrisDBHeader->GetNumRecord()*1000)/1000000;
@@ -610,11 +610,15 @@ IrisData * MatchProcessor::SegmentEye(HTTPPOSTMsg *msg,float *variance){
 		throw "could not determine Image dims";
 	}
 
+#if 1
 	XTIME_OP("Resize",
 		frame = ResizeFrame(width, height, frame)
 		);
 	mr.setState(FAILED);
 	mr.setVar(-1);
+#endif
+	// cv::Mat MatInputFrame = cv::cvarrToMat( frame);
+	// cv::imwrite("An.pgm", MatInputFrame);
 
 	bool iris = m_spoofDetector->GetIris(msg->GetTime(),frame,variance);
 // Try to get IrisData
@@ -677,11 +681,15 @@ void MatchProcessor::UpdateIrisData(HTTPPOSTMsg *msg,IrisData *irisData){
 bool MatchProcessor::CheckIrisFromSameFrame(){
 	bool spoof= false;
 	try {
+		printf("Inside try....m_IrisDataIndex%d\n",m_IrisDataIndex);
 		for(int i=0;i < m_IrisDataIndex && (!spoof) ;i++){
+			printf("Inside Check for i loop\n");
 			for(int j=i+1;j<m_IrisDataIndex && (!spoof) ;j++){
+				printf("m_IrisData[i]->getSegmentation(),,,,,%dm_IrisData[j]->getSegmentation()....%d\n", m_IrisData[i]->getSegmentation(), m_IrisData[j]->getSegmentation());
 				if(m_IrisData[i]->getSegmentation() && m_IrisData[j]->getSegmentation()){
+					printf("Anita,,,,,,,,,,,,,,,,,,,,,,MatchIrisCodeSingle\n");
 					std::pair<int, float> res = m_bioInstance->MatchIrisCodeSingle((char*)(m_IrisData[i]->getIris()),(char*)(m_IrisData[j]->getIris()),m_maskval);
-					//printf("%d %d %lf < %lf %d %d \n",m_IrisData[i]->getFrameIndex(),m_IrisData[i]->getEyeIndex(),res.second,m_scoreThresh,m_IrisData[j]->getFrameIndex(),m_IrisData[j]->getEyeIndex());
+					printf("%d %d %lf < %lf %d %d \n",m_IrisData[i]->getFrameIndex(),m_IrisData[i]->getEyeIndex(),res.second,m_scoreThresh,m_IrisData[j]->getFrameIndex(),m_IrisData[j]->getEyeIndex());
 					if( res.second < m_scoreThresh){
 						spoof = true;
 						EyelockLog(logger, DEBUG, "Spoof Spoof Spoof on account of Iris from same Frame ");
@@ -698,6 +706,7 @@ bool MatchProcessor::CheckIrisFromSameFrame(){
 }
 
 void MatchProcessor::SendIrisFromSameFrame(){
+	printf("Anita.......................SendIrisFromSameFrame\n");
 	float var[8]={0};
 	for(int i=0;i < m_IrisDataIndex;i++){
 		if(m_IrisData[i]->getSegmentation()){
@@ -708,6 +717,7 @@ void MatchProcessor::SendIrisFromSameFrame(){
 }
 
 bool MatchProcessor::SendForMatching(IrisData *irisData, float* varience){
+	printf("Anita.......................SendForMatching\n");
 	bool matched = false;
     NwMatcherSerialzer ns;
     int ret = ns.GetSizeOfNwMsg(irisData);
@@ -715,7 +725,8 @@ bool MatchProcessor::SendForMatching(IrisData *irisData, float* varience){
     ns.MakeNwMsg(msg1.GetBuffer(),irisData);
     if(m_Master&&(m_softwareType!=ePICO)){
         if(m_nwMatchManager){
-        	//printf("MatchProcessor::SendForMatching %d %d %d\n",irisData->getFrameIndex(),irisData->getEyeIndex(),irisData->getIrisRadiusCheck()?1:0);
+        	printf("Anita.......................m_softwareType....ret %d\n", ret);
+        	// printf("MatchProcessor::SendForMatching %d %d %d\n",irisData->getFrameIndex(),irisData->getEyeIndex(),irisData->getIrisRadiusCheck()?1:0);
             m_nwMatchManager->enqueMsg(msg1);
         }
     }else{

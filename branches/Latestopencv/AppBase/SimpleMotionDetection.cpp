@@ -116,7 +116,7 @@ bool SimpleMotionDetection::ProcessImage(IplImage *img,timeval* pCurrtime)
 		}
 
 		if(m_Level <= 3){
-			cvCopyImage(ptr,m_ImageQueue.getCurr());
+			cvCopy(ptr,m_ImageQueue.getCurr());
 		}
 
 		//cvSaveImage("/mnt/mmc/Imageinp.pgm",img);

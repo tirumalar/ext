@@ -31,6 +31,8 @@ SpoofDetector::SpoofDetector(Configuration& conf, int width, int height,MatchMan
 }
 
 bool SpoofDetector::GetIris(uint64_t ts, unsigned char *frame,float* robostFeatureVar){
+
+
 	m_matchScore = 1.0;
 	//Update the Time Stamp from the incoming image.
 	m_CurrTimeStamp = ts;
@@ -39,6 +41,7 @@ bool SpoofDetector::GetIris(uint64_t ts, unsigned char *frame,float* robostFeatu
 	XTIME_OP("GetIris",
 		test = m_MatchMgr->GetBio()->GetIrisCode(frame, m_width, m_height, m_width,(char*)m_IrisBuff,&Circles,robostFeatureVar)
 	);
+	printf("Anita...........GetIris.....%s\n", m_IrisBuff);
 	m_irisData->setSegmentation(test);
 	m_irisData->setIrisRadiusCheck(true);
 	m_irisData->setIrisCircle(Circles.ip.x,Circles.ip.y,Circles.ip.r);
