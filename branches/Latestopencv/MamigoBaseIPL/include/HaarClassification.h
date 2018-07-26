@@ -14,7 +14,7 @@
 #include "apr_errno.h"
 #include "MamigoBaseIPL_def.h"
 #include "CvInterfaceDefs.h"
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 #include "MIPLClassificationParams.h"
 
 /*

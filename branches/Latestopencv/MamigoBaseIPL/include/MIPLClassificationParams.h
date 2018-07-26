@@ -10,7 +10,7 @@
 #ifndef MIPLCLASSIFICATIONPARAMS_H_
 #define MIPLCLASSIFICATIONPARAMS_H_
 #include "MamigoBaseIPL_def.h"
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 #include <fstream>
 
 class MIPLClassificationParams

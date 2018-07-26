@@ -3,7 +3,7 @@
 #include "apr.h"
 #include "apr_errno.h"
 #include "MamigoBaseIPL_def.h"
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 
 apr_status_t MAMIGO_BASE_IPL_DLL_EXPORT set_horizontal_border(IplImage *in, int border, int borderType, int val=0);
 apr_status_t MAMIGO_BASE_IPL_DLL_EXPORT set_vertical_border(IplImage *in, int border, int borderType, int val=0);

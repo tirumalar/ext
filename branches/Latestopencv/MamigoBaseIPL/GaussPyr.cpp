@@ -1,6 +1,6 @@
 #include "GaussPyr.h"
 #include <algorithm>
-#include <cv.h>
+#include <opencv/cv.h>
 using std::max;
 using std::min;
 apr_status_t set_horizontal_border(IplImage *in, int border, int borderType, int val)
