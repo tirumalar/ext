@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 #include <map>
 #include <list>
 

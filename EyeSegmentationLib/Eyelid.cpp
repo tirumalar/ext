@@ -2,7 +2,7 @@
 #include "EyeSegmentServer.h"
 #include "DistanceMetrics.h"
 #include "useful.h"
-#include <cv.h>
+#include <opencv/cv.h>
 #include <map>
 #include "useful.h"
 #include "area_concom.h"
