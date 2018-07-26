@@ -33,7 +33,7 @@ export ZLIB=${PKG_PATH}/zlib-1.2.8
 
 # for MultiChannelLogger
 export POCO_BASE=${PKG_PATH}/poco-1.9.0
-export OPENSSL_102N_BASE=${PKG_PATH}/openssl-1.0.2o
+export OPENSSL_102N_BASE=${PKG_PATH}/openssl-1.0.2n
 
 #for FaceTracker
 #export FACE_INC=${EYELOCK_WS_EXTLINUX}/EXTFaceDetection/facedetect/include
