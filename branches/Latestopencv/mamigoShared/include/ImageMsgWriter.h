@@ -8,7 +8,7 @@
 #ifndef IMAGEMSGWRITER_H_
 #define IMAGEMSGWRITER_H_
 
-#include <cv.h>
+#include <opencv/cv.h>
 #include <stdint.h>
 #include "Configurable.h"
 enum FORMATTYPE {eHTTP=0,eXML};

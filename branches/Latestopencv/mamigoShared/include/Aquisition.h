@@ -9,7 +9,7 @@
 #define AQUISITION_H_
 
 
-#include <cv.h>
+#include <opencv/cv.h>
 #include "FrameGrabber.h"
 
 
