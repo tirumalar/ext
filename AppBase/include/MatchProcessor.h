@@ -12,8 +12,8 @@
 #include "CircularAccess.h"
 #include "Safe.h"
 #include "ProcessorChain.h"
-#include <cv.h>
-#include <cxcore.h>
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
 
 #include "EyeSegmentationInterface.h"
 #include "MatchManagerInterface.h"

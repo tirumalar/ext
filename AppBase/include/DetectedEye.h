@@ -7,7 +7,7 @@
 
 #ifndef DETECTEDEYE_H_
 #define DETECTEDEYE_H_
-#include <cv.h>
+#include <opencv/cv.h>
 #include "CircularAccess.h"
 
 class DetectedEye {

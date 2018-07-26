@@ -13,13 +13,16 @@
 #include "IrisSelectServer.h"
 #include "EyeTracker.h"
 #include <iostream>
-#include <highgui.h>
+// #include <highgui.h>
+#include <opencv2/highgui/highgui.hpp>
 #include <time.h>
 #include "logging.h"
 #include "ProcessorChain.h"
 #include "LaplacianBasedFocusDetector.h"
 #include <unistd.h>
 #include "UtilityFunctions.h"
+
+#include <opencv2/imgproc/imgproc.hpp>
 extern "C"{
 #ifdef __BFIN__
 	#include <bfin_sram.h>
