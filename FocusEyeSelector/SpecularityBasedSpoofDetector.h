@@ -1,7 +1,7 @@
 #ifndef _IRIS_SELECT_SERVER_H
 #define _IRIS_SELECT_SERVER_H
 					
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 #include <map>
 
 class SpecularityBasedSpoofDetector
