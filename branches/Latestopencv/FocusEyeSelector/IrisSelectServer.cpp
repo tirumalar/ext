@@ -1,5 +1,5 @@
 #include "IrisSelectServer.h"
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 #include <stdio.h>
 
 #define IRIS_SPECULARITY_COVARIANCE_EIGENVALUE_THRESHOLD	7.0

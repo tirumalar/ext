@@ -1,6 +1,6 @@
 #include "SpecularityBasedSpoofDetector.h"
-#include <cxcore.h>
-#include <cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/cv.h>
 #include <stdio.h>
 extern "C" {
 #include "file_manip.h"

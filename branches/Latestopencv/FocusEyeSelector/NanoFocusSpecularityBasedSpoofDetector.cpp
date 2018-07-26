@@ -1,6 +1,6 @@
 #include "NanoFocusSpecularityBasedSpoofDetector.h"
-#include <cxcore.h>
-#include <cv.h>
+#include <opencv/cxcore.h>
+#include <opencv/cv.h>
 #include <algorithm>
 //#include "ippi.h"
 //#include "ippsr.h"
