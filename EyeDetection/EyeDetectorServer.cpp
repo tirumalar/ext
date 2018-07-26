@@ -1,8 +1,8 @@
 #include "EyeDetectorServer.h"
 #include "HRect.h"
 #include <math.h>
-#include <cv.h>
-#include <highgui.h>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 #include "assert.h"
 #define USE_MMX 0
 #define DO_DY_OUTSIDE 0

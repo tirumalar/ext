@@ -1,6 +1,7 @@
 #include "pyramid.h"
 #include "Image.h"
-#include <cv.h>
+#include <opencv/cv.h>
+#include <opencv2/core.hpp>
 
 #include "GaussPyr.h"
 extern "C"{
