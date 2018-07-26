@@ -8,7 +8,12 @@
 #ifndef NWMATCHERSERIALZER_H_
 #define NWMATCHERSERIALZER_H_
 
-#include <cxtypes.h>
+#if 1
+// #include <cxtypes.h>
+// #include <opencv2/core/types_c.h>
+#include <stdint.h>
+typedef uint64_t uint64;
+#endif
 #include <string>
 
 class IrisData;
