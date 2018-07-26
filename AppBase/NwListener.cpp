@@ -443,6 +443,12 @@ bool NwListener::do_serv_task(Socket& client) {
 				mf2f->settime();
 			}
 		}
+		else if (m_HTTPMsg->getMsgType() == LOCATEDEVICE_MSG)
+		{
+			if(m_nwMatchManager){
+				m_nwMatchManager->GetF2FDispatcher()->LocateDevice();
+			}
+		}
 		else if (m_HTTPMsg->getMsgType() == TESTMATCH)
 		{
 			if(m_nwMatchManager){

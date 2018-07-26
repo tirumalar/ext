@@ -440,7 +440,8 @@ void LEDDispatcher::process(MatchResult *msg) {
 			int value, sleeptime;
 			msg->getNwValandSleep(value, sleeptime);
 			val = value;
-			m_periodForNWSet = sleeptime / 1000;
+			//m_periodForNWSet = sleeptime / 1000; // why /1000? it's provided in ms
+			m_periodForNWSet = sleeptime;
 			if (m_ledDebug)
 				EyelockLog(logger, DEBUG, "Nw SleepTime %d", sleeptime);
 			break;

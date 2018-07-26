@@ -90,6 +90,7 @@ public:
 
 	void gettime();
 	void settime();
+	void LocateDevice();
 
 protected:
 	bool checkToBeSendToNw( MatchResultState val);

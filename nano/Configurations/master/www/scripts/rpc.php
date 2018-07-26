@@ -26,11 +26,28 @@ if (isset($_REQUEST['action']))
         //error_log("checklogin: not logged in rpc ");
         die;
     }
+	$eyeLockINI = new INIEditor("/home/root/Eyelock.ini");
+    $eyeLockINI->LoadIniSettings(true);
     switch($_REQUEST['action'])
     {
         case 'identifydevice':
         case 'identifydevicestop':
         {
+			if ($eyeLockINI->HardwareType == '1') // ext
+			{
+            	if ($_REQUEST['action'] === 'identifydevice')
+            	{
+				$strLocateDevice = "LOCATEDEVICE_MSG";
+			        $strLocateDevice = SendTCPMessage($strLocateDevice);
+					sleep(3);
+				}
+				else
+				{
+					echo "stop";
+				}
+			}
+			else
+			{
             $nLoopTimes = 3;
             $nSleepDelay = 1;
             $strAppName = "Eyelock";
@@ -90,7 +107,7 @@ if (isset($_REQUEST['action']))
                 $strCmd = sprintf("36".chr(0x1F)."%s".chr(0x1F)."%s", $strScriptFolder, $strAppName);//"cd %s;touch %s.run", $strScriptFolder, $strAppName);
                 $cmdResult = NXTW_shell_exec($strCmd);
             }
-
+			}
             echo "identifydevice|{$strReturn}";
             break;
         }
