@@ -10,7 +10,7 @@ struct _IplImage;
 #include <utility>
 #include <map>
 #include "EyeSegmentationLib_def.h"
-#include "cxcore.h"
+#include <opencv2/core.hpp>
 
 typedef struct
 {

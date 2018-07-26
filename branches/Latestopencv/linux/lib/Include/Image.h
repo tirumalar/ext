@@ -1,5 +1,5 @@
 #pragma once
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 #include "HBox.h"
 #include "CvInterfaceDefs.h"
 #include <algorithm>
