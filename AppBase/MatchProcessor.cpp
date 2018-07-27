@@ -687,7 +687,6 @@ bool MatchProcessor::CheckIrisFromSameFrame(){
 			for(int j=i+1;j<m_IrisDataIndex && (!spoof) ;j++){
 				printf("m_IrisData[i]->getSegmentation(),,,,,%dm_IrisData[j]->getSegmentation()....%d\n", m_IrisData[i]->getSegmentation(), m_IrisData[j]->getSegmentation());
 				if(m_IrisData[i]->getSegmentation() && m_IrisData[j]->getSegmentation()){
-					printf("Anita,,,,,,,,,,,,,,,,,,,,,,MatchIrisCodeSingle\n");
 					std::pair<int, float> res = m_bioInstance->MatchIrisCodeSingle((char*)(m_IrisData[i]->getIris()),(char*)(m_IrisData[j]->getIris()),m_maskval);
 					printf("%d %d %lf < %lf %d %d \n",m_IrisData[i]->getFrameIndex(),m_IrisData[i]->getEyeIndex(),res.second,m_scoreThresh,m_IrisData[j]->getFrameIndex(),m_IrisData[j]->getEyeIndex());
 					if( res.second < m_scoreThresh){
@@ -706,7 +705,6 @@ bool MatchProcessor::CheckIrisFromSameFrame(){
 }
 
 void MatchProcessor::SendIrisFromSameFrame(){
-	printf("Anita.......................SendIrisFromSameFrame\n");
 	float var[8]={0};
 	for(int i=0;i < m_IrisDataIndex;i++){
 		if(m_IrisData[i]->getSegmentation()){
@@ -717,7 +715,6 @@ void MatchProcessor::SendIrisFromSameFrame(){
 }
 
 bool MatchProcessor::SendForMatching(IrisData *irisData, float* varience){
-	printf("Anita.......................SendForMatching\n");
 	bool matched = false;
     NwMatcherSerialzer ns;
     int ret = ns.GetSizeOfNwMsg(irisData);
@@ -725,7 +722,6 @@ bool MatchProcessor::SendForMatching(IrisData *irisData, float* varience){
     ns.MakeNwMsg(msg1.GetBuffer(),irisData);
     if(m_Master&&(m_softwareType!=ePICO)){
         if(m_nwMatchManager){
-        	printf("Anita.......................m_softwareType....ret %d\n", ret);
         	// printf("MatchProcessor::SendForMatching %d %d %d\n",irisData->getFrameIndex(),irisData->getEyeIndex(),irisData->getIrisRadiusCheck()?1:0);
             m_nwMatchManager->enqueMsg(msg1);
         }

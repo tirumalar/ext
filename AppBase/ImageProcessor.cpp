@@ -189,7 +189,7 @@ m_LedConsolidator = NULL;
     m_FlipType = pConf->getValueIndex("GRI.Flip", -1, 2, 2, "Both", "Horizontal", "Vertical", "None");
 
     if(m_shouldRotate)
-		m_rotationBuff=cvCreateImage(cvSize(ch,cw),numbits,1);
+		m_rotationBuff=cvCreateImage(cvSize(ch,cw),IPL_DEPTH_8U,1);
     m_FocusBasedRejectionType = pConf->getValueIndex("GRI.FocusBasedRejection", 0, 4, 0, "None", "Threshold", "PeakDetection", "RunningMax", "BlockMax");
     if(!m_shouldDetect)
         m_FocusBasedRejectionType = 0;
@@ -289,7 +289,7 @@ m_LedConsolidator = NULL;
 
 		int w,h,bits;
 		ReadPGM5WHandBits(fpath,&w,&h,&bits);
-		m_src = cvCreateImage(cvSize(w,h),bits,1);
+		m_src = cvCreateImage(cvSize(w,h),IPL_DEPTH_8U,1);
 		ReadPGM5(fpath,(unsigned char *)m_src->imageData,&w,&h,m_src->imageSize);
 	}
 
@@ -710,7 +710,7 @@ void ImageProcessor::SetImage(IplImage *dst){
 		int ret = ReadPGM5WHandBits(fpath,&w,&h,&bits);
 		printf("Reading %s %d %d %d %d\n",fpath,w,h,bits,ret);
 		if(!m_src && (ret != -1)){
-			m_src = cvCreateImage(cvSize(w,h),bits,1);
+			m_src = cvCreateImage(cvSize(w,h),IPL_DEPTH_8U,1);
 		}
 
 		if(ret == -1){
@@ -821,8 +821,49 @@ void ImageProcessor::GenMsgToNormal(BinMessage& msg){
 	msg.SetData(Buffer,len);
 }
 
+// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
+const std::string currentDateTime() {
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+    // for more information about date/time format
+    strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+
+    return buf;
+}
+#include <ctime>
 bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 {
+
+	std::time_t now = std::time(NULL);
+		std::tm * ptm = std::localtime(&now);
+		char timebuff[32];
+		std::strftime(timebuff,32, "%a, %d.%m.%Y %H:%M:%S:%3N", ptm);
+
+	printf("ProcessImageProcessImageProcessImageProcessImageProcessImageProcessImage") ;
+	system("date +'%d/%m/%Y %H:%M:%S:%3N'");
+	printf("\n\n");
+#if 0
+	int frame_number = 0;
+	if(frame->imageData != NULL)
+	{
+		frame_number = frame->imageData[3]&0xff;
+	}
+	time_t timer;
+	struct tm* tm1;
+	time(&timer);
+	tm1 = localtime(&timer);
+	char time_str[100];
+	strftime(time_str, 100, "%Y_%m_%d_%H-%M-%S", tm1);
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+
+
+	printf("In Process Image_%s_%lu_%09lu_frame_number_%d", time_str, ts.tv_sec, ts.tv_nsec, frame_number);
+#endif
+
 #if 0
 		boost::filesystem::path temp_session_dir(DEBUG_SESSION_DIR);
 		if (boost::filesystem::is_directory(temp_session_dir))

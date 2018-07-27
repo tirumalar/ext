@@ -535,7 +535,6 @@ void printTempMask(unsigned char *templ,unsigned char *mask,int len){
 
 void EyeMatchServer::MakeShifts_x0F(unsigned char *f1ptr, unsigned char *m1ptr, unsigned char **shiftedCode,unsigned char **shiftedMask,void *scratch )
 {
-	printf("Anita......................................MakeShifts_x0F\n");
 	*shiftedCode = (unsigned char *) scratch;
 	*shiftedMask = *shiftedCode + m_featureLength*(m_ShiftRight/2 - m_ShiftLeft/2 + 1);
 
@@ -640,7 +639,7 @@ unsigned char* EyeMatchServer::GetCompressMask(unsigned char *DB,int eyenum){
 std::pair<int, float> EyeMatchServer::MatchDBNewCompress(unsigned char *database, int numCodes,
 		bool greedy,float hammingscore,int featureMask,unsigned char *shiftedCode,unsigned char *shiftedMask) {
 
-	printf("Anita......................................MatchDBNewCompress\n");
+
 	double bestScore = 1.0;
 	int bestIdx = -1;
 	int jump = m_featureLength;

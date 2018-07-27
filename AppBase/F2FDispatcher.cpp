@@ -1440,8 +1440,29 @@ void F2FDispatcher::ResetReaderLED()
 	//m_pMatchType->clearCardData();
 }
 
+// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
+const std::string currentDateTime11() {
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+    // for more information about date/time format
+    strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+
+    return buf;
+}
+
+#include <ctime>
+
 void F2FDispatcher::LogMatchResult(MatchResult *msg)
 {
+
+	std::time_t now = std::time(NULL);
+		std::tm * ptm = std::localtime(&now);
+		char timebuff[32];
+		std::strftime(timebuff,32, "%a, %d.%m.%Y %H:%M:%S  %Z", ptm);
+
 	if(m_Debug)
 		EyelockLog(logger, TRACE, "F2FDispatcher::LogMatchResult()");
 
@@ -1476,6 +1497,27 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 		}
 		SDKCallbackMsg msg(MATCH, std::string(tmp));
 		m_sdkDispatcher->enqueMsg(msg);
+		printf("LogMatchResultLogMatchResultLogMatchResult") ;
+			system("date +'%d/%m/%Y %H:%M:%S:%3N'");
+			printf("\n\n");
+		// std::cout << "LogMatchResultLogMatchResultLogMatchResult" << system("date +'%d/%m/%Y %H:%M:%S:%3N'") << std::endl << std::endl << std::endl;
+#if 0
+
+		time_t timer;
+		struct tm* tm1;
+		time(&timer);
+		tm1 = localtime(&timer);
+		char time_str[100];
+		strftime(time_str, 100, "%Y_%m_%d_%H-%M-%S", tm1);
+		struct timespec ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
+
+
+		printf("In Process Image_%s_%lu_%09lu", time_str, ts.tv_sec, ts.tv_nsec);
+	#endif
+
+
+
 #ifdef DEBUG_SESSION
 		if(m_DebugTesting){
 			file = fopen(session_match_log, "a");
