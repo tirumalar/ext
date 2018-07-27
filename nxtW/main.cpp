@@ -1097,6 +1097,11 @@ int processCommand(char *str)
 			//system("sync");
 		    break;
 		}
+		case 1339:
+		{
+			system("cd /home/root; ./fwHandler.sh reboot");
+			break;
+		}
 		default:
 			printf("Unknown token %d\n", nToken);
 			len = sprintf(szTokenBuffer, "echo 'Unknown token %d\n'", nToken);
