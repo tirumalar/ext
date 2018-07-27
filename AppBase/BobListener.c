@@ -597,6 +597,25 @@ void BoBClearACSSoundOut()
 {
 	BobClearACSOutput(BOB_ACS_OUT_SOUNDER);
 }
+void BoBSetACSTamperOut(int polFlag,int tamper)
+{
+	printf("****************tamper occured %d\n",tamper);
+	if(tamper)
+	{
+		if (polFlag)
+			BobClearACSOutput(BOB_ACS_OUT_TAMPER_PANEL);
+		else
+			BobSetACSOutput(BOB_ACS_OUT_TAMPER_PANEL);
+	}
+	else
+	{
+		if (polFlag)
+			BobSetACSOutput(BOB_ACS_OUT_TAMPER_PANEL);
+		else
+			BobClearACSOutput(BOB_ACS_OUT_TAMPER_PANEL);
+	}
+
+}
 int BobReadReg(unsigned char reg, unsigned int *val)
 {
 	int fd = i2c_start_transaction();

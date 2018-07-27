@@ -55,6 +55,7 @@ FileConfiguration eyelockConf("");
 std::string m_sessionDir;
 std::string m_sessionInfo;
 bool switchedToIrisMode = false;
+void DoTamper(void);
 void LogSessionEvent(struct tm* tm1, struct timespec* ts, const char* msg)
 {
 	FILE *file = fopen(m_sessionInfo.c_str(), "a");
@@ -2102,11 +2103,9 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 #ifdef Tempering
 	{
-
+		 DoTamper();
 	}
 #endif
-
-
 
 }
 
@@ -3092,19 +3091,25 @@ int main(int argc, char **argv)
 		void SendUdpImage(int port, char *image, int bytes_left);
 		Mat imageIn, image;
 		int x;
+		Mat sendImg;
+
+		sendImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
 
 
-		image=imread("send_bad.pgm",0);
-				image.convertTo(image,CV_8UC1);
-				EyelockLog(logger, DEBUG, "sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
+		image=imread(argv[2],0);
+		image.convertTo(image,CV_8UC1);
 
-				for (x=0; x<atoi(argv[2]);x++)
+		EyelockLog(logger, DEBUG, "sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);
+
+		image.copyTo(sendImg(cv::Rect(0,0,image.cols, image.rows)));
+
+		for (x=0; x<atoi(argv[3]);x++)
 				{
 					EyelockLog(logger, DEBUG, "send bad\n");
-					SendUdpImage(8192, (char *)image.data, image.cols*image.rows);
+					SendUdpImage(8192, (char *)sendImg.data, sendImg.cols*sendImg.rows);
 					usleep(40000);
 				}
-
+        exit(1);
 		image=imread("send.pgm",0);
 		image.convertTo(image,CV_8UC1);
 		EyelockLog(logger, DEBUG, "sending udp  %d  %dbytes \n",image.cols*image.rows,image.dims);

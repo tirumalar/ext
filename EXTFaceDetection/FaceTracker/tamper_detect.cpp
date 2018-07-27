@@ -111,7 +111,7 @@ char temp[100];
 				EyelockLog(logger, TRACE, "AVG val :::::: %3.3f, %3.3f, %3.3f -------------->>>>>>>>>! \n", xAvg,yAvg,zAvg);
 				if (xAvg > 0.01 & yAvg > 0.01 & zAvg > 0.08){
 					printf("TEMPER DETECTED!!!!!!!!!!!!!!!!!!!!!!------------------>>>>>>>>>>> \n");
-					system("touch /home/root/tamper");
+					system("touch /home/root/OIMtamper");
 					//exit(EXIT_FAILURE);;
 				}
 				//char s = cv::waitKey(1);
