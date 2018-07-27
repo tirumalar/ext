@@ -10,11 +10,15 @@ COUNTER=0
 MAX_SEQUENTIAL_RECOVERIES=3
 FACETRACKER_RUN_FILE='/home/root/FaceTracker.run'
 EYELOCK_RUN_FILE='/home/root/Eyelock.run'
+EYELOCK_OIM_TAMPER_FILE='/home/root/OIMtamper'
+EYELOCK_TAMPER_FILE='/home/root/tamper'
 
 rm "${FLAG}"
 
 rm "${FACETRACKER_RUN_FILE}"
 rm "${EYELOCK_RUN_FILE}"
+rm "${EYELOCK_OIM_TAMPER_FILE}"
+rm "${EYELOCK_TAMPER_FILE}"
 
 while true
 do

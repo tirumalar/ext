@@ -358,8 +358,8 @@ void F2FDispatcher::ProcessTamper(bool value, bool mbTamper)
 			m_osdpMessage->isTamperSet = isTamperSet;
 			//osdpUpdateACSChanges();
 		}
-
-		// BoBSetACSTamperOut(); // hw loopback, no need to set tamper out here
+	//	int polFlag =
+		 BoBSetACSTamperOut(m_tamperOutBitHighToLow,tamper_value); // hw loopback, no need to set tamper out here
 
 		if (m_temperature && isTamperSet) {
 			RunSystemCmd("aplay /home/root/tones/tamper1.wav");

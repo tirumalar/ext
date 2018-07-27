@@ -210,6 +210,7 @@ void BoBSetACSLedGreenOut();
 void BoBClearACSLedGreenOut();
 void BoBSetACSSoundOut(int, int);
 void BoBClearACSSoundOut();
+void BoBSetACSTamperOut(int polFlag,int tamper);
 void setinputAcs(int val);
 int BoBOSDPPanelMsg();
 int BoBOSDPReaderMsg();
