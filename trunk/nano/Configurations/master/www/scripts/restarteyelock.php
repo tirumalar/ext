@@ -2,6 +2,7 @@
 
 require("checklogin.php"); // Make sure user is logged on to get to this page...
 include_once($_SERVER['DOCUMENT_ROOT']."/scripts/debug.php");
+include_once("inieditor.php");
 //include_once("/home/www/debug.php");
  //ob_start();
 
@@ -14,7 +15,15 @@ include_once($_SERVER['DOCUMENT_ROOT']."/scripts/debug.php");
     }
     function RebootDevice()
     {
-   
+		$eyeLockINI = new INIEditor("/home/root/Eyelock.ini");
+	    $eyeLockINI->LoadIniSettings(true);
+
+		if ($eyeLockINI->HardwareType == '1') // ext
+		{
+			NXTW_shell_exec("1339"); // cd /home/root; ./fwHandler.sh reboot
+		}
+		else
+		{
        // $strResult = NXTW_shell_exec("29");//"reboot");
 	   shell_exec("touch /home/nxtW.run");
 		sleep(15); 
@@ -38,7 +47,7 @@ include_once($_SERVER['DOCUMENT_ROOT']."/scripts/debug.php");
             NXTW_shell_exec("29");//'reboot'); //third and one more step to ensure reboot
 		   sleep(2);
             NXTW_shell_exec("41");//'i2cset -y 3 0x2e 4 8'); // reset command to motherboard if the above command fails
-			
+		}	
     }
 
     function DeleteEyelockRun()

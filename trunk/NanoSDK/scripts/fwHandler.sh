@@ -360,12 +360,17 @@ cleanupRestore(){
 rebootDevice(){
 	echo "Rebooting..."
 	
-	printf 'fixed_set_rgb(100,80,0)\n' | nc -q 1 192.168.4.172 30
+	cd /home/root
+
+	# reboot OIM
+	./i2cHandler -r0
+	sleep 3
+	./i2cHandler -r1
+	sleep 7
 
 	sync
-	sleep 3
-	
-	/sbin/reboot
+
+	reboot
 }
 
 getXmlTag()
