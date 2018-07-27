@@ -14,7 +14,7 @@ class DetectedEye {
 public:
 	DetectedEye(int cwidth, int cheight,int numbits = 8):m_prev(-1),m_eyeCrop(0),m_eyeIndex(0),m_faceIndex(0),m_numEyes(0),m_eyeLeft(0),m_eyeTop(0),m_isUpdated(false),m_ill0(0),m_tobeSentAsPair(false),m_alreadySent(false)
 	{
-		m_eyeCrop=cvCreateImage(cvSize(cwidth,cheight),numbits,1);
+		m_eyeCrop=cvCreateImage(cvSize(cwidth,cheight),IPL_DEPTH_8U,1);
 		m_numbits = numbits;
 	}
 	virtual ~DetectedEye() {
