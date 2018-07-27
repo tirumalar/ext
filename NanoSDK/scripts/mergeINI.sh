@@ -3,7 +3,7 @@
 # /home/Eyelock.default ==> existing default file, copied from /home/default/Eyelock.ini before upgrade
 
 # compare default files
-diff -wb /home/Eyelock.default /home/default/Eyelock.ini | grep -v '^+\s*$' | grep -v '^-\s*$' > diff_tmp
+diff -wb /home/Eyelock.default /home/default/Eyelock.ini | grep -v '^<\s*$' | grep -v '^>\s*$' > diff_tmp
 if [ ! -s diff_tmp ];
     then
 	echo "no need to merge parameters in Eyelock.ini"
@@ -13,17 +13,17 @@ if [ ! -s diff_tmp ];
     fi
 
 # remove lines
-grep '^-' diff_tmp | sed '1d' | cut -c 2- | while read line; 
+grep '^>' diff_tmp | cut -c 2- | while read line; 
     do
         echo "Remove a line : $line"
         sed -i "/${line}/d" /home/root/Eyelock.ini
     done 
 
 # append new lines
-grep '^+' diff_tmp | sed '1d' | cut -c 2- | while read line; 
+grep '^<' diff_tmp | cut -c 2- | tr -d [' '] | while read line; 
     do
         param=$(echo $line | sed 's/=.*//') 
-        grep -q $param /home/root/Eyelock.ini
+        grep -q "[^;]$param" /home/root/Eyelock.ini
         if [ $? -ne 0 ]
         then
             sed -i -e "$ a ${line}" /home/root/Eyelock.ini
