@@ -55,7 +55,7 @@ FileConfiguration eyelockConf("");
 std::string m_sessionDir;
 std::string m_sessionInfo;
 bool switchedToIrisMode = false;
-void DoTamper(void);
+void *DoTamper(void *arg);
 void LogSessionEvent(struct tm* tm1, struct timespec* ts, const char* msg)
 {
 	FILE *file = fopen(m_sessionInfo.c_str(), "a");
@@ -1759,7 +1759,7 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 #define tempRecord
 
 
-void DoTemperatureLog()
+void *DoTemperatureLog(void * arg)
 {
 	static time_t start = time(0);
 	double seconds_since_start = difftime( time(0), start);
@@ -1874,6 +1874,9 @@ void DoAgc(void)
 
 
 void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
+	pthread_t threadIdtamper;
+	pthread_t threadIdtemp;
+
 	EyelockLog(logger, TRACE, "DoRunMode_test");
 
 	int start_process_time = clock();
@@ -2096,14 +2099,16 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 #endif
 
 #ifdef tempRecord
-	DoTemperatureLog();
+	pthread_create(&threadIdtemp,NULL,DoTemperatureLog,NULL);
+	// DoTemperatureLog();
 #endif
 
 
 
 #ifdef Tempering
 	{
-		 DoTamper();
+		pthread_create(&threadIdtamper,NULL,DoTamper,NULL);
+		// DoTamper();
 	}
 #endif
 
@@ -3043,6 +3048,7 @@ int main(int argc, char **argv)
     int temp_mode = 0;
     pthread_t threadId;
     pthread_t thredEcId;
+
 
 
 	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
