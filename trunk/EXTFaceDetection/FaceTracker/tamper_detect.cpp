@@ -39,7 +39,7 @@ vector<float> tempDataX,tempDataY,tempDataZ;
 float xp =0,yp = 0,zp =0;
 double difX,difY,difZ;
 
-void DoTamper(void)
+void *DoTamper(void * arg)
 {
 int len;
 float x, y, z, a;
