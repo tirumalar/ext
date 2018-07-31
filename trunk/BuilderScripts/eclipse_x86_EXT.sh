@@ -34,9 +34,9 @@ export ALSA_LIB=${STATIC_LIBS}/alsa/lib
 
 export OPENSSL_INC=${PKG_PATH}/openssl-1.0.1i/include
 export OPENSSL_ASN_INC=${PKG_PATH}/openssl-1.0.1i/crypto/asn1
-export OPENCV_INC=${PKG_PATH}/cv/include
-export CXCORE_INC=${PKG_PATH}/cxcore/include
-export HIGHGUI_INC=${PKG_PATH}/highgui/include
+#export OPENCV_INC=${PKG_PATH}/cv/include
+#export CXCORE_INC=${PKG_PATH}/cxcore/include
+#export HIGHGUI_INC=${PKG_PATH}/highgui/include
 export APR_INC=${PKG_PATH}/apr-1.4.8/include
 export APR_UTIL_INC=${PKG_PATH}/apr-util-1.5.2/include
 export LOG4CXX_INC=${PKG_PATH}/apache-log4cxx-0.10.0/src/main/include

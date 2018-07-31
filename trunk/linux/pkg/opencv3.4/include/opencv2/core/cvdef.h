@@ -482,6 +482,7 @@ using std::uint64_t;
 }
 #else
 #include <stdint.h>
+#if 0 // Anita
 namespace cv {
 typedef ::int8_t int8_t;
 typedef ::uint8_t uint8_t;
@@ -492,6 +493,7 @@ typedef ::uint32_t uint32_t;
 typedef ::int64_t int64_t;
 typedef ::uint64_t uint64_t;
 }
+#endif
 #endif
 #endif
 

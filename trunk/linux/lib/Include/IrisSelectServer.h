@@ -1,7 +1,7 @@
 #ifndef _IRIS_SELECT_SERVER_H
 #define _IRIS_SELECT_SERVER_H
 
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 #if (defined(__BFIN__)||(defined(__linux__)))
 #define Ipp32f float
 #define Ipp8u  unsigned char

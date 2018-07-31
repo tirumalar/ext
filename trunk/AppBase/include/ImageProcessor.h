@@ -13,7 +13,7 @@
 #ifndef IMAGEPROCESSOR_H_
 #define IMAGEPROCESSOR_H_
 
-#include <cv.h>
+#include <opencv/cv.h>
 #include "Configurable.h"
 #include "ImageMsgWriter.h"
 #include "EyeDetectAndMatchServer.h"

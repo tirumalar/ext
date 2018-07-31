@@ -1,6 +1,6 @@
 #pragma once
 					
-#include <cxtypes.h>
+#include <opencv2/core/types_c.h>
 //#include "ippdefs.h"
 #include <list>
 #include <map>

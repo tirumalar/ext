@@ -10,8 +10,8 @@
 #include "IrisSelector.h"
 #endif
 
-#include "cv.h"
-#include "cxcore.h"
+#include "opencv/cv.h"
+#include "opencv/cxcore.h"
 
 extern "C"{
 #include "file_manip.h"

@@ -8,7 +8,7 @@
 #ifndef FILEBASEDFRAMEGRABBER_H_
 #define FILEBASEDFRAMEGRABBER_H_
 
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 #include "FrameGrabber.h"
 
 class FileBasedFrameGrabber : public FrameGrabber{

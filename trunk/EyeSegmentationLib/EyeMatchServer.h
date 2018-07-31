@@ -1,5 +1,5 @@
 #pragma once
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 
 #ifdef __BFIN__
 extern "C"{

@@ -1,7 +1,7 @@
 #ifndef _DISTANCE_METRICS_H_
 #define _DISTANCE_METRICS_H_
 
-#include <cv.h>
+#include <opencv/cv.h>
 
 float emdDistance(float *iptr, float *optr, int sz, CvMat *cost=0, CvMat *flow=0);
 float kullBackDistance(float *iptr, float *optr, int sz);

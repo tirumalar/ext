@@ -9,7 +9,7 @@
 #define EYESEGMENTSERVER_H_
 #include <list>
 
-#include <cv.h>
+#include <opencv/cv.h>
 extern "C" {
 #include "test_fw.h"
 #include "EdgeImage_private.h"
