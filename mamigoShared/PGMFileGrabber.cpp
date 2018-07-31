@@ -4,7 +4,7 @@
  *  Created on: 17 Mar, 2009
  *      Author: akhil
  */
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 #include "PGMFileGrabber.h"
 extern "C"{
 #include "file_manip.h"

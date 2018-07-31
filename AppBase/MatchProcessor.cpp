@@ -596,7 +596,7 @@ void MatchProcessor::process(HTTPPOSTMsg *msg) {
 		cout << ex.what() << endl;
 	}
 }
-
+#include <opencv2/highgui/highgui.hpp>
 IrisData * MatchProcessor::SegmentEye(HTTPPOSTMsg *msg,float *variance){
 #ifdef MADHAV
 	int numsec = (1500000+2*m_IrisDBHeader->GetNumRecord()*1000)/1000000;

@@ -2,7 +2,7 @@
 
 #define _AREA_CONCOM_H
 
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 //#include "motion_common.h"
 
 typedef struct _MAMIGO_MOTION_CCOMP_BLOB

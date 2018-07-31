@@ -4,7 +4,7 @@
  *  Created on: 19 Dec, 2008
  *      Author: akhil
  */
-#include <highgui.h>
+#include <opencv/highgui.h>
 #include "FileBasedFrameGrabber.h"
 #include "Configuration.h"
 extern "C"{

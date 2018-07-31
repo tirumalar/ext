@@ -13,13 +13,16 @@
 #include "IrisSelectServer.h"
 #include "EyeTracker.h"
 #include <iostream>
-#include <highgui.h>
+// #include <highgui.h>
+#include <opencv2/highgui/highgui.hpp>
 #include <time.h>
 #include "logging.h"
 #include "ProcessorChain.h"
 #include "LaplacianBasedFocusDetector.h"
 #include <unistd.h>
 #include "UtilityFunctions.h"
+
+#include <opencv2/imgproc/imgproc.hpp>
 extern "C"{
 #ifdef __BFIN__
 	#include <bfin_sram.h>
@@ -186,7 +189,7 @@ m_LedConsolidator = NULL;
     m_FlipType = pConf->getValueIndex("GRI.Flip", -1, 2, 2, "Both", "Horizontal", "Vertical", "None");
 
     if(m_shouldRotate)
-		m_rotationBuff=cvCreateImage(cvSize(ch,cw),numbits,1);
+		m_rotationBuff=cvCreateImage(cvSize(ch,cw),IPL_DEPTH_8U,1);
     m_FocusBasedRejectionType = pConf->getValueIndex("GRI.FocusBasedRejection", 0, 4, 0, "None", "Threshold", "PeakDetection", "RunningMax", "BlockMax");
     if(!m_shouldDetect)
         m_FocusBasedRejectionType = 0;
@@ -286,7 +289,7 @@ m_LedConsolidator = NULL;
 
 		int w,h,bits;
 		ReadPGM5WHandBits(fpath,&w,&h,&bits);
-		m_src = cvCreateImage(cvSize(w,h),bits,1);
+		m_src = cvCreateImage(cvSize(w,h),IPL_DEPTH_8U,1);
 		ReadPGM5(fpath,(unsigned char *)m_src->imageData,&w,&h,m_src->imageSize);
 	}
 
@@ -707,7 +710,7 @@ void ImageProcessor::SetImage(IplImage *dst){
 		int ret = ReadPGM5WHandBits(fpath,&w,&h,&bits);
 		printf("Reading %s %d %d %d %d\n",fpath,w,h,bits,ret);
 		if(!m_src && (ret != -1)){
-			m_src = cvCreateImage(cvSize(w,h),bits,1);
+			m_src = cvCreateImage(cvSize(w,h),IPL_DEPTH_8U,1);
 		}
 
 		if(ret == -1){

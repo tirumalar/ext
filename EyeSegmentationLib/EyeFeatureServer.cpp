@@ -1,6 +1,6 @@
 #include "EyeFeatureServer.h"
 #include "EyeMatchServer.h"
-#include <cv.h>
+#include <opencv/cv.h>
 #include <stdio.h>
 #include <map>
 #include <list>
@@ -252,7 +252,9 @@ int EyeFeatureServer::FeatureCoring(unsigned char *feature, unsigned char *tag)
 	printf("\n");
 	return 1;
 }
-
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv/cxcore.h>
+#include <opencv2/imgproc/imgproc.hpp>
 int EyeFeatureServer::ExtractFeatures(IplImage *img, IplImage *mask, unsigned char *feature, unsigned char *tag)
 {
 	int width = mask->width;

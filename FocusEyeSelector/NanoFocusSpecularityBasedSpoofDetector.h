@@ -1,6 +1,9 @@
 #pragma once
-					
+#if 0
 #include <cxtypes.h>
+#else
+#include <opencv2/core.hpp>
+#endif
 //#include "ippdefs.h"
 #include <list>
 #include <map>

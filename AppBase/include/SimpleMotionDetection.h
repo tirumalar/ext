@@ -7,7 +7,7 @@
 
 #ifndef SIMPLEMOTIONDETECTION_H_
 #define SIMPLEMOTIONDETECTION_H_
-#include <cv.h>
+#include <opencv/cv.h>
 
 #include "Configurable.h"
 #include "CircularAccess.h"

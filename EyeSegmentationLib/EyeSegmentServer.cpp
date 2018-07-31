@@ -3,9 +3,9 @@
 
 #include "EyeSegmentServer.h"
 #include "DistanceMetrics.h"
-#include <cv.h>
+#include <opencv/cv.h>
 #include <stdlib.h>
-#include <cxcore.h>
+#include <opencv/cxcore.h>
 #include "EyeFeatureServer.h"
 #include "EyeMatchServer.h"
 #include <time.h>
@@ -14,7 +14,7 @@
 #include <time.h>
 #include "area_concom.h"
 #include <algorithm>
-#include <highgui.h>
+#include <opencv/highgui.h>
 #include "EdgeImage_private.h"
 
 using std::max;

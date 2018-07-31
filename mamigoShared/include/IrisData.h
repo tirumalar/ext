@@ -1,7 +1,13 @@
 #ifndef IRISDATA_H_
 #define IRISDATA_H_
 #include "MessageExt.h"
+#if 0
 #include <cxtypes.h>
+#else
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv2/core/types_c.h>
+#endif
 #include <string>
 
 #define  ALIGN_BYTES 4

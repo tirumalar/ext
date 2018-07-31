@@ -20,9 +20,9 @@
 #include "ImageProcessor.h"
 
 #ifdef HBOX_PG
-#include <cv.h>
-#include <cxcore.h>
-#include <highgui.h>
+#include <opencv/cv.h>
+#include <opencv/cxcore.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <iostream>
 #include "FlyCapture2.h"
 

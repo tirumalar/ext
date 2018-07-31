@@ -1,5 +1,5 @@
 #pragma once
-#include <cv.h>
+#include <opencv/cv.h>
 typedef CvSize IppiSize;
 typedef CvPoint IppiPoint;
 typedef CvRect IppiRect;

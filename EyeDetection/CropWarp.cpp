@@ -3,7 +3,7 @@
 #include "Image.h"
 #include "pyramid.h"
 #include <stdio.h>
-#include <highgui.h>
+#include <opencv/highgui.h>
 #ifdef __BFIN__
 #include "GaussPyr.h"
 
