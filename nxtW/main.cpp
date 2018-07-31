@@ -1102,6 +1102,16 @@ int processCommand(char *str)
 			system("cd /home/root; ./fwHandler.sh reboot");
 			break;
 		}
+		case 1340:
+		{
+			len = sprintf(szTokenBuffer, "hostnamectl set-hostname %s",szParam[1]);
+			break;
+		}
+		case 1341:
+		{
+			system("mv /home/www-internal/hosts.temp /etc/hosts");
+			break;
+		}
 		default:
 			printf("Unknown token %d\n", nToken);
 			len = sprintf(szTokenBuffer, "echo 'Unknown token %d\n'", nToken);

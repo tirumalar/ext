@@ -552,6 +552,56 @@ class InterfaceEditor
         return $arFiles;
     }
 
+	private function ValidateHostname($hostname)
+	{
+		$regex_match_result = preg_match("/[a-zA-Z0-9]+/", $hostname);
+
+		return (($regex_match_result == 1) && strlen($hostname) <= 255);
+	}
+
+	private function ChangeHostnameInHostsFile($old_hostname, $new_hostname)
+	{
+		$hosts_filepath = '/etc/hosts';
+		$temp_hosts_filepath = '/home/www-internal/hosts.temp';
+
+		$hosts_file = fopen($hosts_filepath, "r");
+		if ($hosts_file)
+		{
+			$temp_hosts_file = fopen($temp_hosts_filepath, "w");
+			if ($temp_hosts_file)
+			{
+				while (($line = fgets($hosts_file)) !== false)
+				{
+					//echo "line: $line\n";
+					if (!empty($line))
+					{
+						$line_parts = explode("\t", $line);
+						if (count($line_parts) >= 2 && trim($line_parts[1]) == $old_hostname)
+						{
+							//echo "line part [1]: $line_parts[1]\n";
+							$line_parts[1] = str_replace($old_hostname, $new_hostname, $line_parts[1]);
+						}
+						$line = implode("\t", $line_parts);
+						if (!fwrite($temp_hosts_file, $line))
+						{
+							printf("error writing temp hosts file ($temp_hosts_filepath)");
+						}
+					}
+				}
+				fclose($temp_hosts_file);
+			}
+			else
+			{
+				printf("error opening temp hosts file ($temp_hosts_filepath)");
+			}
+			fclose($hosts_file);
+		}
+		else
+		{
+			printf("error opening hosts file ($hosts_filepath)");
+		}
+	}
+
 
 
     function UpdateInterfacesFile($row, $bSwitchedToStatic, $bForceUpdate, $theHardwareType)
@@ -588,6 +638,8 @@ class InterfaceEditor
         $strCurrentInterfaces .= sprintf("broadcast %s\n", $this->BroadcastIp);
         $strCurrentInterfaces .= sprintf("gateway %s\n", $this->Gateway);
         $strCurrentInterfaces .= sprintf("hwaddress ether %s\n", $this->MacAddress);
+
+		$strCurrentDeviceName = $this->DeviceName;
 
         // Ok, that takes care of all the backup issues... Now, let's write the new values...
         // First, we update our internal values, then write out the new interfaces file...
@@ -703,10 +755,26 @@ class InterfaceEditor
         // DMOTODO add code to change hostname...
         if ($bDeviceNameChanged)
         {
+			if ($this->ValidateHostname($this->DeviceName))
+			{
+				if ($theHardwareType === '1')
+				{
+					$this->ChangeHostnameInHostsFile($strCurrentDeviceName, escapeshellarg($this->DeviceName));
+					$strcmdResult = NXTW_shell_exec(sprintf("1340".chr(0x1F)."%s", escapeshellarg($this->DeviceName))); // hostnamectl set-hostname '%s'
+					// TODO: check result
+					//if ()
+					{
+						NXTW_shell_exec("1341"); // mv /home/www-internal/hosts.temp /etc/hosts
+					}
+				}
+				else		
+				{
 		//	error_log("try changehost name");
             // If the device name (ie. hostname) has changed... write out the hostname file...
 //            $strcmdResult = sprintf("echo '%s' > '%s'", $this->DeviceName, "/etc/hostname");
 			$strcmdResult = NXTW_shell_exec(sprintf("4".chr(0x1F)."%s", escapeshellarg($this->DeviceName))); // nxtW will identify read-only FS and correct hostname file
+			}
+			}
         }
 	
 	 if ($bChanged)
