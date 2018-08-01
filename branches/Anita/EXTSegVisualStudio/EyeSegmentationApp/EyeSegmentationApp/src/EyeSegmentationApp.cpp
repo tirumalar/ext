@@ -17,7 +17,10 @@
 #include <sstream>
 #include <conio.h>
 #include "EyeDetectAndMatchServer.h"
+#include "FileConfiguration.h"
 //#include <vector.h>
+
+
 using namespace std;
 
 void saveImageSnippet(char imageName[], int height, int width, char* data) 
@@ -40,11 +43,136 @@ void draw( IplImage* img1, float x, float y, float z, CvScalar color )
 	cvCircle( img1, center, radius, color, 1, 8, 0 );
 }
 
+void setImage(IplImage *dst, IplImage *m_src)
+{
+	//if(m_Imageformat){
+		int m_fileIndex = 1, m_fileEyeIndex=0,m_maxFramesReset=10;
+		//const char *m_Imageformat="./data/Good_255.pgm";
+		char *m_Imageformat="./data/Good_255.pgm";
+
+		char fpath[1024];
+		sprintf(fpath,m_Imageformat,m_fileIndex,m_fileEyeIndex);
+
+		int w=-1,h=-1,bits=-1;
+		// int ret = ReadPGM5WHandBits(fpath,&w,&h,&bits);
+
+//		printf("Reading %s %d %d %d %d\n",fpath,w,h,bits,ret);
+		/*if(!m_src && (ret != -1)){
+			m_src = cvCreateImage(cvSize(w,h),bits,1);
+		}
+
+		if(ret == -1){
+			if(m_fileIndex >= m_maxFramesReset){
+				m_fileIndex = -1;
+				m_fileEyeIndex = 2;
+			}
+			if(m_src)
+				cvSetZero(m_src);
+		}else{
+			ReadPGM5(fpath,(unsigned char *)m_src->imageData,&w,&h,m_src->imageSize);
+		}*/
+
+		if(m_src){
+			for(int i =0;i<min(dst->height,m_src->height);i++){
+				unsigned char *inp,*out;
+				inp = ((unsigned char *)m_src->imageData) + i*(m_src->widthStep);
+				//out = ((unsigned char *)dst->imageData) + (i+(dst->height>>1)-(m_src->height>>1))*(dst->widthStep) + (dst->widthStep>>1);
+				out = ((unsigned char *)dst->imageData) + (i+(dst->height>>1)-(m_src->height>>1))*(dst->widthStep) + (dst->widthStep>>1);
+				memcpy(out,inp,min(dst->width,m_src->width));
+			}
+		}
+		//m_il0 = m_fileIndex&0x1;
+		m_fileEyeIndex++;
+		if(m_fileEyeIndex >1){
+			m_fileEyeIndex=0;
+			m_fileIndex++;
+		}
+	//}
+}
+
+EyeDetectAndMatchServer *m_pSrv;	
+#define WIDTH 2000
+#define HEIGHT 2000
+int m_detectLevel = 2;
+
+void configureDetector(){
+	m_pSrv = new EyeDetectAndMatchServer(WIDTH,HEIGHT,m_detectLevel,"Eyelock.log");
+	m_pSrv->LoadHaarClassifier("data/adaboostClassifier.txt"); 
+
+	// set the specularity mode
+	FileConfiguration pConf("data/Eyelock.ini");
+	m_pSrv->SetSingleSpecMode(pConf.getValue("GRI.SingleSpecMode",false));
+	m_pSrv->SetDoHaar(pConf.getValue("GRI.DoHaar",true));
+	m_pSrv->SetHaarEyeZoom(pConf.getValue("GRI.HaarEyeZoom",m_pSrv->GetHaarEyeZoom()));
+	m_pSrv->SetHaarImageShifts(pConf.getValue("GRI.HaarImageShifts",m_pSrv->GetHaarImageShifts()));
+	m_pSrv->SetHaarImageSampling(pConf.getValue("GRI.HaarImageSampling",m_pSrv->GetHaarImageSampling()));
+
+	bool val = pConf.getValue("GRI.CovarianceTestForDetection",false);
+
+	m_pSrv->SetCovTestForDetection(val?1:0);
+	m_pSrv->SetSpecCovEigenThresh(pConf.getValue("GRI.SpecularityCovarianceEigenvalueThreshold",m_pSrv->GetSpecCovEigenThresh()));
+	m_pSrv->SetSpecEccThresh(pConf.getValue("GRI.SpecularityEccentricityThreshold",m_pSrv->GetSpecEccThresh()));
 
 
 
+	EyeDetectorServer *detector=m_pSrv->GetEyeDetector();
+	detector->SetSpecularityMagnitude(pConf.getValue("GRI.EyeDetectionSpecularityMagnitude",15));
+	int a = detector->GetSpecularitySize();
 
+	detector->SetMaskRadius(pConf.getValue("GRI.EyeDetectionMaskRadius",10));
+	detector->SetVarianceThresholdMin(pConf.getValue("GRI.EyeDetectionVarianceThresholdMin",1.5f));
+	detector->SetVarianceThresholdMax(pConf.getValue("GRI.EyeDetectionVarianceThresholdMax",0.666f));
+	detector->SetSeparation(pConf.getValue("GRI.EyeDetectionSeparation",36));
+	detector->SetSearchX(pConf.getValue("GRI.EyeDetectionSearchX",15));
+	detector->SetSearchY(pConf.getValue("GRI.EyeDetectionSearchY",10));
+	detector->SetBoxX(pConf.getValue("GRI.EyeDetectionBoxX",detector->GetSpecularitySize()));
+	detector->SetBoxY(pConf.getValue("GRI.EyeDetectionBoxY",detector->GetSpecularitySize()));
+}
 
+int detectEyes(IplImage* inputImage)
+{	
+	configureDetector();
+	static int EyeCropCnt;
+	// cvSaveImage("Test.pgm", inputImage);
+		
+	
+
+	CSampleFrame frame;
+	frame.setScratch(m_pSrv->GetScratch());
+	static int i=0;
+	Image8u img(inputImage,false);
+	frame.SetImage(&img);
+	bool result = false;
+	
+	result = m_pSrv->Detect(&frame);
+	
+	IplImage *m_eyeCrop = cvCreateImage(cvSize(640,480),IPL_DEPTH_8U,1);
+	// bool detect = m_pSrv->Detect(&m_sframe,m_eyeDetectionLevel);
+	if(result)
+	{		
+		int	haarEyes = frame.GetNumberOfHaarEyes();
+		printf("haarEyes......%d\n", haarEyes);
+	
+		EyeCenterPointList *pointList = (frame.GetEyeCenterPoints());
+		EyeCenterPointList::iterator iter = pointList->begin();
+		char outputFileName[200];
+		sprintf(outputFileName,"D:/Eyes1/EyeCrop_%d.pgm",EyeCropCnt++);
+		for(int j=0; j<haarEyes; ++j)
+		{
+			int left,top;
+			static int EyeCropCnt;
+			frame.GetCroppedEye(j,m_eyeCrop,left,top);
+			// cvSaveImage(outputFileName,m_eyeCrop);
+			cvShowImage("EyecropImage",m_eyeCrop);
+			cvWaitKey(1);		
+		}
+	}
+
+	if(m_eyeCrop)
+		cvReleaseImage(&m_eyeCrop);
+	
+	getchar(); 
+}
 
 int main(int argc, char* argv[])
 {
@@ -59,11 +187,11 @@ int main(int argc, char* argv[])
 	//CreateDirectoryA(homeFolder.c_str(), NULL);
 
 
-	// Anita EyeDetection
-	EyeDetectAndMatchServer *m_pSrv;
-	CSampleFrame m_sframe;
-	int m_eyeDetectionLevel;
-	bool detect = m_pSrv->Detect(&m_sframe,m_eyeDetectionLevel);
+	// Anita EyeDetection	
+	IplImage *frame;
+	frame = cvLoadImage("D:/Cam_12120579_1.pgm", CV_LOAD_IMAGE_GRAYSCALE);
+	detectEyes(frame);
+	
 
 	std::string str; 
 	ofstream myfile;
