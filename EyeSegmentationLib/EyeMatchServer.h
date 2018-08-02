@@ -32,9 +32,9 @@ public:
 	double MatchWithShifts(unsigned char *f2ptr, unsigned char *m2ptr,unsigned int maskval);
 
 	void MakeShifts(unsigned char *f1ptr, unsigned char *m1ptr,unsigned int uiMask);
-	CvPoint GetHammingDistance_global(unsigned char *f1, unsigned char *m1, unsigned char *f2, unsigned char *m2);
-	CvPoint GetHammingDistance_globalOpt(unsigned char *f1, unsigned char *m1, unsigned char *f2, unsigned char *m2);
-	double Match(unsigned char* f2ptr, unsigned char* m2ptr);
+	CvPoint GetHammingDistance_global(unsigned char *f1, unsigned char *m1, unsigned char *f2, unsigned char *m2, int featureMask);
+	CvPoint GetHammingDistance_globalOpt(unsigned char *f1, unsigned char *m1, unsigned char *f2, unsigned char *m2, int featureMask);
+	double Match(unsigned char* f2ptr, unsigned char* m2ptr,int featureMask);
 	void PrintAllShift();
 
 	void MakeShiftsInternal(unsigned char *codeTemp, unsigned char *maskTemp, int featureLength, int numRows, int shiftScale);

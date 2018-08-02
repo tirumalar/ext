@@ -54,7 +54,7 @@ HDMatcher* HDMatcherFactory::Create(int matchtype,int irissz,int size,int id,con
 	bool lowernibble = getConf()->getValue("GRI.MatcherUseLowerNibble",true);
 
 	if (LOCAL == matchtype){
-		HDMLocal* inp = new HDMLocal(size,id,coarseFineMatch,irissz);
+		HDMLocal* inp = new HDMLocal(size,id,coarseFineMatch,maskcode,irissz);
 		inp->setConf(getConf());
 		inp->SetMatchManager(m_Mgr);
 		inp->SetCommonBits(nominalCommonBits,minCommonBitsFine,minCommonBitsCoarse);
@@ -67,7 +67,7 @@ HDMatcher* HDMatcherFactory::Create(int matchtype,int irissz,int size,int id,con
 		return inp;
 	}
 	else if(REMOTEPROXY == matchtype ){
-		HDMRemote* inp = new HDMRemote(size,id,add);
+		HDMRemote* inp = new HDMRemote(size,id,maskcode,add);
 		inp->setConf(getConf());
 		inp->SetMatchManager(m_Mgr);
 		inp->SetTimeOut(m_timeOut);
@@ -84,7 +84,7 @@ HDMatcher* HDMatcherFactory::Create(int matchtype,int irissz,int size,int id,con
 	}
 	else if(NWMATCHER==matchtype )
 	{
-		HDMatcher *inp= new HDMatcher(size,id,coarseFineMatch);
+		HDMatcher *inp= new HDMatcher(size,id,coarseFineMatch,maskcode);
 		inp->setConf(getConf());
 		inp->SetCommonBits(nominalCommonBits,minCommonBitsFine,minCommonBitsCoarse);
 		inp->SetMaxCorruptBitsPercAllowed(maxCorrBitPer*1.0f);

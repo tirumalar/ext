@@ -25,7 +25,7 @@ typedef  enum{PING,ASSIGNDB,MATCH,EXITIT,UPDATEIRIS,DELETEIRIS,VALIDATECARD}NWMS
 
 class HDMRemote: public HDMatcher {
 public:
-	HDMRemote(int size,int id,const char *add=NULL);
+	HDMRemote(int size,int id,int featureMask,const char *add=NULL);
 	virtual ~HDMRemote();
 	virtual void InitSSL();
 	virtual bool StartMatch(unsigned char *iriscode, int taskid);

@@ -14,7 +14,7 @@ class IrisDBHeader;
 class IrisData;
 class HDMLocal: public HDMatcher {
 public:
-	HDMLocal(int size,int id,bool useCoarseFine,int irissz = 1280);
+	HDMLocal(int size,int id,bool useCoarseFine,int featureMask,int irissz = 1280);
 	virtual ~HDMLocal();
 	virtual bool StartMatch(unsigned char *iriscode, int taskid);
 	virtual void StartMatch(unsigned char *iriscode, int taskid, int *numdenbuf);
