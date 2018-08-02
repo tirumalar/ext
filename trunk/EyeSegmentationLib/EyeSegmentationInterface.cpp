@@ -524,9 +524,9 @@ std::pair<int, float> IrisMatchInterface::match_pair(unsigned char *Iriscode1, u
 	return std::pair<int, float>(0,score);
 }
 
-std::pair<int, float> IrisMatchInterface::Match(unsigned char *Iriscode2, unsigned char *Maskcode2){
+std::pair<int, float> IrisMatchInterface::Match(unsigned char *Iriscode2, unsigned char *Maskcode2, int featureMask){
 	float score;
-	score = (float) m_pEyeMatchServer->Match(Iriscode2, Maskcode2);
+	score = (float) m_pEyeMatchServer->Match(Iriscode2, Maskcode2, featureMask);
 	return std::pair<int, float>(0,score);
 }
 

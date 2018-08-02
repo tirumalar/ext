@@ -29,8 +29,8 @@ using std::min;
 using namespace std;
 const char logger[30] = "HDMRemote";
 
-HDMRemote::HDMRemote(int size, int id,const char* addr):
-	HDMatcher(size, id,false),m_socketFactory(0){
+HDMRemote::HDMRemote(int size, int id,int featureMask,const char* addr):
+	HDMatcher(size, id,false,featureMask),m_socketFactory(0){
 	EyelockLog(logger, DEBUG, "Address %s ",addr);
 	m_pAddress = new HostAddress(addr);
 	m_genMsg = new TextMessage(64);

@@ -595,7 +595,7 @@ std::pair<int, float> EyeMatchServer::MatchDBNew(unsigned char *database, int nu
 			Compress_Shift(templ, f2ptr, m_numRows,	m_featureLength / m_numRows);
 			Compress_Shift(mask, m2ptr, m_numRows, m_featureLength / m_numRows);
 			CvPoint dist;
-			dist = GetHammingDistance_globalOpt(icode, imask, f2ptr, m2ptr);
+			dist = GetHammingDistance_globalOpt(icode, imask, f2ptr, m2ptr, featureMask);
 			double score =(dist.y > m_minCommonBits) ? 1.0 * dist.x / dist.y : 1.0;
 			if (score < min_score) {
 				min_score = score;
@@ -667,7 +667,7 @@ std::pair<int, float> EyeMatchServer::MatchDBNewCompress(unsigned char *database
 //			printf("%d DB Code amd Mask\n",r);
 //			printTempMask(templ,mask,640);
 
-			dist = GetHammingDistance_globalOpt(icode, imask, templ, mask);
+			dist = GetHammingDistance_globalOpt(icode, imask, templ, mask, featureMask);
 			double score =(dist.y > m_minCommonBits) ? 1.0 * dist.x / dist.y : 1.0;
 //			printf("%d %f\n",r,score);
 			if (score < min_score) {
@@ -735,7 +735,7 @@ void EyeMatchServer::PrintAllShift(){
 	}
 }
 
-double EyeMatchServer::Match(unsigned char* f2ptr, unsigned char* m2ptr){
+double EyeMatchServer::Match(unsigned char* f2ptr, unsigned char* m2ptr, int featureMask){
 	double min_score = 10.0;
 	CvPoint bestMatchScore = cvPoint(0, m_featureLength);
 	int arrsz = m_ShiftRight-m_ShiftLeft +1;
@@ -744,7 +744,7 @@ double EyeMatchServer::Match(unsigned char* f2ptr, unsigned char* m2ptr){
 		unsigned char *icode = m_codeArray[i]; //insp
 		unsigned char *imask = m_maskArray[i]; //insp
 
-		dist = GetHammingDistance_global(icode,imask,f2ptr,m2ptr);
+		dist = GetHammingDistance_global(icode,imask,f2ptr,m2ptr,featureMask);
 		//printf("%d[%d] -> total=>%d %d\n",i,m_featureLength,dist.x,dist.y);
 		double score = (dist.y > m_minCommonBits)? 1.0*dist.x/dist.y : 1.0;
 		if(score < min_score){
@@ -757,7 +757,7 @@ double EyeMatchServer::Match(unsigned char* f2ptr, unsigned char* m2ptr){
 	return min_score;
 }
 
-CvPoint EyeMatchServer::GetHammingDistance_global(unsigned char *f1, unsigned char *m1, unsigned char *f2, unsigned char *m2)
+CvPoint EyeMatchServer::GetHammingDistance_global(unsigned char *f1, unsigned char *m1, unsigned char *f2, unsigned char *m2, int featureMask)
 {
 	unsigned int bits = 0;
 	unsigned int dist = 0;
@@ -813,13 +813,13 @@ CvPoint EyeMatchServer::GetHammingDistance_global(unsigned char *f1, unsigned ch
 		unsigned int t1 = (*m1ptr++) & (*m2ptr++);
 		unsigned int t2 = (*f1ptr++ ^ *f2ptr++) & t1;
 
-		bits += m_lut16[t1 & 0xFFFF] + m_lut16[t1 >> 16];
-		dist += m_lut16[t2 & 0xFFFF] + m_lut16[t2 >> 16];
+		bits += m_lut16[t1 & featureMask] + m_lut16[t1 >> 16];
+		dist += m_lut16[t2 & featureMask] + m_lut16[t2 >> 16];
 	}
 	return cvPoint(dist, bits);
 #endif
 }
-CvPoint EyeMatchServer::GetHammingDistance_globalOpt(unsigned char *f1, unsigned char *m1, unsigned char *f2, unsigned char *m2)
+CvPoint EyeMatchServer::GetHammingDistance_globalOpt(unsigned char *f1, unsigned char *m1, unsigned char *f2, unsigned char *m2, int featureMask)
 {
 	unsigned int bits = 0;
 	unsigned int dist = 0;
@@ -874,8 +874,8 @@ CvPoint EyeMatchServer::GetHammingDistance_globalOpt(unsigned char *f1, unsigned
 		unsigned int t1 = (*m1ptr++) & (*m2ptr++);
 		unsigned int t2 = (*f1ptr++ ^ *f2ptr++) & t1;
 
-		bits += m_lut16[t1 & 0xFFFF] + m_lut16[t1 >> 16];
-		dist += m_lut16[t2 & 0xFFFF] + m_lut16[t2 >> 16];
+		bits += m_lut16[t1 & featureMask] + m_lut16[t1 >> 16];
+		dist += m_lut16[t2 & featureMask] + m_lut16[t2 >> 16];
 	}
 	return cvPoint(dist, bits);
 #endif

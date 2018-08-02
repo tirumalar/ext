@@ -27,7 +27,7 @@ extern "C" {
 	void ScaleCodeHigh(unsigned char *inp,unsigned char *out,int cnt);
 }
 
-HDMatcher::HDMatcher(int byteSize,int id,bool useCoarseFine)
+HDMatcher::HDMatcher(int byteSize,int id,bool useCoarseFine,int featuremask)
 :m_numIris(0),m_pMatchManagerInterface(0),m_startIndx(0),m_GreedyMatch(false),m_CoarseFineMatch(false),m_Threshold(-1.0f),
 m_Shift(0),m_logResults(0),m_maxCorruptBitsPercAllowed(70),m_Lut(0),m_maskCode(0xFFFFFFFF),m_irisData(0),m_assigned(0),m_compressedMatching(false)
 {
@@ -49,6 +49,7 @@ m_Shift(0),m_logResults(0),m_maxCorruptBitsPercAllowed(70),m_Lut(0),m_maskCode(0
 	m_Coarsemask = NULL;
 	m_LowerNibble = true;
 	m_irisData = new IrisData;
+	m_FeatureMask = featuremask;
 	memset(m_cardMatchName, 0, 100);
 }
 
@@ -230,7 +231,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveCoarseFineDBCompressed(un
 			//Coarse
 			unsigned char *coarseIrisCode = GetCoarseCompressIris(coarseDB,i);
 			unsigned char *coarseMaskCode = coarseIrisCode +COARSE_IRIS_SIZE;
-			scoreCoarse = m_pIrisMatchInterfaceCoarse->Match(coarseIrisCode, coarseMaskCode);
+			scoreCoarse = m_pIrisMatchInterfaceCoarse->Match(coarseIrisCode, coarseMaskCode,m_FeatureMask);
 			if(scoreCoarse.second < best_scoreCoarse.second){
 				best_scoreCoarse = scoreCoarse;
 				best_scoreCoarse.first = i;
@@ -239,7 +240,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveCoarseFineDBCompressed(un
 			k++;
 			//Fine
 			unsigned char *insIrisCode = GetCompressIris(DB,i);
-			score = m_pIrisMatchInterface->MatchDBNewCompress(insIrisCode,1,m_GreedyMatch,1.0,0xF,shiftedCode,shiftedMask);
+			score = m_pIrisMatchInterface->MatchDBNewCompress(insIrisCode,1,m_GreedyMatch,1.0,m_FeatureMask,shiftedCode,shiftedMask);
 			if(m_debug)printf("(%8.6f,%8.6f)\n",scoreCoarse.second,score.second);
 			if(score.second < best_score.second){
 				best_score = score;
@@ -271,7 +272,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveDBCompressed(unsigned cha
 			unsigned char *insIrisCode = GetCompressIris(DB,i);
 			unsigned char *insMaskCode = insIrisCode + COMPRESS_IRIS_SIZE;
 			k++;
-			score = m_pIrisMatchInterface->MatchDBNewCompress(insIrisCode,1,m_GreedyMatch,1.0,0xF,shiftedCode,shiftedMask);
+			score = m_pIrisMatchInterface->MatchDBNewCompress(insIrisCode,1,m_GreedyMatch,1.0,m_FeatureMask,shiftedCode,shiftedMask);
 			if(score.second < best_score.second){
 				best_score = score;
 				best_score.first = i;
@@ -316,7 +317,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveCoarseFineDBUnCompressed(
 			unsigned char *coarseIrisCode = GetCoarseIris(coarseDB,0);
 			unsigned char *coarseMaskCode = GetCoarseMask(coarseDB,0);
 			IrisMatchInterface::GetCoarseIrisCode(insIrisCode,insMaskCode,irissz,coarseIrisCode,coarseMaskCode);
-			scoreCoarse = m_pIrisMatchInterfaceCoarse->Match(coarseIrisCode, coarseMaskCode);
+			scoreCoarse = m_pIrisMatchInterfaceCoarse->Match(coarseIrisCode, coarseMaskCode,m_FeatureMask);
 			if(scoreCoarse.second < best_scoreCoarse.second){
 				best_scoreCoarse = scoreCoarse;
 				best_scoreCoarse.first = i;
@@ -425,7 +426,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustive(unsigned char *IrisCode,
 			unsigned char *insIrisCode = GetIris(DB,i)+ 0;
 			unsigned char *insMaskCode = GetMask(DB,i)+ 0;
 			//SaveCode1((char *)insIrisCode);
-			score = m_pIrisMatchInterface->Match(insIrisCode, insMaskCode);
+			score = m_pIrisMatchInterface->Match(insIrisCode, insMaskCode,m_FeatureMask);
 //			printf("Score %f \n",score.second);
 			if(mrh){
 				if(score.second < m_Threshold){
@@ -482,7 +483,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeGreedy(unsigned char *IrisCode, uns
 		if(CheckFromCorruptList(i)){
 			unsigned char *insIrisCode = GetIris(DB,i);
 			unsigned char *insMaskCode = GetMask(DB,i);
-			score = m_pIrisMatchInterface->Match(insIrisCode, insMaskCode);
+			score = m_pIrisMatchInterface->Match(insIrisCode, insMaskCode,m_FeatureMask);
 
 			if(score.second < m_Threshold){
 				best_score = score;
@@ -527,7 +528,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveCoarseFine(unsigned char 
 			IrisMatchInterface::GetCoarseIrisCode(insIrisCode,insMaskCode,irissz,coarseIrisCode,coarseMaskCode);
 
 			//std::pair<int, float> scoreCoarse1 = m_pIrisMatchInterfaceCoarse->match_pair(m_CoarseBuff, m_Coarsemask, coarseIrisCode, coarseMaskCode);
-			scoreCoarse = m_pIrisMatchInterfaceCoarse->Match(coarseIrisCode, coarseMaskCode);
+			scoreCoarse = m_pIrisMatchInterfaceCoarse->Match(coarseIrisCode, coarseMaskCode,m_FeatureMask);
 			//printf("%f %f\n",scoreCoarse1.second,scoreCoarse.second);
 
 			if(scoreCoarse.second < best_scoreCoarse.second){
@@ -539,7 +540,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveCoarseFine(unsigned char 
 			k++;
 
 			//std::pair<int, float>score1 = m_pIrisMatchInterface->match_pair(refIrisCode, refMaskCode, insIrisCode, insMaskCode,m_maskCode);
-			score = m_pIrisMatchInterface->Match(insIrisCode, insMaskCode);
+			score = m_pIrisMatchInterface->Match(insIrisCode, insMaskCode,m_FeatureMask);
 			
 			//printf("%f %f\n",score1.second,score.second);
 
@@ -577,13 +578,13 @@ std::pair<int,float> HDMatcher::MatchIrisCodeGreedyCoarseFine(unsigned char *Iri
 			unsigned char *coarseMaskCode = GetCoarseMask(coarseDB,0);
 			IrisMatchInterface::GetCoarseIrisCode(insIrisCode,insMaskCode,1280,coarseIrisCode,coarseMaskCode);
 
-			score = m_pIrisMatchInterfaceCoarse->Match(coarseIrisCode, coarseMaskCode);
+			score = m_pIrisMatchInterfaceCoarse->Match(coarseIrisCode, coarseMaskCode, m_FeatureMask);
 
 			if(score.second>m_CoarseThreshold) continue;
 
 			insIrisCode = GetIris(DB,i);
 			insMaskCode = GetMask(DB,i);
-			score = m_pIrisMatchInterface->Match(insIrisCode, insMaskCode);
+			score = m_pIrisMatchInterface->Match(insIrisCode, insMaskCode, m_FeatureMask);
 
 			if(score.second < m_Threshold){
 				best_score = score;

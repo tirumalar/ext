@@ -23,7 +23,7 @@ using std::string;
 class HDMatcher: public Configurable{
 public:
 	enum Status{INIT, REGISTERED, AVAILABLE, BUSY, NOTAVAILABLE, CARDMATCH};
-	HDMatcher(int size,int id, bool useCoarseFine);
+	HDMatcher(int size,int id, bool useCoarseFine, int featureMask);
 	virtual ~HDMatcher();
 	virtual void InitSSL(){}
 
@@ -148,6 +148,7 @@ protected:
 	unsigned int m_maskCode;
 	IrisData *m_irisData;
 	char m_cardMatchName[100];
+	int m_FeatureMask;
 	unsigned char* GetIris(unsigned char *DB,int eyenum);
 	unsigned char* GetMask(unsigned char *DB,int eyenum);
 

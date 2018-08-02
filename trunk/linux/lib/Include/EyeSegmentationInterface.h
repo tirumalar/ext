@@ -98,7 +98,7 @@ public:
 	std::pair<int, int> match_pairNumDen(unsigned char *c1, unsigned char *m1,unsigned char *c2, unsigned char *m2, unsigned int maskval=0xFFFFFFFF);
 	std::pair<int, int> get_best_match_score();
 	std::pair<int, float> match_database(unsigned char *c1,unsigned char *m1);
-	std::pair<int, float> Match(unsigned char *Iriscode2, unsigned char *Maskcode2);
+	std::pair<int, float> Match(unsigned char *Iriscode2, unsigned char *Maskcode2,int featureMask);
 	std::pair<int, float> MatchDBRotation(unsigned char *f1ptr,unsigned char *m1ptr, unsigned char *database, int numCodes,bool greedy,float hammingscore,int featureMask);
 	std::pair<int, float> MatchDBNewOpt(unsigned char *database, int numCodes,bool greedy,float hammingscore,int featureMask,unsigned char *shiftedCode,unsigned char *shiftedMask);
 	std::pair<int, float> MatchDBNewCompress(unsigned char *database, int numCodes,bool greedy,float hammingscore,int featureMask,unsigned char *shiftedCode,unsigned char *shiftedMask);

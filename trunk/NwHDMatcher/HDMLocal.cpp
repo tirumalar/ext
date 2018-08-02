@@ -21,8 +21,8 @@ extern "C" {
 #include "file_manip.h"
 }
 
-HDMLocal::HDMLocal(int size,int id,bool useCoarseFine,int irissz):
-	HDMatcher(size,id,useCoarseFine){
+HDMLocal::HDMLocal(int size,int id,bool useCoarseFine,int featureMask,int irissz):
+	HDMatcher(size,id,useCoarseFine,featureMask){
 	m_CoarseDb = NULL;
 	m_data = NULL;
 	m_type = LOCAL;
