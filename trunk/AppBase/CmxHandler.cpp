@@ -38,7 +38,17 @@ extern "C" {
 //#include "EyeDispatcher.h"
 
 const char logger[30] = "CmxHandler";
+#if 0 
+#include <boost/filesystem.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
+long ptime_in_ms_from_epoch1(const boost::posix_time::ptime& pt)
+{
+	using boost::posix_time::ptime;
+	using namespace boost::gregorian;
+	return(pt-ptime(date(2013, Dec,30))).total_milliseconds();
+}
+#endif
 CMXMESSAGETYPE Prev_mesg;
 #define BUFLEN 1500
 #define min(a,b)((a<b)?(a):(b))
@@ -2901,6 +2911,7 @@ void *leftCServer(void *arg)
 
         	            	if(!b_syncReceived && ((short *)databuf)[0] == 0x5555)
         	                {
+        	            		// unsigned long timems = ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
       	                		datalen = 0;
       	                	    	memcpy(databuf, &databuf[rx_idx+2], length-2);
       	                	        rx_idx = length-2;
