@@ -1,6 +1,6 @@
 #!/bin/bash -e
 echo HOMEDIR  $HOME
-export EYELOCK_WS_EXT="${HOME}/30May/trunk"
+export EYELOCK_WS_EXT="${HOME}/workspace/trunk"
 
 if [ "${HOME}/workspace/eclipse" ];
 then
@@ -60,8 +60,8 @@ export OPENCV_NEW_INC=${PKG_PATH}/opencv3.4/include
 export OPENCV_NEW_LIBS=${PKG_PATH}/opencv3.4/lib
 
 #for OIMCalibration
-export ARUCO_INC=${STATIC_LIBS}/opencv3.4/aruco/include
-export ARUCO_LIBS=${STATIC_LIBS}/opencv3.4/aruco/lib
+export ARUCO_INC=${PKG_PATH}/opencv3.4/aruco/include/aruco
+export ARUCO_LIBS=${PKG_PATH}/opencv3.4/aruco/lib
 
 export ARCH_PROCESSOR="x86"
 
