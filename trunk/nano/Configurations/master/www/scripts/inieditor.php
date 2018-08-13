@@ -927,6 +927,9 @@ class INIEditor
             // ALWAYS add the value if it's missing from the Eyelock.ini file
             $this->add("GRI.LEDBrightness", $this->GRI_LEDBrightness);
         }
+		else
+            // Convert 0-255 from ini file into 0-100;
+            $this->GRI_LEDBrightness = ($this->GRI_LEDBrightness/255)*100;
 
         
         if (!$this->get("GRI.TamperToneVolume", $this->GRI_TamperToneVolume))
@@ -1621,7 +1624,7 @@ class INIEditor
             else if ($key === "GRI_LEDBrightness")
             {
                 if ($value != $this->GRI_LEDBrightness)
-      				$this->set("GRI.LEDBrightness", $value);
+      				$this->set("GRI.LEDBrightness", ($value/100)*255);
             }
             else if ($key === "GRI_InternetTimeAddr")
             {
