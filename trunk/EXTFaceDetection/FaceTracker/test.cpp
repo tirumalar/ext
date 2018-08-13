@@ -198,7 +198,9 @@ Mat outImgLast, outImg1, outImg1s;		//Used in MeasureSnr function
 //Used as increasing exposure time in brightnessAdjust function,
 //mainly used in Camera to Camera Calibration
 int agc_val_cal=3;
-
+int step;
+int startPoint;
+int thresholdVal;
 //variable used for tempering
 
 std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
@@ -709,6 +711,8 @@ void DoStartCmd(){
 
 
 	MIN_POS = fconfig.getValue("FTracker.minPos",0);
+	step = fconfig.getValue("FTracker.CalStep",15);
+	startPoint = fconfig.getValue("FTracker.startPoint",100);
 	MAX_POS = fconfig.getValue("FTracker.maxPos",350);
 	CENTER_POS = fconfig.getValue("FTracker.centerPos",164);
 
@@ -2152,6 +2156,9 @@ void MeasureSnr() {
 }
 
 
+#define minCalBrightness 40		//orignal 40
+#define maxCalBrightness 220
+
 //Individual camera's offset correction
 void DoImageCal(int cam_id_ignore)
 {
@@ -2180,15 +2187,15 @@ void DoImageCal(int cam_id_ignore)
 
     	a=mean(outImg);
     	EyelockLog(logger, DEBUG, "Mean is %f\n",a.val[0]);
-    	if (a.val[0]>40)
+    	if (a.val[0]>minCalBrightness)
     		break;
     	}
-    if (a.val[0]<40)
+    if (a.val[0]<minCalBrightness)
     {
     	EyelockLog(logger, DEBUG, "Error Not enough light");
     	exit(0);
     }
-    if (a.val[0]>220)
+    if (a.val[0]>maxCalBrightness)
        {
     	EyelockLog(logger, DEBUG, "Too much light");
        	exit(0);
@@ -2269,7 +2276,7 @@ void CalAll()
 #ifdef CAMERACALIBERATION_ARUCO
 
 //Detect ARUCO markers
-std::vector<aruco::Marker> gridBooardMarker(Mat img){
+std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam){
 	//VideoCapture inputVideo;
 	//inputVideo.open(0);
 	int imgCount = 0;
@@ -2282,7 +2289,7 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
 	int portNum = vs->m_port;
-	Mat imgCopy;
+	Mat imgCopy, imgCopy1;
 
 	//float scale = 1.0;
 	if (portNum == 8194){
@@ -2301,9 +2308,17 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 	std::vector<aruco::Marker> markers;
 
 	char buffer[512];
+	imgCopy.copyTo(imgCopy1);
 
 #if 1
 	if(!img.empty()){
+		if (cam == 4){
+			//equalizeHist( imgCopy, imgCopy );
+			//threshold( imgCopy, imgCopy, 10, 255,THRESH_BINARY);
+		}
+		else{
+			threshold( imgCopy, imgCopy, thresholdVal, 255,THRESH_BINARY);
+		}
 		markers = mDetector.detect(imgCopy);
 		//cv::imshow("streaming without marker", imgCopy);
 
@@ -2323,12 +2338,16 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img){
 		for(size_t i = 0; i < markers.size(); i++){
 			//cout << markers[i] << endl;
 			//cout << "IDs ::: " << markers[i].id << "    center  ::: " << markers[i].getCenter() << endl;
-			markers[i].draw(imgCopy);
+
+			//markers[i].draw(imgCopy);		//uncomment to check binary image
+			markers[i].draw(imgCopy1);
 
 		}
 		//namedWindow("marker Detects", WINDOW_NORMAL);
 		//sprintf(buffer, "imgAruco%i.png", portNum);
-		cv::imshow("marker Detects", imgCopy);
+
+		//cv::imshow("marker Detects", imgCopy);		//uncomment to check binary image
+		cv::imshow("marker Detects", imgCopy1);
 		c=cvWaitKey(200);
 		if (c=='q')
 			printf("Continue!\n");
@@ -2511,12 +2530,12 @@ void brightnessAdjust(Mat outImg, int cam){
 	float bThreshold;
 	if (cam == 4){
 		agc_val_cal = 3;
-		bThreshold = 15.00;
+		bThreshold = 13.00;
 	}
 	else if (cam == 81 || cam == 82)
-		bThreshold = 50.00;
+		bThreshold = 35.00;
 	else
-		bThreshold = 52.00;
+		bThreshold = 30.00;
 
 
 	while(!(p >= bThreshold)){
@@ -2571,7 +2590,7 @@ bool CalCam(){
 	printf("Detecting marker of aux 8193 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisAuxRight = gridBooardMarker(outImg);
+	std::vector<aruco::Marker> markerIrisAuxRight = gridBooardMarker(outImg,0);
 
 	//If detected markers less then 2
 	if (markerIrisAuxRight.size() < 2){
@@ -2591,7 +2610,7 @@ bool CalCam(){
 	printf("Detecting marker of aux 8192 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisAuxleft = gridBooardMarker(outImg);
+	std::vector<aruco::Marker> markerIrisAuxleft = gridBooardMarker(outImg,0);
 	if (markerIrisAuxleft.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
@@ -2613,7 +2632,7 @@ bool CalCam(){
 	printf("Detecting marker of main 8193 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisMainRight = gridBooardMarker(outImg);
+	std::vector<aruco::Marker> markerIrisMainRight = gridBooardMarker(outImg,0);
 	if (markerIrisMainRight.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
@@ -2629,7 +2648,7 @@ bool CalCam(){
 	printf("Detecting marker of main 8192 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisMainleft = gridBooardMarker(outImg);
+	std::vector<aruco::Marker> markerIrisMainleft = gridBooardMarker(outImg,0);
 	if (markerIrisMainleft.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
@@ -2646,7 +2665,7 @@ bool CalCam(){
 	printf("Detecting marker of Face 8194 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerFace = gridBooardMarker(outImg);
+	std::vector<aruco::Marker> markerFace = gridBooardMarker(outImg,4);
 	if (markerFace.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
@@ -2816,8 +2835,8 @@ bool CalCam(){
 //Run calibration until meet all the condition based on brightness changes and motor movement
 void runCalCam(){
 	bool check = true;
-	int step = 15;		//initialize increment step
-	int newPos = MIN_POS + step;
+	//step = 100;		//initialize increment step
+	int newPos = MIN_POS + startPoint;
 	char cmd[512];
 
 
@@ -2842,6 +2861,8 @@ void runCalCam(){
 
 	while(check){
 		printf("Motor is moving to %i and conducting calibration\n", newPos);
+		sprintf(cmd, "fx_home()\n");
+		usleep(10000);
 		sprintf(cmd, "fx_abs(%i)\n", newPos);
 		port_com_send(cmd);
 		//MoveTo(newPos);
@@ -3312,7 +3333,7 @@ int main(int argc, char **argv)
 			{
 
 			//For testing image optimization (OFFset correction)
-			 Mat DiffImage = imread("white.pgm",CV_LOAD_IMAGE_GRAYSCALE);
+			Mat DiffImage = imread("white.pgm",CV_LOAD_IMAGE_GRAYSCALE);
 			Mat dstImage;
 			if (DiffImage.cols!=0)
 			{
