@@ -1044,7 +1044,9 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 #else
 			sprintf(filename,"EyeCrop_PG_%d.pgm",eyecropIndex++);
 #endif
-			cvSaveImage(filename, eye->getEyeCrop());
+			cv::Mat mateye = cv::cvarrToMat(eye->getEyeCrop());
+			imwrite(filename, mateye);
+			// cvSaveImage(filename, eye->getEyeCrop());
 		}else{
 			// sprintf(filename,"EyeCrop_PG_%d.pgm",eyeIdx);
 			// cvSaveImage(filename, eye->getEyeCrop());
