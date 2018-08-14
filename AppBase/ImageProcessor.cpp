@@ -955,7 +955,9 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	if(m_SaveFullFrame){
 		static int Index = 0;
 		sprintf(filename,"InputImage_%d.pgm",Index++);
-		cvSaveImage(filename, frame);
+		cv::Mat mateye = cv::cvarrToMat(frame);
+		imwrite(filename, mateye);
+		// cvSaveImage(filename, frame);
 	}
     m_inputImg.Init(frame);
     XTIME_OP("Pyramid",

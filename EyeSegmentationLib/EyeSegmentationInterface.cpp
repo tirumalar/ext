@@ -276,6 +276,38 @@ void EyeSegmentationInterface::GetRobustFeatureVariances(float *var)
 	}
 }
 
+#define MAX_LINE_LEN 256
+
+int LoadEyelockConfigINIFile(){
+	static FILE *fp;
+	char line[MAX_LINE_LEN + 1] ;
+	char *token; char *Value;
+	int saveSegImages = 0;
+	// char *saveseg = (char *)calloc(10,sizeof(char));
+	fp = fopen("Eyelock.ini", "rb");
+	if(fp == NULL) {
+		printf("Can't open Eyelock.ini\n");
+		//return -1;
+	}else{
+		while( fgets( line, MAX_LINE_LEN, fp ) != NULL )
+		{
+			token = strtok( line, "\t =\n\r" ) ;
+			if( token != NULL && token[0] != '#' )
+			{
+				Value = strtok( NULL, "\t =\n\r" ) ;
+				if(strcmp(token,"Eyelock.SaveSegmentedImages") == 0){
+					if(strcmp(Value,"true") == 0)
+						saveSegImages = 1;
+					else
+						saveSegImages = 0;
+				}
+			}
+		}
+		fclose(fp);
+	}
+	return saveSegImages;
+}
+
 bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, int h, int stride, unsigned char *Iriscode, unsigned char *Maskcode, IrisPupilCircles *pCircles)
 {
 	////printf("*********entering GetIrisCode *************\n");
@@ -392,21 +424,23 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 	//char filename[100];
 	//FILE *fp;
 	// static int i;
+	int SaveSegImages = LoadEyelockConfigINIFile();
 	if(corruptBitcount <= m_maxCorruptBitsPercAllowed && (AnnularCheck==1)) // && Getiseye() )
 	{
 		if( m_eso->ip.x > 0 )
 		{
-				EyeSegmentationOutput tmp1 = *m_eso;
-				// segmentation(unsigned char *data, int w, int h, float pupilX, float pupilY, float pupilR, float irisX, float irisY, float irisR)
-				bool status = (bool)segmentation((unsigned char*)imageBuffer, 640,480, m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
-#if 0 // Commented saving of images
-				
+			EyeSegmentationOutput tmp1 = *m_eso;
+			// segmentation(unsigned char *data, int w, int h, float pupilX, float pupilY, float pupilR, float irisX, float irisY, float irisR)
+			bool status = (bool)segmentation((unsigned char*)imageBuffer, 640,480, m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
+			if(SaveSegImages){
 				if (status)
 				{
 					draw( image, tmp1.pp, color );
 					draw( image, tmp1.ip, color );
 					sprintf(name, "Good_segmented_image_%d.pgm",segmented_count++);
-					cvSaveImage(name,image);
+					cv::Mat mateye = cv::cvarrToMat(image);
+					imwrite(name, mateye);
+					// cvSaveImage(name,image);
 					//sprintf(filename,"text_%d.txt",segmented_count++);
 					//fp = fopen(filename, "wb");
 					//fprintf(fp, "%f %f %f %f %f %f %f", m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
@@ -418,13 +452,15 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 					draw( image, tmp1.pp, color );
 					draw( image, tmp1.ip, color );
 					sprintf(name, "Bad_segmented_image_%d.pgm",segmented_count++);
-					cvSaveImage(name,image);
+					cv::Mat mateye = cv::cvarrToMat(image);
+					imwrite(name, mateye);
+					// cvSaveImage(name,image);
 					//sprintf(filename,"text_%d.txt",segmented_count++);
 					//fp = fopen(filename, "wb");
 					//fprintf(fp, "%f %f %f %f %f %f %f", m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
 					//fclose(fp);
 				}
-#endif
+			}
 		}
 		cvReleaseImageHeader(&image);
 		return true; // Iris and Segmentation is OK
