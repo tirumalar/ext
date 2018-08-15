@@ -38,16 +38,16 @@ using namespace cv;
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 
-void saveImageSnippet(char imageName[], int height, int width, char* data) 
+void saveImageSnippet(char imageName[], int height, int width, char* data)
 {
 	int var1, var2; //unused variables
 	char fName[200]="c:\\testimg\\";
 	IplImage *img;
-	sprintf(fName,"%s.bmp", imageName);  
+	sprintf(fName,"%s.bmp", imageName);
 	img = cvCreateImageHeader(cvSize(width, height),8/*depth*/,1);
 	img->imageData=(char*)data;
 	cvSaveImage(fName, img); //now it works fine
-	cvReleaseImage(&img);   
+	cvReleaseImage(&img);
 }
 
 
@@ -199,6 +199,416 @@ int detectEyes(IplImage* inputImage)
 	getchar(); 
 }
 
+#if 0
+int main_old(int argc, char* argv[])
+{
+	bool enrollMent = false;
+	/**********laplacian initialization**************/
+	CvFont font;
+	double hScale=.5;
+	double vScale=.5;
+	int    lineWidth=1;
+	cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, hScale,vScale,0,lineWidth);
+
+	//CreateDirectoryA(homeFolder.c_str(), NULL);
+
+
+	// Anita EyeDetection
+	IplImage *frame;
+	frame = cvLoadImage("D:/Cam_12120579_1.pgm", CV_LOAD_IMAGE_GRAYSCALE);
+	detectEyes(frame);
+
+
+	std::string str;
+	ofstream myfile;
+    myfile.open ("example.txt");
+
+	LaplacianBasedFocusDetector lp = LaplacianBasedFocusDetector(320, 240);
+
+	int cw = 480; //GRI.cropWidth=480
+	int ch = 640; //GRI.cropHeight=640
+	CvPoint3D32f outputTemp;
+	bool m_shouldRotate = false;
+
+
+	/**********Laplacian Initialization End***************/
+
+	/**********Segmentation Initialization start***************/
+
+	int m_width, m_height;
+	int scale =1;
+	bool fine = false; //conf.getValue("GRI.enableFineScale",false);
+	if(fine) scale = 0;
+	m_width = 640;//conf.getValue("GRI.cropWidth", 640);
+	m_height = 480;//conf.getValue("GRI.cropHeight", 480);
+	int stride = 640;
+
+
+
+	IrisPupilCircles Circles;
+	// unsigned char* m_IrisBuff;
+
+	int minAngle = -90;
+	int maxAngle = 90;
+	printf("%d, %d", minAngle, maxAngle);
+	// m_bioInstance = new BiOmega(m_width, m_height,scale, minAngle, maxAngle);
+	CvScalar color = cvRealScalar(255);
+
+	/**************Segmentation Initialization end*******************/
+
+	/**************Read Iris Codes into Memory*******************/
+
+
+	int MAX_TARGET_IRIS_COUNT = 300;
+	char* IrisCode =  new char[2560];
+	fstream MyBinFileRead;
+	//std::vector<std::string> IrisFilesList;
+	char IrisCodeName[256];
+
+	//Reading the Iris's in dataBase
+	char * dataBase = new char[2560 * MAX_TARGET_IRIS_COUNT];
+	char * dataBasePtr = dataBase;
+	int irisNum=0;
+	std::ifstream IrisCodeList("C:/Outdoor_NXT/extData/database/input.txt");
+
+	if (!enrollMent)
+	{
+		if(IrisCodeList.is_open()){
+
+			while(IrisCodeList.getline(IrisCodeName,2560)){
+				//IrisFilesList.push_back(IrisCodeName);
+				MyBinFileRead.open(IrisCodeName,std::ios::in|std::ios::binary);
+				if(MyBinFileRead.is_open())
+				{
+					MyBinFileRead.read(dataBase, 2560);
+					dataBase+=2560;
+					MyBinFileRead.close();
+
+					if(++irisNum >= MAX_TARGET_IRIS_COUNT)
+						break;
+				}
+				else
+				{
+					printf("Error! %s not found !!!!", IrisCodeName);
+					continue;
+				}
+			}
+		}
+		else
+		{
+			printf("Error! Code List not found");
+			//return 0;
+		}
+	}
+
+	/***end Reading Iris codes
+
+	/*************Read Images******************/
+	std::ifstream file;
+	if(enrollMent)
+		file = std::ifstream("C:/Outdoor_NXT/EXTImages_person_with_glasses/EyeCrop_PG_4_13_18/inputEnroll.txt"); //"D:/EyeLockRnD/SegmentationRnD/inputWholeProblems1.csv";
+	else
+		file = std::ifstream("C:/Outdoor_NXT/extData/7_6_18_Debug/7_6_images/input.txt"); //"D:/EyeLockRnD/SegmentationRnD/inputWholeProblems1.csv";
+
+	std:: string homeFolder = std::string("C:/Outdoor_NXT/extData/7_6_18_Debug/7_6_images");
+	char temp[100]= "";
+	sprintf(temp, "/MinMaxAngle");
+	std::string thresholdFolder =   homeFolder + std::string(temp);
+#if 0
+	CreateDirectoryA(thresholdFolder.c_str(), NULL);
+	std::string unfocusedFolder =   thresholdFolder + "/badsegmentation";
+	CreateDirectoryA(unfocusedFolder.c_str(), NULL);
+	std::string focusedFolder =   thresholdFolder + "/goodSegmentation";
+	CreateDirectoryA(focusedFolder.c_str(), NULL);
+#endif
+	unsigned char *m_IrisBuff=new unsigned char[2560];
+	int totalImage = 0;
+	int totalImagePassed = 0;
+	int badImagesPassed = 0;
+	int goodImagesPassed = 0;
+	int matched = 0;
+	int totalGlass = 0;
+
+	// DetectGlass dg= DetectGlass();
+
+
+	BiOmega *m_bioInstance  = new BiOmega(m_width, m_height,scale);
+	//m_bioInstance->GetEyeSegmentationInterface()->SetIrisRadiusSearchRange(50, 145);
+
+
+	while (std::getline(file, str))
+	{
+
+		//if (str.find("EyeCrop") == string::npos)
+			//continue;
+
+		unsigned char *frame;
+		float* robostFeatureVar;
+		totalImage++;
+
+		IplImage *m_centreEyecropEnroll = cvCreateImage(cvSize(320, 240), IPL_DEPTH_8U, 1);
+		IplImage *m_rotatedEyecrop = cvCreateImage(cvSize(ch, cw), IPL_DEPTH_8U, 1);
+		printf("%s\n", str.c_str());
+		CvRect rect = { 160, 120, 320, 240 };
+		IplImage *cec = NULL;
+		IplImage* im = 0;
+		//			IplImage* cec=0;
+		cec = m_centreEyecropEnroll;
+		im=cvLoadImage(str.c_str(), 0);
+		if(!im)
+		{
+			printf("error reading images\n");
+			getchar();
+			return 0;
+		}
+		//cvShowImage("Input", im);
+		//m_bioInstance = new BiOmega(m_width, m_height,scale, minAngle, maxAngle);
+		//Segmentation
+
+#if 0
+		bool Glass = DetectGlass::detect_glass(im,im, 8,8,.05,2);//DetectGlass::detect_glass_effect(im,im, 8,8,0.01,2, 30);  //Mihir Glasses detection
+#endif
+		//Glass = dg.detect_glass_window((int)Glass);
+#if 0
+		if (Glass)
+
+		{
+			totalGlass++;
+			//bool shouldPass = DetectGlass::detect_glass_Effect(im,im, 8,8,0.01,2, 60);
+			//if(!shouldPass)
+			//	continue;
+			//m_bioInstance->GetEyeSegmentationInterface()->SetIrisRadiusSearchRange(50, 145);
+			printf("\nGlass Detected\n");
+			//printf("New Iris Radius: %d\n", m_bioInstance->GetEyeSegmentationInterface()->get);
+			//DetectGlass::detect_glass_Effect(im,im, 8,8,0.01,2, 60);
+
+
+		}
+		else
+		{	//m_bioInstance->GetEyeSegmentationInterface()->SetIrisRadiusSearchRange(70, 145);
+			printf("\nNo Glass \n");
+		}
+
+
+#endif
+
+		int rc = m_bioInstance->GetIrisCode((unsigned char*)im->imageData, m_width, m_height, m_width,(char*)m_IrisBuff,&Circles,robostFeatureVar);
+		int segmentationOkPupil = -1;
+		int segmentationOkIris= 1;
+		if (rc)
+		{
+			// segmentationOkPupil = segmentation((unsigned char*)im->imageData, m_width, m_height, Circles.pp.x, Circles.pp.y, Circles.pp.r, Circles.ip.x, Circles.ip.y, Circles.ip.r, .18);
+			//segmentationOkIris = segmentation((unsigned char*)im->imageData, m_width, m_height, Circles.ip.x, Circles.ip.y, Circles.ip.r, Circles.ip.x, Circles.ip.y, Circles.ip.r, 0.28);
+
+		}
+		//Laplacian
+		CvPoint3D32f outputTemp;
+		if (cec) {
+			rect.x = MAX(0,(m_rotatedEyecrop->width-cec->width)/2);
+			rect.y = MAX(0,(m_rotatedEyecrop->height-cec->height)/2);
+			rect.width = cec->width;
+			rect.height = cec->height;
+
+			if (m_shouldRotate) {
+				cvTranspose(im, m_rotatedEyecrop);
+				cvFlip(m_rotatedEyecrop, m_rotatedEyecrop, 1);
+				cvSetImageROI(m_rotatedEyecrop, rect);
+				cvCopy(m_rotatedEyecrop, cec);
+				cvResetImageROI(m_rotatedEyecrop);
+			}
+			else {
+				cvSetImageROI(im, rect);
+				cvCopy(im, cec);
+				cvResetImageROI(im);
+				cvFlip(cec, cec, 1);
+			}
+
+			outputTemp.x = -1.0f;
+			outputTemp = lp.ComputeRegressionFocus(cec,
+				255);
+			//printf("\nLap during Enrollment:%0.3f\n", outputTemp.x); //For Enrollment Only
+		}
+
+		//std::pair<double, double> agcValues = AGC(im->width, im->height, (unsigned char *)im->imageData);
+		//fprintf(fp, "%s, %0.3f,%0.3f, %0.3f\n", str.c_str(), outputTemp.x, agcValues.first, agcValues.second);
+		char comment[4024]="";
+		sprintf(comment, "Lap: %0.3f", outputTemp.x);
+		cvPutText (im,comment,cvPoint(25,100), &font, cvScalar(0,0,0));
+		cvPutText (im,comment,cvPoint(150,100), &font, cvScalar(255,255,255));
+
+		std::string newName = str;
+		int rep_loc= str.find("ug/");
+		str.replace(0,rep_loc+3,"");
+		//rep_loc= str.find("/");
+		//str.replace(0,rep_loc+3,"");
+		//str.replace(str.begin(), str.end(), '/', '_');
+		str.replace(str.find("/"), 1, "_");
+		//str.replace(str.find("/"), 1, "_");
+		printf("%s", str.c_str());
+		//std::string newName = str;
+		if (outputTemp.x < .10)
+		{
+#if 0
+			printf("");
+			sprintf(comment, "%s/%s.png",  unfocusedFolder.c_str(), str.c_str());
+#endif
+		}
+		else
+		{
+
+			if (rc)
+			{
+				totalImagePassed++;
+#if 0
+				if (Glass)
+					sprintf(comment,"%s", ""); //sprintf(comment,"%s", "");
+				else
+					sprintf(comment, "%s", "NoGlass"); //sprintf(comment, "%s", "NoGlass");
+#endif
+
+				cvPutText (im,comment,cvPoint(25,75), &font, cvScalar(0,0,0));
+				cvPutText (im,comment,cvPoint(150,75), &font, cvScalar(255,255,255));
+
+
+				draw(im, Circles.pp.x, Circles.pp.y, Circles.pp.r, color);
+				draw(im, Circles.ip.x, Circles.ip.y, Circles.ip.r, color);
+				if ((bool)segmentationOkPupil && (bool)segmentationOkIris)
+				{
+
+					if (enrollMent)
+					{
+						printf("Writing bin file\n");
+						sprintf(comment, "C:/Outdoor_NXT/EXTImages_person_with_glasses/EyeCrop_PG_4_13_18/Enrolled_%d.bin", goodImagesPassed);
+						std::string binFileName(comment);
+#if 0 //Anita later
+						std::ofstream firstEye(binFileName,std::ios::binary|std::ios::trunc);
+						firstEye<<std::string((char*)m_IrisBuff,2560);//<<std::string((char *)bestPairOfEyes.first->GetMask(),1280);
+
+#endif
+
+					}
+					else
+					{
+
+						std::pair<int, float> result= m_bioInstance->MatchIrisCode((char *)m_IrisBuff ,dataBasePtr, irisNum);
+						sprintf(comment, "Good Segment   MatchHD=%0.3f", result.second);
+						//sprintf(comment, "Good_Segment");
+						cvPutText (im,comment,cvPoint(25,25), &font, cvScalar(0,0,0));
+						cvPutText (im,comment,cvPoint(25,50), &font, cvScalar(255,255,255));
+						//fprintf(fp, "%s, %d, %0.3f\n", str.c_str(), result.first, result.second);
+						char temp[300]="";
+						sprintf(temp, "%s, %d, %0.3f\n", str.c_str(), result.first, result.second);
+						myfile << string(temp);// <<endl;
+
+
+
+						if (result.second < -0.3)
+							{
+								matched++;
+								sprintf(comment, "%s_good.png",  newName.c_str());
+
+						}
+#if 0
+						else
+							sprintf(comment, "%s/%s_good.png",  focusedFolder.c_str(), str.c_str());
+#endif
+
+					}
+
+					//sprintf(comment, "%s_good.bmp",  str.c_str());
+					//printf("%s", comment);
+					goodImagesPassed++;
+
+
+				}
+
+				else
+				{
+					sprintf(comment, "Bad Segment");
+					cvPutText (im,comment,cvPoint(50,50), &font, cvScalar(0,0,0));
+					cvPutText (im,comment,cvPoint(150,50), &font, cvScalar(255,255,255));
+					//sprintf(comment, "%s/%s",  unfocusedFolder.c_str(), newName.c_str());
+					//sprintf(comment, "%s_bad.png",  newName.c_str());
+					// sprintf(comment, "%s/%s.png",  unfocusedFolder.c_str(), str.c_str());
+					//printf("%s", comment);
+					badImagesPassed++;
+				}
+
+				//sprintf(comment, "%s/ImageNo_%d.bmp", thresholdFolder.c_str(), totalImage);
+
+				//sprintf(comment, "%s/%s.pgm", thresholdFolder.c_str(), newName.c_str());
+				printf("%s", comment);
+				int var1, var2;
+				//cvShowImage("output", im);
+				//cvWaitKey(50);
+				//getchar();
+				//saveImageSnippet(comment, im->width, im->height, im->imageData);
+				cvSaveImage(comment, im);
+				/*
+
+				#if 0
+				// DetectGlass detectglassObj = DetectGlass(); //Window with size 10
+
+				for (int i = prevIrisListSize; i < currentIrisListSize; i++)
+				{
+				hasGlass = detectglassObj.detect_glass_window(m_EnrollmentEyesList[i]->get_hasGlass());
+				if (hasGlass)
+				break;
+				}
+
+				if (hasGlass)
+				printf("Glass Detected !!!!!!!!!!!!!!!!!!\n");
+
+
+				if(m_GlassDetection){
+				bool Glass = DetectGlass::detect_glass(m_eyeCrop,3,3,0.04,2);  //Mihir Glasses detection
+				//bool Glass = false;
+				if(Glass == true)
+				{
+				G[0]=1;
+				}
+				G<<=1;
+				}
+				#endif
+				*/
+
+
+			}
+		}
+
+
+		//IplImage *eyeCrop = cvLoadImage("EyeCrop_PG_0.pgm",CV_LOAD_IMAGE_UNCHANGED);
+		//cvShowImage("Input", eyeCrop);
+		//cvWaitKey(10);
+		//printf("Anita\n");
+
+
+		//cvSaveImage(comment, im);
+		cvReleaseImage(&im);
+		cvReleaseImage(&m_centreEyecropEnroll);
+		cvReleaseImage(&m_rotatedEyecrop);
+		printf(	"\nTotal = %d, totalPassed= %d, totalGood= %d, TotalBad %d, TotalMatched= %d\n", totalImage, totalImagePassed,  goodImagesPassed, badImagesPassed, matched);
+		printf(" TotalGlassPos = %d, NOGlass = %d\n", totalGlass, totalImage - totalGlass);
+		// delete m_bioInstance;
+
+#if 0
+		if(m_bioInstance)
+		{
+			delete m_bioInstance;
+			m_bioInstance = 0;
+		}
+#endif
+	}
+	myfile.close();
+
+
+
+	// delete[]m_IrisBuff;
+
+
+ }
+#endif
+
 int m_width = 640;
 int m_height = 480;
 IplImage *m_scaleDest;
@@ -246,6 +656,12 @@ IplImage * ResizeFrame(int width, int height, unsigned char *frame) {
 }
 #define WIDTH 1200
 #define HEIGHT 960
+
+
+
+
+//Main Ext code with database match
+#if 1
 
 int main(int argc, char* argv[])
 {
@@ -349,7 +765,7 @@ int main(int argc, char* argv[])
 
 	{
 		// take the input directory eiether as eye crop or full frame images
-		string inputFileName = "/home/eyelock/SortingData/input.txt";
+		string inputFileName = "/home/eyelock/BlaineOutdoorMaskVal255/sortingData/inputR.txt";
 		file = std::ifstream(inputFileName);
 		int rep_loc1= inputFileName.find_last_of("/");
 		inputFileName.replace(rep_loc1,inputFileName.length(),"");
@@ -552,7 +968,7 @@ int main(int argc, char* argv[])
 
 		std::string newName = str;
 		//Turn this macro on if you want to pass eyecrop images as a full frame image
-#if 0
+#if 1
 		IplImage *frame1;
 		frame1 = cvLoadImage(str.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
 		if(!frame1)
@@ -598,10 +1014,8 @@ int main(int argc, char* argv[])
 
 
 #if 1
-		if(processFullImage){
-			// detectEyes(frame1);
-			resultDetect = m_pSrv->Detect(&frame, m_detectLevel);
-		}
+		if(processFullImage)
+			resultDetect = m_pSrv->Detect(&frame);
 #endif
 		if(resultDetect)
 		{
@@ -899,3 +1313,531 @@ int main(int argc, char* argv[])
 
 
 }
+
+
+#endif
+
+
+
+
+//For corssmatching analysis
+#if 0
+int main_crossMatching(int argc, char* argv[])
+{
+	string side = "right.pgm";
+	bool enrollMent = false;
+	/**********laplacian initialization**************/
+	CvFont font;
+	double hScale=.5;
+	double vScale=.5;
+	int    lineWidth=1;
+	cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, hScale,vScale,0,lineWidth);
+	std::string str, strR;
+	ofstream myfile;
+	myfile.open ("example.txt");
+	FileConfiguration pConf("/home/root/Eyelock.ini");
+	float lapThresh = pConf.getValue("Eyelock.Laplacian_focus_Threshold", 0.15f);
+	LaplacianBasedFocusDetector lp = LaplacianBasedFocusDetector(320, 240);
+
+	int cw = 480; //GRI.cropWidth=480
+	int ch = 640; //GRI.cropHeight=640
+	CvPoint3D32f outputTemp;
+	bool m_shouldRotate = false;
+
+	/**********Laplacian Initialization End***************/
+
+//#if 1 //Anita
+	/**********Segmentation Initialization start***************/
+
+	int m_width, m_height;
+	int scale =1;
+	bool fine = false; //conf.getValue("GRI.enableFineScale",false);
+	if(fine) scale = 0;
+	m_width = 640;//conf.getValue("GRI.cropWidth", 640);
+	m_height = 480;//conf.getValue("GRI.cropHeight", 480);
+	int stride = 640;
+	CvScalar color = cvRealScalar(255);
+	float* robustFeatureVar;
+	/**************Segmentation Initialization end*******************/
+
+	/***********************Eye Detection**************************/
+	configureDetector();
+
+	/**************Read Iris Codes into Memory*******************/
+	int MAX_TARGET_IRIS_COUNT = 300;
+	char* IrisCode =  new char[2560];
+	fstream MyBinFileRead;
+	//std::vector<std::string> IrisFilesList;
+	char IrisCodeName[256];
+
+	//Reading the Iris's in dataBase
+	char * dataBase = new char[2560 * MAX_TARGET_IRIS_COUNT];
+	char * dataBasePtr = dataBase;
+	int irisNum=0;
+	std::ifstream IrisCodeList("/home/eyelock/BlainDB/input.txt");
+
+	if (!enrollMent)
+	{
+		if(IrisCodeList.is_open()){
+
+			while(IrisCodeList.getline(IrisCodeName,2560)){
+				//printf("%s\n", IrisCodeName);
+				//IrisFilesList.push_back(IrisCodeName);
+				MyBinFileRead.open(IrisCodeName,std::ios::in|std::ios::binary);
+				if(MyBinFileRead.is_open())
+				{
+					MyBinFileRead.read(dataBase, 2560);
+					dataBase+=2560;
+					MyBinFileRead.close();
+
+					if(++irisNum >= MAX_TARGET_IRIS_COUNT)
+						break;
+				}
+				else
+				{
+					//printf("Error! %s not found !!!!", IrisCodeName);
+					continue;
+				}
+			}
+		}
+		else
+		{
+			//printf("Error! Code List not found");
+			//return 0;
+		}
+	}
+
+	/********end Reading Iris codes*******************/
+
+	/********Managing the input and output folder*******************/
+	std::ifstream file, fileR;
+	std:: string homeFolder;
+	if(enrollMent)
+	{
+		string inputFileName = "C:/Outdoor_NXT/EXTImages_person_with_glasses/EyeCrop_PG_4_13_18/inputEnroll.txt";
+		file = std::ifstream(inputFileName);
+		int rep_loc1= inputFileName.find_last_of("/");
+		inputFileName.replace(rep_loc1,inputFileName.length(),"");
+		homeFolder	 = std::string(inputFileName);
+	}
+	else
+
+	{
+		// take the input directory eiether as eye crop or full frame images
+		string inputFileName = "/home/eyelock/BlaineOutdoorMaskVal255/sortingData/inputR.txt";
+		file = std::ifstream(inputFileName);
+		fileR = std::ifstream(inputFileName);
+		int rep_loc1= inputFileName.find_last_of("/");
+		inputFileName.replace(rep_loc1,inputFileName.length(),"");
+		homeFolder	 = std::string(inputFileName);
+
+	}
+
+	//create output directory
+	char temp[100]= "";
+	sprintf(temp, "/outputs");
+	std::string thresholdFolder =   homeFolder + std::string(temp);
+	string comm = "mkdir -p ";
+	string parseComm = comm + thresholdFolder;
+	//printf("COMM:::::::::::::::::::::: %s\n", parseComm.c_str());
+
+	int dir_err = system(parseComm.c_str());
+	if (dir_err == -1)
+	{
+	    printf("Error creating directory!n");
+	    exit(1);
+	}
+
+
+	//create EyeCrops directory
+	std::string eyeCropFolder;
+	eyeCropFolder =   thresholdFolder + "/EyeCrops";
+	parseComm = comm + eyeCropFolder;
+	//printf("COMM:::::::::::::::::::::: %s\n", parseComm.c_str());
+	dir_err = system(parseComm.c_str());
+	if (dir_err == -1)
+	{
+		printf("Error creating directory!n");
+		exit(1);
+	}
+
+	//create badsegmentation directory
+	std::string unfocusedFolder =   thresholdFolder + "/badsegmentation";
+	parseComm = comm + unfocusedFolder;
+	//printf("COMM:::::::::::::::::::::: %s\n", parseComm.c_str());
+	dir_err = system(parseComm.c_str());
+	if (dir_err == -1)
+	{
+		printf("Error creating directory!n");
+		exit(1);
+	}
+
+	//create goodSegmentation directory
+	std::string focusedFolder =   thresholdFolder + "/goodSegmentation";
+	parseComm = comm + focusedFolder;
+	//printf("COMM:::::::::::::::::::::: %s\n", parseComm.c_str());
+	dir_err = system(parseComm.c_str());
+	if (dir_err == -1)
+	{
+		printf("Error creating directory!n");
+		exit(1);
+	}
+
+
+	unsigned char *m_IrisBuff=new unsigned char[2560];
+	unsigned char *m_IrisBuffR=new unsigned char[2560];
+
+	int totalImage = 0;
+	int totalImagePassed = 0;
+	int badImagesPassed = 0;
+	int goodImagesPassed = 0;
+	int matched = 0;
+	int totalGlass = 0;
+
+	//DetectGlass dg= DetectGlass();
+#if 0
+	BiOmega *m_bioInstance  = new BiOmega(m_width, m_height,scale);
+	m_bioInstance->GetEyeSegmentationInterface()->SetIrisRadiusSearchRange(50, 180);
+	m_bioInstance->GetEyeSegmentationInterface()->SetPupilRadiusSearchRange(12,48);
+	m_bioInstance->set
+#else
+		BiOmega *m_bioInstance = new BiOmega(m_width, m_height,scale);
+		int pupilmin5 = pConf.getValue("GRI.minPupilLutValue", 5);
+
+
+		int pupilmax64 = pConf.getValue("GRI.maxPupilLutValue", 64);
+		int cirmin5 = pConf.getValue("GRI.minCircleLutValue", 5);
+		int cirmax255 = pConf.getValue("GRI.maxCircleLutValue", 255);
+
+		m_bioInstance->SetLUT(pupilmin5,pupilmax64,cirmin5,cirmax255);
+
+		bool eyelidseg = pConf.getValue("GRI.enableEyelidSegmentation", true);
+		m_bioInstance->SetEnableEyelidSegmentation(eyelidseg);
+
+		//set Upper eyelid center and radius
+		CvPoint depPt ;
+		float defRad ;
+		depPt.x = pConf.getValue("GRI.upperEyelidCenterX", 360);
+		depPt.y = pConf.getValue("GRI.upperEyelidCenterY", 190);
+		defRad = pConf.getValue("GRI.upperEyelidRadius", 140.0f);
+		m_bioInstance->SetUpperEyelidCenterandRadius(depPt,defRad);
+
+		depPt.x = pConf.getValue("GRI.lowerEyelidCenterX", 130);
+		depPt.y = pConf.getValue("GRI.lowerEyelidCenterY", 190);
+		defRad = pConf.getValue("GRI.lowerEyelidRadius", 135.0f);
+		m_bioInstance->SetLowerEyelidCenterandRadius(depPt,defRad);
+
+		// Pupil Min and Max
+		int minPupilDiameter = pConf.getValue("GRI.minPupilDiameter", 16);
+		int maxPupilDiameter = pConf.getValue("GRI.maxPupilDiameter", 85);
+		m_bioInstance->SetPupilRadiusSearchRange(minPupilDiameter, maxPupilDiameter);
+
+		//Iris Min and Max
+		int minIrisDiameter = pConf.getValue("GRI.minIrisDiameter", 70);
+		int maxIrisDiameter = pConf.getValue("GRI.maxIrisDiameter", 145);
+		m_bioInstance->SetIrisRadiusSearchRange(minIrisDiameter, maxIrisDiameter);
+
+		int minPupilAngle = pConf.getValue("GRI.minPupilAngle", -60);
+		int maxPupilAngle = pConf.getValue("GRI.maxPupilAngle",  90);
+		m_bioInstance->SetPupilAngleSearchRange(minPupilAngle, maxPupilAngle);
+
+		//Search Area ROI
+		CvRect searchArea;
+		m_bioInstance->GetEyeLocationSearchArea(searchArea.x, searchArea.y,
+				searchArea.width, searchArea.height);
+		searchArea.x = pConf.getValue("GRI.EyeLocationSearchArea.x", searchArea.x);
+		searchArea.y = pConf.getValue("GRI.EyeLocationSearchArea.y", searchArea.y);
+		searchArea.width = pConf.getValue("GRI.EyeLocationSearchArea.width",
+				searchArea.width);
+		searchArea.height = pConf.getValue("GRI.EyeLocationSearchArea.height",
+				searchArea.height);
+		bool fail = m_bioInstance->SetEyeLocationSearchArea(searchArea.x,
+				searchArea.y, searchArea.width, searchArea.height);
+
+
+		// max corrupt bits percentage
+		m_bioInstance->SetMaxCorruptBitsPercAllowed(
+				pConf.getValue("GRI.MaxCorruptBitPercentage"
+						,m_bioInstance->GetMaxCorruptBitsPercAllowed()));
+#endif
+	ofstream saveMatchScore, imposterScore;
+	string matchPath = homeFolder + "/matchScore.csv";
+	string impMatchPath = homeFolder + "/imposterScore.csv";
+
+	saveMatchScore.open(matchPath, ios::out | ios::app);
+	imposterScore.open(impMatchPath, ios::out | ios::app);
+
+
+	// FileConfiguration pConf("/home/root/Eyelock.ini");
+	int size = pConf.getValue("GRI.HDMatcher.0.BuffSize",64000000);
+	int id = pConf.getValue("GRI.HDMatcherID",0);
+	bool useCoarseFine = pConf.getValue("GRI.useCoarseFineMatch",false);
+	int featureMask = pConf.getValue("GRI.MatcherFeatureMask",255);
+
+	// Anita
+	int nominalCommonBits = pConf.getValue("GRI.Match.NominalCommonBits",4100);
+	int minCommonBitsFine = pConf.getValue("GRI.Match.MinCommonBits",0);
+	int minCommonBitsCoarse = pConf.getValue("GRI.Match.Coarse.MinCommonBits",(minCommonBitsFine)/4);
+	int maxCorrBitPer = pConf.getValue("GRI.MaxCorruptBitPercentageEnrollment",70);
+	bool compressedMatching = pConf.getValue("GRI.CompressedMatching",false);
+	unsigned int maskcode = pConf.getValue("GRI.MatcherFeatureMask",255);
+	unsigned int maskval = (maskcode<<24)|(maskcode<<16)|(maskcode<<8)|(maskcode);
+	bool lowernibble = pConf.getValue("GRI.MatcherUseLowerNibble",true);
+
+	bool greedy = pConf.getValue("GRI.GreedyMatch",false);
+	float thresh = pConf.getValue("GRI.matchScoreThresh", 0.13f);
+	float coarsethresh = pConf.getValue("GRI.matchCoarseThresh",0.35f);
+	bool coarseFineMatch = pConf.getValue("GRI.useCoarseFineMatch",false);
+	int shift = pConf.getValue("GRI.HDMatcherShift", 12);
+
+	// printf("shift.....%d nominalCommonBits %d\n", shift, nominalCommonBits);
+
+	HDMatcher *m_HDMatcherInstance = new HDMatcher(size, id, useCoarseFine, featureMask);
+	m_HDMatcherInstance->m_numIris = 2;
+	m_HDMatcherInstance->SetCommonBits(nominalCommonBits,minCommonBitsFine,minCommonBitsCoarse);
+	m_HDMatcherInstance->SetMaxCorruptBitsPercAllowed(maxCorrBitPer*1.0f);
+	m_HDMatcherInstance->SetMaskCode(maskval);
+	m_HDMatcherInstance->SetlowerNibble(lowernibble);
+	m_HDMatcherInstance->SetCompressedMatching(compressedMatching);
+	m_HDMatcherInstance->StartMatchInterface(shift,greedy,thresh,coarsethresh,1280);
+	DBAdapter * dbAdapter;
+	unsigned char* coarseDB = NULL;
+	// m_HDMatcherInstance->InitializeDb(dbAdapter,(unsigned char*)dataBasePtr, coarseDB);
+	//m_HDMatcherInstance->Init();
+
+	//m_HDMatcherInstance->CheckFromCorruptList(irisNum);
+
+
+
+
+	vector<string> dirData;
+
+	while (std::getline(file, str)){
+		dirData.push_back(str);
+	}
+
+	char comment[4024]="";
+
+
+#if 0
+	//These for loop wqill dump all the Good segmented images in
+	//this directory "./outputs/goodSegmentation"
+	int totalImageC = 0;
+	int goodSeg = 0;
+	int badSeg = 0;
+	for (int i = 0; i < dirData.size();i++){
+		str = dirData[i];
+		IplImage *frame1;
+		frame1 = cvLoadImage(str.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
+		if(!frame1)
+			{
+				//printf("error reading images\n");
+				getchar();
+				return 0;
+			} else {
+				//printf("Successfully load the image\n");
+			}
+		IplImage *outImage1 = cvCreateImageHeader(cvSize(640,480), IPL_DEPTH_8U, 1);
+		outImage1 = ResizeFrame(640, 480, frame1->imageData);
+		IrisPupilCircles Circles;
+		int rc = m_bioInstance->GetIrisCode((unsigned char*)outImage1->imageData, m_width, m_height, m_width,(char*)m_IrisBuff,&Circles,robustFeatureVar);
+
+		if (rc){
+		draw(outImage1, Circles.pp.x, Circles.pp.y, Circles.pp.r, color);
+		draw(outImage1, Circles.ip.x, Circles.ip.y, Circles.ip.r, color);
+
+
+		char temp[3000]="";
+		int locS = str.find_last_of("/");
+		str.replace(0, locS+1,"");
+		locS = str.find_last_of(".");
+		str.replace(locS,str.length(),"");
+		sprintf(temp, "%s/%s_good.pgm", focusedFolder.c_str(), str.c_str());
+		cv::Mat test = cv::cvarrToMat(outImage1);
+		imwrite(temp, test);
+		goodSeg++;
+		}
+		else{
+			badSeg++;
+		}
+
+		totalImageC++;
+	}
+
+	printf("Total input images ---- >  %d\n", totalImageC);
+	printf("Total Good Seg images ---- >  %d\n", goodSeg);
+	printf("Total Bad Seg images ---- >  %d\n", badSeg);
+
+#endif
+
+//Use after verifing good seg images
+#if 0
+	int repLocR;
+	string imgName, dirMod;
+	char tempM[3000]="";
+	ofstream newdir;
+	string pathRR = homeFolder + "/inputR.txt";
+	newdir.open(pathRR, ios::out | ios::app);
+
+	while (std::getline(file, str)){
+		repLocR = str.find_last_of("_");
+		str.replace(repLocR,str.length(),"");
+		printf("\n%s\n", str.c_str());
+
+		dirMod = str;
+		imgName = str;
+
+		repLocR = imgName.find_last_of("/");
+		imgName.replace(0, repLocR+1,"");
+		printf("\n%s\n", imgName.c_str());
+
+		repLocR = dirMod.find_last_of("/");
+		dirMod.replace(repLocR,dirMod.length(),"");
+		printf("\n%s\n", dirMod.c_str());
+
+		repLocR = dirMod.find_last_of("/");
+		dirMod.replace(repLocR,dirMod.length(),"");
+		printf("\n%s\n", dirMod.c_str());
+
+		repLocR = dirMod.find_last_of("/");
+		dirMod.replace(repLocR,dirMod.length(),"");
+		printf("\n%s\n", dirMod.c_str());
+
+		sprintf(temp, "%s/%s.pgm", dirMod.c_str(),imgName.c_str());
+		string r = string(temp);
+		printf("%s\n", r.c_str());
+		newdir<< r<<endl;;
+
+	}
+	newdir.close();
+
+#endif
+
+
+#if 1
+	int totalImageC = 0;
+	int successfullyCrosMat = 0;
+	int failCrosMat = 0;
+	int totalAuthScore = 0;
+	int totalimposterScore = 0;
+	float thresScore = 0.33;
+	int goodAuthScore = 0;
+	//printf("size:: %d\n", dirData.size());
+	for (int i = 0; i < dirData.size();i++){
+		printf("Processing image:  %d\n", i);
+		totalImageC++;
+		str = dirData[i];
+		IplImage *frame1;
+		frame1 = cvLoadImage(str.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
+		if(!frame1)
+			{
+				//printf("error reading images\n");
+				getchar();
+				return 0;
+			} else {
+				//printf("Successfully load the image\n");
+			}
+
+		IplImage *outImage1 = cvCreateImageHeader(cvSize(640,480), IPL_DEPTH_8U, 1);
+		outImage1 = ResizeFrame(640, 480, frame1->imageData);
+		IrisPupilCircles Circles;
+		int rc = m_bioInstance->GetIrisCode((unsigned char*)outImage1->imageData, m_width, m_height, m_width,(char*)m_IrisBuff,&Circles,robustFeatureVar);
+
+		for (int j = i+1; j < dirData.size();j++){
+			strR = dirData[j];
+			IplImage *frame2;
+			frame2 = cvLoadImage(strR.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
+			if(!frame2)
+				{
+					//printf("error reading images\n");
+					getchar();
+					return 0;
+				} else {
+					//printf("Successfully load the image\n");
+				}
+
+
+			IplImage *outImage2 = cvCreateImageHeader(cvSize(640,480), IPL_DEPTH_8U, 1);
+			outImage2 = ResizeFrame(640, 480, frame2->imageData);
+
+			IrisPupilCircles CirclesR;
+			int rcR = m_bioInstance->GetIrisCode((unsigned char*)outImage2->imageData, m_width, m_height, m_width,(char*)m_IrisBuffR,&CirclesR,robustFeatureVar);
+
+			if(!(rc && rcR)){
+				failCrosMat++;
+
+			}
+			else
+			{
+
+#if 1			// fin the nsame saving parse of the code
+				int rep_loc= str.find_last_of("/");
+				str.replace(0,rep_loc+1,"");
+				//printf("%s\n", str.c_str());
+
+				rep_loc= strR.find_last_of("/");
+				strR.replace(0,rep_loc+1,"");
+				//printf("%s\n", strR.c_str());
+
+				string check, checkR;
+				check = str;
+				checkR = strR;
+
+				rep_loc= check.find_last_of("_");
+				check.replace(0,rep_loc+1,"");
+				//printf("%s\n", check.c_str());
+
+				rep_loc= checkR.find_last_of("_");
+				checkR.replace(0,rep_loc+1,"");
+				//printf("%s\n", checkR.c_str());
+
+				if (check.compare(checkR) == 0){
+					std::pair<int, float> result = m_HDMatcherInstance->MatchIrisCode((unsigned char*)m_IrisBuff ,(unsigned char*)m_IrisBuffR, coarseDB);
+					//printf("Authentic score ------------------>		%0.5f\n", result.second);
+					saveMatchScore << str.c_str() << strR.c_str() << "," << result.second << endl;
+					totalAuthScore++;
+					if (result.second <= thresScore){
+						goodAuthScore++;
+					}
+
+				}
+				else{
+					std::pair<int, float> result = m_HDMatcherInstance->MatchIrisCode((unsigned char*)m_IrisBuff ,(unsigned char*)m_IrisBuffR, coarseDB);
+					//printf("Imposter score ------------------?		%0.5f\n", result.second);
+					imposterScore << str.c_str() << strR.c_str() << "," << result.second << endl;
+					totalimposterScore++;
+				}
+#endif
+				successfullyCrosMat++;
+			}
+
+
+			cvReleaseImage(&outImage2);
+			cvReleaseImage(&frame2);
+		}
+
+		cvReleaseImage(&outImage1);
+		cvReleaseImage(&frame1);
+	}
+
+
+	imposterScore.close();
+	saveMatchScore.close();
+
+
+
+
+	printf("Total input images ---- >  %d\n", totalImageC);
+	printf("Total Successfully crossed match images ---- >  %d\n", successfullyCrosMat);
+	printf("Total Authentic match  ---- >  %d\n", totalAuthScore);
+	printf("Total Good authetic score ---- >  %d	and with threshold:::::	%0.3f\n", goodAuthScore, thresScore);
+	printf("Total Imposter match  ---- >  %d\n", totalimposterScore);
+
+#endif
+
+}
+
+#endif
+
+
+
