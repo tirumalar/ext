@@ -46,8 +46,11 @@ LoiteringDetector::LoiteringDetector(Configuration& conf)
 
 	m_msgFormat=conf.getValue("Eyelock.LoiteringMsgFormat","LOITERING;Camera:%s;Time:%llu;HALO:%f;IRIS:%d:");
 	m_sleepTimeuSec = conf.getValue("Eyelock.LoiteringSleepMilliSec",1000);
+#if 0
 	m_sleepTimeuSec = m_sleepTimeuSec*1000;
-
+#else
+	m_sleepTimeuSec = m_sleepTimeuSec*10;
+#endif
 	const char *camid =  conf.getValue("GRI.cameraID","NONE");
 	m_CamStr.assign(camid);
 

@@ -147,13 +147,13 @@ void NWHDMatcher::run()
 			sockSrv=0;
 			cout <<name;
 			ncex.PrintException();
-			sleep(1);
+			// sleep(1);
 		}
 		catch(const char* msg){
 			if(sockSrv)delete sockSrv;
 			sockSrv=0;
 			cout <<name<<msg <<endl;
-			sleep(1);
+			// sleep(1);
 		}
 	}
 	if(sockSrv){
