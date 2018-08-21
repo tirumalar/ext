@@ -73,7 +73,11 @@ MatchDispatcher::MatchDispatcher(Configuration& conf)
 
 //new items
 	m_Debug = conf.getValue("Eyelock.MatchDispDebug",false);
+#if 0
 	m_matchDispSleepusec = 1000 * conf.getValue("Eyelock.MatchDispSleepusec", 200);//200 milli sec
+#else
+	m_matchDispSleepusec = 1000 * conf.getValue("Eyelock.MatchDispSleepusec", 10);// 10 milli sec
+#endif
 	m_dualEyeMatchThresholdTime = 1000 * conf.getValue("Eyelock.DualEyeMatchThresholdTime", 2000);//2sec
 	m_dualMatcherPolicy = conf.getValue("Eyelock.DualMatcherPolicy",false);
 

@@ -179,17 +179,17 @@ unsigned int EyelockNanoSdkThread::MainLoop() {
 		catch(Exception& ncex){
 			EyelockLog(logger, ERROR, "EyelockNanoSdkThread Exception");
 			ncex.PrintException();
-			sleep(1);
+			//sleep(1);
 		}
 		catch(const char* msg){
 			EyelockLog(logger, ERROR, "EyelockNanoSdkThread Exception %s",msg);
-			sleep(1);
+			//sleep(1);
 		}
 		catch(apache::thrift::TException ex){
 			EyelockLog(logger, ERROR, "Thrift Exception in EyelockNanoSdkThread %s",ex.what());
 			EyelockLog(logger, ERROR, "Error = %d",errno);
 		}
-		sleep(1);
+		//sleep(1);
 	}
 	return 0;
 }

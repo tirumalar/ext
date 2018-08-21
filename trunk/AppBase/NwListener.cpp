@@ -672,13 +672,13 @@ unsigned int NwListener::MainLoop() {
 			cout <<name; cout.flush();
 			ncex.PrintException();
 			reset = true;
-			sleep(1);
+			//sleep(1);
 		}
 		catch(const char* msg){
 			EyelockLog(logger, ERROR, "MainLoop() exception: %s", msg);
 			cout <<name<<msg <<endl;
 			reset = true;
-			sleep(1);
+			//sleep(1);
 		}
 	}
 

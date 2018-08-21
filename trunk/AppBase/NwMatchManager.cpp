@@ -38,13 +38,13 @@ NwMatchManager::NwMatchManager(Configuration& conf) :
 		m_PingTimeStamp(0), m_PingInterval(5), m_imageProcessor(0), m_clientAddr(0), m_enableCentroidRatio(false),
 		m_f2fDispatcher(NULL),m_singleIrisinDual(false), m_loiteringDetector(NULL), m_F2FDbDoneMsg(256),
 		m_matchDispatcher(NULL), m_irisState(UT_IRIS_NONE), m_resultDestAddr(NULL), m_socketFactory(NULL),
-		m_intraEyeTimeWindowEnable(false),m_irisCodeDatabaseFile(NULL),m_negativeMatchEnable(false),m_sleepTimeBetweenMatching(50000) {
+		m_intraEyeTimeWindowEnable(false),m_irisCodeDatabaseFile(NULL),m_negativeMatchEnable(false),m_sleepTimeBetweenMatching(1000) {
 	FlushIrisList(CHECK_IRIS_BOTH);
 
 	m_queueFullBehaviour = OVERWRIE_OLD;
 	m_matchScoreThresh = conf.getValue("GRI.matchScoreThresh", 0.13f);
 	m_matchScoreThresh1 = conf.getValue("GRI.matchScoreThresh1", 0.27f);
-	m_sleepTimeBetweenMatching = conf.getValue("Eyelock.SleepTimeBetweenMatching",50000);
+	m_sleepTimeBetweenMatching = conf.getValue("Eyelock.SleepTimeBetweenMatching",1000);
 	timeoutThreadSpawned = false;
 #ifndef __BFIN__
 	m_bioInstance = new BiOmega(640, 480, 1);
@@ -492,7 +492,7 @@ void NwMatchManager::ProcessReloadMsg(HTTPPOSTMsg* msg) {
 	}
 
 	if(m_f2fDispatcher)m_f2fDispatcher->SetSendingEveryNSec(true);
-	usleep(10000);
+	usleep(1000);
 	if(m_ledDispatcher)m_ledDispatcher->SetInitialState();
 	SendF2FMessage(m_F2FDbDoneMsg);
 }
@@ -985,7 +985,7 @@ void* NwMatchManager::timeoutThread(void * data) {
 			bool doQuit = ShouldIQuit();
 			if(doQuit)
 				return 0;
-			usleep(50000); //should be 20 hz:
+			usleep(1000); //should be 20 hz:
 
 		}
 
@@ -1003,7 +1003,7 @@ void* NwMatchManager::timeoutThread(void * data) {
 				pt->m_bTimeoutActive = false;
 				break;
 			}
-			usleep(500000);
+			usleep(1000);
 			CURR_TV_AS_MSEC(curr);
 			current = curr - start;
 		

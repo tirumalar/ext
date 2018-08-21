@@ -85,7 +85,11 @@ F2FDispatcher::F2FDispatcher(Configuration& conf):ResultDispatcher(conf), m_pMat
 	m_f2fResult.setState(HEALTH);
 	m_NSec = conf.getValue("Eyelock.SystemReadyFrequencySec",0);
 	m_SleepTime = conf.getValue("Eyelock.TimeDelayBetweenMsgMilliSec",200);
+#if 0
 	m_SleepTime = m_SleepTime*1000;//microsec
+#else
+	m_SleepTime = 10000; //microsec
+#endif
 	m_Debug = conf.getValue("Eyelock.SystemReadyDebug", false);
 	int timeOutms = conf.getValue("Eyelock.WeiganSocketTimeOutMillis", 200);
 	m_timeOutSend.tv_sec = timeOutms / 1000;
@@ -223,7 +227,7 @@ F2FDispatcher::F2FDispatcher(Configuration& conf):ResultDispatcher(conf), m_pMat
 	}
 	const char *tmp	= conf.getValue("Eyelock.TamperNotifyMessage", "Tamper!");
 	strcpy(m_tamperMsg, tmp);
-	sleep(1);
+	// sleep(1); // Anita
 
 	if (m_osdpACSEnabled || m_osdpReaderEnable) {
 		m_osdpMessage = new OSDPMessage(conf);
@@ -524,7 +528,7 @@ void F2FDispatcher::ProcessBoBAcsChange()
 		else if (!m_transTOC)
 			EyelockLog(logger, INFO, "Ready for Eyes");
 		EyelockEvent("System Ready for Authentication");
-		testSend();
+		// testSend(); // Anita
 	}
 }
 

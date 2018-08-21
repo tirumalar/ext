@@ -212,13 +212,13 @@ unsigned int MasterSlaveNwListner::MainLoop() {
 			cout <<name; cout.flush();
 			ncex.PrintException();
 			reset = true;
-			sleep(1);
+			//sleep(1);
 		}
 		catch(const char* msg){
 			EyelockLog(logger, ERROR, "MainLoop() exception: %s", msg);
 			cout <<name<<msg <<endl;
 			reset = true;
-			sleep(1);
+			//sleep(1);
 		}
 	}
 	EyelockLog(logger, DEBUG, "NwListener::MainLoop; CloserServer()"); fflush(stdout);
