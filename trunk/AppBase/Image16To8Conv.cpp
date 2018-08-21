@@ -19,6 +19,9 @@
 #include <exception>
 #include "socket.h"
 
+#ifdef __aarch64__
+#define __ARM__
+#endif
 
 #ifdef __ARM__
 #include <arm_neon.h>

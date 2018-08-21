@@ -45,7 +45,7 @@ export OPENCV_NEW_LIBS=${STATIC_LIBS}/opencv3.4/lib
 export ARUCO_INC=${STATIC_LIBS}/opencv3.4/aruco/include
 export ARUCO_LIBS=${STATIC_LIBS}/opencv3.4/aruco/lib
 
-export ARCH_PROCESSOR="_ARM_"
+export ARCH_PROCESSOR="__ARM__"
 
 
 
