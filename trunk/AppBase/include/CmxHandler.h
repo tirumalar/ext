@@ -156,7 +156,7 @@ private:
 
 };
 
-
+void *Images(void *arg);
 void *pingStatus(void *arg);
 void *leftCServer(void *arg);
 #ifndef HBOX_PG
