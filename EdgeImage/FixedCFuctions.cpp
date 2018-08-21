@@ -21,6 +21,10 @@ extern "C" {
 #include "EdgeImage_private.h"
 }
 
+#ifdef __aarch64__
+#define __ARM__
+#endif
+
 #ifdef __ARM__
 #include <arm_neon.h>
 #endif
@@ -2442,7 +2446,7 @@ void reduce_gauss5_16bit_4x(unsigned short* inp,unsigned short* out, int *param)
 }
 #endif
 
-
+#if 0 // 21 Aug 2018
 void GetExtractedLine(unsigned short *inptr,unsigned short *even16,unsigned short *even4,int outwidth){
 
 
@@ -2475,6 +2479,26 @@ void GetExtractedLine(unsigned short *inptr,unsigned short *even16,unsigned shor
 #endif
 
 }
+#else
+void GetExtractedLine(unsigned short *inptr,unsigned short *even16,unsigned short *even4,int outwidth){
+	unsigned short *e16=even16,*e4=even4;
+	unsigned short *ptr1 = inptr;
+	unsigned short *ptr2 = inptr+2;
+
+	*e16++ = 0;
+	*e4++ = 0;
+
+	for(int i=0;i<outwidth;i++,ptr1+=4,ptr2+=4){
+		*e16++ = *ptr1;
+		*e4++ = *ptr2;
+	}
+	*even16 = *(even16+2); //first replicated
+	*even4 = *(even4+1);   //first replicated
+
+	*(even16+outwidth+1)= *(e16-1);//last replicated
+	*(even4+outwidth+1) = *(e4-1);//last replicated
+}
+#endif
 
 #ifdef __ARM__
 void print_uint16 (uint16x8_t data, char* name) {

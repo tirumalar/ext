@@ -9,6 +9,12 @@ extern "C" {
 	#include "test_fw.h"
 	#include "file_manip.h"
 }
+
+
+#ifdef __aarch64__
+#define __ARM__
+#endif
+
 #ifdef __ARM__
 #include <arm_neon.h>
 #endif
