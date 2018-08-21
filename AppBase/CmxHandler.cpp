@@ -27,8 +27,9 @@
 //#include "MatchManagerInterface.h"
 
 #include "BufferBasedFrameGrabber.h"
+#include <opencv2/imgcodecs.hpp>
 using namespace std;
-
+using namespace cv;
 extern "C" {
 #include "file_manip.h"
 #include "include/BobListener.h"
@@ -2967,6 +2968,54 @@ void *leftCServer(void *arg)
       close(leftCSock);
 }
 
+void *Images(void *arg)
+{
+	PortServerInfo *ps = (PortServerInfo*) arg;
+
+    CmxHandler *me = (CmxHandler *) ps->pCmxHandler;
+    int length;
+    int pckcnt=0;
+    char buf[IMAGE_SIZE];
+    char dummy_buff[IMAGE_SIZE];
+    int datalen = 0;
+    int bytes_to_get=IMAGE_SIZE;
+    short *pShort = (short *)buf;
+    bool b_syncReceived = false;
+    ImageQueueItem queueItem;
+    BufferBasedFrameGrabber *pFrameGrabber = (BufferBasedFrameGrabber*)me->pImageProcessor->GetFrameGrabber();
+    queueItem = pFrameGrabber->GetFreeBuffer();
+    char * databuf = (char *)queueItem.m_ptr;
+
+    void SendUdpImage(int port, char *image, int bytes_left);
+    Mat imageIn, image;
+    int x;
+    Mat sendImg;
+	sendImg = Mat(Size(1200,960), CV_8U);
+	image=imread("EyeCropAnita.pgm",0);
+	image.convertTo(image,CV_8UC1);
+	image.copyTo(sendImg(cv::Rect(0,0,image.cols, image.rows)));
+	memcpy(databuf, (char *)sendImg.data, sendImg.cols*sendImg.rows);
+
+    while (!me->ShouldIQuit())
+    {
+    	if (databuf != dummy_buff)
+    		pFrameGrabber->PushProcessBuffer(queueItem);
+#if 1 // Looping
+    	queueItem = pFrameGrabber->GetFreeBuffer();
+    	// if not put data into dummy buffer
+    	if (!queueItem.m_ptr)
+    	{
+    		databuf = dummy_buff;
+    	}
+    	else
+    	{
+    		databuf = queueItem.m_ptr;
+    	}
+#endif
+
+    }
+
+}
 #ifdef HBOX_PG
 void *middleCamera(void *arg)
 {
