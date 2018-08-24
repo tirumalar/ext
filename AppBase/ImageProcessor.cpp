@@ -862,7 +862,10 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 			if(frame->imageData != NULL)
 			{
 				sprintf(filename, "%s/InputImage_%s_%lu_%09lu_%d_%d.pgm", m_sessionDir.c_str(), time_str, ts.tv_sec, ts.tv_nsec, frame_number, cam_idd);
-				cvSaveImage(filename,frame); // terminates the application if path doesn't exists
+				// cvSaveImage(filename,frame); // terminates the application if path doesn't exists
+				cv::Mat mateye = cv::cvarrToMat(frame);
+				imwrite(filename, mateye);
+				
 			}
 
 			char session_match_log[100];
