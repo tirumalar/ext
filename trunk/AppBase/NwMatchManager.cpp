@@ -32,6 +32,11 @@
 #include <unistd.h>
 
 const char logger[30] = "NwMatchManager";
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv/cv.h>
+#include <opencv2/core.hpp>
 
 NwMatchManager::NwMatchManager(Configuration& conf) :
 		GenericProcessor(conf), m_queueSz(0), m_MatcherHDMStatus(true), m_ledDispatcher(NULL), m_logging(false),
@@ -159,6 +164,7 @@ NwMatchManager::NwMatchManager(Configuration& conf) :
 
 	m_certFile = NULL;
 
+	m_SaveMatchInfo = conf.getValue("Eyelock.SaveMatchInfo", false);
 	//xxlog("Eyelock Startup\n",0);
 	EyelockEvent("Eyelock Startup\n",0);
 
@@ -1049,7 +1055,11 @@ void NwMatchManager::ResetNegativeMatch() {
 void NwMatchManager::processmatch(Copyable *inpmsg) {
 
 	bool tempdualMatch  = m_dualMatchEnabled;
-
+	CvFont font;
+	double hScale=0.7;
+	double vScale=0.7;
+	int lineWidth=1;
+	bool static firstTime = true;
 	try {
 		if(m_negativeMatchEnable){
 			if(m_Debug)EyelockLog(logger, DEBUG, "foo match! timer active %d timeout %d timer running %d",
@@ -1111,6 +1121,20 @@ void NwMatchManager::processmatch(Copyable *inpmsg) {
 		if ((NULL == m_leftiris.m_matchedIris) || (NULL == m_rightiris.m_matchedIris)) {
 			XTIME_OP("NwMATCHM matcher",
 					result=m_matchManager->DoMatch((unsigned char*)iriscodeMsg->GetBuffer()));
+			if(firstTime){
+				cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, hScale,vScale,0,lineWidth);
+				firstTime = false;
+			}
+
+			if(m_SaveMatchInfo){
+				std::ostringstream ssCoInfo;
+				ssCoInfo << "MatchScore  " << result-> getScore();
+				char filename[100];
+				sprintf(filename,"EyeCrop_%d.pgm", irisCurr->getFrameIndex());
+				cv::Mat mateye = cv::imread(filename, 0);
+				putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), &font, 0.8, cvScalar(255,255,255), 2, 8);
+				imwrite(filename, mateye);
+			}
 			result->setFrameInfo(irisCurr->getFrameIndex(),irisCurr->getEyeIndex(),(char*)irisCurr->getCamID());
 			result->setTimeStamp(irisCurr->getTimeStamp());
 			if((result-> getScore() < m_matchScoreThresh)&& m_singleIrisinDual){

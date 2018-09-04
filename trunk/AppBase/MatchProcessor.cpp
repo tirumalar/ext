@@ -24,6 +24,8 @@
 #include "NwMatchManager.h"
 #include "NwMatcherSerialzer.h"
 #include "IrisData.h"
+#include <opencv2/highgui/highgui.hpp>
+
 //#include "IrisSelector.h"
 extern "C" {
 #include "file_manip.h"
@@ -236,6 +238,9 @@ MatchProcessor::MatchProcessor(Configuration& conf) :
 	m_irisMaxThreshRad = conf.getValue("Eyelock.irisMaxThreshRad",400);
 
  	m_logging = conf.getValue("Eyelock.Logging", false);
+
+ 	m_SaveMatchInfo = conf.getValue("Eyelock.SaveMatchInfo", false);
+ 	m_EyeCrop = cvCreateImageHeader(cvSize(640, 480), IPL_DEPTH_8U, 1);
 }
 
 MatchProcessor::~MatchProcessor() {
@@ -269,6 +274,8 @@ MatchProcessor::~MatchProcessor() {
 		delete m_IrisData[i];
 	}
 	if(m_IrisData) free(m_IrisData);
+	if(m_EyeCrop)
+		cvReleaseImageHeader(&m_EyeCrop);
 }
 
 bool MatchProcessor::enqueMsg(Copyable& msg) {
@@ -596,7 +603,13 @@ void MatchProcessor::process(HTTPPOSTMsg *msg) {
 		cout << ex.what() << endl;
 	}
 }
-#include <opencv2/highgui/highgui.hpp>
+
+void draw1( IplImage* img1, CvPoint3D32f pt, CvScalar color )
+{
+	CvPoint center = {(int)(pt.x), (int)(pt.y)};
+	int radius = (int)(pt.z);
+	cvCircle( img1, center, radius, color, 1, 8, 0 );
+}
 IrisData * MatchProcessor::SegmentEye(HTTPPOSTMsg *msg,float *variance){
 #ifdef MADHAV
 	int numsec = (1500000+2*m_IrisDBHeader->GetNumRecord()*1000)/1000000;
@@ -620,6 +633,19 @@ IrisData * MatchProcessor::SegmentEye(HTTPPOSTMsg *msg,float *variance){
 // Try to get IrisData
 	IrisData *irisData = m_spoofDetector->GetIrisData();
 
+	if(m_SaveMatchInfo)
+	{
+		char filename[100];
+		CvPoint3D32f ip = irisData->getIrisCircle();
+		CvPoint3D32f pp = irisData->getPupilCircle();
+		sprintf(filename,"EyeCrop_%d.pgm",msg->getFrameIndex());
+		cvSetData(m_EyeCrop, (unsigned char*)frame, m_EyeCrop->width);
+		CvScalar color = cvRealScalar(255);
+		draw1( m_EyeCrop, pp, color );
+		draw1( m_EyeCrop, ip, color );
+		cv::Mat mateye = cv::cvarrToMat(m_EyeCrop);
+		imwrite(filename, mateye);
+	}
 	return irisData;
 }
 
