@@ -20,6 +20,8 @@ class Configuration;
 class DBAdapter;
 using std::string;
 
+#include <opencv2/core.hpp>
+
 class HDMatcher: public Configurable{
 public:
 	enum Status{INIT, REGISTERED, AVAILABLE, BUSY, NOTAVAILABLE, CARDMATCH};
@@ -59,7 +61,7 @@ public:
 	virtual void SetDebug(){m_debug= true;}
 	bool InitializeDb(ReaderWriter* dbRdr, unsigned char *db, unsigned char *coarsedb);
 	bool InitializeDb(DBAdapter *dbAdapter, unsigned char *db, unsigned char *coarsedb);
-	std::pair<int, float> MatchIrisCode(unsigned char * IrisCode,unsigned char* DB, unsigned char *coarseDB=0);
+	std::pair<int, float> MatchIrisCode(unsigned char * IrisCode,unsigned char* DB, CvPoint3D32f pupil, unsigned char *coarseDB=0);
 	unsigned char* GetF2FAndIDKey(unsigned char* DB,int indx);
 	std::string GetMatchGUID(unsigned char* DB,int indx);
 	virtual int GetType(){return 0;}
@@ -149,6 +151,7 @@ protected:
 	IrisData *m_irisData;
 	char m_cardMatchName[100];
 	int m_FeatureMask;
+	float m_pupilzz;
 	unsigned char* GetIris(unsigned char *DB,int eyenum);
 	unsigned char* GetMask(unsigned char *DB,int eyenum);
 
@@ -159,15 +162,15 @@ protected:
 	void MatchIrisCodeExhaustiveNumDen(unsigned char *IrisCode, unsigned char* DB,int *buffer);
 
 	unsigned char * extractCoarseDbRecord(unsigned char *PersonRec, unsigned char *coarseRec);
-	std::pair<int,float> MatchIrisCodeGreedy(unsigned char *IrisCode, unsigned char* DB);
-	std::pair<int,float> MatchIrisCodeExhaustive(unsigned char *IrisCode, unsigned char* DB);
-	std::pair<int,float> MatchIrisCodeExhaustiveCoarseFine(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB);
-	std::pair<int,float> MatchIrisCodeGreedyCoarseFine(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB);
-	std::pair<int,float> MatchIrisCodeExhaustiveCoarseFineDBUnCompressed(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB);
+	std::pair<int,float> MatchIrisCodeGreedy(unsigned char *IrisCode, unsigned char* DB, CvPoint3D32f pupil);
+	std::pair<int,float> MatchIrisCodeExhaustive(unsigned char *IrisCode, unsigned char* DB, CvPoint3D32f pupil);
+	std::pair<int,float> MatchIrisCodeExhaustiveCoarseFine(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB, CvPoint3D32f pupil);
+	std::pair<int,float> MatchIrisCodeGreedyCoarseFine(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB, CvPoint3D32f pupil);
+	std::pair<int,float> MatchIrisCodeExhaustiveCoarseFineDBUnCompressed(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB, CvPoint3D32f pupil);
 	unsigned char* GetCompressIris(unsigned char *DB,int eyenum);
 	unsigned char* GetCoarseCompressIris(unsigned char *DB,int eyenum);
-	std::pair<int,float> MatchIrisCodeExhaustiveCoarseFineDBCompressed(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB);
-	std::pair<int,float> MatchIrisCodeExhaustiveDBCompressed(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB);
+	std::pair<int,float> MatchIrisCodeExhaustiveCoarseFineDBCompressed(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB, CvPoint3D32f pupil);
+	std::pair<int,float> MatchIrisCodeExhaustiveDBCompressed(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB, CvPoint3D32f pupil);
 	void UpdateBuffer(unsigned char *DB,unsigned char*coarsedb,int indx,unsigned char* left,unsigned char* right,unsigned char* guid,bool inc);
 	void SetIrisAndGUID(unsigned char *DB,int indx,unsigned char* data,unsigned char *coarsedb=NULL,unsigned char*coarsedata=NULL);
 

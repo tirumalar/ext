@@ -435,7 +435,7 @@ void NWHDMatcher::GetMatch(char *ptr, int preludeSize, Socket & client)
        //Check if the numeyes is 0 means there is no DB to it and Eyes have come.
         // Inform the MatchSvr abt the bad state..
 		if (m_HDMatcher->GetNumEyes() != 0) {
-			XTIME_OP("NWHDMatcher",res = m_HDMatcher->MatchIrisCode(m_IrisData->getIris(),m_DB, m_CoarseDB));
+			XTIME_OP("NWHDMatcher",res = m_HDMatcher->MatchIrisCode(m_IrisData->getIris(),m_DB, m_IrisData->getPupilCircle(), m_CoarseDB));
 			int indx = res.first >= 0 ? res.first : 0;
 			//key = (char*) m_HDMatcher->GetF2FAndIDKey(m_DB, indx);
 			std::string guid = m_HDMatcher->GetMatchGUID(m_DB,indx);
