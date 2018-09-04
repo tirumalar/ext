@@ -71,7 +71,7 @@ void HDMLocal::DoMatch(unsigned char* inp, int taskid){
 	if(!ret){
 		printf("HDMLocal::ERROR in IRIS CODE\n");
 	}
-	std::pair<int,float> result= MatchIrisCode(m_irisData->getIris(),m_data,m_CoarseDb);
+	std::pair<int,float> result= MatchIrisCode(m_irisData->getIris(),m_data, m_irisData->getPupilCircle(), m_CoarseDb);
 	std::string key = GetMatchGUID(m_data,result.first);
 	std::string keyret;
 	keyret.resize(2);
