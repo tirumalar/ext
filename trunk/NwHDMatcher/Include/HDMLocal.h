@@ -22,7 +22,7 @@ public:
 
 	virtual void AssignDB(char *fname,int memio=0);
 	virtual void AssignDB(DBAdapter *dbAdapter);
-	virtual void StartMatchInterface(int shift,bool greedyMatch,float threshold, float coarseThreshold,int irissz=1280);
+	virtual void StartMatchInterface(int shift,bool greedyMatch,float threshold, float coarseThreshold,float OutdoorMatchThresh,int irissz=1280);
 	virtual bool UpdateSingleUserOnly(unsigned char * perid,unsigned char * leftiris,unsigned char * rightiris);
 	virtual bool AddSingleUserOnly(string perid,string leftiris,string rightiris);
 	virtual bool DeleteSingleUserOnly(unsigned char *guid);

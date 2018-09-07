@@ -53,8 +53,8 @@ HDMLocal::~HDMLocal() {
 	}
 }
 
-void HDMLocal::StartMatchInterface(int shift,bool greedyMatch,float threshold,float coarseThresh,int irissz){
-	HDMatcher::StartMatchInterface(shift,greedyMatch,threshold,coarseThresh,irissz);
+void HDMLocal::StartMatchInterface(int shift,bool greedyMatch,float threshold,float coarseThresh,float OutdoorMatchThresh,int irissz){
+	HDMatcher::StartMatchInterface(shift,greedyMatch,threshold,coarseThresh,OutdoorMatchThresh,irissz);
 	m_Status= REGISTERED;
 }
 bool  HDMLocal::StartMatch(unsigned char *iriscode, int taskid){

@@ -147,6 +147,10 @@ protected:
 	int m_irisMinThreshX,m_irisMaxThreshX,m_irisMinThreshRad,m_irisMaxThreshRad;
 	bool m_logging;
 	bool m_SaveMatchInfo;
+	bool m_OutdoorMatching;
+	float m_OutdoorMatchThresh;
+	int m_FeatureMask;
+	float m_pupilzz;
 	IplImage *m_EyeCrop;
 	SoftwareType m_softwareType;
 };

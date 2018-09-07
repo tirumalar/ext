@@ -32,7 +32,8 @@ extern "C" {
 
 HDMatcher::HDMatcher(int byteSize,int id,bool useCoarseFine,int featuremask)
 :m_numIris(0),m_pMatchManagerInterface(0),m_startIndx(0),m_GreedyMatch(false),m_CoarseFineMatch(false),m_Threshold(-1.0f),
-m_Shift(0),m_logResults(0),m_maxCorruptBitsPercAllowed(70),m_Lut(0),m_maskCode(0xFFFFFFFF),m_irisData(0),m_assigned(0),m_compressedMatching(false),m_pupilzz(18.0)
+m_Shift(0),m_logResults(0),m_maxCorruptBitsPercAllowed(70),m_Lut(0),m_maskCode(0xFFFFFFFF),m_irisData(0),m_assigned(0),m_compressedMatching(false)
+,m_pupilzz(18.0f),m_OutdoorMatching(false),m_OutdoorMatchThresh(0.25f)
 {
 	m_size = byteSize;
 	m_ID = id;
@@ -56,12 +57,13 @@ m_Shift(0),m_logResults(0),m_maxCorruptBitsPercAllowed(70),m_Lut(0),m_maskCode(0
 	memset(m_cardMatchName, 0, 100);
 }
 
-void HDMatcher::StartMatchInterface(int shift, bool greedymatch, float threshold, float coarseThreshold, int irissz){
+void HDMatcher::StartMatchInterface(int shift, bool greedymatch, float threshold, float coarseThreshold, float OutdoorMatchThresh,int irissz){
 	printf("MatcherFeatureMask %#0x \n",m_maskCode&0xFF);
 	m_GreedyMatch = greedymatch;
 	m_Threshold = threshold;
 	m_CoarseThreshold=coarseThreshold;
 	m_Shift=shift;
+	m_OutdoorMatchThresh=OutdoorMatchThresh;
 	Init(irissz);
 }
 
@@ -212,8 +214,10 @@ unsigned char* HDMatcher::GetCoarseMask(unsigned char *DB,int eyenum){
 std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveCoarseFineDBCompressed(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB, CvPoint3D32f pupil){
 
 	int FeatureMask = m_FeatureMask;
-	if(pupil.z <= m_pupilzz)
-		FeatureMask = 255;
+	if(m_OutdoorMatching){
+		if(pupil.z <= m_pupilzz)
+			FeatureMask = 255;
+	}
 
 	EyelockLog(logger, DEBUG, "MatchIrisCodeExhaustiveCoarseFineDBCompressed.....pupilz %f FeatureMask %d\n", pupil.z, FeatureMask);
 
@@ -276,8 +280,10 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveDBCompressed(unsigned cha
 	m_pIrisMatchInterface->MakeShiftsForIris(refIrisCode,refMaskCode,&shiftedCode,&shiftedMask);
 
 	int FeatureMask = m_FeatureMask;
-	if(pupil.z <= m_pupilzz)
-	FeatureMask = 255;
+	if(m_OutdoorMatching){
+		if(pupil.z <= m_pupilzz)
+			FeatureMask = 255;
+	}
 
 	EyelockLog(logger, DEBUG, "MatchIrisCodeExhaustiveDBCompressed.....pupilz %f FeatureMask %d\n", pupil.z, FeatureMask);
 
@@ -304,9 +310,10 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveDBCompressed(unsigned cha
 std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveCoarseFineDBUnCompressed(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB, CvPoint3D32f pupil){
 
 	int FeatureMask = m_FeatureMask;
-	if(pupil.z <= m_pupilzz)
-	FeatureMask = 255;
-
+	if(m_OutdoorMatching){
+		if(pupil.z <= m_pupilzz)
+		FeatureMask = 255;
+	}
 	EyelockLog(logger, DEBUG, "MatchIrisCodeExhaustiveCoarseFineDBUnCompressed.....pupilz %f FeatureMask %d\n", pupil.z, FeatureMask);
 
 	std::pair<int, float> best_score = std::make_pair(-1, 1);
@@ -431,10 +438,15 @@ static void SaveCode1( char *code) {
 std::pair<int,float> HDMatcher::MatchIrisCodeExhaustive(unsigned char *IrisCode, unsigned char* DB, CvPoint3D32f pupil)
 {
 	int FeatureMask = m_FeatureMask;
-	if(pupil.z <= m_pupilzz)
-		FeatureMask = 255;
+	float matchThresh = m_Threshold;
+	if(m_OutdoorMatching){
+		if(pupil.z <= m_pupilzz)
+			FeatureMask = 255;
+		if(FeatureMask == 255)
+			matchThresh = m_OutdoorMatchThresh;
+	}
 
-	EyelockLog(logger, DEBUG, "MatchIrisCodeExhaustive.....pupilz %f FeatureMask %d\n", pupil.z, FeatureMask);
+	EyelockLog(logger, DEBUG, "MatchIrisCodeExhaustive.....pupilz %f FeatureMask %d  matchThresh %f m_numIris %d \n", pupil.z, FeatureMask, matchThresh, m_numIris);
 
 	std::pair<int, float> best_score = std::make_pair(-1, 1);
 	std::pair<int, float> score= std::make_pair(-1, 1);
@@ -458,7 +470,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustive(unsigned char *IrisCode,
 			score = m_pIrisMatchInterface->Match(insIrisCode, insMaskCode,FeatureMask);
 //			printf("Score %f \n",score.second);
 			if(mrh){
-				if(score.second < m_Threshold){
+				if(score.second < matchThresh){
 					mrh->Append(i+m_startIndx,score.second);
 					mrh->SetType(eMATCH);
 				}
@@ -503,10 +515,17 @@ void HDMatcher::MatchIrisCodeExhaustiveNumDen(unsigned char *IrisCode, unsigned 
 std::pair<int,float> HDMatcher::MatchIrisCodeGreedy(unsigned char *IrisCode, unsigned char* DB, CvPoint3D32f pupil)
 {
 	int FeatureMask = m_FeatureMask;
-	if(pupil.z <= m_pupilzz)
-		FeatureMask = 255;
+	float matchThresh = m_Threshold;
 
-	EyelockLog(logger, DEBUG, "MatchIrisCodeGreedy.....pupilz %f FeatureMask %d\n", pupil.z, FeatureMask);
+	if(m_OutdoorMatching){
+		if(pupil.z <= m_pupilzz)
+			FeatureMask = 255;
+		if(FeatureMask == 255)
+			matchThresh = m_OutdoorMatchThresh;
+	}
+
+
+	EyelockLog(logger, DEBUG, "MatchIrisCodeGreedy.....pupilz %f FeatureMask %d  matchThresh %f \n", pupil.z, FeatureMask, matchThresh);
 
 	std::pair<int, float> best_score = std::make_pair(-1, 1);
 	std::pair<int, float> score= std::make_pair(-1, 1);
@@ -520,7 +539,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeGreedy(unsigned char *IrisCode, uns
 			unsigned char *insMaskCode = GetMask(DB,i);
 			score = m_pIrisMatchInterface->Match(insIrisCode, insMaskCode,FeatureMask);
 
-			if(score.second < m_Threshold){
+			if(score.second < matchThresh){
 				best_score = score;
 				best_score.first = i;
 				break;
@@ -533,9 +552,10 @@ std::pair<int,float> HDMatcher::MatchIrisCodeGreedy(unsigned char *IrisCode, uns
 std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveCoarseFine(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB, CvPoint3D32f pupil)
 {
 	int FeatureMask = m_FeatureMask;
-	if(pupil.z <= m_pupilzz)
-		FeatureMask = 255;
-
+	if(m_OutdoorMatching){
+		if(pupil.z <= m_pupilzz)
+			FeatureMask = 255;
+	}
 	EyelockLog(logger, DEBUG, "MatchIrisCodeExhaustiveCoarseFine.....pupilz %f FeatureMask %d\n", pupil.z, FeatureMask);
 
 	std::pair<int, float> best_score = std::make_pair(-1, 1);
@@ -599,10 +619,15 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustiveCoarseFine(unsigned char 
 std::pair<int,float> HDMatcher::MatchIrisCodeGreedyCoarseFine(unsigned char *IrisCode, unsigned char* DB,unsigned char *coarseDB, CvPoint3D32f pupil)
 {
 	int FeatureMask = m_FeatureMask;
-	if(pupil.z <= m_pupilzz)
-		FeatureMask = 255;
+	float matchThresh = m_Threshold;
+	if(m_OutdoorMatching){
+		if(pupil.z <= m_pupilzz)
+			FeatureMask = 255;
+		if(FeatureMask == 255)
+			matchThresh = m_OutdoorMatchThresh;
+	}
 
-	EyelockLog(logger, DEBUG, "MatchIrisCodeGreedyCoarseFine.....pupilz %f FeatureMask %d\n", pupil.z, FeatureMask);
+	EyelockLog(logger, DEBUG, "MatchIrisCodeGreedyCoarseFine.....pupilz %f FeatureMask %d  matchThresh %f \n", pupil.z, FeatureMask, matchThresh);
 
 	std::pair<int, float> best_score = std::make_pair(-1, 1);
 	std::pair<int, float> score= std::make_pair(-1, 1);
@@ -633,7 +658,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeGreedyCoarseFine(unsigned char *Iri
 			insMaskCode = GetMask(DB,i);
 			score = m_pIrisMatchInterface->Match(insIrisCode, insMaskCode, FeatureMask);
 
-			if(score.second < m_Threshold){
+			if(score.second < matchThresh){
 				best_score = score;
 				best_score.first = i;
 				break;
