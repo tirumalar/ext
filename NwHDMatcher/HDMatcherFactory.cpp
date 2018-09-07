@@ -44,6 +44,9 @@ HDMatcher* HDMatcherFactory::Create(int matchtype,int irissz,int size,int id,con
 	int minCommonBitsCoarse = getConf()->getValue("GRI.Match.Coarse.MinCommonBits",(minCommonBitsFine)/4);
 	int maxCorrBitPer = getConf()->getValue("GRI.MaxCorruptBitPercentageEnrollment",70);
 	bool compressedMatching = getConf()->getValue("GRI.CompressedMatching",false);
+	bool OutdoorMatching = getConf()->getValue("Eyelock.OutdoorMatching",false);
+	float pupilzz = getConf()->getValue("Eyelock.pupilzz",18.0f);
+	float OutdoorMatchThresh = getConf()->getValue("Eyelock.OutdoorMatchScoreThresh", 0.25f);
 	char *cameraID = (char*)getConf()->getValue("GRI.cameraID","Unknown");
 
 	bool debug=getConf()->getValue("GRI.HDDebug",false);
@@ -62,8 +65,10 @@ HDMatcher* HDMatcherFactory::Create(int matchtype,int irissz,int size,int id,con
 		inp->SetMaskCode(maskval);
 		inp->SetlowerNibble(lowernibble);
 		inp->SetCompressedMatching(compressedMatching);
+		inp->SetOutdoorMatching(OutdoorMatching);
+		inp->Setpupilzz(pupilzz);
 		if(debug) inp->SetDebug();
-		inp->StartMatchInterface(shift,greedy,thresh,coarsethresh,irissz);
+		inp->StartMatchInterface(shift,greedy,thresh,coarsethresh,OutdoorMatchThresh,irissz);
 		return inp;
 	}
 	else if(REMOTEPROXY == matchtype ){
@@ -93,7 +98,7 @@ HDMatcher* HDMatcherFactory::Create(int matchtype,int irissz,int size,int id,con
 		inp->SetCompressedMatching(compressedMatching);
 		if(debug) inp->SetDebug();
 		inp->InitSSL();
-		inp->StartMatchInterface(shift,greedy,thresh,coarsethresh,irissz);
+		inp->StartMatchInterface(shift,greedy,thresh,coarsethresh,OutdoorMatchThresh,irissz);
 		return inp;
 	}
 	else

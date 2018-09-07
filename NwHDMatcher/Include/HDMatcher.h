@@ -65,7 +65,7 @@ public:
 	unsigned char* GetF2FAndIDKey(unsigned char* DB,int indx);
 	std::string GetMatchGUID(unsigned char* DB,int indx);
 	virtual int GetType(){return 0;}
-	virtual void StartMatchInterface(int shift,bool greedyMatch,float threshold, float coarseThreshold, int irissz=1280);
+	virtual void StartMatchInterface(int shift,bool greedyMatch,float threshold, float coarseThreshold, float OutdoorMatchThresh, int irissz=1280);
 	void DeclareBad(){ m_Status=NOTAVAILABLE;}
 	void SetRegistered(){m_Status = REGISTERED;}
 	char *GetStatus();
@@ -104,6 +104,8 @@ public:
 	bool IslowerNibble(){ return m_LowerNibble;}
 	void SetlowerNibble(bool val){ m_LowerNibble = val;}
 	void SetCompressedMatching(bool val){ m_compressedMatching = val;}
+	void SetOutdoorMatching(bool val){ m_OutdoorMatching = val;}
+	void Setpupilzz(float val){ m_pupilzz = val;}
 	virtual bool UpdateSingleUserOnly(unsigned char * perid,unsigned char * leftiris,unsigned char * rightiris){return false;}
 	virtual bool AddSingleUserOnly(string perid,string leftiris,string rightiris){return false;}
 	virtual bool DeleteSingleUserOnly(unsigned char *guid){return false;}
@@ -152,6 +154,8 @@ protected:
 	char m_cardMatchName[100];
 	int m_FeatureMask;
 	float m_pupilzz;
+	bool m_OutdoorMatching;
+	float m_OutdoorMatchThresh;
 	unsigned char* GetIris(unsigned char *DB,int eyenum);
 	unsigned char* GetMask(unsigned char *DB,int eyenum);
 

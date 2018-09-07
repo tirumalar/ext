@@ -141,6 +141,10 @@ MatchProcessor::MatchProcessor(Configuration& conf) :
 	m_scoreThresh = conf.getValue("GRI.matchScoreThresh", 0.13f);
 	unsigned int maskcode = conf.getValue("GRI.MatcherFeatureMask",255);
 	m_maskval = (maskcode<<24)|(maskcode<<16)|(maskcode<<8)|(maskcode);
+	m_OutdoorMatching = conf.getValue("Eyelock.OutdoorMatching",false);
+	m_OutdoorMatchThresh = conf.getValue("Eyelock.OutdoorMatchScoreThresh", 0.25f);
+	m_FeatureMask = maskcode;
+	m_pupilzz = conf.getValue("Eyelock.pupilzz",18.0f);
 
 	m_inQueue(inQSize);
 	for (int i = 0; i < inQSize; i++) {
@@ -702,13 +706,22 @@ void MatchProcessor::UpdateIrisData(HTTPPOSTMsg *msg,IrisData *irisData){
 
 bool MatchProcessor::CheckIrisFromSameFrame(){
 	bool spoof= false;
+	float matchThresh = m_scoreThresh;
+	float FeatureMask = m_FeatureMask;
 	try {
 		for(int i=0;i < m_IrisDataIndex && (!spoof) ;i++){
 			for(int j=i+1;j<m_IrisDataIndex && (!spoof) ;j++){
 				if(m_IrisData[i]->getSegmentation() && m_IrisData[j]->getSegmentation()){
 					std::pair<int, float> res = m_bioInstance->MatchIrisCodeSingle((char*)(m_IrisData[i]->getIris()),(char*)(m_IrisData[j]->getIris()),m_maskval);
-					//printf("%d %d %lf < %lf %d %d \n",m_IrisData[i]->getFrameIndex(),m_IrisData[i]->getEyeIndex(),res.second,m_scoreThresh,m_IrisData[j]->getFrameIndex(),m_IrisData[j]->getEyeIndex());
-					if( res.second < m_scoreThresh){
+					//printf("%d %d %lf < %lf %d %d \n",m_IrisData[i]->getFrameIndex(),m_IrisData[i]->getEyeIndex(),res.second,matchThresh,m_IrisData[j]->getFrameIndex(),m_IrisData[j]->getEyeIndex());
+					if(m_OutdoorMatching){
+						CvPoint3D32f pupil = m_IrisData[i]->getPupilCircle();
+						if(pupil.z <= m_pupilzz)
+							FeatureMask = 255;
+						if(FeatureMask == 255)
+							matchThresh = m_OutdoorMatchThresh;
+					}
+					if( res.second < matchThresh){
 						spoof = true;
 						EyelockLog(logger, DEBUG, "Spoof Spoof Spoof on account of Iris from same Frame ");
 					}
