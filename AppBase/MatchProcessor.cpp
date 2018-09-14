@@ -708,19 +708,22 @@ bool MatchProcessor::CheckIrisFromSameFrame(){
 	bool spoof= false;
 	float matchThresh = m_scoreThresh;
 	float FeatureMask = m_FeatureMask;
+	unsigned int maskval = m_maskval;
 	try {
 		for(int i=0;i < m_IrisDataIndex && (!spoof) ;i++){
 			for(int j=i+1;j<m_IrisDataIndex && (!spoof) ;j++){
 				if(m_IrisData[i]->getSegmentation() && m_IrisData[j]->getSegmentation()){
-					std::pair<int, float> res = m_bioInstance->MatchIrisCodeSingle((char*)(m_IrisData[i]->getIris()),(char*)(m_IrisData[j]->getIris()),m_maskval);
-					//printf("%d %d %lf < %lf %d %d \n",m_IrisData[i]->getFrameIndex(),m_IrisData[i]->getEyeIndex(),res.second,matchThresh,m_IrisData[j]->getFrameIndex(),m_IrisData[j]->getEyeIndex());
 					if(m_OutdoorMatching){
 						CvPoint3D32f pupil = m_IrisData[i]->getPupilCircle();
 						if(pupil.z <= m_pupilzz)
 							FeatureMask = 255;
-						if(FeatureMask == 255)
+						if(FeatureMask == 255){
 							matchThresh = m_OutdoorMatchThresh;
+							maskval = (FeatureMask<<24)|(FeatureMask<<16)|(FeatureMask<<8)|(FeatureMask);
+						}
 					}
+					std::pair<int, float> res = m_bioInstance->MatchIrisCodeSingle((char*)(m_IrisData[i]->getIris()),(char*)(m_IrisData[j]->getIris()),maskval);
+					//printf("%d %d %lf < %lf %d %d \n",m_IrisData[i]->getFrameIndex(),m_IrisData[i]->getEyeIndex(),res.second,matchThresh,m_IrisData[j]->getFrameIndex(),m_IrisData[j]->getEyeIndex());
 					if( res.second < matchThresh){
 						spoof = true;
 						EyelockLog(logger, DEBUG, "Spoof Spoof Spoof on account of Iris from same Frame ");

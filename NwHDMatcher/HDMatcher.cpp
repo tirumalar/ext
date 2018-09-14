@@ -439,11 +439,14 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustive(unsigned char *IrisCode,
 {
 	int FeatureMask = m_FeatureMask;
 	float matchThresh = m_Threshold;
+	unsigned int maskCode = m_maskCode;
 	if(m_OutdoorMatching){
 		if(pupil.z <= m_pupilzz)
 			FeatureMask = 255;
-		if(FeatureMask == 255)
+		if(FeatureMask == 255){
 			matchThresh = m_OutdoorMatchThresh;
+			maskCode = (FeatureMask<<24)|(FeatureMask<<16)|(FeatureMask<<8)|(FeatureMask);
+		}
 	}
 
 	EyelockLog(logger, DEBUG, "MatchIrisCodeExhaustive.....pupilz %f FeatureMask %d  matchThresh %f m_numIris %d \n", pupil.z, FeatureMask, matchThresh, m_numIris);
@@ -460,7 +463,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustive(unsigned char *IrisCode,
 
 	FrameMatchResult *mrh = GetMatcherHistory();
 	irissz= irissz>>1;
-	m_pIrisMatchInterface->MakeShifts(refIrisCode, refMaskCode,m_maskCode);
+	m_pIrisMatchInterface->MakeShifts(refIrisCode, refMaskCode,maskCode);
 
 	for(int i=0;i<m_numIris;i++){
 		if(CheckFromCorruptList(i)){
@@ -516,12 +519,14 @@ std::pair<int,float> HDMatcher::MatchIrisCodeGreedy(unsigned char *IrisCode, uns
 {
 	int FeatureMask = m_FeatureMask;
 	float matchThresh = m_Threshold;
-
+	unsigned int maskCode = m_maskCode;
 	if(m_OutdoorMatching){
 		if(pupil.z <= m_pupilzz)
 			FeatureMask = 255;
-		if(FeatureMask == 255)
+		if(FeatureMask == 255){
 			matchThresh = m_OutdoorMatchThresh;
+			maskCode = (FeatureMask<<24)|(FeatureMask<<16)|(FeatureMask<<8)|(FeatureMask);
+		}
 	}
 
 
@@ -531,7 +536,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeGreedy(unsigned char *IrisCode, uns
 	std::pair<int, float> score= std::make_pair(-1, 1);
 	unsigned char *refIrisCode = IrisCode;
 	unsigned char *refMaskCode = refIrisCode + 1280;
-	m_pIrisMatchInterface->MakeShifts(refIrisCode, refMaskCode,m_maskCode);
+	m_pIrisMatchInterface->MakeShifts(refIrisCode, refMaskCode,maskCode);
 
 	for(int i=0;i<m_numIris;i++){
 		if(CheckFromCorruptList(i)){
@@ -620,11 +625,15 @@ std::pair<int,float> HDMatcher::MatchIrisCodeGreedyCoarseFine(unsigned char *Iri
 {
 	int FeatureMask = m_FeatureMask;
 	float matchThresh = m_Threshold;
+	unsigned int maskCode = m_maskCode;
 	if(m_OutdoorMatching){
 		if(pupil.z <= m_pupilzz)
 			FeatureMask = 255;
-		if(FeatureMask == 255)
+		if(FeatureMask == 255){
 			matchThresh = m_OutdoorMatchThresh;
+			maskCode = FeatureMask;
+			maskCode = (FeatureMask<<24)|(FeatureMask<<16)|(FeatureMask<<8)|(FeatureMask);
+		}
 	}
 
 	EyelockLog(logger, DEBUG, "MatchIrisCodeGreedyCoarseFine.....pupilz %f FeatureMask %d  matchThresh %f \n", pupil.z, FeatureMask, matchThresh);
@@ -638,7 +647,7 @@ std::pair<int,float> HDMatcher::MatchIrisCodeGreedyCoarseFine(unsigned char *Iri
 	IrisMatchInterface::GetCoarseIrisCode(refIrisCode,refMaskCode,1280,m_CoarseBuff,m_Coarsemask);
 	);
 	m_pIrisMatchInterfaceCoarse->MakeShifts(m_CoarseBuff,m_Coarsemask,0xFF);
-	m_pIrisMatchInterface->MakeShifts(refIrisCode, refMaskCode,m_maskCode);
+	m_pIrisMatchInterface->MakeShifts(refIrisCode, refMaskCode,maskCode);
 
 	for(int i=0;i<m_numIris;i++){
 		if(CheckFromCorruptList(i)){
