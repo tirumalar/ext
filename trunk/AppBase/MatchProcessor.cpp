@@ -707,7 +707,7 @@ void MatchProcessor::UpdateIrisData(HTTPPOSTMsg *msg,IrisData *irisData){
 bool MatchProcessor::CheckIrisFromSameFrame(){
 	bool spoof= false;
 	float matchThresh = m_scoreThresh;
-	float FeatureMask = m_FeatureMask;
+	int FeatureMask = m_FeatureMask;
 	unsigned int maskval = m_maskval;
 	try {
 		for(int i=0;i < m_IrisDataIndex && (!spoof) ;i++){
