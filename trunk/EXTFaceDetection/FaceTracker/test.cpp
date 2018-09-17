@@ -200,7 +200,7 @@ Mat outImgLast, outImg1, outImg1s;		//Used in MeasureSnr function
 int agc_val_cal=3;
 int step;
 int startPoint;
-int thresholdVal;
+int thresholdVal = 10;
 //variable used for tempering
 
 std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
