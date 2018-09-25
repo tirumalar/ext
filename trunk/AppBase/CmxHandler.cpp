@@ -2219,6 +2219,9 @@ rightCServerInfo(0)
 
 	m_exposureTime = conf.getValue("Eyelock.ExposureTime",4);
 	m_analogGain = conf.getValue("Eyelock.CmxAnalogGain",53);
+
+	//DMO
+	m_pOIMQueue = NULL;
 	//Eyelock.ExposureTime
 				//int exposuretime = get
 #ifdef HBOX_PG
@@ -2410,6 +2413,7 @@ void CmxHandler::DestroyCMDTCPServer()
 	}
 }
 
+#if 0 //DMOOUT -  Replaced with function below for pushing CMD messages into OIMQueue
 void CmxHandler::SendMessage(char *outMsg, int len)
 {
 	if (m_debug)
@@ -2457,6 +2461,35 @@ void CmxHandler::SendMessage(char *outMsg, int len)
 
 	//printf("CMX SendMessage: sent\n");
 }
+#else //DMONEW
+void CmxHandler::SendMessage(char *outMsg, int len)
+{
+	if (m_debug)
+		EyelockLog(logger, TRACE, "Send Message %d, len %d", outMsg[0], len);
+
+	if (m_pOIMQueue == NULL)
+	{
+		if (m_debug)
+			EyelockLog(logger, TRACE, "CmxHandler::SendMessage(): OIMQueue uninitialized!");
+		return;
+	}
+
+
+	OIMQueueItem theItem;
+
+	strcpy(theItem.m_Message, outMsg);
+
+	if (m_debug)
+		EyelockLog(logger, TRACE, "CmxHandler::SendMessage(): OIMQueue size = %d...", m_pOIMQueue->Size());
+
+
+	m_pOIMQueue->Push(theItem);
+
+}
+#endif
+
+
+
 
 int m_prevR=-1,m_prevG=-1,m_prevB=-1;
 bool bSend=false;
@@ -2472,9 +2505,9 @@ void CmxHandler::HandleSendMsg(char *msg){
 //	printf("CmxHandler::HandleSendMsg() %s \n", msg);
 	//return;
 	CMXMESSAGETYPE msgType = (CMXMESSAGETYPE)msg[0];
-	char buf[512];
+	char buf[MAXMSG];
 	int len = 0;
-	memset(buf,0x00,512);
+	memset(buf,0x00,MAXMSG);
 	if(msgType == CMX_MATCH)
 	{
 		printf("setting mes type to match\n");
