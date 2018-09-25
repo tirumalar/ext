@@ -65,6 +65,7 @@ public:
 	void reset_wd_counter();
 	static void safe_exit(int);
 	void startHDListener();
+	void startFaceTracking();
 	void startTNIListener();
 	void kill();
 	int CheckTemperature();
@@ -113,6 +114,7 @@ private:
 	char *m_svrAddr;
 	bool m_Debug;
 	pthread_t hdThread;
+	pthread_t ftThread;
 	bool m_Master,m_Slave;
 	SoftwareType m_softwareType;
 	Safe<bool> m_KeepAlive;
