@@ -9,6 +9,7 @@
  */
 #include <fcntl.h>
 #include "EyeLockMain.h"
+#include "eyelock_com.h"
 
 #ifdef __ARM__
 #define __SOUND__
@@ -52,6 +53,8 @@ struct iniParameter_t {
 	char global_gain_val[10];
 } intCalib;
 
+
+extern void *init_facetracking(void * arg);
 
 enum LEDType { MiniLED, NanoLED, EyelockLED, PicoLED, NoLED }; // TODO: Make LEDControllerFctory for thisvoid
 const char logger[30] = "EyelockMain";
@@ -186,8 +189,19 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 
 	if(m_Master){
 #ifdef CMX_C1
-			pCMXHandle = new CmxHandler(conf);
-		if (pCMXHandle) pCMXHandle->SetImageProcessor(pImageProcessor->m_ImageProcessor);
+		//Allocate our Facetracking <--->  Eyelock message queue
+		AllocateOIMQueue(10); // 10 is queue sizee.  Can be replaced with config value later if necessary
+
+		// Start facetracking threads
+		startFaceTracking();
+
+		// Create Cmx handler
+		pCMXHandle = new CmxHandler(conf);
+		if (pCMXHandle)
+		{
+			pCMXHandle->SetImageProcessor(pImageProcessor->m_ImageProcessor);
+			pCMXHandle->SetFaceTrackingQueue(g_pOIMQueue); //DMO configure facetracking queue
+		}
 #endif
 
 		m_SendLed=conf.getValue("GRI.LED.SendResult",true);
@@ -823,6 +837,11 @@ void *hdDispatcher(void *args) {
 
 void EyeLockMain::startHDListener() {
 	pthread_create(&hdThread, NULL, ::hdDispatcher, (void *) (this));
+}
+
+
+void EyeLockMain::startFaceTracking() {
+	pthread_create(&ftThread, NULL, init_facetracking, (void *) (this));
 }
 
 void EyeLockMain::startTNIListener() {
