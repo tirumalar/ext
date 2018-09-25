@@ -18,6 +18,7 @@
 #include "ProcessorChain.h"
 #include "Synchronization.h"
 #include "ImageProcessor.h"
+#include <eyelock_com.h>
 
 #ifdef HBOX_PG
 #include <opencv/cv.h>
@@ -65,6 +66,7 @@ public:
 	//bool do_serv_task(Socket & client);
 	void HandleSendMsg(char *msg);
 	void SetImageProcessor(ImageProcessor *ptr) {pImageProcessor = ptr;}
+	void SetFaceTrackingQueue(OIMQueue * ptr) {m_pOIMQueue = ptr;}
 	static void onConnect(Socket & client, void *arg);
 	bool HandleReceiveImage(char *buffer, int length);
 	int CreateUDPServer(int port);
@@ -86,6 +88,7 @@ public:
 	SocketFactory *m_socketFactory;
 
 	ImageProcessor *pImageProcessor;
+	OIMQueue *m_pOIMQueue;
 
 private:
     bool HandleReceiveMsg(Socket & client);
