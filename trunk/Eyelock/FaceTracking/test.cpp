@@ -2066,7 +2066,8 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 		EyelockLog(logger, DEBUG, "Imshow");
 		cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
 		cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
-		imshow(temp, smallImg);
+		imshow("FaceTracker", smallImg);
+		cvWaitKey(1);
 	}
 
 //For debug session
@@ -3336,10 +3337,12 @@ void *init_facetracking(void *arg)
 	}
 
 	//imshow() face tracking streaming
+#if 0 // Anita
 	if(bShowFaceTracking)
 	{
 		cv::namedWindow(temp);
 	}
+#endif
 
 	//Controling Offset correction while normal streaming (used for testing offset correction)
 	if (vs->m_port==8192)
@@ -3386,8 +3389,10 @@ void *init_facetracking(void *arg)
 
 				}
 				//	cv::resize(outImg, smallImg, cv::Size(), 0.25, 0.25, INTER_NEAREST); //Time debug
-				if(bShowFaceTracking)
-					imshow(temp,smallImg);  //Time debug
+				if(bShowFaceTracking){
+					imshow("FaceTracker",smallImg);  //Time debug
+					cvWaitKey(1);
+				}
 			}
 
 
