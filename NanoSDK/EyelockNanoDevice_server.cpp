@@ -110,6 +110,9 @@ void EyelockNanoDeviceHandler::SetEyelockThread(EyeLockThread *ptr) {
 int32_t EyelockNanoDeviceHandler::startImageStream(const std::string& ipaddress,
 		const std::string& portno, const bool secure, const ELKNS_ImageFormats::type format) {
 	// Store the current mode of the nano device
+#ifdef CMX_C1
+	return NOT_SUPPORTED;
+#endif
 	EyelockLog(logger, INFO, "Starting image stream to: %s:%s (secure: %d), format = %d", ipaddress.c_str(), portno.c_str(), secure, format);
 	int32_t ret = FLOW_ERR;
 	if (m_pEyeLockThread) {
@@ -150,6 +153,9 @@ int32_t EyelockNanoDeviceHandler::startImageStream(const std::string& ipaddress,
 
 int32_t EyelockNanoDeviceHandler::stopImageStream(const std::string& ipaddress,
 		const std::string& portno) {
+#ifdef CMX_C1
+	return NOT_SUPPORTED;
+#endif
 	EyelockLog(logger, INFO, "Stopping image stream to: %s:%s", ipaddress.c_str(), portno.c_str());
 	int32_t ret = INPUT_ERR;
 	if (m_pEyeLockThread) {
