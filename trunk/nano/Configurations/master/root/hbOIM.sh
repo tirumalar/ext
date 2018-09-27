@@ -26,7 +26,8 @@ do
 	if ping -c 5 "${OIM_IP}"
 	then
 		echo "OIM ${OIM_IP} is pingable, sleeping ${TIMEOUT} seconds"
-		touch "${FACETRACKER_RUN_FILE}"
+#		touch "${FACETRACKER_RUN_FILE}"
+		touch "${EYELOCK_RUN_FILE}"
 		COUNTER=0		
 	else
 		echo "OIM ${OIM_IP} is NOT pingable!"

@@ -83,7 +83,7 @@ export NTP_SERVER=`grep -e "GRI\.InternetTimeAddr\=.*" Eyelock.ini | cut -f2 -d'
 chmod a+x ./icm_communicator
 
 chmod a+x ./FaceTracker
-bash -c "while true; do if [ -f /home/root/FaceTracker.run ]; then /home/root/FaceTracker 8194 1; fi; sleep 6; done" &
+#bash -c "while true; do if [ -f /home/root/FaceTracker.run ]; then /home/root/FaceTracker 8194 1; fi; sleep 6; done" &
 
 # Only run Eyelock when Eyelock.run exists
 chmod a+x ./Eyelock
