@@ -688,6 +688,8 @@ void DoStartCmd(){
 	EyelockLog(logger, TRACE, "DoStartCmd");
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 
+	FileConfiguration fconfig1("/home/root/Eyelock.ini");
+
 /*	double id = fconfig.getValue("FTracker.uintID",0);
 	double idm;
 	cout << "Input the device ID::::: ";
@@ -859,11 +861,17 @@ void DoStartCmd(){
 
 
 ///////////////////ilya///////////////////
+	int volume = fconfig1.getValue("GRI.AuthorizationToneVolume", 40);
+
 	//This code is for playing sound
 	if(1)
 	{
 		EyelockLog(logger, DEBUG, "playing audio -set_audio(1)");
-		port_com_send("set_audio(1)");
+		// port_com_send("set_audio(1)");
+		if(volume < 50)
+			port_com_send("fixed_aud_set(1)");
+		else
+			port_com_send("fixed_aud_set(7)");
 		usleep(100000);
 		port_com_send("data_store_set(0)");
 		usleep(100000);
