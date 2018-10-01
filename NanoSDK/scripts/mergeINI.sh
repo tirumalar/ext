@@ -13,14 +13,14 @@ if [ ! -s diff_tmp ];
     fi
 
 # remove lines
-grep '^>' diff_tmp | cut -c 2- | while read line; 
+grep '^<' diff_tmp | cut -c 2- | while read line; 
     do
         echo "Remove a line : $line"
         sed -i "/${line}/d" /home/root/Eyelock.ini
     done 
 
 # append new lines
-grep '^<' diff_tmp | cut -c 2- | tr -d [' '] | while read line; 
+grep '^>' diff_tmp | cut -c 2- | tr -d [' '] | while read line; 
     do
         param=$(echo $line | sed 's/=.*//') 
         grep -q "[^;]$param" /home/root/Eyelock.ini
