@@ -151,6 +151,8 @@ int errSwitchThreshold;		//6
 
 
 // detect_area used for finding face in a certain rect area of entire image
+int rectX, rectY, rectW, rectH;
+int targetOffset;
 Rect detect_area(15/SCALE,15/SCALE,(960/(SCALE*SCALE))+15/SCALE,(1200/(SCALE*SCALE))+15/SCALE); //15 was 30
 Rect no_move_area;		//Face target area
 
@@ -189,7 +191,7 @@ int MIN_FACE_SIZE;
 int MAX_FACE_SIZE;
 
 Point eyes;	// hold eye info from each frame
-char temp[512];
+char temp[512], tempI1[512], tempI2[512];
 int AGC_Counter = 0;
 int noFaceCounter =0;
 
@@ -200,7 +202,8 @@ Mat outImgLast, outImg1, outImg1s;		//Used in MeasureSnr function
 int agc_val_cal=3;
 int step;
 int startPoint;
-int thresholdVal = 10;
+int thresholdVal = 30;
+bool calDebug, calTwoPoint;
 //variable used for tempering
 
 std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
@@ -249,13 +252,12 @@ void CalAll();
 
 #ifdef CAMERACALIBERATION_ARUCO
 //Camera to Camera Calibration
-std::vector<aruco::Marker> gridBooardMarker(Mat img);
+std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam, bool calDebug);
 vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<aruco::Marker> markerFace);
+void brightnessAdjust(Mat outImg, int cam, bool calDebug);
+bool CalCam(bool calDebug);
+void runCalCam(bool calDebug);
 #endif
-
-void brightnessAdjust(Mat outImg, int cam);
-bool CalCam();
-void runCalCam();
 
 // Temperature test purpose
 void motorMove();
@@ -704,14 +706,15 @@ void DoStartCmd(){
 	tempTarget = fconfig.getValue("FTracker.tempReadingTimeInMinutes",5);
 	tempTarget = tempTarget * 60;	//converting into sec
 
-	int rectX = fconfig.getValue("FTracker.targetRectX",0);
-	int rectY = fconfig.getValue("FTracker.targetRectY",497);
-	int rectW = fconfig.getValue("FTracker.targetRectWidth",960);
-	int rectH = fconfig.getValue("FTracker.targetRectHeight",121);
+
+	rectX = fconfig.getValue("FTracker.targetRectX",0);
+	rectY = fconfig.getValue("FTracker.targetRectY",497);
+	rectW = fconfig.getValue("FTracker.targetRectWidth",960);
+	rectH = fconfig.getValue("FTracker.targetRectHeight",121);
 
 
 	MIN_POS = fconfig.getValue("FTracker.minPos",0);
-	step = fconfig.getValue("FTracker.CalStep",15);
+
 	startPoint = fconfig.getValue("FTracker.startPoint",100);
 	MAX_POS = fconfig.getValue("FTracker.maxPos",350);
 	CENTER_POS = fconfig.getValue("FTracker.centerPos",164);
@@ -921,7 +924,7 @@ void DoStartCmd(){
 	no_move_area.height = (a_rect[3])/scaling -targetOffset*2;*/
 
 	//Reading the calibrated Rect
-	int targetOffset = 3;		//Adding offset
+	targetOffset = 3;		//Adding offset
 
 	no_move_area.x = rectX/scaling;
 	no_move_area.y = rectY/scaling + targetOffset;
@@ -941,9 +944,12 @@ void DoStartCmd_CamCal(){
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 
 	MIN_POS = fconfig.getValue("FTracker.minPos",0);
-	//MIN_POS = MIN_POS + 75;	// adding 20 offset
+	startPoint = fconfig.getValue("FTracker.startPoint",100);
 	MAX_POS = fconfig.getValue("FTracker.maxPos",350);
 	CENTER_POS = fconfig.getValue("FTracker.centerPos",164);
+	step = fconfig.getValue("FTracker.CalStep",15);
+	calDebug = fconfig.getValue("FTracker.calDebug",false);
+	calTwoPoint = fconfig.getValue("FTracker.twoPointCalibration",true);
 
 	int allLEDhighVoltEnable = fconfig.getValue("FTracker.allLEDhighVoltEnable",1);
 
@@ -978,20 +984,20 @@ void DoStartCmd_CamCal(){
 	sprintf(cmd, "fx_abs(%i)",MIN_POS);
 	EyelockLog(logger, DEBUG, "Reset to lower position minPos:%d", MIN_POS);
 	port_com_send(cmd);
-	printf(cmd);
-	printf("------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+	//printf(cmd);
+	//printf("------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 
 	EyelockLog(logger, DEBUG, "Configuring face LEDs");
 	//Face configuration of LED
 	sprintf(cmd, "psoc_write(2,%i) | psoc_write(1,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)| psoc_write(6,%i)\n", calibVolt, allLEDhighVoltEnable, calibCurrent, calibTrigger, calibLEDEnable, calibLEDMaxTime);
 
-	printf("Before EyelockLOG\n");
+	//printf("Before EyelockLOG\n");
 	EyelockLog(logger, DEBUG, "Configuring face LEDs faceLEDVolt:%d, allLEDhighVoltEnable:%d, faceLEDcurrentSet:%d, faceLEDtrigger:%d, faceLEDEnable:%d, faceLEDmaxTime:%d", calibVolt, allLEDhighVoltEnable, calibCurrent, calibTrigger, calibLEDEnable, calibLEDMaxTime);
 	port_com_send(cmd);
 
-	printf("faceCamExposureTime:: %d", faceCamExposureTime);
-	printf("faceCamDataPedestal:: %d", faceCamDataPedestal);
-	printf("faceCamDigitalGain:: %d", faceCamDigitalGain);
+	//printf("faceCamExposureTime:: %d", faceCamExposureTime);
+	//printf("faceCamDataPedestal:: %d", faceCamDataPedestal);
+	//printf("faceCamDigitalGain:: %d", faceCamDigitalGain);
 
 
 	//Setting up cap current
@@ -2276,13 +2282,21 @@ void CalAll()
 #ifdef CAMERACALIBERATION_ARUCO
 
 //Detect ARUCO markers
-std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam){
+std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam, bool calDebug){
 	//VideoCapture inputVideo;
 	//inputVideo.open(0);
+
+/*	//for saving values
+	ofstream calScore;
+	string path = "/home/eyelock/calVal.csv";
+	calScore.open(path, ios::out | ios::app);*/
+
+
 	int imgCount = 0;
 	char c;
 
-	printf("Inside gridBooardMarker\n");
+
+	//printf("Inside gridBooardMarker\n");
     int w,h;
 
 	vs->get(&w,&h,(char *)outImg.data);
@@ -2312,7 +2326,7 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam){
 
 #if 1
 	if(!img.empty()){
-		if (cam == 4){
+		if (vs->cam_id == 4){
 			//equalizeHist( imgCopy, imgCopy );
 			//threshold( imgCopy, imgCopy, 10, 255,THRESH_BINARY);
 		}
@@ -2324,34 +2338,50 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam){
 
 		if (markers.size() < 2){
 			printf("%i camera detected %i markers!\n", portNum, markers.size());
-			cv::imshow("marker Detects", imgCopy);
-			c=cvWaitKey(200);
-			if (c=='q')
-				printf("Continue!\n");
-			//sprintf(buffer, "No_marker_detect%i.png", portNum);
-			//imwrite(buffer, imgCopy);
 
+			if(calDebug){
+				cv::imshow("No or only 1 marker detected", imgCopy);
+				c=cvWaitKey(200);
+				if (c=='q')
+					printf("Continue!\n");
+				//sprintf(buffer, "No_marker_detect%i.png", portNum);
+				//imwrite(buffer, imgCopy);
+			}
 			return markers;
 			//exit(EXIT_FAILURE);
 		}
 
 		for(size_t i = 0; i < markers.size(); i++){
 			//cout << markers[i] << endl;
-			//cout << "IDs ::: " << markers[i].id << "    center  ::: " << markers[i].getCenter() << endl;
+
+/*			//for saving values
+			cout << "IDs ::: " << markers[i].id << "    center  ::: " << markers[i].getCenter() << endl;
+			calScore << markers[i].id << ","<< markers[i].getCenter().x << "," << markers[i].getCenter().y << endl;
+*/
 
 			//markers[i].draw(imgCopy);		//uncomment to check binary image
 			markers[i].draw(imgCopy1);
 
 		}
+
+		//calScore << cam << endl;
 		//namedWindow("marker Detects", WINDOW_NORMAL);
 		//sprintf(buffer, "imgAruco%i.png", portNum);
 
 		//cv::imshow("marker Detects", imgCopy);		//uncomment to check binary image
-		cv::imshow("marker Detects", imgCopy1);
-		c=cvWaitKey(200);
-		if (c=='q')
-			printf("Continue!\n");
-		//imwrite(buffer, imgCopy);
+
+		//cout << "Inside marker detect calDebug :::: " << calDebug << endl;
+		if(calDebug){
+			char cmd[500];
+			cv::imshow("<<< Detecting Markers >>> ", imgCopy1);
+			sprintf(cmd,"detectedMarkerCam%i.bmp", vs->cam_id);
+			cv::imwrite(cmd,imgCopy1);
+			printf(cmd);
+			c=cvWaitKey();
+/*			if (c=='q')
+				printf("Continue!\n");*/
+			//imwrite(buffer, imgCopy);
+		}
 
 	}
 	else{
@@ -2361,6 +2391,7 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam){
 	}
 
 
+/*
 
 	//comment the following lines it you want continue streaming and finish calibration!
 	while (1)
@@ -2377,6 +2408,7 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam){
 		}
 	}
 
+*/
 
 
 #endif
@@ -2397,6 +2429,13 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 	cv::Point2f ptr1, ptr2;
 	std::vector<int> targetID;
 	float maxDis = 0.0;
+	int id;
+	float m_offset, constantX, constantY; //magnification offset
+
+
+
+	//Sorting out IDs that support two point condition
+	// two points need to have max Euclidean distance and diagonally a part from each other
 	for(int i = 0; i < markerIris.size(); i++){
 
 		ptr1 = markerIris[i].getCenter();
@@ -2432,12 +2471,15 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 	}
 
 
+
 	//Search target ID's center in iris camera
 	for (int i = 0; i < targetID.size(); i++){
-		int id = targetID[i];
+		id = targetID[i];
 		for (int j = 0; j < markerIris.size(); j++){
 			int idIris = markerIris[j].id;
+			//pointsExp.push_back(markerIris[j].getCenter());
 			if (id == idIris){
+				//pointsExp.push_back(markerIris[j].getCenter());
 				pointsIris.push_back(markerIris[j].getCenter());
 			}
 		}
@@ -2449,7 +2491,9 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 		int id = targetID[i];
 		for (int j = 0; j < markerFace.size(); j++){
 			int idFace = markerFace[j].id;
+			//pointsExp.push_back(markerFace[j].getCenter());
 			if (id == idFace){
+				//pointsExp.push_back(markerFace[j].getCenter());
 				pointsFace.push_back(markerFace[j].getCenter());
 			}
 		}
@@ -2458,114 +2502,218 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 
 
 	//check whether it was successfully detected atleast two target points from both camera
-	if (pointsIris.size() <= 1){
-		printf("Fail to detect two aruco markers in horizental direction!\n");
+	if (pointsIris.size() <= 1 || pointsFace.size() <= 1){
+		printf("Fail to detect two common aruco markers with maximum Diagonal "
+				"Distance in Both iris and face camera!\n");
+		printf("Running the calibration again----->>>>>\n\n\n\n\n");
 		return rectResult;
 		//exit(EXIT_FAILURE);
 	}
 
-	//cout << pointsIris[0].x << "-------------" << pointsIris[0].y << endl;
-	//cout << pointsIris[1].x << "-------------" << pointsIris[1].y << endl;
-	//cout << pointsFace[0].x << "-------------" << pointsFace[0].y << endl;
-	//cout << pointsFace[1].x << "-------------" << pointsFace[1].y << endl;
-	//cout << endl;
+	//pointsExp.push_back();
 
-	//calculate the zoom offset or slope
-	float mx = (pointsFace[1].x - pointsFace[0].x) / (pointsIris[1].x - pointsIris[0].x);
-	float my = (pointsFace[1].y - pointsFace[0].y) / (pointsIris[1].y - pointsIris[0].y);
-
-	//cout << "row::::: " << row << "   col:::::" << col << endl;
-
-	//measure the x , x_offset and y, y_offset
-	float x_offset = pointsFace[0].x - (mx * pointsIris[0].x);
-	float xMax_offset = (mx * col) + x_offset;
-	float y_offset = pointsFace[0].y - (my * pointsIris[0].y);
-	float yMax_offset = (my * row) + y_offset;
+	if (calDebug){
+	cout << pointsIris.size() << "-------------" << pointsIris[0].x << "-------------" << pointsIris[0].y << endl;
+	cout << pointsIris.size() << "-------------" << pointsIris[1].x << "-------------" << pointsIris[1].y << endl;
+	cout << pointsFace.size() << "-------------" << pointsFace[0].x << "-------------" << pointsFace[0].y << endl;
+	cout << pointsFace.size() << "-------------" << pointsFace[1].x << "-------------" << pointsFace[1].y << endl;
+	cout << endl;
+	}
 
 
-	//cout << x_offset << "*********************" << xMax_offset << endl;
-	//cout << y_offset << "  **********************   " << yMax_offset << endl;
 
+	if (calTwoPoint){
+		//calculate the zoom offset or slope
+		float mx = abs((pointsFace[1].x - pointsFace[0].x) / (pointsIris[1].x - pointsIris[0].x));
+		float my = abs((pointsFace[1].y - pointsFace[0].y) / (pointsIris[1].y - pointsIris[0].y));
+
+		m_offset = (mx + my)/2.0; 		//average Magnification offset
+
+		float constantX = pointsFace[1].x - (mx * pointsIris[1].x);
+		float constantY = pointsFace[1].y - (my * pointsIris[1].y);
+
+		//constant = (cx + cy)/2.0;
+
+		if (calDebug){
+			cout << "number of face point ::: " << pointsFace.size() << " Number of Iris points :::: " << pointsIris.size() << endl;
+			cout << "mx::::: " << mx << "   my:::::" << my << "		m_offset::: "<< m_offset <<endl;
+			cout << "cx::::: " << constantX << "   cy:::::" << constantY <<endl;
+		}
+
+
+
+	}
+	else{
+
+		// Here for calculating magnification offset--- It will use all the common co-ordinates between
+		int cc = 0;
+		float sumIx1=0, sumFx1=0,sumIx2=0, sumFx2=0,multIx1Fx1=0,multIx2Fx2=0,powIx1=0,powFx1=0,powIx2=0,powFx2=0;
+		float slopeIFx, slopeIFy;
+		Vec4f lineX, lineY;
+
+		for(int i = 0; i < markerIris.size(); i++){
+			for(int j = 0; j < markerFace.size(); j++){
+				if (markerIris[i].id == markerFace[j].id){
+					sumIx1 += markerIris[i].getCenter().x;
+					sumFx1 += markerFace[j].getCenter().x;
+					multIx1Fx1 += markerIris[i].getCenter().x * markerFace[j].getCenter().x;
+					powIx1 += markerIris[i].getCenter().x * markerIris[i].getCenter().x;
+					powFx1 += markerFace[j].getCenter().x * markerFace[j].getCenter().x;
+
+					sumIx2 += markerIris[i].getCenter().y;
+					sumFx2 += markerFace[j].getCenter().y;
+					multIx2Fx2 += markerIris[i].getCenter().y * markerFace[j].getCenter().y;
+					powIx2 += markerIris[i].getCenter().y * markerIris[i].getCenter().y;
+					powFx2 += markerFace[j].getCenter().y * markerFace[j].getCenter().y;
+
+					cc++;
+					break;
+				}
+			}
+		}
+
+
+		slopeIFx = ( (cc*multIx1Fx1) - (sumIx1 * sumFx1) ) / ( (cc*powIx1) - (sumIx1*sumIx1) );
+		slopeIFy = ( (cc*multIx2Fx2) - (sumIx2 * sumFx2) ) / ( (cc*powIx2) - (sumIx2*sumIx2) );
+
+
+		constantX = ((sumFx1 * powIx1) - (sumIx1*multIx1Fx1)) / ((cc*powIx1) - (sumIx1*sumIx1));
+		constantY = ((sumFx2 * powIx2) - (sumIx2*multIx2Fx2)) / ((cc*powIx2) - (sumIx2*sumIx2));
+
+		m_offset = (slopeIFx + slopeIFy)/2.0; 		//average Magnification offset
+		//constant = (constantIFx + constantIFy)/2.0;
+
+		if (calDebug){
+			cout << "slopeIFx::::: " << slopeIFx << "   slopeIFy:::::" << slopeIFy << "m_offset :::::::: "<< m_offset << endl;
+			cout << "constantIFx::::: " << constantX << "   constantIFy:::::" << constantY << endl;
+		}
+
+	}
+
+
+
+
+	//use average magnification offset for projecting co-ordinates
+	float x1_offset = cvRound(pointsFace[0].x - (m_offset * pointsIris[0].x));
+	float y1_offset = cvRound(pointsFace[0].y - (m_offset * pointsIris[0].y));
+
+	float x2_offset = cvRound((m_offset * col) + x1_offset);
+	float y2_offset = cvRound((m_offset * row) + y1_offset);
+
+
+	if (calDebug){
+	cout << x1_offset << "*********************" << x2_offset << endl;
+	cout << y1_offset << "  **********************   " << y2_offset << endl;
+	}
 
 
 	cout << "successfully calculated co-orinates! \n" << endl;
 
-	rectResult.push_back(x_offset);
-	rectResult.push_back(y_offset);
-	rectResult.push_back(xMax_offset);
-	rectResult.push_back(yMax_offset);
+	rectResult.push_back(x1_offset);
+	rectResult.push_back(y1_offset);
+	rectResult.push_back(x2_offset);
+	rectResult.push_back(y2_offset);
+	rectResult.push_back(m_offset);		//common slope for two euqation
+	rectResult.push_back(constantX);	//constant for calculating x coordinates
+	rectResult.push_back(constantY);	//constant for calculating y coordinates
 
-	return rectResult;
 
+
+/*
 	//draw a rect to verify the rect
 	cv::Point pt1(x_offset, y_offset);
 	cv::Point pt2(xMax_offset, yMax_offset);
 	smallImg = rotation90(outImg);
 	cv::rectangle(smallImg, pt1, pt2, cv::Scalar(255, 255, 255));
-	imwrite("imgArucoRect.png", smallImg);
+	imwrite("imgArucoRect.png", smallImg);*/
+
+	return rectResult;
+
+/*	//draw a rect to verify the rect
+	cv::Point pt1(x_offset, y_offset);
+	cv::Point pt2(xMax_offset, yMax_offset);
+	smallImg = rotation90(outImg);
+	cv::rectangle(smallImg, pt1, pt2, cv::Scalar(255, 255, 255));
+	imwrite("imgArucoRect.png", smallImg);*/
 
 }
 
 
 //ADjust brightness during calibration
-void brightnessAdjust(Mat outImg, int cam){
+void brightnessAdjust(Mat outImg, int cam, bool calDebug){
 	float p, p_old;
 	int w,h;
 
 	vs->flush();
 	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
+
 	//vs = new VideoStream(8193);
 	p = AGC(outImg.cols,outImg.rows,(unsigned char *)(outImg.data),50);
 	//imwrite("b_ad_a8193Img.png",outImg);
-	printf("percentile::: %f\n", p);
+	//printf("percentile::: %f\n", p);
 	//outImg.release();
+
 	//delete (vs);
 
 	//cout << "Cam ID:::::" << vs->cam_id << endl;
 	//int agc_val_cal=5;
 	char buff[512];
+	int exposure_camID;
+
+
+/*	vs->cam_id face is 4; main is 1 and 2; Aux is 129 and 130
+	for changing exposure cam setting is
+	face 4; main 24 and aux 4.*/
 
 	float bThreshold;
 	if (cam == 4){
 		agc_val_cal = 3;
-		bThreshold = 13.00;
+		bThreshold = 10.00;
+		exposure_camID = 4;
 	}
-	else if (cam == 81 || cam == 82)
-		bThreshold = 35.00;
-	else
-		bThreshold = 30.00;
+	else if (cam == 129 || cam == 130){
+		bThreshold = 25.00;
+		exposure_camID = 3;
+	}
+	else if(cam == 1 || cam == 2){
+		bThreshold = 15.00;
+		exposure_camID = 24;
+	}
 
 
 	while(!(p >= bThreshold)){
 		agc_val_cal++;
-		sprintf(buff,"wcr(%d,0x3012,%d)",cam,agc_val_cal);
+		sprintf(buff,"wcr(%d,0x3012,%d)",exposure_camID,agc_val_cal);
 		//printf(buff);
-		printf("bThreshold:::  %3.3f\n",bThreshold);
+		//printf("bThreshold:::  %3.3f\n",bThreshold);
 		port_com_send(buff);
 		p_old = p;
 
 		vs->get(&w,&h,(char *)outImg.data);
 		vs->get(&w,&h,(char *)outImg.data);
-		vs->get(&w,&h,(char *)outImg.data);
+
 
 		p = AGC(outImg.cols,outImg.rows,(unsigned char *)(outImg.data),50);
-		printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Percentile::: %3.3f Agc value = %d\n",p,agc_val_cal);
-		imshow("AGC change", outImg);
-		cvWaitKey();
+		//printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Percentile::: %3.3f Agc value = %d\n",p,agc_val_cal);
+
+		if (calDebug){
+			imshow("<<< Adjusting Brightness >>>", outImg);
+			cvWaitKey();
+		}
 
 		if(agc_val_cal > 26)
 		{
 			sprintf(buff,"wcr(%d,0x3012,%d)",cam,agc_val_cal + 4);
 			port_com_send(buff);
-			printf("Increase brightness");
+			//printf("Increase brightness");
 			break;
 		}
 
 
 	}
 
+	//destroyWindow("<<< Adjusting Brightness >>>");
 	printf("Brightness adjustment is completed!\n");
 
 }
@@ -2573,9 +2721,11 @@ void brightnessAdjust(Mat outImg, int cam){
 
 
 //Calculate Final Rect from all three cameras
-bool CalCam(){
+bool CalCam(bool calDebug){
 
 	char cmd[512];
+	char buff[512];
+	int w,h;
 
 	//Turn on Alternate cameras
 	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);
@@ -2584,18 +2734,24 @@ bool CalCam(){
 
 	//Fetching images from Aux right
 	vs = new VideoStream(8193);
+	vs->flush();
+	vs->get(&w,&h,(char *)outImg.data);
+
 
 	//adjusting brightness
-	brightnessAdjust(outImg,3);
+	brightnessAdjust(outImg,vs->cam_id, calDebug);
 	printf("Detecting marker of aux 8193 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisAuxRight = gridBooardMarker(outImg,0);
+	std::vector<aruco::Marker> markerIrisAuxRight = gridBooardMarker(outImg,0, calDebug);
 
 	//If detected markers less then 2
 	if (markerIrisAuxRight.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
+		sprintf(buff,"wcr(%d,0x3012,%d)",3,3);
+		port_com_send(buff);
+
 		return true;
 	}
 	delete (vs);
@@ -2604,16 +2760,20 @@ bool CalCam(){
 
 	//Fetching images from Aux left
 	vs = new VideoStream(8192);
+	vs->flush();
+	vs->get(&w,&h,(char *)outImg.data);
 
 	//adjusting brightness
-	brightnessAdjust(outImg,3);
+	brightnessAdjust(outImg,vs->cam_id,calDebug);
 	printf("Detecting marker of aux 8192 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisAuxleft = gridBooardMarker(outImg,0);
+	std::vector<aruco::Marker> markerIrisAuxleft = gridBooardMarker(outImg,0, calDebug);
 	if (markerIrisAuxleft.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
+		sprintf(buff,"wcr(%d,0x3012,%d)",3,3);
+		port_com_send(buff);
 		return true;
 	}
 	delete (vs);
@@ -2626,32 +2786,40 @@ bool CalCam(){
 
 	//Fetching images from Main Right
 	vs = new VideoStream(8193);
+	vs->flush();
+	vs->get(&w,&h,(char *)outImg.data);
 
 	//adjusting brightness
-	brightnessAdjust(outImg,24);
+	brightnessAdjust(outImg,vs->cam_id,calDebug);
 	printf("Detecting marker of main 8193 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisMainRight = gridBooardMarker(outImg,0);
+	std::vector<aruco::Marker> markerIrisMainRight = gridBooardMarker(outImg,0, calDebug);
 	if (markerIrisMainRight.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
+		sprintf(buff,"wcr(%d,0x3012,%d)",24,3);
+		port_com_send(buff);
 		return true;
 	}
 	delete (vs);
 
 	//Fetching images from Main Left
 	vs = new VideoStream(8192);
+	vs->flush();
+	vs->get(&w,&h,(char *)outImg.data);
 
 	//adjusting brightness
-	brightnessAdjust(outImg,24);
+	brightnessAdjust(outImg,vs->cam_id,calDebug);
 	printf("Detecting marker of main 8192 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisMainleft = gridBooardMarker(outImg,0);
+	std::vector<aruco::Marker> markerIrisMainleft = gridBooardMarker(outImg,0, calDebug);
 	if (markerIrisMainleft.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
+		sprintf(buff,"wcr(%d,0x3012,%d)",24,3);
+		port_com_send(buff);
 		return true;
 	}
 	delete (vs);
@@ -2659,16 +2827,20 @@ bool CalCam(){
 
 	//Fetching images from Face camera
 	vs = new VideoStream(8194);
+	vs->flush();
+	vs->get(&w,&h,(char *)outImg.data);
 
 	//adjusting brightness
-	brightnessAdjust(outImg,4);
+	brightnessAdjust(outImg,vs->cam_id,calDebug);
 	printf("Detecting marker of Face 8194 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerFace = gridBooardMarker(outImg,4);
+	std::vector<aruco::Marker> markerFace = gridBooardMarker(outImg,0, calDebug);
 	if (markerFace.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
+		sprintf(buff,"wcr(%d,0x3012,%d)",4,3);
+		port_com_send(buff);
 		return true;
 	}
 
@@ -2719,7 +2891,7 @@ bool CalCam(){
 	Mat smallImgX;
 	smallImg.copyTo(smallImgX);
 
-	cv::rectangle(smallImg, pt1, pt2, cv::Scalar(255, 255, 255), 3);
+
 
 	//Aux Right sorting
 	x_offset = rectRightAux[0];
@@ -2729,7 +2901,7 @@ bool CalCam(){
 
 	cv::Point pt3(x_offset, y_offset);
 	cv::Point pt4(xMax_offset, yMax_offset);
-	cv::rectangle(smallImg, pt3, pt4, cv::Scalar(255, 255, 255), 3);
+
 
 
 
@@ -2743,7 +2915,7 @@ bool CalCam(){
 
 	cv::Point pt5(x_offset, y_offset);
 	cv::Point pt6(xMax_offset, yMax_offset);
-	cv::rectangle(smallImg, pt5, pt6, cv::Scalar(0, 255, 0), 3);
+
 
 	//Main Right sorting
 	x_offset = rectRightMain[0];
@@ -2753,51 +2925,152 @@ bool CalCam(){
 
 	cv::Point pt7(x_offset, y_offset);
 	cv::Point pt8(xMax_offset, yMax_offset);
-	cv::rectangle(smallImg, pt7, pt8, cv::Scalar(0, 255, 0), 3);
 
 
-	printf("Finished calibration process------------------->\n");
-	imwrite("MarkerRucoDetectofLeftRightAUX_Main.png", smallImg);
+
+
+
+	if (calDebug){
+		cv::rectangle(smallImg, pt1, pt2, cv::Scalar(255, 255, 255), 3);
+		cv::rectangle(smallImg, pt3, pt4, cv::Scalar(255, 255, 255), 3);
+		cv::rectangle(smallImg, pt5, pt6, cv::Scalar(0, 255, 0), 3);
+		cv::rectangle(smallImg, pt7, pt8, cv::Scalar(0, 255, 0), 3);
+		imwrite("MarkerRucoDetectofLeftRightAUX_Main.png", smallImg);
+		imshow("Each IrisCam projected in Face cam",smallImg);
+		cvWaitKey();
+	}
+
 	delete (vs);
+
 
 
 	//Data saved for Aux Rect
 	int x, y, width, height;
+	float m_offset_mr, m_offset_ml, m_offset_ar, m_offset_al;
 	x = 0; y = pt1.y; width = int(smallImg.cols); height = int(abs(pt1.y - pt4.y));
+
+
+	//check for negative value
+	if (y < 0 || height < 0)
+		return true;
+
+
 	Rect auxRect(x, y,width, height);
-	cout << x << "    " << y << "    " << width << "    " << height << "    " <<endl;
+	//cout << x << "    " << y << "    " << width << "    " << height << "    " <<endl;
 
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 
 
-	string xs,ys,ws,hs;
-	stringstream ssx,ssy,ssw,ssh;
-	ssx << x;
-	ssx >> xs;
+	//Writing Calibrated Rect
+	stringstream ssI;
+	string ssO;
 
-	ssy << y;
-	ssy >> ys;
-
-	ssw << width;
-	ssw >> ws;
-
-	ssh << height;
-	ssh >> hs;
-
-	cout << xs << "    " << ys << "    " << ws << "    " << hs << "    " <<endl;
+	ssI << x;
+	ssI >> ssO;
+	fconfig.setValue("FTracker.targetRectX",ssO.c_str());
+	if(calDebug){
+		printf("x:: %s\n", ssO.c_str());
+	}
 
 
-	printf("xc:: %s\n", xs.c_str());
-	printf("yc:: %s\n", ys.c_str());
-	printf("widthc:: %s\n", ws.c_str());
-	printf("heightc:: %s\n", hs.c_str());
+	ssI.clear();
+	ssI << y;
+	ssI >> ssO;
+	fconfig.setValue("FTracker.targetRectY",ssO.c_str());
+	if(calDebug){
+		printf("y:: %s\n", ssO.c_str());
+	}
 
-	fconfig.setValue("FTracker.targetRectX",xs.c_str());
-	fconfig.setValue("FTracker.targetRectY",ys.c_str());
-	fconfig.setValue("FTracker.targetRectWidth",ws.c_str());
-	fconfig.setValue("FTracker.targetRectHeight",hs.c_str());
+
+	ssI.clear();
+	ssI << width;
+	ssI >> ssO;
+	fconfig.setValue("FTracker.targetRectWidth",ssO.c_str());
+	if(calDebug){
+		printf("width:: %s\n", ssO.c_str());
+	}
+
+
+	ssI.clear();
+	ssI << height;
+	ssI >> ssO;
+	fconfig.setValue("FTracker.targetRectHeight",ssO.c_str());
+	if(calDebug){
+		printf("height:: %s\n", ssO.c_str());
+	}
+
+
+	//Writing magnification offset
+	ssI.clear();
+	ssI << rectRightAux[4];
+	ssI >> ssO;
+	fconfig.setValue("FTracker.magOffsetAuxRightCam",ssO.c_str());
+
+	ssI.clear();
+	ssI << rectLeftAux[4];
+	ssI >> ssO;
+	fconfig.setValue("FTracker.magOffsetAuxLeftCam",ssO.c_str());
+
+	ssI.clear();
+	ssI << rectRightMain[4];
+	ssI >> ssO;
+	fconfig.setValue("FTracker.magOffsetMainRightCam",ssO.c_str());
+
+	ssI.clear();
+	ssI << rectLeftMain[4];
+	ssI >> ssO;
+	fconfig.setValue("FTracker.magOffsetMainLeftCam",ssO.c_str());
+
+
+	//Writing reference Marker points
+	ssI.clear();
+	ssI << float(rectRightAux[5]);
+	ssI >> ssO;
+	fconfig.setValue("FTracker.constantAuxRightCam_x",ssO.c_str());
+	//printf("constantAuxRightCam_x:: %s		%3.3f\n", ssO.c_str(), rectRightAux[5]);
+
+	ssI.clear();
+	ssI << float(rectRightAux[6]);
+	ssI >> ssO;
+	fconfig.setValue("FTracker.constantAuxRightCam_y",ssO.c_str());
+	//printf("constantAuxRightCam_y:: %s		%3.3f\n", ssO.c_str(), rectRightAux[6]);
+
+
+	ssI.clear();
+	ssI << float(rectLeftAux[5]);
+	ssI >> ssO;
+	fconfig.setValue("FTracker.constantAuxLeftCam_x",ssO.c_str());
+
+	ssI.clear();
+	ssI << float(rectLeftAux[6]);
+	ssI >> ssO;
+	fconfig.setValue("FTracker.constantAuxLeftCam_y",ssO.c_str());
+
+	ssI.clear();
+	ssI << float(rectRightMain[5]);
+	ssI >> ssO;
+	fconfig.setValue("FTracker.constantMainRightCam_x",ssO.c_str());
+
+	ssI.clear();
+	ssI << float(rectRightMain[6]);
+	ssI >> ssO;
+	fconfig.setValue("FTracker.constantMainRightCam_y",ssO.c_str());
+
+	ssI.clear();
+	ssI << float(rectLeftMain[5]);
+	ssI >> ssO;
+	fconfig.setValue("FTracker.constantMainLeftCam_x",ssO.c_str());
+
+	ssI.clear();
+	ssI << float(rectLeftMain[6]);
+	ssI >> ssO;
+	fconfig.setValue("FTracker.constantMainLeftCam_y",ssO.c_str());
+
 
 	fconfig.writeIni("/home/root/data/calibration/faceConfig.ini");
+
+	printf("Finished calibration process------------------->\n");
+	printf("Finish writing all the values in faceConfig.ini\n");
 
 /*	//saving Aux Rect info ---> This is the Rect info we will use for face Tracking
 	ofstream auxfile("auxRect.csv");
@@ -2821,11 +3094,15 @@ bool CalCam(){
 	mainfile << int(abs(pt7.y - pt6.y)) << endl;
 	mainfile.close();*/
 
-	cv::rectangle(smallImgX, auxRect,cv::Scalar( 255, 255, 255 ), 4);
-	cv::rectangle(smallImgX, mainRect,cv::Scalar( 0, 255, 0 ), 4);
-	imwrite("MarkerRucoDetectofLeftRightAUX_Main_testRect.png", smallImgX);
 
+	//cv::rectangle(smallImgX, mainRect,cv::Scalar( 0, 255, 0 ), 4);
+	if (calDebug){
+		cv::rectangle(smallImgX, auxRect,cv::Scalar( 255, 255, 255 ), 4);
+		imwrite("MarkerRucoDetectofLeftRightAUX_Main_testRect.png", smallImgX);
+		imshow("Projected Target in Face cam", smallImgX);
+		cvWaitKey();
 
+	}
 
 	return false;
 }
@@ -2833,11 +3110,15 @@ bool CalCam(){
 
 
 //Run calibration until meet all the condition based on brightness changes and motor movement
-void runCalCam(){
+void runCalCam(bool calDebug){
 	bool check = true;
-	//step = 100;		//initialize increment step
+	//step = 5;		//initialize increment step
+
 	int newPos = MIN_POS + startPoint;
+	//printf(">>>>>>>>>>>>>>>>>>>>>>New Pos ::: %i, MIN_POS ::: %i, startPoint ::: %i   \n",newPos, MIN_POS, startPoint);
 	char cmd[512];
+
+	//cout << "Caibration Debug mode::::" << calDebug << endl;
 
 
 /*	double id;
@@ -2860,17 +3141,17 @@ void runCalCam(){
 
 
 	while(check){
-		printf("Motor is moving to %i and conducting calibration\n", newPos);
+		//printf(">>>>>>>>>>>>>>>>>>>>>>>>>>Motor is moving to %i and conducting calibration\n", newPos);
 		sprintf(cmd, "fx_home()\n");
 		usleep(10000);
 		sprintf(cmd, "fx_abs(%i)\n", newPos);
 		port_com_send(cmd);
 		//MoveTo(newPos);
-		usleep(1000);
-		printf("New Pos ::: %i, Max Pos ::: %i   \n",newPos, MAX_POS);
-		printf(cmd);
-		printf("------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
-		check = CalCam();	// Rum calibration, return false if fail
+		usleep(10000);
+		//printf(">>>>>>>>>>>>>>>>>>>>>>New Pos ::: %i, step ::: %i, Max Pos ::: %i   \n",newPos, step, MAX_POS);
+		//printf(cmd);
+		//printf("------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+		check = CalCam(calDebug);	// Rum calibration, return false if fail
 		newPos = newPos + step;
 
 		//If Motor reach to max position and failt to calibrate
@@ -3259,7 +3540,7 @@ int main(int argc, char **argv)
 		DoStartCmd_CamCal();
 
 #ifdef CAMERACALIBERATION_ARUCO
-		runCalCam();
+		runCalCam(calDebug);
 #endif
 		return 0;
 
