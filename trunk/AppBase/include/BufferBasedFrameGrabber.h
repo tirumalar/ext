@@ -18,6 +18,11 @@ typedef struct ImageQueueItem{
 	int m_frameIndex;
 	__int64_t m_startTime,m_endTime;
 	int item_id;
+	int m_ExtCameraIndex;
+	int AuxLeftFrameIndex;
+	int AuxRightFrameIndex;
+	int MainLeftFrameIndex;
+	int MainRightFrameIndex;
 };
 
 

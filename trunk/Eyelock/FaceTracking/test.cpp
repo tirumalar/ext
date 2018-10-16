@@ -1,3 +1,7 @@
+// By Anita
+// The entire file is included in macro because this code is now ported to FaceTracker class - FaceTracker.cpp and FaceTracker.h
+// The file is retained for legacy
+#ifdef TESTFACETRACKER
 #include <stdlib.h>
 #include <string>
 #include <iostream>
@@ -36,7 +40,7 @@
 #include <boost/filesystem.hpp>
 #include "boost/date_time/posix_time/posix_time.hpp"
 #endif
-#include "log.h"
+#include "logging.h"
 
 #include "eyelock_com.h"
 
@@ -278,7 +282,7 @@ void SetExp(int cam, int val)
 
 	//sprintf(buff,"wcr(%d,0x3012,%d) | wcr(%d,0x3014,%d)",cam,coarse,cam,fine);
 	sprintf(buff,"wcr(%d,0x3012,%d)",cam,coarse);
-	EyelockLog(logger, DEBUG, "Setting Gain %d\n",coarse);
+	EyelockLog(logger, TRACE, "Setting Gain %d\n",coarse);
 	//port_com_send(buff);
 }
 
@@ -791,7 +795,7 @@ void DoStartCmd(){
 	read_angle();		//read current angle
 
 
-	EyelockLog(logger, DEBUG, "Configuring face LEDs");
+	EyelockLog(logger, TRACE, "Configuring face LEDs");
 	//Face configuration of LED
 	sprintf(cmd, "psoc_write(2,%i) | psoc_write(1,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)| psoc_write(6,%i)\n",faceLEDVolt, allLEDhighVoltEnable, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable, faceLEDmaxTime);
 
@@ -811,7 +815,7 @@ void DoStartCmd(){
 
 
 	//Face cameras configuration
-	EyelockLog(logger, DEBUG, "Configuring face Cameras");
+	EyelockLog(logger, TRACE, "Configuring face Cameras");
 	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x301e,%i) | wcr(0x04,0x305e,%i)\n",faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
 	EyelockLog(logger, DEBUG, "faceCamExposureTime:%d faceCamDataPedestal:%d faceCamDigitalGain:%d", faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
 	port_com_send(cmd);
@@ -821,7 +825,7 @@ void DoStartCmd(){
 
 
 	//AUX cameras configuration
-	EyelockLog(logger, DEBUG, "Configuring AUX Iris Cameras");
+	EyelockLog(logger, TRACE, "Configuring AUX Iris Cameras");
 	sprintf(cmd, "wcr(0x03,0x3012,%i) | wcr(0x03,0x301e,%i) | wcr(0x03,0x305e,%i)\n",AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
 	EyelockLog(logger, DEBUG, "AuxIrisCamExposureTime:%d AuxIrisCamDataPedestal:%d AuxIrisCamDigitalGain:%d", AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
 	port_com_send(cmd);
@@ -830,7 +834,7 @@ void DoStartCmd(){
 
 
 	//Main Iris Cameras Configuration
-	EyelockLog(logger, DEBUG, "Configuring Main Iris Cameras");
+	EyelockLog(logger, TRACE, "Configuring Main Iris Cameras");
 	sprintf(cmd, "wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
 	EyelockLog(logger, DEBUG, "MainIrisCamExposureTime:%d MainIrisCamDataPedestal:%d MainIrisCamDigitalGain:%d", faceCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
 	port_com_send(cmd);
@@ -838,7 +842,7 @@ void DoStartCmd(){
 	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,128)");	//Demo Config
 
 
-	EyelockLog(logger, DEBUG, "Setting up PLL");
+	EyelockLog(logger, TRACE, "Setting up PLL");
 
 	//following process will activate PLL for all cameras
 	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
@@ -989,7 +993,7 @@ void DoStartCmd_CamCal(){
 	printf(cmd);
 	printf("------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 
-	EyelockLog(logger, DEBUG, "Configuring face LEDs");
+	EyelockLog(logger, TRACE, "Configuring face LEDs");
 	//Face configuration of LED
 	sprintf(cmd, "psoc_write(2,%i) | psoc_write(1,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)| psoc_write(6,%i)\n", calibVolt, allLEDhighVoltEnable, calibCurrent, calibTrigger, calibLEDEnable, calibLEDMaxTime);
 
@@ -1011,7 +1015,7 @@ void DoStartCmd_CamCal(){
 
 	// faceCamDataPedestal, faceCamDigitalGain);
 	//Face cameras configuration
-	EyelockLog(logger, DEBUG, "Configuring face Cameras");
+	EyelockLog(logger, TRACE, "Configuring face Cameras");
 	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x301e,%i) | wcr(0x04,0x305e,%i)\n",faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
 	EyelockLog(logger, DEBUG, "faceCamExposureTime:%d faceCamDataPedestal:%d faceCamDigitalGain:%d", faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
 	port_com_send(cmd);
@@ -1019,14 +1023,14 @@ void DoStartCmd_CamCal(){
 
 
 	//AUX cameras configuration
-	EyelockLog(logger, DEBUG, "Configuring AUX Iris Cameras");
+	EyelockLog(logger, TRACE, "Configuring AUX Iris Cameras");
 	sprintf(cmd, "wcr(0x03,0x3012,%i) | wcr(0x03,0x301e,%i) | wcr(0x03,0x305e,%i)\n",AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
 	EyelockLog(logger, DEBUG, "AuxIrisCamExposureTime:%d AuxIrisCamDataPedestal:%d AuxIrisCamDigitalGain:%d", AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x18,0x3012,3) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x40)");
 
 	//Main Iris Cameras Configuration
-	EyelockLog(logger, DEBUG, "Configuring Main Iris Cameras");
+	EyelockLog(logger, TRACE, "Configuring Main Iris Cameras");
 	sprintf(cmd, "wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
 	EyelockLog(logger, DEBUG, "MainIrisCamExposureTime:%d MainIrisCamDataPedestal:%d MainIrisCamDigitalGain:%d", faceCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
 	port_com_send(cmd);
@@ -1034,7 +1038,7 @@ void DoStartCmd_CamCal(){
 
 
 	// setup up all pll values
-	EyelockLog(logger, DEBUG, "setting up PLL");
+	EyelockLog(logger, TRACE, "setting up PLL");
 	//following process will activate PLL for all cameras
 
 	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
@@ -1082,7 +1086,7 @@ float AGC(int width, int height,unsigned char *dsty, int limit)
 	percentile = (Ptotal*100)/total;
 	average=average/(width*height);
 
-	EyelockLog(logger, DEBUG, "average : %3.1f percentile : %3.1f\n",average,percentile);
+	EyelockLog(logger, TRACE, "average : %3.1f percentile : %3.1f\n",average,percentile);
 	return (float)percentile;
 }
 
@@ -1213,8 +1217,8 @@ float StandardDeviation_m1(vector<float> vec){
 Mat preProcessingImg(Mat outImg){
 	float p;
 
-	EyelockLog(logger, DEBUG, "preProcessing");
-	EyelockLog(logger, DEBUG, "resize");
+	EyelockLog(logger, TRACE, "preProcessing");
+	EyelockLog(logger, TRACE, "resize");
 	cv::resize(outImg, smallImgBeforeRotate, cv::Size(), (1 / scaling),
 			(1 / scaling), INTER_NEAREST);	//py level 3
 
@@ -1240,7 +1244,7 @@ Mat preProcessingImg(Mat outImg){
 
 
 	//AGC control to block wash out images
-	EyelockLog(logger, DEBUG, "AGC Calculation");
+	EyelockLog(logger, TRACE, "AGC Calculation");
 	p = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),180);
 
 	if (p < FACE_GAIN_PER_GOAL - FACE_GAIN_HIST_GOAL)
@@ -1959,7 +1963,7 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	currnet_mode = -1;
 	// handle switching state
 	//if (last_system_state != system_state)
-	EyelockLog(stateMachineLogger, TRACE, "STATE:%8s  NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",StateText(system_state),
+	EyelockLog(stateMachineLogger, DEBUG, "STATE:%8s  NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",StateText(system_state),
 					noFaceCounter,
 				foundEyes?'E':'.',
 				eyesInDetect?'D':'.',
@@ -2071,7 +2075,7 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	//For dispaying face tracker
 	if(bShowFaceTracking){
 		sprintf(temp, "Debug facetracker Window\n");
-		EyelockLog(logger, DEBUG, "Imshow");
+		EyelockLog(logger, TRACE, "Imshow");
 		cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
 		cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
 		imshow("FaceTracker", smallImg);
@@ -2241,7 +2245,7 @@ void DoImageCal(int cam_id_ignore)
 	fclose(f);
 	}
 	else
-		EyelockLog(logger, DEBUG, "cant write output file %s\n",temp);
+		EyelockLog(logger, ERROR, "cant write output file %s\n",temp);
 	printf("All done press q to quit\n");
 	while (1)
 		{
@@ -2259,7 +2263,7 @@ void CalAll()
 	port_com_send("set_cam_mode(0x83,100");
 	port_com_send("psoc_write(3,3)");
 
-	EyelockLog(logger, DEBUG, "CalAll AUX Cameras");
+	EyelockLog(logger, TRACE, "CalAll AUX Cameras");
 	vs = new VideoStream(8192);
 	DoImageCal(0);
 	delete (vs);
@@ -2268,7 +2272,7 @@ void CalAll()
 	DoImageCal(0);
 	delete (vs);
 
-	EyelockLog(logger, DEBUG, "CalAll Main Cameras");
+	EyelockLog(logger, TRACE, "CalAll Main Cameras");
 	port_com_send("set_cam_mode(0x3,100");
 	vs = new VideoStream(8192);
 	DoImageCal(0);
@@ -2995,7 +2999,7 @@ void motorMove(){
 /*    MoveTo(CENTER_POS);
     temp = calTemp();*/
 
-	EyelockLog(logger, DEBUG, "\nStart temp expermiment process-----------------> \n");
+	EyelockLog(logger, TRACE, "\nStart temp expermiment process-----------------> \n");
 	char cmd[512];
     while(1){
         MoveTo(MAX_POS);
@@ -3153,7 +3157,7 @@ void *init_facetracking(void *arg)
 
 		for (x=0; x<atoi(argv[3]);x++)
 				{
-					EyelockLog(logger, DEBUG, "send bad\n");
+					EyelockLog(logger, TRACE, "send bad\n");
 					SendUdpImage(8192, (char *)sendImg.data, sendImg.cols*sendImg.rows);
 					usleep(40000);
 				}
@@ -3164,7 +3168,7 @@ void *init_facetracking(void *arg)
 
 		for (x=0; x< atoi(argv[3]);x++)
 		{
-			EyelockLog(logger, DEBUG, "send good\n");
+			EyelockLog(logger, TRACE, "send good\n");
 			SendUdpImage(8192, (char *)image.data, image.cols*image.rows);
 			usleep(40000);
 		}
@@ -3219,7 +3223,7 @@ void *init_facetracking(void *arg)
 
 		for (x=0; x< atoi(argv[3]);x++)
 		{
-			EyelockLog(logger, DEBUG, "send good\n");
+			EyelockLog(logger, TRACE, "send good\n");
 			SendUdpImage(8193, (char *)image.data, image.cols*image.rows);
 			usleep(40000);
 		}
@@ -3246,7 +3250,7 @@ void *init_facetracking(void *arg)
 	//Camera to camera geometric calibration
 	if (strcmp(argv[1],"calcam")==0)
 	{
-		EyelockLog(logger, DEBUG, "calcam mode is running");
+		EyelockLog(logger, TRACE, "calcam mode is running");
 		run_mode =1;
 		cal_cam_mode=1;
 	}
@@ -3254,7 +3258,7 @@ void *init_facetracking(void *arg)
 	//Run temp test
 	if (strcmp(argv[1],"temp")==0)
 	{
-		EyelockLog(logger, DEBUG, "temperature test mode is running");
+		EyelockLog(logger, TRACE, "temperature test mode is running");
 		run_mode =1;
 		temp_mode=1;
 	}
@@ -3320,7 +3324,7 @@ void *init_facetracking(void *arg)
 	//Setting up Run mode
 	if (run_mode)
 	{
-		EyelockLog(logger, DEBUG, "run_mode");
+		EyelockLog(logger, TRACE, "run_mode");
 /*		FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 
 		double id = fconfig.getValue("FTracker.uintID",0);
@@ -3384,7 +3388,7 @@ void *init_facetracking(void *arg)
 				{
 					dstImage=outImg-DiffImage;
 					cv::resize(dstImage, smallImg, cv::Size(), 1, 1, INTER_NEAREST); //Time debug
-					EyelockLog(logger, DEBUG, "sub\n");
+					EyelockLog(logger, TRACE, "sub\n");
 				}
 				else
 					cv::resize(outImg, smallImg, cv::Size(), 1, 1, INTER_NEAREST); //Time debug
@@ -3427,7 +3431,7 @@ void *init_facetracking(void *arg)
 
 }
 
-
+#endif
 
 
 

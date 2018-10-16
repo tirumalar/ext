@@ -18,7 +18,7 @@
 #include <opencv2/photo/photo.hpp>
 #endif
 
-#include "log.h"
+#include "logging.h"
 
 extern int IrisFrameCtr;
 

@@ -823,6 +823,7 @@ void ImageProcessor::GenMsgToNormal(BinMessage& msg){
 
 bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 {
+	char filename[150];
 #if 0
 		boost::filesystem::path temp_session_dir(DEBUG_SESSION_DIR);
 		if (boost::filesystem::is_directory(temp_session_dir))
@@ -904,13 +905,14 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	}
 #endif
 #if 1 // Loading Offset file - PGM
+	int cam_id = frame->imageData[2]&0xff;
 	if(m_EnableOffsetCorrection){
 		static bool m_OffsetImageLoadedMainCamera1 = false;
 		static bool m_OffsetImageLoadedMainCamera2 = false;
 		static bool m_OffsetImageLoadedAuxCamera1 = false;
 		static bool m_OffsetImageLoadedAuxCamera2 = false;
 
-		int cam_id = frame->imageData[2]&0xff;
+		// int cam_id = frame->imageData[2]&0xff;
 		sprintf(temp,"cal%02x.pgm",cam_id);
 		// printf("cam_id....%02x filename...%s\n", cam_id, temp);
 
@@ -954,10 +956,9 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	XTIME_OP("SetImage",
 		SetImage(frame)
 	);
-	char filename[150];
+
 	if(m_SaveFullFrame){
-		static int Index = 0;
-		sprintf(filename,"InputImage_%d.pgm",Index++);
+		sprintf(filename,"InputImage_%d_%d.pgm", cam_idd, m_faceIndex);
 		cv::Mat mateye = cv::cvarrToMat(frame);
 		imwrite(filename, mateye);
 		// cvSaveImage(filename, frame);
@@ -968,16 +969,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
     );
     ComputeMotion();
     bool detect;
-#if 0 //Anita
-    if(frame->imageData[0] != 0)
-    {
-    	printf("saving the image file ****** \n");
-    	cvSaveImage("Inside_Imagetestimg_inputImg.pgm", frame);
-    }
-#else
 
-
-#endif
     XTIME_OP("Detect",
     	detect = m_pSrv->Detect(&m_sframe,m_eyeDetectionLevel)
     );
@@ -995,9 +987,6 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
     int maxEyes = m_sframe.GetEyeCenterPointList()->size();
     if(m_Debug)
     	printf("NumEyes %d \n", maxEyes);
-#if 1
-    // printf("NumEyes %d \n", maxEyes);
-#endif
 
     if(maxEyes > m_maxEyes){
     	int clear = ClearEyes(m_faceIndex);
@@ -1036,22 +1025,20 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 #endif
 		if(m_SaveEyeCrops)
 		{
-			static int eyecropIndex = 0;
 #ifdef DEBUG_SESSION
 			struct stat st = {0};
 			if (stat(m_sessionDir.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
-				sprintf(filename,"%s/EyeCrop_PG_CamId_%d_%d.pgm", m_sessionDir.c_str(), cam_idd, eyecropIndex++);
+				sprintf(filename,"%s/EyeCrop_PG_CamId_%d_%d.pgm", m_sessionDir.c_str(), cam_idd, m_faceIndex);
 			}
 			else
 			{
-				sprintf(filename,"EyeCrop_PG_CamId_%d_%d.pgm", cam_idd, eyecropIndex++);
+				sprintf(filename,"EyeCrop_PG_CamId_%d_%d.pgm", cam_idd, m_faceIndex);
 			}
 #else
-			sprintf(filename,"EyeCrop_PG_%d.pgm",eyecropIndex++);
+			sprintf(filename,"EyeCrop_PG_%d.pgm", m_faceIndex);
 #endif
 			cv::Mat mateye = cv::cvarrToMat(eye->getEyeCrop());
 			imwrite(filename, mateye);
-			// cvSaveImage(filename, eye->getEyeCrop());
 		}else{
 			// sprintf(filename,"EyeCrop_PG_%d.pgm",eyeIdx);
 			// cvSaveImage(filename, eye->getEyeCrop());

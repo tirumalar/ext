@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdio.h>
 
-#include "log.h"
+#include "logging.h"
 
 using namespace std;
 using namespace cv;

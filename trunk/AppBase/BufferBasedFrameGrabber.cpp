@@ -52,16 +52,70 @@ void BufferBasedFrameGrabber::PushProcessBuffer (ImageQueueItem m)
 {
 //	printf("pushing image buffer %d\n",m.item_id);
 	static int cntr=0;
+	static int AuxLeft=0;
+	static int AuxRight=0;
+	static int MainLeft=0;
+	static int MainRight=0;
 
+	m_ImageQueueItem.m_ExtCameraIndex = m.m_ptr[2]&0xff;
+
+	// Counter Increment
+	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 129){
+		AuxLeft++;
+	}
+	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 130){
+		AuxRight++;
+	}
+	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 01){
+		MainLeft++;
+	}
+	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 02){
+		MainRight++;
+	}
+
+	// FrameIndex
+	if(m_ImageQueueItem.m_ExtCameraIndex == 129){
+		if(AuxLeft != 0)
+			m_ImageQueueItem.AuxLeftFrameIndex = (255 * AuxLeft) + (m.m_ptr[3]&0xff);
+		else
+			m_ImageQueueItem.AuxLeftFrameIndex  =  m.m_ptr[3]&0xff;
+
+		m.m_frameIndex = m_ImageQueueItem.AuxLeftFrameIndex;
+	}
+	if(m_ImageQueueItem.m_ExtCameraIndex == 130){
+		if(AuxRight != 0)
+			m_ImageQueueItem.AuxRightFrameIndex = (255 * AuxRight) + (m.m_ptr[3]&0xff);
+		else
+			m_ImageQueueItem.AuxRightFrameIndex  =  m.m_ptr[3]&0xff;
+
+		m.m_frameIndex = m_ImageQueueItem.AuxRightFrameIndex;
+	}
+	if(m_ImageQueueItem.m_ExtCameraIndex == 01){
+		if(MainLeft != 0)
+			m_ImageQueueItem.MainLeftFrameIndex = (255 * MainLeft) + (m.m_ptr[3]&0xff);
+		else
+			m_ImageQueueItem.MainLeftFrameIndex  =  m.m_ptr[3]&0xff;
+
+		m.m_frameIndex = m_ImageQueueItem.MainLeftFrameIndex;
+	}
+	if(m_ImageQueueItem.m_ExtCameraIndex == 02){
+		if(MainRight != 0)
+			m_ImageQueueItem.MainRightFrameIndex = (255 * MainRight) + (m.m_ptr[3]&0xff);
+		else
+			m_ImageQueueItem.MainRightFrameIndex  =  m.m_ptr[3]&0xff;
+
+		m.m_frameIndex = m_ImageQueueItem.MainRightFrameIndex;
+	}
 
 	if(cntr & 0x1){
 		m.m_ill0 = 1;
 	}else{
 		m.m_ill0 = 0;
 	}
+#if 0 // Original Frame Index 
 	m.m_frameIndex = cntr;
 	cntr++;
-
+#endif
 	struct timeval m_timer;
 	gettimeofday(&m_timer, 0);
 	TV_AS_USEC(m_timer,starttimestamp);
