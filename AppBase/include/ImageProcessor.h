@@ -29,6 +29,8 @@
 #ifdef HBOX_PG
 #include "PostMessages.h"
 #endif
+#include "FileConfiguration.h"
+
 class IrisSelectServer;
 class EyeTracker;
 class Aquisition;
@@ -117,6 +119,8 @@ public:
 	int getFrameType() { return m_testImageSendLevel;}
 	bool getShouldDetectEyes() { return m_shouldDetect;}
 	//void SetCmxHandler(CmxHandler *pCmxHandler) {m_pCmxHandler = pCmxHandler;}
+	float projectPoints(float y, float c, float m);
+	cv::Rect projectRect(cv::Rect face, int CameraId, IplImage *InputFrame, int FaceFrameNo, int IrisFrameNo);
 #ifndef UNITTEST    
 protected:
 #endif
@@ -233,6 +237,16 @@ protected:
 //#ifdef DEBUG_SESSION
 	bool m_DebugTesting;
 	std::string m_sessionDir;
+	cv::Rect FaceCoord;
+	IplImage *m_IrisProjImage;
+	bool m_SaveProjImage;
+	int rectX, rectY, rectW, rectH;
+	float magOffMainl, magOffMainR, magOffAuxl, magOffAuxR;
+	cv::Point2f constantMainl, constantMainR, constantAuxl, constantAuxR;
+	bool useOffest_m, useOffest_a;
+	float projOffset_m, projOffset_a;
+	bool m_showProjection;
+	bool m_FaceIrisMapping;
 //#endif
 #ifdef HBOX_PG	
 	bool m_SPAWAREnable;

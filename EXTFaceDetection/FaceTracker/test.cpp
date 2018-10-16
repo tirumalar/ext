@@ -22,6 +22,7 @@
 
 #define CAMERACALIBERATION_ARUCO
 
+
 #ifdef CAMERACALIBERATION_ARUCO
 #include <aruco.h>
 #include <dictionary.h>
@@ -133,6 +134,9 @@ const char stateMachineLogger[30] = "StateMachine";
 
 
 VideoStream *vs;
+VideoStream *vsExp1, *vsExp2;
+Mat outImgI1,outImgI2;
+Mat imgIS1, imgIS2;
 
 Mat outImg, smallImg, smallImgBeforeRotate;
 
@@ -152,9 +156,13 @@ int errSwitchThreshold;		//6
 
 // detect_area used for finding face in a certain rect area of entire image
 int rectX, rectY, rectW, rectH;
+float magOffMainl, magOffMainR, magOffAuxl, magOffAuxR;
+cv::Point2f constantMainl, constantMainR, constantAuxl, constantAuxR;
 int targetOffset;
 Rect detect_area(15/SCALE,15/SCALE,(960/(SCALE*SCALE))+15/SCALE,(1200/(SCALE*SCALE))+15/SCALE); //15 was 30
-Rect no_move_area;		//Face target area
+Rect no_move_area, no_move_areaX;		//Face target area
+Rect projFace;
+
 
 int IrisFrameCtr = 0;		//used for counting Iris Frame
 
@@ -203,8 +211,23 @@ int agc_val_cal=3;
 int step;
 int startPoint;
 int thresholdVal = 30;
-bool calDebug, calTwoPoint;
+bool calDebug, calTwoPoint, projDebug, projPtr = false;;
+float projOffset_m, projOffset_a;
+bool useOffest_m, useOffest_a;
+bool showProjection;
+
 //variable used for tempering
+//CvFont font;
+
+
+struct coordinateProject{
+	int camIDL;
+	int frmaeL;
+	Rect camLRect;
+	int camIDR;
+	int frmaeR;
+	Rect camRRect;
+};
 
 std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
 
@@ -215,7 +238,7 @@ extern int vid_stream_get(int *win,int *hin, char *wbuffer);
 extern void  *init_tunnel(void *arg);
 extern void *init_ec(void * arg);
 extern int IrisFramesHaveEyes();
-int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size);
+int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size, Rect &face);
 
 int face_init(  );
 float read_angle(void);
@@ -252,6 +275,7 @@ void CalAll();
 
 #ifdef CAMERACALIBERATION_ARUCO
 //Camera to Camera Calibration
+float projectPoints(float y, float c, float m);
 std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam, bool calDebug);
 vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<aruco::Marker> markerFace);
 void brightnessAdjust(Mat outImg, int cam, bool calDebug);
@@ -469,6 +493,21 @@ void SwitchIrisCameras(bool mode)
 		sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);
 
 	port_com_send(cmd);
+
+	printf("mode....%d\n", mode);
+
+/*	int w,h;
+	vsExp1 = new VideoStream(8192);
+	vsExp1->flush();
+	vsExp1->get(&w,&h,(char *)imgIS1.data);
+
+
+	vsExp2 = new VideoStream(8193);
+	vsExp2->flush();
+	vsExp2->get(&w,&h,(char *)imgIS2.data);*/
+
+
+
 }
 
 
@@ -518,8 +557,18 @@ void SetFaceMode()
 	currnet_mode = MODE_FACE;
 	//port_com_send("fixed_set_rgb(100,100,100)");
 
+/*	delete(vsExp1);
+	delete(vsExp2);*/
+
+
 	sprintf(cmd,"set_cam_mode(0x04,%d)",FRAME_DELAY);
 	port_com_send(cmd);
+
+	if(projDebug){
+		port_com_send("set_cam_mode(0x87,100)");
+	}
+
+
 }
 
 
@@ -712,6 +761,44 @@ void DoStartCmd(){
 	rectW = fconfig.getValue("FTracker.targetRectWidth",960);
 	rectH = fconfig.getValue("FTracker.targetRectHeight",121);
 
+	projDebug = fconfig.getValue("FTracker.faceIrisProjection",false);
+
+
+	//magOffMainl, magOffMainR, magOffAuxl, magOffAuxR;
+
+	magOffMainl = fconfig.getValue("FTracker.magOffsetMainLeftCam",float(0.15));
+	magOffMainR = fconfig.getValue("FTracker.magOffsetMainRightCam",float(0.15));
+	magOffAuxl = fconfig.getValue("FTracker.magOffsetAuxLeftCam",float(0.22));
+	magOffAuxR = fconfig.getValue("FTracker.magOffsetAuxRightCam",float(0.22));
+/*	printf("magOffMainl::: %3.3f, magOffMainR::: %3.3f, magOffAuxl::: %3.3f, magOffAuxR::: %3.3f\n"
+			, magOffMainl, magOffMainR, magOffAuxl, magOffAuxR);*/
+
+	constantMainl.x = fconfig.getValue("FTracker.constantMainLeftCam_x",float(0.15));
+	constantMainl.y = fconfig.getValue("FTracker.constantMainLeftCam_y",float(0.15));
+	constantMainR.x = fconfig.getValue("FTracker.constantMainRightCam_x",float(0.15));
+	constantMainR.y = fconfig.getValue("FTracker.constantMainRightCam_y",float(0.15));
+	constantAuxl.x = fconfig.getValue("FTracker.constantAuxLeftCam_x",float(0.22));
+	constantAuxl.y = fconfig.getValue("FTracker.constantAuxLeftCam_y",float(0.22));
+	constantAuxR.x = fconfig.getValue("FTracker.constantAuxRightCam_x",float(0.22));
+	constantAuxR.y = fconfig.getValue("FTracker.constantAuxRightCam_y",float(0.22));
+
+/*
+	printf("constantMainl.x ::: %3.3f, constantMainl.y ::: %3.3f, constantMainR.x ::: %3.3f, constantMainR.y ::: %3.3f, constantAuxl.x ::: %3.3f, constantAuxl.y ::: %3.3f, constantAuxR.x ::: %3.3f, constantAuxR.y ::: %3.3f",
+			constantMainl.x, constantMainl.y, constantMainR.x, constantMainR.y, constantAuxl.x, constantAuxl.y, constantAuxR.x, constantAuxR.y);
+*/
+
+/*	float projOffset_m = 100.00, projOffset_a = 200.00;
+	bool useOffest_m= false, useOffest_a = true;*/
+
+
+	useOffest_m = fconfig.getValue("FTracker.projectionOffsetMain",false);
+	useOffest_a = fconfig.getValue("FTracker.projectionOffsetAux",true);
+	projOffset_m = fconfig.getValue("FTracker.projectionOffsetValMain",float(50.00));
+	projOffset_a = fconfig.getValue("FTracker.projectionOffsetValAux",float(200.00));
+
+	//printf("useOffest_m ::: %s, useOffest_a ::: %s, projOffset_m ::: %3.3f, projOffset_a ::: %3.3f\n", useOffest_m ? "true":"false", useOffest_a ? "true":"false",projOffset_m,projOffset_a);
+
+	showProjection = fconfig.getValue("FTracker.showProjection",false);
 
 	MIN_POS = fconfig.getValue("FTracker.minPos",0);
 
@@ -789,6 +876,7 @@ void DoStartCmd(){
 	//move to center position
 	EyelockLog(logger, DEBUG, "Moving to center position");
 	MoveTo(CENTER_POS);
+	//printf("enter pos val %d\n", CENTER_POS);
 	read_angle();		//read current angle
 
 
@@ -859,8 +947,8 @@ void DoStartCmd(){
 	//port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
 
 
-
-
+	//Temp Change
+	//MainIrisSettings();
 ///////////////////ilya///////////////////
 	//This code is for playing sound
 	if(1)
@@ -890,7 +978,8 @@ void DoStartCmd(){
 
 
 	EyelockLog(logger, DEBUG, "Turning on Alternate cameras");
-	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Turn on Alternate cameras
+	//sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Turn on Alternate cameras
+	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);		//Need Just faced camera to be ON (changed by Mo)
 	port_com_send(cmd);
 
 	//Leave the PLL always ON
@@ -975,6 +1064,7 @@ void DoStartCmd_CamCal(){
 	//Homing
 	EyelockLog(logger, DEBUG, "Re Homing");
 	port_com_send("fx_home()\n");
+
 #ifdef NOOPTIMIZE
 	usleep(100000);
 #endif
@@ -1399,7 +1489,7 @@ float p; //AGC
 void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 {
 	EyelockLog(logger, TRACE, "DoRunMode");
-
+	Rect face;
 
 	// if (run_state == RUN_STATE_FACE)
 	{
@@ -1493,7 +1583,7 @@ void DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 
 
 		EyelockLog(logger, DEBUG, "FindEyeLocation");
-		if (FindEyeLocation(smallImg, eyes, eye_size)) {	//Find face
+		if (FindEyeLocation(smallImg, eyes, eye_size, face)) {	//Find face
 			if (detect_area.contains(eyes)) {		//Find face/eye into the rect first, Future use of detect face at center
 				EyelockLog(logger, DEBUG, "eyes found");
 
@@ -1883,22 +1973,433 @@ void DoAgc(void)
 }
 
 
+
+/*float projectPoints(float y, float c, float m){
+	//y = mx + c
+	//y is Face points and x is Iris points
+	//x = (y-c)/m
+	printf("y::: %3.3f, c::: %3.3f, m::: %3.3f, x::: %3.3f\n", y,c,m, float(abs(y-c)/m));
+	return (abs(y-c)/m);
+
+}*/
+
+float projectPoints(float y, float c, float m){
+	//y = mx + c
+	//y is Face points and x is Iris points
+	//x = (y-c)/m
+	//printf("y::: %3.3f, c::: %3.3f, m::: %3.3f, x::: %3.3f\n", y,c,m, float((y-c)/m));
+	return ((y-c)/m);
+
+}
+
+
+
+coordinateProject projectRect(Rect &face, int stateofIrisCameras){
+
+	printf("scaling %d targetOffset %d\n", scaling, targetOffset);
+
+	printf("constantMainl.x  %f constantMainl.y %f magOffMainl %f\n", constantMainl.x ,constantMainl.y,  magOffMainl);
+
+	printf("Rect %d %d %d %d\n", rectX, rectY, rectW, rectH);
+
+	float scale = 1.0;
+	//showProjection = true;
+	Rect ret1(0,0,0,0);
+	Rect ret2(0,0,0,0);
+	Rect retd1(0,0,0,0);
+	Rect retd2(0,0,0,0);
+
+/*	cam_idd = frame->imageData[2]&0xff;
+	frame_number = frame->imageData[3]&0xff;*/
+
+
+	// printf("targetOffset %d\n", targetOffset);
+
+
+	Mat imgCopy;
+	smallImg.copyTo(imgCopy);
+
+
+
+	Rect faceP = face;
+	faceP.y = (rectY/scaling) + targetOffset;
+	faceP.height = (rectH)/scaling -(targetOffset*2);
+
+	if (projPtr){
+		sprintf(temp, "Debug facetracker WindowX\n");
+		EyelockLog(logger, DEBUG, "ImshowX");
+
+
+		if (projDebug){
+
+			/*
+			Mat outImgM = rotation90(outImg);
+
+			printf("face x = %d  face y = %d face width = %d  face height = %d\n",face.x, face.y, face.width, face.height);
+			face.x =face.x * scaling;
+			face.y =face.y * scaling;
+			face.height =face.height * scaling;
+			face.width =face.width * scaling;
+			printf("face x = %d  face y = %d face width = %d  face height = %d\n",face.x, face.y, face.width, face.height);
+
+			projFace.x = face.x;				//column
+			projFace.y = rectY + targetOffset;	//row
+			projFace.width = face.width;
+			projFace.height = rectH -(targetOffset*2);*/
+
+			//printf("After scaling %d targetOffset %d\n", scaling, targetOffset);
+
+			//printf("magOffMainl %d magOffAuxl %d\n", magOffMainl, magOffAuxl);
+
+
+			projFace.x = face.x * scaling;				//column
+			projFace.y = rectY + targetOffset;	//row
+			projFace.width = face.width * scaling;
+			projFace.height = rectH -(targetOffset*2);
+			//printf("projFace x = %d  projFace y = %d projFace width = %d  projFace height = %d\n",projFace.x, projFace.y, projFace.width, projFace.height);
+
+			//printf("face x = %i  face y = %i face width = %i  face height = %i\n",face.x, face.y, face.width, face.height);
+			//cv::rectangle(outImgM, no_move_areaX, Scalar(255, 0, 0), 1, 0);
+			//cv::rectangle(outImgM, projFace, Scalar(255, 0, 0), 1, 0);
+			//cv::rectangle(outImgM, face, Scalar(255,0,0),1,0);
+
+
+
+			//vs->cam_id face is 4; main is 1 left and 2 right; Aux is 129 left and 130 right
+			//int projectPoints(float y, float c, float m)
+			// y-> is face point, c is contant and m is the offset
+			//ptr.x-> column, ptr.y-> row
+			//magOffMainl, magOffMainR, magOffAuxl, magOffAuxR;
+			//constantMainl.x, constantMainl.y, constantMainR.x, constantMainR.y, constantAuxl.x, constantAuxl.y, constantAuxR.x, constantAuxR.y;
+			cv::Point2i ptr1, ptr2, ptr3, ptr4;
+
+			if(stateofIrisCameras == STATE_MAIN_IRIS){
+			// if(vsExp1->cam_id == 1){
+				//project two coordinates diagonally a part in face frame into Iris
+				ptr1.x = projectPoints(projFace.x, constantMainl.x, magOffMainl);
+				ptr1.y = projectPoints(projFace.y, constantMainl.y, magOffMainl);
+
+				ptr2.x = projectPoints((face.x+face.width), constantMainl.x, magOffMainl);
+				ptr2.y = projectPoints((projFace.y+projFace.height), constantMainl.y, magOffMainl);
+
+
+				//check extreme conditions
+				if (ptr1.x > 1200){
+					ptr1.x = 1200;
+				}
+				if (ptr2.y > 960){
+					ptr2.y = 960;
+				}
+
+				if (ptr1.x < 0){
+					ptr1.x = 0;
+				}
+				if (ptr2.y < 0){
+					ptr2.y = 0;
+				}
+
+				//create RECT
+				ret1.x = ptr1.x;
+				ret1.y = ptr1.y;
+				ret1.width = abs(ptr1.x - ptr2.x);
+				ret1.height = abs(ptr1.y - ptr2.y);
+
+				//check extreme conditions
+				if(ret1.width > 1200)
+					ret1.width = 1200;
+				if(ret1.height > 960)
+					ret1.height = 960;
+
+				//Offset correction if useOffset is true
+				if(useOffest_m){
+					ret1.height = ret1.height - int(projOffset_m);
+				}
+
+				if (showProjection){
+					retd1.x = ptr1.x/scale;
+					retd1.y = ptr1.y/scale;
+					retd1.width = abs(ptr1.x - ptr2.x)/scale;
+
+					if (useOffest_m)
+						retd1.height = (abs(ptr1.y - ptr2.y)-projOffset_m)/scale;
+					else
+						retd1.height = abs(ptr1.y - ptr2.y)/scale;
+
+				}
+
+				printf("Main Left::: %d, ptr3.x:: %d, ptr3.y:: %d, ptr4.x:: %d, ptr4.y:: %d\n",STATE_MAIN_IRIS, ptr3.x,ptr3.y,ptr4.x,ptr4.y);
+				printf("Main Left::: %d, ret2.x:: %d, ret2.y:: %d, ret2.width:: %d, ret2.height:: %d\n",STATE_MAIN_IRIS, ret2.x,ret2.y,ret2.width,ret2.height);
+
+
+				//printf("Camera ID::: %d, ptr1.x:: %d, ptr1.y:: %d, ptr2.x:: %d, ptr2.y:: %d\n",vsExp1->cam_id, ptr1.x,ptr1.y,ptr2.x,ptr2.y);
+				//printf("Camera ID::: %d, ret1.x:: %d, ret1.y:: %d, ret1.width:: %d, ret1.height:: %d\n",vsExp1->cam_id, ret1.x,ret1.y,ret1.width,ret1.height);
+
+			}
+			else if(stateofIrisCameras == STATE_AUX_IRIS){
+			// else if(vsExp1->cam_id == 129){
+				//project two coordinates diagonally a part in face frame into Iris
+				ptr1.x = projectPoints(projFace.x, constantAuxl.x, magOffAuxl);
+				ptr1.y = projectPoints(projFace.y, constantAuxl.y, magOffAuxl);
+
+				ptr2.x = projectPoints((face.x+face.width), constantAuxl.x, magOffAuxl);
+				ptr2.y = projectPoints((projFace.y+projFace.height), constantAuxl.y, magOffAuxl);
+
+
+				//check extreme conditions
+				if (ptr1.x > 1200){
+					ptr1.x = 1200;
+				}
+				if (ptr2.y > 960){
+					ptr2.y = 960;
+				}
+
+				if (ptr1.x < 0){
+					ptr1.x = 0;
+				}
+				if (ptr2.y < 0){
+					ptr2.y = 0;
+				}
+
+				//create RECT
+				ret1.x = ptr1.x;
+				ret1.y = ptr1.y;
+				ret1.width = abs(ptr1.x - ptr2.x);
+				ret1.height = abs(ptr1.y - ptr2.y);
+
+				//check extreme conditions
+				if(ret1.width > 1200)
+					ret1.width = 1200;
+				if(ret1.height > 960)
+					ret1.height = 960;
+
+				//Offset correction if useOffset is true
+				if(useOffest_a){
+					ret1.height = ret1.height - int(projOffset_a);
+				}
+
+				if (showProjection){
+					retd1.x = ptr1.x/scale;
+					retd1.y = ptr1.y/scale;
+					retd1.width = abs(ptr1.x - ptr2.x)/scale;
+					if (useOffest_a)
+						retd1.height = (abs(ptr1.y - ptr2.y)-projOffset_a)/scale;
+					else
+						retd1.height = abs(ptr1.y - ptr2.y)/scale;
+				}
+
+				printf("Aux Left::: %d, ptr3.x:: %d, ptr3.y:: %d, ptr4.x:: %d, ptr4.y:: %d\n",STATE_AUX_IRIS, ptr3.x,ptr3.y,ptr4.x,ptr4.y);
+				printf("Aux Left::: %d, ret2.x:: %d, ret2.y:: %d, ret2.width:: %d, ret2.height:: %d\n",STATE_AUX_IRIS, ret2.x,ret2.y,ret2.width,ret2.height);
+
+				//printf("Camera ID::: %d, ptr1.x:: %d, ptr1.y:: %d, ptr2.x:: %d, ptr2.y:: %d\n",vsExp1->cam_id, ptr1.x,ptr1.y,ptr2.x,ptr2.y);
+				//printf("Camera ID::: %d, ret1.x:: %d, ret1.y:: %d, ret1.width:: %d, ret1.height:: %d\n",vsExp1->cam_id, ret1.x,ret1.y,ret1.width,ret1.height);
+
+			}
+
+			if(stateofIrisCameras == STATE_MAIN_IRIS){
+			// if(vsExp2->cam_id == 2){
+				//project two coordinates diagonally a part in face frame into Iris
+				ptr3.x = projectPoints(projFace.x, constantMainR.x, magOffMainR);
+				ptr3.y = projectPoints(projFace.y, constantMainR.y, magOffMainR);
+
+				ptr4.x = projectPoints((face.x+face.width), constantMainR.x, magOffMainR);
+				ptr4.y = projectPoints((projFace.y+projFace.height), constantMainR.y, magOffMainR);
+
+
+				//check extreme conditions
+				if (ptr3.x > 1200){
+					ptr3.x = 1200;
+				}
+				if (ptr4.y > 960){
+					ptr4.y = 960;
+				}
+
+				if (ptr3.x < 0){
+					ptr3.x = 0;
+				}
+				if (ptr4.y < 0){
+					ptr4.y = 0;
+				}
+
+				//create RECT
+				ret2.x = ptr3.x;
+				ret2.y = ptr3.y;
+				ret2.width = abs(ptr3.x - ptr4.x);
+				ret2.height = abs(ptr3.y - ptr4.y);
+
+				//check extreme conditions
+				if(ret2.width > 1200)
+					ret2.width = 1200;
+				if(ret2.height > 960)
+					ret2.height = 960;
+
+				//Offset correction if useOffset is true
+				if(useOffest_m){
+					ret2.height = ret2.height - int(projOffset_m);
+				}
+
+				if (showProjection){
+					retd2.x = ptr3.x/scale;
+					retd2.y = ptr3.y/scale;
+					retd2.width = abs(ptr3.x - ptr4.x)/scale;
+
+
+					if (useOffest_m)
+						retd2.height = (abs(ptr3.y - ptr4.y)-projOffset_m)/scale;
+					else
+						retd2.height = abs(ptr3.y - ptr4.y)/scale;
+
+				}
+
+				printf("Main Right::: %d, ptr3.x:: %d, ptr3.y:: %d, ptr4.x:: %d, ptr4.y:: %d\n",STATE_MAIN_IRIS, ptr3.x,ptr3.y,ptr4.x,ptr4.y);
+				printf("Main Right::: %d, ret2.x:: %d, ret2.y:: %d, ret2.width:: %d, ret2.height:: %d\n",STATE_MAIN_IRIS, ret2.x,ret2.y,ret2.width,ret2.height);
+
+				}
+			else if(stateofIrisCameras == STATE_AUX_IRIS){
+			// else if(vsExp2->cam_id == 130){
+				//project two coordinates diagonally a part in face frame into Iris
+				ptr3.x = projectPoints(projFace.x, constantAuxR.x, magOffAuxR);
+				ptr3.y = projectPoints(projFace.y, constantAuxR.y, magOffAuxR);
+
+				ptr4.x = projectPoints((face.x+face.width), constantAuxR.x, magOffAuxR);
+				ptr4.y = projectPoints((projFace.y+projFace.height), constantAuxR.y, magOffAuxR);
+
+				//check extreme conditions
+				if (ptr3.x > 1200){
+					ptr3.x = 1200;
+				}
+				if (ptr4.y > 960){
+					ptr4.y = 960;
+				}
+
+				if (ptr3.x < 0){
+					ptr3.x = 0;
+				}
+				if (ptr4.y < 0){
+					ptr4.y = 0;
+				}
+
+				//create RECT
+				ret2.x = ptr3.x;
+				ret2.y = ptr3.y;
+				ret2.width = abs(ptr3.x - ptr4.x);
+				ret2.height = abs(ptr3.y - ptr4.y);
+
+				//check extreme conditions
+				if(ret2.width > 1200)
+					ret2.width = 1200;
+				if(ret2.height > 960)
+					ret2.height = 960;
+
+				//Offset correction if useOffset is true
+				if(useOffest_a){
+					ret2.height = ret2.height - int(projOffset_a);
+				}
+
+				if (showProjection){
+					retd2.x = ptr3.x/scale;
+					retd2.y = ptr3.y/scale;
+					retd2.width = abs(ptr3.x - ptr4.x)/scale;
+					retd2.height = abs(ptr3.y - ptr4.y)/scale;
+				}
+
+				if (useOffest_a)
+					retd2.height = (abs(ptr3.y - ptr4.y)-projOffset_a)/scale;
+				else
+					retd2.height = abs(ptr3.y - ptr4.y)/scale;
+
+				printf("Aux Right::: %d, ptr3.x:: %d, ptr3.y:: %d, ptr4.x:: %d, ptr4.y:: %d\n",STATE_AUX_IRIS, ptr3.x,ptr3.y,ptr4.x,ptr4.y);
+				printf("Aux Right::: %d, ret2.x:: %d, ret2.y:: %d, ret2.width:: %d, ret2.height:: %d\n",STATE_AUX_IRIS, ret2.x,ret2.y,ret2.width,ret2.height);
+
+
+
+			}
+
+
+
+/*			CvFont font;
+			double hScale=.5;
+			double vScale=.5;
+			int    lineWidth=1;*/
+
+			//int s_camId = vsExp1->cam_id;
+			//sprintf(tempI1, "Iris left cam");
+			//sprintf(tempI1, "CAM %2x %s",s_camId,s_camId&0x80 ?  "AUX":"MAIN");
+			//cvPutText (outImage1,drawComm,cvPoint(20,50), &font, cvScalar(255,255,255));
+			//cvPutText ((unsigned char*)imgIS1,tempI1,cvPoint(25,100), &font, cvScalar(0,0,0));
+
+			//int s_camIdd = vsExp2->cam_id;
+			//sprintf(tempI2, "Iris Right cam");
+			//sprintf(tempI1, "CAM %2x %s",s_camId,s_camId&0x80 ?  "AUX":"MAIN");
+			//sprintf(tempI2, "CAM %2x %s",s_camIdd,s_camIdd&0x80 ?  "AUX":"MAIN");
+			//cvPutText ((unsigned char*)imgIS2,tempI1,cvPoint(25,100), &font, cvScalar(0,0,0));
+
+
+
+			if (showProjection){
+
+				cv::rectangle(imgCopy, no_move_area, Scalar(255, 0, 0), 1, 0);
+				cv::rectangle(imgCopy, faceP, Scalar(255, 0, 0), 1, 0);
+
+				//scaling in a smaller image
+
+				Mat imgl, imgR;
+				cv::resize(imgIS1, imgl, cv::Size(), (1 / scale),(1 / scale), INTER_NEAREST);
+				cv::resize(imgIS2, imgR, cv::Size(), (1 / scale),(1 / scale), INTER_NEAREST);
+
+				cv::rectangle(imgl, retd1, Scalar(255, 0, 0), 2, 0);
+				cv::rectangle(imgR, retd2, Scalar(255, 0, 0), 2, 0);
+
+				imshow(temp, imgCopy);
+				imshow(tempI1, imgl);
+				imshow(tempI2, imgR);
+
+
+			}
+		}
+
+	}
+	else{
+/*		vsExp1->cam_id = 0;
+		vsExp2->cam_id = 0;*/
+		return {0,0,ret1,0,0,ret2};
+	}
+
+	//printf("number ::::::::::::::: %i, ID::::::::::::%i\n", (int)imgIS1.at<uchar>(0,2), int(vsExp1->cam_id));
+
+	return {int(0),(int)imgIS1.at<uchar>(0,3),ret1, int(0),(int)imgIS2.at<uchar>(0,3),ret2};
+	// return {int(vsExp1->cam_id),(int)imgIS1.at<uchar>(0,3),ret1, int(vsExp2->cam_id),(int)imgIS2.at<uchar>(0,3),ret2};
+}
+
+cv::Rect ImgFaceData;
+
+cv::Rect getFaceData()
+{
+	return ImgFaceData;
+}
+
 void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	pthread_t threadIdtamper;
 	pthread_t threadIdtemp;
+	cv::Rect face;
+	coordinateProject result;
 
 	EyelockLog(logger, TRACE, "DoRunMode_test");
 
 	int start_process_time = clock();
 
 	smallImg = preProcessingImg(outImg);
-	bool foundEyes = FindEyeLocation(smallImg, eyes, eye_size);
+
+	bool foundEyes = FindEyeLocation(smallImg, eyes, eye_size, face);
+/*	float projOffset_m = 100.00, projOffset_a = 200.00;
+	bool useOffest_m= false, useOffest_a = true;*/
+
 
 	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
 
 
 	bool eyesInDetect = foundEyes? detect_area.contains(eyes):false;
 	bool eyesInViewOfIriscam = eyesInDetect ? no_move_area.contains(eyes):false;
+	//bool projPtr = false;
 
 
 	if (foundEyes==false)
@@ -1974,9 +2475,9 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 			g_MatchState=0;
 		last_angle_move=0;
 
+	int stateofIrisCameras = 0;
 
 	if (last_system_state != system_state)
-
 	switch(last_system_state)
 	{
 	case STATE_LOOK_FOR_FACE:
@@ -1993,12 +2494,18 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						DimmFaceForIris();											//Dim face settings
 						MainIrisSettings();											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
+						projPtr = true;
+						stateofIrisCameras = STATE_MAIN_IRIS;
+						//result = projectRect(face);
 						break;
 					case STATE_AUX_IRIS:
 						// enable aux camera and set led currnet
 						DimmFaceForIris();											//Dim face settings
 						MainIrisSettings();											//change to Iris settings
 						SwitchIrisCameras(false);									//switch cameras
+						projPtr = true;
+						stateofIrisCameras = STATE_AUX_IRIS;
+						//result = projectRect(face);
 						break;
 					}
 					break;
@@ -2018,6 +2525,9 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						//DimmFaceForIris();											//Dim face settings
 						MainIrisSettings();											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
+						projPtr = true;
+						stateofIrisCameras = STATE_MAIN_IRIS;
+						//result = projectRect(face);
 						break;
 					}
 					break;
@@ -2038,6 +2548,9 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							//DimmFaceForIris();
 							MainIrisSettings();											//change to Iris settings
 							SwitchIrisCameras(false);									//switch cameras
+							projPtr = true;
+							stateofIrisCameras = STATE_AUX_IRIS;
+							//result = projectRect(face);
 							break;
 						}
 						break;
@@ -2055,25 +2568,384 @@ void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						DimmFaceForIris();											//Dim face settings
 						MainIrisSettings();											//change to Iris settings
 						SwitchIrisCameras(false);									//switch cameras
+						projPtr = true;
+						stateofIrisCameras = STATE_AUX_IRIS;
+						//result = projectRect(face);
 						break;
 					case STATE_MAIN_IRIS:
 						// enable main cameras and set
 						DimmFaceForIris();											//Dim face settings
 						MainIrisSettings();											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
+						projPtr = true;
+						stateofIrisCameras = STATE_MAIN_IRIS;
+						//result = projectRect(face);
 						break;
 					}
 					break;
 	}
 
 	//For dispaying face tracker
-	if(bShowFaceTracking){
-		sprintf(temp, "Debug facetracker Window\n");
-		EyelockLog(logger, DEBUG, "Imshow");
-		cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
-		cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
-		imshow(temp, smallImg);
-	}
+	CvFont font;
+		double hScale=0.7;
+		double vScale=0.7;
+		int lineWidth=1;
+		bool static firstTime = true;
+		if(firstTime){
+						cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, hScale,vScale,0,lineWidth);
+						firstTime = false;
+					}
+
+		//
+		ImgFaceData = face;
+		//printf("stateofIrisCameras.....%d\n", stateofIrisCameras);
+		result = projectRect(face, stateofIrisCameras);
+		// printf("cameID1:: %d, Frame1:: %i, Rect1.x :: %d,Rect1.y :: %d,Rect1.width :: %d,Rect1.height :: %d\n", result.camIDL, result.frmaeL, result.camLRect.x,result.camLRect.y,result.camLRect.width,result.camLRect.height);
+		// printf("cameID2:: %d, Frame2:: %i, Rect2.x :: %d,Rect2.y :: %d,Rect2.width :: %d,Rect2.height :: %d\n", result.camIDR, result.frmaeR, result.camRRect.x,result.camRRect.y,result.camRRect.width,result.camRRect.height);
+
+/*
+		float scale = 1.0;
+		//showProjection = true;
+		Rect ret1,ret2,retd1,retd2;
+
+		Mat imgCopy;
+		smallImg.copyTo(imgCopy);
+
+		Rect faceP = face;
+		faceP.y = (rectY/scaling) + targetOffset;
+		faceP.height = (rectH)/scaling -(targetOffset*2);
+
+
+		if (projPtr){
+			sprintf(temp, "Debug facetracker WindowX\n");
+			EyelockLog(logger, DEBUG, "ImshowX");
+
+
+			if (projDebug){
+
+
+				Mat outImgM = rotation90(outImg);
+
+				printf("face x = %d  face y = %d face width = %d  face height = %d\n",face.x, face.y, face.width, face.height);
+				face.x =face.x * scaling;
+				face.y =face.y * scaling;
+				face.height =face.height * scaling;
+				face.width =face.width * scaling;
+				printf("face x = %d  face y = %d face width = %d  face height = %d\n",face.x, face.y, face.width, face.height);
+
+				projFace.x = face.x;				//column
+				projFace.y = rectY + targetOffset;	//row
+				projFace.width = face.width;
+				projFace.height = rectH -(targetOffset*2);
+
+				projFace.x = face.x * scaling;				//column
+				projFace.y = rectY + targetOffset;	//row
+				projFace.width = face.width * scaling;
+				projFace.height = rectH -(targetOffset*2);
+				printf("projFace x = %d  projFace y = %d projFace width = %d  projFace height = %d\n",projFace.x, projFace.y, projFace.width, projFace.height);
+
+				//printf("face x = %i  face y = %i face width = %i  face height = %i\n",face.x, face.y, face.width, face.height);
+				//cv::rectangle(outImgM, no_move_areaX, Scalar(255, 0, 0), 1, 0);
+				//cv::rectangle(outImgM, projFace, Scalar(255, 0, 0), 1, 0);
+				//cv::rectangle(outImgM, face, Scalar(255,0,0),1,0);
+
+
+
+				//vs->cam_id face is 4; main is 1 left and 2 right; Aux is 129 left and 130 right
+				//int projectPoints(float y, float c, float m)
+				// y-> is face point, c is contant and m is the offset
+				//ptr.x-> column, ptr.y-> row
+				//magOffMainl, magOffMainR, magOffAuxl, magOffAuxR;
+				//constantMainl.x, constantMainl.y, constantMainR.x, constantMainR.y, constantAuxl.x, constantAuxl.y, constantAuxR.x, constantAuxR.y;
+				cv::Point2i ptr1, ptr2, ptr3, ptr4;
+				Rect ret1,ret2,retd1,retd2;
+				if(vsExp1->cam_id == 1){
+					//project two coordinates diagonally a part in face frame into Iris
+					ptr1.x = projectPoints(projFace.x, constantMainl.x, magOffMainl);
+					ptr1.y = projectPoints(projFace.y, constantMainl.y, magOffMainl);
+
+					ptr2.x = projectPoints((face.x+face.width), constantMainl.x, magOffMainl);
+					ptr2.y = projectPoints((projFace.y+projFace.height), constantMainl.y, magOffMainl);
+
+
+					//check extreme conditions
+					if (ptr1.x > 1200){
+						ptr1.x = 1200;
+					}
+					if (ptr2.y > 960){
+						ptr2.y = 960;
+					}
+
+					if (ptr1.x < 0){
+						ptr1.x = 0;
+					}
+					if (ptr2.y < 0){
+						ptr2.y = 0;
+					}
+
+					//create RECT
+					ret1.x = ptr1.x;
+					ret1.y = ptr1.y;
+					ret1.width = abs(ptr1.x - ptr2.x);
+					ret1.height = abs(ptr1.y - ptr2.y);
+
+					//check extreme conditions
+					if(ret1.width > 1200)
+						ret1.width = 1200;
+					if(ret1.height > 960)
+						ret1.height = 960;
+
+					//Offset correction if useOffset is true
+					if(useOffest_m){
+						ret1.height = ret1.height - int(projOffset_m);
+					}
+
+					if (showProjection){
+						retd1.x = ptr1.x/scale;
+						retd1.y = ptr1.y/scale;
+						retd1.width = abs(ptr1.x - ptr2.x)/scale;
+
+						if (useOffest_m)
+							retd1.height = (abs(ptr1.y - ptr2.y)-projOffset_m)/scale;
+						else
+							retd1.height = abs(ptr1.y - ptr2.y)/scale;
+
+					}
+
+					printf("Camera ID::: %d, ptr1.x:: %d, ptr1.y:: %d, ptr2.x:: %d, ptr2.y:: %d\n",vsExp1->cam_id, ptr1.x,ptr1.y,ptr2.x,ptr2.y);
+					printf("Camera ID::: %d, ret1.x:: %d, ret1.y:: %d, ret1.width:: %d, ret1.height:: %d\n",vsExp1->cam_id, ret1.x,ret1.y,ret1.width,ret1.height);
+
+				}
+				else if(vsExp1->cam_id == 129){
+					//project two coordinates diagonally a part in face frame into Iris
+					ptr1.x = projectPoints(projFace.x, constantAuxl.x, magOffAuxl);
+					ptr1.y = projectPoints(projFace.y, constantAuxl.y, magOffAuxl);
+
+					ptr2.x = projectPoints((face.x+face.width), constantAuxl.x, magOffAuxl);
+					ptr2.y = projectPoints((projFace.y+projFace.height), constantAuxl.y, magOffAuxl);
+
+
+					//check extreme conditions
+					if (ptr1.x > 1200){
+						ptr1.x = 1200;
+					}
+					if (ptr2.y > 960){
+						ptr2.y = 960;
+					}
+
+					if (ptr1.x < 0){
+						ptr1.x = 0;
+					}
+					if (ptr2.y < 0){
+						ptr2.y = 0;
+					}
+
+					//create RECT
+					ret1.x = ptr1.x;
+					ret1.y = ptr1.y;
+					ret1.width = abs(ptr1.x - ptr2.x);
+					ret1.height = abs(ptr1.y - ptr2.y);
+
+					//check extreme conditions
+					if(ret1.width > 1200)
+						ret1.width = 1200;
+					if(ret1.height > 960)
+						ret1.height = 960;
+
+					//Offset correction if useOffset is true
+					if(useOffest_a){
+						ret1.height = ret1.height - int(projOffset_a);
+					}
+
+					if (showProjection){
+						retd1.x = ptr1.x/scale;
+						retd1.y = ptr1.y/scale;
+						retd1.width = abs(ptr1.x - ptr2.x)/scale;
+						if (useOffest_a)
+							retd1.height = (abs(ptr1.y - ptr2.y)-projOffset_a)/scale;
+						else
+							retd1.height = abs(ptr1.y - ptr2.y)/scale;
+					}
+
+					printf("Camera ID::: %d, ptr1.x:: %d, ptr1.y:: %d, ptr2.x:: %d, ptr2.y:: %d\n",vsExp1->cam_id, ptr1.x,ptr1.y,ptr2.x,ptr2.y);
+					printf("Camera ID::: %d, ret1.x:: %d, ret1.y:: %d, ret1.width:: %d, ret1.height:: %d\n",vsExp1->cam_id, ret1.x,ret1.y,ret1.width,ret1.height);
+
+				}
+
+
+				if(vsExp2->cam_id == 2){
+					//project two coordinates diagonally a part in face frame into Iris
+					ptr3.x = projectPoints(projFace.x, constantMainR.x, magOffMainR);
+					ptr3.y = projectPoints(projFace.y, constantMainR.y, magOffMainR);
+
+					ptr4.x = projectPoints((face.x+face.width), constantMainR.x, magOffMainR);
+					ptr4.y = projectPoints((projFace.y+projFace.height), constantMainR.y, magOffMainR);
+
+
+					//check extreme conditions
+					if (ptr3.x > 1200){
+						ptr3.x = 1200;
+					}
+					if (ptr4.y > 960){
+						ptr4.y = 960;
+					}
+
+					if (ptr3.x < 0){
+						ptr3.x = 0;
+					}
+					if (ptr4.y < 0){
+						ptr4.y = 0;
+					}
+
+					//create RECT
+					ret2.x = ptr3.x;
+					ret2.y = ptr3.y;
+					ret2.width = abs(ptr3.x - ptr4.x);
+					ret2.height = abs(ptr3.y - ptr4.y);
+
+					//check extreme conditions
+					if(ret2.width > 1200)
+						ret2.width = 1200;
+					if(ret2.height > 960)
+						ret2.height = 960;
+
+					//Offset correction if useOffset is true
+					if(useOffest_m){
+						ret2.height = ret2.height - int(projOffset_m);
+					}
+
+					if (showProjection){
+						retd2.x = ptr3.x/scale;
+						retd2.y = ptr3.y/scale;
+						retd2.width = abs(ptr3.x - ptr4.x)/scale;
+
+
+						if (useOffest_m)
+							retd2.height = (abs(ptr3.y - ptr4.y)-projOffset_m)/scale;
+						else
+							retd2.height = abs(ptr3.y - ptr4.y)/scale;
+
+					}
+
+					printf("Camera ID::: %d, ptr3.x:: %d, ptr3.y:: %d, ptr4.x:: %d, ptr4.y:: %d\n",vsExp2->cam_id, ptr3.x,ptr3.y,ptr4.x,ptr4.y);
+					printf("Camera ID::: %d, ret2.x:: %d, ret2.y:: %d, ret2.width:: %d, ret2.height:: %d\n",vsExp2->cam_id, ret2.x,ret2.y,ret2.width,ret2.height);
+
+					}
+				else if(vsExp2->cam_id == 130){
+					//project two coordinates diagonally a part in face frame into Iris
+					ptr3.x = projectPoints(projFace.x, constantAuxR.x, magOffAuxR);
+					ptr3.y = projectPoints(projFace.y, constantAuxR.y, magOffAuxR);
+
+					ptr4.x = projectPoints((face.x+face.width), constantAuxR.x, magOffAuxR);
+					ptr4.y = projectPoints((projFace.y+projFace.height), constantAuxR.y, magOffAuxR);
+
+					//check extreme conditions
+					if (ptr3.x > 1200){
+						ptr3.x = 1200;
+					}
+					if (ptr4.y > 960){
+						ptr4.y = 960;
+					}
+
+					if (ptr3.x < 0){
+						ptr3.x = 0;
+					}
+					if (ptr4.y < 0){
+						ptr4.y = 0;
+					}
+
+					//create RECT
+					ret2.x = ptr3.x;
+					ret2.y = ptr3.y;
+					ret2.width = abs(ptr3.x - ptr4.x);
+					ret2.height = abs(ptr3.y - ptr4.y);
+
+					//check extreme conditions
+					if(ret2.width > 1200)
+						ret2.width = 1200;
+					if(ret2.height > 960)
+						ret2.height = 960;
+
+					//Offset correction if useOffset is true
+					if(useOffest_a){
+						ret2.height = ret2.height - int(projOffset_a);
+					}
+
+					if (showProjection){
+						retd2.x = ptr3.x/scale;
+						retd2.y = ptr3.y/scale;
+						retd2.width = abs(ptr3.x - ptr4.x)/scale;
+						retd2.height = abs(ptr3.y - ptr4.y)/scale;
+					}
+
+					if (useOffest_a)
+						retd2.height = (abs(ptr3.y - ptr4.y)-projOffset_a)/scale;
+					else
+						retd2.height = abs(ptr3.y - ptr4.y)/scale;
+
+					printf("Camera ID::: %d, ptr3.x:: %d, ptr3.y:: %d, ptr4.x:: %d, ptr4.y:: %d\n",vsExp2->cam_id, ptr3.x,ptr3.y,ptr4.x,ptr4.y);
+					printf("Camera ID::: %d, ret2.x:: %d, ret2.y:: %d, ret2.width:: %d, ret2.height:: %d\n",vsExp2->cam_id, ret2.x,ret2.y,ret2.width,ret2.height);
+
+				}
+
+
+
+				CvFont font;
+				double hScale=.5;
+				double vScale=.5;
+				int    lineWidth=1;
+
+				int s_camId = vsExp1->cam_id;
+				sprintf(tempI1, "Iris left cam");
+				//sprintf(tempI1, "CAM %2x %s",s_camId,s_camId&0x80 ?  "AUX":"MAIN");
+				//cvPutText (outImage1,drawComm,cvPoint(20,50), &font, cvScalar(255,255,255));
+				//cvPutText ((unsigned char*)imgIS1,tempI1,cvPoint(25,100), &font, cvScalar(0,0,0));
+
+				int s_camIdd = vsExp2->cam_id;
+				sprintf(tempI2, "Iris Right cam");
+				//sprintf(tempI1, "CAM %2x %s",s_camId,s_camId&0x80 ?  "AUX":"MAIN");
+				//sprintf(tempI2, "CAM %2x %s",s_camIdd,s_camIdd&0x80 ?  "AUX":"MAIN");
+				//cvPutText ((unsigned char*)imgIS2,tempI1,cvPoint(25,100), &font, cvScalar(0,0,0));
+
+
+
+				if (showProjection){
+
+					cv::rectangle(imgCopy, no_move_area, Scalar(255, 0, 0), 1, 0);
+					cv::rectangle(imgCopy, faceP, Scalar(255, 0, 0), 1, 0);
+
+					//scaling in a smaller image
+
+					Mat imgl, imgR;
+					cv::resize(imgIS1, imgl, cv::Size(), (1 / scale),(1 / scale), INTER_NEAREST);
+					cv::resize(imgIS2, imgR, cv::Size(), (1 / scale),(1 / scale), INTER_NEAREST);
+
+					cv::rectangle(imgl, retd1, Scalar(255, 0, 0), 2, 0);
+					cv::rectangle(imgR, retd2, Scalar(255, 0, 0), 2, 0);
+
+					imshow(temp, imgCopy);
+					imshow(tempI1, imgl);
+					imshow(tempI2, imgR);
+
+
+				}
+			}
+
+		}
+*/
+
+
+		if(bShowFaceTracking){
+			//printf("face x = %i  face y = %i face width = %i  face height = %i\n",face.x, face.y, face.width, face.height);
+			sprintf(temp, "Debug facetracker Window\n");
+			EyelockLog(logger, DEBUG, "Imshow");
+			cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
+			cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
+			cv::rectangle(smallImg, face, Scalar(255,0,0),1,0);
+			imshow(temp, smallImg);
+		}
+
+
 
 //For debug session
 #ifdef DEBUG_SESSION
@@ -2507,7 +3379,7 @@ vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<
 				"Distance in Both iris and face camera!\n");
 		printf("Running the calibration again----->>>>>\n\n\n\n\n");
 		return rectResult;
-		//exit(EXIT_FAILURE);
+		exit(EXIT_FAILURE);
 	}
 
 	//pointsExp.push_back();
@@ -3355,13 +4227,15 @@ int main(int argc, char **argv)
 
 	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
 
+	//outImg2 = Mat(Size(WIDTH,HEIGHT), CV_8U);
+#if 0
 	if (argc<2)
 	{
 		EyelockLog(logger, DEBUG, "error params");
 		// printf("error params\n");
 		exit (0);
 	}
-
+#endif
 	//check device ID with user in
 	float id = 0.0;
 /*	cout << "Give device ID:::: " << endl;
@@ -3380,11 +4254,16 @@ int main(int argc, char **argv)
 	}*/
 
 	//Check argc for run face tracker
+#if 0
 	if (argc== 3)
 		run_mode=1;
 	else
 		run_mode =0;
+#endif
 
+	run_mode=1;  //DMO forced
+
+#if 0 //DMOOUT - No more cmd line stuff always just run in FaceTracking only mode...
 
 	//Image optimization
 	if (strcmp(argv[1],"cal")==0)
@@ -3518,7 +4397,7 @@ int main(int argc, char **argv)
 		run_mode =1;
 		temp_mode=1;
 	}
-
+#endif
 	//pThread for face tracker active
 	if (run_mode)
 		pthread_create(&threadId,NULL,init_tunnel,NULL);
@@ -3557,10 +4436,13 @@ int main(int argc, char **argv)
 
 
 	//vid_stream_start
+#if 0
 	vs= new VideoStream(atoi(argv[1]));
 	sprintf(temp,"Disp %d",atoi (argv[1]) );
-
-
+#else
+	vs= new VideoStream(8194); //Facecam is 8194...
+	sprintf(temp,"Disp %d", 8194);
+#endif
 	//Setting up Run mode
 	if (run_mode)
 	{
@@ -3583,14 +4465,32 @@ int main(int argc, char **argv)
 		face_init();
 		portcom_start();
 		DoStartCmd();
+/*		double hScale=.5;
+		double vScale=.5;
+		int    lineWidth=1;
+		cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, hScale,vScale,0,lineWidth);*/
+
+		imgIS1 = Mat(Size(WIDTH,HEIGHT), CV_8U);
+		imgIS2 = Mat(Size(WIDTH,HEIGHT), CV_8U);
+#if 0
+		vsExp1 = new VideoStream(8192);
+		vsExp1->flush();
+
+
+		vsExp2 = new VideoStream(8193);
+		vsExp2->flush();
+#endif
 	}
 
 	//imshow() face tracking streaming
+#if 0 // Anita
 	if(bShowFaceTracking)
+	{
 		cv::namedWindow(temp);
+	}
+#endif
 
-
-	//Controling Offset correction while normal streaming (used for testing offset correction)
+	//Controlling Offset correction while normal streaming (used for testing offset correction)
 	if (vs->m_port==8192)
 		vs->offset_sub_enable=0;
 	if (vs->m_port==8193)
@@ -3609,9 +4509,18 @@ int main(int argc, char **argv)
 			{
 			 //DoRunMode(bShowFaceTracking, bDebugSessions);
 			 DoRunMode_test(bShowFaceTracking, bDebugSessions);
+#if 0
+			vsExp1->get(&w,&h,(char *)imgIS1.data);
+
+			vsExp2->get(&w,&h,(char *)imgIS2.data);
+#endif
+
+
 			}
 		else
 			{
+			//portcom_start();
+			//DoStartCmd();
 
 			//For testing image optimization (OFFset correction)
 			Mat DiffImage = imread("white.pgm",CV_LOAD_IMAGE_GRAYSCALE);
@@ -3627,20 +4536,24 @@ int main(int argc, char **argv)
 			//MeasureSnr();
 			{
 				char text[10];
-				sprintf(text,"CAM %2x %s",s_canId,s_canId&0x80 ?  "AUX":"MAIN" );
-				putText(smallImg,text,Point(10,60), FONT_HERSHEY_SIMPLEX, 1.5,Scalar(255,255,255),2);
-				putText(smallImg,text,Point(10+1,60+1), FONT_HERSHEY_SIMPLEX, 1.5,Scalar(0,0,0),2);
+				//sprintf(text,"CAM %2x %s %d",s_canId,s_canId&0x80 ?  "AUX":"MAIN",vs->frameId );
+				//putText(smallImg,text,Point(10,60), FONT_HERSHEY_SIMPLEX, 1.5,Scalar(255,255,255),2);
+				//putText(smallImg,text,Point(10+1,60+1), FONT_HERSHEY_SIMPLEX, 1.5,Scalar(0,0,0),2);
 
 			}
 		//	cv::resize(outImg, smallImg, cv::Size(), 0.25, 0.25, INTER_NEAREST); //Time debug
-		if(bShowFaceTracking)
-			imshow(temp,smallImg);  //Time debug
+				if(bShowFaceTracking){
+					imshow("FaceTracker",smallImg);  //Time debug
+					cvWaitKey(1);
+				}
 			}
+
 
 
 	    key = cv::waitKey(1);
 	    //printf("Key pressed : %u\n",key);
 
+#if 0 //DMOOUT no more key'd exits...
 	    //For quit streaming
 		if (key=='q')
 			break;
@@ -3655,6 +4568,7 @@ int main(int argc, char **argv)
 			printf("saved %s\n",fName);
 
 		}
+#endif
 	}
 
 

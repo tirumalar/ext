@@ -13,7 +13,7 @@ const char logger[30] = "facedetect";
 
 /** Function Headers */
 int face_init();
-int FindEyeLocation(Mat frame, Point &eyes, float &eye_size);
+int FindEyeLocation(Mat frame, Point &eyes, float &eye_size, Rect &face);
 
 /** Global variables */
 String face_cascade_name =
@@ -39,7 +39,7 @@ int face_init() {
 
 #define EYES_MULT 0.3		// previous val is 0.3
 /** Find face and eye locaiton */
-int FindEyeLocation(Mat frame, Point &eyes, float &eye_size) {
+int FindEyeLocation(Mat frame, Point &eyes, float &eye_size, Rect &face) {
 	EyelockLog(logger, TRACE, "FindEyeLocation");
 	std::vector<Rect> faces;
 	Mat frame_gray;
@@ -69,27 +69,35 @@ int FindEyeLocation(Mat frame, Point &eyes, float &eye_size) {
 		break;
 	}
 
-	//Drawing rectangle on a face
+/*	//Drawing rectangle on a face
 	for (size_t i = 0; i < faces.size(); i++) {
 		rectangle(frame, Point(faces[i].x, faces[i].y),
 				Point(faces[i].x + faces[i].width,
 						faces[i].y + faces[i].height), Scalar(255, 255, 255),
 				1);
-	}
+	}*/
 
 	//If the detectMultiScale finds multiple face the function will return 0, otherwise 1
 	cv::Rect roi;
+
+
+
 	if (faces.size() == 1)	//if it finds only 1 face
-			{
+	{
 		eyes.x = faces[0].x + faces[0].width / 2;//x is equal to the 1st point of the face and rect + half face width
 		eyes.y = faces[0].y + (float) faces[0].height * EYES_MULT;//y is equal to the 2nd point of the face rect + 30% of face height
 
 		eye_size = faces[0].width;		// eye_size is equal ot face rext width
 
 		//printf("face x = %d  face y = %d face width = %d  face height = %d reject %f levels %d\n",faces[0].x, faces[0].y, faces[0].width, faces[0].height,level_weights[0],reject_levels[0]);
+		//printf("face x = %d  face y = %d face width = %d  face height = %d \n",faces[0].x, faces[0].y, faces[0].width, faces[0].height);
+		face.x = faces[0].x;
+		face.y = faces[0].y;
+		face.height = faces[0].height;
+		face.width= faces[0].width;
+/*		printf("Face detect tooc %3.3f\n",
+				(float) (clock() - t) / CLOCKS_PER_SEC );*/
 
-		//printf("Face detect tooc %3.3f\n",
-		//		(float) (clock() - t) / CLOCKS_PER_SEC );
 		return 1;
 	}
 
