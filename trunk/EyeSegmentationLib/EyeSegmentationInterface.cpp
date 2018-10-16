@@ -473,6 +473,154 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 
 }
 
+EyeSegmentationOutput EyeSegmentationInterface::GetFlatIrisMask(unsigned char *imageBuffer, int w, int h, int stride, unsigned char *Iriscode, unsigned char *Maskcode, IrisPupilCircles *pCircles)
+{
+	EyeSegmentationOutput EyeSegOut;
+	bool status;
+	////printf("*********entering GetIrisCode *************\n");
+	m_corruptBitcountPerc = 0.0f;
+	IplImage *image = cvCreateImageHeader(cvSize(w, h), IPL_DEPTH_8U, 1);
+
+	cvSetData(image, imageBuffer, stride);
+
+	PROFILE_START(PROCESSIMAGE)
+	memcpy(m_eso, &(m_pEyeSegmentServer->Process(image, m_index++)), sizeof(EyeSegmentationOutput));
+
+	// printf("After Process m_eso->ip.x value %f\n", m_eso->ip.x);
+	PROFILE_END(PROCESSIMAGE)
+
+	CvScalar color = cvRealScalar(255);
+#if 0 //Anita
+	if( m_eso->ip.x > 0 )
+	{
+		EyeSegmentationOutput tmp1 = *m_eso;
+
+		draw( image, tmp1.pp, color );
+		draw( image, tmp1.ip, color );
+		cvSaveImage("segmented_Image.pgm",image);
+	}
+#endif
+#if 0
+	if( m_eso->ip.x > 0 )
+	{
+		draw( image, m_eso->pp, color );
+		draw( image, m_eso->ip, color );
+	}
+	char fName[100];
+	sprintf(fName,"eye_%d.pgm",m_index-1);
+	cvSaveImage(fName,image);
+
+#endif
+
+
+
+	//cvReleaseImageHeader(&image);
+
+	memset( Iriscode, 0, m_pEyeFeatureServer->GetFeatureLength() );
+	memset( Maskcode, -1, m_pEyeFeatureServer->GetFeatureLength() );
+#ifdef SEG
+	printf("m_eso->ip.x...%d", m_eso->ip.x);
+#endif
+
+	if( m_eso->ip.x < 0 )
+	{
+		cvSet( m_eso->flatIris, cvScalar(0) );
+        cvSet( m_eso->flatMask, cvScalar(0) );
+		// return false;
+	}
+
+	// printf("Before pCircles\n");
+
+	if(pCircles)
+	{
+		pCircles->ip.x = m_eso->ip.x;
+		pCircles->ip.y = m_eso->ip.y;
+		pCircles->ip.r = m_eso->ip.z;
+
+		pCircles->pp.x = m_eso->pp.x;
+		pCircles->pp.y = m_eso->pp.y;
+		pCircles->pp.r = m_eso->pp.z;
+    }
+
+
+
+
+	// TO BE REMOVED _ JUST FOR TEST - IMPORTANT
+//	cvRandArr(&m_rng, m_eso->flatIris, CV_RAND_UNI, cvRealScalar(0), cvRealScalar(256));
+
+
+	//SAVE_NAME_INDX(m_eso->flatIris,"flatIris",m_index);
+	//SAVE_NAME_INDX(m_eso->flatMask,"flatMask",m_index);
+	// printf("Before Extract Features\n");
+	PROFILE_START(EXTRACTFEAT)
+	XTIME_OP("ExtractFeatures",
+	m_pEyeFeatureServer->ExtractFeatures(m_eso->flatIris, m_eso->flatMask, Iriscode, Maskcode)
+	);
+	PROFILE_END(EXTRACTFEAT)
+	// printf("After Extract Features\n");
+	/*char fName[100];
+	sprintf(fName,"Iris_%d.pgm",m_index-1);
+	cvSaveImage(fName,m_eso->flatIris);
+	sprintf(fName,"Mask_%d.pgm",m_index-1);
+	cvSaveImage(fName,m_eso->flatMask);*/
+
+
+	PROFILE_START(GOODSEG)
+
+	double corruptBitcount = m_pEyeFeatureServer->checkBitCorruption(Maskcode);
+	corruptBitcount /= m_pEyeFeatureServer->GetFeatureLength() << 3;		// << 3 consequence of making iris code a byte
+	corruptBitcount *=100;
+
+	m_corruptBitcountPerc = (float)corruptBitcount;
+	//Validation for Annular region
+	int AnnularCheck = 0;
+	float cdist = sqrt((m_eso->ip.x - m_eso->pp.x)*(m_eso->ip.x - m_eso->pp.x) + (m_eso->ip.y - m_eso->pp.y)*(m_eso->ip.y - m_eso->pp.y));
+	if((m_eso->pp.z + cdist) > m_eso->ip.z - 10 || cdist > 30 )
+		AnnularCheck = 0; //Failed
+	else
+		AnnularCheck = 1;
+
+	CvPoint2D32f SegmentationCheck = m_pEyeSegmentServer->m_SegmentationCheck;
+	PROFILE_END(GOODSEG)
+
+	if(corruptBitcount > m_maxCorruptBitsPercAllowed)
+		printf("Too many Bits Corrupted\n");
+
+	char name[100];
+	static int segmented_count;
+	//char filename[100];
+	//FILE *fp;
+	// static int i;
+	int SaveSegImages = LoadEyelockConfigINIFile();
+
+	if(SaveSegImages){
+		EyeSegmentationOutput tmp1 = *m_eso;
+		draw( image, tmp1.pp, color );
+		draw( image, tmp1.ip, color );
+		sprintf(name, "Good_segmented_image_%d.pgm",segmented_count++);
+		cv::Mat mateye = cv::cvarrToMat(image);
+		imwrite(name, mateye);
+	}
+#if 1
+	if(corruptBitcount <= m_maxCorruptBitsPercAllowed && (AnnularCheck==1)) // && Getiseye() )
+	{
+		if( m_eso->ip.x > 0 )
+		{
+			memcpy(&EyeSegOut, m_eso, sizeof(EyeSegmentationOutput));
+		}
+		cvReleaseImageHeader(&image);
+
+		return EyeSegOut;
+	}
+#else
+	memcpy(&EyeSegOut, m_eso, sizeof(EyeSegmentationOutput));
+	cvReleaseImageHeader(&image);
+	return EyeSegOut;
+#endif
+
+}
+
+
 bool EyeSegmentationInterface::Getiseye()
 {
 	return m_pEyeSegmentServer->Getiseye();

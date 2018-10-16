@@ -51,7 +51,7 @@ EyeMatchServer::EyeMatchServer(int featureLength, int numRows, int byteSize, int
 , m_maskTemp(NULL)
 {
 	int length = ((m_ShiftRight - m_ShiftLeft +1)+3)&(~3);
-	printf("Shifts from %d for %d\n",-m_ShiftRight,length);
+	// printf("Shifts from %d for %d\n",-m_ShiftRight,length);
 
 	for(int i=0;i<2;i++)
 		m_temp[i] = new unsigned char[2*m_featureLength];
