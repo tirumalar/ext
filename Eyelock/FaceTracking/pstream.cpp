@@ -50,7 +50,7 @@ int m_port;
 #define FREE_BUFF_SIZE 2
 
 void VideoStream::flush() {
-	ImageQueueItem val;
+	ImageQueueItemF val;
 	while ((m_pRingBuffer->TryPop(val)) != false)
 		usleep(1000);
 }
@@ -61,7 +61,7 @@ VideoStream::~VideoStream()
 		usleep(100);
 
 	// assuming all items from m_ProcessBuffer will be returned back to m_FreeBuffer
-	ImageQueueItem qi;
+	ImageQueueItemF qi;
 	while (!m_FreeBuffer->Empty())
 	{
 		if (m_FreeBuffer->TryPop(qi))
@@ -201,14 +201,14 @@ void SendUdpImage(int port, char *image, int bytes_left)
 
 }
 
-void VideoStream::ReleaseProcessBuffer(ImageQueueItem m)
+void VideoStream::ReleaseProcessBuffer(ImageQueueItemF m)
 {
 	m_FreeBuffer->Push(m);
 }
 
-ImageQueueItem VideoStream::GetFreeBuffer()
+ImageQueueItemF VideoStream::GetFreeBuffer()
 {
-	ImageQueueItem qi;
+	ImageQueueItemF qi;
 	if (m_FreeBuffer->TryPop(qi))
 		return qi;
 	qi.m_ptr=0;
@@ -216,7 +216,7 @@ ImageQueueItem VideoStream::GetFreeBuffer()
 	return qi;
 }
 
-void VideoStream::PushProcessBuffer (ImageQueueItem m)
+void VideoStream::PushProcessBuffer (ImageQueueItemF m)
 {
 //	printf("pushing image buffer %d\n",m.item_id);
 	static int cntr=0;
@@ -258,7 +258,7 @@ void *VideoStream::ThreadServer(void *arg)
         int pkgs_missed = 0;
         int rx_idx=0;
 
-        ImageQueueItem queueItem = vs->GetFreeBuffer();
+        ImageQueueItemF queueItem = vs->GetFreeBuffer();
         char *databuf = (char *)queueItem.m_ptr;
 
 
@@ -339,14 +339,14 @@ VideoStream ::VideoStream(int port) : frameId(0)
 	m_port = port;
 	offset_sub_enable=0;
 	offset_image_loaded=0;
-	ImageQueueItem imageQueueItem;
+	ImageQueueItemF imageQueueItem;
 
-	m_pRingBuffer = new RingBufferImageQueue(2);
+	m_pRingBuffer = new RingBufferImageQueueF(2);
 	length = (HEIGHT * WIDTH);
 
 	m_current_process_queue_item.m_ptr = NULL;
-	m_FreeBuffer = new RingBufferImageQueue(FREE_BUFF_SIZE);
-	m_ProcessBuffer = new RingBufferImageQueue(FREE_BUFF_SIZE);
+	m_FreeBuffer = new RingBufferImageQueueF(FREE_BUFF_SIZE);
+	m_ProcessBuffer = new RingBufferImageQueueF(FREE_BUFF_SIZE);
 	for (int x = 0 ; x < FREE_BUFF_SIZE; x++)
 	{
 		imageQueueItem.m_ptr = new unsigned char[length];

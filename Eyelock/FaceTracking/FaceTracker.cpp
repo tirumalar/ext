@@ -1716,7 +1716,6 @@ FaceData getFaceData1()
 }
 
 #endif
-
 void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	pthread_t threadIdtamper;
 	pthread_t threadIdtemp;
@@ -1729,17 +1728,11 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 	FaceCameraFrameNo = (int)outImg.at<uchar>(0,3);
 
-	printf("FaceCameraFrameNo%d\n", FaceCameraFrameNo);
+	// printf("FaceCameraFrameNo%d\n", FaceCameraFrameNo);
 
 	smallImg = preProcessingImg(outImg);
 
 	bool foundEyes = FindEyeLocation(smallImg, eyes, eye_size, face);
-
-	ImgFaceData = face;
-
-	faceData.FaceFrameNo = FaceCameraFrameNo;
-	faceData.FaceRect = face;
-
 /*	float projOffset_m = 100.00, projOffset_a = 200.00;
 	bool useOffest_m= false, useOffest_a = true;*/
 
@@ -1948,7 +1941,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 		// printf("DoRunMode_test face.x %d face.y %d face.width %d face.height %d\n",  face.x,face.y,face.width,face.height);
 
-
+		ImgFaceData = face;
 
 		// m_BufferFrameGrabber->setFaceRect(face);
 
