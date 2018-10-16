@@ -14,7 +14,7 @@
 
 #define IMAGE_SIZE WIDTH*HEIGHT
 
-struct ImageQueueItem {
+struct ImageQueueItemF {
 	unsigned char *m_ptr;	// image size 1152000
 	int m_ill0;
 	int m_frameIndex;
@@ -22,7 +22,7 @@ struct ImageQueueItem {
 	int item_id;
 };
 
-typedef RingBuffer<ImageQueueItem> RingBufferImageQueue;
+typedef RingBuffer<ImageQueueItemF> RingBufferImageQueueF;
 
 class VideoStream {
 public:
@@ -31,13 +31,13 @@ public:
 	int m_port;
 	volatile int running;
 	int cam_id;
-	RingBufferImageQueue *m_pRingBuffer;
+	RingBufferImageQueueF *m_pRingBuffer;
 
-	RingBufferImageQueue *m_FreeBuffer;
-	RingBufferImageQueue *m_ProcessBuffer;
+	RingBufferImageQueueF *m_FreeBuffer;
+	RingBufferImageQueueF *m_ProcessBuffer;
 
-	ImageQueueItem m_ImageQueueItem;
-	ImageQueueItem m_current_process_queue_item;
+	ImageQueueItemF m_ImageQueueItem;
+	ImageQueueItemF m_current_process_queue_item;
 
 	char buf[BUFLEN];
 	char offset_image[IMAGE_SIZE];
@@ -46,9 +46,9 @@ public:
 	pthread_t Thread;
 	static void *ThreadServer(void *arg);
 
-	ImageQueueItem GetFreeBuffer();
-	void ReleaseProcessBuffer(ImageQueueItem m);
-	void PushProcessBuffer(ImageQueueItem m);
+	ImageQueueItemF GetFreeBuffer();
+	void ReleaseProcessBuffer(ImageQueueItemF m);
+	void PushProcessBuffer(ImageQueueItemF m);
 
 	void flush(void);
 	int get(int *win, int *hin, char *m_pImageBuffer, char get_last=0);
