@@ -15,7 +15,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>	/* needed for sockaddr_in */
 #include <time.h>
-#include "log.h"
+#include "logging.h"
 
 static int sockfd;
 #define SERVER_ADDR     "192.168.4.172"     /* localhost */

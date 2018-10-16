@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include "log.h"
+#include "logging.h"
 
 #define PORT    48
 #define MAXMSG  512
