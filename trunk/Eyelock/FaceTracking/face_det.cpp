@@ -13,7 +13,7 @@ const char logger[30] = "facedetect";
 
 /** Function Headers */
 int face_init();
-int FindEyeLocation(Mat frame, Point &eyes, float &eye_size);
+int FindEyeLocation(Mat frame, Point &eyes, float &eye_size, Rect &face);
 
 /** Global variables */
 String face_cascade_name =
@@ -39,7 +39,7 @@ int face_init() {
 
 #define EYES_MULT 0.3		// previous val is 0.3
 /** Find face and eye locaiton */
-int FindEyeLocation(Mat frame, Point &eyes, float &eye_size) {
+int FindEyeLocation(Mat frame, Point &eyes, float &eye_size, Rect &face) {
 	EyelockLog(logger, TRACE, "FindEyeLocation");
 	std::vector<Rect> faces;
 	Mat frame_gray;
@@ -69,13 +69,13 @@ int FindEyeLocation(Mat frame, Point &eyes, float &eye_size) {
 		break;
 	}
 
-	//Drawing rectangle on a face
+/*	//Drawing rectangle on a face
 	for (size_t i = 0; i < faces.size(); i++) {
 		rectangle(frame, Point(faces[i].x, faces[i].y),
 				Point(faces[i].x + faces[i].width,
 						faces[i].y + faces[i].height), Scalar(255, 255, 255),
 				1);
-	}
+	}*/
 
 	//If the detectMultiScale finds multiple face the function will return 0, otherwise 1
 	cv::Rect roi;
@@ -88,6 +88,12 @@ int FindEyeLocation(Mat frame, Point &eyes, float &eye_size) {
 
 		//printf("face x = %d  face y = %d face width = %d  face height = %d reject %f levels %d\n",faces[0].x, faces[0].y, faces[0].width, faces[0].height,level_weights[0],reject_levels[0]);
 
+		face.x = faces[0].x;
+		face.y = faces[0].y;
+		face.height = faces[0].height;
+		face.width= faces[0].width;
+
+		// printf("FindEyeLocation face x = %d  face y = %d face width = %d  face height = %d\n", face.x, face.y, face.width, face.height);
 		//printf("Face detect tooc %3.3f\n",
 		//		(float) (clock() - t) / CLOCKS_PER_SEC );
 		return 1;
