@@ -788,7 +788,7 @@ int segmentation(unsigned char *data, int w, int h, float pupilX, float pupilY, 
 		clock_t end = clock();
 		double time = (double) (end-start) / CLOCKS_PER_SEC * 1000.0;
 		float score = normErrorLeft > normErrorRight? normErrorLeft: normErrorRight;
-		printf("Total Error:  %f, Time: %f\n",  score, time);
+		// printf("Total Error:  %f, Time: %f\n",  score, time);
 		//free(data);
 		return score < 0.275 ? 1:0 ;
 }

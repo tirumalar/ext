@@ -38,7 +38,7 @@ void fillContentLength(char *buff, int total){
 }
 
 
-int ImageMsgWriter::write(char *outBuff, int maxSize, IplImage *img, int id, int frameId, int imageId, int nImages, int x, int y, float scale,int score,uint64_t currtimestamp,int ill0,
+int ImageMsgWriter::write(char *outBuff, int maxSize, IplImage *img, int id, int cameraId, int frameId, int imageId, int nImages, int x, int y, float scale,int score,uint64_t currtimestamp,int ill0,
 		int spoof,float areascore,float focusscore,float blc,float irx, float iry,int prev,float halo,int numbits)
 {
 	char *orgBuff=outBuff;
@@ -57,7 +57,7 @@ int ImageMsgWriter::write(char *outBuff, int maxSize, IplImage *img, int id, int
 		"\r\n"
 		"<?xml version=\"1.0\" encoding=\"utf-8\" ?>\r\n"
 		"<images>\r\n"
-		"<image id=\"%d\" cameraId=\"%s\" frameId=\"%d\" imageId=\"%d\" numberOfImages=\"%d\" scale=\"%3.2f\" x=\"%d\" y=\"%d\" width=\"%d\""
+		"<image id=\"%d\" cameraId=\"%d\" frameId=\"%d\" imageId=\"%d\" numberOfImages=\"%d\" scale=\"%3.2f\" x=\"%d\" y=\"%d\" width=\"%d\""
 		" height=\"%d\" score=\"%d\" maxValue=\"255\" timeStamp=\"%llu\" Il0=\"%d\" Spoof=\"%d\" ascore=\"%f\" fscore=\"%f\" blc=\"%f\" irx=\"%f\" iry=\"%f\" halo=\"%f\" prev=\"%d\" numbits=\"%d\" file_name=\"image_%d.bin\">\r\n"
 		"</image>\r\n"
 		"<iris diameter=\"120\"/>\r\n"
@@ -69,7 +69,7 @@ int ImageMsgWriter::write(char *outBuff, int maxSize, IplImage *img, int id, int
 		"\r\n";
 
 	int count=sprintf(outBuff,hdrFmt,url,svrAddr,boundary,boundary,
-			id,cameraID,frameId,imageId,nImages,scale,x,y,img->width,img->height,score,currtimestamp,ill0,spoof,areascore,focusscore,blc,irx,iry,halo,prev,numbits,
+			id,cameraId,frameId,imageId,nImages,scale,x,y,img->width,img->height,score,currtimestamp,ill0,spoof,areascore,focusscore,blc,irx,iry,halo,prev,numbits,
 			id,boundary,id);
 	outBuff+=count;
 

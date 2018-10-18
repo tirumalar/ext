@@ -238,16 +238,20 @@ void MatchDispatcher::MatchDetected(MatchResult *result,int frindx,int eyeindx)
 		}
 	}
 
-	if ((elapsedTime > m_RepeatAuthorizationPeriod)	|| ismatch)
+    if ((elapsedTime > m_RepeatAuthorizationPeriod)	|| ismatch)
 	{
-	    cout << "Best matched with record " << result->getEyeIndex() << " with score " << result->getScore()<< " @ time " << timestamp << endl;
-	    int fr,ey;
-	    string cam;
-	    result->getFrameInfo(fr,ey,cam);
+		int fr,ey;
+		string cam;
+		int EXTCameraIndex;
+		result->getFrameInfo(fr,ey,cam, EXTCameraIndex);
+	    cout << "Best matched with record " << result->getEyeIndex() << "  ExtCameraNo:" << EXTCameraIndex << "  FrameNo:" << fr << " with score " << result->getScore()<< " @ time " << timestamp << endl;
+
+
 	    CURR_TV_AS_MSEC(t);
 	    int nwval,mt;
 	    result->getNwValandSleep(nwval,mt);
-	    EyelockLog(logger, INFO, "%llu::MATCHED %d %d %s Matched timing %d msec\n",t,fr,ey,cam.c_str(),mt);
+	    // EyelockLog(logger, INFO, "%llu::MATCHED FrameNo:%d  %d %s Matched timing %d msec\n",t,fr,ey,cam.c_str(),mt);
+	    EyelockLog(logger, DEBUG, "%llu::MATCHED CameraNo:%d FrameNo:%d  Matched timing %d msec\n",t,EXTCameraIndex, fr,mt);
 	   // printf("%llu::MATCHED %d %d %s Matched timing %d msec\n",t,fr,ey,cam.c_str(),mt);
 
 		if(m_logging){

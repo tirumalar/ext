@@ -12,7 +12,7 @@
 
 class DetectedEye {
 public:
-	DetectedEye(int cwidth, int cheight,int numbits = 8):m_prev(-1),m_eyeCrop(0),m_eyeIndex(0),m_faceIndex(0),m_numEyes(0),m_eyeLeft(0),m_eyeTop(0),m_isUpdated(false),m_ill0(0),m_tobeSentAsPair(false),m_alreadySent(false)
+	DetectedEye(int cwidth, int cheight,int numbits = 8):m_prev(-1),m_eyeCrop(0),m_eyeIndex(0),m_faceIndex(0),m_numEyes(0),m_eyeLeft(0),m_eyeTop(0),m_isUpdated(false),m_ill0(0),m_tobeSentAsPair(false),m_alreadySent(false),m_CameraId(0)
 	{
 		m_eyeCrop=cvCreateImage(cvSize(cwidth,cheight),IPL_DEPTH_8U,1);
 		m_numbits = numbits;
@@ -20,7 +20,8 @@ public:
 	virtual ~DetectedEye() {
 		cvReleaseImage(&m_eyeCrop);
 	}
-	void init(int eyeIndex, int faceIndex, int numEyes, int eyeLeft, int eyeTop,CvPoint2D32f iris ,int ill0=0,int spoof = 0,float areaScore=0.0f, float focusScore=0.0f,float blacklevel=0.0,float halo=-1.0,bool tobeSentAsPair=false){
+	void init(int CameraId, int eyeIndex, int faceIndex, int numEyes, int eyeLeft, int eyeTop,CvPoint2D32f iris ,int ill0=0,int spoof = 0,float areaScore=0.0f, float focusScore=0.0f,float blacklevel=0.0,float halo=-1.0,bool tobeSentAsPair=false){
+		m_CameraId=CameraId;
 		m_eyeIndex=eyeIndex;
 		m_faceIndex=faceIndex;
 		m_numEyes=numEyes;
@@ -58,6 +59,7 @@ public:
 	float getFocusScore(){ return m_focusScore;}
 	float getHalo(){ return m_halo;}
 	void setHalo(float halo){  m_halo = halo;}
+	int getCameraIndex(){ return m_CameraId;}
 	int getFaceIndex(){ return m_faceIndex;}
 	int getEyeIndex(){ return m_eyeIndex;}
 	int getNumEyes(){ return m_numEyes;}
@@ -110,6 +112,7 @@ protected:
 	int m_prev;
 	bool m_alreadySent;
 	int m_numbits;
+	int m_CameraId;
 };
 
 typedef CircularAccess<DetectedEye *> DetectedEyesQueue;

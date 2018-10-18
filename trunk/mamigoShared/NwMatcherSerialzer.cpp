@@ -173,6 +173,11 @@ bool NwMatcherSerialzer::ExtractNwMsg(IrisData* data,char* buff,char*hdr){
 	offset+=ret;
 	data->setFrameIndex(val);
 
+#if 1
+	ret = writeInt((char*)&val,(int*)(buff+offset));
+	offset+=ret;
+	data->setCameraIndex(val);
+#endif
 	ret = writeInt((char*)&val,(int*)(buff+offset));
 	offset+=ret;
 	data->setEyeIndex(val);
@@ -289,6 +294,10 @@ int NwMatcherSerialzer::MakeNwMsg(char *dst,IrisData *data,char *hdr){
 	ret = writeInt(dst+offset,&val);
 	offset+=ret;
 	val = data->getFrameIndex();
+	ret = writeInt(dst+offset,&val);
+	offset+=ret;
+	val = data->getCameraIndex();
+	// printf("Val of EXTCameraIndex in MakeNwMsg...%d\n", val);
 	ret = writeInt(dst+offset,&val);
 	offset+=ret;
 	val = data->getEyeIndex();

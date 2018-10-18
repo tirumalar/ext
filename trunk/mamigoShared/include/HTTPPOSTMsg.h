@@ -507,6 +507,13 @@ bool getTimeStamp(uint64_t& ts){
 
 }
 
+int getEXTCameraIndex(){
+		char *temp=Buffer;
+		temp=strstr(temp,"CameraId=\"");
+		if(0==temp) return -1;
+		temp+=9;
+		return atoi(temp);
+	}
 
 int getFrameIndex(){
 		char *temp=Buffer;

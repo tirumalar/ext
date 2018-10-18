@@ -655,6 +655,8 @@ IrisData * MatchProcessor::SegmentEye(HTTPPOSTMsg *msg,float *variance){
 
 void MatchProcessor::UpdateIrisData(HTTPPOSTMsg *msg,IrisData *irisData){
 	float irx=0.0,iry=0.0;
+	int ExtCameraid = 0;
+
 	bool ret1 = msg->getIrx(irx);
 	ret1 = msg->getIry(iry);
 	irisData->setSpecCentroid(irx,iry);
@@ -675,6 +677,8 @@ void MatchProcessor::UpdateIrisData(HTTPPOSTMsg *msg,IrisData *irisData){
 	ret1 = msg->getHalo(halo);
 	irisData->setHalo(halo);
 
+	msg->getCameraNo(ExtCameraid);
+	irisData->setCameraIndex(ExtCameraid);
 	irisData->setFrameIndex(msg->getFrameIndex());
 	irisData->setEyeIndex(msg->getEyeIndex());
 	irisData->setIlluminatorState(msg->getIlluminator());

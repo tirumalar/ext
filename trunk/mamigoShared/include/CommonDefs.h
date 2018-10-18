@@ -144,6 +144,7 @@ public:
 		m_NwSleepmsec = 0;
 		m_VarienceScore=0;
 		m_frameIndex = -1;
+		m_cameraIndex=-1;
 		m_eyeIdx = -1;
 		m_cam.assign("NONE");
 		m_PersonIrisInfo = 0;
@@ -170,6 +171,7 @@ public:
 		m_name.assign(other.m_name);
 		m_guid.assign(other.m_guid);
 		m_frameIndex = other.m_frameIndex;
+		m_cameraIndex=other.m_cameraIndex;
 		m_eyeIdx = other.m_eyeIdx;
 		m_PersonIrisInfo = other.m_PersonIrisInfo;
 		m_cam.assign(other.m_cam);
@@ -201,6 +203,7 @@ public:
 		m_name.assign(other.m_name);
 		m_guid.assign(other.m_guid);
 		m_frameIndex = other.m_frameIndex;
+		m_cameraIndex=other.m_cameraIndex;
 		m_eyeIdx = other.m_eyeIdx;
 		m_cam.assign(other.m_cam);
 	}
@@ -246,14 +249,16 @@ public:
 		val = m_NwValue;
 		sleeptime = m_NwSleepmsec;
 	}
-	void setFrameInfo(int fno,int eno,char* cam){
+	void setFrameInfo(int fno,int eno,char* cam, int EXTCameraIdx){
 		m_frameIndex = fno;
 		m_eyeIdx = eno;
+		m_cameraIndex=EXTCameraIdx;
 		m_cam.assign(cam);
 	}
-	void getFrameInfo(int& fno,int& eno,string& cam){
+	void getFrameInfo(int& fno,int& eno,string& cam, int& EXTCameraIdx){
 		fno =m_frameIndex;
 		eno = m_eyeIdx ;
+		EXTCameraIdx=m_cameraIndex;
 		cam.assign(m_cam);
 	}
 	void SetPersonIrisInfo(int val){
@@ -294,6 +299,7 @@ public:
 	MatchResultState m_state;
 	uint64_t m_timeStamp;
 	int m_frameIndex,m_eyeIdx;
+	int m_cameraIndex;
 	string m_cam;
 };
 
