@@ -1,4 +1,3 @@
-#if 1
 /*
  * FaceTracker.h
  * 
@@ -62,25 +61,25 @@
 #define MODE_CHANGE_FREEZE 10
 
 #define MIN_IRIS_FRAMES 10
-#define FRAME_DELAY 100
+#define FRAME_DELAY 	100
 
 // this defines how many frames without a face will cause a switch back to face mode ie look for faces
 #define NO_FACE_SWITCH_FACE 10
-#define ANGLE_TO_STEPS 5
-#define smallMoveTo 2		//limiting motor movement
+#define ANGLE_TO_STEPS 		5
+#define smallMoveTo 		2		//limiting motor movement
 
 //Controlling states between face and Eyes
-#define RUN_STATE_FACE 0
-#define RUN_STATE_EYES 1
+#define RUN_STATE_FACE 	0
+#define RUN_STATE_EYES 	1
 
 //USed to switch cameras and keep it running while changes dont need
-#define MODE_FACE 0
-#define MODE_EYES_MAIN 1
-#define MODE_EYES_AUX 2
+#define MODE_FACE 		0
+#define MODE_EYES_MAIN 	1
+#define MODE_EYES_AUX 	2
 
 //USed in DoImageCal function
-#define NUM_AVG_CAL 10
-#define MAX_CAL_CURENT 20
+#define NUM_AVG_CAL 	10
+#define MAX_CAL_CURENT 	20
 
 int system_state = STATE_LOOK_FOR_FACE;
 int last_system_state = STATE_LOOK_FOR_FACE;
@@ -88,11 +87,13 @@ int run_state=RUN_STATE_FACE;
 
 int move_counts = 0;
 
-const char logger[30] = "test";
-const char stateMachineLogger[30] = "StateMachine";
+const char logger[30] = "FACETRACKER";
+// const char stateMachineLogger[30] = "FACETRACKER_STATES";
 
 using namespace cv;
+int IrisFrameCtr = 0;		//used for counting Iris Frame
 
+int currnet_mode = 0;
 
 // Function Declarations
 extern int vid_stream_start(int port);
@@ -106,24 +107,12 @@ void *DoTamper(void *arg);
 #define tempRecord
 
 
-struct coordinateProject{
-	int camIDL;
-	int frmaeL;
-	Rect camLRect;
-	int camIDR;
-	int frmaeR;
-	Rect camRRect;
-};
-
-
-
 class FaceTracker{
 private:
-
-	int currnet_mode;
+	int rectX, rectY, rectW, rectH;
 	int cur_pos;
 	int previousEye_distance;
-	int IrisFrameCtr;		//used for counting Iris Frame
+
 	int fileNum;
 
 	int noeyesframe;
@@ -300,9 +289,7 @@ public:
 	int calTemp(int i);
 	void motorMove();
 	float AGC_average(int width, int height,unsigned char *dsty, int limit);
-	
-	float projectPoints(float y, float c, float m);
-	coordinateProject projectRect(Rect &face, int stateofIrisCameras);
+
 
 	// CAMERACALIBERATION_ARUCO
 	std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam, bool calDebug);
@@ -319,4 +306,4 @@ public:
 };
 
 #endif /* FACETRACKER_H_ */
-#endif
+

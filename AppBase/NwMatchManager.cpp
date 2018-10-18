@@ -211,7 +211,8 @@ void NwMatchManager::FlushLoitering() {
 void NwMatchManager::MatchDetected(MatchResult *result) {
     int fr,ey;
     string cam;
-    result->getFrameInfo(fr,ey,cam);
+    int EXTCameraId;
+    result->getFrameInfo(fr,ey,cam,EXTCameraId);
 	CURR_TV_AS_USEC(t);
 	int64_t diff = t-result->getTimeStamp();
 	if (m_Debug)
@@ -1135,7 +1136,7 @@ void NwMatchManager::processmatch(Copyable *inpmsg) {
 				putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), &font, 0.8, cvScalar(255,255,255), 2, 8);
 				imwrite(filename, mateye);
 			}
-			result->setFrameInfo(irisCurr->getFrameIndex(),irisCurr->getEyeIndex(),(char*)irisCurr->getCamID());
+			result->setFrameInfo(irisCurr->getFrameIndex(),irisCurr->getEyeIndex(),(char*)irisCurr->getCamID(),irisCurr->getCameraIndex());
 			result->setTimeStamp(irisCurr->getTimeStamp());
 			if((result-> getScore() < m_matchScoreThresh)&& m_singleIrisinDual){
 				if(result->GetPersonIrisInfo() == SINGLE){

@@ -59,20 +59,6 @@ void BufferBasedFrameGrabber::PushProcessBuffer (ImageQueueItem m)
 
 	m_ImageQueueItem.m_ExtCameraIndex = m.m_ptr[2]&0xff;
 
-	// Counter Increment
-	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 129){
-		AuxLeft++;
-	}
-	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 130){
-		AuxRight++;
-	}
-	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 01){
-		MainLeft++;
-	}
-	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 02){
-		MainRight++;
-	}
-
 	// FrameIndex
 	if(m_ImageQueueItem.m_ExtCameraIndex == 129){
 		if(AuxLeft != 0)
@@ -81,6 +67,7 @@ void BufferBasedFrameGrabber::PushProcessBuffer (ImageQueueItem m)
 			m_ImageQueueItem.AuxLeftFrameIndex  =  m.m_ptr[3]&0xff;
 
 		m.m_frameIndex = m_ImageQueueItem.AuxLeftFrameIndex;
+
 	}
 	if(m_ImageQueueItem.m_ExtCameraIndex == 130){
 		if(AuxRight != 0)
@@ -107,11 +94,28 @@ void BufferBasedFrameGrabber::PushProcessBuffer (ImageQueueItem m)
 		m.m_frameIndex = m_ImageQueueItem.MainRightFrameIndex;
 	}
 
+	cntr = m.m_frameIndex;
+
+	// Counter Increment
+	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 129){
+		AuxLeft++;
+	}
+	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 130){
+		AuxRight++;
+	}
+	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 01){
+		MainLeft++;
+	}
+	if((m.m_ptr[3]&0xff) == 255 && m_ImageQueueItem.m_ExtCameraIndex == 02){
+		MainRight++;
+	}
+
 	if(cntr & 0x1){
 		m.m_ill0 = 1;
 	}else{
 		m.m_ill0 = 0;
 	}
+
 #if 0 // Original Frame Index 
 	m.m_frameIndex = cntr;
 	cntr++;

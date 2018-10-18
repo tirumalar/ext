@@ -449,7 +449,8 @@ std::pair<int,float> HDMatcher::MatchIrisCodeExhaustive(unsigned char *IrisCode,
 		}
 	}
 
-	EyelockLog(logger, DEBUG, "MatchIrisCodeExhaustive.....pupilz %f FeatureMask %d  matchThresh %f m_numIris %d \n", pupil.z, FeatureMask, matchThresh, m_numIris);
+	EyelockLog(logger, DEBUG, "pupilzz %f FeatureMask %d matchThresh %f m_numIris %d", pupil.z, FeatureMask, matchThresh, m_numIris);
+	// EyelockLog(logger, DEBUG, "MatchIrisCodeExhaustive.....pupilz %f FeatureMask %d  matchThresh %f m_numIris %d \n", pupil.z, FeatureMask, matchThresh, m_numIris);
 
 	std::pair<int, float> best_score = std::make_pair(-1, 1);
 	std::pair<int, float> score= std::make_pair(-1, 1);

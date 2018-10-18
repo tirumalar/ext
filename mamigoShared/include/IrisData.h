@@ -36,7 +36,7 @@ public:
 		m_focusScore = -1.0;
 		m_halo= -1.0;
 		m_blc = -1.0;
-
+		m_cameraIndex=0;
 	}
 
 	IrisData(const IrisData& data)// IrisData a(b);
@@ -59,6 +59,7 @@ public:
 		m_illuminatorState = data.m_illuminatorState;
 		m_imageIndex = data.m_imageIndex;
 		m_eyeIndex = data.m_eyeIndex;
+		m_cameraIndex=data.m_cameraIndex;
 		m_camID = data.m_camID;
 		m_prevIndex = data.m_prevIndex;
 		memcpy(m_iris, data.m_iris, 2560);
@@ -77,6 +78,11 @@ public:
 	virtual ~IrisData(){
 		delete m_iris;
 	}
+
+	void setCameraIndex(int CameraIdx){
+		m_cameraIndex = CameraIdx;
+	}
+
 	void setCamID(char *camId){ std::string t(camId);m_camID = t;}
 	void setIlluminatorState(int state){m_illuminatorState = state;}
 	void setSpecCentroid(float x, float y){m_specCentroid.x = x;m_specCentroid.y = y;}
@@ -110,6 +116,7 @@ public:
 
 	int getIlluminatorState(){ return m_illuminatorState;}
 	int getFrameIndex(){ return m_imageIndex;}
+	int getCameraIndex(){ return m_cameraIndex;}
 	int getEyeIndex(){return m_eyeIndex;}
 	int getPrevIndex(){return m_prevIndex;}
 	unsigned char* getIris(){ return m_iris;}
@@ -146,6 +153,7 @@ public:
 			m_imageIndex = data->m_imageIndex;
 			m_eyeIndex = data->m_eyeIndex;
 			m_prevIndex = data->m_prevIndex;
+			m_cameraIndex=data->m_cameraIndex;
 			//m_camID = data->m_camID;
 			setCamID((char*)data->m_camID.c_str());
 			memcpy(m_iris, data->m_iris, 2560);
@@ -162,6 +170,7 @@ private:
 	float m_areaScore,m_focusScore,m_halo,m_blc;
 	int m_illuminatorState;
 	int m_imageIndex,m_eyeIndex,m_prevIndex;
+	int m_cameraIndex;
 	int m_segmentation;
 	int m_radiusAndIrisCheck;
 	uint64_t m_ts;

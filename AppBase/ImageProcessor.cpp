@@ -377,6 +377,7 @@ m_LedConsolidator = NULL;
 	m_FaceIrisMapping = pConf->getValue("Eyelock.FaceIrisMapping",false);
 	m_IrisProjImage = cvCreateImage(cvSize(Imagewidth, Imageheight),IPL_DEPTH_8U,1);
 	m_SaveProjImage = pConf->getValue("Eyelock.SaveProjectedImage",false);
+	m_showProjection = pConf->getValue("Eyelock.showProjection",false);
 
 	FileConfiguration m_FaceConfig("/home/root/data/calibration/faceConfig.ini");
 	rectX = m_FaceConfig.getValue("FTracker.targetRectX",0);
@@ -404,7 +405,7 @@ m_LedConsolidator = NULL;
 	projOffset_m = m_FaceConfig.getValue("FTracker.projectionOffsetValMain",float(50.00));
 	projOffset_a = m_FaceConfig.getValue("FTracker.projectionOffsetValAux",float(200.00));
 
-	m_showProjection = m_FaceConfig.getValue("FTracker.showProjection",false);
+
 
 #ifdef DEBUG_SESSION
 	m_DebugTesting = pConf->getValue("Eyelock.TestSystemPerformance",false);
@@ -654,7 +655,7 @@ void ImageProcessor::sendLiveImages(){
 		m_inputImg.CopyCenteredROIInto(m_DetectedEyesQueue[0]->getEyeCrop());
 	}
 
-    m_DetectedEyesQueue[0]->init(0,m_faceIndex,0,0,0,irisCen,m_il0);
+    m_DetectedEyesQueue[0]->init(0, 0,m_faceIndex,0,0,0,irisCen,m_il0);
     if(m_saveCount>0) {
   		m_saveCount--;
   		IplImage *p = m_DetectedEyesQueue[0]->getEyeCrop();
@@ -1437,7 +1438,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 			irisCentroid.x = irisCentroid.y;
 			irisCentroid.y = temp;
 		}
-		eye->init(eyeIdx,m_faceIndex,maxEyes,left, top,irisCentroid,m_il0,1,output.x,score.second,blt.first,halo.z);
+		eye->init(cam_idd, eyeIdx,m_faceIndex,maxEyes,left, top,irisCentroid,m_il0,1,output.x,score.second,blt.first,halo.z);
 		eye->setTimeStamp(m_timestampBeforeGrabbing);
 		eye->setUpdated(true);
 
@@ -1535,6 +1536,8 @@ bool ImageProcessor::ProcessSpoofFlowImage(IplImage *frame,bool matchmode){
 //    memcpy(bufImag,ptr->imageData,ptr->imageSize);
 //    prevmaxEyes = maxEyes;
 
+    int CameraId = frame->imageData[2]&0xff;
+
     for(int eyeIdx=0;eyeIdx<maxEyes;eyeIdx++){
     	CvPoint2D32f irisCentroid = cvPoint2D32f(0,0);
 		DetectedEye *eye=getNextAvailableEyeBuffer();
@@ -1557,7 +1560,7 @@ bool ImageProcessor::ProcessSpoofFlowImage(IplImage *frame,bool matchmode){
 			irisCentroid.y = temp;
 		}
 
-		eye->init(eyeIdx,m_faceIndex,maxEyes,left, top,irisCentroid,m_il0,1,score.first,score.second,blt.first,halo.z);
+		eye->init(CameraId, eyeIdx,m_faceIndex,maxEyes,left, top,irisCentroid,m_il0,1,score.first,score.second,blt.first,halo.z);
 		eye->setTimeStamp(m_timestampBeforeGrabbing);
 		eye->setUpdated(true);
 
@@ -1916,13 +1919,16 @@ void ImageProcessor::sendToNwQueue(DetectedEye *info){
 
 	outMsg->SetTime(currtimestamp);
 
+	// printf("CamrraId....%d\n", info->getCameraIndex());
+
+
 	if(info){
 		if (m_Debug)
 			printf("%llu::ImageDetection %d %d \n",info->getTimeStamp()/1000,info->getFaceIndex(),info->getEyeIndex());
 		info->setAlreadySent(true);
 		int il0=info->getIlluminatorStatus();
 		len = writer->write(
-				outMsg->GetBuffer(), m_bufSize, outImg, ++m_id,info->getFaceIndex(),info->getEyeIndex(),
+				outMsg->GetBuffer(), m_bufSize, outImg, ++m_id,info->getCameraIndex(),info->getFaceIndex(),info->getEyeIndex(),
 			info->getNumEyes(),info->getEyeLeft(), info->getEyeTop(),1.0f,info->getScore(),info->getTimeStamp(),il0,info->getSpoof(),info->getAreaScore(),info->getFocusScore(),
 			info->getBlackLevel(),info->getIrisCentroid().x,info->getIrisCentroid().y,info->getPrev(),info->getHalo(),info->getNumBits());
 		//printf("Score %d",info->getScore());
