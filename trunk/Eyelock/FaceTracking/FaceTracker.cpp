@@ -233,8 +233,6 @@ FaceTracker::FaceTracker(char* filename)
 
 	bShowFaceTracking = FaceConfig.getValue("FTracker.ShowFaceTracking", false);
 
-	projDebug = FaceConfig.getValue("FTracker.faceIrisProjection",false);
-
 	startPoint = FaceConfig.getValue("FTracker.startPoint",100);
 	calDebug = FaceConfig.getValue("FTracker.calDebug",false);
 	calTwoPoint = FaceConfig.getValue("FTracker.twoPointCalibration",true);
@@ -1333,7 +1331,7 @@ void FaceTracker::DoRunMode(bool bShowFaceTracking, bool bDebugSessions)
 						int MoveToLimitBound = 1;
 						err = (no_move_area.y + no_move_area.height / 2)
 								- eyes.y;
-						EyelockLog(logger, DEBUG, "abs err----------------------------------->  %d\n", abs(err));
+						EyelockLog(logger, DEBUG, "abs err in move area ----------------------------------->  %d\n", abs(err));
 						err = (float) err * (float) SCALE * (float) ERROR_LOOP_GAIN;
 
 						// if we need to move
@@ -1930,12 +1928,12 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 				int FrameNo = vs->frameId;
 				int CamId = vs->cam_id;
 				char filename[200];
-				sprintf(filename, "%s/FaceImage_%s_%lu_%09lu_%d_%d.pgm", m_sessionDir.c_str(), time_str, ts.tv_sec, ts.tv_nsec, FrameNo, CamId);
+				sprintf(filename, "%s/FaceImage_%s_%lu_%09lu_%d_%d.pgm", m_sessionDir.c_str(), time_str, ts.tv_sec, ts.tv_nsec, FaceCameraFrameNo, CamId);
 
 				imwrite(filename, smallImg);
 
 				char logmsg[300];
-				sprintf(logmsg, "Saved-FaceImage-FrNum%d-CamID%d-%s", FrameNo, CamId, filename);
+				sprintf(logmsg, "Saved-FaceImage-FrNum%d-CamID%d-%s", FaceCameraFrameNo, CamId, filename);
 				LogSessionEvent(logmsg);
 			}
 		}
@@ -3382,7 +3380,7 @@ void *init_facetracking(void *arg)
 		return 0;
 
 	}
-
+#if 0 // Anita Not used
 	//Set environment for temp Test
 	if (temp_mode){
 		portcom_start();
@@ -3391,7 +3389,7 @@ void *init_facetracking(void *arg)
 		return 0;
 
 	}
-
+#endif
 
 	//vid_stream_start
 

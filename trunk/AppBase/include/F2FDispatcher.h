@@ -175,10 +175,9 @@ protected:
 	char m_pinNumber[MAX_PIN_BYTE_LENGTH];
 	int m_pinNumberRcvd;
 
-//#ifdef DEBUG_SESSION
+
 	bool m_DebugTesting;
 	std::string m_sessionDir;
-//#endif
 
 	//pthread_t osdp_thread;
 };

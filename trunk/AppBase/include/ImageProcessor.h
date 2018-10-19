@@ -51,6 +51,11 @@ typedef struct NanoSpoofResult{
 	std::pair<float, float> m_score;
 };
 
+#define IRISCAM_MAIN_LEFT  01
+#define IRISCAM_MAIN_RIGHT 02
+#define IRISCAM_AUX_LEFT   129
+#define IRISCAM_AUX_RIGHT  130
+
 // Simple base class to define interface for low latency callbacks
 class ImageHandler
 {
@@ -234,7 +239,7 @@ protected:
 	IplImage *m_OffsetImageAuxCamera1;
 	IplImage *m_OffsetImageAuxCamera2;
 	IplImage *m_OffsetOutputImage;
-//#ifdef DEBUG_SESSION
+
 	bool m_DebugTesting;
 	std::string m_sessionDir;
 	cv::Rect FaceCoord;
@@ -247,7 +252,9 @@ protected:
 	float projOffset_m, projOffset_a;
 	bool m_showProjection;
 	bool m_FaceIrisMapping;
-//#endif
+	int m_Imagewidth;
+	int m_Imageheight;
+
 #ifdef HBOX_PG	
 	bool m_SPAWAREnable;
 
