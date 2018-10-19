@@ -264,7 +264,23 @@ private:
 	char * StateText(int state);
 	void DoAgc(void);
 
+	// Temperature
+	void motorMove();
+	double parsingIntfromHex(string str1);
+
+	// CAMERACALIBERATION_ARUCO
+	std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam, bool calDebug);
+	vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<aruco::Marker> markerFace);
+	void brightnessAdjust(Mat outImg, int cam, bool calDebug);
+
+	float AGC_average(int width, int height,unsigned char *dsty, int limit);
+
 	void MeasureSnr();
+
+	//Tampering
+	double StandardDeviation(std::vector<double> samples);
+	double Variance(std::vector<double> samples);
+
 public:
 	bool bDebugSessions;
 	bool bShowFaceTracking;
@@ -285,24 +301,14 @@ public:
 	void CalAll();
 		
 	// Temperature
-	double parsingIntfromHex(string str1);
 	int calTemp(int i);
-	void motorMove();
-	float AGC_average(int width, int height,unsigned char *dsty, int limit);
 
-
-	// CAMERACALIBERATION_ARUCO
-	std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam, bool calDebug);
-	vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<aruco::Marker> markerFace);
-	void brightnessAdjust(Mat outImg, int cam, bool calDebug);
 	bool CalCam(bool calDebug);
 	void runCalCam(bool calDebug);
 	
 	void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions);
 
-	//Temparing
-	double StandardDeviation(std::vector<double> samples);
-	double Variance(std::vector<double> samples);
+
 };
 
 #endif /* FACETRACKER_H_ */

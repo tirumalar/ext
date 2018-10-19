@@ -1468,6 +1468,7 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 		EyelockLog(logger, TRACE, "F2FDispatcher::LogMatchResult()");
 
 	char tmp[256];
+	char DebugSession[256];
 	MatchResultState state = msg->getState();
 
 #ifdef DEBUG_SESSION
@@ -1487,14 +1488,23 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 	}
 #endif
 
+	int frameNo,eyeIdx;
+	string cam;
+	int EXTCameraIndex;
+	msg->getFrameInfo(frameNo,eyeIdx,cam, EXTCameraIndex);
+	float MatchScore = msg->getScore();
 	if (state == PASSED) {
 			if (m_pMatchType->m_duress && m_authMode >= PIN_AND_IRIS_DURESS) {
+			EyelockLog(logger, DEBUG, "Match success ID is %s CameraId:%d FrameId:%d MatchScore:%f", msg->getName().c_str(), EXTCameraIndex, frameNo, MatchScore);
 			EyelockEvent("Match success(Duress) ID is %s", msg->getName().c_str());
 			sprintf(tmp, "Match success(Duress) ID is %s", msg->getName().c_str());
+			sprintf(DebugSession, "Match success ID is %s CameraId:%d FrameId:%d MatchScore:%f", msg->getName().c_str(), EXTCameraIndex, frameNo, MatchScore);
 		}
 		else {
+			EyelockLog(logger, DEBUG, "Match success ID is %s CameraId:%d FrameId:%d MatchScore:%f", msg->getName().c_str(), EXTCameraIndex, frameNo, MatchScore);
 			EyelockEvent("Match success ID is %s", msg->getName().c_str());
 			sprintf(tmp, "Match success ID is %s", msg->getName().c_str());
+			sprintf(DebugSession, "Match success ID is %s CameraId:%d FrameId:%d MatchScore:%f", msg->getName().c_str(), EXTCameraIndex, frameNo, MatchScore);
 		}
 		SDKCallbackMsg msg(MATCH, std::string(tmp));
 		m_sdkDispatcher->enqueMsg(msg);
@@ -1502,13 +1512,15 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 		if(m_DebugTesting){
 			file = fopen(session_match_log, "a");
 			if (file){
-				fprintf(file, "%s %lu:%09lu Match_success[%s]\n", time_str, ts.tv_sec, ts.tv_nsec, tmp);
+				fprintf(file, "%s %lu:%09lu Match_success[%s]\n", time_str, ts.tv_sec, ts.tv_nsec, DebugSession);
 				fclose(file);
 			}
 		}
 #endif
 	}
 	else if (state == CONFUSION) {
+		EyelockLog(logger, DEBUG, "Match failed %s CameraId:%d FrameId:%d MatchScore:%f", msg->getName().c_str(), EXTCameraIndex, frameNo, MatchScore);
+		sprintf(DebugSession, "Match failed %s CameraId:%d FrameId:%d MatchScore:%f", msg->getName().c_str(), EXTCameraIndex, frameNo, MatchScore);
 		EyelockEvent("Match failed");
 		SDKCallbackMsg msg(MATCH, "Match failed");
 		m_sdkDispatcher->enqueMsg(msg);
@@ -1516,7 +1528,7 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 		if(m_DebugTesting){
 			file = fopen(session_match_log, "a");
 			if (file){
-				fprintf(file, "%s %lu:%09lu Match_failed\n", time_str, ts.tv_sec, ts.tv_nsec);
+				fprintf(file, "%s %lu:%09lu Match_failed[%s]\n", time_str, ts.tv_sec, ts.tv_nsec, DebugSession);
 				fclose(file);
 			}
 		}
@@ -1525,6 +1537,8 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 	else if (state == FAILED) {
 		char username[NAME_SIZE];
 		m_pMatchType->getUserNameFromCard(m_pMatchType->m_pCardData, username);
+		EyelockLog(logger, DEBUG, "Match failure, iris mismatch - %s CameraId:%d FrameId:%d MatchScore:%f", username, EXTCameraIndex, frameNo, MatchScore);
+		sprintf(DebugSession, "Match failure, iris mismatch - %s CameraId:%d FrameId:%d MatchScore:%f", username, EXTCameraIndex, frameNo, MatchScore);
 		EyelockEvent("Match failure, iris mismatch - %s", username);
 		sprintf(tmp, "Match failure, iris mismatch - %s", username);
 		SDKCallbackMsg msg(MATCH, std::string(tmp));
@@ -1533,7 +1547,7 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 		if(m_DebugTesting){
 			file = fopen(session_match_log, "a");
 			if (file){
-				fprintf(file, "%s %lu:%09lu Match_failed\n", time_str, ts.tv_sec, ts.tv_nsec);
+				fprintf(file, "%s %lu:%09lu Match_failed[%s]\n", time_str, ts.tv_sec, ts.tv_nsec, DebugSession);
 				fclose(file);
 			}
 		}
