@@ -1932,6 +1932,11 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 				imwrite(filename, smallImg);
 
+				// To save full face Images
+				char filename1[200];
+				sprintf(filename1, "%s/FaceFullImage_%s_%lu_%09lu_%d_%d.pgm", m_sessionDir.c_str(), time_str, ts.tv_sec, ts.tv_nsec, FaceCameraFrameNo, CamId);
+				Mat Orig = rotation90(outImg);
+				imwrite(filename1, Orig);
 				char logmsg[300];
 				sprintf(logmsg, "Saved-FaceImage-FrNum%d-CamID%d-%s", FaceCameraFrameNo, CamId, filename);
 				LogSessionEvent(logmsg);
