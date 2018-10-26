@@ -40,6 +40,7 @@
 #include "log.h"
 
 #include "eyelock_com.h"
+#include "extFocus.h"
 
 using namespace cv;
 using namespace std::chrono;
@@ -199,7 +200,7 @@ int MIN_FACE_SIZE;
 int MAX_FACE_SIZE;
 
 Point eyes;	// hold eye info from each frame
-char temp[512], tempI1[512], tempI2[512];
+char temp[512], tempI1[512], tempI2[512], tempI3[512], tempI4[512], tempI5[512];
 int AGC_Counter = 0;
 int noFaceCounter =0;
 
@@ -293,6 +294,8 @@ float AGC_average(int width, int height,unsigned char *dsty, int limit);
 double StandardDeviation(std::vector<double> samples);
 double Variance(std::vector<double> samples);
 
+
+extFocus *fs;
 
 
 void SetExp(int cam, int val)
@@ -4185,6 +4188,107 @@ void motorMove(){
 
 
 
+void RunCamFocus(){
+
+	int w,h;
+	char key;
+
+	bool quit = false;
+
+	fs = new extFocus();
+
+	char cmd[512];
+
+	//Set AUX cameras
+	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);
+	port_com_send(cmd);
+
+
+	//Fetching images from Face camera
+	int leftCam = 8192;
+	int rightCam = 8193;
+
+	VideoStream *vs;
+	vs = new VideoStream(leftCam);
+	vs->flush();
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+
+	while(1){
+		vs->get(&w,&h,(char *)outImg.data);
+		quit = fs->camControlFocus(outImg, vs->cam_id);
+
+		if(quit)
+			break;
+	}
+	delete(vs);
+	delete(fs);
+
+
+	fs = new extFocus();
+
+	vs = new VideoStream(rightCam);
+	vs->flush();
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	quit = false;
+
+	while(1){
+		vs->get(&w,&h,(char *)outImg.data);
+		quit = fs->camControlFocus(outImg, vs->cam_id);
+
+		if(quit)
+			break;
+	}
+	delete(vs);
+	delete(fs);
+
+	//Set Main cameras
+	sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY);
+	port_com_send(cmd);
+	usleep(1000);
+
+
+	fs = new extFocus();
+	vs = new VideoStream(leftCam);
+	vs->flush();
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+
+	while(1){
+		vs->get(&w,&h,(char *)outImg.data);
+		quit = fs->camControlFocus(outImg, vs->cam_id);
+
+		if(quit)
+			break;
+	}
+	delete(vs);
+	delete(fs);
+
+
+	fs = new extFocus();
+	vs = new VideoStream(rightCam);
+	vs->flush();
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	quit = false;
+
+	while(1){
+		vs->get(&w,&h,(char *)outImg.data);
+		quit = fs->camControlFocus(outImg, vs->cam_id);
+
+		if(quit)
+			break;
+	}
+	delete(vs);
+	delete(fs);
+
+}
+
+
+
+
+
 int main(int argc, char **argv)
 {
 	EyelockLog(logger, TRACE, "Inside main function");
@@ -4220,6 +4324,7 @@ int main(int argc, char **argv)
     int cal_mode=0;				//initialize image optimization
     int cal_cam_mode = 0;		//initializing camera to camera geometric calibration
     int temp_mode = 0;
+    int focusMode = 0;
     pthread_t threadId;
     pthread_t thredEcId;
 
@@ -4398,6 +4503,11 @@ int main(int argc, char **argv)
 		temp_mode=1;
 	}
 #endif
+	if (strcmp(argv[1],"focus")==0)
+	{
+		focusMode =1;
+
+	}
 	//pThread for face tracker active
 	if (run_mode)
 		pthread_create(&threadId,NULL,init_tunnel,NULL);
@@ -4412,6 +4522,19 @@ int main(int argc, char **argv)
 		CalAll();
 		return 0;
 	}
+
+	fs = new extFocus();
+	if(focusMode){
+		portcom_start();
+
+		fs->DoStartCmd_focus();
+		delete(fs);
+		RunCamFocus();
+
+		return 0;
+
+	}
+
 
 	//Set environment for camera to camera calibration
 	if (cal_cam_mode){
