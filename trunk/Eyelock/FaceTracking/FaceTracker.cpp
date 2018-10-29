@@ -1911,7 +1911,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 #ifdef DEBUG_SESSION
 	if (bDebugSessions)
 	{
-		if (switchedToIrisMode)
+		if (foundEyes)
 		{
 			struct stat st = {0};
 			if (stat(m_sessionDir.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
