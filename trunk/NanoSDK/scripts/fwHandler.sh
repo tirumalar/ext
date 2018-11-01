@@ -362,6 +362,9 @@ rebootDevice(){
 	
 	cd /home/root
 
+	NOW=$(date +"%Y-%m-%d, %T.000")
+	echo "$NOW, INFO , [Eyelock], - Rebooting OIM" >> /home/root/nxtLog.log
+
 	# reboot OIM
 	./i2cHandler -r0
 	sleep 3
@@ -369,7 +372,10 @@ rebootDevice(){
 	sleep 7
 
 	sync
-
+	
+	NOW=$(date +"%Y-%m-%d, %T.000")
+	echo "$NOW, INFO , [Eyelock], - Rebooting COTS" >> /home/root/nxtLog.log
+	
 	reboot
 }
 
