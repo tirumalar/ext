@@ -20,17 +20,20 @@ rm "${EYELOCK_RUN_FILE}"
 rm "${EYELOCK_OIM_TAMPER_FILE}"
 rm "${EYELOCK_TAMPER_FILE}"
 
+source '/home/root/EyelockLog.sh'
+EYELOCK_LOGLABEL='HBOIM'
+
 while true
 do
-	echo "pinging OIM ${OIM_IP}..."
+	EyelockLog "pinging OIM ${OIM_IP}..." 'TRACE'
 	if ping -c 5 "${OIM_IP}"
 	then
-		echo "OIM ${OIM_IP} is pingable, sleeping ${TIMEOUT} seconds"
+		EyelockLog "OIM ${OIM_IP} is pingable, sleeping ${TIMEOUT} seconds" 'TRACE'
 #		touch "${FACETRACKER_RUN_FILE}"
 		touch "${EYELOCK_RUN_FILE}"
 		COUNTER=0		
 	else
-		echo "OIM ${OIM_IP} is NOT pingable!"
+		EyelockLog "OIM ${OIM_IP} is NOT pingable!" 'ERROR'
 
 		if [[ ${COUNTER} < ${MAX_SEQUENTIAL_RECOVERIES} ]]
 		then
@@ -38,26 +41,26 @@ do
 			if [[ -f ${FLAG} ]]
 			then
 				TIME_SINCE_LAST_RECOVERY=$(($(date +%s) - $(date +%s -r "${FLAG}")))
-				echo "time since last recovery: $TIME_SINCE_LAST_RECOVERY"
+				EyelockLog "time since last recovery: $TIME_SINCE_LAST_RECOVERY" 'DEBUG'
 			fi
 
 			if [[ ${TIME_SINCE_LAST_RECOVERY} -ge ${RECOVERY_MIN_INTERVAL} ]] 
 			then
-				echo "recovering..."
+				EyelockLog "recovering..." 'DEBUG'
 				rm "${EYELOCK_RUN_FILE}"				
-				rm "${FACETRACKER_RUN_FILE}"
+				#rm "${FACETRACKER_RUN_FILE}"
 
-				FCTKR_PID=$(ps -ef | grep '/FaceTracker 8194 1$' | awk '{print $2}')
-				if [[ ! -z ${FCTKR_PID} ]]
-				then
-					echo "killing FaceTracker, PID: $FCTKR_PID"
-					kill -9 "${FCTKR_PID}"
-				fi
+				#FCTKR_PID=$(ps -ef | grep '/FaceTracker 8194 1$' | awk '{print $2}')
+				#if [[ ! -z ${FCTKR_PID} ]]
+				#then
+				#	EyelockLog "killing FaceTracker, PID: $FCTKR_PID"
+				#	kill -9 "${FCTKR_PID}"
+				#fi
 
 				ELK_PID=$(ps -ef | grep '/Eyelock$' | awk '{print $2}')
 				if [[ ! -z ${ELK_PID} ]]
 				then
-					echo "killing Eyelock, PID: $ELK_PID"
+					EyelockLog "killing Eyelock, PID: $ELK_PID" 'DEBUG'
 					kill -9 "${ELK_PID}"
 				fi
 
@@ -75,10 +78,10 @@ do
 
 				sleep 10
 			else
-				echo "too soon to recover, skipping..."
+				EyelockLog "too soon to recover, skipping..." 'DEBUG'
 			fi
 		else
-			echo "${COUNTER} sequential recoveries. Device must be powercycled"
+			EyelockLog "${COUNTER} sequential recoveries. Device must be powercycled" 'ERROR'
 			/home/root/i2cHandler -l 6
 			exit 1
 		fi
