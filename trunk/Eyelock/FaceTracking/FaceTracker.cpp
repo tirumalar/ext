@@ -34,7 +34,11 @@ int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size, Rect &face);
 int face_init();
 float read_angle(void);
 
+// Temperature monitoring parameters
 int tempTarget; //5 mins = 60*5 = 300s
+float tempLowThreshold;
+float tempHighThreshold;
+
 
 #ifdef DEBUG_SESSION
 //#define DEBUG_SESSION_DIR "DebugSessions/Session"
@@ -94,11 +98,12 @@ void *DoTemperatureLog(void * arg)
 
 		if ((len = port_com_send_return("accel_temp()", temperatureBuf, 20)) > 0) {
 			sscanf(temperatureBuf, "%f", &tempData);
-			EyelockLog(logger, TRACE, "temp reading =>%3.3f\n", tempData);
+			EyelockLog(logger, DEBUG, "temp reading =>%3.3f\n", tempData);
 
 			//printf("cumilative time ::: %3.3f and Temp ::::: %3.3f\n", sumST, tempData);
 			//temperatureLogStream <<  tempData << '\n';
 
+#ifdef TEMP_LOGGING_TO_SEPARATE_FILE
 			time_t timer;
 			struct tm* tm1;
 			time(&timer);
@@ -110,6 +115,18 @@ void *DoTemperatureLog(void * arg)
 				strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
 				fprintf(file, "[%s] %3.3f\n", time_str, tempData);
 				fclose(file);
+			}
+#endif
+
+			if (tempData > tempHighThreshold)
+			{
+				EyelockEvent("Temperature is too high: %3.3f!", tempData);
+				EyelockLog(logger, ERROR, "OIM temperature is too high: %3.3f (threshold %3.3f)", tempData, tempHighThreshold);
+			}
+			if (tempData < tempLowThreshold)
+			{
+				EyelockEvent("Temperature is too low: %3.3f!", tempData);
+				EyelockLog(logger, ERROR, "OIM temperature is too low: %3.3f (threshold %3.3f)", tempData, tempLowThreshold);
 			}
 
 			//sumST = 0.0;
@@ -142,6 +159,8 @@ FaceTracker::FaceTracker(char* filename)
 	cur_pos = CENTER_POS;
 	tempTarget = FaceConfig.getValue("FTracker.tempReadingTimeInMinutes",5);
 	tempTarget = tempTarget * 60;	//converting into sec
+	tempHighThreshold = FaceConfig.getValue("FTracker.OimTemperatureHighThreshold", 60.0f);
+	tempLowThreshold = FaceConfig.getValue("FTracker.OimTemperatureLowThreshold", 0.0f);
 	
 	switchThreshold = FaceConfig.getValue("FTracker.switchThreshold",37);
 	errSwitchThreshold = FaceConfig.getValue("FTracker.errSwitchThreshold",2);
