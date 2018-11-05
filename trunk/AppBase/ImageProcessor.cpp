@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include "UtilityFunctions.h"
 
+const char logger[30] = "ImageProcessor";
 
 extern "C"{
 #ifdef __BFIN__
@@ -893,7 +894,7 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 	faceP.y = (rectY/scaling) + targetOffset1;
 	faceP.height = (rectH)/scaling -(targetOffset1*2);
 
-	if (projDebug)
+	if (FaceFrameNo == IrisFrameNo)
 	{
 		projFace.x = face.x * scaling;		//column
 		projFace.y = rectY + targetOffset1;	//row
@@ -1070,6 +1071,8 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 
 		}
 
+	}else{
+		EyelockLog(logger, DEBUG, "Face and Iris Frames are out of sync FaceFrameNo:%d IrisFrameNo:%d", FaceFrameNo, IrisFrameNo);
 	}
 	return (IrisProjRect);
 
@@ -1220,7 +1223,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	if(m_FaceIrisMapping)
 	{
 		FaceCoord = getFaceData();
-		int FaceFrameNo = getFaceFrameNo();
+		int FaceFrameNo = getFaceFrameNo(); // Number is in range of 0 to 255
 		int IrisFrameNo = frame->imageData[3]&0xff;
 		FaceData1 FaceData = getFaceData1();
 
