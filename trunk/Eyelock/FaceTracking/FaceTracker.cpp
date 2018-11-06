@@ -652,7 +652,8 @@ void FaceTracker::DoStartCmd()
 	//Homing
 	EyelockLog(logger, DEBUG, "Re Homing");
 	printf("Re Homing\n");
-
+	sprintf(cmd,"fx_home");
+	port_com_send(cmd);
 	EyelockLog(logger, DEBUG, "port_com_send fx_home command is issued");
 #ifdef NOOPTIMIZE
 	usleep(100000);
