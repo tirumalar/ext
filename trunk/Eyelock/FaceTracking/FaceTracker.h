@@ -141,6 +141,8 @@ private:
 	int MIN_POS;
 	int MAX_POS;
 	
+	int initialMotion, finalMotion, MotorAcceleration;	//used for increasing or decreasing motor acceleration
+
 	//Switching threshold and Hysteresis
 	int switchThreshold;		// 37
 	int errSwitchThreshold;		//6
