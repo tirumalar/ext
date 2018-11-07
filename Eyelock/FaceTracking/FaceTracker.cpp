@@ -162,6 +162,11 @@ FaceTracker::FaceTracker(char* filename)
 	tempHighThreshold = FaceConfig.getValue("FTracker.OimTemperatureHighThreshold", 60.0f);
 	tempLowThreshold = FaceConfig.getValue("FTracker.OimTemperatureLowThreshold", 0.0f);
 	
+	//For motor acceleration
+	initialMotion = FaceConfig.getValue("FTracker.IntialSpeedMotion",150);
+	finalMotion = FaceConfig.getValue("FTracker.FinalSpeedMotion",150);
+	MotorAcceleration = FaceConfig.getValue("FTracker.MotorAcceleration",150);
+
 	switchThreshold = FaceConfig.getValue("FTracker.switchThreshold",37);
 	errSwitchThreshold = FaceConfig.getValue("FTracker.errSwitchThreshold",2);
 
@@ -648,6 +653,13 @@ void FaceTracker::DoStartCmd()
 	sprintf(cmd,"set_cam_mode(0x0,%d)",FRAME_DELAY);		//Turn on Alternate cameras
 	port_com_send(cmd);
 
+
+	//adjust Motor Motion
+	sprintf(cmd,"fx_mot_set(%i,%i,%i)",initialMotion, finalMotion, MotorAcceleration);
+	//printf(cmd);
+	port_com_send(cmd);
+	EyelockLog(logger, DEBUG, "Motor acceleration setting is issued");
+	EyelockLog(logger, DEBUG, cmd);
 
 	//Homing
 	EyelockLog(logger, DEBUG, "Re Homing");
