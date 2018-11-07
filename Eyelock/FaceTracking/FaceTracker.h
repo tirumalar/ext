@@ -158,6 +158,7 @@ private:
 	//#define FACE_CONTROL_GAIN   1000.0
 	
 	float ERROR_LOOP_GAIN;	// used for error cal during face tracking and motor movement
+	float ERROR_CHECK_EYES; //Checking for Eyes at the center of the tracking target
 
 	//Face size tracking from 90 to 30cm range if the images are bright enough
 	int MIN_FACE_SIZE;
@@ -282,6 +283,9 @@ private:
 	//Tampering
 	double StandardDeviation(std::vector<double> samples);
 	double Variance(std::vector<double> samples);
+
+	//adjust eye Tracking target at the center
+	cv::Rect seacrhEyeArea(cv::Rect no_move_area);
 
 public:
 	bool bDebugSessions;

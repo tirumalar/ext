@@ -16,6 +16,7 @@ double scaling = 8.0;		//Used for resizing the images in py lev 3
 int targetOffset;
 Rect detect_area(15/SCALE,15/SCALE,(960/(SCALE*SCALE))+15/SCALE,(1200/(SCALE*SCALE))+15/SCALE); //15 was 30
 Rect no_move_area, no_move_areaX;		//Face target area
+Rect search_eye_area;					//Narrow down the eye search range in face
 Rect projFace;
 
 string fileName = "output.csv";			//Save temp data
@@ -232,6 +233,7 @@ FaceTracker::FaceTracker(char* filename)
 	FACE_GAIN_HIST_GOAL = FaceConfig.getValue("FTracker.FACE_GAIN_HIST_GOAL",float(0.1));
 	FACE_CONTROL_GAIN = FaceConfig.getValue("FTracker.FACE_CONTROL_GAIN",float(500.0));
 	ERROR_LOOP_GAIN = FaceConfig.getValue("FTracker.ERROR_LOOP_GAIN",float(0.08));
+	ERROR_CHECK_EYES = FaceConfig.getValue("FTracker.ERROR_CHECK_EYES",float(0.06));
 
 	MIN_FACE_SIZE = FaceConfig.getValue("FTracker.MIN_FACE_SIZE",10);
 	MAX_FACE_SIZE = FaceConfig.getValue("FTracker.MAX_FACE_SIZE",70);
@@ -626,6 +628,31 @@ void FaceTracker::SetIrisMode(float CurrentEye_distance)
 
 
 }
+
+cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
+	//printf("no_move_area 	x: %d	y: %d	w: %d	h: %d\n", no_move_area.x, no_move_area.y, no_move_area.height, no_move_area.width);
+	//printf("ERROR_CHECK_EYES %3.3f \n", ERROR_CHECK_EYES);
+
+	float hclip = float(no_move_area.height - float(no_move_area.height * ERROR_CHECK_EYES));
+	//printf("hclip::::: %3.3f\n", hclip);
+
+	//float yclip = cvRound(hclip/2.0);
+	float yclip = hclip/2.0;
+	//printf("yclip::::: %3.3f\n", yclip);
+
+
+	Rect modRect;
+	modRect.x = no_move_area.x;
+	modRect.width = no_move_area.width;
+
+	modRect.y = no_move_area.y + yclip;
+	modRect.height = no_move_area.height - hclip;
+
+	//printf("search_eye_area 	x: %d	y: %d	w: %d	h: %d\n", modRect.x, modRect.y, modRect.height, modRect.width);
+
+	return modRect;
+}
+
 	
 // Main DoStartCmd configuration for Eyelock matching
 void FaceTracker::DoStartCmd()
@@ -818,6 +845,8 @@ void FaceTracker::DoStartCmd()
 	no_move_area.y = rectY/scaling + targetOffset;
 	no_move_area.width = rectW/scaling;
 	no_move_area.height = (rectH)/scaling -targetOffset*2;
+
+	search_eye_area = seacrhEyeArea(no_move_area);
 
 	system("touch /home/root/Eyelock.run");
 }
@@ -1165,7 +1194,10 @@ void FaceTracker::moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, 
 
 		float err;
 		int MoveToLimitBound = 1;
-		err = (no_move_area.y + no_move_area.height / 2) - eyes.y;
+		//err = (no_move_area.y + no_move_area.height / 2) - eyes.y;		//Following no_move_area
+		//instead of following no_move_area we will use search_eye_area to make eyes at the center of no_move_area
+		err = (search_eye_area.y + search_eye_area.height / 2) - eyes.y;
+
 		EyelockLog(logger, DEBUG, "abs err----------------------------------->  %d\n", abs(err));
 		err = (float) err * (float) SCALE * (float) ERROR_LOOP_GAIN;
 
@@ -1724,7 +1756,8 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 
 	bool eyesInDetect = foundEyes? detect_area.contains(eyes):false;
-	bool eyesInViewOfIriscam = eyesInDetect ? no_move_area.contains(eyes):false;
+	bool eyesInViewOfIriscam = eyesInDetect ? search_eye_area.contains(eyes):false;
+	//bool eyesInViewOfIriscam = eyesInDetect ? no_move_area.contains(eyes):false;
 
 	if (foundEyes==false)
 		noFaceCounter++;
@@ -1931,6 +1964,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 			//printf("face x = %i  face y = %i face width = %i  face height = %i\n",face.x, face.y, face.width, face.height);
 			EyelockLog(logger, TRACE, "Imshow");
 			cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
+			cv::rectangle(smallImg, search_eye_area, Scalar(255, 0, 0), 1, 0);
 			cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
 			cv::rectangle(smallImg, face, Scalar(255,0,0),1,0);
 			imshow("FaceTracker", smallImg);
