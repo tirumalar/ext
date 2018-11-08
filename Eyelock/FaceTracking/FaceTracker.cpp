@@ -501,13 +501,45 @@ void FaceTracker::MoveRelAngle(float a)
 
 	EyelockLog(logger, DEBUG, "limiting small movements based on relative changes and face size changes:diffEyedistance %f", move);
 	//limiting small movements based on relative changes and face size changes
-	if (abs(move) > smallMoveTo)	//&& diffEyedistance >= errSwitchThreshold
+	//printf("Current_a=%f ; next_a=%f\n",current_a,a);
+	
+	//low angle condition but the motor wants to move up
+	low = ((int)(abs(current_a)) < minAngle && (a < 0)) ? true : false;
+
+	//high angle conditions but the motor wats top move down
+	high = ((int)(abs(current_a)) > maxAngle && (a > 0)) ? true : false;
+
+	//move angle range
+	angleRange = ((int)(abs(current_a)) <= maxAngle && (int)(abs(current_a)) >= minAngle) ? true : false;
+
+	//printf("low and high::::::::::::::::::::: %i 	%i\n", low, high);
+	
+	if (abs(move) > smallMoveTo && angleRange)
 	{
 		sprintf(buff,"fx_rel(%d)",(int)move);
-		EyelockLog(logger, DEBUG, "Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
+		EyelockLog(logger, DEBUG, "In move angle range --- Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
 		port_com_send(buff);
+		//printf("fx_rel(%d)\n",(int)(abs(move)));
+	}
+	else{
+
+		if (low){
+			sprintf(buff,"fx_rel(%d)",(int)move);
+			EyelockLog(logger, DEBUG, "low angle condition but the motor wants to move up --- Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
+			port_com_send(buff);
+			//printf("fx_rel(%d)\n",(int)(abs(move)));
+		}
+
+		if(high){
+			sprintf(buff,"fx_rel(%d)",(int)move);
+			EyelockLog(logger, DEBUG, "high angle conditions but the motor wats top move down -- Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
+			port_com_send(buff);
+			//printf("fx_rel(%d)\n",(int)(abs(move)));
+		}
+
 	}
 }
+
 
 void FaceTracker::DimmFaceForIris()
 {

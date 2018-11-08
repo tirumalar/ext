@@ -164,7 +164,10 @@ private:
 	int MIN_FACE_SIZE;
 	int MAX_FACE_SIZE;
 
-
+	//variables dedicated for motor movement in extreme conditions
+	bool angleRange;
+	bool high = false, low = false;
+	int maxAngle = 136, minAngle = 72;
 
 	int m_IrisLEDVolt;
 	int m_IrisLEDcurrentSet;
