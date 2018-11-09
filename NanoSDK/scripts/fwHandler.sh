@@ -241,6 +241,12 @@ upgradeMaster(){
 
 	# copy ICM file even if ICM programming is not needed to have it in restore point
 	cp ${bobFileName} /home/root
+	
+	# TODO: copy for restore?
+	#cp ${fpgaFileName} /home/root
+	#cp ${fixedBrdFileName} /home/root
+	#cp ${camBrdFileName} /home/root
+	#cp ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml /home/root
 
 	## copy configuration file for WebConfig
 	#cp /home/upgradeTemp/www/lighttpd.conf /home/www/lighttpd.conf
@@ -289,36 +295,35 @@ checkIcmVersion(){
 programIcm(){
 # $1 - icm_communicator utility file
 # $2 - <ICM FileName>
-# $3 - <Time (in ms)>
 
 	if [[ -e $1 ]]
 	then 
 		if [[ -e $2 ]]
 		then
-			${logger} -L"ICM programming with -t $3..."			
+			${logger} -L"PIM programming..."			
 			
 			# logging to local file added for DEBUG purposes
 			icmProgrammingLog=/home/debugIcmProgrammingOut.log
 			date -u >> ${icmProgrammingLog}
-			echo "$1 -p $2 -t $3" >> ${icmProgrammingLog}
+			echo "$1 -d /dev/ttyACM0 -s 115200 $2" >> ${icmProgrammingLog}
 			
 			sleep 3
-			programmingOut=$($1 -t $3 -p $2)
+			programmingOut=$($1 -d /dev/ttyACM0 -s 115200 $2)
 			sleep 3
 			
 			echo "returned:" >> ${icmProgrammingLog}
 			echo ${programmingOut} >> ${icmProgrammingLog}
 
 			# can we rely on this output? 
-			echo ${programmingOut} | grep -q "Successfully"
-			if [[ $? -ne 0 ]]
-			then
-				${logger} -L"Error: ICM programming failed"
-				return 2	
-			fi
+			#echo ${programmingOut} | grep -q "Successfully"
+			#if [[ $? -ne 0 ]]
+			#then
+			#	${logger} -L"Error: PIM programming failed"
+			#	return 2	
+			#fi
 			
 			# check version with current icm_communicator
-			installedIcmVer=$(/home/root/icm_communicator -v | sed -n "s/^nanoNXT\sICM\sSoftware\sVersion:\s\(.*\)\s/\1/p")
+			installedIcmVer=$(/home/root/i2cHandler -v | grep 'ICM software version' | cut -d':' -f2 | tr -d ' ')
 			
 			echo "installed: ${installedIcmVer}" >> ${icmProgrammingLog}
 			echo "" >> ${icmProgrammingLog}
@@ -329,13 +334,13 @@ programIcm(){
 			then
 				return 0
 			else	
-				${logger} -L"Error: ICM test failed"
+				${logger} -L"Error: PIM test failed"
 				return 3
 			fi
 
 			return 0
 		else
-			${logger} -L"Error: ICM file not found"
+			${logger} -L"Error: PIM file not found"
 			return 1
 		fi
 	else
@@ -401,6 +406,143 @@ changeIniValue()
 	fi
 }
 
+oimctl(){
+	local cmd=$1
+	local quitAfter=$2
+	if [[ -z ${quitAfter} ]]
+	then
+		local quitAfter=3
+	fi
+	#OIMADDR='192.168.4.172'
+	#OIMPORT='30'
+	#printf 'set_cam_mode(0x0,0)\n' | nc -q 1 192.168.4.172 30
+	printf "${cmd}\n" | nc -q "${quitAfter}" -w 10 192.168.4.172 30
+	return $?
+}
+
+oimSendFile(){
+	local file=$1
+	local status=0
+	if [[ -f ${file} ]]
+	then
+		#cat "${file}" | pv -L 25K | nc -q 15 -O 512 192.168.4.172 35
+		# TODO: timeout for nc?
+		nc -q 15 -O 512 192.168.4.172 35 < "${file}"
+		local status=$?
+	fi
+	return ${status}
+}
+
+upgradeOim(){
+
+	# DEBUG
+	#echo "New fixed board FW version: ${fixedBrdVer}"
+	#echo "New fixed board FW file: ${fixedBrdFileName}"
+	
+	if ! ping -q -c 5 192.168.4.172
+	then
+		${logger} -L"Error: failed to ping OIM"
+		${logger} -L"STATUS:UNSUCCESSFUL"
+		return 1
+	fi
+	
+	# check telnet connection with empty command
+	if ! oimctl ''
+	then
+		${logger} -L"Error: failed to control OIM"
+		${logger} -L"STATUS:UNSUCCESSFUL"
+		return 1
+	fi
+		
+	# check version and only update if version is different
+	# retrieve hex files versions from XML
+	allVer=$(oimctl 'ver(0)')
+	if [[ -z ${allVer} ]]
+	then
+		${logger} -L"Error: failed to retrieve OIM chips versions"
+		${logger} -L"STATUS:UNSUCCESSFUL"
+		return 1
+	fi
+		
+	# TODO: no option for specific version separately?
+	# if this text is changed in OIM side, we will loose backward compatibility
+	curFpgaVer=$(echo "${allVer}" | grep 'FPGA VERSION' | cut -d':' -f2)
+	curFixedBrdVer=$(echo "${allVer}" | grep 'Fixed board Verson' | cut -d':' -f2)
+	curCamBrdVer=$(echo "${allVer}" | grep 'Cam Psoc Version' | cut -d':' -f2)
+	
+	# DEBUG
+	#echo
+	#echo "curFpgaVer: ${curFpgaVer}"
+	#echo "curFixedBrdVer: ${curFixedBrdVer}"
+	#echo "curCamBrdVer: ${curCamBrdVer}"
+	
+	# if at least one of the chips needs to be programmed, then turn off all the cameras
+	if [[ ${curFpgaVer} != ${fpgaVer} || ${curFixedBrdVer} != ${fixedBrdVer} || ${curCamBrdVer} != ${camBrdVer} ]]
+	then
+		${logger} -L"Turning off the cameras for upgrading OIM"
+		oimctl 'set_cam_mode(0x0,0)' 
+	fi
+	
+	# which one should go first? 
+	# assuming, FPGA, because: 1) most risky: if fails, no need to continue 2) may contain improvements for upgrading PSoCs
+	# any chance of loosing backward compatiblity if one fails?
+	if [[ ${curFpgaVer} != ${fpgaVer} ]]
+	then
+		${logger} -L"Programming FPGA"
+		oimctl 'data_store_set(4)'
+		if ! oimSendFile "${fpgaFileName}"
+		then
+			# TODO: check hash sum? resend if failed? num attempts?
+			${logger} -L"Error: failed to send FPGA file"
+			${logger} -L"STATUS:UNSUCCESSFUL"
+			return 1
+		fi
+		# TODO: check hash sum? resend if failed? num attempts?
+		fpgaProgOut=$(oimctl 'flash_prog')
+		# TODO: need to get status. Check output? check version after flashing? retry if failed? num retries?
+		#fpgaProgStatus=$(echo "${fpgaProgOut}" | grep ... ?
+		${logger} -L"Programming FPGA done"
+	fi
+	
+	if [[ ${curFixedBrdVer} != ${fixedBrdVer} ]]
+	then
+		${logger} -L"Programming fixed board"
+		oimctl 'data_store_set(4)'
+		if ! oimSendFile "${fixedBrdFileName}"
+		then
+			# TODO: check hash sum? resend if failed? num attempts?
+			${logger} -L"Error: failed to send fixed board file"
+			${logger} -L"STATUS:UNSUCCESSFUL"
+			return 1
+		fi
+		fixedBrdProgOut=$(oimctl 'psoc_prog(1)')
+		printf "\nFixed board prog out: %s" "${fixedBrdProgOut}"
+		# TODO: need to get status. Check output? check version after flashing? retry if failed? num retries?
+		#fixedBrdProgStatus=$(echo "${fixedBrdProgOut}" | grep ... ?
+				
+		${logger} -L"Programming fixed board done"
+	fi
+	# TODO: revert back the first chip if this failed?
+	
+	if [[ ${curCamBrdVer} != ${camBrdVer} ]]
+	then
+		${logger} -L"Programming camera board"
+		oimctl 'data_store_set(4)'
+		if ! oimSendFile "${camBrdFileName}"
+		then
+			# TODO: check hash sum? resend if failed? num attempts?
+			${logger} -L"Error: failed to send camera board file"
+			${logger} -L"STATUS:UNSUCCESSFUL"
+			return 1
+		fi
+		camBrdProgOut=$(oimctl 'psoc_prog(2)')
+		# TODO: need to get status. Check output? check version after flashing? retry if failed? num retries?
+		#camBrdProgStatus=$(echo "${camBrdProgOut}" | grep ... ?
+		${logger} -L"Programming camera board done"
+	fi
+	# TODO: revert back the first and the second chips if this failed?
+}
+
 # performed by WebConfig/SDK themselves:
 # *******************************************************************************
 #echo "Upgrading..."
@@ -428,6 +570,14 @@ upgrade()
 	nanoVersion=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml nanoversion)
 	bobFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml bobfilename)
 	masterFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml nanofilename)
+	
+	fpgaVer=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml fpgaversion)
+	fixedBrdVer=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml fixedbrdversion)
+	camBrdVer=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml cambrdversion)
+
+	fpgaFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml fpgafilename)
+	fixedBrdFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml fixedbrdfilename)
+	camBrdFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml cambrdfilename)
 
 	mv ${firmwareDir}/fwHandler/MultiChannelLogger ${firmwareDir}
 	mv ${firmwareDir}/fwHandler/MultiChannelLoggerSettings.xml ${firmwareDir}
@@ -541,9 +691,9 @@ upgrade()
 	#	checkIcmVersion
 	#	if [[ $? -ne 0 ]]
 	#	then
-	#		${logger} -L"New ICM version matches with current."
+	#		${logger} -L"New PIM version matches with current."
 	#	else
-	#		${logger} -L"Upgrading ICM..."
+	#		${logger} -L"Upgrading PIM..."
 	#		touch /home/icmupdate.txt
 	#		rm /home/bobupdate.txt
 	#	
@@ -551,11 +701,11 @@ upgrade()
 	#	
 	#		chmod 777 ${icmCommunicator}
 	#	
-	#		programIcm ${icmCommunicator} ${bobFileName} 20 || programIcm ${icmCommunicator} ${bobFileName} 30 || programIcm ${icmCommunicator} ${bobFileName} 40
+	#		programIcm ${icmCommunicator} ${bobFileName}
 	#		upgradeIcmStatus=$?
 	#		if [[ ${upgradeIcmStatus} -ne 0 ]]
 	#		then 
-	#			${logger} -L"Error: ICM upgrade failed."
+	#			${logger} -L"Error: PIM upgrade failed."
 	#			${logger} -L"STATUS:UNSUCCESSFUL"
 	#			${logger} -L"Device will be rebooted."
 	#			cleanup
@@ -569,9 +719,11 @@ upgrade()
 	#		date -u > /home/bobupdate.txt
 	#	
 	#		rm /home/icmupdate.txt
-	#		${logger} -L"ICM upgrade done."
+	#		${logger} -L"PIM upgrade done."
 	#	fi
 	#fi
+	
+	upgradeOim
 
 	# adding upgrade event to logs
 	NOW=$(date -u +"%Y-%m-%d %T, %Z")
@@ -646,16 +798,9 @@ restore(){
 	# TODO: uncomment ICM restoring when ICM communicator will be ready	
 	# ICM
 	# ===============================================================================
-	#bobFileName=$(find /home/restoreTemp/root -type f -name '*.cyacd' | sort | sed q)
-	#if [[ -z ${bobFileName} ]]
-	#then
-	#	${logger} -L"Error: ICM file not found."		
-	#	${logger} -L"STATUS:UNSUCCESSFUL"
-	#	cleanupRestore
-	#	exit 1
-	#fi
-	#
-	#bobVersion=$(echo ${bobFileName} | sed -n "s/\(.*\)v\(.*\)\.cyacd/\2/p")
+	#bobFileName=$(getXmlTag /home/root/NanoEXTVersionInfo.xml bobfilename)
+
+	#bobVersion=$(getXmlTag /home/root/NanoEXTVersionInfo.xml bobversion)
 	#
 	#${logger} -L"Restoring ICM (${bobFileName})..."
 	#
@@ -664,16 +809,29 @@ restore(){
 	#
 	#chmod 777 ${icmCommunicator}
 	#
-	#programIcm ${icmCommunicator} ${bobFileName} 20 || programIcm ${icmCommunicator} ${bobFileName} 30 || programIcm ${icmCommunicator} ${bobFileName} 40
+	#programIcm ${icmCommunicator} ${bobFileName}
 	#restoreIcmStatus=$?
 	#if [[ ${restoreIcmStatus} -ne 0 ]]
 	#then 
-	#	${logger} -L"Error: ICM restore failed."
+	#	${logger} -L"Error: PIM restore failed."
 	#	${logger} -L"STATUS:UNSUCCESSFUL"
 	#	cleanupRestore
 	#	exit 1
 	#fi
-	#${logger} -L"Restoring ICM done."
+	#${logger} -L"Restoring PIM done."
+	# ===============================================================================
+	
+	# OIM
+	# ===============================================================================
+	# fpgaVer=$(getXmlTag /home/root/NanoEXTVersionInfo.xml fpgaversion)
+	# fixedBrdVer=$(getXmlTag /home/root/NanoEXTVersionInfo.xml fixedbrdversion)
+	# camBrdVer=$(getXmlTag /home/root/NanoEXTVersionInfo.xml cambrdversion)
+
+	# fpgaFileName=$(getXmlTag /home/root/NanoEXTVersionInfo.xml fpgafilename)
+	# fixedBrdFileName=$(getXmlTag /home/root/NanoEXTVersionInfo.xml fixedbrdfilename)
+	# camBrdFileName=$(getXmlTag /home/root/NanoEXTVersionInfo.xml cambrdfilename)
+	
+	# upgradeOim	
 	# ===============================================================================
 
 	${logger} -L"Master: applying changes..."
