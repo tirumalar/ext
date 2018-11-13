@@ -2607,6 +2607,10 @@ void CmxHandler::HandleSendMsg(char *msg){
 					len = sprintf(buf, "play_snd(1)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
 					SendMessage(buf, len);
 					break;
+				case 3:
+					len = sprintf(buf, "play_snd(2)|play_snd(2)|play_snd(2)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
+					SendMessage(buf, len);
+					break;
 				default:
 					break;
 				}

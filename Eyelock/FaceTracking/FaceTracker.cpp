@@ -825,6 +825,10 @@ void FaceTracker::DoStartCmd()
 		usleep(100000);
 		system("nc -O 512 192.168.4.172 35 < /home/root/tones/rej.raw");
 		sleep(1);
+		port_com_send("data_store_set(2)");
+		usleep(100000);
+		system("nc -O 512 192.168.4.172 35 < /home/root/tones/tamper1.raw");
+		sleep(1);
 	}
 
 
