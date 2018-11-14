@@ -12,7 +12,7 @@ Point eyes;	// hold eye info from each frame
 double scaling = 8.0;		//Used for resizing the images in py lev 3
 
 // detect_area used for finding face in a certain rect area of entire image
-
+bool faceConfigInit;
 int targetOffset;
 Rect detect_area(15/SCALE,15/SCALE,(960/(SCALE*SCALE))+15/SCALE,(1200/(SCALE*SCALE))+15/SCALE); //15 was 30
 Rect no_move_area, no_move_areaX;		//Face target area
@@ -691,6 +691,7 @@ void FaceTracker::DoStartCmd()
 {
 
 	EyelockLog(logger, TRACE, "DoStartCmd");
+	faceConfigInit = false;
 
 /*	double id = fconfig.getValue("FTracker.uintID",0);
 	double idm;
@@ -885,6 +886,7 @@ void FaceTracker::DoStartCmd()
 	search_eye_area = seacrhEyeArea(no_move_area);
 
 	system("touch /home/root/Eyelock.run");
+	faceConfigInit = true;
 }
 
 

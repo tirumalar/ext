@@ -89,12 +89,12 @@ void AudioDispatcher::process(MatchResult *msg)
 			EyelockLog(logger, DEBUG, "tamper state");
 			if (m_volumeTamper)
 			{
-				SetAlsaMasterVolume(m_volumeTamper);
+				//SetAlsaMasterVolume(m_volumeTamper);
 
 				// RunSystemCmd_Audio("killall -KILL aplay; aplay /home/root/tones/tamper1.wav ");
 
 				// sleep(2);
-				SetAlsaMasterVolume(m_volume);
+				//SetAlsaMasterVolume(m_volume);
 			}
 		}
 		else if (msg->getState()==PASSED)

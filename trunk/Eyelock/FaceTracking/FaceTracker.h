@@ -293,6 +293,7 @@ private:
 public:
 	bool bDebugSessions;
 	bool bShowFaceTracking;
+	//bool faceConfigInit;
 
 	// Mat Image;
 	Mat outImg;
