@@ -1,6 +1,6 @@
 #!/bin/bash -e
 echo HOMEDIR  $HOME
-export EYELOCK_WS_EXT="${HOME}/31Mayworkspace/trunk" 
+export EYELOCK_WS_EXT="${HOME}/workspace/trunk" 
 
 export PKG_PATH="${EYELOCK_WS_EXT}/linux/pkg"
 export TUT_INC=${PKG_PATH}/tut-190-trunk/include
