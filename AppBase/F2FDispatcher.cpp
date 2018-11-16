@@ -528,6 +528,11 @@ void F2FDispatcher::ProcessBoBAcsChange()
 		else if (!m_transTOC)
 			EyelockLog(logger, INFO, "Ready for Eyes");
 		EyelockEvent("System Ready for Authentication");
+		EyelockLog(logger, DEBUG, "Setting PIM LED white");
+		unsigned char regs[1];
+		regs[0] = 7;
+		BobSetData(regs,1);
+		BobSetCommand(BOB_COMMAND_SET_LED);
 		// testSend(); // Anita
 	}
 }
