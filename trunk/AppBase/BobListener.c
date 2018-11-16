@@ -113,11 +113,13 @@ pthread_mutex_t lock;
 int testB=0;
 void bob_thread(void *arg)
 {
+#if 0
 	FILE *flag = fopen("DisableBOB", "r"); // ugly workaround to disable BOB for running on PC
 	if (flag){
 		fclose(flag);
 		return;
 	}
+#endif
 
 	long int tid = syscall(SYS_gettid);
 	//EyelockLog(logger, INFO, "BoB => *** BobListener thread %ld ***",tid);
