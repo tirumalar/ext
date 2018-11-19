@@ -723,7 +723,7 @@ upgrade()
 	#	fi
 	#fi
 	
-	upgradeOim
+	#upgradeOim
 
 	# adding upgrade event to logs
 	NOW=$(date -u +"%Y-%m-%d %T, %Z")
