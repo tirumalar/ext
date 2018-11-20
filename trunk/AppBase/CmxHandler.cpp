@@ -2906,7 +2906,7 @@ void *leftCServer(void *arg)
         int pkgs_received = 0;
         int pkgs_missed = 0;
         int rx_idx=0;
-
+        static int NoSyncCntr=0;
         ImageQueueItem queueItem;
         // me->HandleReceiveImage(databuf, datalen);
 
@@ -2949,6 +2949,10 @@ void *leftCServer(void *arg)
 
         	            	if(!b_syncReceived && ((short *)databuf)[0] == 0x5555)
         	                {
+        	            		//if(NoSyncCntr > 0){
+        	            		//	printf("NoSyncCntr....%d\n", NoSyncCntr);
+        	            	//	}
+        	            		//NoSyncCntr = 0;
         	            		// unsigned long timems = ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
       	                		datalen = 0;
       	                	    	memcpy(databuf, &databuf[rx_idx+2], length-2);
@@ -2967,6 +2971,10 @@ void *leftCServer(void *arg)
         	                        rx_idx+=length;
         	                        datalen += length;
         	                        pckcnt++;
+        	                }else{
+        	                	// NoSyncCntr++;
+        	                	//printf("CMX: No sync\n");
+        	                	continue;
         	                }
         	                bytes_to_read-=  length;
         	                if(datalen >= IMAGE_SIZE-5)
@@ -2975,7 +2983,12 @@ void *leftCServer(void *arg)
 
         	                	// dont push if its a dummy buffer
         	                	if (databuf != dummy_buff)
+        	                	{
         	                		pFrameGrabber->PushProcessBuffer(queueItem);
+        	                		pkgs_missed=0;
+        	                		pkgs_received=0;
+        	                		pckcnt = 0;
+        	                	}
 
 
         	                    queueItem = pFrameGrabber->GetFreeBuffer();
@@ -2983,7 +2996,7 @@ void *leftCServer(void *arg)
         	                    if (!queueItem.m_ptr)
         	                    {
         	                    	pkgs_missed++;
-        	                    	printf("no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
+        	                    	// printf("CMX: no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
         	                    	databuf = dummy_buff;
         	                    }
         	                    else

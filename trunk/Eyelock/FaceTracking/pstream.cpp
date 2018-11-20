@@ -298,6 +298,9 @@ void *VideoStream::ThreadServer(void *arg)
                         rx_idx+=length;
                         datalen += length;
                         pckcnt++;
+                }else{
+                	//printf("FaceTracker: No sync\n");
+                	continue;
                 }
                 bytes_to_read-=  length;
                 if(datalen >= IMAGE_SIZE-5)
@@ -305,14 +308,19 @@ void *VideoStream::ThreadServer(void *arg)
                     //vs->HandleReceiveImage(databuf, datalen);
 
                 	if (databuf != dummy_buff)
+                	{
 						vs->PushProcessBuffer(queueItem);
+						pkgs_missed=0;
+						pkgs_received=0;
+						pckcnt = 0;
+                	}
 
 					queueItem = vs->GetFreeBuffer();
 					// if not put data into dummy buffer
 					if (!queueItem.m_ptr)
 					{
 						pkgs_missed++;
-						printf("no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
+						// printf("FaceTracker: no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
 						databuf = dummy_buff;
 					}
 					else
