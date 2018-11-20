@@ -514,6 +514,7 @@ void FaceTracker::MoveRelAngle(float a)
 
 	//printf("low and high::::::::::::::::::::: %i 	%i\n", low, high);
 	
+#if 1
 	if (abs(move) > smallMoveTo && angleRange)
 	{
 		sprintf(buff,"fx_rel(%d)",(int)move);
@@ -538,6 +539,16 @@ void FaceTracker::MoveRelAngle(float a)
 		}
 
 	}
+
+#else
+	if (abs(move) > smallMoveTo)	//&& diffEyedistance >= errSwitchThreshold
+	{
+		sprintf(buff,"fx_rel(%d)",(int)move);
+		EyelockLog(logger, DEBUG, "Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
+		port_com_send(buff);
+	}
+#endif
+
 }
 
 
