@@ -514,7 +514,8 @@ void FaceTracker::MoveRelAngle(float a)
 
 	//printf("low and high::::::::::::::::::::: %i 	%i\n", low, high);
 	
-#if 1
+
+#if 0
 	if (abs(move) > smallMoveTo && angleRange)
 	{
 		sprintf(buff,"fx_rel(%d)",(int)move);
