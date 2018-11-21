@@ -269,6 +269,9 @@ private:
 	int SelectWhichIrisCam(float eye_size, int cur_state);
 	char * StateText(int state);
 	void DoAgc(void);
+	void motorInIt();
+	float motorBottom;
+	float motorTop;
 
 	// Temperature
 	void motorMove();

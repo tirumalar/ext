@@ -490,6 +490,8 @@ void FaceTracker::SetFaceMode()
 
 void FaceTracker::MoveRelAngle(float a)
 {
+	FILE *file;
+	float pr_time;
 	EyelockLog(logger, TRACE, "MoveRelAngle");
 	// add a limit check to make sure we are not out of bounds
 	char buff[100];
@@ -497,6 +499,19 @@ void FaceTracker::MoveRelAngle(float a)
 	float current_a = read_angle();
 	EyelockLog(logger, DEBUG, "Current_a=%f ; next_a=%f\n",current_a,a);
 
+	file = fopen("motor.log", "at");
+	if (file)
+	{
+		fprintf(file, "Current angle = ,%03.3f, next Angle = ,%03.3f, ",current_a,a);
+		fclose(file);
+	}
+
+
+	if ((a<0)&&((current_a +a)<motorBottom))
+		 {
+		  a = -1*(motorBottom-current_a);
+		  printf("Bottom Hit---------- ---  %3.3f\n\n\n",a);
+		 }
 	move=-1*a*ANGLE_TO_STEPS;
 
 	EyelockLog(logger, DEBUG, "limiting small movements based on relative changes and face size changes:diffEyedistance %f", move);
@@ -546,9 +561,18 @@ void FaceTracker::MoveRelAngle(float a)
 	{
 		sprintf(buff,"fx_rel(%d)",(int)move);
 		EyelockLog(logger, DEBUG, "Sending by angle(current %3.3f dest %3.3f: %s\n",current_a,a,buff);
-		port_com_send(buff);
+		port_com_send(buff,&pr_time);
 	}
 #endif
+
+	usleep(50000);
+	current_a = read_angle();
+	file = fopen("motor.log", "at");
+	if (file)
+	{
+		fprintf(file, "After move angle = , %03.3f, Processing Time = ,%03.3f\n",current_a,pr_time);
+		fclose(file);
+	}
 
 }
 
@@ -697,6 +721,22 @@ cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 	return modRect;
 }
 
+#define NUMAVG 10
+#define MOTOR_BOTTOM_OFFSET 10
+void FaceTracker::motorInIt(){
+	char cmd[512];
+	sprintf(cmd,"fx_home");
+	port_com_send(cmd);
+
+	float sum = 0;
+	for(int i = 0; i < NUMAVG; i++){
+		sum+= read_angle();
+
+	}
+  motorBottom=sum/NUMAVG + MOTOR_BOTTOM_OFFSET;
+  printf("Motor Bottom-   %3.3f ------------\n\n\n",motorBottom);
+
+}
 	
 // Main DoStartCmd configuration for Eyelock matching
 void FaceTracker::DoStartCmd()
@@ -739,6 +779,15 @@ void FaceTracker::DoStartCmd()
 	sprintf(cmd,"fx_home");
 	port_com_send(cmd);
 	EyelockLog(logger, DEBUG, "port_com_send fx_home command is issued");
+
+
+	printf("Motor Int\n");
+	motorInIt();
+
+
+
+
+
 #ifdef NOOPTIMIZE
 	usleep(100000);
 #endif
@@ -749,8 +798,11 @@ void FaceTracker::DoStartCmd()
 	port_com_send(cmd);
 
 	//move to center position
+	printf("Moving to Center\n");
+	sprintf(cmd, "fx_abs(%i)",CENTER_POS);
 	EyelockLog(logger, DEBUG, "Moving to center position");
-	MoveTo(CENTER_POS);
+	port_com_send(cmd);
+	//MoveTo(CENTER_POS);
 	read_angle();		//read current angle
 
 	EyelockLog(logger, DEBUG, "Configuring face LEDs");
@@ -1865,8 +1917,9 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	currnet_mode = -1;
 	// handle switching state
 	//if (last_system_state != system_state)
-	if(foundEyes)
+	// if(foundEyes)
 	{
+#if 0
 		EyelockLog(logger, DEBUG, "FaceFrameNo:%d STATE:%8s  NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",FaceFrameIndex, StateText(system_state),
 						noFaceCounter,
 					foundEyes?'E':'.',
@@ -1880,6 +1933,23 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							agc_set_gain,
 							g_MatchState
 							);
+#else
+		printf("FaceFrameNo:%d STATE:%8s  NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",FaceFrameIndex, StateText(system_state),
+								noFaceCounter,
+							foundEyes?'E':'.',
+							eyesInDetect?'D':'.',
+							eyesInViewOfIriscam?'V':'.',
+									eye_size,
+									eyes.x,
+									eyes.y,
+									last_angle_move,
+									process_time,
+									agc_set_gain,
+									g_MatchState
+									);
+
+#endif
+
 	}
 		if (g_MatchState)
 			g_MatchState=0;
