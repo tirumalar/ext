@@ -30,8 +30,8 @@ using namespace std;
 
 
 class extFocus{
-	bool quit = false;
-	char text[512], textI1[512], textI2[512], textI3[512], textI4[512], textI5[512];
+
+	char text[512], textI1[512], textI2[512], textI3[512], textI4[512], textI5[512], textI6[512], textI7[512];
 	int numCount = 0;
 
 	struct focusMatric{
@@ -59,9 +59,10 @@ class extFocus{
 	preProcessingImgF preProcessingImg_focus(Mat &cropIm);
 	focusMatric sobelBasedFocusMeasure(Mat &cropIm);
 	focusMatric laplacianBasedFocusMeasure(Mat &grayImg);
-
+	Mat rotate90(Mat src);
 
 public:
+	bool quit = false;
 	void DoStartCmd_focus();
 	bool camControlFocus(Mat &img,int camID);
 	bool focusDebug = false;
