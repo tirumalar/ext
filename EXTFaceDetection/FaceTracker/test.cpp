@@ -208,7 +208,7 @@ Mat outImgLast, outImg1, outImg1s;		//Used in MeasureSnr function
 
 //Used as increasing exposure time in brightnessAdjust function,
 //mainly used in Camera to Camera Calibration
-int agc_val_cal=3;
+int agc_val_cal= 1;
 int step;
 int startPoint;
 int thresholdVal = 30;
@@ -1064,9 +1064,9 @@ void DoStartCmd_CamCal(){
 	int MainIrisCamDataPedestal = fconfig.getValue("FTracker.calibMainIrisCamDataPedestal",0);
 
 
-	//Homing
+/*	//Homing
 	EyelockLog(logger, DEBUG, "Re Homing");
-	port_com_send("fx_home()\n");
+	port_com_send("fx_home\n");*/
 
 #ifdef NOOPTIMIZE
 	usleep(100000);
@@ -1094,8 +1094,7 @@ void DoStartCmd_CamCal(){
 
 
 	//Setting up cap current
-	port_com_send("psoc_write(9,60)");	// charge cap for max current 60 < range < 95
-
+	port_com_send("psoc_write(9,80)");	// charge cap for max current 60 < range < 95
 	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
 	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
 
@@ -1107,7 +1106,7 @@ void DoStartCmd_CamCal(){
 	EyelockLog(logger, DEBUG, "faceCamExposureTime:%d faceCamDataPedestal:%d faceCamDigitalGain:%d", faceCamExposureTime, faceCamDataPedestal, faceCamDigitalGain);
 	port_com_send(cmd);
 	//port_com_send("wcr(0x04,0x3012,2) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0x30)");
-
+	//wcr(0x04,0x3012,6) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0x50)
 
 	//AUX cameras configuration
 	EyelockLog(logger, DEBUG, "Configuring AUX Iris Cameras");
@@ -1133,13 +1132,32 @@ void DoStartCmd_CamCal(){
 	port_com_send("wcr(0x1f,0x302e,2) | wcr(0x1f,0x3030,44) | wcr(0x1f,0x302c,2) | wcr(0x1f,0x302a,6)");
 	cvWaitKey(10);								//Wait for 10 msec
 
+/*
 	//Turn on analog gain
 	port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
 	port_com_send("wcr(0x4,0x30b0,0x80");		//Only face camera gain is x90
 
 	port_com_send("wcr(0x1f,0x301a,0x1998)"); // ilya added to leave the pll on always
+*/
 
 
+
+
+
+	//Turn on analog gain
+	sprintf(cmd,"wcr(0x1b,0x30b0,%i)\n",((1&0x3)<<4) | 0X80);
+	//EyelockLog(logger, DEBUG, "Iris analog gain: %d", (((1&0x3)<<4) | 0X80));
+	port_com_send(cmd);
+
+	sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((1&0x3)<<4) | 0X80);
+	//EyelockLog(logger, DEBUG, "Face analog gain: %d", (((1&0x3)<<4) | 0X80));
+	port_com_send(cmd);
+	//port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
+	//port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
+
+
+	//Leave the PLL always ON
+	port_com_send("wcr(0x1f,0x301a,0x1998)");
 }
 
 
@@ -3212,16 +3230,23 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam, bool calDebug){
 		//cv::imshow("streaming without marker", imgCopy);
 
 		if (markers.size() < 2){
+
 			printf("%i camera detected %i markers!\n", portNum, markers.size());
 
 			if(calDebug){
-				cv::imshow("No or only 1 marker detected", imgCopy);
-				c=cvWaitKey(200);
-				if (c=='q')
+				sprintf(buffer, "%i have un-focus Images and only %i markers detected", portNum, markers.size());
+				//cv::imshow("Binary No or only 1 marker detected", imgCopy);
+				cv::imshow(buffer, imgCopy1);
+				cv::moveWindow(buffer, 20, 20);
+				c=cvWaitKey();
+				if (c=='q'){
 					printf("Continue!\n");
-				//sprintf(buffer, "No_marker_detect%i.png", portNum);
-				//imwrite(buffer, imgCopy);
+					destroyWindow(buffer);
+				}
+
 			}
+
+
 			return markers;
 			//exit(EXIT_FAILURE);
 		}
@@ -3247,14 +3272,52 @@ std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam, bool calDebug){
 
 		//cout << "Inside marker detect calDebug :::: " << calDebug << endl;
 		if(calDebug){
-			char cmd[500];
-			cv::imshow("<<< Detecting Markers >>> ", imgCopy1);
-			sprintf(cmd,"detectedMarkerCam%i.bmp", vs->cam_id);
+			char cmd[500], cmd1[500];
+			//printf("Cam ::: %i\n", cam);
+			if (cam == 4){
+				sprintf(cmd1, "%i Markers detected in Face camera", markers.size());
+				imshow(cmd1, imgCopy1);
+				cv::moveWindow(cmd1,20,20);
+
+				//cv::imshow("<<< Detecting Markers >>> ", imgCopy1);
+				sprintf(cmd,"/home/root/data/calibration/detectedMarkerCam%i.bmp", vs->cam_id);
+				cv::imwrite(cmd,imgCopy1);
+				printf(cmd);
+				c=cvWaitKey();
+				if (c=='q'){
+					printf("Continue!\n");
+					destroyWindow(cmd1);
+				}
+			}
+			else{
+				sprintf(cmd1, "%i Markers detected in %s %s camera", markers.size(), cam & 0x01 ? "Left":"Right",cam & 0x80 ?  "AUX":"MAIN");
+				imshow(cmd1, imgCopy1);
+				cv::moveWindow(cmd1,20,20);
+
+				//cv::imshow("<<< Detecting Markers >>> ", imgCopy1);
+				sprintf(cmd,"/home/root/data/calibration/detectedMarkerCam%i.bmp", vs->cam_id);
+				cv::imwrite(cmd,imgCopy1);
+				printf(cmd);
+				c=cvWaitKey();
+				if (c=='q'){
+					printf("Continue!\n");
+					destroyWindow(cmd1);
+				}
+			}
+/*			sprintf(cmd1, "%i number of Markers detected in %s %s camera", markers.size(), cam & 0x01 ? "Left":"Right",cam & 0x80 ?  "AUX":"MAIN");
+			imshow(cmd1, imgCopy1);
+			cv::moveWindow(cmd1,20,20);
+
+			//cv::imshow("<<< Detecting Markers >>> ", imgCopy1);
+			sprintf(cmd,"/home/root/data/calibration/detectedMarkerCam%i.bmp", vs->cam_id);
 			cv::imwrite(cmd,imgCopy1);
 			printf(cmd);
 			c=cvWaitKey();
-/*			if (c=='q')
-				printf("Continue!\n");*/
+			if (c=='q'){
+				printf("Continue!\n");
+				destroyWindow(cmd1);
+			}*/
+
 			//imwrite(buffer, imgCopy);
 		}
 
@@ -3533,7 +3596,7 @@ void brightnessAdjust(Mat outImg, int cam, bool calDebug){
 
 	//cout << "Cam ID:::::" << vs->cam_id << endl;
 	//int agc_val_cal=5;
-	char buff[512];
+	char buff[512], buffX[512], v;
 	int exposure_camID;
 
 
@@ -3543,19 +3606,34 @@ void brightnessAdjust(Mat outImg, int cam, bool calDebug){
 
 	float bThreshold;
 	if (cam == 4){
-		agc_val_cal = 3;
-		bThreshold = 10.00;
+		agc_val_cal = 1;
+		bThreshold = 9.00;
 		exposure_camID = 4;
 	}
 	else if (cam == 129 || cam == 130){
+		agc_val_cal = 1;
 		bThreshold = 25.00;
 		exposure_camID = 3;
 	}
 	else if(cam == 1 || cam == 2){
-		bThreshold = 15.00;
+		agc_val_cal = 1;
+		//bThreshold = 15.00;
+		bThreshold = 12.00;
 		exposure_camID = 24;
 	}
 
+	if (calDebug){
+		if (cam == 4){
+			sprintf(buffX, "Adjusting Brightness of Face camera");
+			imshow(buffX, outImg);
+			cv::moveWindow(buffX, 20, 20);
+		}
+		else{
+			sprintf(buffX, "Adjusting Brightness of %s %s camera", cam & 0x01 ? "Left":"Right",cam & 0x80 ?  "AUX":"MAIN");
+			imshow(buffX, outImg);
+			cv::moveWindow(buffX, 20, 20);
+		}
+	}
 
 	while(!(p >= bThreshold)){
 		agc_val_cal++;
@@ -3573,13 +3651,20 @@ void brightnessAdjust(Mat outImg, int cam, bool calDebug){
 		//printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Percentile::: %3.3f Agc value = %d\n",p,agc_val_cal);
 
 		if (calDebug){
-			imshow("<<< Adjusting Brightness >>>", outImg);
-			cvWaitKey();
+			//sprintf(buffX, "Adjusting Brightness of %s %s camera", cam & 0x01 ? "Left":"Right",cam & 0x80 ?  "AUX":"MAIN");
+			imshow(buffX, outImg);
+			//cv::moveWindow(buffX, 20, 20);
+			//imshow("Adjusting Brightness", outImg);
+			v = cvWaitKey();
+			if(v == 'q')
+				continue;
+
 		}
 
 		if(agc_val_cal > 26)
 		{
-			sprintf(buff,"wcr(%d,0x3012,%d)",cam,agc_val_cal + 4);
+			sprintf(buff,"wcr(%d,0x3012,%d)",exposure_camID,agc_val_cal + 1);
+			//sprintf(buff,"wcr(%d,0x3012,%d)",cam,agc_val_cal + 4);
 			port_com_send(buff);
 			//printf("Increase brightness");
 			break;
@@ -3588,6 +3673,9 @@ void brightnessAdjust(Mat outImg, int cam, bool calDebug){
 
 	}
 
+	if (calDebug){
+		destroyWindow(buffX);
+	}
 	//destroyWindow("<<< Adjusting Brightness >>>");
 	printf("Brightness adjustment is completed!\n");
 
@@ -3611,14 +3699,16 @@ bool CalCam(bool calDebug){
 	vs = new VideoStream(8193);
 	vs->flush();
 	vs->get(&w,&h,(char *)outImg.data);
-
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
 
 	//adjusting brightness
 	brightnessAdjust(outImg,vs->cam_id, calDebug);
 	printf("Detecting marker of aux 8193 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisAuxRight = gridBooardMarker(outImg,0, calDebug);
+	std::vector<aruco::Marker> markerIrisAuxRight = gridBooardMarker(outImg,vs->cam_id, calDebug);
 
 	//If detected markers less then 2
 	if (markerIrisAuxRight.size() < 2){
@@ -3637,13 +3727,16 @@ bool CalCam(bool calDebug){
 	vs = new VideoStream(8192);
 	vs->flush();
 	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
 
 	//adjusting brightness
 	brightnessAdjust(outImg,vs->cam_id,calDebug);
 	printf("Detecting marker of aux 8192 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisAuxleft = gridBooardMarker(outImg,0, calDebug);
+	std::vector<aruco::Marker> markerIrisAuxleft = gridBooardMarker(outImg,vs->cam_id, calDebug);
 	if (markerIrisAuxleft.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
@@ -3663,13 +3756,16 @@ bool CalCam(bool calDebug){
 	vs = new VideoStream(8193);
 	vs->flush();
 	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
 
 	//adjusting brightness
 	brightnessAdjust(outImg,vs->cam_id,calDebug);
 	printf("Detecting marker of main 8193 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisMainRight = gridBooardMarker(outImg,0, calDebug);
+	std::vector<aruco::Marker> markerIrisMainRight = gridBooardMarker(outImg,vs->cam_id, calDebug);
 	if (markerIrisMainRight.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
@@ -3683,13 +3779,16 @@ bool CalCam(bool calDebug){
 	vs = new VideoStream(8192);
 	vs->flush();
 	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
 
 	//adjusting brightness
 	brightnessAdjust(outImg,vs->cam_id,calDebug);
 	printf("Detecting marker of main 8192 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerIrisMainleft = gridBooardMarker(outImg,0, calDebug);
+	std::vector<aruco::Marker> markerIrisMainleft = gridBooardMarker(outImg,vs->cam_id, calDebug);
 	if (markerIrisMainleft.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
@@ -3704,13 +3803,16 @@ bool CalCam(bool calDebug){
 	vs = new VideoStream(8194);
 	vs->flush();
 	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
 
 	//adjusting brightness
 	brightnessAdjust(outImg,vs->cam_id,calDebug);
 	printf("Detecting marker of Face 8194 cam\n");
 
 	//Detecting markers
-	std::vector<aruco::Marker> markerFace = gridBooardMarker(outImg,0, calDebug);
+	std::vector<aruco::Marker> markerFace = gridBooardMarker(outImg,vs->cam_id, calDebug);
 	if (markerFace.size() < 2){
 		delete (vs);
 		printf("Not enough (less then 2 ) markers detected to Run calibration!\n ");
@@ -3801,7 +3903,7 @@ bool CalCam(bool calDebug){
 	cv::Point pt7(x_offset, y_offset);
 	cv::Point pt8(xMax_offset, yMax_offset);
 
-
+	char c;
 
 
 
@@ -3810,9 +3912,12 @@ bool CalCam(bool calDebug){
 		cv::rectangle(smallImg, pt3, pt4, cv::Scalar(255, 255, 255), 3);
 		cv::rectangle(smallImg, pt5, pt6, cv::Scalar(0, 255, 0), 3);
 		cv::rectangle(smallImg, pt7, pt8, cv::Scalar(0, 255, 0), 3);
-		imwrite("MarkerRucoDetectofLeftRightAUX_Main.png", smallImg);
-		imshow("Each IrisCam projected in Face cam",smallImg);
+		imwrite("/home/root/data/calibration/MarkerRucoDetectofLeftRightAUX_Main.bmp", smallImg);
+		sprintf(buff, "Each IrisCam projected in Face cam");
+		imshow(buff,smallImg);
+		cv::moveWindow(buff,20,20);
 		cvWaitKey();
+		destroyWindow(buff);
 	}
 
 	delete (vs);
@@ -3973,9 +4078,12 @@ bool CalCam(bool calDebug){
 	//cv::rectangle(smallImgX, mainRect,cv::Scalar( 0, 255, 0 ), 4);
 	if (calDebug){
 		cv::rectangle(smallImgX, auxRect,cv::Scalar( 255, 255, 255 ), 4);
-		imwrite("MarkerRucoDetectofLeftRightAUX_Main_testRect.png", smallImgX);
-		imshow("Projected Target in Face cam", smallImgX);
+		imwrite("/home/root/data/calibration/MarkerRucoDetectofLeftRightAUX_Main_testRect.bmp", smallImgX);
+		sprintf(buff, "Projected Target in Face cam");
+		imshow(buff, smallImgX);
+		cv::moveWindow(buff, 20, 20);
 		cvWaitKey();
+		destroyWindow(buff);
 
 	}
 
@@ -4014,15 +4122,19 @@ void runCalCam(bool calDebug){
 
 	fconfig.writeIni("/home/root/data/calibration/faceConfig.ini");*/
 
-
+/*	//Active this while loop if the calibration needs to run by moving motors
 	while(check){
 		//printf(">>>>>>>>>>>>>>>>>>>>>>>>>>Motor is moving to %i and conducting calibration\n", newPos);
+
 		sprintf(cmd, "fx_home()\n");
+		port_com_send(cmd);
 		usleep(10000);
 		sprintf(cmd, "fx_abs(%i)\n", newPos);
 		port_com_send(cmd);
 		//MoveTo(newPos);
 		usleep(10000);
+
+
 		//printf(">>>>>>>>>>>>>>>>>>>>>>New Pos ::: %i, step ::: %i, Max Pos ::: %i   \n",newPos, step, MAX_POS);
 		//printf(cmd);
 		//printf("------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
@@ -4033,6 +4145,24 @@ void runCalCam(bool calDebug){
 		if (newPos > MAX_POS){
 			printf("Fail Camera to Camera geometric calibration process due to no good images!!! \n");
 			check = false;
+		}
+	}*/
+
+	int numOfAttempt = 0;
+
+	while(check){
+
+		check = CalCam(calDebug);	// Rum calibration, return false if fail
+		numOfAttempt++;
+
+		printf("Center The motor so That it is facing the Target\n");
+		//If Motor reach to max position and failt to calibrate
+		if (numOfAttempt > 5){
+
+			printf("Fail Camera to Camera geometric calibration process due to unfocus Images!!! \n");
+
+			check = false;
+
 		}
 	}
 
@@ -4195,6 +4325,7 @@ void RunCamFocus(){
 
 	bool quit = false;
 
+	extFocus *fs;
 	fs = new extFocus();
 
 	char cmd[512];
@@ -4202,23 +4333,30 @@ void RunCamFocus(){
 	//Set AUX cameras
 	sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY);
 	port_com_send(cmd);
-
+	usleep(100);
 
 	//Fetching images from Face camera
 	int leftCam = 8192;
 	int rightCam = 8193;
+	int faceCam = 8194;
 
 	VideoStream *vs;
 	vs = new VideoStream(leftCam);
 	vs->flush();
+	usleep(100);
 	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+
+	printf("Start Left Iris Aux Camera \n");
 
 	while(1){
 		vs->get(&w,&h,(char *)outImg.data);
 		quit = fs->camControlFocus(outImg, vs->cam_id);
+		//printf("quit:::::: %i\n", quit);
 
-		if(quit)
+		if(fs->quit)
 			break;
 	}
 	delete(vs);
@@ -4229,15 +4367,20 @@ void RunCamFocus(){
 
 	vs = new VideoStream(rightCam);
 	vs->flush();
+	usleep(100);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
 	quit = false;
 
+	printf("Start Right Iris Aux Camera \n");
 	while(1){
 		vs->get(&w,&h,(char *)outImg.data);
 		quit = fs->camControlFocus(outImg, vs->cam_id);
+		//printf("quit:::::: %i\n", quit);
 
-		if(quit)
+		if(fs->quit)
 			break;
 	}
 	delete(vs);
@@ -4246,20 +4389,26 @@ void RunCamFocus(){
 	//Set Main cameras
 	sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY);
 	port_com_send(cmd);
-	usleep(1000);
+	usleep(100);
 
 
 	fs = new extFocus();
 	vs = new VideoStream(leftCam);
 	vs->flush();
+	usleep(10000);
 	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	quit = false;
 
+	printf("Start left Iris Main Camera \n");
 	while(1){
 		vs->get(&w,&h,(char *)outImg.data);
 		quit = fs->camControlFocus(outImg, vs->cam_id);
+		//printf("quit:::::: %i\n", quit);
 
-		if(quit)
+		if(fs->quit)
 			break;
 	}
 	delete(vs);
@@ -4269,20 +4418,52 @@ void RunCamFocus(){
 	fs = new extFocus();
 	vs = new VideoStream(rightCam);
 	vs->flush();
+	usleep(100);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
 	quit = false;
 
+	printf("Start right Iris Main Camera \n");
 	while(1){
 		vs->get(&w,&h,(char *)outImg.data);
 		quit = fs->camControlFocus(outImg, vs->cam_id);
+		//printf("quit:::::: %i\n", quit);
 
-		if(quit)
+		if(fs->quit)
 			break;
 	}
 	delete(vs);
 	delete(fs);
 
+
+
+	fs = new extFocus();
+	vs = new VideoStream(8194);
+	vs->flush();
+	usleep(100);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data);
+	quit = false;
+
+	printf("Start face Camera \n");
+	while(1){
+		vs->get(&w,&h,(char *)outImg.data);
+		quit = fs->camControlFocus(outImg, faceCam);
+		//printf("quit:::::: %i\n", quit);
+
+		if(fs->quit)
+			break;
+	}
+	delete(vs);
+	delete(fs);
+
+
+
+	return 0;
 }
 
 
@@ -4503,6 +4684,14 @@ int main(int argc, char **argv)
 		temp_mode=1;
 	}
 #endif
+	//Camera to camera geometric calibration
+	if (strcmp(argv[1],"calcam")==0)
+	{
+		EyelockLog(logger, DEBUG, "calcam mode is running");
+		//run_mode =1;
+		cal_cam_mode=1;
+	}
+
 	if (strcmp(argv[1],"focus")==0)
 	{
 		focusMode =1;
