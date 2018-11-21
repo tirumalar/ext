@@ -112,6 +112,9 @@ void port_com_send(char *cmd_in)
 		fclose(file);
 	}
 
+	if (pr_time)
+		*pr_time=(float) (clock() - t) / CLOCKS_PER_SEC;
+
 	pthread_mutex_unlock(&lock);
 }
 
