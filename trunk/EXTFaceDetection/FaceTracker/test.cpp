@@ -4523,7 +4523,7 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	fs = new extFocus();
+
 	if(focusMode){
 		portcom_start();
 
@@ -4547,6 +4547,32 @@ int main(int argc, char **argv)
 		return 0;
 
 	}
+
+
+	fs = new extFocus();
+	if(focusMode){
+		portcom_start();
+
+		fs->DoStartCmd_focus();
+		delete(fs);
+		RunCamFocus();
+
+		return 0;
+
+	}
+
+
+/*	//Set environment for camera to camera calibration
+	if (cal_cam_mode){
+		portcom_start();
+		DoStartCmd_CamCal();
+
+#ifdef CAMERACALIBERATION_ARUCO
+		runCalCam(calDebug);
+#endif
+		return 0;
+
+	}*/
 
 	//Set environment for temp Test
 	if (temp_mode){

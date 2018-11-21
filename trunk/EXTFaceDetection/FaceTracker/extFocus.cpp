@@ -34,6 +34,8 @@ using namespace std;
 //
 void extFocus::DoStartCmd_focus(){
 
+	printf("Setting up Device Parameters\n");
+
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 
 	int allLEDhighVoltEnable = fconfig.getValue("FTracker.allLEDhighVoltEnable",1);
@@ -52,7 +54,8 @@ void extFocus::DoStartCmd_focus(){
 	int MainIrisCamDigitalGain = fconfig.getValue("FTracker.MainIrisCamDigitalGain",128);
 	int MainIrisCamDataPedestal = fconfig.getValue("FTracker.MainIrisCamDataPedestal",0);
 
-	int moveMotor = fconfig.getValue("FTracker.focusMoveCmd",140);
+	int moveMotor = fconfig.getValue("FTracker.focusMoveCmd",140);		//add focusMoveCmd in faceConfig.ini
+	//printf("moveMotor:::: %i\n", moveMotor);
 
 	char cmd[512];
 
@@ -60,28 +63,79 @@ void extFocus::DoStartCmd_focus(){
 	sprintf(cmd,"set_cam_mode(0x0,%d)",100);		//Turn on Alternate cameras
 	port_com_send(cmd);
 
+
+/*	//Homing
+	printf("Re Homing\n");
+	sprintf(cmd,"fx_home");
+	port_com_send(cmd);
+
 	//Move to pos
 	sprintf(cmd,"fx_home | fx_abs(%i)",moveMotor);
-	port_com_send(cmd);
+	port_com_send(cmd);*/
+
 
 	//Parsing Face LED commands - same as DoStartCmd()
 	//sprintf(cmd, "psoc_write(2,%i) | psoc_write(1,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)| psoc_write(6,%i)\n",faceLEDVolt, allLEDhighVoltEnable, faceLEDcurrentSet, faceLEDtrigger, faceLEDEnable, faceLEDmaxTime);
-	sprintf(cmd,"psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,40) | psoc_write(4,4) | psoc_write(3,2)| psoc_write(6,4)");
+	sprintf(cmd,"psoc_write(2,30) | psoc_write(1,1) | psoc_write(5,40) | psoc_write(4,4) | psoc_write(3,3)| psoc_write(6,4)");
 	port_com_send(cmd);
 
+	//New Changes
+	sprintf(cmd, "psoc_write(9,%i)\n", 80);
+	port_com_send(cmd);	// charge cap for max current 60 < range < 95
+
+	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
+	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
+
 	//Parsing AUX cam settings commands - same as DoStartCmd()
-	sprintf(cmd,"wcr(0x03,0x305e,15)|wcr(3,0x3012,30)");
+	sprintf(cmd,"wcr(0x03,0x305e,12)|wcr(0x03,0x3012,12)");
 	//sprintf(cmd, "wcr(0x03,0x3012,%i) | wcr(0x03,0x301e,%i) | wcr(0x03,0x305e,%i)\n",AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
 	port_com_send(cmd);
+	printf(cmd);
 	//printf("wcr(0x03,0x3012,%i) | wcr(0x03,0x301e,%i) | wcr(0x03,0x305e,%i)\n",AuxIrisCamExposureTime, AuxIrisCamDataPedestal, AuxIrisCamDigitalGain);
 
 	//Parsing Main cam settings commands - same as DoStartCmd()
-	//sprintf(cmd,"wcr(0x03,0x305e,90)|wcr(3,0x3012,24)");
-	sprintf(cmd, "wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
+	sprintf(cmd,"wcr(0x18,0x305e,16)|wcr(0x18,0x3012,8)");
+	//sprintf(cmd, "wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
 	port_com_send(cmd);
-	printf("wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
+	printf(cmd);
+
+
+	//Parsing Face cam settings commands - same as DoStartCmd()
+	sprintf(cmd,"wcr(0x04,0x305e,25)|wcr(0x04,0x3012,6)");
+	//sprintf(cmd, "wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
+	port_com_send(cmd);
+	printf(cmd);
+
+
+	//printf("wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n",MainIrisCamExposureTime, MainIrisCamDataPedestal, MainIrisCamDigitalGain);
+
+	//following process will activate PLL for all cameras
+	sprintf(cmd,"set_cam_mode(0x00,%d)",10);	//turn off the cameras before changing PLL
+	cvWaitKey(100);								//Wait for 100 msec
+	port_com_send("wcr(0x1f,0x302e,2) | wcr(0x1f,0x3030,44) | wcr(0x1f,0x302c,2) | wcr(0x1f,0x302a,6)");
+	cvWaitKey(10);								//Wait for 10 msec
+
+	//Turn on analog gain
+	sprintf(cmd,"wcr(0x1b,0x30b0,%i)\n",((1 &0x3)<<4) | 0X80);
+	port_com_send(cmd);
+
+	//Leave the PLL always ON
+	port_com_send("wcr(0x1f,0x301a,0x1998)");
+
+	printf("Finish setting up Param \n");
 
 }
+
+
+
+Mat extFocus::rotate90(Mat src){
+	//EyelockLog(logger, TRACE, "rotation90");
+	Mat dst;
+	transpose(src, dst);
+	flip(dst,dst,0);
+	return dst;
+}
+
 
 
 extFocus::preProcessingImgF extFocus::preProcessingImg_focus(Mat &cropIm){
@@ -104,7 +158,7 @@ extFocus::preProcessingImgF extFocus::preProcessingImg_focus(Mat &cropIm){
 
 
 	//bilateralFilter works best as it remove spatial noise by preserving the edges
-	int b_kernal =3;
+	int b_kernal =2;
 	bilateralFilter(cropImg,blurImg, b_kernal, b_kernal*2, b_kernal/2, BORDER_DEFAULT);
 
 
@@ -241,6 +295,28 @@ void extFocus::BrightnessAndContrastAuto(const cv::Mat &src, cv::Mat &dst, float
 
 
 extFocus::focusMatric extFocus::sobelBasedFocusMeasure(Mat &cropIm){
+
+	//Later use for detect high exposure images
+/*	double minVal, maxVal;
+	Point minLoc, maxLoc;
+	cv::minMaxLoc(cropIm, &minVal, &maxVal, &minLoc, &maxLoc);
+
+
+
+	Mat bw;
+	threshold( cropIm, bw, 0, 255,THRESH_BINARY);
+	Mat nonZeroPix;
+	cv::findNonZero(bw, nonZeroPix);
+
+	int zeroPix = int(bw.rows * bw.cols) - int(nonZeroPix.rows * nonZeroPix.cols);
+
+	if (minVal <= 2 || maxVal >= 230){
+		printf("Min::: %i		Max::: %i\n", int(minVal),int(maxVal));
+
+		printf("Zero Pix Number::: %i	%i\n", zeroPix);
+
+	}*/
+
 	int num = 0;
 	//adjust brightness with other methods
 	//cropIm.copyTo(cropImg);
@@ -347,6 +423,7 @@ extFocus::focusMatric extFocus::sobelBasedFocusMeasure(Mat &cropIm){
 	//statistic of texture analysis----> mean, std(sigma) and vaience(sigma^2)
 	cv::Scalar mean,sigma;
 	cv::meanStdDev(fm,mean,sigma);
+
 
 	return {float(mean.val[0]),float(sigma.val[0])};
 }
@@ -574,7 +651,7 @@ bool extFocus::camControlFocus(Mat &img,int camID){
 	//vs->get(&w,&h,(char *)img.data);
 
 	if (camID & 0x80 ?  1:0){
-		x1 = 5, y1 = 50, x2 = 1010, y2 = 800;
+		x1 = 10, y1 = 50, x2 = 1020, y2 = 800;
 		resultFocus = measureFocus(img, camID, width, height, x1, y1, x2, y2);
 	}
 	else{
@@ -583,6 +660,120 @@ bool extFocus::camControlFocus(Mat &img,int camID){
 	}
 	//resultFocus = measureFocus(img, vs->cam_id, width, height, x1, y1, x2, y2);
 
+	if(camID == 8194){
+		x1 = 450, y1 = 540, x2 = 540, y2 = 620;
+		Mat rotMat = rotate90(img);
+		//printf("Successfully rotate image\n");
+		width = 65;
+		height = 45;
+		resultFocus = measureFocus(rotMat, camID, width, height, x1, y1, x2, y2);
+
+
+		//New Addition
+		//The problem of taking difference is when image is washed out it still the diff as zero and when
+		// the froat and rare target is focus the number is close to 10
+		float FourCorAvg = (resultFocus.mean1 + resultFocus.mean2 + resultFocus.mean3 + resultFocus.mean4) / 4.0;
+		//int diff = abs(((FourCorAvg - resultFocus.mean5) + 0.0005) * 100);
+
+		// If we multiply the avg of rare target and front target val , it works for all scenarios
+		// the val varies from 0 - 10,000 in ideal scenarios
+		//Howver, our target val is close or above 6500
+		//int scaleFront = (resultFocus.mean5 + 0.0005) * 100;
+		int scaleRare = (FourCorAvg + 0.0005) * 100;
+		//int mult = scaleFront * scaleRare;
+
+	/*	printf("FourCorAvg ::::: %3.3f\n", FourCorAvg);
+		printf("FourCorAvg ::::: %3.3f\n", resultFocus.mean5);
+		printf("diff ::::: %i\n", diff);
+		printf("Mult ::::: %i\n", mult);*/
+
+		//for sobel
+		sprintf(extFocus::textI1,"focus: %0.0f", float((resultFocus.mean1+0.0005) * 100));		//scaling data from 0 - 100
+		sprintf(extFocus::textI2,"focus: %0.0f", float((resultFocus.mean2+0.0005) * 100));		//scaling data from 0 - 100
+		sprintf(extFocus::textI3,"focus: %0.0f", float((resultFocus.mean3+0.0005) * 100));		//scaling data from 0 - 100
+		sprintf(extFocus::textI4,"focus: %0.0f", float((resultFocus.mean4+0.0005) * 100));		//scaling data from 0 - 100
+		sprintf(extFocus::textI5,"focus: %0.0f", float((resultFocus.mean5+0.0005) * 100));		//scaling data from 0 - 100
+		sprintf(extFocus::textI6,"Target Focus: %i", scaleRare);		//scaling data from 0 - 100
+		//sprintf(extFocus::textI7,"Mult: %i", mult);		//scaling data from 0 - 10,000
+
+		//for laplacian
+		//sprintf(textI1,"focus val mean: %0.2f    Var:: %0.2f ", float((matric.mean+0.005) * 100), float(((matric.sigma*matric.sigma) + 0.005) * 1000));
+
+
+		sprintf(extFocus::text,"Focusing %s Camera ","Face");
+		cv::namedWindow(extFocus::text);
+
+		//Uncomment the following two lines if brightness change effects need to check
+		//cv::imwrite("imgCheck.bmp",resultFocus.brightAdjImg);
+		//cv::imshow("imgCheck.bmp",resultFocus.brightAdjImg);
+
+		cv::rectangle(rotMat, resultFocus.ROI1, Scalar(255, 0, 0), 2, 0);
+		cv::rectangle(rotMat, resultFocus.ROI2, Scalar(255, 0, 0), 2, 0);
+		cv::rectangle(rotMat, resultFocus.ROI3, Scalar(255, 0, 0), 2, 0);
+		cv::rectangle(rotMat, resultFocus.ROI4, Scalar(255, 0, 0), 2, 0);
+		//cv::rectangle(rotMat, resultFocus.ROI5, Scalar(255, 0, 0), 1, 0);
+
+		cv::putText(rotMat,textI1,cvPoint(resultFocus.ROI1.x - 180,resultFocus.ROI1.y - 0), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
+		cv::putText(rotMat,textI2,cvPoint(resultFocus.ROI2.x + 140,resultFocus.ROI2.y - 0), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
+		cv::putText(rotMat,textI3,cvPoint(resultFocus.ROI3.x - 180,resultFocus.ROI3.y - 0), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
+		cv::putText(rotMat,textI4,cvPoint(resultFocus.ROI4.x + 140,resultFocus.ROI4.y - 0), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
+		//cv::putText(rotMat,textI5,cvPoint(resultFocus.ROI5.x - 50,resultFocus.ROI5.y - 10), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
+		cv::putText(rotMat,textI6,cvPoint(img.rows/2.0, 50), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
+		//cv::putText(rotMat,textI7,cvPoint(img.rows/2.0, 100), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
+
+		cv::imshow(extFocus::text,rotMat);
+		cv::moveWindow(extFocus::text, 20, 20);
+
+		//for continuous streaming
+		key = cv::waitKey(1);
+		//For quit streaming
+		if (key=='q'){
+			char fName[50];
+			sprintf(fName,"/home/root/data/calibration/%s_%d.bmp","FaceCam", numCount++);
+			cv::imwrite(fName,rotMat);
+			printf("saved %s\n",fName);
+			numCount = 0;
+			quit = true;
+			destroyWindow(extFocus::text);
+
+			return quit;
+			//break;
+		}
+		//For saving images while streaming individual cameras
+		if(key=='s')
+		{
+			char fName[50];
+			sprintf(fName,"%s_%s_%d.bmp",camID & 0x01 ? "Left":"Right",camID & 0x80 ?  "AUX":"MAIN", numCount++);
+			cv::imwrite(fName,img);
+			printf("saved %s\n",fName);
+		}
+
+		//}
+
+		//delete(vs);		// delete instances
+
+		return quit;
+	}
+	else{
+
+	//New Addition
+	//The problem of taking difference is when image is washed out it still the diff as zero and when
+	// the froat and rare target is focus the number is close to 10
+	float FourCorAvg = (resultFocus.mean1 + resultFocus.mean2 + resultFocus.mean3 + resultFocus.mean4) / 4.0;
+	int diff = abs(((FourCorAvg - resultFocus.mean5) + 0.0005) * 100);
+
+	// If we multiply the avg of rare target and front target val , it works for all scenarios
+	// the val varies from 0 - 10,000 in ideal scenarios
+	//Howver, our target val is close or above 6500
+	int scaleFront = (resultFocus.mean5 + 0.0005) * 100;
+	int scaleRare = (FourCorAvg + 0.0005) * 100;
+	//int mult = scaleFront * scaleRare;
+	int multScaled = ((scaleFront * scaleRare) / 10000.0) * 100.0;
+
+/*	printf("FourCorAvg ::::: %3.3f\n", FourCorAvg);
+	printf("FourCorAvg ::::: %3.3f\n", resultFocus.mean5);
+	printf("diff ::::: %i\n", diff);
+	printf("Mult ::::: %i\n", mult);*/
 
 	//for sobel
 	sprintf(extFocus::textI1,"focus: %0.0f", float((resultFocus.mean1+0.0005) * 100));		//scaling data from 0 - 100
@@ -590,6 +781,8 @@ bool extFocus::camControlFocus(Mat &img,int camID){
 	sprintf(extFocus::textI3,"focus: %0.0f", float((resultFocus.mean3+0.0005) * 100));		//scaling data from 0 - 100
 	sprintf(extFocus::textI4,"focus: %0.0f", float((resultFocus.mean4+0.0005) * 100));		//scaling data from 0 - 100
 	sprintf(extFocus::textI5,"focus: %0.0f", float((resultFocus.mean5+0.0005) * 100));		//scaling data from 0 - 100
+	sprintf(extFocus::textI6,"Target Focus: %i", multScaled);		//scaling data from 0 - 100
+	//sprintf(extFocus::textI7,"Mult1: %i", mult);		//scaling data from 0 - 10,000
 
 	//for laplacian
 	//sprintf(textI1,"focus val mean: %0.2f    Var:: %0.2f ", float((matric.mean+0.005) * 100), float(((matric.sigma*matric.sigma) + 0.005) * 1000));
@@ -613,8 +806,11 @@ bool extFocus::camControlFocus(Mat &img,int camID){
 	cv::putText(img,textI3,cvPoint(resultFocus.ROI3.x,resultFocus.ROI3.y - 10), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
 	cv::putText(img,textI4,cvPoint(resultFocus.ROI4.x,resultFocus.ROI4.y - 10), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
 	cv::putText(img,textI5,cvPoint(resultFocus.ROI5.x,resultFocus.ROI5.y - 10), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
+	cv::putText(img,textI6,cvPoint(img.cols/2.0, 50), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
+	//cv::putText(img,textI7,cvPoint(img.cols/2.0, 100), CV_FONT_HERSHEY_PLAIN,1.5,cvScalar(255,0,0),1,CV_AA);
 
 	cv::imshow(extFocus::text,img);
+	cv::moveWindow(extFocus::text, 20, 20);
 
 	//for continuous streaming
 	key = cv::waitKey(1);
@@ -645,6 +841,7 @@ bool extFocus::camControlFocus(Mat &img,int camID){
 	//delete(vs);		// delete instances
 
 	return quit;
+	}
 
 }
 
