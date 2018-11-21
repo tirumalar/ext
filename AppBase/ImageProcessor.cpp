@@ -935,6 +935,14 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 			if(ret1.height > m_Imageheight)
 				ret1.height = m_Imageheight;
 
+
+			//Corner condition for cvSetImageROI assertion fail issue
+			if(ret1.width + ret1.x > m_Imagewidth)
+				ret1.width = m_Imagewidth - ret1.x;
+			if(ret1.height + ret1.y > m_Imageheight)
+				ret1.height = m_Imageheight - ret1.y;
+
+
 			//Offset correction if useOffset is true
 			if(useOffest_m){
 				ret1.height = ret1.height - int(projOffset_m);
@@ -977,6 +985,14 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 				ret1.width = m_Imagewidth;
 			if(ret1.height > m_Imageheight)
 				ret1.height = m_Imageheight;
+
+
+			//Corner condition for cvSetImageROI assertion fail issue
+			if(ret1.width + ret1.x > m_Imagewidth)
+				ret1.width = m_Imagewidth - ret1.x;
+			if(ret1.height + ret1.y > m_Imageheight)
+				ret1.height = m_Imageheight - ret1.y;
+
 
 			//Offset correction if useOffset is true
 			if(useOffest_a){
@@ -1021,6 +1037,14 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 			if(ret2.height > m_Imageheight)
 				ret2.height = m_Imageheight;
 
+
+			//Corner condition for cvSetImageROI assertion fail issue
+			if(ret2.width + ret2.x > m_Imagewidth)
+				ret2.width = m_Imagewidth - ret2.x;
+			if(ret2.height + ret2.y > m_Imageheight)
+				ret2.height = m_Imageheight - ret2.y;
+
+
 			//Offset correction if useOffset is true
 			if(useOffest_m){
 				ret2.height = ret2.height - int(projOffset_m);
@@ -1062,6 +1086,14 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 				ret2.width = m_Imagewidth;
 			if(ret2.height > m_Imageheight)
 				ret2.height = m_Imageheight;
+
+
+			//Corner condition for cvSetImageROI assertion fail issue
+			if(ret2.width + ret2.x > m_Imagewidth)
+				ret2.width = m_Imagewidth - ret2.x;
+			if(ret2.height + ret2.y > m_Imageheight)
+				ret2.height = m_Imageheight - ret2.y;
+
 
 			//Offset correction if useOffset is true
 			if(useOffest_a){
