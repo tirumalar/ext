@@ -923,6 +923,23 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 				ptr2.y = 0;
 			}
 
+
+			//New check of assertion fail Mo
+			if (ptr1.y < 0){
+				ptr1.y = 0;
+			}
+
+			if (ptr2.x < 0){
+				ptr2.x = 0;
+			}
+			if (ptr1.y > m_Imageheight){
+				ptr1.y = m_Imageheight;
+			}
+			if (ptr2.x > m_Imagewidth){
+				ptr2.x = m_Imagewidth;
+			}
+
+
 			//create RECT
 			ret1.x = ptr1.x;
 			ret1.y = ptr1.y;
@@ -973,6 +990,23 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 			if (ptr2.y < 0){
 				ptr2.y = 0;
 			}
+
+
+			//New check of assertion fail Mo
+			if (ptr1.y < 0){
+				ptr1.y = 0;
+			}
+
+			if (ptr2.x < 0){
+				ptr2.x = 0;
+			}
+			if (ptr1.y > m_Imageheight){
+				ptr1.y = m_Imageheight;
+			}
+			if (ptr2.x > m_Imagewidth){
+				ptr2.x = m_Imagewidth;
+			}
+
 
 			//create RECT
 			ret1.x = ptr1.x;
@@ -1025,6 +1059,23 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 				ptr4.y = 0;
 			}
 
+
+			//New check of assertion fail MO
+			if (ptr3.y < 0){
+				ptr3.y = 0;
+			}
+
+			if (ptr4.x < 0){
+				ptr4.x = 0;
+			}
+			if (ptr3.y > m_Imageheight){
+				ptr3.y = m_Imageheight;
+			}
+			if (ptr4.x > m_Imagewidth){
+				ptr4.x = m_Imagewidth;
+			}
+
+
 			//create RECT
 			ret2.x = ptr3.x;
 			ret2.y = ptr3.y;
@@ -1074,6 +1125,22 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 			if (ptr4.y < 0){
 				ptr4.y = 0;
 			}
+
+			//New check of assertion fail Mo
+			if (ptr3.y < 0){
+				ptr3.y = 0;
+			}
+
+			if (ptr4.x < 0){
+				ptr4.x = 0;
+			}
+			if (ptr3.y > m_Imageheight){
+				ptr3.y = m_Imageheight;
+			}
+			if (ptr4.x > m_Imagewidth){
+				ptr4.x = m_Imagewidth;
+			}
+
 
 			//create RECT
 			ret2.x = ptr3.x;
