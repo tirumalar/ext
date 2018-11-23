@@ -263,9 +263,15 @@ FaceTracker::FaceTracker(char* filename)
 	calDebug = FaceConfig.getValue("FTracker.calDebug",false);
 	calTwoPoint = FaceConfig.getValue("FTracker.twoPointCalibration",true);
 
+	m_Motor_Bottom_Offset = FaceConfig.getValue("FTracker.MotorBottomOffset",15);
+	m_Motor_Range = FaceConfig.getValue("FTracker.MotorRange",50);
+
 	// Eyelock.ini Parameters	
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");
 	m_ToneVolume = EyelockConfig.getValue("GRI.AuthorizationToneVolume", 40);
+
+
+
 #ifdef DEBUG_SESSION
 	bDebugSessions = FaceConfig.getValue("FTracker.DebugSessions",false);
 	m_sessionDir = string(EyelockConfig.getValue("Eyelock.DebugSessionDir","DebugSessions/Session"));
@@ -503,16 +509,34 @@ void FaceTracker::MoveRelAngle(float a)
 	if (file)
 	{
 		fprintf(file, "Current angle = ,%03.3f, next Angle = ,%03.3f, ",current_a,a);
+		// fclose(file);
+
+
+
+    // make sure we are not asked to go bellow the bottom
+	if ((a>0)&&((current_a -a)<motorBottom))
+		 {
+		fprintf(file, "Before correction %3.3f  bot %3.3f ",a,motorBottom);
+		  a = -1*(motorBottom-current_a);
+		  // dont move in opposite direction we are there so too bad
+		  if (a<0)
+			  a=0;
+		  fprintf(file, "Bottom Hit---------- ---  %3.3f\n\n\n",a);
+		 }
+
+	if((a < 0)&&(current_a-a)>motorTop){
+		fprintf(file, "Before correction for Motor top %3.3f  top %3.3f ",a,motorTop);
+		a = -1*(motorTop-current_a);
+
+		fprintf(file, "motorTop Hit---------- ---  %3.3f\n\n\n",a);
+
+	}
 		fclose(file);
 	}
 
-
-	if ((a<0)&&((current_a +a)<motorBottom))
-		 {
-		  a = -1*(motorBottom-current_a);
-		  printf("Bottom Hit---------- ---  %3.3f\n\n\n",a);
-		 }
 	move=-1*a*ANGLE_TO_STEPS;
+
+
 
 	EyelockLog(logger, DEBUG, "limiting small movements based on relative changes and face size changes:diffEyedistance %f", move);
 	//limiting small movements based on relative changes and face size changes
@@ -722,7 +746,7 @@ cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 }
 
 #define NUMAVG 10
-#define MOTOR_BOTTOM_OFFSET 10
+// #define MOTOR_BOTTOM_OFFSET 15
 void FaceTracker::motorInIt(){
 	char cmd[512];
 	sprintf(cmd,"fx_home");
@@ -733,7 +757,8 @@ void FaceTracker::motorInIt(){
 		sum+= read_angle();
 
 	}
-  motorBottom=sum/NUMAVG + MOTOR_BOTTOM_OFFSET;
+  motorBottom=sum/NUMAVG + m_Motor_Bottom_Offset;
+  motorTop= motorBottom + m_Motor_Range;
   printf("Motor Bottom-   %3.3f ------------\n\n\n",motorBottom);
 
 }

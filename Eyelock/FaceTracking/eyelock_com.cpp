@@ -10,6 +10,7 @@
 #include <ctime>
 
 #include "eyelock_com.h"
+#include "portcom.h"
 
 #if 1
 #include "opencv2/highgui/highgui.hpp"
@@ -28,7 +29,7 @@ int match_Lock=0;
 bool b_goHome=false;
 
 extern int move_counts;
-extern void port_com_send(char *cmd);
+// extern void port_com_send(char *cmd);
 
 const char logger[30] = "eyelock_com";
 

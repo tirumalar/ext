@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include "logging.h"
+#include "portcom.h"
 
 #define PORT    48
 #define MAXMSG  512
@@ -37,7 +38,7 @@ int read_from_client(int filedes) {
 		buffer[nbytes] = 0;
 		fprintf(stderr, "Server: got message: `%s'\n", buffer);
 		{
-			void port_com_send(char *cmd);
+
 			port_com_send(buffer);
 		}
 		EyelockLog(logger, ERROR, "read_from_client exit");
