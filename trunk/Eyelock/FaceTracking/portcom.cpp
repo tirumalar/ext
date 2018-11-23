@@ -60,7 +60,7 @@ int portcom_start() {
 
 int in_send = 0;
 
-void port_com_send(char *cmd_in)
+void port_com_send(char *cmd_in, float *pr_time)
 {
 	EyelockLog(logger, TRACE, "port_com_send");
 	pthread_mutex_lock(&lock);

@@ -228,6 +228,9 @@ private:
 	int calibMainIrisCamDigitalGain;
 	int calibMainIrisCamDataPedestal;
 
+	int m_Motor_Bottom_Offset;
+	int m_Motor_Range;
+
 	pthread_t threadIdtamper;
 	pthread_t threadIdtemp;
 	
