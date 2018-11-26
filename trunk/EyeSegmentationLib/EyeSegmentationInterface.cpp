@@ -425,15 +425,26 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 	//FILE *fp;
 	// static int i;
 	int SaveSegImages = LoadEyelockConfigINIFile();
+	bool segresult = false;
 	if(corruptBitcount <= m_maxCorruptBitsPercAllowed && (AnnularCheck==1)) // && Getiseye() )
 	{
 		if( m_eso->ip.x > 0 )
 		{
+
 			EyeSegmentationOutput tmp1 = *m_eso;
 			// segmentation(unsigned char *data, int w, int h, float pupilX, float pupilY, float pupilR, float irisX, float irisY, float irisR)
-			bool status = (bool)segmentation((unsigned char*)imageBuffer, 640,480, m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
+			// bool status = (bool)segmentation((unsigned char*)imageBuffer, 640,480, m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
+
+			double centerError = sqrt(abs((int)pCircles->ip.x-(int)pCircles->pp.x)*abs((int)pCircles->ip.x-(int)pCircles->pp.x) + abs((int)pCircles->ip.y-(int)pCircles->pp.y)*abs((int)pCircles->ip.y-(int)pCircles->pp.y));
+			double imageCenterError = sqrt(abs(320-(int)pCircles->pp.x)*abs(320-(int)pCircles->pp.x) + abs(240-(int)pCircles->pp.y)*abs(240-(int)pCircles->pp.y));
+
+			if ((centerError < 8) && (imageCenterError < 25) && (pCircles->ip.r/pCircles->pp.r > 2))
+				segresult = true;
+			else
+		       segresult = false;
+
 			if(SaveSegImages){
-				if (status)
+				if (segresult)
 				{
 					draw( image, tmp1.pp, color );
 					draw( image, tmp1.ip, color );
@@ -463,12 +474,12 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 			}
 		}
 		cvReleaseImageHeader(&image);
-		return true; // Iris and Segmentation is OK
+		return segresult; // Iris and Segmentation is OK
 	}
 	else{
 		printf("Inside GetIrisCode bad Seg\n");
 		cvReleaseImageHeader(&image);
-		return false; // Iris or Segmentation is NOT OK
+		return segresult; // Iris or Segmentation is NOT OK
 	}
 
 }
