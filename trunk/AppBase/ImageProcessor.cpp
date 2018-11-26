@@ -924,22 +924,6 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 			}
 
 
-			//New check of assertion fail Mo
-			if (ptr1.y < 0){
-				ptr1.y = 0;
-			}
-
-			if (ptr2.x < 0){
-				ptr2.x = 0;
-			}
-			if (ptr1.y > m_Imageheight){
-				ptr1.y = m_Imageheight;
-			}
-			if (ptr2.x > m_Imagewidth){
-				ptr2.x = m_Imagewidth;
-			}
-
-
 			//create RECT
 			ret1.x = ptr1.x;
 			ret1.y = ptr1.y;
@@ -954,9 +938,9 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 
 
 			//Corner condition for cvSetImageROI assertion fail issue
-			if(ret1.width + ret1.x > m_Imagewidth)
+			if(ret1.width + ret1.x >= m_Imagewidth)
 				ret1.width = m_Imagewidth - ret1.x;
-			if(ret1.height + ret1.y > m_Imageheight)
+			if(ret1.height + ret1.y >= m_Imageheight)
 				ret1.height = m_Imageheight - ret1.y;
 
 
@@ -991,23 +975,6 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 				ptr2.y = 0;
 			}
 
-
-			//New check of assertion fail Mo
-			if (ptr1.y < 0){
-				ptr1.y = 0;
-			}
-
-			if (ptr2.x < 0){
-				ptr2.x = 0;
-			}
-			if (ptr1.y > m_Imageheight){
-				ptr1.y = m_Imageheight;
-			}
-			if (ptr2.x > m_Imagewidth){
-				ptr2.x = m_Imagewidth;
-			}
-
-
 			//create RECT
 			ret1.x = ptr1.x;
 			ret1.y = ptr1.y;
@@ -1022,9 +989,9 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 
 
 			//Corner condition for cvSetImageROI assertion fail issue
-			if(ret1.width + ret1.x > m_Imagewidth)
+			if(ret1.width + ret1.x >= m_Imagewidth)
 				ret1.width = m_Imagewidth - ret1.x;
-			if(ret1.height + ret1.y > m_Imageheight)
+			if(ret1.height + ret1.y >= m_Imageheight)
 				ret1.height = m_Imageheight - ret1.y;
 
 
@@ -1060,22 +1027,6 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 			}
 
 
-			//New check of assertion fail MO
-			if (ptr3.y < 0){
-				ptr3.y = 0;
-			}
-
-			if (ptr4.x < 0){
-				ptr4.x = 0;
-			}
-			if (ptr3.y > m_Imageheight){
-				ptr3.y = m_Imageheight;
-			}
-			if (ptr4.x > m_Imagewidth){
-				ptr4.x = m_Imagewidth;
-			}
-
-
 			//create RECT
 			ret2.x = ptr3.x;
 			ret2.y = ptr3.y;
@@ -1090,9 +1041,9 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 
 
 			//Corner condition for cvSetImageROI assertion fail issue
-			if(ret2.width + ret2.x > m_Imagewidth)
+			if(ret2.width + ret2.x >= m_Imagewidth)
 				ret2.width = m_Imagewidth - ret2.x;
-			if(ret2.height + ret2.y > m_Imageheight)
+			if(ret2.height + ret2.y >= m_Imageheight)
 				ret2.height = m_Imageheight - ret2.y;
 
 
@@ -1126,21 +1077,6 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 				ptr4.y = 0;
 			}
 
-			//New check of assertion fail Mo
-			if (ptr3.y < 0){
-				ptr3.y = 0;
-			}
-
-			if (ptr4.x < 0){
-				ptr4.x = 0;
-			}
-			if (ptr3.y > m_Imageheight){
-				ptr3.y = m_Imageheight;
-			}
-			if (ptr4.x > m_Imagewidth){
-				ptr4.x = m_Imagewidth;
-			}
-
 
 			//create RECT
 			ret2.x = ptr3.x;
@@ -1156,9 +1092,9 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 
 
 			//Corner condition for cvSetImageROI assertion fail issue
-			if(ret2.width + ret2.x > m_Imagewidth)
+			if(ret2.width + ret2.x >= m_Imagewidth)
 				ret2.width = m_Imagewidth - ret2.x;
-			if(ret2.height + ret2.y > m_Imageheight)
+			if(ret2.height + ret2.y >= m_Imageheight)
 				ret2.height = m_Imageheight - ret2.y;
 
 
@@ -1172,6 +1108,11 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 
 	}else{
 		EyelockLog(logger, DEBUG, "Face and Iris Frames are out of sync FaceFrameNo:%d IrisFrameNo:%d", FaceFrameNo, IrisFrameNo);
+	}
+
+	cv::Rect retDefault(0,0,1200,960);
+	if (ret1.width == 0 || ret1.height == 0){
+		IrisProjRect = retDefault;
 	}
 	return (IrisProjRect);
 
@@ -1328,10 +1269,15 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 
 		cv::Rect IrisProj = projectRect(FaceCoord, cam_id, frame, FaceFrameNo, IrisFrameNo);
 		// printf("IrisProj  IrisProj.x %d IrisProj.y %d IrisProj.width %d IrisProj.height %d\n", IrisProj.x, IrisProj.y, IrisProj.width, IrisProj.height);
-		cvSetData(m_IrisProjImage,frame->imageData,frame->widthStep);
-		cvSetImageROI(m_IrisProjImage,IrisProj);
-		cvSetData(frame,m_IrisProjImage->imageData,frame->widthStep);
-		cvResetImageROI(m_IrisProjImage);
+		try{
+			cvSetData(m_IrisProjImage,frame->imageData,frame->widthStep);
+			cvSetImageROI(m_IrisProjImage,IrisProj);
+			cvSetData(frame,m_IrisProjImage->imageData,frame->widthStep);
+			cvResetImageROI(m_IrisProjImage);
+		}
+		catch (cv::Exception& e){
+			cout << e.what() << endl;
+		}
 
 		if(m_SaveProjImage){
 			sprintf(filename,"IrisImage_%d_%d.pgm", cam_idd, m_faceIndex);

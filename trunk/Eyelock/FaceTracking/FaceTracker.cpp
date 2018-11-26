@@ -1944,7 +1944,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	//if (last_system_state != system_state)
 	// if(foundEyes)
 	{
-#if 0
+#if 1
 		EyelockLog(logger, DEBUG, "FaceFrameNo:%d STATE:%8s  NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",FaceFrameIndex, StateText(system_state),
 						noFaceCounter,
 					foundEyes?'E':'.',
