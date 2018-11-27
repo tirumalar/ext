@@ -84,6 +84,10 @@ function defineStrings($HardwareType)
             define ("HOME_HARDWARE_BOBVER", "ICM Hardware Ver.: ");
              define ("HOME_SOFTWARE_LINUXVER", "Linux OS Ver.: ");
              define ("HOME_HARDWARE_PSOCVER", "M.B. PSOC Ver.: ");
+             define ("HOME_CAMERA_FPGAVER", "Camera FPGA Ver.: ");
+             define ("HOME_CAMERA_PSOCVER", "Camera PSOC Ver.: ");
+             define ("HOME_FIXED_BOARDVER", "Fixed Board Ver.: ");
+
             define ("HOME_SOFTWARE_NANOLABEL", $NXTText." Updated: ");
             define ("HOME_SOFTWARE_BOBLABEL", "ICM Updated: ");
 
@@ -995,6 +999,9 @@ function defineStrings($HardwareType)
 		define("HOME_STORAGESTATS_TEMPLATESPACE", "Количество незанятых пользователей");
 		define("HOME_SOFTWARE_GROUPTITLE", "Информация о ПО");
 		define("HOME_SOFTWARE_APPVER", "Версия прошивки ".$NXTText." :");
+        define ("HOME_CAMERA_FPGAVER", "Camera FPGA Ver.: ");
+        define ("HOME_CAMERA_PSOCVER", "Camera PSOC Ver.: ");
+        define ("HOME_FIXED_BOARDVER", "Fixed Board Ver.: ");
 		define("HOME_SOFTWARE_BOBVER", "Версия прошивки ICM:");
 		define("HOME_HARDWARE_BOBVER", "Версия аппаратного обеспечения ICM:");
 		define("HOME_SOFTWARE_LINUXVER", "Версия ОС Linux:");
@@ -1512,6 +1519,9 @@ function defineStrings($HardwareType)
             define ("HOME_PTINFO_HARDWAREVERSION", "Versão Hardware:");
             define ("HOME_PTINFO_KEYPADVERSION", "Versão Keypad:");
             define ("HOME_PTINFO_CONFIGURATION", "Configuração:");
+            define ("HOME_CAMERA_FPGAVER", "Camera FPGA Ver.: ");
+            define ("HOME_CAMERA_PSOCVER", "Camera PSOC Ver.: ");
+            define ("HOME_FIXED_BOARDVER", "Fixed Board Ver.: ");
 
             define ("HOME_SOFTWARE_GROUPTITLE", "Informação Software");
             define ("HOME_SOFTWARE_APPVER", "Firmware ".$NXTText.":");
