@@ -298,10 +298,10 @@ void *VideoStream::ThreadServer(void *arg)
                         rx_idx+=length;
                         datalen += length;
                         pckcnt++;
-                }else{
+                }/*else{
                 	//printf("FaceTracker: No sync\n");
                 	continue;
-                }
+                }*/
                 bytes_to_read-=  length;
                 if(datalen >= IMAGE_SIZE-5)
                 {

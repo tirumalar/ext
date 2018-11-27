@@ -2971,11 +2971,11 @@ void *leftCServer(void *arg)
         	                        rx_idx+=length;
         	                        datalen += length;
         	                        pckcnt++;
-        	                }else{
+        	                }/*else{
         	                	// NoSyncCntr++;
-        	                	//printf("CMX: No sync\n");
+        	                	printf("CMX: No sync\n");
         	                	continue;
-        	                }
+        	                }*/
         	                bytes_to_read-=  length;
         	                if(datalen >= IMAGE_SIZE-5)
         	                {

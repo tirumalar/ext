@@ -894,7 +894,7 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 	faceP.y = (rectY/scaling) + targetOffset1;
 	faceP.height = (rectH)/scaling -(targetOffset1*2);
 
-	if (FaceFrameNo == IrisFrameNo)
+	// if (FaceFrameNo == IrisFrameNo)
 	{
 		projFace.x = face.x * scaling;		//column
 		projFace.y = rectY + targetOffset1;	//row
@@ -1106,8 +1106,6 @@ cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId, IplImage *Inpu
 
 		}
 
-	}else{
-		EyelockLog(logger, DEBUG, "Face and Iris Frames are out of sync FaceFrameNo:%d IrisFrameNo:%d", FaceFrameNo, IrisFrameNo);
 	}
 
 	cv::Rect retDefault(0,0,1200,960);
@@ -1267,6 +1265,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		int IrisFrameNo = frame->imageData[3]&0xff;
 		FaceData1 FaceData = getFaceData1();
 
+		if (FaceFrameNo == IrisFrameNo){
 		cv::Rect IrisProj = projectRect(FaceCoord, cam_id, frame, FaceFrameNo, IrisFrameNo);
 		// printf("IrisProj  IrisProj.x %d IrisProj.y %d IrisProj.width %d IrisProj.height %d\n", IrisProj.x, IrisProj.y, IrisProj.width, IrisProj.height);
 		try{
@@ -1317,6 +1316,9 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 			imshow("Output", imgl);
 			cvWaitKey(1);
 		}
+		}else{
+			EyelockLog(logger, DEBUG, "No Projection: Face and Iris Frames are out of sync FaceFrameNo:%d IrisFrameNo:%d", FaceFrameNo, IrisFrameNo);
+		}
 	}
 
 	// printf("Inside ProcessImage\n");
@@ -1340,6 +1342,11 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
     XTIME_OP("Detect",
     	detect = m_pSrv->Detect(&m_sframe,m_eyeDetectionLevel)
     );
+
+    int NoOfHaarEyes = m_sframe.GetNumberOfHaarEyes();
+    if(NoOfHaarEyes == 0)
+    	EyelockLog(logger, DEBUG, "After Detect Eyes function: No Eyes detected in Input Frame from Camera %d", cam_idd);
+
    //  printf("After Detect Eyes\n");
     if(m_shouldLog){
         logResults(m_faceIndex);
@@ -1512,8 +1519,10 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		}
 		else
 		{
-			sendToNwQueue(eye);
-			bSentSomething=true;
+			if(halo.z > 0 && halo.z < m_haloThreshold){
+				sendToNwQueue(eye);
+				bSentSomething=true;
+			}
 		}
 	}
 

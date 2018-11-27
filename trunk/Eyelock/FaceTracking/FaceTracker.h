@@ -203,6 +203,7 @@ private:
 	
 	// ToneControl from Eyelock.ini
 	int m_ToneVolume;
+	int m_FixedAudSetVal;
 
 	// Mat Image;
 	Mat smallImgBeforeRotate;
