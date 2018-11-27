@@ -374,6 +374,8 @@ m_LedConsolidator = NULL;
 	m_Imageheight = pConf->getValue("FrameSize.height",960);
 	m_OffsetOutputImage = cvCreateImage(cvSize(m_Imagewidth, m_Imageheight),IPL_DEPTH_8U,1);
 
+	m_EnableExtHalo = pConf->getValue("Eyelock.EnableExtHalo",false);
+
 	// Face Mapping Projection
 	m_FaceIrisMapping = pConf->getValue("Eyelock.FaceIrisMapping",false);
 	m_IrisProjImage = cvCreateImage(cvSize(m_Imagewidth, m_Imageheight),IPL_DEPTH_8U,1);
@@ -1519,9 +1521,11 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		}
 		else
 		{
+			if(m_EnableExtHalo){
 			if(halo.z > 0 && halo.z < m_haloThreshold){
 				sendToNwQueue(eye);
 				bSentSomething=true;
+				}
 			}
 		}
 	}

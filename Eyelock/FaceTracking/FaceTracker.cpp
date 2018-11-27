@@ -263,8 +263,8 @@ FaceTracker::FaceTracker(char* filename)
 	calDebug = FaceConfig.getValue("FTracker.calDebug",false);
 	calTwoPoint = FaceConfig.getValue("FTracker.twoPointCalibration",true);
 
-	m_Motor_Bottom_Offset = FaceConfig.getValue("FTracker.MotorBottomOffset",15);
-	m_Motor_Range = FaceConfig.getValue("FTracker.MotorRange",50);
+	m_Motor_Bottom_Offset = FaceConfig.getValue("FTracker.MotorBottomOffset",5);
+	m_Motor_Range = FaceConfig.getValue("FTracker.MotorRange",55);
 
 	// Eyelock.ini Parameters	
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");

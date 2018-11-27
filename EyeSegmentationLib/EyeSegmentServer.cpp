@@ -2160,28 +2160,6 @@ EyeSegmentationOutput EyeSegmentServer::Process(IplImage* image, int index)
 		
 	}
 
-	if(m_eso.pp.z <= 22.0)
-	{
-		// char nameOrig[100];
-		//char name[100];
-		// static int count =0;
-
-		// cv::Mat mateyeOrig = cv::cvarrToMat(m_eso.flatMask);
-		// sprintf(nameOrig, "FlatMask_Orig_%d.pgm",count);
-		//imwrite(nameOrig, mateyeOrig);
-
-		cv::Mat mateye = cv::cvarrToMat(m_eso.flatMask);
-		// printf("cols..%d row...%d\n", mateye.cols, mateye.rows);
-		mateye.rowRange(16,48).setTo(cv::Scalar(255));
-		// mateye.rowRange(48,63).setTo(cv::Scalar(255));
-		IplImage test = mateye;
-		cvCopy(&test, m_eso.flatMask);
-
-		// sprintf(name, "FlatMask_%d.pgm",count);
-		//imwrite(name, mateye);
-		// count++;
-	}
-
 	m_irisCircleList.empty();
 	m_pupilCircleList.empty();
 
