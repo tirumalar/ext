@@ -269,7 +269,7 @@ FaceTracker::FaceTracker(char* filename)
 	// Eyelock.ini Parameters	
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");
 	m_ToneVolume = EyelockConfig.getValue("GRI.AuthorizationToneVolume", 40);
-	m_FixedAudSetVal = EyelockConfig.getValue("Eyelock.FixedAudSetValue", 3);
+	m_FixedAudSetVal = EyelockConfig.getValue("Eyelock.FixedAudSetValue", 5);
 
 
 #ifdef DEBUG_SESSION
@@ -904,8 +904,10 @@ void FaceTracker::DoStartCmd()
 		// port_com_send("set_audio(1)");
 		if(m_ToneVolume < 50)
 			port_com_send("fixed_aud_set(1)");
-		else
-			port_com_send("fixed_aud_set(m_FixedAudSetVal)"); // port_com_send("fixed_aud_set(7)");
+		else{
+			sprintf(cmd,"fixed_aud_set(%d)",m_FixedAudSetVal);
+			port_com_send(cmd); // port_com_send("fixed_aud_set(7)");
+		}
 		usleep(100000);
 		port_com_send("data_store_set(0)");
 		usleep(100000);
