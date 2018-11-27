@@ -427,16 +427,7 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 	int SaveSegImages = LoadEyelockConfigINIFile();
 	bool segresult = false;
 
-	bool skipCorruptBitCntCheck = false;
-
-	if(m_eso->pp.z <= 22.0){
-		skipCorruptBitCntCheck = true;
-	}else{
-		skipCorruptBitCntCheck = corruptBitcount <= m_maxCorruptBitsPercAllowed && (AnnularCheck==1);
-	}
-
-	// if(corruptBitcount <= m_maxCorruptBitsPercAllowed && (AnnularCheck==1)) // && Getiseye() ) // Original Check
-	if(skipCorruptBitCntCheck) // && Getiseye() )
+	if(corruptBitcount <= m_maxCorruptBitsPercAllowed && (AnnularCheck==1)) // && Getiseye() ) // Original Check
 	{
 		if( m_eso->ip.x > 0 )
 		{

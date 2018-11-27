@@ -254,6 +254,7 @@ protected:
 	bool m_FaceIrisMapping;
 	int m_Imagewidth;
 	int m_Imageheight;
+	bool m_EnableExtHalo;
 
 #ifdef HBOX_PG	
 	bool m_SPAWAREnable;
