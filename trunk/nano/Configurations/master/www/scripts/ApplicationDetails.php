@@ -13,6 +13,9 @@ class ApplicationDetails
     public $AppVersion = "N/A"; 
     public $BobVersion = "N/A";
     public $BobHWVersion = "N/A";
+    public $CameraFPGAVersion = "N/A";
+    public $CameraPSOCVersion = "N/A";
+    public $FixedBoardVersion = "N/A";
     //public $HardwareType = "0"; //set based on some kind of hardware flag, used to determine which functions are retained for each device.
     public $TOCBLEVersion = "N/A";
     public $TOCMainFWVersion = "N/A";
@@ -49,7 +52,7 @@ class ApplicationDetails
     }
     function getLinuxVer()
     {
-           $tux = shell_exec("uname -a");
+         $tux = shell_exec("uname -a");
         
        // $firephp->log('linux version:');
        // $firephp->log($tux);
@@ -59,11 +62,22 @@ class ApplicationDetails
         //0     1        2
         $LinuxVersion = $tuxTokens[2];
         return $LinuxVersion;
-
     }
+
+    function getCameraFPGAVer()
+    {
+    }
+
+    function getCameraPSOCVer()
+    {
+    }
+
+    function getFixedBoardVer()
+    {
+    }
+
     function LoadApplicationDetails()
     {
-      
         $cmdVersion = "";
         $cmdRunFile = "";
         $cmdForBobFile = "";
@@ -88,6 +102,8 @@ class ApplicationDetails
           //  $cmdRunFile = shell_exec(sprintf("sh /home/root/led_rgb.sh %s", "runInfo"));
             //$cmdForBobFile = shell_exec("exec /home/root/GetVersion.sh");
             $cmdForBobFile = file_get_contents("/home/root/BobVersion");
+            $cmdForOimFile = file_get_contents("/home/root/OimVersion");
+	    $cmdForBobFile = $cmdForBobFile."\n".$cmdForOimFile;
             if(file_exists("/home/root/TOCReaderVersion"))
             {
                 $hasTOC = TRUE;
@@ -169,9 +185,15 @@ class ApplicationDetails
         // get bob version number
         $bFoundSoftware = FALSE;
         $bFoundHardware = FALSE;
+        $bFoundCameraPSOC = FALSE;
+        $bFoundCameraFPGA = FALSE;
+        $bFoundFixedBoard = FALSE;
 
         $BobVersion = "N/A"; // default
         $BobHWVersion = "N/A";
+        $CameraFPGAVersion = "N/A";
+        $CameraPSOCVersion = "N/A";
+        $FixedBoardVersion = "N/A";
 
         $strBobFileResults = str_replace("\n", ":", $cmdForBobFile);
         
@@ -189,6 +211,22 @@ class ApplicationDetails
                 $bFoundHardware = FALSE;
                 $this->BobHWVersion = trim($theString);
             }
+            else if ($bFoundCameraPSOC)
+            {
+                $bFoundCameraPSOC = FALSE;
+                $this->CameraPSOCVersion = trim($theString);
+            }
+            else if ($bFoundCameraFPGA)
+            {
+                $bFoundCameraFPGA = FALSE;
+                $this->CameraFPGAVersion = trim($theString);
+            }
+            else if ($bFoundFixedBoard)
+            {
+                $bFoundFixedBoard = FALSE;
+                $this->FixedBoardVersion = trim($theString);
+            }
+
 
             $pos = strpos($theString, "software version");
             if ($pos !== false)
@@ -199,8 +237,33 @@ class ApplicationDetails
 
             $pos = strpos($theString, "hardware version");
             if ($pos !== false)
+            {
                 $bFoundHardware = true;
+                continue;
+            }
+
+            $pos = strpos($theString, "FPGA VERSION");
+            if ($pos !== false)
+            {
+                $bFoundCameraFPGA = true;
+                continue;
+            }
+
+            $pos = strpos($theString, "Fixed board Verson");
+            if ($pos !== false)
+            {
+                $bFoundFixedBoard = true;
+                continue;
+            }
+
+            $pos = strpos($theString, "Cam Psoc Version");
+            if ($pos !== false)
+            {
+                $bFoundCameraPSOC = true;
+                continue;
+            }
         }
+
         if($hasTOC){
                 //parse TOCReaderVersionFile
                //  public $TOCBLEVersion = "N/A";
