@@ -82,13 +82,13 @@ class InterfaceEditor
 	}
     }
     
-    function SaveDNSSettings($newDns1, $newDns2)
+    function SaveDNSSettings($newDns1, $newDns2, $resolvFile)
     {
 	
 	$current = "nameserver ".$newDns1."\n";
 	if(isset($newDns2))
 		$current .= "nameserver ".$newDns2."\n";
-	file_put_contents($this->resolvFile, $current);
+	file_put_contents($resolvFile, $current);
     }
 
     function LoadInterfaceSettings($HardwareType)
@@ -795,6 +795,10 @@ class InterfaceEditor
 				fclose($f);
 				
 				shell_exec("mv /home/www-internal/iftemp /home/www-internal/interfaces");
+				
+				$this->SaveDNSSettings($this->dns1, $this->dns2, "/home/www-internal/resolv.conf.temp");
+				
+				NXTW_shell_exec("1343");
 			}
 			else		
 			{
@@ -841,7 +845,7 @@ class InterfaceEditor
             $strcmdResult = NXTW_shell_exec(sprintf("11".chr(0x1F)."%s".chr(0x1F)."%s", escapeshellarg($this->etcNetworkPath.$this->InterfacesFile.'-new'), escapeshellarg($this->RootFolder.'/'.$this->InterfacesFile)));//"cp /etc/network/%s-new  %s/%s", $this->InterfacesFile, $this->RootFolder, $this->InterfacesFile));
 
 	     // save dns settings to resolv.conf file
-	     $this->SaveDNSSettings($this->dns1, $this->dns2);
+	     $this->SaveDNSSettings($this->dns1, $this->dns2, $this->resolvFile);
 
             //todo: update address 0 in the rc.conf file
            //this whole area is trying to configure for static so we'll stick the rc.conf mod here
@@ -911,6 +915,8 @@ class InterfaceEditor
 				fclose($f);
 		
 				shell_exec("mv /home/www-internal/iftemp /home/www-internal/interfaces");
+
+				NXTW_shell_exec("1342");
 			}
         }
 		else
@@ -926,7 +932,7 @@ class InterfaceEditor
             $strcmdResult = NXTW_shell_exec(sprintf("17"));//"chmod 777 /home/www/scripts/SetDHCP.sh"
             NXTW_shell_exec(sprintf("171"));
 	    
-            $this->SaveDNSSettings($this->Gateway,$this->Gateway);
+            $this->SaveDNSSettings($this->Gateway,$this->Gateway, $this->resolvFile);
 
             if ($this->DeleteFileAndReboot($this->RootFolder, $this->InterfacesFile, false, $theHardwareType))
                 $bSuccess = $this->DeleteFileAndReboot($this->RootFolder, $this->InterfacesFile . ".md5", true, $theHardwareType);
