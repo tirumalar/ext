@@ -267,6 +267,10 @@ upgradeMaster(){
 	chmod 777 /home/root/*.sh
 	chmod 777 /home/root/scripts/*.sh
 	chmod 777 /home/default/reloadinterfaces.sh
+
+	mv /home/www/nxtW /home
+	chmod +x /home/nxtW
+
 	${logger} -L"Applying done."
 
 	${logger} -L"Settings merging..."

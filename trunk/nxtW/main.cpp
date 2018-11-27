@@ -1112,6 +1112,16 @@ int processCommand(char *str)
 			system("mv /home/www-internal/hosts.temp /etc/hosts");
 			break;
 		}
+		case 1342:
+		{
+			system("rm /etc/resolv.conf; ln -s /run/resolvconf/resolv.conf /etc/resolv.conf");
+			break;
+		}
+		case 1343:
+		{
+			system("rm /etc/resolv.conf; mv /home/www-internal/resolv.conf.temp /etc/resolv.conf");
+			break;
+		}
 		default:
 			printf("Unknown token %d\n", nToken);
 			len = sprintf(szTokenBuffer, "echo 'Unknown token %d\n'", nToken);
