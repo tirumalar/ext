@@ -172,6 +172,7 @@ class INIEditor
     public $GRI_RepeatAuthorizationPeriod = 4;
     public $GRI_TamperToneVolume = 0;
     public $GRI_LEDBrightness = 0;
+    public $GRI_LEDBrightnessMaximum = 128;  // Upper limit of UI settable LED brightness on scale of 0-255.  Slider will still go 0-100...
     public $GRI_InternetTimeAddr = "";
     public $GRI_InternetTimeSync = "";
     public $Eyelock_DeviceLocation = ""; // takes some sort of geographic location – a string with 1 to 150 characters
@@ -921,16 +922,29 @@ class INIEditor
             $this->add("GRI.AuthorizationToneDurationSeconds", $this->GRI_AuthorizationToneDurationSeconds);
         }
 
+        //For this to work on initial load, this value MUST exist in the ini file BEFORE GRI_LEDBrightness
+        if (!$this->get("GRI.LEDBrightnessMaximum", $this->GRI_LEDBrightnessMaximum))
+        {
+            $this->GRI_LEDBrightnessMaximum = "128";
+            // ALWAYS add the value if it's missing from the Eyelock.ini file
+            $this->add("GRI.LEDBrightnessMaximum", $this->GRI_LEDBrightnessMaximum);
+        }
+
+
         if (!$this->get("GRI.LEDBrightness", $this->GRI_LEDBrightness))
         {
-            $this->GRI_LEDBrightness = "1";
+            $this->GRI_LEDBrightness = $this->GRI_LEDBrightnessMaximum; //default 128 out of 255
             // ALWAYS add the value if it's missing from the Eyelock.ini file
             $this->add("GRI.LEDBrightness", $this->GRI_LEDBrightness);
         }
 		else
+        {
+            // Enforce maximum on loading
+            if ($this->GRI_LEDBrightness > $this->GRI_LEDBrightnessMaximum)
+                $this->GRI_LEDBrightness = $this->GRI_LEDBrightnessMaximum; 
             // Convert 0-255 from ini file into 0-100;
-            $this->GRI_LEDBrightness = ($this->GRI_LEDBrightness/255)*100;
-
+            $this->GRI_LEDBrightness = ($this->GRI_LEDBrightness/$this->GRI_LEDBrightnessMaximum)*100;
+        }
         
         if (!$this->get("GRI.TamperToneVolume", $this->GRI_TamperToneVolume))
         {
@@ -1624,7 +1638,7 @@ class INIEditor
             else if ($key === "GRI_LEDBrightness")
             {
                 if ($value != $this->GRI_LEDBrightness)
-      				$this->set("GRI.LEDBrightness", ($value/100)*255);
+      				$this->set("GRI.LEDBrightness", ($value/100)*$this->GRI_LEDBrightnessMaximum);
             }
             else if ($key === "GRI_InternetTimeAddr")
             {
