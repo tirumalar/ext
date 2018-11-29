@@ -145,6 +145,7 @@ MatchProcessor::MatchProcessor(Configuration& conf) :
 	m_OutdoorMatchThresh = conf.getValue("Eyelock.OutdoorMatchScoreThresh", 0.25f);
 	m_FeatureMask = maskcode;
 	m_pupilzz = conf.getValue("Eyelock.pupilzz",18.0f);
+	m_pupilzz = m_pupilzz/2.0;
 
 	m_inQueue(inQSize);
 	for (int i = 0; i < inQSize; i++) {
