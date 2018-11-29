@@ -46,6 +46,8 @@ HDMatcher* HDMatcherFactory::Create(int matchtype,int irissz,int size,int id,con
 	bool compressedMatching = getConf()->getValue("GRI.CompressedMatching",false);
 	bool OutdoorMatching = getConf()->getValue("Eyelock.OutdoorMatching",false);
 	float pupilzz = getConf()->getValue("Eyelock.pupilzz",18.0f);
+	pupilzz = pupilzz/2.0;
+
 	float OutdoorMatchThresh = getConf()->getValue("Eyelock.OutdoorMatchScoreThresh", 0.25f);
 	char *cameraID = (char*)getConf()->getValue("GRI.cameraID","Unknown");
 
