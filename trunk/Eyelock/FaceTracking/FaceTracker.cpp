@@ -902,7 +902,9 @@ void FaceTracker::DoStartCmd()
 	{
 		EyelockLog(logger, DEBUG, "playing audio -set_audio(1)");
 		// port_com_send("set_audio(1)");
-		if(m_ToneVolume < 50)
+		if(m_ToneVolume == 0)
+			port_com_send("fixed_aud_set(0)");
+		else if(m_ToneVolume > 0 && m_ToneVolume < 50)
 			port_com_send("fixed_aud_set(1)");
 		else{
 			sprintf(cmd,"fixed_aud_set(%d)",m_FixedAudSetVal);
