@@ -373,7 +373,7 @@ function submitComplete()
             }
 
 
-            if (initialStaticIP != document.getElementById('ipofboard').value || ipTypeChanged() || tlsModeChange || deviceNameChange || IEEEModeChange) {
+            if (initialStaticIP != document.getElementById('ipofboard').value || initialStaticSubNetMask != document.getElementById('subnetmask').value || initialStaticGateway != document.getElementById('gateway').value || ipTypeChanged() || tlsModeChange || deviceNameChange || IEEEModeChange) {
                 bStaticIPReboot = true;
                 bRebootDevice = true;
                 ignoreTimeout = true;

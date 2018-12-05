@@ -47,6 +47,8 @@ else
 {
     $prevStaticIPFlag = $interfaceSettings->IsStatic;
     $prevStaticIP = $interfaceSettings->IpOfBoard;
+    $prevStaticGateway = $interfaceSettings->Gateway;
+    $prevStaticSubNetMask = $interfaceSettings->SubNetMask;
     $prevDeviceName = $interfaceSettings->DeviceName;
 
     if (!$interfaceSettings->SaveInterfaceSettings($_POST, false, $eyeLockINI->HardwareType)) // This is simpler, just rewrites the script with the updated values... (no matter what)
@@ -69,7 +71,7 @@ else
   
         if ($_POST['deviceipmode'] === "staticip") // changing to or staying on static...
         {
-            if ((!$prevStaticIPFlag || ($_POST['IpOfBoard'] !== $prevStaticIP)) && isset($_POST['IpOfBoard']))
+            if ((!$prevStaticIPFlag || ($_POST['IpOfBoard'] !== $prevStaticIP)) && isset($_POST['IpOfBoard']) || (($_POST['Gateway'] !== $prevStaticGateway) && isset($_POST['Gateway'])) || ( ($_POST['SubNetMask'] !== $prevStaticSubNetMask) && isset($_POST['SubNetMask'])) )
             {
                 echo "saveconfig|refreshpageip|{$_POST['IpOfBoard']}";   // The url to use in the refresh..
                 $fullReboot = TRUE;
