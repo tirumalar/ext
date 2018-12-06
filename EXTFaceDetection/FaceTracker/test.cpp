@@ -199,6 +199,9 @@ int run_state=RUN_STATE_FACE;
 int MIN_FACE_SIZE;
 int MAX_FACE_SIZE;
 
+int MIN_FACE_SIZE_INTER;
+int MAX_FACE_SIZE_INTER;
+
 Point eyes;	// hold eye info from each frame
 char temp[512], tempI1[512], tempI2[512], tempI3[512], tempI4[512], tempI5[512];
 int AGC_Counter = 0;
@@ -734,7 +737,8 @@ void SetIrisMode(float CurrentEye_distance)
 
 
 int tempTarget; 		//5 mins = 60*5 = 300s
-
+int mask1, mask2, mask3;
+int outerFaceRange1,outerFaceRange2, innerFaceRange1, innerFaceRange2;
 
 // Main DoStartCmd configuration for Eyelock matching
 void DoStartCmd(){
@@ -754,6 +758,23 @@ void DoStartCmd(){
 		printf("-------------->>>>>>>>>>>>>>>>>>> Device ID didn't match with calibration file!\n");
 		exit(EXIT_FAILURE);
 	}*/
+
+
+	onSlope1 = fconfig.getValue("FTracker.interResRGBouterSlope",6);
+	onSlope2 = fconfig.getValue("FTracker.interResRGBinnerSlope",13);
+
+	MIN_FACE_SIZE_INTER = fconfig.getValue("FTracker.MIN_FACE_SIZE_INTER",6);
+	MAX_FACE_SIZE_INTER = fconfig.getValue("FTracker.MAX_FACE_SIZE_INTER",6);
+
+	outerFaceRange1 = fconfig.getValue("FTracker.OuterFaceRange1",50);
+	outerFaceRange2 = fconfig.getValue("FTracker.OuterFaceRange2",40);
+	innerFaceRange1 = fconfig.getValue("FTracker.InnerFaceRange1",27);
+	innerFaceRange2 = fconfig.getValue("FTracker.InnerFaceRange2",32);
+
+	mask1 = fconfig.getValue("FTracker.LEDsettings1",4);
+	mask2 = fconfig.getValue("FTracker.LEDsettings2",14);
+	mask3 = fconfig.getValue("FTracker.LEDsettings3",31);
+
 
 	tempTarget = fconfig.getValue("FTracker.tempReadingTimeInMinutes",5);
 	tempTarget = tempTarget * 60;	//converting into sec
@@ -863,8 +884,12 @@ void DoStartCmd(){
 
 
 	//Homing
-	EyelockLog(logger, DEBUG, "Re Homing");
 	printf("Re Homing\n");
+	sprintf(cmd, "fx_home");
+	EyelockLog(logger, DEBUG, "Re Homing");
+	port_com_send(cmd);
+	usleep(1000);
+
 
 	EyelockLog(logger, DEBUG, "port_com_send fx_home command is issued");
 #ifdef NOOPTIMIZE
@@ -875,10 +900,13 @@ void DoStartCmd(){
 	sprintf(cmd, "fx_abs(%i)",MIN_POS);
 	EyelockLog(logger, DEBUG, "Reset to lower position minPos:%d", MIN_POS);
 	port_com_send(cmd);
+	usleep(1000);
 
 	//move to center position
 	EyelockLog(logger, DEBUG, "Moving to center position");
 	MoveTo(CENTER_POS);
+	usleep(1000);
+
 	//printf("enter pos val %d\n", CENTER_POS);
 	read_angle();		//read current angle
 
@@ -2397,6 +2425,584 @@ cv::Rect getFaceData()
 {
 	return ImgFaceData;
 }
+
+void rgb_interface(){
+	char cmd[512], key[100];
+
+	while(1){
+	//Set AUX cameras
+	int R = 0, G = 0, B = 0, mask = 31;
+	sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+	port_com_send(cmd);
+	usleep(10000);
+
+	//key = cv::waitKey(1);
+	//if(key == 'q')
+
+	R = 0, G = 0, B = 200, mask = 4;
+	sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+	port_com_send(cmd);
+	usleep(100000);
+
+	R = 0, G = 0, B = 200, mask = 14;
+	sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+	port_com_send(cmd);
+	usleep(100000);
+
+	R = 0, G = 0, B = 200, mask = 31;
+	sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+	port_com_send(cmd);
+	usleep(100000);
+
+	R = 0, G = 200, B = 0, mask = 31;
+	sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+	port_com_send(cmd);
+	usleep(1000000);
+
+	R = 100, G = 0, B = 0, mask = 31;
+	sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+	port_com_send(cmd);
+	usleep(1000000);
+
+	R = 0, G = 0, B = 200, mask = 4;
+	sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+	port_com_send(cmd);
+	usleep(100000);
+
+	R = 0, G = 0, B = 200, mask = 14;
+	sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+	port_com_send(cmd);
+	usleep(100000);
+
+	R = 0, G = 0, B = 200, mask = 31;
+	sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+	port_com_send(cmd);
+	usleep(100000);
+
+
+	}
+}
+#define OUT_RANGE 1
+#define IN_RANGE 2
+#define INNER_OUTER_RANGE_1 3
+#define INNER_OUTER_RANGE_2 4
+#define OUTER_RANGE_1 5
+#define OUTER_RANGE_2 6
+int RGBstate = OUT_RANGE;
+int lastRGBstate = OUT_RANGE;
+
+void interactiveResponseUsingRGBLeds_X1(float &faceWidth, bool foundEyes){
+	int R,G,B,mask;
+
+	/*int mask1, mask2,mask3;*/
+
+	R = 0, G = 0, B = 80;
+	char cmd[255];
+
+
+
+/*	mask1 = 4;
+	mask2 = 14;
+	mask3 = 31;	//
+	int outerFaceRange1=52;
+	int outerFaceRange2=47;
+
+	int innerFaceRange1=27;
+	int innerFaceRange2=32;*/
+
+
+	//Out of focus range condition
+	bool outOfRange = (faceWidth < MIN_FACE_SIZE_INTER && faceWidth > MAX_FACE_SIZE_INTER) ? true:false;
+
+	//1st and 2nd outer slope condition Min faceSize to 1st inner range and then to 2nd inner range
+	bool outterRange_m1 = (faceWidth >= MIN_FACE_SIZE_INTER && faceWidth < innerFaceRange1) ? true:false;
+	bool outterRange_m2 = (faceWidth >= innerFaceRange1 && faceWidth < innerFaceRange2) ? true:false;
+
+	//1st and 2nd inner slope condition Max faceSize to 1st outerRange and then to 2nd outer range
+	bool innerRange_m1 = (faceWidth <= MAX_FACE_SIZE_INTER && faceWidth > outerFaceRange1) ? true:false;
+	bool innerRange_m2 = (faceWidth <= outerFaceRange1 && faceWidth > outerFaceRange2) ? true:false;
+
+
+	//Focus zone
+	bool focusrange = (faceWidth >= innerFaceRange2 && faceWidth <= outerFaceRange2) ? true:false;
+
+	bool state = false;
+
+
+	int lastRGBstate = RGBstate;
+
+	if (foundEyes){
+		switch (RGBstate)
+		{
+		case OUT_RANGE:
+			if(outterRange_m1 || innerRange_m1){
+				lastRGBstate = INNER_OUTER_RANGE_1;
+				break;
+			}
+
+			if(outterRange_m2 || innerRange_m2){
+				lastRGBstate = INNER_OUTER_RANGE_2;
+				break;
+			}
+
+			if(focusrange){
+				lastRGBstate = IN_RANGE;
+				break;
+			}
+			break;
+		case IN_RANGE:
+			if(outterRange_m1 || innerRange_m1){
+				lastRGBstate = INNER_OUTER_RANGE_1;
+				break;
+			}
+
+			if(outterRange_m2 || innerRange_m2){
+				lastRGBstate = INNER_OUTER_RANGE_2;
+				break;
+			}
+			if (outOfRange){
+				lastRGBstate = INNER_OUTER_RANGE_2;
+				break;
+			}
+			break;
+		case INNER_OUTER_RANGE_1:
+			if(outterRange_m2 || innerRange_m2){
+				lastRGBstate = INNER_OUTER_RANGE_2;
+				break;
+			}
+			if (outOfRange){
+				lastRGBstate = INNER_OUTER_RANGE_2;
+				break;
+			}
+			if(focusrange){
+				lastRGBstate = IN_RANGE;
+				break;
+			}
+			break;
+		case INNER_OUTER_RANGE_2:
+			if(outterRange_m1 || innerRange_m1){
+				lastRGBstate = INNER_OUTER_RANGE_1;
+				break;
+			}
+			if (outOfRange){
+				lastRGBstate = INNER_OUTER_RANGE_2;
+				break;
+			}
+			if(focusrange){
+				lastRGBstate = IN_RANGE;
+				break;
+			}
+			break;
+		}
+	}
+	else{
+		R = 80, G = 80, B = 80;
+		sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask3);
+		port_com_send(cmd);
+	}
+
+
+	if (lastRGBstate != RGBstate){
+		switch (lastRGBstate){
+		case OUT_RANGE:
+			R = 80, G = 80, B = 80;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask3);
+			port_com_send(cmd);
+			break;
+		case IN_RANGE:
+			R = 0, G = 0, B = 80;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask3);
+			port_com_send(cmd);
+			state = true;
+			break;
+		case INNER_OUTER_RANGE_1:
+			R = 0, G = 0, B = 80;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask1);
+			port_com_send(cmd);
+
+			mask = mask3 - mask1;
+			//R = 200, G = 200, B = 200;
+			R = 0, G = 0, B = 0;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+			port_com_send(cmd);
+			state = true;
+			break;
+		case INNER_OUTER_RANGE_2:
+			R = 0, G = 0, B = 80;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask2);
+			port_com_send(cmd);
+
+			mask = mask3 - mask2;
+			//R = 200, G = 200, B = 200;
+			R = 0, G = 0, B = 0;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+			port_com_send(cmd);
+			state = true;
+			break;
+		}
+
+		if (state){
+			FILE *file = fopen("faceSize.log", "a");
+			if (file){
+				//char saveData[100];
+				fprintf(file, cmd);
+				//fwrite(saveData, sizeof(char), sizeof(saveData),file);
+				fclose(file);
+			}
+		}
+	}
+
+}
+void interactiveResponseUsingRGBLeds_X(float &faceWidth, bool foundEyes){
+	int R,G,B,mask,mask1, mask2,mask3;
+	R = 0, G = 0, B = 80;
+	char cmd[255];
+
+
+
+	mask1 = 4;
+	mask2 = 14;
+	mask3 = 31;	//
+	int outerFaceRange1=52;
+	int outerFaceRange2=47;
+
+	int innerFaceRange1=27;
+	int innerFaceRange2=32;
+
+	//Out of focus range condition
+	bool outOfRange = (faceWidth < MIN_FACE_SIZE_INTER && faceWidth > MAX_FACE_SIZE_INTER) ? true:false;
+
+	//1st and 2nd outer slope condition Min faceSize to 1st inner range and then to 2nd inner range
+	bool outterRange_m1 = (faceWidth >= MIN_FACE_SIZE_INTER && faceWidth < innerFaceRange1) ? true:false;
+	bool outterRange_m2 = (faceWidth >= innerFaceRange1 && faceWidth < innerFaceRange2) ? true:false;
+
+	//1st and 2nd inner slope condition Max faceSize to 1st outerRange and then to 2nd outer range
+	bool innerRange_m1 = (faceWidth <= MAX_FACE_SIZE_INTER && faceWidth > outerFaceRange1) ? true:false;
+	bool innerRange_m2 = (faceWidth <= outerFaceRange1 && faceWidth > outerFaceRange2) ? true:false;
+
+
+	//Focus zone
+	bool focusrange = (faceWidth >= innerFaceRange2 && faceWidth <= outerFaceRange2) ? true:false;
+
+	bool state = false;
+
+
+
+	if(foundEyes){
+
+		if (outOfRange){
+			R = 80, G = 80, B = 80;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask3);
+			port_com_send(cmd);
+		}
+		else if(outterRange_m1 || innerRange_m1){
+			R = 0, G = 0, B = 80;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask1);
+			port_com_send(cmd);
+
+			mask = mask3 - mask1;
+			//R = 200, G = 200, B = 200;
+			R = 0, G = 0, B = 0;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+			port_com_send(cmd);
+			state = true;
+
+		}
+		else if(outterRange_m2 || innerRange_m2){
+			R = 0, G = 0, B = 80;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask2);
+			port_com_send(cmd);
+
+			mask = mask3 - mask2;
+			//R = 200, G = 200, B = 200;
+			R = 0, G = 0, B = 0;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+			port_com_send(cmd);
+			state = true;
+		}
+		else if(focusrange){
+			R = 0, G = 0, B = 80;
+			sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask3);
+			port_com_send(cmd);
+			state = true;
+		}
+
+
+		currFaceWidth = faceWidth;
+
+
+		if (state){
+			FILE *file = fopen("faceSize.log", "a");
+			if (file){
+				//char saveData[100];
+				fprintf(file, cmd);
+				//fwrite(saveData, sizeof(char), sizeof(saveData),file);
+				fclose(file);
+			}
+		}
+	}
+	else{
+		mask = 31;
+		R = 80, G = 80, B = 80;
+		sprintf(cmd,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
+		port_com_send(cmd);
+	}
+
+
+}
+
+void DoRunMode_testRGB(bool bShowFaceTracking, bool bDebugSessions){
+	pthread_t threadIdtamper;
+	pthread_t threadIdtemp;
+	cv::Rect face;
+	coordinateProject result;
+
+	EyelockLog(logger, TRACE, "DoRunMode_test");
+
+	int start_process_time = clock();
+
+	smallImg = preProcessingImg(outImg);
+
+	bool foundEyes = FindEyeLocation(smallImg, eyes, eye_size, face);
+/*	float projOffset_m = 100.00, projOffset_a = 200.00;
+	bool useOffest_m= false, useOffest_a = true;*/
+
+	//printf("Found Eyes :::::::::::::: %i \n", foundEyes);
+	minFaceSize(eye_size, foundEyes);
+	maxFaceSize(eye_size, foundEyes);
+
+	//printf("Found Eyes size:::::::::::::: %d \n", &eye_size);
+	//interactiveResponseUsingRGBLeds(eye_size, foundEyes);
+	//interactiveResponseUsingRGBLeds_X(eye_size, foundEyes);
+	interactiveResponseUsingRGBLeds_X1(eye_size, foundEyes);
+
+	if (foundEyes){
+		FILE *file = fopen("faceSize.log", "a");
+		if (file){
+			//char saveData[100];
+			fprintf(file, "%d , %d\n", maxFace, minFace);
+			//fwrite(saveData, sizeof(char), sizeof(saveData),file);
+			fclose(file);
+		}
+	}
+
+
+	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
+
+
+	bool eyesInDetect = foundEyes? detect_area.contains(eyes):false;
+	bool eyesInViewOfIriscam = eyesInDetect ? no_move_area.contains(eyes):false;
+	//bool projPtr = false;
+
+
+	if (foundEyes==false)
+		noFaceCounter++;
+	noFaceCounter = min(noFaceCounter,NO_FACE_SWITCH_FACE);
+
+	if (foundEyes)
+		noFaceCounter=0;
+	last_system_state = system_state;
+
+	// figure out our next state
+	switch(system_state)
+	{
+	case STATE_LOOK_FOR_FACE:
+							// we see eyes but need to move to them
+							if (eyesInDetect && !eyesInViewOfIriscam)
+								{
+								system_state = STATE_MOVE_MOTOR;
+								break;
+								}
+							//if (eyesInDetect && eyesInViewOfIriscam)			//changed by Ilya
+							if (eyesInDetect)			//changed by Mo
+									system_state = SelectWhichIrisCam(eye_size,system_state);
+							DoAgc();
+							//if (eyesInViewOfIriscam)
+							break;
+
+	case STATE_MAIN_IRIS:
+	case STATE_AUX_IRIS:
+						system_state = SelectWhichIrisCam(eye_size,system_state);
+						if (noFaceCounter >= NO_FACE_SWITCH_FACE)
+							{
+							system_state=STATE_LOOK_FOR_FACE;
+							break;
+							}
+						if (eyesInDetect &&  !eyesInViewOfIriscam)
+							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+						break;
+	case STATE_MOVE_MOTOR:
+						//if (eyesInViewOfIriscam)		//by ilya
+						if (eyesInDetect)			//changed by Mo
+							{
+							system_state = SelectWhichIrisCam(eye_size,system_state);
+							break;
+							}
+						if (!foundEyes)
+							{
+							system_state = STATE_LOOK_FOR_FACE;
+							break;
+							}
+						DoAgc();
+						moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+	}
+
+
+	currnet_mode = -1;
+	// handle switching state
+	//if (last_system_state != system_state)
+	EyelockLog(stateMachineLogger, TRACE, "STATE:%8s  NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",StateText(system_state),
+					noFaceCounter,
+				foundEyes?'E':'.',
+				eyesInDetect?'D':'.',
+				eyesInViewOfIriscam?'V':'.',
+						eye_size,
+						eyes.x,
+						eyes.y,
+						last_angle_move,
+						process_time,
+						agc_set_gain,
+						g_MatchState
+						);
+		if (g_MatchState)
+			g_MatchState=0;
+		last_angle_move=0;
+
+	int stateofIrisCameras = 0;
+
+	if (last_system_state != system_state)
+	switch(last_system_state)
+	{
+	case STATE_LOOK_FOR_FACE:
+					switch (system_state)
+					{
+					case STATE_MOVE_MOTOR:
+						// above states switches no action has to be taken
+						moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+						// flush after moving to get more accurate motion on next loop
+						vs->flush();
+						break;
+					case STATE_MAIN_IRIS:
+						// enable main camera and set led currnet
+						DimmFaceForIris();											//Dim face settings
+						MainIrisSettings();											//change to Iris settings
+						SwitchIrisCameras(true);									//switch cameras
+						projPtr = true;
+						stateofIrisCameras = STATE_MAIN_IRIS;
+						//result = projectRect(face);
+						break;
+					case STATE_AUX_IRIS:
+						// enable aux camera and set led currnet
+						DimmFaceForIris();											//Dim face settings
+						MainIrisSettings();											//change to Iris settings
+						SwitchIrisCameras(false);									//switch cameras
+						projPtr = true;
+						stateofIrisCameras = STATE_AUX_IRIS;
+						//result = projectRect(face);
+						break;
+					}
+					break;
+	case STATE_AUX_IRIS:
+					switch (system_state)
+					{
+					case STATE_MOVE_MOTOR: // cannot happen
+					case STATE_LOOK_FOR_FACE:
+						// disable iris camera set current for face camera
+						MoveTo(CENTER_POS);
+						SetFaceMode();
+						break;
+					case STATE_MAIN_IRIS:
+						//if the switch happen from AUX to MAIN then we
+						//dont need to dim down the face cam settings because it is already
+						//dimmed down
+						//DimmFaceForIris();											//Dim face settings
+						MainIrisSettings();											//change to Iris settings
+						SwitchIrisCameras(true);									//switch cameras
+						projPtr = true;
+						stateofIrisCameras = STATE_MAIN_IRIS;
+						//result = projectRect(face);
+						break;
+					}
+					break;
+	case STATE_MAIN_IRIS:
+						switch (system_state)
+						{
+						case STATE_MOVE_MOTOR:
+							break;
+						case STATE_LOOK_FOR_FACE:
+							// disable iris camera set current for face camera
+							MoveTo(CENTER_POS);
+							SetFaceMode();
+							break;
+						case STATE_AUX_IRIS:
+							//if the switch happen from AUX to MAIN then we
+							//dont need to dim down the face cam settings because it is already
+							//dimmed down
+							//DimmFaceForIris();
+							MainIrisSettings();											//change to Iris settings
+							SwitchIrisCameras(false);									//switch cameras
+							projPtr = true;
+							stateofIrisCameras = STATE_AUX_IRIS;
+							//result = projectRect(face);
+							break;
+						}
+						break;
+	case STATE_MOVE_MOTOR:
+					switch (system_state)
+					{
+					case STATE_LOOK_FOR_FACE:
+						// disable iris camera set current for face camera
+						MoveTo(CENTER_POS);
+						SetFaceMode();
+						break;
+					case STATE_AUX_IRIS:
+						// switch only the expusure and camera enables
+						// no need to change voltage or current
+						DimmFaceForIris();											//Dim face settings
+						MainIrisSettings();											//change to Iris settings
+						SwitchIrisCameras(false);									//switch cameras
+						projPtr = true;
+						stateofIrisCameras = STATE_AUX_IRIS;
+						//result = projectRect(face);
+						break;
+					case STATE_MAIN_IRIS:
+						// enable main cameras and set
+						DimmFaceForIris();											//Dim face settings
+						MainIrisSettings();											//change to Iris settings
+						SwitchIrisCameras(true);									//switch cameras
+						projPtr = true;
+						stateofIrisCameras = STATE_MAIN_IRIS;
+						//result = projectRect(face);
+						break;
+					}
+					break;
+	}
+
+	//For dispaying face tracker
+	CvFont font;
+		double hScale=0.7;
+		double vScale=0.7;
+		int lineWidth=1;
+		bool static firstTime = true;
+		if(firstTime){
+						cvInitFont(&font,CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, hScale,vScale,0,lineWidth);
+						firstTime = false;
+					}
+
+		//
+		ImgFaceData = face;
+
+		if(bShowFaceTracking){
+			//printf("face x = %i  face y = %i face width = %i  face height = %i\n",face.x, face.y, face.width, face.height);
+			sprintf(temp, "Debug facetracker Window\n");
+			EyelockLog(logger, DEBUG, "Imshow");
+			cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
+			cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
+			cv::rectangle(smallImg, face, Scalar(255,0,0),1,0);
+			imshow(temp, smallImg);
+		}
+}
+
 
 void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	pthread_t threadIdtamper;
@@ -4846,7 +5452,8 @@ int main(int argc, char **argv)
 		if (run_mode)
 			{
 			 //DoRunMode(bShowFaceTracking, bDebugSessions);
-			 DoRunMode_test(bShowFaceTracking, bDebugSessions);
+			 //DoRunMode_test(bShowFaceTracking, bDebugSessions);
+			 DoRunMode_testRGB(bShowFaceTracking, bDebugSessions);
 #if 0
 			vsExp1->get(&w,&h,(char *)imgIS1.data);
 
