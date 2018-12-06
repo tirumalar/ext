@@ -2728,7 +2728,7 @@ void interactiveResponseUsingRGBLeds_X(float &faceWidth, bool foundEyes){
 		}
 
 
-		currFaceWidth = faceWidth;
+		//currFaceWidth = faceWidth;
 
 
 		if (state){
@@ -2748,6 +2748,27 @@ void interactiveResponseUsingRGBLeds_X(float &faceWidth, bool foundEyes){
 		port_com_send(cmd);
 	}
 
+
+}
+int maxFace = 0;
+int minFace = 90;
+
+
+void maxFaceSize(float &eye_size, bool foundEyes){
+
+	if (foundEyes){
+		if (maxFace < eye_size)
+			maxFace = eye_size;
+	}
+
+}
+
+void minFaceSize(float &eye_size, bool foundEyes){
+
+	if (foundEyes){
+		if (minFace > eye_size)
+			minFace = eye_size;
+	}
 
 }
 
