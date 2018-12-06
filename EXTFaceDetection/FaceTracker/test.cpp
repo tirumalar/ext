@@ -760,8 +760,8 @@ void DoStartCmd(){
 	}*/
 
 
-	onSlope1 = fconfig.getValue("FTracker.interResRGBouterSlope",6);
-	onSlope2 = fconfig.getValue("FTracker.interResRGBinnerSlope",13);
+	//onSlope1 = fconfig.getValue("FTracker.interResRGBouterSlope",6);
+	//onSlope2 = fconfig.getValue("FTracker.interResRGBinnerSlope",13);
 
 	MIN_FACE_SIZE_INTER = fconfig.getValue("FTracker.MIN_FACE_SIZE_INTER",6);
 	MAX_FACE_SIZE_INTER = fconfig.getValue("FTracker.MAX_FACE_SIZE_INTER",6);
