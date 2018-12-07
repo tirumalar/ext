@@ -2049,11 +2049,21 @@ function enable802Fields()
  {
      if (document.getElementById('Eyelock_EnableIEEE8021X').checked) {
             // $('#CACertificateFile').removeAttr('disabled');
-             $('#browseCACertbutton').removeAttr('disabled');
+            // $('#browseCACertbutton').removeAttr('disabled');
             // $('#ClientCertificateFile').removeAttr('disabled');
-             $('#browseClientCertbutton').removeAttr('disabled');
+            // $('#browseClientCertbutton').removeAttr('disabled');
             // $('#ClientPrivateKeyFile').removeAttr('disabled');
-             $('#browsePrivateKeybutton').removeAttr('disabled');
+            // $('#browsePrivateKeybutton').removeAttr('disabled');
+
+            $('#browseCACertButton').removeAttr('disabled');
+            $('#CACertbutton').removeAttr('disabled');
+            $('#CAcertToUpload').removeAttr('disabled');
+            $('#browseClientCertButton').removeAttr('disabled');
+            $('#ClientCertbutton').removeAttr('disabled');
+            $('#ClientCertToUpload').removeAttr('disabled');
+            $('#browsePrivateKeyButton').removeAttr('disabled');
+            $('#PrivateKeybutton').removeAttr('disabled');
+            $('#PrivateKeyToUpload').removeAttr('disabled');
 
           //DMO Why is this even in here?   $('#logintype').removeAttr('disabled');
           
@@ -2066,20 +2076,21 @@ function enable802Fields()
          else {
 ///DMO We do NOT disable any of these controls just because 'Enable' is turned off...  it messes up the POST array when saving the config out.
 
-          //      $('#CACertificateFile').attr({'disabled': 'disabled'});
                 $('#browseCACertButton').attr({'disabled': 'disabled'});
-          //      $('#ClientCertificateFile').attr({'disabled': 'disabled'});
-                $('#browseClientCertbutton').attr({'disabled': 'disabled'});
-          //      $('#ClientPrivateKeyFile').attr({'disabled': 'disabled'});
-                $('#browsePrivateKeybutton').attr({'disabled': 'disabled'});
+                $('#CACertbutton').attr({'disabled': 'disabled'});
+                $('#CAcertToUpload').attr({'disabled': 'disabled'});
+                $('#browseClientCertButton').attr({'disabled': 'disabled'});
+                $('#ClientCertbutton').attr({'disabled': 'disabled'});
+                $('#ClientcertToUpload').attr({'disabled': 'disabled'});
+                $('#browsePrivateKeyButton').attr({'disabled': 'disabled'});
+                $('#PrivateKeybutton').attr({'disabled': 'disabled'});
+                $('#PrivateKeyToUpload').attr({'disabled': 'disabled'});
 
-          //DMO Why is this even in here?      $('#logintype').attr({'disabled': 'disabled'});
                 $('#EAPVersion').attr({'disabled': 'disabled'});
                 $('#EAPIdentityName').attr({'disabled': 'disabled'});
                 $('#PrivateKeyPassword').attr({'disabled': 'disabled'});
 
                 $('#download802log').attr({'disabled': 'disabled'});
-///
          }
  }
 
