@@ -67,7 +67,7 @@ EyelockNanoSdkThread::EyelockNanoSdkThread(Configuration &conf):GenericProcessor
 	m_certPath = conf.getValue("Eyelock.SecureCertificate", "./rootCert/certs/nanoNXTDefault.crt");
 	m_certKeyPath = conf.getValue("Eyelock.SecureCertificateKey", "./rootCert/certs/nanoNXTDefault.key");
 	m_rootCAPath = conf.getValue("Eyelock.CAPath", "./rootCert/rootCA.cert");
-	m_forceTLS12 = conf.getValue("Eyelock.TLSEnable",false);
+	m_forceTLS12 = conf.getValue("Eyelock.TLSEnable",true);
 }
 
 

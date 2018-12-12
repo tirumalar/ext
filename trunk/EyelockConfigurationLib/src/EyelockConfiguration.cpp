@@ -1808,7 +1808,7 @@ namespace EyelockConfigurationNS
 		}
 	}
 
-	const bool Eyelock_TLSEnableDefault = false;
+	const bool Eyelock_TLSEnableDefault = true;
 	bool EyelockConfiguration::getEyelock_TLSEnable()
 	{
 		return conf.getBool(string("Eyelock.TLSEnable"), Eyelock_TLSEnableDefault);

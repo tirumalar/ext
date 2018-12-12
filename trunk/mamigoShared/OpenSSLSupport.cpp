@@ -155,7 +155,7 @@ SSL_CTX* OpenSSLSupport::InitCTX(bool bClient) {
 	certKeyPath = conf.getValue("Eyelock.SecureCertificateKey", "./rootCert/certs/nanoNXTDefault.key");
 	caFilePath = conf.getValue("Eyelock.CAPath", "./rootCert/rootCA.cert");
 
-	bool enableTLS = conf.getValue("Eyelock.TLSEnable",false);
+	bool enableTLS = conf.getValue("Eyelock.TLSEnable",true);
 
 	if (bClient){
 		if(m_ctxClnt==0){
