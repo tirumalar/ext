@@ -8,7 +8,7 @@
 #include "SocketFactory.h"
 
 SocketFactory::SocketFactory(Configuration& conf):m_conf(conf) {
-	 const char *str = m_conf.getValue("Eyelock.Cipher","TLSv1.2:TLSv1:SSLv3");
+	 const char *str = m_conf.getValue("Eyelock.Cipher","TLSv1.2");
 	 m_serverCipher.assign(str);
 }
 

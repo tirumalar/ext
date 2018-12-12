@@ -252,7 +252,11 @@ upgradeMaster(){
 	#cp /home/upgradeTemp/www/lighttpd.conf /home/www/lighttpd.conf
 
 	# taking new WebConfig configuration file and add settings for TLS if enabled
-	cat /home/root/Eyelock.ini | grep -iq "^Eyelock.TLSEnable=true" && sed -i -e "$ a ssl.use-sslv2 = \"disable\"" /home/www/lighttpd.conf && sed -i -e "$ a ssl.use-sslv3 = \"disable\"" /home/www/lighttpd.conf
+	#cat /home/root/Eyelock.ini | grep -iq "^Eyelock.TLSEnable=true" && sed -i -e "$ a ssl.use-sslv2 = \"disable\"" /home/www/lighttpd.conf && sed -i -e "$ a ssl.use-sslv3 = \"disable\"" /home/www/lighttpd.conf
+
+	# ssl.use-sslv2 and other are present by default. Commenting them out if TLS is disabled explicitly
+	grep -iq "^Eyelock.TLSEnable=false" /home/root/Eyelock.ini && sed -i s/'ssl.use-sslv2'/'#ssl.use-sslv2'/ '/home/root/lighttpd.conf' && sed -i s/'ssl.use-sslv3'/'#ssl.use-sslv3'/ '/home/root/lighttpd.conf'  && sed -i s/'ssl.cipher-list'/'#ssl.cipher-list'/ '/home/root/lighttpd.conf'
+
 
 	# copy this script, Logger and Logger settings for restore point functionality
 	cp ${firmwareDir}/fwHandler/fwHandler.sh /home/root	
