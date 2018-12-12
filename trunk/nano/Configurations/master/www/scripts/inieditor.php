@@ -2080,8 +2080,9 @@ class INIEditor
    function setTLSOnlyWebConfig($isset)
     {
       
-        $lighttpdconf = fopen("/home/www/lighttpd.conf", "r");
-        $lighttpdconfout = fopen("/home/www/lighttpd.conf.tmp", "w");
+        shell_exec("rm /home/root/lighttpd.conf.tmp");
+	$lighttpdconf = fopen("/home/root/lighttpd.conf", "r");
+        $lighttpdconfout = fopen("/home/root/lighttpd.conf.tmp", "w");
         //error_log("set is " .$isset);
         $haslines = 0;
         while(!feof($lighttpdconf))
@@ -2135,8 +2136,8 @@ class INIEditor
             fclose($lighttpdconfout);
 
                //error_log("saveconfig");
-                shell_exec("rm /home/www/lighttpd.conf");
-            shell_exec("mv /home/www/lighttpd.conf.tmp /home/www/lighttpd.conf");
+               // shell_exec("rm /home/www/lighttpd.conf");
+            shell_exec("mv /home/root/lighttpd.conf.tmp /home/root/lighttpd.conf");
             //error_log("done");
     }
 	// sets the value for the specified key into the internal array	

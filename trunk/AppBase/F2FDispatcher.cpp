@@ -1445,7 +1445,7 @@ void* F2FDispatcher::LocateDeviceLoop(void *ptr)
 
 		l.setNwValandSleep(1, timeout);
 		f2fDispatcherPtr->m_ledConsolidator->enqueMsg(l);
-		color = 4;
+		color = 1;
 		BobSetData(&color,1);
 		BobSetCommand(BOB_COMMAND_SET_LED);
 		sleep((timeout-1000)/1000);
