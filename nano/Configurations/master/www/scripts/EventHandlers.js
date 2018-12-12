@@ -832,7 +832,7 @@ function OsdpSecureModeOK() {
 
 // When user 'cancels' the Idendtify device requests...
  function CancelIdentifyDevice() {
-     bLocateDeviceCancelled = true;
+	sndReq('/scripts/rpc.php', 'identifydevicestop', "", false);
      HideWaitingDlg();
  }
 

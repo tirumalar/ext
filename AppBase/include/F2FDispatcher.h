@@ -90,7 +90,12 @@ public:
 
 	void gettime();
 	void settime();
-	void LocateDevice();
+	void StartLocateDevice();
+	void StopLocateDevice();
+	static void* LocateDeviceLoop(void *f2fDispatcherPtr);
+	pthread_t locateDeviceThread;
+	pthread_mutex_t locateDeviceLock;
+	bool stopLocateDevice;
 
 protected:
 	bool checkToBeSendToNw( MatchResultState val);

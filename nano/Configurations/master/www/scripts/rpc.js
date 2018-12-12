@@ -376,16 +376,6 @@ function handleResponse(theResponse)
             else
                 ShowMessageBox(GlobalStrings.ResetPasswordTitle, GlobalStrings.ResetPasswordFail, "", "MB_ICONINFORMATION", "OK");
         }
-        else if (update[0] === 'identifydevice') {
-            // If user has not click the 'Cancel' button, then send it again...
-            if (!bLocateDeviceCancelled)
-                sndReq('/scripts/rpc.php', 'identifydevice', "", false);
-            else
-            {
-				bLocateDeviceCancelled = false; // reset
-				sndReq('/scripts/rpc.php', 'identifydevicestop', "", false);
-			}
-        }
         else if (update[0] === 'updatetime') {
             
 			if(!submitTimeSync)//don't hide this if we're in submit mode, we're still using the dialog

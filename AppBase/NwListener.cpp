@@ -446,7 +446,13 @@ bool NwListener::do_serv_task(Socket& client) {
 		else if (m_HTTPMsg->getMsgType() == LOCATEDEVICE_MSG)
 		{
 			if(m_nwMatchManager){
-				m_nwMatchManager->GetF2FDispatcher()->LocateDevice();
+				m_nwMatchManager->GetF2FDispatcher()->StartLocateDevice();
+			}
+		}
+		else if (m_HTTPMsg->getMsgType() == LOCATEDEVICESTOP_MSG)
+		{
+			if(m_nwMatchManager){
+				m_nwMatchManager->GetF2FDispatcher()->StopLocateDevice();
 			}
 		}
 		else if (m_HTTPMsg->getMsgType() == TESTMATCH)

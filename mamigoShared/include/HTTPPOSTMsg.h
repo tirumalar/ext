@@ -39,7 +39,8 @@ enum NWMESSAGETYPE {
 	CALIBRATION_MSG,
 	TESTMATCH,
 	TIMESYNC_MSG,
-	LOCATEDEVICE_MSG
+	LOCATEDEVICE_MSG,
+	LOCATEDEVICESTOP_MSG
 };
 
 class HTTPPOSTMsg :
@@ -152,6 +153,8 @@ public:
 		if(isCalibration()) return CALIBRATION_MSG;
 		if(isHwTimeSync()) return TIMESYNC_MSG;
 		if(isLocateDevice()) return LOCATEDEVICE_MSG;
+		if(isLocateDeviceStop()) return LOCATEDEVICESTOP_MSG;
+
 		int fr_Len=0;
 		char *frame=getFrameHTTP(&fr_Len);
 		if(fr_Len>0 && frame!=0) return IMG_MSG;
@@ -296,7 +299,10 @@ bool isLocateDevice(){
 	bool ismode = (0==strncmp(Buffer,"LOCATEDEVICE_MSG",16));
 	return ismode;
 }
-
+bool isLocateDeviceStop(){
+	bool ismode = (0==strncmp(Buffer,"LOCATEDEVICESTOP_MSG",20));
+	return ismode;
+}
 
 bool getThreadMessageType(){
 	char *temp=Buffer;
