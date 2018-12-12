@@ -277,6 +277,8 @@ F2FDispatcher::F2FDispatcher(Configuration& conf):ResultDispatcher(conf), m_pMat
 		SendToBoB(conf);
 	}
 
+	pthread_mutex_init(&locateDeviceLock,NULL);
+
 }
 
 int F2FDispatcher::BoBOSDPCallback(void* my_data, int data_length)
@@ -1391,20 +1393,75 @@ void F2FDispatcher::SetLedInitState(int initLed)
 	m_ledConsolidator->GetLedDispatcher()->m_initialState = (char)initLed;
 }
 
-void F2FDispatcher::LocateDevice()
+void F2FDispatcher::StartLocateDevice()
 {
+	EyelockLog(logger, DEBUG, "Start locating device");
+	pthread_mutex_lock(&locateDeviceLock);
+	stopLocateDevice = false;
+	pthread_mutex_unlock(&locateDeviceLock);
+	pthread_create(&locateDeviceThread, NULL, &F2FDispatcher::LocateDeviceLoop, this);
+}
+
+
+void F2FDispatcher::StopLocateDevice()
+{
+	EyelockLog(logger, DEBUG, "Stop locating device");
+	pthread_mutex_lock(&locateDeviceLock);
+	stopLocateDevice = true;
+	pthread_mutex_unlock(&locateDeviceLock);
+	sleep(2);
+	unsigned char color = 7;
+	BobSetData(&color,1);
+	BobSetCommand(BOB_COMMAND_SET_LED);
+}
+
+
+void* F2FDispatcher::LocateDeviceLoop(void *ptr)
+{
+	if (ptr == NULL)
+	{
+		return NULL;
+	}
+
+	F2FDispatcher *f2fDispatcherPtr = (F2FDispatcher *) ptr;
+
 	EyelockLog(logger, TRACE, "Locate device");
 	const int timeout = 2000;
 	LEDResult l;
 	l.setState(LED_NWSET);
 	l.setGeneratedState(eREMOTEGEN);
-	std::vector<int> colors = {1,5,16};
-	std::vector<int>::iterator it;
-	for (it = colors.begin(); it!=colors.end(); it++)
+	//std::vector<int> colors = {1,5,16};
+	unsigned char color;
+	while (1)
 	{
-		EyelockLog(logger, TRACE, "Setting LED value %d, timeout: %d", *it, timeout);
-		l.setNwValandSleep(*it, timeout);
-		m_ledConsolidator->enqueMsg(l);
+		pthread_mutex_lock(&(f2fDispatcherPtr->locateDeviceLock));
+		bool stopRequested = f2fDispatcherPtr->stopLocateDevice;
+		pthread_mutex_unlock(&(f2fDispatcherPtr->locateDeviceLock));
+
+		if (stopRequested)
+		{
+			return NULL;
+		}
+
+		l.setNwValandSleep(1, timeout);
+		f2fDispatcherPtr->m_ledConsolidator->enqueMsg(l);
+		color = 4;
+		BobSetData(&color,1);
+		BobSetCommand(BOB_COMMAND_SET_LED);
+		sleep((timeout-1000)/1000);
+
+		l.setNwValandSleep(5, timeout);
+		f2fDispatcherPtr->m_ledConsolidator->enqueMsg(l);
+		color = 4;
+		BobSetData(&color,1);
+		BobSetCommand(BOB_COMMAND_SET_LED);
+		sleep((timeout-1000)/1000);
+
+		l.setNwValandSleep(16, timeout);
+		f2fDispatcherPtr->m_ledConsolidator->enqueMsg(l);
+		color = 2;
+		BobSetData(&color,1);
+		BobSetCommand(BOB_COMMAND_SET_LED);
 		sleep((timeout-1000)/1000);
 	}
 }

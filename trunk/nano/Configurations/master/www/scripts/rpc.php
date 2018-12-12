@@ -37,13 +37,13 @@ if (isset($_REQUEST['action']))
 			{
             	if ($_REQUEST['action'] === 'identifydevice')
             	{
-				$strLocateDevice = "LOCATEDEVICE_MSG";
+					$strLocateDevice = "LOCATEDEVICE_MSG";
 			        $strLocateDevice = SendTCPMessage($strLocateDevice);
-					sleep(3);
 				}
 				else
 				{
-					echo "stop";
+					$strLocateDevice = "LOCATEDEVICESTOP_MSG";
+			        $strLocateDevice = SendTCPMessage($strLocateDevice);
 				}
 			}
 			else
