@@ -1102,9 +1102,9 @@ void DoStartCmd_CamCal(){
 
 
 	//Reset the lower motion
-	sprintf(cmd, "fx_abs(%i)",MIN_POS);
-	EyelockLog(logger, DEBUG, "Reset to lower position minPos:%d", MIN_POS);
-	port_com_send(cmd);
+	//sprintf(cmd, "fx_abs(%i)",MIN_POS);
+	//EyelockLog(logger, DEBUG, "Reset to lower position minPos:%d", MIN_POS);
+	//port_com_send(cmd);
 	//printf(cmd);
 	//printf("------------------------------------------------------------------>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
 
