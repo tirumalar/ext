@@ -1399,7 +1399,14 @@ void F2FDispatcher::StartLocateDevice()
 	pthread_mutex_lock(&locateDeviceLock);
 	stopLocateDevice = false;
 	pthread_mutex_unlock(&locateDeviceLock);
-	pthread_create(&locateDeviceThread, NULL, &F2FDispatcher::LocateDeviceLoop, this);
+	EyelockLog(logger, DEBUG, "StartLocateDevice: lock acquired");
+
+	int rc = pthread_create(&locateDeviceThread, NULL, &F2FDispatcher::LocateDeviceLoop, this);
+	if (rc != 0)
+	{
+		EyelockLog(logger, ERROR, "StartLocateDevice: cannot create thread (%d)", rc);
+	}
+	pthread_detach(locateDeviceThread);
 }
 
 
@@ -1420,12 +1427,13 @@ void* F2FDispatcher::LocateDeviceLoop(void *ptr)
 {
 	if (ptr == NULL)
 	{
-		return NULL;
+		EyelockLog(logger, ERROR, "Locate device loop: null pointer to F2FDispatcher object");
+		pthread_exit(NULL);
 	}
 
 	F2FDispatcher *f2fDispatcherPtr = (F2FDispatcher *) ptr;
 
-	EyelockLog(logger, TRACE, "Locate device");
+	EyelockLog(logger, DEBUG, "Locate device loop started");
 	const int timeout = 2000;
 	LEDResult l;
 	l.setState(LED_NWSET);
@@ -1440,7 +1448,8 @@ void* F2FDispatcher::LocateDeviceLoop(void *ptr)
 
 		if (stopRequested)
 		{
-			return NULL;
+			EyelockLog(logger, DEBUG, "Locate device loop: stop requested");
+			pthread_exit(NULL);
 		}
 
 		l.setNwValandSleep(1, timeout);
