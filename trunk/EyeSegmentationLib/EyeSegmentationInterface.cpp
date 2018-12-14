@@ -484,7 +484,7 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 	}
 
 }
-
+#if 0
 EyeSegmentationOutput EyeSegmentationInterface::GetFlatIrisMask(unsigned char *imageBuffer, int w, int h, int stride, unsigned char *Iriscode, unsigned char *Maskcode, IrisPupilCircles *pCircles)
 {
 	EyeSegmentationOutput EyeSegOut;
@@ -631,7 +631,7 @@ EyeSegmentationOutput EyeSegmentationInterface::GetFlatIrisMask(unsigned char *i
 #endif
 
 }
-
+#endif
 
 bool EyeSegmentationInterface::Getiseye()
 {

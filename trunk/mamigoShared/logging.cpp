@@ -111,3 +111,90 @@ void EyelockLog(const char *filename, LogType level, const char *fmt, ...) {
 
 }
 
+void PortComLog(const char *filename, LogType level, const char *fmt, ...) {
+	if (level < m_LogLevel)
+		return;
+
+	pthread_mutex_lock(&m_LogLock);
+	LoggerPtr logger(Logger::getLogger(filename));
+	PropertyConfigurator::configure("facetrackerlog.cfg");
+
+	va_list va;
+	static char msg[256];
+	va_start(va, fmt);
+	vsnprintf(msg, 256, fmt, va);
+	va_end(va);
+
+	switch (level) {
+		case TRACE:
+			LOG4CXX_TRACE(logger, msg);
+			break;
+		case DEBUG:
+			LOG4CXX_DEBUG(logger, msg);
+			break;
+		case INFO:
+			LOG4CXX_INFO(logger, msg);
+			break;
+		case WARN:
+			LOG4CXX_WARN(logger, msg);
+			break;
+		case ERROR:
+			LOG4CXX_ERROR(logger, msg);
+			printf(msg);
+			break;
+		case FATAL:
+			LOG4CXX_FATAL(logger, msg);
+			break;
+		default:
+			LOG4CXX_TRACE(logger, msg);
+			break;
+	}
+
+	pthread_mutex_unlock(&m_LogLock);
+
+}
+
+void MotorLog(const char *filename, LogType level, const char *fmt, ...) {
+	if (level < m_LogLevel)
+		return;
+
+	pthread_mutex_lock(&m_LogLock);
+	LoggerPtr logger(Logger::getLogger(filename));
+	PropertyConfigurator::configure("motorlog.cfg");
+
+	va_list va;
+	static char msg[256];
+	va_start(va, fmt);
+	vsnprintf(msg, 256, fmt, va);
+	va_end(va);
+
+	switch (level) {
+		case TRACE:
+			LOG4CXX_TRACE(logger, msg);
+			break;
+		case DEBUG:
+			LOG4CXX_DEBUG(logger, msg);
+			break;
+		case INFO:
+			LOG4CXX_INFO(logger, msg);
+			break;
+		case WARN:
+			LOG4CXX_WARN(logger, msg);
+			break;
+		case ERROR:
+			LOG4CXX_ERROR(logger, msg);
+			printf(msg);
+			break;
+		case FATAL:
+			LOG4CXX_FATAL(logger, msg);
+			break;
+		default:
+			LOG4CXX_TRACE(logger, msg);
+			break;
+	}
+
+	pthread_mutex_unlock(&m_LogLock);
+
+}
+
+

@@ -102,7 +102,7 @@ public:
 	void setSegmentation(bool seg){ m_segmentation = seg?1:0;}
 	void setIrisRadiusCheck(bool seg){ m_radiusAndIrisCheck = seg?1:0;}
 		int getSizeofIrisData(){
-		int sz = 2560 + sizeof(uint64_t) + sizeof(CvPoint3D32f)*2 + sizeof(CvPoint2D32f) + sizeof(float)*4 + sizeof(int)*6 +  strlen(m_camID.c_str()) + 1;
+		int sz = 2560 + sizeof(uint64_t) + sizeof(CvPoint3D32f)*2 + sizeof(CvPoint2D32f) + sizeof(float)*4 + sizeof(int)*7 +  strlen(m_camID.c_str()) + 1;
 		return sz;
 	}
 	CvPoint2D32f getSpecCentroid(){ return m_specCentroid;}

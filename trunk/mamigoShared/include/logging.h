@@ -37,5 +37,6 @@ void EyelockLogClose();
 void EyelockLogInit();
 extern "C" void EyelockEvent(const char * msg, ...);
 extern "C" void EyelockLog(const char *filename, LogType level, const char *fmt, ...);
-
+extern "C" void PortComLog(const char *filename, LogType level, const char *fmt, ...);
+extern "C" void MotorLog(const char *filename, LogType level, const char *fmt, ...);
 #endif /* LOGGING_H_ */

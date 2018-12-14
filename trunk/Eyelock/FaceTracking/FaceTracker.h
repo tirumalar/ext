@@ -29,10 +29,6 @@
 #include <opencv/cv.h>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
-#include <opencv2/photo/photo.hpp>
-
-#include <aruco.h>
-#include <dictionary.h>
 
 #include "portcom.h"
 #include "eyelock_com.h"
@@ -41,6 +37,7 @@
 #include "FileConfiguration.h"
 #include "Configuration.h"
 #include "logging.h"
+
 
 //WIDTH and HEIGHT of input image
 #define WIDTH 1200
@@ -102,16 +99,14 @@ extern void  *init_tunnel(void *arg);
 extern void *init_ec(void * arg);
 void *DoTamper(void *arg);
 
-//#define LED_brightness_control
-// #define Tempering
-#define tempRecord
-
+VideoStream *vs;
 
 class FaceTracker{
 private:
+	bool m_CalRectFromOIM;
 	int rectX, rectY, rectW, rectH;
-	int cur_pos;
 	int previousEye_distance;
+	int cur_pos;
 
 	int fileNum;
 
@@ -166,8 +161,8 @@ private:
 
 	//variables dedicated for motor movement in extreme conditions
 	bool angleRange;
-	bool high = false, low = false;
-	int maxAngle = 136, minAngle = 72;
+	bool high, low;
+	int maxAngle, minAngle;
 
 	int m_IrisLEDVolt;
 	int m_IrisLEDcurrentSet;
@@ -205,11 +200,9 @@ private:
 	int m_ToneVolume;
 	int m_FixedAudSetVal;
 
-	// Mat Image;
-	Mat smallImgBeforeRotate;
-	
-	Mat outImgLast, outImg1, outImg1s;	// Used in MeasureSnr function
-	
+	float motorBottom;
+	float motorTop;
+
 	// Calibration
 	int calibVolt;
 	int calibCurrent;
@@ -234,96 +227,62 @@ private:
 
 	pthread_t threadIdtamper;
 	pthread_t threadIdtemp;
-	
-	bool calDebug;
-	bool calTwoPoint;
-	bool projDebug;
-	bool projPtr;
-	float projOffset_m;
-	float projOffset_a;
+	pthread_t threadIdFace;
 
-	bool showProjection;
+	FaceImageQueue m_LeftCameraFaceInfo;
+	FaceImageQueue m_RightCameraFaceInfo;
 
 	void SetExp(int cam, int val);
-	void MoveToAngle(float a);
-	void MoveTo(int v);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
 	void SelLedDistance(int val); // val between 0 and 100
-	void RecoverModeDrop();
+
 	void MainIrisSettings();
 	void SwitchIrisCameras(bool mode);
 	void SetFaceMode();
-	void MoveRelAngle(float a);
-	void DimmFaceForIris();
-	void SetIrisMode(float CurrentEye_distance);
-	
 
-	float AGC(int width, int height,unsigned char *dsty, int limit);
-	Mat rotate(Mat src, double angle);
-	Mat rotation90(Mat src);
-	int IrisFramesHaveEyes();
-	
-	float StandardDeviation_m1(vector<float> vec);
-	Mat preProcessingImg(Mat outImg);
+	void DimmFaceForIris();
 	void LEDbrightnessControl(Mat smallImg);
+
+	void SetIrisMode(float CurrentEye_distance);
+	int IrisFramesHaveEyes();
+
+	void MoveRelAngle(float a);
+	void MoveToAngle(float a);
+	void MoveTo(int v);
 	void moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, bool bDebugSessions);
+	void motorInit();
+
 	void faceModeState(bool bDebugSessions);
-	void switchStaes(int states, float eye_size, bool bShowFaceTracking, bool bDebugSessions);
-	void DoRunMode(bool bShowFaceTracking, bool bDebugSessions);
 	int SelectWhichIrisCam(float eye_size, int cur_state);
 	char * StateText(int state);
-	void DoAgc(void);
-	void motorInIt();
-	float motorBottom;
-	float motorTop;
+	
+	void DoAgc(Mat smallImg);
+	float AGC(int width, int height,unsigned char *dsty, int limit);
 
-	// Temperature
-	void motorMove();
-	double parsingIntfromHex(string str1);
-
-	// CAMERACALIBERATION_ARUCO
-	std::vector<aruco::Marker> gridBooardMarker(Mat img, int cam, bool calDebug);
-	vector<float> calibratedRect(std::vector<aruco::Marker> markerIris, std::vector<aruco::Marker> markerFace);
-	void brightnessAdjust(Mat outImg, int cam, bool calDebug);
-
-	float AGC_average(int width, int height,unsigned char *dsty, int limit);
-
-	void MeasureSnr();
-
-	//Tampering
-	double StandardDeviation(std::vector<double> samples);
-	double Variance(std::vector<double> samples);
+	// Mat rotate(Mat src, double angle);
+	Mat rotation90(Mat src, Mat dst);
+	Mat preProcessingImg(Mat outImg, Mat smallImg);
 
 	//adjust eye Tracking target at the center
 	cv::Rect seacrhEyeArea(cv::Rect no_move_area);
 
 public:
+
+
 	bool bDebugSessions;
 	bool bShowFaceTracking;
 	//bool faceConfigInit;
 
-	// Mat Image;
-	Mat outImg;
-	Mat smallImg;
-
 	FileConfiguration FaceConfig;
+
+	// FaceImageQueueItem *faceInfo;
+
 	FaceTracker(char* filename);
 	virtual ~FaceTracker();
 
 	void DoStartCmd();
-	void DoStartCmd_CamCal();
-
-	// Image Optimization
-	void DoImageCal(int cam_id_ignore);
-	void CalAll();
 		
-	// Temperature
-	int calTemp(int i);
-
-	bool CalCam(bool calDebug);
-	void runCalCam(bool calDebug);
-	
-	void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions);
+	void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions, Mat outImg);
 
 
 };
