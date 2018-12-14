@@ -2048,24 +2048,16 @@ $(document).ready(function ()
 function enable802Fields()
  {
      if (document.getElementById('Eyelock_EnableIEEE8021X').checked) {
-            // $('#CACertificateFile').removeAttr('disabled');
-            // $('#browseCACertbutton').removeAttr('disabled');
-            // $('#ClientCertificateFile').removeAttr('disabled');
-            // $('#browseClientCertbutton').removeAttr('disabled');
-            // $('#ClientPrivateKeyFile').removeAttr('disabled');
-            // $('#browsePrivateKeybutton').removeAttr('disabled');
-
             $('#browseCACertButton').removeAttr('disabled');
             $('#CACertbutton').removeAttr('disabled');
             $('#CAcertToUpload').removeAttr('disabled');
             $('#browseClientCertButton').removeAttr('disabled');
             $('#ClientCertbutton').removeAttr('disabled');
-            $('#ClientCertToUpload').removeAttr('disabled');
+            $('#ClientcertToUpload').removeAttr('disabled');
             $('#browsePrivateKeyButton').removeAttr('disabled');
             $('#PrivateKeybutton').removeAttr('disabled');
             $('#PrivateKeyToUpload').removeAttr('disabled');
 
-          //DMO Why is this even in here?   $('#logintype').removeAttr('disabled');
           
              $('#EAPVersion').removeAttr('disabled');
              $('#EAPIdentityName').removeAttr('disabled');
@@ -2074,8 +2066,6 @@ function enable802Fields()
              $('#download802log').removeAttr('disabled');
          }
          else {
-///DMO We do NOT disable any of these controls just because 'Enable' is turned off...  it messes up the POST array when saving the config out.
-
                 $('#browseCACertButton').attr({'disabled': 'disabled'});
                 $('#CACertbutton').attr({'disabled': 'disabled'});
                 $('#CAcertToUpload').attr({'disabled': 'disabled'});
