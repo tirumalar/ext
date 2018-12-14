@@ -30,6 +30,7 @@
 #include "PostMessages.h"
 #endif
 #include "FileConfiguration.h"
+#include "FaceMap.h"
 
 class IrisSelectServer;
 class EyeTracker;
@@ -123,9 +124,12 @@ public:
 	void setShouldDetectEyes(bool val){ m_shouldDetect = val;}
 	int getFrameType() { return m_testImageSendLevel;}
 	bool getShouldDetectEyes() { return m_shouldDetect;}
-	//void SetCmxHandler(CmxHandler *pCmxHandler) {m_pCmxHandler = pCmxHandler;}
-	float projectPoints(float y, float c, float m);
-	cv::Rect projectRect(cv::Rect face, int CameraId, IplImage *InputFrame, int FaceFrameNo, int IrisFrameNo);
+
+	cv::Point2i ProjectPtr2(float x, float y, cv::Point2f constant, float ConstDiv);
+	cv::Point2i projectPointsPtr1(cv::Rect projFace, cv::Point2f constant, float ConstDiv);
+	cv::Rect CeateRect(cv::Point2i ptr1, cv::Point2i ptr2, bool useOffest, float projOffset);
+	cv::Rect projectRectNew(cv::Rect face, int CameraId);
+	FaceMapping GetFaceInfoFromQueue(int CameraId, char IrisFrameNo);
 #ifndef UNITTEST    
 protected:
 #endif
@@ -242,11 +246,13 @@ protected:
 
 	bool m_DebugTesting;
 	std::string m_sessionDir;
-	cv::Rect FaceCoord;
+
 	IplImage *m_IrisProjImage;
 	bool m_SaveProjImage;
+	bool m_CalRectFromOIM;
 	int rectX, rectY, rectW, rectH;
 	float magOffMainl, magOffMainR, magOffAuxl, magOffAuxR;
+	float magOffMainlDiv, magOffMainRDiv, magOffAuxlDiv, magOffAuxRDiv;
 	cv::Point2f constantMainl, constantMainR, constantAuxl, constantAuxR;
 	bool useOffest_m, useOffest_a;
 	float projOffset_m, projOffset_a;
@@ -255,7 +261,7 @@ protected:
 	int m_Imagewidth;
 	int m_Imageheight;
 	bool m_EnableExtHalo;
-
+	cv::Rect retd1;
 #ifdef HBOX_PG	
 	bool m_SPAWAREnable;
 

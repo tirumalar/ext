@@ -357,6 +357,27 @@ void AllocateOIMQueue(int nSize)
 	g_pOIMQueue = new OIMQueue(nSize);
 }
 
+LeftCameraFaceQueue *g_pLeftCameraFaceQueue = NULL;
+RightCameraFaceQueue *g_pRightCameraFaceQueue = NULL;
+FaceCameraQueue *g_pCameraFaceQueue = NULL;
+
+void AllocateFaceQueue(int nSize)
+{
+	printf("Inside AllocateFaceQueue\n");
+	g_pLeftCameraFaceQueue = new LeftCameraFaceQueue(nSize);
+	g_pRightCameraFaceQueue = new RightCameraFaceQueue(nSize);
+}
+
+/*
+void deallocateOIMQueue()
+{
+	if (OIMQueue)
+		delete [] OIMQueue;
+	if (RingBufferFaceQueue)
+		delete [] RingBufferFaceQueue;
+}
+*/
+
 
 void *init_ec(void * arg) {
 	EyelockLog(logger, TRACE, "init_ec");
@@ -364,6 +385,7 @@ void *init_ec(void * arg) {
 	int i;
 	//struct sockaddr_in clientname;
 	//unsigned int size;
+
 
 	// Create Queue for communicating with Eyelock CMXHandler
 //	g_pOIMQueue = new OIMQueue(10); //DMO pull from config later...

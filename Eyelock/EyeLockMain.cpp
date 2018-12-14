@@ -191,6 +191,7 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 #ifdef CMX_C1
 		//Allocate our Facetracking <--->  Eyelock message queue
 		AllocateOIMQueue(10); // 10 is queue sizee.  Can be replaced with config value later if necessary
+		AllocateFaceQueue(10);
 
 		// Start facetracking threads
 		startFaceTracking();

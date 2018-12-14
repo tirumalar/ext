@@ -10,8 +10,15 @@
 
 
 
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv/cv.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+
 //DMO Queue Processing
 #include "Synchronization.h"
+#include "FaceMap.h"
 
 #define PORT    50
 #define MAXMSG  512
@@ -40,6 +47,7 @@ extern OIMQueue *g_pOIMQueue;
      void SetFaceMode();
      void RecoverModeDrop();
      void AllocateOIMQueue(int nSize);
+     void AllocateFaceQueue(int nSize);
  #ifdef __cplusplus
      }
  #endif

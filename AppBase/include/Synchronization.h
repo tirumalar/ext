@@ -192,7 +192,17 @@ T Pop() // wait and pop
 		}
 		return status;
 	}
-
+T Peek() // wait and peek
+	{
+		ScopeLock lock(m_Lock);
+		while(m_Buffer.empty())
+		{
+			pthread_cond_wait( &m_NotNull, &m_Lock );
+		}
+		T value = m_Buffer.front();
+		pthread_cond_signal(&m_NotFull);
+		return value;
+	}
 };
 
 

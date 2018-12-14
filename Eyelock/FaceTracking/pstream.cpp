@@ -24,6 +24,7 @@
 #include "pstream.h"
 #include <signal.h>
 
+const char loggerp[30] = "pstream";
 void diep(char *s)
 {
     perror(s);

@@ -78,7 +78,7 @@ public:
 	int GetFeatureNumRows() const;
 	_IplImage** GetImagePyramid();
 	float GetCorruptBitsPerc(){ return m_corruptBitcountPerc;}
-	EyeSegmentationOutput GetFlatIrisMask(unsigned char *imageBuffer, int w, int h, int stride, unsigned char *Iriscode, unsigned char *Maskcode, IrisPupilCircles *pCircles);
+	// EyeSegmentationOutput GetFlatIrisMask(unsigned char *imageBuffer, int w, int h, int stride, unsigned char *Iriscode, unsigned char *Maskcode, IrisPupilCircles *pCircles);
 private:
 	EyeSegmentServer *m_pEyeSegmentServer;
 	EyeFeatureServer *m_pEyeFeatureServer;

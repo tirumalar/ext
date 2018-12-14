@@ -1,3 +1,4 @@
+#include "logging.h"
 
 #define BUFLEN 1500
 //#define IMAGE_SIZE 1152000
