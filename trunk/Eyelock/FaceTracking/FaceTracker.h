@@ -99,7 +99,6 @@ extern void  *init_tunnel(void *arg);
 extern void *init_ec(void * arg);
 void *DoTamper(void *arg);
 
-VideoStream *vs;
 
 class FaceTracker{
 private:
@@ -256,18 +255,17 @@ private:
 	int SelectWhichIrisCam(float eye_size, int cur_state);
 	char * StateText(int state);
 	
-	void DoAgc(Mat smallImg);
+	void DoAgc(void);
 	float AGC(int width, int height,unsigned char *dsty, int limit);
 
 	// Mat rotate(Mat src, double angle);
-	Mat rotation90(Mat src, Mat dst);
-	Mat preProcessingImg(Mat outImg, Mat smallImg);
+	Mat rotation90(Mat src);
+	Mat preProcessingImg(Mat outImg);
 
 	//adjust eye Tracking target at the center
 	cv::Rect seacrhEyeArea(cv::Rect no_move_area);
 
 public:
-
 
 	bool bDebugSessions;
 	bool bShowFaceTracking;
@@ -282,7 +280,7 @@ public:
 
 	void DoStartCmd();
 		
-	void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions, Mat outImg);
+	void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions);
 
 
 };
