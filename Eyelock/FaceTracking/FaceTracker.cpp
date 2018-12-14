@@ -20,6 +20,11 @@ Rect no_move_area, no_move_areaX;		//Face target area
 Rect search_eye_area;					//Narrow down the eye search range in face
 Rect projFace;
 
+VideoStream *vs;
+Mat outImg;
+Mat smallImg;
+Mat smallImgBeforeRotate;
+Mat dst;
 
 // std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
 
@@ -664,7 +669,7 @@ void FaceTracker::SetIrisMode(float CurrentEye_distance)
 }
 
 cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
-	//printf("no_move_area 	x: %d	y: %d	w: %d	h: %d\n", no_move_area.x, no_move_area.y, no_move_area.height, no_move_area.width);
+	/// printf("no_move_area 	x: %d	y: %d	w: %d	h: %d\n", no_move_area.x, no_move_area.y, no_move_area.height, no_move_area.width);
 	//printf("ERROR_CHECK_EYES %3.3f \n", ERROR_CHECK_EYES);
 
 	float hclip = float(no_move_area.height - float(no_move_area.height * ERROR_CHECK_EYES));
@@ -682,7 +687,7 @@ cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 	modRect.y = no_move_area.y + yclip;
 	modRect.height = no_move_area.height - hclip;
 
-	//printf("search_eye_area 	x: %d	y: %d	w: %d	h: %d\n", modRect.x, modRect.y, modRect.height, modRect.width);
+	// printf("search_eye_area 	x: %d	y: %d	w: %d	h: %d\n", modRect.x, modRect.y, modRect.height, modRect.width);
 
 #if 1 // To check if needed
 	if(modRect.x < 0)
@@ -745,10 +750,6 @@ void FaceTracker::DoStartCmd()
 
 	printf("Motor Int\n");
 	motorInit();
-
-#ifdef NOOPTIMIZE
-	usleep(100000);
-#endif
 
 	//Reset the lower motion
 	sprintf(cmd, "fx_abs(%i)",MIN_POS);
@@ -942,21 +943,7 @@ float FaceTracker::AGC(int width, int height,unsigned char *dsty, int limit)
 	return (float)percentile;
 }
 
-#if 0
-Mat FaceTracker::rotate(Mat src, double angle)
-{
-	EyelockLog(logger, TRACE, "rotate");
-	Mat dst;
-    Point2f pt(src.cols*0.5, src.rows*0.5);
-    Mat M = cv::getRotationMatrix2D(pt, angle, 1.0);
-    cv::warpAffine(src, dst, M, src.size());
-    //cv::warpAffine(src, dst, M, smallImgBeforeRotate.size(),cv::INTER_CUBIC);
-    M.release();
-    return dst;
-}
-#endif
-
-Mat FaceTracker::rotation90(Mat src, Mat dst)
+Mat FaceTracker::rotation90(Mat src)
 {
 	EyelockLog(logger, TRACE, "rotation90");
 	transpose(src, dst);
@@ -976,17 +963,16 @@ int FaceTracker::IrisFramesHaveEyes()
 		return 1;
 }
 
-
-Mat FaceTracker::preProcessingImg(Mat outImg, Mat smallImg)
+Mat FaceTracker::preProcessingImg(Mat outImg)
 {
 	float p;
-	Mat smallImgBeforeRotate, dst;
+
 	EyelockLog(logger, TRACE, "preProcessing");
 	EyelockLog(logger, TRACE, "resize");
 	cv::resize(outImg, smallImgBeforeRotate, cv::Size(), (1 / scaling),
 			(1 / scaling), INTER_NEAREST);	//py level 3
 
-	smallImg = rotation90(smallImgBeforeRotate, dst);	//90 deg rotation
+	smallImg = rotation90(smallImgBeforeRotate);	//90 deg rotation
 
 	//AGC control to block wash out images
 	EyelockLog(logger, TRACE, "AGC Calculation");
@@ -1009,8 +995,7 @@ Mat FaceTracker::preProcessingImg(Mat outImg, Mat smallImg)
 
 	agc_set_gain = agc_val;
 
-	smallImgBeforeRotate.release();
-	dst.release();
+
 	return smallImg;
 }
 
@@ -1110,7 +1095,7 @@ char* FaceTracker::StateText(int state)
 	return "none";
 }
 
-void FaceTracker::DoAgc(Mat smallImg)
+void FaceTracker::DoAgc(void)
 {
 	p = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),180);
 
@@ -1140,11 +1125,10 @@ void FaceTracker::DoAgc(Mat smallImg)
 }
 
 
-void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions, Mat outImg){
+void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	EyelockLog(logger, TRACE, "DoRunMode_test");
 
 	cv::Rect face;
-	Mat smallImg, OutSmallImg; 
 	int start_process_time = clock();
 
 	char FaceCameraQFrameNo = (int)outImg.at<uchar>(0,3);
@@ -1168,18 +1152,18 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions, Ma
 	gettimeofday(&m_timer, 0);
 	TV_AS_USEC(m_timer,starttimestamp);
 
-	OutSmallImg = preProcessingImg(outImg, smallImg);
+	smallImg = preProcessingImg(outImg);
 
-	bool foundEyes = FindEyeLocation(OutSmallImg, eyes, eye_size, face);
+	bool foundEyes = FindEyeLocation(smallImg, eyes, eye_size, face);
 
 	m_LeftCameraFaceInfo.FaceCoord = face;
-	m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraQFrameNo;
+	m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
 	m_LeftCameraFaceInfo.m_startTime = starttimestamp;
 
 	m_RightCameraFaceInfo.FaceCoord = face;
-	m_RightCameraFaceInfo.FaceFrameNo = FaceCameraQFrameNo;
+	m_RightCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
 	m_RightCameraFaceInfo.m_startTime = starttimestamp;
-
+#if 1
 	// printf("PushToQueue foundEyes %d FaceFrameNo %d face x = %d  face y = %d face width = %d  face height = %d \n", foundEyes, FaceCameraQFrameNo, face.x,  face.y,  face.width, face.height);
 	if(system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){
 		//printf("Mapping: Push to Left Queue FaceFrameNo: %d\n", FaceCameraQFrameNo);
@@ -1187,7 +1171,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions, Ma
 		//printf("Mapping: Push to Right Queue FaceFrameNo: %d\n", FaceCameraQFrameNo);
 		g_pRightCameraFaceQueue->TryPush(m_RightCameraFaceInfo);
 	}
-
+#endif
 	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
 
 
@@ -1216,7 +1200,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions, Ma
 							//if (eyesInDetect && eyesInViewOfIriscam)			//changed by Ilya
 							if (eyesInDetect)			//changed by Mo
 									system_state = SelectWhichIrisCam(eye_size,system_state);
-							DoAgc(OutSmallImg);
+							DoAgc();
 							//if (eyesInViewOfIriscam)
 							break;
 
@@ -1243,7 +1227,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions, Ma
 							system_state = STATE_LOOK_FOR_FACE;
 							break;
 							}
-						DoAgc(OutSmallImg);
+						DoAgc();
 						moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
 	}
 
@@ -1378,16 +1362,15 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions, Ma
 		if(bShowFaceTracking){
 			//printf("face x = %i  face y = %i face width = %i  face height = %i\n",face.x, face.y, face.width, face.height);
 			EyelockLog(logger, TRACE, "Imshow");
-			cv::rectangle(OutSmallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
-			cv::rectangle(OutSmallImg, search_eye_area, Scalar(255, 0, 0), 1, 0);
-			cv::rectangle(OutSmallImg, detect_area, Scalar(255, 0, 0), 1, 0);
-			cv::rectangle(OutSmallImg, face, Scalar(255,0,0),1,0);
-			imshow("FaceTracker", OutSmallImg);
+			cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
+			cv::rectangle(smallImg, search_eye_area, Scalar(255, 0, 0), 1, 0);
+			cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
+			cv::rectangle(smallImg, face, Scalar(255,0,0),1,0);
+			imshow("FaceTracker", smallImg);
 			cvWaitKey(1);
 		}
 
-		smallImg.release();
-		OutSmallImg.release(); 
+
 
 //For debug session
 #ifdef DEBUG_SESSION
@@ -1417,9 +1400,8 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions, Ma
 				// To save full face Images
 				char filename1[200];
 				sprintf(filename1, "%s/FaceFullImage_%s_%lu_%09lu_%d_%d.pgm", m_sessionDir.c_str(), time_str, ts.tv_sec, ts.tv_nsec, FaceCameraFrameNo, CamId);
-				//Mat dst1;
-				// Mat Orig = rotation90(outImg, dst1);
-				imwrite(filename1, outImg);
+				imwrite(filename1, rotation90(outImg));
+
 				char logmsg[300];
 				sprintf(logmsg, "Saved-FaceImage-FrNum%d-CamID%d-%s", FaceCameraFrameNo, CamId, filename);
 				LogSessionEvent(logmsg);
@@ -1427,6 +1409,9 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions, Ma
 		}
 	}
 #endif
+
+// Push face Coordinates to Queue
+	// pthread_create(&threadIdFace,NULL,face_queue,faceInfo);
 // Temperature
 	pthread_create(&threadIdtemp,NULL,DoTemperatureLog,NULL);
 
@@ -1460,7 +1445,6 @@ void *init_facetracking(void *arg) {
 	pthread_create(&threadId, NULL, init_ec, NULL);
 	EyelockLog(logger, TRACE, "Start  Eyelock Com Thread");
 
-
 	//vid_stream_start
 	vs = new VideoStream(8194); //Facecam is 8194...
 
@@ -1477,14 +1461,15 @@ void *init_facetracking(void *arg) {
 	m_faceTracker.DoStartCmd();
 
 	// Main Loop...
-	Mat outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
+	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
+
 	while (1)
 	{
 		// printf("Inside while of face tracking\n");
 		vs->get(&w, &h, (char *) outImg.data);
 
 		//Main Face tracking operation
-		m_faceTracker.DoRunMode_test(m_faceTracker.bShowFaceTracking, m_faceTracker.bDebugSessions, outImg);
+		m_faceTracker.DoRunMode_test(m_faceTracker.bShowFaceTracking, m_faceTracker.bDebugSessions);
 
 	}
 	outImg.release();
