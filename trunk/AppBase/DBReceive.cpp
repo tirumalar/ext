@@ -73,7 +73,7 @@ DBReceive::DBReceive(Configuration& conf ):GenericProcessor(conf),m_DBFileMsg(0)
 	m_socketFactory = new SocketFactory(conf);
 	m_DeleteUpdateMsg = new HDMatcherMsg();
 	m_tempBuffer = new char[65536];
-	m_ReceiveMsg = new HTTPPOSTMsg(65536);
+	// m_ReceiveMsg = new HTTPPOSTMsg(65536);
 
 }
 

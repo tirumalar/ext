@@ -26,6 +26,8 @@ extern "C" {
 #include <iostream>
 const char logger[30] = "MatchDispatcher";
 
+#include <opencv2/imgproc/imgproc.hpp>
+
 MatchDispatcher::MatchDispatcher(Configuration& conf)
 : ResultDispatcher(conf)
 ,m_f2fDispatcher(NULL)
@@ -93,6 +95,7 @@ MatchDispatcher::MatchDispatcher(Configuration& conf)
 	m_timeOut.tv_sec = timeOutms / 1000;
 	m_timeOut.tv_usec = (timeOutms % 1000) * 1000;
 	m_socketFactory = new SocketFactory(conf);
+	m_SaveMatchedDispatched = conf.getValue("Eyelock.SaveMatchedDispatched",false);
 }
 
 MatchDispatcher::~MatchDispatcher() {
@@ -243,8 +246,36 @@ void MatchDispatcher::MatchDetected(MatchResult *result,int frindx,int eyeindx)
 		int fr,ey;
 		string cam;
 		int EXTCameraIndex;
-		result->getFrameInfo(fr,ey,cam, EXTCameraIndex);
-	    cout << "Best matched with record " << result->getEyeIndex() << "  ExtCameraNo:" << EXTCameraIndex << "  FrameNo:" << fr << " with score " << result->getScore()<< " @ time " << timestamp << endl;
+		IplImage *eyeCrop = result->getFrameInfo(fr,ey,cam, EXTCameraIndex);
+		cout << "Best matched with record " << result->getEyeIndex() << "  ExtCameraNo:" << EXTCameraIndex << "  FrameNo:" << fr << " with score " << result->getScore()<< " @ time " << timestamp << endl;
+
+	    if(m_SaveMatchedDispatched){
+
+	    	time_t timer;
+	 		struct tm* tm1;
+	 		time(&timer);
+	 		tm1 = localtime(&timer);
+	 		char time_str[100];
+	 		strftime(time_str, 100, "%Y_%m_%d_%H-%M-%S", tm1);
+
+	 		struct timespec ts;
+	 		clock_gettime(CLOCK_REALTIME, &ts);
+
+	    	char filename[100];
+	    	std::ostringstream ssCoInfo;
+	    	ssCoInfo << "MatchScore  " << result-> getScore();
+	    	string name;
+	    	name.assign(result->getName());
+	    	char *FullName = strtok ((char*)name.c_str(),"|");
+	    	char *PersonName = strtok (FullName," ");
+	    	cv::Mat mateye = cv::cvarrToMat(eyeCrop);
+	    	int fontFace = CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC;
+	    	double fontScale = 1;
+	    	// putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cv::Scalar::all(150), 3, 4);
+	    	putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cvScalar(0,122,122), 3, 4);
+	    	sprintf(filename,"MRD_%d_%d_%s_%f_%s_%lu_%09lu.pgm", EXTCameraIndex, fr, PersonName, result-> getScore(), time_str, ts.tv_sec, ts.tv_nsec);
+	    	imwrite(filename, mateye);
+	    }
 
 
 	    CURR_TV_AS_MSEC(t);

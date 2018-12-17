@@ -164,7 +164,7 @@ NwMatchManager::NwMatchManager(Configuration& conf) :
 
 	m_certFile = NULL;
 
-	m_SaveMatchInfo = conf.getValue("Eyelock.SaveMatchInfo", false);
+	m_SaveMatched = conf.getValue("Eyelock.SaveMatched", false);
 	//xxlog("Eyelock Startup\n",0);
 	EyelockEvent("Eyelock Startup\n",0);
 
@@ -212,11 +212,15 @@ void NwMatchManager::MatchDetected(MatchResult *result) {
     int fr,ey;
     string cam;
     int EXTCameraId;
-    result->getFrameInfo(fr,ey,cam,EXTCameraId);
+    IplImage *eyeCrop = result->getFrameInfo(fr,ey,cam,EXTCameraId);
 	CURR_TV_AS_USEC(t);
 	int64_t diff = t-result->getTimeStamp();
-	if (m_Debug)
-		EyelockLog(logger, DEBUG, "%llu::MatchDetected %d %d %s diff %d\n",t/1000,fr,ey,cam.c_str(),diff);
+	if (m_Debug){
+		string name;
+		name.assign(result->getName());
+		char *PersonName = strtok ((char*)name.c_str(),"|");
+		EyelockLog(logger, DEBUG, "%llu::MatchDetected %d %d %s diff %d MatchName: %s\n",t/1000,fr,ey,cam.c_str(),diff, PersonName);
+	}
 	result->setNwValandSleep(0,(int)(diff/1000));
 	m_mr=*result;
 	if (m_matchDispatcher){
@@ -1127,16 +1131,35 @@ void NwMatchManager::processmatch(Copyable *inpmsg) {
 				firstTime = false;
 			}
 
-			if(m_SaveMatchInfo){
-				std::ostringstream ssCoInfo;
-				ssCoInfo << "MatchScore  " << result-> getScore();
-				char filename[100];
-				sprintf(filename,"EyeCrop_%d.pgm", irisCurr->getFrameIndex());
-				cv::Mat mateye = cv::imread(filename, 0);
-				putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), &font, 0.8, cvScalar(255,255,255), 2, 8);
-				imwrite(filename, mateye);
+			if(m_SaveMatched){
+				if(result-> getScore() < m_matchScoreThresh){
+					time_t timer;
+					struct tm* tm1;
+					time(&timer);
+					tm1 = localtime(&timer);
+					char time_str[100];
+					strftime(time_str, 100, "%Y_%m_%d_%H-%M-%S", tm1);
+
+					struct timespec ts;
+					clock_gettime(CLOCK_REALTIME, &ts);
+
+					char filename[100];
+					std::ostringstream ssCoInfo;
+					ssCoInfo << "MatchScore  " << result-> getScore();
+					IplImage *eyeCrop = irisCurr->getEyeCrop();
+					string name;
+					name.assign(result->getName());
+					char *PersonName = strtok ((char*)name.c_str(),"|");
+					cv::Mat mateye = cv::cvarrToMat(eyeCrop);
+					int fontFace = CV_FONT_HERSHEY_SIMPLEX;
+					double fontScale = 1;
+					// putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), &font, 0.8, cvScalar(0,143,143), 2, 8);
+					putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cvScalar(0,122,122), 3, 4);
+					sprintf(filename,"MCQ_%d_%d_%s_%f_%s_%lu_%09lu.pgm", irisCurr->getCameraIndex(), irisCurr->getFrameIndex(), PersonName, result-> getScore(), time_str, ts.tv_sec, ts.tv_nsec);
+					imwrite(filename, mateye);
+				}
 			}
-			result->setFrameInfo(irisCurr->getFrameIndex(),irisCurr->getEyeIndex(),(char*)irisCurr->getCamID(),irisCurr->getCameraIndex());
+			result->setFrameInfo(irisCurr->getFrameIndex(),irisCurr->getEyeIndex(),(char*)irisCurr->getCamID(),irisCurr->getCameraIndex(), irisCurr->getEyeCrop());
 			result->setTimeStamp(irisCurr->getTimeStamp());
 			if((result-> getScore() < m_matchScoreThresh)&& m_singleIrisinDual){
 				if(result->GetPersonIrisInfo() == SINGLE){

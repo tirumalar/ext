@@ -679,6 +679,8 @@ void MatchProcessor::UpdateIrisData(HTTPPOSTMsg *msg,IrisData *irisData){
 	irisData->setHalo(halo);
 
 	msg->getCameraNo(ExtCameraid);
+	unsigned char *frame = (unsigned char *) ((msg->getImage()));
+	irisData->setEyeCropImageData(frame);
 	irisData->setCameraIndex(ExtCameraid);
 	irisData->setFrameIndex(msg->getFrameIndex());
 	irisData->setEyeIndex(msg->getEyeIndex());

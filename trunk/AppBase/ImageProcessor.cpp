@@ -555,6 +555,7 @@ ImageProcessor::~ImageProcessor() {
 	if(m_IrisProjImage){
 		cvReleaseImage(&m_IrisProjImage);
 	}
+
 #ifdef HBOX_PG
 	if(m_pHttpPostSender){
 		delete m_pHttpPostSender;
@@ -976,6 +977,7 @@ cv::Rect ImageProcessor::projectRectNew(cv::Rect face, int CameraId)
 	projFace.height = rectH - (targetOffset1 * 2);
 	cv::Point2i ptr1, ptr2;
 
+
 	if (CameraId == IRISCAM_MAIN_LEFT) {
 		ptr1 = projectPointsPtr1(projFace, constantMainl, magOffMainlDiv);
 		ptr2 = ProjectPtr2((face.x + face.width), (projFace.y + projFace.height), constantMainl, magOffMainlDiv),
@@ -1000,238 +1002,10 @@ cv::Rect ImageProcessor::projectRectNew(cv::Rect face, int CameraId)
 		IrisProjRect =  CeateRect(ptr1, ptr2, useOffest, projOffset);;
 
 	}
-
+	// IrisProjRect.width = projFace.width;
 	return (IrisProjRect);
 
 }
-
-#if 0
-// Mo's code
-float ImageProcessor::projectPoints(float y, float c, float m)
-{
-	//y = mx + c
-	//y is Face points and x is Iris points
-	//x = (y-c)/m
-	//printf("y::: %3.3f, c::: %3.3f, m::: %3.3f, x::: %3.3f\n", y,c,m, float((y-c)/m));
-
-	return ((y-c)/m);
-
-}
-
-cv::Rect ImageProcessor::projectRect(cv::Rect face, int CameraId)
-{
-	double scaling = 8.0;
-	float scale = 1.0;
-	int targetOffset1;
-	cv::Rect IrisProjRect;
-	targetOffset1 = 3;
-
-	cv::Rect ret1(0,0,0,0);
-	cv::Rect ret2(0,0,0,0);
-	cv::Rect retd1(0,0,0,0);
-	cv::Rect retd2(0,0,0,0);
-	cv::Rect projFace;
-	cv::Rect faceP = face;
-
-	printf("scaling....%f\n", scaling);
-
-	printf("projectRect face x = %d  face y = %d face width = %d  face height = %d CameraId %d\n", faceP.x, faceP.y, faceP.width, faceP.height, CameraId);
-
-	faceP.y = (rectY/scaling) + targetOffset1;
-	faceP.height = (rectH)/scaling -(targetOffset1*2);
-
-	projFace.x = face.x * scaling;		//column
-	projFace.y = rectY + targetOffset1;	//row
-	projFace.width = face.width * scaling;
-	projFace.height = rectH - (targetOffset1 * 2);
-	cv::Point2i ptr1, ptr2, ptr3, ptr4;
-
-
-
-	if (CameraId == IRISCAM_MAIN_LEFT) {
-		//project two coordinates diagonally a part in face frame into Iris
-		ptr1.x = projectPoints(projFace.x, constantMainl.x, magOffMainl);
-		ptr1.y = projectPoints(projFace.y, constantMainl.y, magOffMainl);
-		ptr2.x = projectPoints((face.x + face.width), constantMainl.x,
-				magOffMainl);
-		ptr2.y = projectPoints((projFace.y + projFace.height), constantMainl.y,
-				magOffMainl);
-
-		//check extreme conditions
-		if (ptr1.x > m_Imagewidth) {
-			ptr1.x = m_Imagewidth;
-		}
-		if (ptr2.y > m_Imageheight) {
-			ptr2.y = m_Imageheight;
-		}
-		if (ptr1.x < 0) {
-			ptr1.x = 0;
-		}
-		if (ptr2.y < 0) {
-			ptr2.y = 0;
-		}
-
-		//create RECT
-		ret1.x = ptr1.x;
-		ret1.y = ptr1.y;
-		ret1.width = abs(ptr1.x - ptr2.x);
-		ret1.height = abs(ptr1.y - ptr2.y);
-
-		//Corner condition for cvSetImageROI assertion fail issue
-		if (ret1.width + ret1.x >= m_Imagewidth)
-			ret1.width = m_Imagewidth - ret1.x;
-		if (ret1.height + ret1.y >= m_Imageheight)
-			ret1.height = m_Imageheight - ret1.y;
-
-		//Offset correction if useOffset is true
-		if (useOffest_m) {
-			ret1.height = ret1.height - int(projOffset_m);
-		}
-
-		IrisProjRect = ret1;
-
-	} else if (CameraId == IRISCAM_AUX_LEFT) {
-		//project two coordinates diagonally a part in face frame into Iris
-		ptr1.x = projectPoints(projFace.x, constantAuxl.x, magOffAuxl);
-		ptr1.y = projectPoints(projFace.y, constantAuxl.y, magOffAuxl);
-
-		ptr2.x = projectPoints((face.x + face.width), constantAuxl.x,
-				magOffAuxl);
-		ptr2.y = projectPoints((projFace.y + projFace.height), constantAuxl.y,
-				magOffAuxl);
-
-		//check extreme conditions
-		if (ptr1.x > m_Imagewidth) {
-			ptr1.x = m_Imagewidth;
-		}
-		if (ptr2.y > m_Imageheight) {
-			ptr2.y = m_Imageheight;
-		}
-
-		if (ptr1.x < 0) {
-			ptr1.x = 0;
-		}
-		if (ptr2.y < 0) {
-			ptr2.y = 0;
-		}
-
-		//create RECT
-		ret1.x = ptr1.x;
-		ret1.y = ptr1.y;
-		ret1.width = abs(ptr1.x - ptr2.x);
-		ret1.height = abs(ptr1.y - ptr2.y);
-
-		//Corner condition for cvSetImageROI assertion fail issue
-		if (ret1.width + ret1.x >= m_Imagewidth)
-			ret1.width = m_Imagewidth - ret1.x;
-		if (ret1.height + ret1.y >= m_Imageheight)
-			ret1.height = m_Imageheight - ret1.y;
-
-		//Offset correction if useOffset is true
-		if (useOffest_a) {
-			ret1.height = ret1.height - int(projOffset_a);
-		}
-
-		IrisProjRect = ret1;
-
-	} else if (CameraId == IRISCAM_MAIN_RIGHT) {
-		//project two coordinates diagonally a part in face frame into Iris
-		ptr3.x = projectPoints(projFace.x, constantMainR.x, magOffMainR);
-		ptr3.y = projectPoints(projFace.y, constantMainR.y, magOffMainR);
-
-		ptr4.x = projectPoints((face.x + face.width), constantMainR.x,
-				magOffMainR);
-		ptr4.y = projectPoints((projFace.y + projFace.height), constantMainR.y,
-				magOffMainR);
-
-		//check extreme conditions
-		if (ptr3.x > m_Imagewidth) {
-			ptr3.x = m_Imagewidth;
-		}
-		if (ptr4.y > m_Imageheight) {
-			ptr4.y = m_Imageheight;
-		}
-
-		if (ptr3.x < 0) {
-			ptr3.x = 0;
-		}
-		if (ptr4.y < 0) {
-			ptr4.y = 0;
-		}
-
-		//create RECT
-		ret2.x = ptr3.x;
-		ret2.y = ptr3.y;
-		ret2.width = abs(ptr3.x - ptr4.x);
-		ret2.height = abs(ptr3.y - ptr4.y);
-
-		//Corner condition for cvSetImageROI assertion fail issue
-		if (ret2.width + ret2.x >= m_Imagewidth)
-			ret2.width = m_Imagewidth - ret2.x;
-		if (ret2.height + ret2.y >= m_Imageheight)
-			ret2.height = m_Imageheight - ret2.y;
-
-		//Offset correction if useOffset is true
-		if (useOffest_m) {
-			ret2.height = ret2.height - int(projOffset_m);
-		}
-
-		IrisProjRect = ret2;
-
-	} else if (CameraId == IRISCAM_AUX_RIGHT) {
-		//project two coordinates diagonally a part in face frame into Iris
-		ptr3.x = projectPoints(projFace.x, constantAuxR.x, magOffAuxR);
-		ptr3.y = projectPoints(projFace.y, constantAuxR.y, magOffAuxR);
-
-		ptr4.x = projectPoints((face.x + face.width), constantAuxR.x,
-				magOffAuxR);
-		ptr4.y = projectPoints((projFace.y + projFace.height), constantAuxR.y,
-				magOffAuxR);
-
-		//check extreme conditions
-		if (ptr3.x > m_Imagewidth) {
-			ptr3.x = m_Imagewidth;
-		}
-		if (ptr4.y > m_Imageheight) {
-			ptr4.y = m_Imageheight;
-		}
-
-		if (ptr3.x < 0) {
-			ptr3.x = 0;
-		}
-		if (ptr4.y < 0) {
-			ptr4.y = 0;
-		}
-
-		//create RECT
-		ret2.x = ptr3.x;
-		ret2.y = ptr3.y;
-		ret2.width = abs(ptr3.x - ptr4.x);
-		ret2.height = abs(ptr3.y - ptr4.y);
-
-
-		//Corner condition for cvSetImageROI assertion fail issue
-		if (ret2.width + ret2.x >= m_Imagewidth)
-			ret2.width = m_Imagewidth - ret2.x;
-		if (ret2.height + ret2.y >= m_Imageheight)
-			ret2.height = m_Imageheight - ret2.y;
-
-		//Offset correction if useOffset is true
-		if (useOffest_a) {
-			ret2.height = ret2.height - int(projOffset_a);
-		}
-		IrisProjRect = ret2;
-
-	}
-
-	cv::Rect retDefault(0, 0, 1200, 960);
-	if (ret1.width == 0 || ret1.height == 0) {
-		IrisProjRect = retDefault;
-	}
-	return (IrisProjRect);
-
-}
-#endif
 
 FaceMapping ImageProcessor::GetFaceInfoFromQueue(int CameraId, char IrisFrameNo)
 {
@@ -1378,59 +1152,44 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		FaceMapping sFaceMap = GetFaceInfoFromQueue(cam_id, frame_number);
 		if (sFaceMap.bDoMapping) {
 			/*printf(
-					"Before IrisProj  IrisProj.x %d IrisProj.y %d IrisProj.width %d IrisProj.height %d\n",
-					sFaceMap.IrisProj.x, sFaceMap.IrisProj.y,
-					sFaceMap.IrisProj.width, sFaceMap.IrisProj.height); */
+			 "Before IrisProj  IrisProj.x %d IrisProj.y %d IrisProj.width %d IrisProj.height %d\n",
+			 sFaceMap.IrisProj.x, sFaceMap.IrisProj.y,
+			 sFaceMap.IrisProj.width, sFaceMap.IrisProj.height);*/
+
 			try {
-				cvCopy(frame, m_IrisProjImage);
-				cvSetImageROI(m_IrisProjImage, sFaceMap.IrisProj);
-				cvSetData(frame, m_IrisProjImage->imageData, frame->widthStep);
-				cvResetImageROI(m_IrisProjImage);
+				cv::Mat OrigFrame = cv::cvarrToMat(frame);
+				cv::Mat image_roi = OrigFrame(sFaceMap.IrisProj);
+				cv::Mat m_BlackImage = cv::Mat::zeros(cv::Size(m_Imagewidth,m_Imageheight), CV_8U);
+				image_roi.copyTo(
+						m_BlackImage(
+								cv::Rect(0, 0, sFaceMap.IrisProj.width,
+										sFaceMap.IrisProj.height)));
+				IplImage Black = m_BlackImage;
+				frame = &Black;
+				OrigFrame.release();
+				image_roi.release();
+				m_BlackImage.release();
 			} catch (cv::Exception& e) {
 				cout << e.what() << endl;
 			}
 
 		}
 
-#if 0
 		if (m_SaveProjImage) {
-			sprintf(filename, "IrisImage_%d_%d.pgm", cam_idd, m_faceIndex);
+			sprintf(filename, "FaceMapImage_%d_%d.pgm", cam_idd, m_faceIndex);
 			cv::Mat mateye1 = cv::cvarrToMat(frame);
 			imwrite(filename, mateye1);
+
 		}
-#endif
+
 		if (m_showProjection) {
-
-			bool useOffest = false;
-			float projOffset;
-			float scale = 1.0;
-
-			if (cam_id == IRISCAM_AUX_LEFT || cam_id == IRISCAM_AUX_RIGHT) {
-				useOffest = useOffest_a;
-				projOffset = projOffset_a;
-			} else if (cam_id == IRISCAM_MAIN_LEFT || cam_id == IRISCAM_MAIN_RIGHT) {
-				useOffest = useOffest_m;
-				projOffset = projOffset_m;
-			}
-			retd1.x = sFaceMap.IrisProj.x / scale;
-			retd1.y = sFaceMap.IrisProj.y / scale;
-			retd1.width = sFaceMap.IrisProj.width / scale;
-
-			if (useOffest)
-				retd1.height = (sFaceMap.IrisProj.height - projOffset) / scale;
-			else
-				retd1.height = sFaceMap.IrisProj.height / scale;
-#if 0
-			imgIS1 = cv::cvarrToMat(frame);
-			cv::resize(imgIS1, imgl, cv::Size(), (1 / scale), (1 / scale),
-					cv::INTER_NEAREST);
-			cv::rectangle(imgl, retd1, cv::Scalar(255, 0, 0), 2, 0);
-			imshow("Output", imgl);
+			cv::Mat mateye1 = cv::cvarrToMat(frame);
+			imshow("ProjectedOutput", mateye1);
 			cvWaitKey(1);
-#endif
-		}
 
+		}
 	}
+
 	// printf("Inside ProcessImage\n");
 	XTIME_OP("SetImage",
 		SetImage(frame)

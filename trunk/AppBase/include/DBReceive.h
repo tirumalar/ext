@@ -69,7 +69,7 @@ protected:
 	IrisDBHeader m_TempirisDBHeader;
 	HDMatcherMsg *m_DeleteUpdateMsg;
 	char *m_tempBuffer;
-	HTTPPOSTMsg *m_ReceiveMsg;
+	//HTTPPOSTMsg *m_ReceiveMsg;
 	int m_rxfilenumber;
 };
 
