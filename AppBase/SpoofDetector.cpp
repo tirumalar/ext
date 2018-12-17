@@ -39,6 +39,7 @@ bool SpoofDetector::GetIris(uint64_t ts, unsigned char *frame,float* robostFeatu
 	XTIME_OP("GetIris",
 		test = m_MatchMgr->GetBio()->GetIrisCode(frame, m_width, m_height, m_width,(char*)m_IrisBuff,&Circles,robostFeatureVar)
 	);
+	m_irisData->setEyeCropImageData(frame);
 	m_irisData->setSegmentation(test);
 	m_irisData->setIrisRadiusCheck(true);
 	m_irisData->setIrisCircle(Circles.ip.x,Circles.ip.y,Circles.ip.r);

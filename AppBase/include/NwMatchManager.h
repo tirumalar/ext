@@ -276,7 +276,7 @@ private:
 	Mutex m_DBUpdateLock;
 	int m_sleepTimeBetweenMatching;
 	char *m_certFile;
-	bool m_SaveMatchInfo;
+	bool m_SaveMatched;
 };
 
 #endif /* NWMATCHMANAGER_H_ */

@@ -13,7 +13,10 @@
 #include <assert.h>
 #include <algorithm>
 #include <string.h>
-
+#include <opencv/cv.h>
+#include <opencv/cxcore.h>
+#include <opencv2/core/types_c.h>
+#include <opencv2/highgui/highgui.hpp>
 //#define LED_FLASH
 //#define OTO_MATCH
 //#define CMX_C1
@@ -94,13 +97,18 @@ public:
 		m_keyOwn=m_key=(char *)malloc(F2FKEY_MAX_SIZE);
 		memset(m_key,0,F2FKEY_MAX_SIZE);
 		reset();
+		m_EyeCrop = cvCreateImage(cvSize(640,480),IPL_DEPTH_8U,1);
 	}
 	MatchResult(char *keyPtr):m_key(keyPtr),m_keyOwn(0){
 		reset();
+		m_EyeCrop = cvCreateImage(cvSize(640,480),IPL_DEPTH_8U,1);
 	}
 	virtual ~MatchResult(){
 		if(m_keyOwn)
 			free(m_keyOwn);
+		if(m_EyeCrop){
+			cvReleaseImage(&m_EyeCrop);
+		}
 	}
 	void init(int index=-1, float score=1.0f,int keylength=2,int idbytelen=0, bool bPassed=true){
 		m_name.clear();
@@ -167,6 +175,7 @@ public:
 		m_VarienceScore = other.m_VarienceScore;
 		memset(m_key,0,F2FKEY_MAX_SIZE);
 		memcpy(m_key,other.m_key,m_keylength);
+		cvCopy(other.m_EyeCrop, m_EyeCrop);
 		m_timeStamp = other.m_timeStamp;
 		m_name.assign(other.m_name);
 		m_guid.assign(other.m_guid);
@@ -179,6 +188,7 @@ public:
 	MatchResult(const MatchResult& data)
 	{
 		m_keyOwn=m_key=(char *)malloc(F2FKEY_MAX_SIZE);
+		m_EyeCrop = cvCreateImage(cvSize(640,480),IPL_DEPTH_8U,1);
 		reset();
 		CopyFrom(data);
 	}
@@ -206,6 +216,7 @@ public:
 		m_cameraIndex=other.m_cameraIndex;
 		m_eyeIdx = other.m_eyeIdx;
 		m_cam.assign(other.m_cam);
+		cvCopy(other.m_EyeCrop, m_EyeCrop);
 	}
 	char *getKey(){
 		return m_key;
@@ -249,17 +260,19 @@ public:
 		val = m_NwValue;
 		sleeptime = m_NwSleepmsec;
 	}
-	void setFrameInfo(int fno,int eno,char* cam, int EXTCameraIdx){
+	void setFrameInfo(int fno,int eno,char* cam, int EXTCameraIdx, IplImage *eyeCrop){
 		m_frameIndex = fno;
 		m_eyeIdx = eno;
 		m_cameraIndex=EXTCameraIdx;
 		m_cam.assign(cam);
+		cvCopy(eyeCrop, m_EyeCrop);
 	}
-	void getFrameInfo(int& fno,int& eno,string& cam, int& EXTCameraIdx){
+	IplImage* getFrameInfo(int& fno,int& eno,string& cam, int& EXTCameraIdx){
 		fno =m_frameIndex;
 		eno = m_eyeIdx ;
 		EXTCameraIdx=m_cameraIndex;
 		cam.assign(m_cam);
+		return m_EyeCrop;
 	}
 	void SetPersonIrisInfo(int val){
 		m_PersonIrisInfo = val;
@@ -300,6 +313,7 @@ public:
 	uint64_t m_timeStamp;
 	int m_frameIndex,m_eyeIdx;
 	int m_cameraIndex;
+	IplImage *m_EyeCrop;
 	string m_cam;
 };
 

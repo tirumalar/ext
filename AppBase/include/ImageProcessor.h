@@ -261,7 +261,6 @@ protected:
 	int m_Imagewidth;
 	int m_Imageheight;
 	bool m_EnableExtHalo;
-	cv::Rect retd1;
 #ifdef HBOX_PG	
 	bool m_SPAWAREnable;
 

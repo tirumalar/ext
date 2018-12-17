@@ -193,6 +193,8 @@ bool NwMatcherSerialzer::ExtractNwMsg(IrisData* data,char* buff,char*hdr){
 	ret = writeInt((char*)&val,(int*)(buff+offset));
 	offset+=ret;
 	data->setIrisRadiusCheck(val?1:0);
+	ret = writeBuffer((char*)data->getEyeCropData(),buff+offset,data->getEyeCropSize());
+	offset+=ret;
 
 //	printf("Offset After RC %d\n",offset);
 
@@ -317,6 +319,8 @@ int NwMatcherSerialzer::MakeNwMsg(char *dst,IrisData *data,char *hdr){
 	ret = writeInt(dst+offset,&val);
 	offset+=ret;
 
+	ret = writeBuffer(dst+offset,(char*)data->getEyeCropData(),data->getEyeCropSize());
+	offset+=ret;
 //	printf("Offset After Radius check %d\n",offset);
 
 	hdrlen = strlen(data->getCamID());

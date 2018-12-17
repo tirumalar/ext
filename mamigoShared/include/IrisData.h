@@ -7,6 +7,7 @@
 #include <opencv/cv.h>
 #include <opencv/cxcore.h>
 #include <opencv2/core/types_c.h>
+#include <opencv2/highgui/highgui.hpp>
 #endif
 #include <string>
 
@@ -16,6 +17,7 @@ extern "C" {
 #include "file_manip.h"
 }
 
+#define EYECROPSIZE 307200
 
 class IrisData: public Copyable {
 public:
@@ -23,6 +25,8 @@ public:
 		m_extraFeaure = NULL;
 		m_iris = new unsigned char[2560];
 		memset(m_iris,0, 2560);
+		m_ImageData = new unsigned char[EYECROPSIZE];
+		memset(m_ImageData,0, EYECROPSIZE);
 		m_ip.x=m_ip.y=m_ip.z = 0;
 		m_pp.x=m_pp.y=m_pp.z = 0;
 		m_illuminatorState = m_imageIndex = m_eyeIndex=0;
@@ -37,11 +41,14 @@ public:
 		m_halo= -1.0;
 		m_blc = -1.0;
 		m_cameraIndex=0;
+		m_EyeCrop = cvCreateImage(cvSize(640,480),IPL_DEPTH_8U,1);
 	}
 
 	IrisData(const IrisData& data)// IrisData a(b);
 	{
 		m_iris = new unsigned char[2560];
+		m_ImageData = new unsigned char[EYECROPSIZE];
+		m_EyeCrop = cvCreateImage(cvSize(640,480),IPL_DEPTH_8U,1);
 		*this = data;
 		CopyFrom(data);
 	}
@@ -60,9 +67,11 @@ public:
 		m_imageIndex = data.m_imageIndex;
 		m_eyeIndex = data.m_eyeIndex;
 		m_cameraIndex=data.m_cameraIndex;
+		cvCopy(data.m_EyeCrop, m_EyeCrop);
 		m_camID = data.m_camID;
 		m_prevIndex = data.m_prevIndex;
 		memcpy(m_iris, data.m_iris, 2560);
+		memcpy(m_ImageData, data.m_ImageData, EYECROPSIZE);
 		m_ts = data.m_ts;
 		m_enqueTs = data.m_enqueTs;
 		m_segmentation = data.m_segmentation;
@@ -77,10 +86,25 @@ public:
 
 	virtual ~IrisData(){
 		delete m_iris;
+		delete m_ImageData;
+		if(m_EyeCrop){
+			cvReleaseImage(&m_EyeCrop);
+		}
 	}
 
 	void setCameraIndex(int CameraIdx){
 		m_cameraIndex = CameraIdx;
+	}
+	void setEyeCropImageData(unsigned char* frame){
+		memcpy(m_ImageData, frame, EYECROPSIZE);
+	}
+
+
+	IplImage* getEyeCrop(){		
+		unsigned char *data = getEyeCropData();
+	
+		memcpy(m_EyeCrop->imageData, data, m_EyeCrop->imageSize);
+		return m_EyeCrop;
 	}
 
 	void setCamID(char *camId){ std::string t(camId);m_camID = t;}
@@ -102,7 +126,7 @@ public:
 	void setSegmentation(bool seg){ m_segmentation = seg?1:0;}
 	void setIrisRadiusCheck(bool seg){ m_radiusAndIrisCheck = seg?1:0;}
 		int getSizeofIrisData(){
-		int sz = 2560 + sizeof(uint64_t) + sizeof(CvPoint3D32f)*2 + sizeof(CvPoint2D32f) + sizeof(float)*4 + sizeof(int)*7 +  strlen(m_camID.c_str()) + 1;
+		int sz = 2560 + sizeof(uint64_t) + sizeof(CvPoint3D32f)*2 + sizeof(CvPoint2D32f) + sizeof(float)*4 + sizeof(int)*7 +  EYECROPSIZE + strlen(m_camID.c_str()) + 1;
 		return sz;
 	}
 	CvPoint2D32f getSpecCentroid(){ return m_specCentroid;}
@@ -120,6 +144,8 @@ public:
 	int getEyeIndex(){return m_eyeIndex;}
 	int getPrevIndex(){return m_prevIndex;}
 	unsigned char* getIris(){ return m_iris;}
+	unsigned char* getEyeCropData(){ return m_ImageData; }
+	int getEyeCropSize(){ return EYECROPSIZE; }
 	const char* getCamID(){ return m_camID.c_str();}
 
 	uint64_t getTimeStamp(){return m_ts;}
@@ -154,9 +180,11 @@ public:
 			m_eyeIndex = data->m_eyeIndex;
 			m_prevIndex = data->m_prevIndex;
 			m_cameraIndex=data->m_cameraIndex;
+			cvCopy(data->m_EyeCrop, m_EyeCrop);
 			//m_camID = data->m_camID;
 			setCamID((char*)data->m_camID.c_str());
 			memcpy(m_iris, data->m_iris, 2560);
+			memcpy(m_ImageData, data->m_ImageData, EYECROPSIZE);
 			m_ts = data->m_ts;
 			m_segmentation = data->m_segmentation;
 			m_radiusAndIrisCheck = data->m_radiusAndIrisCheck;
@@ -176,8 +204,10 @@ private:
 	uint64_t m_ts;
 	uint64_t m_enqueTs;
 	unsigned char* m_iris;
+	unsigned char* m_ImageData;
 	void *m_extraFeaure;
 	std::string m_camID;
+	IplImage *m_EyeCrop;
 };
 
 #endif //IRISDATA_H_

@@ -74,7 +74,7 @@ private:
     uint64_t m_matchDispSleepusec;//in micro second
     bool m_tsDestAddrpresent;
     NwLEDDispatcher *m_nwLedDispatcher;
-
+    bool m_SaveMatchedDispatched;
 
     void SendResetMsg();
     void SendF2FMsg(MatchResult *mr);

@@ -102,20 +102,9 @@ void port_com_send(char *cmd_in, float *pr_time)
 		{
 		}
 	}
-#if 0 
-	// file open logging
-	file = fopen("port.log", "at");
-	if (file)
-	{
-		fprintf(file, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
-				(float) clock() / CLOCKS_PER_SEC,
-				(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
-		fclose(file);
-	}
-#else
 	PortComLog(logger, DEBUG, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n", (float) clock() / CLOCKS_PER_SEC,
 				(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
-#endif
+
 	if (pr_time)
 		*pr_time=(float) (clock() - t) / CLOCKS_PER_SEC;
 
@@ -182,16 +171,9 @@ while (1)
 				break;
 		}
 	}
-
-	file = fopen("port.log", "at");
-	if (file)
-	{
-		fprintf(file, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
-				(float) clock() / CLOCKS_PER_SEC,
-				(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
-		fclose(file);
-	}
-
+	PortComLog(logger, DEBUG, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
+					(float) clock() / CLOCKS_PER_SEC,
+					(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
 	pthread_mutex_unlock(&lock);
 
 	return strlen(buffer);
