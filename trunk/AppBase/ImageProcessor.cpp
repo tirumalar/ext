@@ -1163,6 +1163,16 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 				image_roi.copyTo(m_BlackImage(cv::Rect(0, 0, sFaceMap.IrisProj.width, sFaceMap.IrisProj.height)));
                 cvSetZero(frame);
 				memcpy((unsigned char *)frame->imageData, (unsigned char *)m_BlackImage.data, (m_BlackImage.rows*m_BlackImage.cols));
+				if (m_SaveProjImage) {
+					sprintf(filename, "FaceMapImage_%d_%d.pgm", cam_idd, m_faceIndex);
+					cv::Mat mateye1 = cv::cvarrToMat(frame);
+					imwrite(filename, mateye1);
+				}
+				if (m_showProjection) {
+					cv::Mat mateye1 = cv::cvarrToMat(frame);
+					imshow("ProjectedOutput", mateye1);
+					cvWaitKey(1);
+				}
 				OrigFrame.release();
 				image_roi.release();
 				m_BlackImage.release();
@@ -1172,19 +1182,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 
 		}
 
-		if (m_SaveProjImage) {
-			sprintf(filename, "FaceMapImage_%d_%d.pgm", cam_idd, m_faceIndex);
-			cv::Mat mateye1 = cv::cvarrToMat(frame);
-			imwrite(filename, mateye1);
-
-		}
-
-		if (m_showProjection) {
-			cv::Mat mateye1 = cv::cvarrToMat(frame);
-			imshow("ProjectedOutput", mateye1);
-			cvWaitKey(1);
-
-		}
+		
 	}
 
 	// printf("Inside ProcessImage\n");
