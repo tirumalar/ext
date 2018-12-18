@@ -28,7 +28,7 @@ Mat dst;
 
 // std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
 
-int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size, Rect &face);
+int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size, Rect &face, int min_face_size, int max_face_size);
 int face_init();
 float read_angle(void);
 
@@ -281,6 +281,7 @@ FaceTracker::FaceTracker(char* filename)
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");
 	m_ToneVolume = EyelockConfig.getValue("GRI.AuthorizationToneVolume", 40);
 	m_FixedAudSetVal = EyelockConfig.getValue("Eyelock.FixedAudSetValue", 5);
+	m_ImageAuthentication = EyelockConfig.getValue("Eyelock.ImageAuthentication", true);
 
 
 #ifdef DEBUG_SESSION
@@ -1154,7 +1155,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 	smallImg = preProcessingImg(outImg);
 
-	bool foundEyes = FindEyeLocation(smallImg, eyes, eye_size, face);
+	bool foundEyes = FindEyeLocation(smallImg, eyes, eye_size, face, MIN_FACE_SIZE, MAX_FACE_SIZE);
 
 	m_LeftCameraFaceInfo.FaceCoord = face;
 	m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
@@ -1438,15 +1439,15 @@ void *init_facetracking(void *arg) {
 	// Create Tunnel Thread
 	// Create Eyelock_Com thread
 
+	//vid_stream_start
+	vs = new VideoStream(8194, m_faceTracker.m_ImageAuthentication); //Facecam is 8194...
+
 	pthread_create(&threadId, NULL, init_tunnel, NULL);
 	EyelockLog(logger, TRACE, "Start Tunnel Thread");
 
 	// Allocate our ec messaging queue, then start the thread...
-	pthread_create(&threadId, NULL, init_ec, NULL);
+	pthread_create(&threadId, NULL, init_ec, vs);
 	EyelockLog(logger, TRACE, "Start  Eyelock Com Thread");
-
-	//vid_stream_start
-	vs = new VideoStream(8194); //Facecam is 8194...
 
 	//Setting up Run mode
 	EyelockLog(logger, DEBUG, "run_mode");

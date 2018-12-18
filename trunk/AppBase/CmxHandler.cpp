@@ -37,7 +37,8 @@ extern "C" {
 #include "NetworkUtilities.h"
 //#include "NwMatcherSerialzer.h"
 //#include "EyeDispatcher.h"
-
+#include <chrono>
+#include <random>
 const char logger[30] = "CmxHandler";
 #if 0 
 #include <boost/filesystem.hpp>
@@ -69,6 +70,8 @@ struct PortServerInfo
 {
 	CmxHandler *pCmxHandler;
 	unsigned short port;
+	unsigned short syndrome;
+	unsigned short seed;
 };
 
 #ifdef HBOX_PG
@@ -2220,6 +2223,8 @@ rightCServerInfo(0)
 	m_exposureTime = conf.getValue("Eyelock.ExposureTime",4);
 	m_analogGain = conf.getValue("Eyelock.CmxAnalogGain",53);
 
+	m_ImageAuthentication = conf.getValue("Eyelock.ImageAuthentication", true);
+
 	//DMO
 	m_pOIMQueue = NULL;
 	//Eyelock.ExposureTime
@@ -2265,6 +2270,29 @@ CmxHandler::~CmxHandler() {
 
 }
 
+#if 0 //
+unsigned short int CmxHandler::GenerateSeed() {
+	// obtain a seed from the system clock:
+	unsigned short int seed1 =
+			std::chrono::system_clock::now().time_since_epoch().count();
+
+	std::minstd_rand0 g1(seed1); // minstd_rand0 is a standard linear_congruential_engine
+	// std::cout << "A time seed produced: " << g1() << std::endl;
+
+	unsigned short int seed2 = 4567;
+	// return g1();
+	return seed2;
+}
+#else
+unsigned short CmxHandler::GenerateSeed()
+{
+	srand(time(NULL)); /* seed random number generator */
+	// unsigned short seed = (1 + (rand() % 32767));
+	unsigned short seed = (1 + (rand() % 65535));
+	// printf("GenerateSeed seed seed seed seed seed...%d\n", seed);
+	return seed;
+}
+#endif
 
 unsigned int CmxHandler::MainLoop() {
 
@@ -2284,10 +2312,12 @@ unsigned int CmxHandler::MainLoop() {
 	leftCServerInfo = new PortServerInfo();
 	leftCServerInfo->pCmxHandler = this;
 	leftCServerInfo->port = 8192;
+	leftCServerInfo->seed = 0;
 
 	rightCServerInfo = new PortServerInfo();
 	rightCServerInfo->pCmxHandler = this;
 	rightCServerInfo->port = 8193;
+	rightCServerInfo->seed = 0;
 
 	if (pthread_create (&leftCThread, NULL, leftCServer, leftCServerInfo)) {
 		EyelockLog(logger, ERROR, "MainLoop(): Error creating thread leftCServer");
@@ -2462,7 +2492,7 @@ void CmxHandler::SendMessage(char *outMsg, int len)
 	//printf("CMX SendMessage: sent\n");
 }
 #else //DMONEW
-void CmxHandler::SendMessage(char *outMsg, int len)
+void CmxHandler::SendMessage(char *outMsg, int len, unsigned short randomseed)
 {
 	if (m_debug)
 		EyelockLog(logger, TRACE, "Send Message %d, len %d", outMsg[0], len);
@@ -2477,6 +2507,7 @@ void CmxHandler::SendMessage(char *outMsg, int len)
 
 	OIMQueueItem theItem;
 
+	theItem.m_RandomSeed = randomseed;
 	strcpy(theItem.m_Message, outMsg);
 
 	if (m_debug)
@@ -2496,7 +2527,7 @@ bool bSend=false;
 
 
 
-void CmxHandler::HandleSendMsg(char *msg){
+void CmxHandler::HandleSendMsg(char *msg, unsigned short randomseed){
 	unsigned char regs[1];	
 	regs[0] = white;
 #ifndef HBOX_PG
@@ -2536,11 +2567,11 @@ void CmxHandler::HandleSendMsg(char *msg){
 			{
 				len = sprintf(buf, "fixed_set_rgb(%d,%d,%d)\n", msg[2], msg[3], msg[4]);	// set_rgb(r,g,b)
 				printf("CMX: sending %s\n",buf);
-				SendMessage(buf, len);
+				SendMessage(buf, len, randomseed);
 			if ((msg[2] == 0) && (msg[3] != 0) && (msg[4] == 0)) {
 				regs[0] = Green;
 					len = sprintf(buf, "play_snd(0)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
-					SendMessage(buf, len);
+					SendMessage(buf, len, randomseed);
 			}
 			if ((msg[2] != 0) && (msg[3] == 0) && (msg[4] == 0)) {
 				regs[0] = Red;
@@ -2572,26 +2603,26 @@ void CmxHandler::HandleSendMsg(char *msg){
 					len = sprintf(buf,"DETECT\n");	// set_rgb(r,g,b)
 
 					printf("CMX: sending %s\n",buf);
-					SendMessage(buf, len);
+					SendMessage(buf, len, randomseed);
 					break;
 		case CMX_MATCH:
 					len = sprintf(buf, "MATCH\n");	// set_rgb(r,g,b)
 
 					printf("CMX: sending %s\n",buf);
-					SendMessage(buf, len);
+					SendMessage(buf, len, randomseed);
 					break;
 //CMX_MATCH_FAIL,CMX_NO_DETECT
 		case CMX_MATCH_FAIL:
 					len = sprintf(buf, "MATCH_FAIL\n");	// set_rgb(r,g,b)
 
 					printf("CMX: sending %s\n",buf);
-					SendMessage(buf, len);
+					SendMessage(buf, len, randomseed);
 					break;
 		case CMX_NO_DETECT:
 					len = sprintf(buf, "NO_EYES\n");	// set_rgb(r,g,b)
 
 					printf("CMX: sending %s\n",buf);
-					SendMessage(buf, len);
+					SendMessage(buf, len, randomseed);
 					break;
 
 		case CMX_SOUND_CMD:
@@ -2605,11 +2636,11 @@ void CmxHandler::HandleSendMsg(char *msg){
 					break;
 				case 2:
 					len = sprintf(buf, "play_snd(1)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
-					SendMessage(buf, len);
+					SendMessage(buf, len, randomseed);
 					break;
 				case 3:
 					len = sprintf(buf, "play_snd(2)|play_snd(2)|play_snd(2)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
-					SendMessage(buf, len);
+					SendMessage(buf, len, randomseed);
 					break;
 				default:
 					break;
@@ -2618,7 +2649,7 @@ void CmxHandler::HandleSendMsg(char *msg){
 		break;
 		case CMX_PING_CMD:
 			len = sprintf(buf, "status()\n");
-			SendMessage(buf, len);
+			SendMessage(buf, len, randomseed);
 			break;
 		case CMX_INIT_CMD:
 #if 0
@@ -2643,7 +2674,7 @@ void CmxHandler::HandleSendMsg(char *msg){
 	}
 #endif
 }
-
+#if 0
 void *pingStatus(void *arg)
 {
 	EyelockLog(logger, TRACE, "pingStatus(): start!"); fflush(stdout);
@@ -2671,13 +2702,14 @@ void *pingStatus(void *arg)
 	    	buff[4] = 'N';
 	    	buff[5] = 'G';
 
-	    	me->HandleSendMsg(buff);
+	    	me->HandleSendMsg(buff, me->m_Randomseed);
 	    	me->m_pingTime = milliseconds;
 	    }
 
 
 	}
 }
+#endif
 
 bool CmxHandler::HandleReceiveMsg(Socket& client)
 {
@@ -2794,230 +2826,278 @@ int CmxHandler::CreateCMDTCPServer(int port) {
 	return m_sock;
 }
 
-
-
-/************************************************************************/
-#ifndef HBOX_PG
-void *leftCServer1(void *arg)
+unsigned short CmxHandler::calc_syndrome(unsigned short syndrome, unsigned short p)
 {
-        EyelockLog(logger, TRACE, "CmxHandler::rightCServer() start");
-
-        CmxHandler *me = (CmxHandler *) arg;
-        int length;
-        int pckcnt=0;
-        char buf[IMAGE_SIZE];
-        char databuf[IMAGE_SIZE];
-        int datalen = 0;
-        short *pShort = (short *)buf;
-        bool b_syncReceived = false;
-        struct sockaddr_in from;
-        socklen_t fromlen = sizeof(struct sockaddr_in);
-        int leftCSock = me->CreateUDPServer(8192);
-        int bytes_to_read = IMAGE_SIZE;
-        if (leftCSock < 0) {
-                EyelockLog(logger, ERROR, "Failed to create rightServer()");
-                return NULL;
-        }
-
-        while (!me->ShouldIQuit())
-        {
-
-#if 1
-            length = recvfrom(leftCSock, buf, min(1500,bytes_to_read), 0, (struct sockaddr *)&from, &fromlen);
-            if (length < 0)
-                EyelockLog(logger, ERROR, "recvfrom error in rightCServer()");
-            else
-            {
-                if (me->m_debug)
- #if 1
-                if (pShort[0] == 0x5555)
-                {
-                    // the first package
-                	//printf("received the sync byte --- new frame\n");
-                        datalen = 0;
-                        memcpy(databuf, buf+2, length-2);
-                        databuf[0] = 1;
-                        datalen = length - 2;
-                        b_syncReceived = true;
-                       // printf("Sync\n");
-                        pckcnt=1;
-                }
-                else if(b_syncReceived)
-                {
-                        length = (datalen+length <= IMAGE_SIZE-4) ? length : IMAGE_SIZE-4-datalen;
-                        memcpy(databuf+datalen, buf, length);
-                        datalen += length;
-                        pckcnt++;
-                }
-         //       printf("leftCServer: received : total %d , in this packet %d of total 1152000 \n",datalen,length);
-                if (datalen >= IMAGE_SIZE-5)
-                {
-                	//struct timeval te;
-                	//gettimeofday(&te, NULL); // get current time
-                	//long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // caculate milliseconds
-
-                //	printf("image:rightserver %llu\n",milliseconds);
-              		//FILE *fp = fopen("cmxRcvd.pgm","wb");
-                	//fwrite(databuf, 1, datalen,fp);
-                	//	fclose(fp);
-
-                    me->HandleReceiveImage(databuf, datalen);
-
-                    	datalen = 0;
-                    	b_syncReceived=false;
-                    	//printf("frame rcved 8193\n");
-
-                      /*buf[0] = CMX_SEND_CMD;
-                      me->HandleSendMsg(buf);
-                      unsigned char cmdbuf[256];
-                      cmdbuf[0] = CMX_SEND_CMD;
-                      me->HandleSendMsg((char *)cmdbuf);*/
-               }
-#endif
-          }
-#endif
-      }
-      close(leftCSock);
+	return syndrome ^=((syndrome <<5) + (p) +(syndrome >>2));
+	return syndrome ^=((syndrome >>5) + (p));
+	//return syndrome +p +1;
 }
-#endif
-/************************************************************************/
-void *leftCServer(void *arg)
+
+void CmxHandler::SetSeed(unsigned short sd)
 {
-//	return;
-        EyelockLog(logger, TRACE, "CmxHandler::leftCServer() start");
+	// seed=sd;
+}
 
+void *leftCServer(void *arg) {
+	EyelockLog(logger, TRACE, "CmxHandler::leftCServer() start");
+	PortServerInfo *ps = (PortServerInfo*) arg;
+	CmxHandler *me = (CmxHandler *) ps->pCmxHandler;
 
-        PortServerInfo *ps = (PortServerInfo*) arg;
+	if (me->m_ImageAuthentication) {
+		int length;
+		int pckcnt = 0;
+		char buf[IMAGE_SIZE];
+		char dummy_buff[IMAGE_SIZE];
+		int datalen = 0;
+		int bytes_to_get = IMAGE_SIZE;
+		short *pShort = (short *) buf;
+		bool b_syncReceived = false;
+		struct sockaddr_in from;
+		int cam_id, FrameNo;
+		socklen_t fromlen = sizeof(struct sockaddr_in);
+		int bytes_to_read = IMAGE_SIZE;
 
-        CmxHandler *me = (CmxHandler *) ps->pCmxHandler;
-        int length;
-        int pckcnt=0;
-        char buf[IMAGE_SIZE];
-        char dummy_buff[IMAGE_SIZE];
-        int datalen = 0;
-        int bytes_to_get=IMAGE_SIZE;
-        short *pShort = (short *)buf;
-        bool b_syncReceived = false;
-        struct sockaddr_in from;
-        int cam_id;
-        socklen_t fromlen = sizeof(struct sockaddr_in);
-        int bytes_to_read=IMAGE_SIZE;
+		int pkgs_received = 0;
+		int pkgs_missed = 0;
+		int rx_idx = 0;
+		unsigned short *hash_data;
+		static int NoSyncCntr = 0;
+		ImageQueueItem queueItem;
+		// me->HandleReceiveImage(databuf, datalen);
 
-        int pkgs_received = 0;
-        int pkgs_missed = 0;
-        int rx_idx=0;
-        static int NoSyncCntr=0;
-        ImageQueueItem queueItem;
-        // me->HandleReceiveImage(databuf, datalen);
+		int leftCSock = me->CreateUDPServer(ps->port);
+		if (leftCSock < 0) {
+			EyelockLog(logger, ERROR, "Failed to create leftC Server()");
+			return NULL;
+		}
 
-        int leftCSock = me->CreateUDPServer(ps->port);
-        if (leftCSock < 0) {
-                EyelockLog(logger, ERROR, "Failed to create leftC Server()");
-                return NULL;
-        }
+		BufferBasedFrameGrabber *pFrameGrabber =
+				(BufferBasedFrameGrabber*) me->pImageProcessor->GetFrameGrabber();
+		queueItem = pFrameGrabber->GetFreeBuffer();
+		char * databuf = (char *) queueItem.m_ptr;
 
-        BufferBasedFrameGrabber *pFrameGrabber = (BufferBasedFrameGrabber*)me->pImageProcessor->GetFrameGrabber();
-        queueItem = pFrameGrabber->GetFreeBuffer();
-        char * databuf = (char *)queueItem.m_ptr;
+		//  sleep(2);
+		while (!me->ShouldIQuit()) {
 
+			ps->seed = me->m_Randomseed;
 
-       //  sleep(2);
-        while (!me->ShouldIQuit())
-        {
+			length = recvfrom(leftCSock, &databuf[rx_idx],
+					min(1500, bytes_to_read), 0, (struct sockaddr *) &from,
+					&fromlen);
+			if (length < 0)
+				printf("recvfrom error in leftCServer()");
+			else {
+				pkgs_received++;
 
-        	 length = recvfrom(leftCSock, &databuf[rx_idx], min(1500,bytes_to_read), 0, (struct sockaddr *)&from, &fromlen);
-        	            if (length < 0)
-        	                printf("recvfrom error in leftCServer()");
-        	            else
-        	            {
-        	            	pkgs_received++;
+				if (!b_syncReceived && ((short *) databuf)[0] == 0x5555) {
+					//if(NoSyncCntr > 0){
+					//	printf("NoSyncCntr....%d\n", NoSyncCntr);
+					//	}
+					//NoSyncCntr = 0;
+					// unsigned long timems = ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
+					datalen = 0;
+					memcpy(databuf, &databuf[rx_idx + 2], length - 2);
+					rx_idx = length - 2;
+					datalen = length - 2;
+					b_syncReceived = true;
+					pckcnt = 1;
+					cam_id = databuf[2] & 0xff;
+					FrameNo = databuf[3] & 0xff;
+					// printf("CMx: seed in %d\n", ps->seed);
+					ps->syndrome = ps->seed;
+					//printf("vs->cam_id %02x\n", vs->cam_id);
+					// printf("Sync\n");
+					// printf("\ncam_id...%d  FrameNo...%d\n", cam_id, FrameNo);
+				} else if (b_syncReceived) {
+					hash_data = (unsigned short *) &databuf[rx_idx];
+					length =
+							(datalen + length <= IMAGE_SIZE - 4) ?
+									length : IMAGE_SIZE - 4 - datalen;
+					datalen += length;
+					pckcnt++;
+
+					// dont do this on the last frame
+					if (datalen < IMAGE_SIZE - 5)
+						ps->syndrome = me->calc_syndrome(ps->syndrome, *hash_data);
+
+					// memcpy(databuf+datalen, buf, length);
+					rx_idx += length;
+
+				}/*else{
+				 // NoSyncCntr++;
+				 printf("CMX: No sync\n");
+				 continue;
+				 }*/
+				bytes_to_read -= length;
+				if (datalen >= IMAGE_SIZE - 5) {
+					//me->HandleReceiveImage(databuf, datalen);
+					unsigned char valid_image;
+					// lets see if calculated matches received
+					valid_image = *hash_data == ps->syndrome ? 1 : 0;
+
+					if (valid_image == 0)
+						printf("Cmx: Bad Image Calc %x got %x\n", ps->syndrome,
+								*hash_data);
+					// dont push if its a dummy buffer
+
+					if (databuf != dummy_buff) {
+						// EyelockLog(logger, ERROR, "CMX: Before PushProcessBuffer\n" );
+						// printf("Cmx: Frame is valid\n");
+						if (valid_image)
+							pFrameGrabber->PushProcessBuffer(queueItem);
+						pkgs_missed = 0;
+						pkgs_received = 0;
+						pckcnt = 0;
+					}
+					if (valid_image)
+						queueItem = pFrameGrabber->GetFreeBuffer();
+
+					// if not put data into dummy buffer
+					if (!queueItem.m_ptr) {
+						pkgs_missed++;
+						// EyelockLog(logger, ERROR, "CMX: no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
+						databuf = dummy_buff;
+					} else {
+						databuf = queueItem.m_ptr;
+					}
+
+					// printf("Got image bytes to read = %d\n",bytes_to_read);
+					datalen = 0;
+					b_syncReceived = false;
+					bytes_to_read = IMAGE_SIZE;
+					rx_idx = 0;
+				}
+				if (bytes_to_read <= 0)
+					bytes_to_read = IMAGE_SIZE;
+			}
+		}
+		printf("closing socket...\n");
+		close(leftCSock);
+
+	} else {
+		int length;
+		int pckcnt = 0;
+		char buf[IMAGE_SIZE];
+		char dummy_buff[IMAGE_SIZE];
+		int datalen = 0;
+		int bytes_to_get = IMAGE_SIZE;
+		short *pShort = (short *) buf;
+		bool b_syncReceived = false;
+		struct sockaddr_in from;
+		int cam_id;
+		socklen_t fromlen = sizeof(struct sockaddr_in);
+		int bytes_to_read = IMAGE_SIZE;
+
+		int pkgs_received = 0;
+		int pkgs_missed = 0;
+		int rx_idx = 0;
+		static int NoSyncCntr = 0;
+		ImageQueueItem queueItem;
+		// me->HandleReceiveImage(databuf, datalen);
+
+		int leftCSock = me->CreateUDPServer(ps->port);
+		if (leftCSock < 0) {
+			EyelockLog(logger, ERROR, "Failed to create leftC Server()");
+			return NULL;
+		}
+
+		BufferBasedFrameGrabber *pFrameGrabber =
+				(BufferBasedFrameGrabber*) me->pImageProcessor->GetFrameGrabber();
+		queueItem = pFrameGrabber->GetFreeBuffer();
+		char * databuf = (char *) queueItem.m_ptr;
+
+		//  sleep(2);
+		while (!me->ShouldIQuit()) {
+
+			length = recvfrom(leftCSock, &databuf[rx_idx],
+					min(1500, bytes_to_read), 0, (struct sockaddr *) &from,
+					&fromlen);
+			if (length < 0)
+				printf("recvfrom error in leftCServer()");
+			else {
+				pkgs_received++;
 
 #if 0
-        	            	if (!b_syncReceived)
-        	                {
-        	                	long long int pos = memmem(pShort,IMAGE_SIZE/2,sync,1);
-        	                	if (!pos)
-        	    				{
-        	    					printf("Sync bytes not FOUND\n");
-        	    				}
-        	    				else
-        	    				{
-        	    					//printf("Sync found at %llu\n", pos-(long long int)(&buf[0]));
-        	    				}
-        	                }
+				if (!b_syncReceived)
+				{
+					long long int pos = memmem(pShort,IMAGE_SIZE/2,sync,1);
+					if (!pos)
+					{
+						printf("Sync bytes not FOUND\n");
+					}
+					else
+					{
+						//printf("Sync found at %llu\n", pos-(long long int)(&buf[0]));
+					}
+				}
 #endif
 
-        	            	if(!b_syncReceived && ((short *)databuf)[0] == 0x5555)
-        	                {
-        	            		//if(NoSyncCntr > 0){
-        	            		//	printf("NoSyncCntr....%d\n", NoSyncCntr);
-        	            	//	}
-        	            		//NoSyncCntr = 0;
-        	            		// unsigned long timems = ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
-      	                		datalen = 0;
-      	                	    	memcpy(databuf, &databuf[rx_idx+2], length-2);
-      	                	        rx_idx = length-2;
-      	                	        datalen = length - 2;
-        	                        b_syncReceived = true;
-        	                        pckcnt=1;
-        	                        cam_id=databuf[2]&0xff;
-        	                        //printf("vs->cam_id %02x\n", vs->cam_id);
-        	                       // printf("Sync\n");
-        	                }
-        	                else if(b_syncReceived)
-        	                {
-        	                        length = (datalen+length <= IMAGE_SIZE-4) ? length : IMAGE_SIZE-4-datalen;
-        	                       // memcpy(databuf+datalen, buf, length);
-        	                        rx_idx+=length;
-        	                        datalen += length;
-        	                        pckcnt++;
-        	                }/*else{
-        	                	// NoSyncCntr++;
-        	                	printf("CMX: No sync\n");
-        	                	continue;
-        	                }*/
-        	                bytes_to_read-=  length;
-        	                if(datalen >= IMAGE_SIZE-5)
-        	                {
-        	                	//me->HandleReceiveImage(databuf, datalen);
+				if (!b_syncReceived && ((short *) databuf)[0] == 0x5555) {
+					//if(NoSyncCntr > 0){
+					//	printf("NoSyncCntr....%d\n", NoSyncCntr);
+					//	}
+					//NoSyncCntr = 0;
+					// unsigned long timems = ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
+					datalen = 0;
+					memcpy(databuf, &databuf[rx_idx + 2], length - 2);
+					rx_idx = length - 2;
+					datalen = length - 2;
+					b_syncReceived = true;
+					pckcnt = 1;
+					cam_id = databuf[2] & 0xff;
+					//printf("vs->cam_id %02x\n", vs->cam_id);
+					// printf("Sync\n");
+				} else if (b_syncReceived) {
+					length =
+							(datalen + length <= IMAGE_SIZE - 4) ?
+									length : IMAGE_SIZE - 4 - datalen;
+					// memcpy(databuf+datalen, buf, length);
+					rx_idx += length;
+					datalen += length;
+					pckcnt++;
+				}/*else{
+				 // NoSyncCntr++;
+				 printf("CMX: No sync\n");
+				 continue;
+				 }*/
+				bytes_to_read -= length;
+				if (datalen >= IMAGE_SIZE - 5) {
+					//me->HandleReceiveImage(databuf, datalen);
 
-        	                	// dont push if its a dummy buffer
-        	                	if (databuf != dummy_buff)
-        	                	{
-        	                		pFrameGrabber->PushProcessBuffer(queueItem);
-        	                		pkgs_missed=0;
-        	                		pkgs_received=0;
-        	                		pckcnt = 0;
-        	                	}
+					// dont push if its a dummy buffer
+					if (databuf != dummy_buff) {
+						pFrameGrabber->PushProcessBuffer(queueItem);
+						pkgs_missed = 0;
+						pkgs_received = 0;
+						pckcnt = 0;
+					}
 
+					queueItem = pFrameGrabber->GetFreeBuffer();
+					// if not put data into dummy buffer
+					if (!queueItem.m_ptr) {
+						pkgs_missed++;
+						// printf("CMX: no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
+						databuf = dummy_buff;
+					} else {
+						databuf = queueItem.m_ptr;
+					}
 
-        	                    queueItem = pFrameGrabber->GetFreeBuffer();
-        	                    // if not put data into dummy buffer
-        	                    if (!queueItem.m_ptr)
-        	                    {
-        	                    	pkgs_missed++;
-        	                    	// printf("CMX: no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
-        	                    	databuf = dummy_buff;
-        	                    }
-        	                    else
-        	                    {
-        	                    	databuf = queueItem.m_ptr;
-        	                    }
-
-        	                   // printf("Got image bytes to read = %d\n",bytes_to_read);
-        	                   	datalen = 0;
-        	                   	b_syncReceived=false;
-        	                   	bytes_to_read=IMAGE_SIZE;
-        	                   	rx_idx=0;
-        	               }
-        	               if(bytes_to_read<=0)
-        	            	   bytes_to_read=IMAGE_SIZE;
-        	            }
-        }
-        printf("closing socket...\n");
-      close(leftCSock);
+					// printf("Got image bytes to read = %d\n",bytes_to_read);
+					datalen = 0;
+					b_syncReceived = false;
+					bytes_to_read = IMAGE_SIZE;
+					rx_idx = 0;
+				}
+				if (bytes_to_read <= 0)
+					bytes_to_read = IMAGE_SIZE;
+			}
+		}
+		printf("closing socket...\n");
+		close(leftCSock);
+	}
 }
 
+#if 0 //Anita
 void *Images(void *arg)
 {
 	PortServerInfo *ps = (PortServerInfo*) arg;
@@ -3037,7 +3117,7 @@ void *Images(void *arg)
     char * databuf = (char *)queueItem.m_ptr;
 
     void SendUdpImage(int port, char *image, int bytes_left);
-    Mat imageIn, image;
+    Mat image;
     int x;
     Mat sendImg;
 	sendImg = Mat(Size(1200,960), CV_8U);
@@ -3066,6 +3146,7 @@ void *Images(void *arg)
     }
 
 }
+#endif
 #ifdef HBOX_PG
 void *middleCamera(void *arg)
 {

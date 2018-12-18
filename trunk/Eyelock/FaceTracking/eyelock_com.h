@@ -32,6 +32,7 @@
 typedef struct _tagOIMQueueItem{
 	char m_Message[MAXMSG];		// Message text... expand to MSG defines later with separate payloads...
 	int m_frameIndex; 	// Unused for now
+	unsigned short m_RandomSeed;
 }OIMQueueItem;
 
 typedef RingBuffer<OIMQueueItem> OIMQueue;

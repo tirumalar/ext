@@ -170,7 +170,17 @@ void AudioDispatcher::process(MatchResult *msg)
 
 	if (m_pCmxHandler)
 	{
-		m_pCmxHandler->HandleSendMsg(buff);
+		printf("HandleSendMsg message\n");
+
+		if(msg->getState() == PASSED){
+			m_pCmxHandler->m_Randomseed = m_pCmxHandler->GenerateSeed();
+			// printf("Random seed for Pass...%d\n", m_pCmxHandler->m_Randomseed);
+		}
+		if (msg->getState()==FAILED || msg->getState()==CONFUSION) {
+			m_pCmxHandler->m_Randomseed = m_pCmxHandler->GenerateSeed();
+			// printf("Random seed for fail....%d\n", m_pCmxHandler->m_Randomseed);
+		}
+		m_pCmxHandler->HandleSendMsg(buff, m_pCmxHandler->m_Randomseed);
 	}
 #endif
 }

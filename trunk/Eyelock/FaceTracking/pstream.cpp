@@ -237,12 +237,129 @@ void VideoStream::PushProcessBuffer (ImageQueueItemF m)
 	m_ProcessBuffer->Push(m);
 }
 
+unsigned short VideoStream::calc_syndrome(unsigned short syndrome, unsigned short p)
+{
+	return syndrome ^=((syndrome <<5) + (p) +(syndrome >>2));
+	return syndrome ^=((syndrome >>5) + (p));
+	//return syndrome +p +1;
+}
+
+void VideoStream ::SetSeed(unsigned short sd)
+{
+	seed=sd;
+}
 
 void *VideoStream::ThreadServer(void *arg)
 {
-		VideoStream *vs=(VideoStream *)arg;
+	VideoStream *vs = (VideoStream *) arg;
+	if(vs->m_UseImageAuthentication){
+		printf("Image Authentication ThreadServer() start\n");
+		int length;
+		int pckcnt = 0;
+		char buf[IMAGE_SIZE];
+		char dummy_buff[IMAGE_SIZE];
 
-        printf("leftCServer() start\n");
+		int datalen = 0;
+		short *pShort = (short *) buf;
+		bool b_syncReceived = false;
+		struct sockaddr_in from;
+		socklen_t fromlen = sizeof(struct sockaddr_in);
+		int bytes_to_read = IMAGE_SIZE;
+
+		int pkgs_received = 0;
+		int pkgs_missed = 0;
+		int rx_idx = 0;
+		unsigned short *hash_data;
+
+		ImageQueueItemF queueItem = vs->GetFreeBuffer();
+		char *databuf = (char *) queueItem.m_ptr;
+
+		int leftCSock = CreateUDPServer(vs->m_port);
+		if (leftCSock < 0) {
+			printf("Failed to create leftC Server()\n");
+			return NULL;
+		}
+		vs->running = 1;
+		while (vs->running) {
+			length = recvfrom(leftCSock, &databuf[rx_idx], min(1500, bytes_to_read),
+					0, (struct sockaddr *) &from, &fromlen);
+			if (length < 0)
+				printf("recvfrom error in leftCServer()");
+			else {
+				pkgs_received++;
+				if (!b_syncReceived && ((short *) databuf)[0] == 0x5555) {
+					datalen = 0;
+					memcpy(databuf, &databuf[rx_idx + 2], length - 2);
+					rx_idx = length - 2;
+					datalen = length - 2;
+					b_syncReceived = true;
+					pckcnt = 1;
+					vs->cam_id = databuf[2] & 0xff;
+					vs->frameId = databuf[3] & 0xff;
+					// printf("pstream: seed in %d\n", vs->seed);
+					vs->syndrome = vs->seed;
+					//printf("vs->frameId %02x %02x %02x %02x\n", databuf[0]&0xff, databuf[1]&0xff, databuf[2]&0xff, databuf[3]&0xff);
+					//printf("vs->cam_id %02x\n", vs->cam_id);
+					// printf("Sync\n");
+				} else if (b_syncReceived) {
+					hash_data = (unsigned short *) &databuf[rx_idx];
+
+					length =
+							(datalen + length <= IMAGE_SIZE - 4) ?
+									length : IMAGE_SIZE - 4 - datalen;
+					datalen += length;
+					pckcnt++;
+
+					// dont do this on the last frame
+					if (datalen < IMAGE_SIZE - 5)
+						vs->syndrome = vs->calc_syndrome(vs->syndrome, *hash_data);
+
+	//                        memcpy(databuf+datalen, buf, length);
+					rx_idx += length;
+				}
+				bytes_to_read -= length;
+				if (datalen >= IMAGE_SIZE - 5) {
+					//vs->HandleReceiveImage(databuf, datalen);
+					unsigned char valid_image;
+					// lets see if calculated matches received
+					valid_image = *hash_data == vs->syndrome ? 1 : 0;
+
+					if (valid_image == 0)
+						printf("Pstream: Bad Image Calc %x got %x\n", vs->syndrome, *hash_data);
+					//else
+					//	printf ("Good image\n");
+					// if its good we push it
+					if (databuf != dummy_buff) {
+						 // printf("Pstream: Frame is valid\n");
+						if (valid_image)
+							vs->PushProcessBuffer(queueItem);
+					}
+					if (valid_image)
+						queueItem = vs->GetFreeBuffer();
+					if (!queueItem.m_ptr) {
+						pkgs_missed++;
+						// printf("no free buffers. Packages received: %d, packages missed: %d\n",	pkgs_received, pkgs_missed);
+						databuf = dummy_buff;
+					} else {
+						databuf = queueItem.m_ptr;
+					}
+
+					// if not put data into dummy buffer
+
+					// printf("Got image bytes to read = %d\n",bytes_to_read);
+					datalen = 0;
+					b_syncReceived = false;
+					bytes_to_read = IMAGE_SIZE;
+					rx_idx = 0;
+				}
+				if (bytes_to_read <= 0)
+					bytes_to_read = IMAGE_SIZE;
+			}
+		}
+		vs->running = -1;
+		close(leftCSock);
+	}else{
+        printf("No Image Authentication ThreadServer() start\n");
         int length;
         int pckcnt=0;
         char buf[IMAGE_SIZE];
@@ -341,14 +458,17 @@ void *VideoStream::ThreadServer(void *arg)
       }
        vs->running =-1;
       close(leftCSock);
+	}
 }
 
-VideoStream ::VideoStream(int port) : frameId(0)
+VideoStream ::VideoStream(int port, bool ImageAuthFlag) : frameId(0)
 {
 	m_port = port;
+	m_UseImageAuthentication = ImageAuthFlag;
 	offset_sub_enable=0;
 	offset_image_loaded=0;
 	ImageQueueItemF imageQueueItem;
+	seed = 0;
 
 	m_pRingBuffer = new RingBufferImageQueueF(2);
 	length = (HEIGHT * WIDTH);

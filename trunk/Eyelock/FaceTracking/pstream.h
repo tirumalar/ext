@@ -27,9 +27,10 @@ typedef RingBuffer<ImageQueueItemF> RingBufferImageQueueF;
 
 class VideoStream {
 public:
-	VideoStream(int port);
+	VideoStream(int port, bool ImageAuthFlag);
 	~VideoStream();
 	int m_port;
+	bool m_UseImageAuthentication;
 	volatile int running;
 	int cam_id;
 	RingBufferImageQueueF *m_pRingBuffer;
@@ -59,5 +60,9 @@ public:
 
 	int frameId;
 
+	unsigned short calc_syndrome(unsigned short syndrome, unsigned short p);
+	unsigned short syndrome;
+	unsigned short seed;
+	void SetSeed(unsigned short sd);
 };
 

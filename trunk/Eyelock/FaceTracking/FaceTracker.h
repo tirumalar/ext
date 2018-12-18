@@ -269,6 +269,7 @@ public:
 
 	bool bDebugSessions;
 	bool bShowFaceTracking;
+	bool m_ImageAuthentication;
 	//bool faceConfigInit;
 
 	FileConfiguration FaceConfig;

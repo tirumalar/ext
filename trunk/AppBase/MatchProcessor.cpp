@@ -638,7 +638,7 @@ IrisData * MatchProcessor::SegmentEye(HTTPPOSTMsg *msg,float *variance){
 // Try to get IrisData
 	IrisData *irisData = m_spoofDetector->GetIrisData();
 
-	if(m_SaveMatchInfo)
+	if(0)
 	{
 		char filename[100];
 		CvPoint3D32f ip = irisData->getIrisCircle();
