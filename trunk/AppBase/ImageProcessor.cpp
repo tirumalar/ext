@@ -1160,12 +1160,9 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 				cv::Mat OrigFrame = cv::cvarrToMat(frame);
 				cv::Mat image_roi = OrigFrame(sFaceMap.IrisProj);
 				cv::Mat m_BlackImage = cv::Mat::zeros(cv::Size(m_Imagewidth,m_Imageheight), CV_8U);
-				image_roi.copyTo(
-						m_BlackImage(
-								cv::Rect(0, 0, sFaceMap.IrisProj.width,
-										sFaceMap.IrisProj.height)));
-				IplImage Black = m_BlackImage;
-				frame = &Black;
+				image_roi.copyTo(m_BlackImage(cv::Rect(0, 0, sFaceMap.IrisProj.width, sFaceMap.IrisProj.height)));
+                cvSetZero(frame);
+				memcpy((unsigned char *)frame->imageData, (unsigned char *)m_BlackImage.data, (m_BlackImage.rows*m_BlackImage.cols));
 				OrigFrame.release();
 				image_roi.release();
 				m_BlackImage.release();
