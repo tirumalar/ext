@@ -64,7 +64,7 @@ public:
 		return "CmxHandler";
 	}
 	//bool do_serv_task(Socket & client);
-	void HandleSendMsg(char *msg);
+	void HandleSendMsg(char *msg, unsigned short randomseed);
 	void SetImageProcessor(ImageProcessor *ptr) {pImageProcessor = ptr;}
 	void SetFaceTrackingQueue(OIMQueue * ptr) {m_pOIMQueue = ptr;}
 	static void onConnect(Socket & client, void *arg);
@@ -90,9 +90,14 @@ public:
 	ImageProcessor *pImageProcessor;
 	OIMQueue *m_pOIMQueue;
 
+	bool m_ImageAuthentication;
+	unsigned short int m_Randomseed;
+	unsigned short int GenerateSeed();
+	unsigned short calc_syndrome(unsigned short syndrome, unsigned short p);
+	void SetSeed(unsigned short sd);
 private:
     bool HandleReceiveMsg(Socket & client);
-    void SendMessage(char *out_msg, int len);
+    void SendMessage(char *out_msg, int len, unsigned short randomseed);
     bool do_serv_task(Socket& client);
 
 

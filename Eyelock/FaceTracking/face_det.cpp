@@ -13,7 +13,7 @@ const char logger[30] = "facedetect";
 
 /** Function Headers */
 int face_init();
-int FindEyeLocation(Mat frame, Point &eyes, float &eye_size, Rect &face);
+int FindEyeLocation(Mat frame, Point &eyes, float &eye_size, Rect &face, int min_face_size, int max_face_size);
 
 /** Global variables */
 String face_cascade_name = "/home/root/data/haarcascades/haarcascade_frontalface_alt.xml";
@@ -35,7 +35,7 @@ int face_init() {
 
 #define EYES_MULT 0.3		// previous val is 0.3
 /** Find face and eye locaiton */
-int FindEyeLocation(Mat frame, Point &eyes, float &eye_size, Rect &face) {
+int FindEyeLocation(Mat frame, Point &eyes, float &eye_size, Rect &face, int min_face_Size, int max_face_size) {
 	EyelockLog(logger, TRACE, "FindEyeLocation");
 	std::vector<Rect> faces;
 
@@ -60,7 +60,8 @@ int FindEyeLocation(Mat frame, Point &eyes, float &eye_size, Rect &face) {
 		break;
 	}
 #else
-		face_cascade.detectMultiScale(frame, faces, 1.1, Neighbors,  0 | CASCADE_SCALE_IMAGE, Size(15, 15), Size(75, 75));
+		// face_cascade.detectMultiScale(frame, faces, 1.1, Neighbors,  0 | CASCADE_SCALE_IMAGE, Size(15, 15), Size(75, 75));
+		face_cascade.detectMultiScale(frame, faces, 1.1, Neighbors,  0 | CASCADE_SCALE_IMAGE, Size(min_face_Size, min_face_Size), Size(max_face_size, max_face_size));
 
 #endif
 

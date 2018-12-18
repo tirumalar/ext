@@ -109,7 +109,7 @@ void RGBControllerNano::SetRGB(unsigned char mask) {
 	buf[3] = g * m_BrightnessG;
 	buf[4] = b * m_BrightnessB;
 	if (m_pCmxHandler)
-		m_pCmxHandler->HandleSendMsg((char *)buf);
+		m_pCmxHandler->HandleSendMsg((char *)buf, m_pCmxHandler->m_Randomseed);
 #endif
 
 }

@@ -11,6 +11,7 @@
 
 #include "eyelock_com.h"
 #include "portcom.h"
+#include "pstream.h"
 
 #if 1
 #include "opencv2/highgui/highgui.hpp"
@@ -386,7 +387,7 @@ void *init_ec(void * arg) {
 	//struct sockaddr_in clientname;
 	//unsigned int size;
 
-
+	VideoStream *vs = (VideoStream*) arg;
 	// Create Queue for communicating with Eyelock CMXHandler
 //	g_pOIMQueue = new OIMQueue(10); //DMO pull from config later...
 	// Wait until a message arrives in the queue...
@@ -395,6 +396,12 @@ void *init_ec(void * arg) {
 		//wait for something to arrive in the queue...
 		OIMQueueItem theItem = (OIMQueueItem)g_pOIMQueue->Pop();
 
+		if(vs->m_UseImageAuthentication){
+			char cmd[100];
+			sprintf(cmd,"cam_set_seed(%i)", theItem.m_RandomSeed);		//Set the seed
+			port_com_send(cmd);
+			vs->seed = theItem.m_RandomSeed;
+		}
 		//Process the item returned from the queue...
 		ec_read_from_client(theItem);
 	}
