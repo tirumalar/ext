@@ -275,6 +275,9 @@ upgradeMaster(){
 	mv /home/www/nxtW /home
 	chmod +x /home/nxtW
 
+	mv /home/root/OIMftp.sh /home
+        chmod +x /home/OIMftp.sh
+
 	${logger} -L"Applying done."
 
 	${logger} -L"Settings merging..."
