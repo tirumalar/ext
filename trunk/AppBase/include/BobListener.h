@@ -122,6 +122,12 @@
 #define BOB_MOBILE_MODE_TAP 			2
 #define BOB_MOBILE_MODE_PING 			3
 
+// Factory Reset
+#define BOB_FACTORY_RESET_OFFSET		6
+#define BOB_FACTORY_STATUS_OFFSET		11
+#define BOB_FACTORY_STATUS_CHANGE		0x01
+#define BOB_FACTORY_STATUS_RESET		0x02
+#define BOB_FACTORY_STATUS_RESTORE		0x04
 
 // functions
 int i2c_start_transaction();
@@ -169,6 +175,7 @@ void BobInitComs();
 void BobCloseComs();
 void BoBSetQuit();
 void BobSetPollACS(int pollACS);
+void BobSetPollResetButton(int pollResetButton);
 
 // callback
 typedef void (*callback)();
