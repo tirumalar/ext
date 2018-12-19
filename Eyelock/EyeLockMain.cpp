@@ -54,6 +54,7 @@ struct iniParameter_t {
 } intCalib;
 
 extern bool DoTamper1(void);
+extern void DoTemperatureLog();
 extern void *init_facetracking(void * arg);
 
 enum LEDType { MiniLED, NanoLED, EyelockLED, PicoLED, NoLED }; // TODO: Make LEDControllerFctory for thisvoid
@@ -545,6 +546,12 @@ void EyeLockMain::run(){
 			}
 
 			// Check temperature
+#ifdef CMX_C1
+			if (count % (5*60) == 0)
+			{
+				DoTemperatureLog();
+			}
+#else
 			if (mbVersion >= 1 && count % 240 == 0) {
 				// 1 min = 250*4*60
 				// temperature
@@ -571,9 +578,8 @@ void EyeLockMain::run(){
 					//system("/home/root/startSlave.sh");
 					RunSystemCmd("reboot");
 				}
-
-
 			}
+#endif
 #if 0	// move to script
 		   //if (count == 4*60*60*24) {	// 24 hr = 250*4*60*60*24
 			if (count == 4*60*5) {	// 5 min

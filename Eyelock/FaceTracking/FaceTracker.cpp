@@ -76,59 +76,40 @@ void LogSessionEvent(const char* msg)
 }
 #endif /* DEBUG_SESSION */
 
-void *DoTemperatureLog(void * arg)
+void DoTemperatureLog()
 {
-	static time_t start = time(0);
-	double seconds_since_start = difftime( time(0), start);
 	int len;
+	float tempData;
+	char temperatureBuf[512];
 
-	//printf ("%3.3f seconds ", seconds_since_start);
-
-	//printf("cumilative time in sec :::::::::::: %d \n", seconds_since_start);
-	if (tempTarget < int(seconds_since_start)){
-
-		//std::string temperatureLogFileName("temperature.log");
-		//ofstream temperatureLogStream(temperatureLogFileName, std::ios_base::app);
-
-		float tempData;
-		char temperatureBuf[512];
-		//float sumST = 0.0;
-
-		if ((len = port_com_send_return("accel_temp()", temperatureBuf, 20)) > 0) {
-			sscanf(temperatureBuf, "%f", &tempData);
-			EyelockLog(logger, DEBUG, "temp reading =>%3.3f\n", tempData);
-
-			//printf("cumilative time ::: %3.3f and Temp ::::: %3.3f\n", sumST, tempData);
-			//temperatureLogStream <<  tempData << '\n';
+	if ((len = port_com_send_return("accel_temp()", temperatureBuf, 20)) > 0) {
+		sscanf(temperatureBuf, "%f", &tempData);
+		EyelockLog(logger, DEBUG, "temp reading =>%3.3f\n", tempData);
 
 #ifdef TEMP_LOGGING_TO_SEPARATE_FILE
-			time_t timer;
-			struct tm* tm1;
-			time(&timer);
-			tm1 = localtime(&timer);
+		time_t timer;
+		struct tm* tm1;
+		time(&timer);
+		tm1 = localtime(&timer);
 
-			FILE *file = fopen("temperature.log", "a");
-			if (file){
-				char time_str[100];
-				strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
-				fprintf(file, "[%s] %3.3f\n", time_str, tempData);
-				fclose(file);
-			}
+		FILE *file = fopen("temperature.log", "a");
+		if (file){
+			char time_str[100];
+			strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
+			fprintf(file, "[%s] %3.3f\n", time_str, tempData);
+			fclose(file);
+		}
 #endif
 
-			if (tempData > tempHighThreshold)
-			{
-				EyelockEvent("Temperature is too high: %3.3f!", tempData);
-				EyelockLog(logger, ERROR, "OIM temperature is too high: %3.3f (threshold %3.3f)", tempData, tempHighThreshold);
-			}
-			if (tempData < tempLowThreshold)
-			{
-				EyelockEvent("Temperature is too low: %3.3f!", tempData);
-				EyelockLog(logger, ERROR, "OIM temperature is too low: %3.3f (threshold %3.3f)", tempData, tempLowThreshold);
-			}
-
-			//sumST = 0.0;
-			start = time(0);
+		if (tempData > tempHighThreshold)
+		{
+			EyelockEvent("Temperature is too high: %3.3f!", tempData);
+			EyelockLog(logger, ERROR, "OIM temperature is too high: %3.3f (threshold %3.3f)", tempData, tempHighThreshold);
+		}
+		if (tempData < tempLowThreshold)
+		{
+			EyelockEvent("Temperature is too low: %3.3f!", tempData);
+			EyelockLog(logger, ERROR, "OIM temperature is too low: %3.3f (threshold %3.3f)", tempData, tempLowThreshold);
 		}
 	}
 }
@@ -1412,12 +1393,6 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 // Push face Coordinates to Queue
 	// pthread_create(&threadIdFace,NULL,face_queue,faceInfo);
-// Temperature
-	pthread_create(&threadIdtemp,NULL,DoTemperatureLog,NULL);
-	pthread_detach(threadIdtemp);
-
-// Tempering
-	// pthread_create(&threadIdtamper,NULL,DoTamper,NULL);
 
 }
 
