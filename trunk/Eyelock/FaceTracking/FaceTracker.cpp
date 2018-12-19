@@ -200,23 +200,6 @@ FaceTracker::FaceTracker(char* filename)
 	m_DimmingfaceExposureTime = FaceConfig.getValue("FTracker.DimmingfaceExposureTime",7);
 	m_DimmingfaceDigitalGain = FaceConfig.getValue("FTracker.DimmingfaceDigitalGain",32);
 	
-	m_CalRectFromOIM = FaceConfig.getValue("FTracker.CalRectFromOIM", true);
-
-	if(m_CalRectFromOIM){
-		// Calibration Parameters from calRect.ini
-		FileConfiguration CalRectConfig("/home/root/CalRect.ini");
-		rectX = CalRectConfig.getValue("FTracker.targetRectX",0);
-		rectY = CalRectConfig.getValue("FTracker.targetRectY",497);
-		rectW = CalRectConfig.getValue("FTracker.targetRectWidth",960);
-		rectH = CalRectConfig.getValue("FTracker.targetRectHeight",121);
-	}else{
-		// To support old devices which don't have cal rect file stored on OIM
-		rectX = FaceConfig.getValue("FTracker.targetRectX",0);
-		rectY = FaceConfig.getValue("FTracker.targetRectY",497);
-		rectW = FaceConfig.getValue("FTracker.targetRectWidth",960);
-		rectH = FaceConfig.getValue("FTracker.targetRectHeight",121);
-	}
-
 	m_AuxIrisCamExposureTime = FaceConfig.getValue("FTracker.AuxIrisCamExposureTime",8);
 	m_AuxIrisCamDigitalGain = FaceConfig.getValue("FTracker.AuxIrisCamDigitalGain",80);
 	m_AuxIrisCamDataPedestal = FaceConfig.getValue("FTracker.AuxIrisCamDataPedestal",0);
@@ -282,6 +265,23 @@ FaceTracker::FaceTracker(char* filename)
 	m_ToneVolume = EyelockConfig.getValue("GRI.AuthorizationToneVolume", 40);
 	m_FixedAudSetVal = EyelockConfig.getValue("Eyelock.FixedAudSetValue", 5);
 	m_ImageAuthentication = EyelockConfig.getValue("Eyelock.ImageAuthentication", true);
+
+	m_OIMFTPEnabled = FaceConfig.getValue("Eyelock.OIMFTPEnabled", true);
+
+	if (m_OIMFTPEnabled) {
+		// Calibration Parameters from CalRectFromOIM.ini
+		FileConfiguration CalRectConfig("/home/root/CalRect.ini");
+		rectX = CalRectConfig.getValue("FTracker.targetRectX", 0);
+		rectY = CalRectConfig.getValue("FTracker.targetRectY", 497);
+		rectW = CalRectConfig.getValue("FTracker.targetRectWidth", 960);
+		rectH = CalRectConfig.getValue("FTracker.targetRectHeight", 121);
+	} else {
+		// To support old devices which don't have cal rect file stored on OIM
+		rectX = FaceConfig.getValue("FTracker.targetRectX", 0);
+		rectY = FaceConfig.getValue("FTracker.targetRectY", 497);
+		rectW = FaceConfig.getValue("FTracker.targetRectWidth", 960);
+		rectH = FaceConfig.getValue("FTracker.targetRectHeight", 121);
+	}
 
 
 #ifdef DEBUG_SESSION
@@ -831,7 +831,7 @@ void FaceTracker::DoStartCmd()
 
 ///////////////////ilya///////////////////
 
-	if(m_CalRectFromOIM){
+	if(m_OIMFTPEnabled){
 		// No need to load snd files; read from ftp
 		EyelockLog(logger, DEBUG, "playing audio -set_audio(1)");
 		if(m_ToneVolume == 0)
@@ -1415,9 +1415,10 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	// pthread_create(&threadIdFace,NULL,face_queue,faceInfo);
 // Temperature
 	pthread_create(&threadIdtemp,NULL,DoTemperatureLog,NULL);
+	pthread_detach(threadIdtemp);
 
 // Tempering
-	pthread_create(&threadIdtamper,NULL,DoTamper,NULL);
+	// pthread_create(&threadIdtamper,NULL,DoTamper,NULL);
 
 }
 

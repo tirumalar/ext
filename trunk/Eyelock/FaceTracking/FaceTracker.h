@@ -102,7 +102,6 @@ void *DoTamper(void *arg);
 
 class FaceTracker{
 private:
-	bool m_CalRectFromOIM;
 	int rectX, rectY, rectW, rectH;
 	int previousEye_distance;
 	int cur_pos;
@@ -198,6 +197,7 @@ private:
 	// ToneControl from Eyelock.ini
 	int m_ToneVolume;
 	int m_FixedAudSetVal;
+	bool m_OIMFTPEnabled;
 
 	float motorBottom;
 	float motorTop;
