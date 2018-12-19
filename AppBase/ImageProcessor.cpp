@@ -379,10 +379,10 @@ m_LedConsolidator = NULL;
 
 	FileConfiguration m_FaceConfig("/home/root/data/calibration/faceConfig.ini");
 
-	m_CalRectFromOIM = m_FaceConfig.getValue("FTracker.CalRectFromOIM",true);
+	m_OIMFTPEnabled = pConf->getValue("Eyelock.OIMFTPEnabled", true);
 
-	if(m_CalRectFromOIM){
-		// Calibration Parameters from calRect.ini
+	if(m_OIMFTPEnabled){
+		// Calibration Parameters from CalRectFromOIM.ini
 		FileConfiguration CalRectConfig("/home/root/CalRect.ini");
 		rectX = CalRectConfig.getValue("FTracker.targetRectX",0);
 		rectY = CalRectConfig.getValue("FTracker.targetRectY",497);

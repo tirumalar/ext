@@ -249,7 +249,7 @@ protected:
 
 	IplImage *m_IrisProjImage;
 	bool m_SaveProjImage;
-	bool m_CalRectFromOIM;
+	bool m_OIMFTPEnabled;
 	int rectX, rectY, rectW, rectH;
 	float magOffMainl, magOffMainR, magOffAuxl, magOffAuxR;
 	float magOffMainlDiv, magOffMainRDiv, magOffAuxlDiv, magOffAuxRDiv;
