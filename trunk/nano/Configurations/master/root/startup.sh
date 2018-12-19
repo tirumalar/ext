@@ -90,6 +90,13 @@ printf "ver\n" | nc -q 5 -w 10 192.168.4.172 30 | grep -e 'FPGA VERSION' -e 'Fix
 sleep 3
 
 # Only run Eyelock when Eyelock.run exists
+#OIM ftp 
+OIMFtpEnabled=`grep -e "Eyelock\.OIMFtpEnabled\=.*" Eyelock.ini | cut -f2 -d'='`
+if [[ $OIMFtpEnabled == true ]]
+then
+chmod a+x /home/OIMftp.sh
+/home/OIMftp.sh
+fi
 chmod a+x ./Eyelock
 bash -c "while true; do if [ -f /home/root/Eyelock.run ]; then /home/root/Eyelock; fi; sleep 6; done" &
 
