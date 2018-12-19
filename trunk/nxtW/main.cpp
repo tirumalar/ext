@@ -569,7 +569,7 @@ int processCommand(char *str)
 		// rpc.php
 		case 37:
 		{
-			len = sprintf(szTokenBuffer, "/home/root/scripts/factoryReset.sh");
+			len = sprintf(szTokenBuffer, "/home/root/scripts/factoryReset.sh & disown");
 			break;
 		}
 
