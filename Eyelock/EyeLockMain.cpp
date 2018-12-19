@@ -269,6 +269,9 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 		if(ledType != NoLED){
 
 			int brightness = conf.getValue("GRI.LEDBrightness", 80); /* DJH NEW */
+			if(brightness == 0)
+				brightness = 1;
+
 			int brightnessR = brightness * 8/10; // conf.getValue("GRI.LEDBrightnessR", 65);
 			int brightnessG = brightness; // conf.getValue("GRI.LEDBrightnessG", 80);
 			int brightnessB = brightness; // conf.getValue("GRI.LEDBrightnessB", 80);
