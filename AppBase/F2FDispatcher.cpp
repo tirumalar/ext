@@ -658,6 +658,12 @@ void F2FDispatcher::SendToBoB(Configuration& conf)
 		}
 	}
 
+	bool ignoreButton = conf.getValue("Eyelock.IgnoreResetButton", false);
+	if (ignoreButton)
+	{
+		BobSetPollResetButton(0);
+	}
+
 	if(conf.getValue("Eyelock.Logging", false)){
 		FILE *fp = fopen("dump.txt","a");
 		fprintf(fp,"\nSet the configuration parameters on BoB:\n ");

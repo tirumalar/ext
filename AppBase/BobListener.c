@@ -77,6 +77,7 @@ static int acsResetSoundTime = 0;
 static int currSoundTime = 0;
 static int ShouldIQuit = 0;
 static int ShouldIPollACS = 1;
+static int ShouldIPollResetButton = 1;
 
 uint64_t timestart = 0;
 int m_i2cdev = 0;
@@ -131,6 +132,11 @@ void bob_thread(void *arg)
 	char buf[MAX_MSG_SIZE], readerBuf[MAX_MSG_SIZE];
 
 	osdpResendCount = 0;
+
+	const char *factoryResetCommand="/home/root/scripts/factoryReset.sh & disown";
+	const char *factoryRestoreCommand="/home/root/scripts/factoryRestore.sh & disown";
+	unsigned int buttonStat = 0;
+	unsigned int buttonVal = 0;
 
 	pthread_mutex_init(&lock,NULL);
 	//EyelockLog(logger, INFO, "BoB => BoB Thread Started");
@@ -280,6 +286,46 @@ void bob_thread(void *arg)
 			}
         }
 
+		if (ShouldIPollResetButton)
+		{
+			BobMutexStart();
+			BobReadReg(BOB_FACTORY_STATUS_OFFSET, &buttonStat);
+			BobMutexEnd();
+
+			if (buttonStat & BOB_FACTORY_STATUS_CHANGE)
+			{
+				BobMutexStart();
+				BobReadReg(BOB_FACTORY_RESET_OFFSET, &buttonVal);
+				BobMutexEnd();
+
+				EyelockLog(logger, DEBUG, "BoB => Polling button: BOB_FACTORY_STATUS_OFFSET=%02x, BOB_FACTORY_RESET_OFFSET=%02x) ", buttonStat, buttonVal);
+
+				if (buttonStat)
+				{
+					BobMutexStart();
+					BobWriteReg(BOB_FACTORY_STATUS_OFFSET, 0);
+					BobMutexEnd();
+				}
+				if (buttonVal)
+				{
+					BobMutexStart();
+					BobWriteReg(BOB_FACTORY_RESET_OFFSET, 0);
+					BobMutexEnd();
+				}
+
+				if((buttonVal & BOB_FACTORY_STATUS_RESET) && (buttonVal == 0xC6))
+				{
+					EyelockLog(logger, DEBUG, "BoB => *************** Running factory reset ********************* ");
+					system(factoryResetCommand);
+				}
+				else if((buttonVal & BOB_FACTORY_STATUS_RESTORE) && (buttonVal == 0x99))
+				{
+					EyelockLog(logger, DEBUG, "BoB => *************** Running factory restore ********************* ");
+					system(factoryRestoreCommand);
+				}
+			}
+		}
+
 		// get status of OSDP
 		if((BobOsdpCB || BobReaderOsdpCB) && !ShouldIPollACS) {
 			osdpResetCount++;
@@ -409,6 +455,11 @@ void BobCloseComs()
 void BobSetPollACS(int pollACS)
 {
 	ShouldIPollACS = pollACS;
+}
+
+void BobSetPollResetButton(int pollResetButton)
+{
+	ShouldIPollResetButton = pollResetButton;
 }
 
 void BoBSetQuit()
