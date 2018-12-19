@@ -154,7 +154,6 @@ FaceTracker::FaceTracker(char* filename)
 ,low(false)
 ,maxAngle(136)
 ,minAngle(72)
-,m_CalRectFromOIM(false)
 {
 
 	CENTER_POS = FaceConfig.getValue("FTracker.centerPos",164);
