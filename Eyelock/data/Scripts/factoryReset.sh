@@ -19,9 +19,7 @@ then
     fi
 
 	rm Eyelock.run
-	rm FaceTracker.run
 	killall -KILL Eyelock;
-	killall -KILL FaceTracker;
 else
 	i2cset -y 3 0x2e 4 6
 	rm Eyelock.run
@@ -72,7 +70,11 @@ then
 	awk -v factoryHostname="${FACTORY_HOSTNAME}" ' BEGIN { OFS = "\t" } ($1 == "127.0.1.1") { $2=factoryHostname; } { print } ' /etc/hosts > /home/www-internal/hosts
 	mv /home/www-internal/hosts /etc/hosts
 
-	mv /home/www-internal/interfaces.default /home/www-internal/interfaces
+	cp /home/www-internal/interfaces.default /home/www-internal/interfaces
+
+	# uncommenting statements to force TLS
+	grep -iq "^#ssl.use-sslv2" '/home/root/lighttpd.conf' && sed -i s/'#ssl.use-sslv2'/'ssl.use-sslv2'/ '/home/root/lighttpd.conf' && sed -i s/'#ssl.use-sslv3'/'ssl.use-sslv3'/ '/home/root/lighttpd.conf'  && sed -i s/'#ssl.cipher-list'/'ssl.cipher-list'/ '/home/root/lighttpd.conf'
+
 else
 	if [[ ${UNAME} == ${UNAME_READONLY_FS} ]]
 	then
@@ -99,6 +101,7 @@ else
 fi
 
 rm wpa_supplicant.log*
+rm port.log
 
 rm nxtEvent*.log*
 NOW=$(date -u +"%Y-%m-%d %T, %Z")
@@ -112,7 +115,14 @@ if grep -qi '^eyelock.hardwaretype=1' '/home/default/Eyelock.ini'
 then
 	sleep 2
 	sync
-	/sbin/reboot
+
+	# reboot OIM
+	./i2cHandler -r0
+	sleep 3
+	./i2cHandler -r1
+	
+	sleep 7
+	reboot
 else
 	ping -q -c2 192.168.40.2 > /dev/null
 	if [ $? -eq 0 ] 
