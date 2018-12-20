@@ -246,7 +246,7 @@ FaceTracker::FaceTracker(char* filename)
 	m_FixedAudSetVal = EyelockConfig.getValue("Eyelock.FixedAudSetValue", 5);
 	m_ImageAuthentication = EyelockConfig.getValue("Eyelock.ImageAuthentication", true);
 
-	m_OIMFTPEnabled = FaceConfig.getValue("Eyelock.OIMFTPEnable", true);
+	m_OIMFTPEnabled = EyelockConfig.getValue("Eyelock.OIMFTPEnable", true);
 
 	if (m_OIMFTPEnabled) {
 		// Calibration Parameters from CalRectFromOIM.ini
