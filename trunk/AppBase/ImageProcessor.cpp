@@ -379,7 +379,7 @@ m_LedConsolidator = NULL;
 
 	FileConfiguration m_FaceConfig("/home/root/data/calibration/faceConfig.ini");
 
-	m_OIMFTPEnabled = pConf->getValue("Eyelock.OIMFTPEnabled", true);
+	m_OIMFTPEnabled = pConf->getValue("Eyelock.OIMFTPEnable", true);
 
 	if(m_OIMFTPEnabled){
 		// Calibration Parameters from CalRectFromOIM.ini

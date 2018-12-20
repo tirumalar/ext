@@ -91,8 +91,8 @@ sleep 3
 
 # Only run Eyelock when Eyelock.run exists
 #OIM ftp 
-OIMFtpEnabled=`grep -e "Eyelock\.OIMFtpEnabled\=.*" Eyelock.ini | cut -f2 -d'='`
-if [[ $OIMFtpEnabled == true ]]
+OIMFTPEnable=`grep -e "Eyelock\.OIMFTPEnable\=.*" Eyelock.ini | cut -f2 -d'='`
+if [[ $OIMFTPEnable == true ]]
 then
 chmod a+x /home/OIMftp.sh
 /home/OIMftp.sh
