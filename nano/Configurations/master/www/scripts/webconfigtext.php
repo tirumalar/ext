@@ -90,6 +90,9 @@ function defineStrings($HardwareType)
 
             define ("HOME_SOFTWARE_NANOLABEL", $NXTText." Updated: ");
             define ("HOME_SOFTWARE_BOBLABEL", "ICM Updated: ");
+			define ("HOME_SOFTWARE_FPGALABEL", "Camera FPGA Updated: ");
+			define ("HOME_SOFTWARE_CAMERAPSOCLABEL", "Camera PSOC Updated: ");
+			define ("HOME_SOFTWARE_FIXEDPSOCLABEL", "Fixed Board Updated: ");
 
        
             //////////////////////////////////////////////////////
@@ -1008,6 +1011,9 @@ function defineStrings($HardwareType)
 		define("HOME_HARDWARE_PSOCVER", "Версия программируемой системы PSOC:");
 		define("HOME_SOFTWARE_NANOLABEL", "Последнее обновление nano:");
 		define("HOME_SOFTWARE_BOBLABEL", "Последнее обновление ICM:");
+		define("HOME_SOFTWARE_FPGALABEL", "Последнее обновление Camera FPGA: ");
+		define("HOME_SOFTWARE_CAMERAPSOCLABEL", "Последнее обновление Camera PSOC: ");
+		define("HOME_SOFTWARE_FIXEDPSOCLABEL", "Последнее обновление Fixed Board: ");
 		define("NETWORK_TABLABEL", "Сеть");
 		define("NETWORK_HEADING", "Настройка сети для устройства:");
 		define("NETWORK_DEVICENAME_GROUPTITLE", "Имя устройства:");
@@ -1531,6 +1537,10 @@ function defineStrings($HardwareType)
              define ("HOME_HARDWARE_PSOCVER", "Versão M.B. PSOC");
             define ("HOME_SOFTWARE_NANOLABEL", "Última atualização");
             define ("HOME_SOFTWARE_BOBLABEL", "Última atualização</br>de ICM:");
+			define ("HOME_SOFTWARE_FPGALABEL", "Última atualização</br>de Camera FPGA: ");
+			define ("HOME_SOFTWARE_CAMERAPSOCLABEL", "Última atualização</br>de Camera PSOC: ");
+			define ("HOME_SOFTWARE_FIXEDPSOCLABEL", "Última atualização</br>de Fixed Board: ");
+			
 
           
             //////////////////////////////////////////////////////
