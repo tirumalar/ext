@@ -512,6 +512,8 @@ upgradeOim(){
 		fpgaProgOut=$(oimctl 'flash_prog')
 		# TODO: need to get status. Check output? check version after flashing? retry if failed? num retries?
 		#fpgaProgStatus=$(echo "${fpgaProgOut}" | grep ... ?
+		NOW=$(date -u)
+		changeIniValue /home/root/Eyelock.ini "Eyelock.SoftwareUpdateDateFpga" "${NOW}"		
 		${logger} -L"Programming FPGA done"
 	fi
 	
@@ -530,7 +532,9 @@ upgradeOim(){
 		printf "\nFixed board prog out: %s" "${fixedBrdProgOut}"
 		# TODO: need to get status. Check output? check version after flashing? retry if failed? num retries?
 		#fixedBrdProgStatus=$(echo "${fixedBrdProgOut}" | grep ... ?
-				
+		
+		NOW=$(date -u)
+		changeIniValue /home/root/Eyelock.ini "Eyelock.SoftwareUpdateDateFixedBoard" "${NOW}"		
 		${logger} -L"Programming fixed board done"
 	fi
 	# TODO: revert back the first chip if this failed?
@@ -549,6 +553,8 @@ upgradeOim(){
 		camBrdProgOut=$(oimctl 'psoc_prog(2)')
 		# TODO: need to get status. Check output? check version after flashing? retry if failed? num retries?
 		#camBrdProgStatus=$(echo "${camBrdProgOut}" | grep ... ?
+		NOW=$(date -u)
+		changeIniValue /home/root/Eyelock.ini "Eyelock.SoftwareUpdateDateCameraBoard" "${NOW}"
 		${logger} -L"Programming camera board done"
 	fi
 	# TODO: revert back the first and the second chips if this failed?

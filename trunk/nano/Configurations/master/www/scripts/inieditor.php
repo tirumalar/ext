@@ -193,6 +193,10 @@ class INIEditor
     public $Eyelock_SoftwareUpdateDateCheck = "Never";
     public $Eyelock_SoftwareUpdateDateNano = "Never";
     public $Eyelock_SoftwareUpdateDateBob = "Never";
+	
+	public $Eyelock_SoftwareUpdateDateFpga = "Never";
+	public $Eyelock_SoftwareUpdateDateCameraBoard = "Never";
+	public $Eyelock_SoftwareUpdateDateFixedBoard = "Never";	
 
     public $Eyelock_EnablePopupHelp = "true";
     public $Eyelock_PopupHelpTriggerHover = 1;
@@ -873,7 +877,43 @@ class INIEditor
          else
             if(file_exists("/home/updateInProgress.txt"))
                     $this->Eyelock_SoftwareUpdateDateBob = "Previous Update Failed...";
-
+				
+		if(file_exists("/home/fpgaUpdateFailed.txt"))
+		{
+			$this->Eyelock_SoftwareUpdateDateFpga = "Previous Update Failed...";
+		}
+		else
+		{
+			if (!$this->get("Eyelock.SoftwareUpdateDateFpga", $this->Eyelock_SoftwareUpdateDateFpga))
+			{
+				$this->Eyelock_SoftwareUpdateDateFpga = "Timestamp not available.";
+			}
+		}
+		
+		if(file_exists("/home/cameraPsocUpdateFailed.txt"))
+		{
+			$this->Eyelock_SoftwareUpdateDateCameraBoard = "Previous Update Failed...";
+		}
+		else
+		{
+			if (!$this->get("Eyelock.SoftwareUpdateDateCameraBoard", $this->Eyelock_SoftwareUpdateDateCameraBoard))
+			{
+				$this->Eyelock_SoftwareUpdateDateCameraBoard = "Timestamp not available.";
+			}
+		}	
+		
+		if(file_exists("/home/fixedBoardPsocUpdateFailed.txt"))
+		{
+			$this->Eyelock_SoftwareUpdateDateFixedBoard = "Previous Update Failed...";
+		}
+		else
+		{
+			if (!$this->get("Eyelock.SoftwareUpdateDateFixedBoard", $this->Eyelock_SoftwareUpdateDateFixedBoard))
+			{
+				$this->Eyelock_SoftwareUpdateDateFixedBoard = "Timestamp not available.";
+			}
+		}
+		
         if (!$this->get("GRITrigger.EnableRelayWithSignal", $this->GRITrigger_EnableRelayWithSignal))
         {
             $this->GRITrigger_EnableRelayWithSignal = "false";
