@@ -5095,6 +5095,7 @@ void RunCamFocus(){
 
 
 
+#define DISPLAY_ON		//Mo added this feature for testing purposes
 
 
 int main(int argc, char **argv)
@@ -5175,6 +5176,15 @@ int main(int argc, char **argv)
 #endif
 
 	run_mode=1;  //DMO forced
+
+
+#ifdef DISPLAY_ON
+	if (argc== 3)
+		run_mode=1;
+	else
+		run_mode =0;
+#endif
+
 
 #if 0 //DMOOUT - No more cmd line stuff always just run in FaceTracking only mode...
 
@@ -5365,8 +5375,9 @@ int main(int argc, char **argv)
 	}
 
 
-	fs = new extFocus();
+	//fs = new extFocus();
 	if(focusMode){
+		fs = new extFocus();
 		portcom_start();
 
 		fs->DoStartCmd_focus();
@@ -5401,13 +5412,26 @@ int main(int argc, char **argv)
 
 
 	//vid_stream_start
-#if 0
+#if 1
 	vs= new VideoStream(atoi(argv[1]));
-	sprintf(temp,"Disp %d",atoi (argv[1]) );
+	sprintf(temp,"Disp %d",atoi (argv[1]));
 #else
 	vs= new VideoStream(8194); //Facecam is 8194...
 	sprintf(temp,"Disp %d", 8194);
 #endif
+
+
+#ifdef DISPLAY_ON
+/*	vsExp1= new VideoStream(atoi(argv[1])); //Facecam is 8194...
+	sprintf(temp,"Disp %d", atoi(argv[1]));*/
+	if(run_mode != 4){
+		if(bShowFaceTracking)
+			{
+				cv::namedWindow(temp);
+			}
+	}
+#endif
+
 	//Setting up Run mode
 	if (run_mode)
 	{
@@ -5485,6 +5509,26 @@ int main(int argc, char **argv)
 			}
 		else
 			{
+
+#ifdef DISPLAY_ON
+			if (vs->cam_id == 4){
+				//cv::resize(outImg, smallImgBeforeRotate, cv::Size(), (1 / scaling),(1 / scaling), INTER_NEAREST);
+				smallImg = rotation90(outImg);	//90 deg rotation
+
+				if(bShowFaceTracking){
+					imshow(temp,smallImg);  //Time debug
+					//cvWaitKey(1);
+				}
+
+			}
+			else{
+				if(bShowFaceTracking){
+					imshow(temp,outImg);  //Time debug
+					//cvWaitKey(1);
+				}
+			}
+
+#else
 			//portcom_start();
 			//DoStartCmd();
 
@@ -5512,12 +5556,35 @@ int main(int argc, char **argv)
 					imshow("FaceTracker",smallImg);  //Time debug
 					cvWaitKey(1);
 				}
+#endif
 			}
 
 
 
 	    key = cv::waitKey(1);
 	    //printf("Key pressed : %u\n",key);
+
+
+if (run_mode == 1){
+
+}else{
+#ifdef DISPLAY_ON
+	    //For quit streaming
+		if (key=='q')
+			break;
+
+
+		//For saving images while streaming individual cameras
+		if(key=='s')
+		{
+			char fName[50];
+			sprintf(fName,"%d_%d.pgm",atoi(argv[1]),fileNum++);
+			cv::imwrite(fName,outImg);
+			printf("saved %s\n",fName);
+
+		}
+#endif
+}
 
 #if 0 //DMOOUT no more key'd exits...
 	    //For quit streaming
