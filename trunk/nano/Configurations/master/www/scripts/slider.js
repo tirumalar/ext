@@ -59,6 +59,84 @@ $(function ()
     });
 });
 
+/////////////////////////// IrisCapture
+
+$(function () {
+    $("#iriscapturetimeout").slider({
+        min: 100,
+        max: 60000,
+        value: document.getElementById('Eyelock_IrisCaptureTimeout').value,
+        range: "min",
+        animate: true,
+        step: 50,
+        slide: function (event, ui) {
+            if (ui.value < 100)
+                return false;
+            if (ui.value > 60000)
+                ui.value = 60000;
+            setIrisCaptureTimeout((ui.value));
+        },
+        create: function (event, ui) {
+            setSliderTicks(event.target);
+        }
+    });
+});
+
+
+$(document).ready(function () {
+    $('#CM_IrisCaptureTimeout').change(function () {
+        //do your update here
+        debugvalue = this.value;
+        $("#iriscapturetimeout").slider("value", parseFloat(debugvalue));
+    })
+})
+
+function setIrisCaptureTimeout(myTimeout) 
+{
+    var timeoutEdit = document.getElementById('Eyelock_IrisCaptureTimeout');
+    timeoutEdit.value = myTimeout;
+}
+
+
+$(function () {
+    $("#iriscapturedelay").slider({
+        min: 1000,
+        max: 300000,
+        value: document.getElementById('Eyelock_IrisCaptureResetDelay').value,
+        range: "min",
+        animate: true,
+        step: 50,
+        slide: function (event, ui) {
+            if (ui.value < 1000)
+                return false;
+            if (ui.value > 300000)
+                ui.value = 300000;
+            setIrisCaptureResetDelay((ui.value));
+        },
+        create: function (event, ui) {
+            setSliderTicks(event.target);
+        }
+    });
+});
+
+
+$(document).ready(function () {
+    $('#CM_IrisCaptureResetDelay').change(function () {
+        //do your update here
+        debugvalue = this.value;
+        $("#iriscapturedelay").slider("value", parseFloat(debugvalue));
+    })
+})
+
+function setIrisCaptureResetDelay(myTimeout) 
+{
+    var timeoutEdit = document.getElementById('Eyelock_IrisCaptureResetDelay');
+    timeoutEdit.value = myTimeout;
+}
+
+
+///////////////////////////
+
 $(function () {
     $("#iriswaittimeslider2").slider({
         min: 10,

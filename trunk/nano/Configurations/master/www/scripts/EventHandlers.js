@@ -1842,6 +1842,8 @@ function handleProtocolSelector()
         }
      }
 }
+
+
 $(document).ready(function () {
 
     handleProtocolSelector();
@@ -1937,6 +1939,57 @@ $(document).ready(function () {
         //         }
 
 
+    });
+});
+
+
+function handleAuthenticationSelector()
+{
+ 	 var cSelect = document.getElementById("irismode");
+
+	 if (cSelect.options[cSelect.selectedIndex].value == "irisauthentication")
+     {
+        $('#IrisAuthentication').show();
+        $('#IrisCapture').hide();
+     }
+     else
+     {
+        $('#IrisAuthentication').hide();
+        $('#IrisCapture').show();
+     }
+}
+
+
+$(document).ready(function () {
+    handleAuthenticationSelector();
+    handleIrisCaptureDataModeSelector();
+});
+
+
+
+// Handle Authentication select (show hide some controls based on selected protocol)
+$(document).ready(function () {
+    $('#irismode').change(function () {
+         handleAuthenticationSelector();
+    });
+});
+
+
+
+function handleIrisCaptureDataModeSelector()
+{
+ 	 var cSelect = document.getElementById("irisdatamode");
+
+	 if (cSelect.options[cSelect.selectedIndex].value == "irisbestpair")
+        $('#bestpairfields').show();
+     else
+        $('#bestpairfields').hide();
+}
+
+// Handle Authentication select (show hide some controls based on selected protocol)
+$(document).ready(function () {
+    $('#irisdatamode').change(function () {
+         handleIrisCaptureDataModeSelector();
     });
 });
 
@@ -2053,12 +2106,11 @@ function enable802Fields()
             $('#CAcertToUpload').removeAttr('disabled');
             $('#browseClientCertButton').removeAttr('disabled');
             $('#ClientCertbutton').removeAttr('disabled');
-            $('#ClientcertToUpload').removeAttr('disabled');
+            $('#ClientCertToUpload').removeAttr('disabled');
             $('#browsePrivateKeyButton').removeAttr('disabled');
             $('#PrivateKeybutton').removeAttr('disabled');
             $('#PrivateKeyToUpload').removeAttr('disabled');
 
-          
              $('#EAPVersion').removeAttr('disabled');
              $('#EAPIdentityName').removeAttr('disabled');
              $('#PrivateKeyPassword').removeAttr('disabled');

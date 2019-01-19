@@ -177,13 +177,19 @@ class INIEditor
     public $GRI_InternetTimeSync = "";
     public $Eyelock_DeviceLocation = ""; // takes some sort of geographic location – a string with 1 to 150 characters
     public $Eyelock_WelcomeMessage = ""; // a string with a pattern (for ex, like the network match message)  , ex  “Welcome %s”,name) 
+    public $Eyelock_IrisMode = 1; // Default is Iris Matching
     public $Eyelock_HttpPostSenderDestAddress = ""; // a URL 
     public $Eyelock_HttpPostSenderDestPostIris = "";//   - End point for posting IRIS images
     public $Eyelock_HttpPostSenderDestSignalError = "";//– End point for posting errors
     public $Eyelock_HttpPostSenderDestSignalHeartBeat = "";//– End point for posting heartbeats
     public $Eyelock_HttpPostSenderDestSignalMaintenance = "";//– End point for posting maintenance messages.
-    public $Eyelock_HttpPostSenderDestScheme = ""; // "http" or "https"
-    public $Eyelock_SPAWAREnable = "false";
+    public $Eyelock_HttpPostSenderDestScheme = "http"; // "http" or "https"
+    public $Eyelock_IrisCaptureTimeout = 5000; // 5 second default
+    public $Eyelock_IrisCaptureResetDelay = 2000; // 2 second default
+    public $Eyelock_IrisCaptureDataMode = "irisbestpair"; // Default is "best pair', value of '2' will be "All Images"
+    public $Eyelock_IrisCaptureBestPairMax = 3; // Default is up to 3 sets of "best pairs"
+    public $Eyelock_IrisPayloadFormat = "payloadiso";
+
 
     public $GRI_EyeDestAddr;
     public $GRI_EyeDestPort;
@@ -1008,6 +1014,12 @@ class INIEditor
             $this->add("GRI.InternetTimeSync", $this->GRI_InternetTimeSync);
         }
 
+        if (!$this->get("Eyelock.IrisMode", $this->Eyelock_IrisMode))
+        {
+            $this->Eyelock_IrisMode = 1; // setup a default
+            $this->add("Eyelock.IrisMode", $this->Eyelock_IrisMode);
+        }
+
         if (!$this->get("Eyelock.HttpPostSenderDestAddress", $this->Eyelock_HttpPostSenderDestAddress))
         {
             $this->Eyelock_HttpPostSenderDestAddress = "";
@@ -1059,16 +1071,41 @@ class INIEditor
 
         if (!$this->get("Eyelock.HttpPostSenderDestScheme", $this->Eyelock_HttpPostSenderDestScheme))
         {
-            $this->Eyelock_HttpPostSenderDestScheme = "https";
+            $this->Eyelock_HttpPostSenderDestScheme = "http";
             // Missing (but required) elements must be 'added'
             $this->add("Eyelock.HttpPostSenderDestScheme", $this->Eyelock_HttpPostSenderDestScheme);
         }
 
-        if (!$this->get("Eyelock.SPAWAREnable", $this->Eyelock_SPAWAREnable))
+        if (!$this->get("Eyelock.IrisCaptureTimeout", $this->Eyelock_IrisCaptureTimeout))
         {
-            $this->Eyelock_SPAWAREnable = "false";
+            $this->Eyelock_IrisCaptureTimeout = "5000";
             // Missing (but required) elements must be 'added'
-            $this->add("Eyelock.SPAWAREnable", $this->Eyelock_SPAWAREnable);
+            $this->add("Eyelock.IrisCaptureTimeout", $this->Eyelock_IrisCaptureTimeout);
+        }
+
+        if (!$this->get("Eyelock.IrisCaptureResetDelay", $this->Eyelock_IrisCaptureResetDelay))
+        {
+            $this->Eyelock_IrisCaptureResetDelay = "2000";
+            // Missing (but required) elements must be 'added'
+            $this->add("Eyelock.IrisCaptureResetDelay", $this->Eyelock_IrisCaptureResetDelay);
+        }
+
+        if (!$this->get("Eyelock.IrisCaptureDataMode", $this->Eyelock_IrisCaptureDataMode))
+        {
+            $this->Eyelock_IrisCaptureDataMode = "irisbestpair"; // setup a default
+            $this->add("Eyelock.IrisCaptureDataMode", $this->Eyelock_IrisCaptureDataMode);
+        }
+
+        if (!$this->get("Eyelock.IrisCaptureBestPairMax", $this->Eyelock_IrisCaptureBestPairMax))
+        {
+            $this->Eyelock_IrisCaptureBestPairMax = 3; // setup a default
+            $this->add("Eyelock.IrisCaptureBestPairMax", $this->Eyelock_IrisCaptureBestPairMax);
+        }
+
+        if (!$this->get("Eyelock.IrisPayloadFormat", $this->Eyelock_IrisPayloadFormat))
+        {
+            $this->Eyelock_IrisPayloadFormat = "payloadiso"; // setup a default
+            $this->add("Eyelock.IrisPayloadFormat", $this->Eyelock_IrisPayloadFormat);
         }
 
         if (!$this->get("GRI.EyeDestAddr", $this->GRI_EyeDestAddr))
@@ -1693,6 +1730,13 @@ class INIEditor
       			$this->set("GRI.InternetTimeSync", "true");
                 $bFoundInternetTimeSync = TRUE;
             }
+            else if ($key === "irismode")
+			{
+				if (($value === "irisauthentication") )
+					$this->set("Eyelock.IrisMode", "1");
+                else
+   					$this->set("Eyelock.IrisMode", "2");
+            }
             else if ($key == "Eyelock_DeviceLocation")
             {
                 // Since this may not already exist in the file, we always write it out.
@@ -1743,10 +1787,34 @@ class INIEditor
                 if ($value != "")
                    $bFound_HttpPostSenderDestSignalMaintenance = true; 
             }
-            else if ($key == "Eyelock_HttpPostSenderDestScheme")
+            else if ($key == "Eyelock_IrisCaptureTimeout")
             {
                 // Since this may not already exist in the file, we always write it out.
-  				$this->set("Eyelock.HttpPostSenderDestScheme", $value);
+  				$this->set("Eyelock.IrisCaptureTimeout", $value);
+            }
+            else if ($key == "Eyelock_IrisCaptureResetDelay")
+            {
+                // Since this may not already exist in the file, we always write it out.
+  				$this->set("Eyelock.IrisCaptureResetDelay", $value);
+            }
+            else if ($key == "irispostscheme")
+            {
+                // Since this may not already exist in the file, we always write it out.
+			    $this->set("Eyelock.HttpPostSenderDestScheme", $value);
+            }
+            else if ($key == "irisdatamode")
+            {
+                // Since this may not already exist in the file, we always write it out.
+			    $this->set("Eyelock.IrisCaptureDataMode", $value);
+            }
+            else if ($key == "Eyelock_IrisCaptureBestPairMax")
+            {
+                // Since this may not already exist in the file, we always write it out.
+			    $this->set("Eyelock.IrisCaptureBestPairMax", $value);
+            }
+            else if ($key == "irispayloadformat")
+            {
+   			    $this->set("Eyelock.IrisPayloadFormat", $value);
             }
             else if ($key === "GRI_EyeDestAddr")
 			{
