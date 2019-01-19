@@ -151,16 +151,16 @@ function defineStrings($HardwareType)
             define ("DEVICE_ACTIVITIES_FACTORYRESET", "Factory Reset");
 		    define ("DEVICE_ACS_OSDPINSTALLMODE", "OSDP Installation Mode");
             define ("DEVICE_ACTIVITIES_REBOOTDEVICE", "Reboot Device");
-            define ("DEVICE_HBOX_GROUPTITLE", "HBOX Settings (EyeLock Support Only!)");
-            define("DEVICE_HBOX_WELCOMEMESSAGE", "Welcome Message:");
-            define("DEVICE_HBOX_LOCATION", "Location:");
-            define("DEVICE_HBOX_POSTTITLE", "Post Event URLs");
-            define("DEVICE_HBOX_DESTINATIONURL", "Main URL:");
-            define("DEVICE_HBOX_IRISURL", "Iris Post Endpoint:");
-            define("DEVICE_HBOX_ERRORURL", "Error Endpoint:");
-            define("DEVICE_HBOX_HEARTBEATURL", "HeartBeat Endpoint:");
-            define("DEVICE_HBOX_MAINTENANCEURL", "Maintenance Endpoint:");
-            define("DEVICE_HBOX_POSTSCHEMEURL", "POST Scheme:");
+            define ("DEVICE_EXTERNAL_GROUPTITLE", "HBOX Settings (EyeLock Support Only!)");
+            define("DEVICE_EXTERNAL_WELCOMEMESSAGE", "Welcome Message:");
+            define("DEVICE_EXTERNAL_LOCATION", "Location:");
+            define("DEVICE_EXTERNAL_POSTTITLE", "Post Event URLs");
+            define("DEVICE_EXTERNAL_DESTINATIONURL", "Main URL:");
+            define("DEVICE_EXTERNAL_IRISURL", "Iris Post Endpoint:");
+            define("DEVICE_EXTERNAL_ERRORURL", "Error Endpoint:");
+            define("DEVICE_EXTERNAL_HEARTBEATURL", "HeartBeat Endpoint:");
+            define("DEVICE_EXTERNAL_MAINTENANCEURL", "Maintenance Endpoint:");
+            define("DEVICE_EXTERNAL_POSTSCHEMEURL", "POST Scheme:");
             define ("DEVICE_ADVSETTINGS_GROUPTITLE", "Advanced Device Settings");
             define ("DEVICE_ADVSETTINGS_LISTENINGPORTLABEL", "Network Listening Port:");
             define ("DEVICE_ADVSETTINGS_EYEDESTADDR", "Eye Destination Address:");
@@ -241,8 +241,8 @@ function defineStrings($HardwareType)
             //////////////////////////////////////////////////////
             // AUTHENTICATION TAB STRINGS
             //////////////////////////////////////////////////////
-            define ("AUTHENTICATION_TABLABEL", "Authentication");
-            define ("AUTHENTICATION_HEADING", "Configure Authentication Details");
+            define ("AUTHENTICATION_TABLABEL", "Iris Processing");
+            define ("AUTHENTICATION_HEADING", "Configure Iris Processing Details");
             define ("AUTHENTICATION_MODE_GROUPTITLE", "Matching");
             define ("AUTHENTICATION_MODE_SINGLEEYELABEL", "Use Single Eye");
             define ("AUTHENTICATION_MODE_DUALEYELABEL", "Use Both Eyes");
@@ -255,7 +255,7 @@ function defineStrings($HardwareType)
             define ("AUTHENTICATION_SETTINGS_DESTINATIONPORTLABEL", "Port:");
             define ("AUTHENTICATION_SETTINGS_SECURENETWORDLABEL", "Secure Network Match Message");
             define ("AUTHENTICATION_SETTINGS_MSGFORMATLABEL", "Network Message Format:");
-
+            define ("AUTHENTICATION_SETTINGS_SENDALLIMAGES", "Send All Images");
 
             //////////////////////////////////////////////////////f
             // DATABASE TAB STRINGS
@@ -414,6 +414,7 @@ function defineStrings($HardwareType)
             // ASSORTED STRINGS
             /////////////////////////////////////////////////////
             define ("SECONDS_LABEL", " Seconds");
+            define ("MILLISECONDS_LABEL", " Milliseconds");
 			define("MSG_UPDATING", "Updating");
             define ("DEFAULT_EMPTY_FIELD", "Optional");
             define ("REQUIRED_EMPTY_FIELD", "Required");
@@ -1056,16 +1057,16 @@ function defineStrings($HardwareType)
 		define("DEVICE_ACTIVITIES_GROUPTITLE", "Действия");
 		define("DEVICE_ACTIVITIES_FACTORYRESET", "Сброс к заводским настройкам");
 		define("DEVICE_ACTIVITIES_REBOOTDEVICE", "Перезагрузить устройство");
-        define("DEVICE_HBOX_GROUPTITLE", "HBOX Settings (EyeLock Support Only!)");
-        define("DEVICE_HBOX_WELCOMEMESSAGE", "Welcome Message:");
-        define("DEVICE_HBOX_LOCATION", "Location:");
-        define("DEVICE_HBOX_POSTTITLE", "Post Event URLs");
-        define("DEVICE_HBOX_DESTINATIONURL", "Main URL:");
-        define("DEVICE_HBOX_IRISURL", "Iris Post Endpoint:");
-        define("DEVICE_HBOX_ERRORURL", "Error Endpoint:");
-        define("DEVICE_HBOX_HEARTBEATURL", "HeartBeat Endpoint:");
-        define("DEVICE_HBOX_MAINTENANCEURL", "Maintenance Endpoint:");
-        define("DEVICE_HBOX_POSTSCHEMEURL", "POST Scheme:");
+        define("DEVICE_EXTERNAL_GROUPTITLE", "HBOX Settings (EyeLock Support Only!)");
+        define("DEVICE_EXTERNAL_WELCOMEMESSAGE", "Welcome Message:");
+        define("DEVICE_EXTERNAL_LOCATION", "Location:");
+        define("DEVICE_EXTERNAL_POSTTITLE", "Post Event URLs");
+        define("DEVICE_EXTERNAL_DESTINATIONURL", "Main URL:");
+        define("DEVICE_EXTERNAL_IRISURL", "Iris Post Endpoint:");
+        define("DEVICE_EXTERNAL_ERRORURL", "Error Endpoint:");
+        define("DEVICE_EXTERNAL_HEARTBEATURL", "HeartBeat Endpoint:");
+        define("DEVICE_EXTERNAL_MAINTENANCEURL", "Maintenance Endpoint:");
+        define("DEVICE_EXTERNAL_POSTSCHEMEURL", "POST Scheme:");
 		define("DEVICE_ADVSETTINGS_GROUPTITLE", "Расширенные настройки устройства");
 		define("DEVICE_ADVSETTINGS_LISTENINGPORTLABEL", "Порт ожидания:");
 		define("DEVICE_ADVSETTINGS_EYEDESTADDR", "IP-адрес назначения изображения:");
@@ -1129,6 +1130,7 @@ function defineStrings($HardwareType)
 		define("AUTHENTICATION_SETTINGS_DESTINATIONPORTLABEL", "Порт:");
 		define("AUTHENTICATION_SETTINGS_SECURENETWORDLABEL", "Использовать защищенное сетевое сообщение");
 		define("AUTHENTICATION_SETTINGS_MSGFORMATLABEL", "Формат сетевого сообщения:");
+        define ("AUTHENTICATION_SETTINGS_SENDALLIMAGES", "Send All Images");
 		define("DATABASE_TABLABEL", "База данных");
 		define("DATABASE_HEADING", "Настройки базы данных");
 		define("DATABASE_TYPE", "Тип базы данных:");
@@ -1197,6 +1199,7 @@ function defineStrings($HardwareType)
 		define("EYELOCK_STATUS_RUNNING", "Выполняется");
 		define("EYELOCK_STATUS_NOTRUNNING", "Не Выполняется");
 		define("SECONDS_LABEL", "Секунды");
+        define ("MILLISECONDS_LABEL", " Milliseconds");
 		define("DEFAULT_EMPTY_FIELD", "Необязательный");
 		define("REQUIRED_EMPTY_FIELD", "Обязательный");
 		define("CHANGE_PASSWORD_OLD", "Используемый пароль");
@@ -1601,16 +1604,16 @@ function defineStrings($HardwareType)
             define ("DEVICE_ACTIVITIES_FACTORYRESET", "Reset de fábrica");
 			define ("DEVICE_ACS_OSDPINSTALLMODE", "OSDP Installation Mode"); 
             define ("DEVICE_ACTIVITIES_REBOOTDEVICE", "Reiniciar dispositivo");
-            define("DEVICE_HBOX_GROUPTITLE", "HBOX Settings (EyeLock Support Only!)");
-            define("DEVICE_HBOX_WELCOMEMESSAGE", "Welcome Message:");
-            define("DEVICE_HBOX_LOCATION", "Location:");
-            define("DEVICE_HBOX_POSTTITLE", "Post Event URLs");
-            define("DEVICE_HBOX_DESTINATIONURL", "Main URL:");
-            define("DEVICE_HBOX_IRISURL", "Iris Post Endpoint:");
-            define("DEVICE_HBOX_ERRORURL", "Error Endpoint:");
-            define("DEVICE_HBOX_HEARTBEATURL", "HeartBeat Endpoint:");
-            define("DEVICE_HBOX_MAINTENANCEURL", "Maintenance Endpoint:");
-            define("DEVICE_HBOX_POSTSCHEMEURL", "POST Scheme:");
+            define ("DEVICE_EXTERNAL_GROUPTITLE", "HBOX Settings (EyeLock Support Only!)");
+            define("DEVICE_EXTERNAL_WELCOMEMESSAGE", "Welcome Message:");
+            define("DEVICE_EXTERNAL_LOCATION", "Location:");
+            define("DEVICE_EXTERNAL_POSTTITLE", "Post Event URLs");
+            define("DEVICE_EXTERNAL_DESTINATIONURL", "Main URL:");
+            define("DEVICE_EXTERNAL_IRISURL", "Iris Post Endpoint:");
+            define("DEVICE_EXTERNAL_ERRORURL", "Error Endpoint:");
+            define("DEVICE_EXTERNAL_HEARTBEATURL", "HeartBeat Endpoint:");
+            define("DEVICE_EXTERNAL_MAINTENANCEURL", "Maintenance Endpoint:");
+            define("DEVICE_EXTERNAL_POSTSCHEMEURL", "POST Scheme:");
             define ("DEVICE_ADVSETTINGS_GROUPTITLE", "Configurações Avançadas de Dispositivo");
             define ("DEVICE_ADVSETTINGS_LISTENINGPORTLABEL", "Porta de Escuta de Rede:");
             define ("DEVICE_ADVSETTINGS_EYEDESTADDR", "Endereço de Destino de Olho:");
@@ -1712,6 +1715,7 @@ function defineStrings($HardwareType)
             define ("AUTHENTICATION_SETTINGS_DESTINATIONPORTLABEL", "Porta:");
             define ("AUTHENTICATION_SETTINGS_SECURENETWORDLABEL", "Mensagem de combinação de rede segura");
             define ("AUTHENTICATION_SETTINGS_MSGFORMATLABEL", "Formato de mensagem de rede:");
+            define ("AUTHENTICATION_SETTINGS_SENDALLIMAGES", "Send All Images");
 
 
             //////////////////////////////////////////////////////f
@@ -1874,6 +1878,7 @@ function defineStrings($HardwareType)
             /////////////////////////////////////////////////////
 			define("MSG_UPDATING", "Atualizando");
             define ("SECONDS_LABEL", " Segundos");
+            define ("MILLISECONDS_LABEL", " Millisegundos");
             define ("DEFAULT_EMPTY_FIELD", "Opcional");
             define ("REQUIRED_EMPTY_FIELD", "Obrigatório");
             define ("CHANGE_PASSWORD_OLD", "Senha Atual");
