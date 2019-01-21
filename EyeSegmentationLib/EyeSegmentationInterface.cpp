@@ -116,6 +116,21 @@ void EyeSegmentationInterface::GetPupilAngleSearchRange(float& min, float& max)
 	m_pEyeSegmentServer->GetPupilAngleSearchRange(min, max);
 }
 
+void EyeSegmentationInterface::SetPupilSearchAngles(float minAngle, float maxAngle)
+{
+	return m_pEyeSegmentServer->SetPupilSearchAngles(minAngle, maxAngle);
+}
+
+void EyeSegmentationInterface::SetFeatureNormalization(bool normalize)
+{
+	return m_pEyeFeatureServer->SetFeatureNormalization(normalize);
+}
+
+void EyeSegmentationInterface::SetSpecularityMaskLevel(int level)
+{
+	m_pEyeSegmentServer->SetSpecularityMaskLevel(level);
+}
+
 void EyeSegmentationInterface::SetUpperEyelidCenterandRadius(CvPoint cenPt,float rad ){
 	m_pEyeSegmentServer->SetUpperEyelidCenterandRadius(cenPt,rad);
 }
@@ -799,6 +814,14 @@ void IrisMatchInterface::SetFeatureScale(int scale)
 		m_pEyeMatchServer->SetNominalCommonBits(5100.0);
 	else
 		m_pEyeMatchServer->SetNominalCommonBits(4100.0);
+}
+
+void IrisMatchInterface::SetFeatureScaleNew(int scale, float scaleFactor)
+{
+	if(scale == 6)
+		m_pEyeMatchServer->SetNominalCommonBits(scaleFactor * 4100.0 * m_featureLength/1280);
+	else
+		m_pEyeMatchServer->SetNominalCommonBits(scaleFactor * 4100.0 * m_featureLength/1280);
 }
 
 
