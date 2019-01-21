@@ -66,7 +66,9 @@ public:
 	void SetEyeLocationSearchArea(int xo, int yo, int w, int h);
 	void GetEyeLocationSearchArea(int& xo, int& yo, int& w, int& h);
 	void SetLUT(int pupilmin5= 5,int pupilmax64 = 64,int cirmin5=5,int cirmax255 = 255);
-
+	void SetPupilSearchAngles(float minAngle, float maxAngle);
+	void SetFeatureNormalization(bool normalize);
+	void SetSpecularityMaskLevel(int level);
 	void EnableEyeQualityAssessment(bool enable=true);
 	void EnableImprovedCostMetric(bool enable=true);
 	int GetMaxCorruptBitsPercAllowed();
@@ -114,6 +116,7 @@ public:
 	int GetNumberOfRotations();
 	void SetNominalCommonBits(int bits);
 	void SetFeatureScale(int scale);
+	void SetFeatureScaleNew(int scale, float scaleFactor=1.0f);
 	void SetMinCommonBits(int commonBits);
 	void SetDoRawScore(bool raw);
 	static int GetCoarseIrisCode(unsigned char *irisCode, unsigned char *maskCode, int length, unsigned char *coarseIrisCode,unsigned char *coarseMaskCode);

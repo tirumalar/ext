@@ -146,6 +146,14 @@ public:
 		m_eyelidSearchSampling = sampling;
 	}
 
+	void SetPupilSearchAngles(float minAngle, float maxAngle)
+	{
+		m_minPupilAngle = (float) (CV_PI*minAngle/180.f);
+		m_maxPupilAngle = (float) (CV_PI*maxAngle/180.f);
+	}
+
+	void SetSpecularityMaskLevel(int level) { m_specularityMaskLevel = level; }
+
 	IplImage** GetImagePyramid(){ return m_imgPyr;}
 
 	void SetDefaultEyelidAngles(float upperEyelidAngle, float lowerEyelidAngle)
@@ -319,5 +327,7 @@ protected:
 	IplImage *m_countMatrix;
 
 	IplImage *m_flatGradImage;
+
+	int m_specularityMaskLevel;
 
 };
