@@ -1099,6 +1099,12 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	}
 #endif
 
+	if(m_SaveFullFrame){
+		sprintf(filename,"InputImage_%d_%d.pgm", cam_idd, m_faceIndex);
+		cv::Mat mateye = cv::cvarrToMat(frame);
+		imwrite(filename, mateye);		
+	}
+
 	char temp[50];
 #if 1 // Loading Offset file - PGM
 	int cam_id = frame->imageData[2]&0xff;
@@ -1190,12 +1196,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		SetImage(frame)
 	);
 
-	if(m_SaveFullFrame){
-		sprintf(filename,"InputImage_%d_%d.pgm", cam_idd, m_faceIndex);
-		cv::Mat mateye = cv::cvarrToMat(frame);
-		imwrite(filename, mateye);
-		// cvSaveImage(filename, frame);
-	}
+	
     m_inputImg.Init(frame);
     XTIME_OP("Pyramid",
     m_sframe.SetImage(&m_inputImg);
