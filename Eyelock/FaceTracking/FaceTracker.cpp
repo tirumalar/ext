@@ -138,6 +138,7 @@ FaceTracker::FaceTracker(char* filename)
 {
 
 	CENTER_POS = FaceConfig.getValue("FTracker.centerPos",164);
+	CENTER_POS_TEST = FaceConfig.getValue("FTracker.centerPosABS",164);
 	cur_pos = CENTER_POS;
 	tempTarget = FaceConfig.getValue("FTracker.tempReadingTimeInMinutes",5);
 	tempTarget = tempTarget * 60;	//converting into sec
@@ -317,10 +318,25 @@ void FaceTracker::MoveTo(int v)
 	v=v-CENTER_POS;
 	v=v/ANGLE_TO_STEPS+CENTER_POSITION_ANGLE;
 
-	EyelockLog(logger, DEBUG,"Value to MoveToAngle:angle = %d",v);
+	EyelockLog(logger, DEBUG,"Value to MoveTo Angle:angle = %d",v);
 
 	MoveToAngle((float) v);
 }
+void FaceTracker::MoveToAbs(int v)
+{
+	char cmd[128];
+	EyelockLog(logger, TRACE, "MoveToAbs");
+	EyelockLog(logger, DEBUG,"Move to Absolute command %d ",v);
+
+	port_com_send("fx_home");
+
+	sprintf(cmd, "fx_abs(%i)",v);
+	//printf(cmd);
+	port_com_send(cmd);
+	//EyelockLog(logger, DEBUG, "Moving to center position");
+	EyelockLog(logger, DEBUG, "Move to ABS CENTER Position after Match/nonMatch:%d", v);
+}
+
 
 void FaceTracker::setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask)
 {
@@ -739,10 +755,15 @@ void FaceTracker::DoStartCmd()
 
 	//move to center position
 	printf("Moving to Center\n");
+	//MoveToAbs(CENTER_POS_TEST);
+	MoveTo(CENTER_POS_TEST);
+	EyelockLog(logger, DEBUG, "Move to center Position:%d", CENTER_POS_TEST);
+/*
 	sprintf(cmd, "fx_abs(%i)",CENTER_POS);
 	EyelockLog(logger, DEBUG, "Moving to center position");
 	port_com_send(cmd);
 	//MoveTo(CENTER_POS);
+*/
 	read_angle();		//read current angle
 
 	EyelockLog(logger, DEBUG, "Configuring face LEDs");
@@ -1028,7 +1049,8 @@ void FaceTracker::moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, 
 
 void FaceTracker::faceModeState(bool bDebugSessions)
 {
-	MoveTo(CENTER_POS);
+	//MoveTo(CENTER_POS);
+	MoveToAbs(CENTER_POS_TEST);
 	run_state = RUN_STATE_FACE;
 	SetFaceMode();
 #ifdef DEBUG_SESSION
@@ -1274,7 +1296,10 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					case STATE_MOVE_MOTOR: // cannot happen
 					case STATE_LOOK_FOR_FACE:
 						// disable iris camera set current for face camera
-						MoveTo(CENTER_POS);
+						//MoveTo(CENTER_POS);
+						MoveTo(CENTER_POS_TEST);
+						//MoveToAbs(CENTER_POS_TEST);
+						//EyelockLog(logger, DEBUG, "Move to ABS CENTER Position after Match/nonMatch:%d", CENTER_POS_TEST);
 						SetFaceMode();
 						break;
 					case STATE_MAIN_IRIS:
@@ -1295,7 +1320,10 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							break;
 						case STATE_LOOK_FOR_FACE:
 							// disable iris camera set current for face camera
-							MoveTo(CENTER_POS);
+							//MoveTo(CENTER_POS);
+							//MoveToAbs(CENTER_POS_TEST);
+							MoveTo(CENTER_POS_TEST);
+							//EyelockLog(logger, DEBUG, "Move to ABS CENTER Position after Match/nonMatch:%d", CENTER_POS_TEST);
 							SetFaceMode();
 							break;
 						case STATE_AUX_IRIS:
@@ -1314,7 +1342,10 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					{
 					case STATE_LOOK_FOR_FACE:
 						// disable iris camera set current for face camera
-						MoveTo(CENTER_POS);
+						//MoveTo(CENTER_POS);
+						//MoveToAbs(CENTER_POS_TEST);
+						MoveTo(CENTER_POS_TEST);
+						//EyelockLog(logger, DEBUG, "Move to ABS CENTER Position after Match/nonMatch:%d", CENTER_POS_TEST);
 						SetFaceMode();
 						break;
 					case STATE_AUX_IRIS:
