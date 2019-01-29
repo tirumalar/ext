@@ -131,6 +131,7 @@ private:
 
 	//Reading from faceConfig.ini
 	int CENTER_POS;
+	int CENTER_POS_TEST;
 	int MIN_POS;
 	int MAX_POS;
 	
@@ -248,6 +249,7 @@ private:
 	void MoveRelAngle(float a);
 	void MoveToAngle(float a);
 	void MoveTo(int v);
+	void MoveToAbs(int v);
 	void moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, bool bDebugSessions);
 	void motorInit();
 
