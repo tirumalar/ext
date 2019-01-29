@@ -2231,6 +2231,7 @@ int main(int argc, char **argv)
 	/*if (run_mode)
 		pthread_create(&threadId,NULL,init_ec,NULL);*/
 
+#if 0 // Duplication
 	if(focusMode){
 		portcom_start();
 
@@ -2242,6 +2243,7 @@ int main(int argc, char **argv)
 
 	}
 
+#endif
 
 	//Set environment for camera to camera calibration
 	if (cal_cam_mode){
