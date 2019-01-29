@@ -26,7 +26,7 @@
 #include "logging.h"
 
 
-#define CYCLE_TEST
+// #define CYCLE_TEST
 
 using namespace cv;
 using namespace std::chrono;
@@ -1486,6 +1486,7 @@ int main(int argc, char **argv)
 	EyelockLog(logger, TRACE, "Inside main function");
 	FileConfiguration fconfig("/home/root/data/calibration/faceConfig.ini");
 	bool bShowFaceTracking = fconfig.getValue("FTracker.ShowFaceTracking", false);
+	bShowFaceTracking = true;
 	bool bDebugSessions = false;
 
 	int w,h;
