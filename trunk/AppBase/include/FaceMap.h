@@ -12,8 +12,9 @@
 
 typedef struct FaceImageQueue{
 	bool FoundEyes;
-	cv::Rect FaceCoord;
+	cv::Rect ScaledFaceCoord;
 	char FaceFrameNo;
+	bool projPtr;
 	__int64_t m_startTime;
 };
 

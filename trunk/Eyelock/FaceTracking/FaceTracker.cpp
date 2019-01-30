@@ -135,6 +135,7 @@ FaceTracker::FaceTracker(char* filename)
 ,low(false)
 ,maxAngle(136)
 ,minAngle(72)
+,m_ProjPtr(false)
 {
 
 	CENTER_POS = FaceConfig.getValue("FTracker.centerPos",164);
@@ -318,7 +319,7 @@ void FaceTracker::MoveTo(int v)
 	v=v-CENTER_POS;
 	v=v/ANGLE_TO_STEPS+CENTER_POSITION_ANGLE;
 
-	EyelockLog(logger, DEBUG,"Value to MoveTo Angle:angle = %d",v);
+	EyelockLog(logger, DEBUG,"Value to MoveToAngle:angle = %d",v);
 
 	MoveToAngle((float) v);
 }
@@ -681,8 +682,15 @@ cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 	modRect.x = no_move_area.x;
 	modRect.width = no_move_area.width;
 
+#if 0
+	//Center the the search rect
 	modRect.y = no_move_area.y + yclip;
 	modRect.height = no_move_area.height - hclip;
+#else
+	//adjust the search REect to Top
+	modRect.y = no_move_area.y;
+	modRect.height = int(float(no_move_area.height * ERROR_CHECK_EYES));
+#endif
 
 	// printf("search_eye_area 	x: %d	y: %d	w: %d	h: %d\n", modRect.x, modRect.y, modRect.height, modRect.width);
 
@@ -718,6 +726,7 @@ void FaceTracker::motorInit(){
 
 }
 	
+
 // Main DoStartCmd configuration for Eyelock matching
 void FaceTracker::DoStartCmd()
 {
@@ -897,7 +906,7 @@ void FaceTracker::DoStartCmd()
 	port_com_send("wcr(0x1f,0x301a,0x1998)");
 
 	//Reading the calibrated Rect
-	int targetOffset = 3;		//Adding offset
+	int targetOffset = 0; // 3;		//Adding offset
 
 	no_move_area.x = rectX/scaling;
 	no_move_area.y = rectY/scaling + targetOffset;
@@ -1157,36 +1166,24 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 	smallImg = preProcessingImg(outImg);
 
-	bool foundEyes = FindEyeLocation(smallImg, eyes, eye_size, face, MIN_FACE_SIZE, MAX_FACE_SIZE);
+	bool foundFace = FindEyeLocation(smallImg, eyes, eye_size, face, MIN_FACE_SIZE, MAX_FACE_SIZE);
 
-	m_LeftCameraFaceInfo.FaceCoord = face;
-	m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
-	m_LeftCameraFaceInfo.m_startTime = starttimestamp;
 
-	m_RightCameraFaceInfo.FaceCoord = face;
-	m_RightCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
-	m_RightCameraFaceInfo.m_startTime = starttimestamp;
-#if 1
-	// printf("PushToQueue foundEyes %d FaceFrameNo %d face x = %d  face y = %d face width = %d  face height = %d \n", foundEyes, FaceCameraQFrameNo, face.x,  face.y,  face.width, face.height);
-	if(system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){
-		//printf("Mapping: Push to Left Queue FaceFrameNo: %d\n", FaceCameraQFrameNo);
-		g_pLeftCameraFaceQueue->TryPush(m_LeftCameraFaceInfo);
-		//printf("Mapping: Push to Right Queue FaceFrameNo: %d\n", FaceCameraQFrameNo);
-		g_pRightCameraFaceQueue->TryPush(m_RightCameraFaceInfo);
-	}
-#endif
+
 	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
 
 
-	bool eyesInDetect = foundEyes? detect_area.contains(eyes):false;
+	bool eyesInDetect = foundFace? detect_area.contains(eyes):false;
 	bool eyesInViewOfIriscam = eyesInDetect ? search_eye_area.contains(eyes):false;
-	//bool eyesInViewOfIriscam = eyesInDetect ? no_move_area.contains(eyes):false;
+	bool eyesInViewOfIriscamNoMove = eyesInDetect ? no_move_area.contains(eyes):false;
 
-	if (foundEyes==false)
+	if (foundFace==false){
 		noFaceCounter++;
+		m_ProjPtr = false;	//projPtr is only false if FindEyeLocation() doesn't find any face
+	}
 	noFaceCounter = min(noFaceCounter,NO_FACE_SWITCH_FACE);
 
-	if (foundEyes)
+	if (foundFace)
 		noFaceCounter=0;
 	last_system_state = system_state;
 
@@ -1201,13 +1198,24 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 								break;
 								}
 							//if (eyesInDetect && eyesInViewOfIriscam)			//changed by Ilya
-							if (eyesInDetect)			//changed by Mo
+							if (eyesInViewOfIriscamNoMove)			//changed by Mo
 									system_state = SelectWhichIrisCam(eye_size,system_state);
 							DoAgc();
 							//if (eyesInViewOfIriscam)
 							break;
 
 	case STATE_MAIN_IRIS:
+						system_state = SelectWhichIrisCam(eye_size,system_state);
+						if (noFaceCounter >= NO_FACE_SWITCH_FACE)
+							{
+							system_state=STATE_LOOK_FOR_FACE;
+							break;
+							}
+						if (eyesInDetect &&  !eyesInViewOfIriscam){
+							//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+							system_state = STATE_MOVE_MOTOR;
+						}
+						break;
 	case STATE_AUX_IRIS:
 						system_state = SelectWhichIrisCam(eye_size,system_state);
 						if (noFaceCounter >= NO_FACE_SWITCH_FACE)
@@ -1215,17 +1223,19 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							system_state=STATE_LOOK_FOR_FACE;
 							break;
 							}
-						if (eyesInDetect &&  !eyesInViewOfIriscam)
-							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+						if (eyesInDetect &&  !eyesInViewOfIriscam){
+							//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+							system_state = STATE_MOVE_MOTOR;
+						}
 						break;
 	case STATE_MOVE_MOTOR:
 						//if (eyesInViewOfIriscam)		//by ilya
-						if (eyesInDetect)			//changed by Mo
+						if (eyesInViewOfIriscamNoMove)			//changed by Mo
 							{
 							system_state = SelectWhichIrisCam(eye_size,system_state);
 							break;
 							}
-						if (!foundEyes)
+						if (!foundFace)
 							{
 							system_state = STATE_LOOK_FOR_FACE;
 							break;
@@ -1235,27 +1245,11 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	}
 
 
-	currnet_mode = -1;
+	currnet_mode = -1;		//This variable is needed for setFaceMode()
 	// handle switching state
 	//if (last_system_state != system_state)
 	// if(foundEyes)
-	{
 
-		EyelockLog(logger, DEBUG, "FaceFrameNo:%d STATE:%8s  NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",FaceFrameIndex, StateText(system_state),
-						noFaceCounter,
-					foundEyes?'E':'.',
-					eyesInDetect?'D':'.',
-					eyesInViewOfIriscam?'V':'.',
-							eye_size,
-							eyes.x,
-							eyes.y,
-							last_angle_move,
-							process_time,
-							agc_set_gain,
-							g_MatchState
-							);
-
-	}
 		if (g_MatchState)
 			g_MatchState=0;
 		last_angle_move=0;
@@ -1273,6 +1267,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
 						// flush after moving to get more accurate motion on next loop
 						vs->flush();
+						m_ProjPtr = false;
 						break;
 					case STATE_MAIN_IRIS:
 						// enable main camera and set led currnet
@@ -1280,6 +1275,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						MainIrisSettings();											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
+						m_ProjPtr = true;		//Added by Mo
 						break;
 					case STATE_AUX_IRIS:
 						// enable aux camera and set led currnet
@@ -1287,6 +1283,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						MainIrisSettings();											//change to Iris settings
 						SwitchIrisCameras(false);									//switch cameras
 						stateofIrisCameras = STATE_AUX_IRIS;
+						m_ProjPtr = true;		//Added by Mo
 						break;
 					}
 					break;
@@ -1294,13 +1291,15 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					switch (system_state)
 					{
 					case STATE_MOVE_MOTOR: // cannot happen
+						// above states switches no action has to be taken
+						moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+						m_ProjPtr = false;
+						break;
 					case STATE_LOOK_FOR_FACE:
 						// disable iris camera set current for face camera
-						//MoveTo(CENTER_POS);
-						MoveTo(CENTER_POS_TEST);
-						//MoveToAbs(CENTER_POS_TEST);
-						//EyelockLog(logger, DEBUG, "Move to ABS CENTER Position after Match/nonMatch:%d", CENTER_POS_TEST);
+						MoveTo(CENTER_POS);
 						SetFaceMode();
+						m_ProjPtr = false;
 						break;
 					case STATE_MAIN_IRIS:
 						//if the switch happen from AUX to MAIN then we
@@ -1310,6 +1309,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						MainIrisSettings();											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
+						m_ProjPtr = true;		//Added by Mo
 						break;
 					}
 					break;
@@ -1317,14 +1317,15 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						switch (system_state)
 						{
 						case STATE_MOVE_MOTOR:
+							// above states switches no action has to be taken
+							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+							m_ProjPtr = false;
 							break;
 						case STATE_LOOK_FOR_FACE:
 							// disable iris camera set current for face camera
-							//MoveTo(CENTER_POS);
-							//MoveToAbs(CENTER_POS_TEST);
-							MoveTo(CENTER_POS_TEST);
-							//EyelockLog(logger, DEBUG, "Move to ABS CENTER Position after Match/nonMatch:%d", CENTER_POS_TEST);
+							MoveTo(CENTER_POS);
 							SetFaceMode();
+							m_ProjPtr = false;
 							break;
 						case STATE_AUX_IRIS:
 							//if the switch happen from AUX to MAIN then we
@@ -1334,6 +1335,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							MainIrisSettings();											//change to Iris settings
 							SwitchIrisCameras(false);									//switch cameras
 							stateofIrisCameras = STATE_AUX_IRIS;
+							m_ProjPtr = true;		//Added by Mo
 							break;
 						}
 						break;
@@ -1342,11 +1344,9 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					{
 					case STATE_LOOK_FOR_FACE:
 						// disable iris camera set current for face camera
-						//MoveTo(CENTER_POS);
-						//MoveToAbs(CENTER_POS_TEST);
-						MoveTo(CENTER_POS_TEST);
-						//EyelockLog(logger, DEBUG, "Move to ABS CENTER Position after Match/nonMatch:%d", CENTER_POS_TEST);
+						MoveTo(CENTER_POS);
 						SetFaceMode();
+						m_ProjPtr = false;
 						break;
 					case STATE_AUX_IRIS:
 						// switch only the expusure and camera enables
@@ -1355,6 +1355,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						MainIrisSettings();											//change to Iris settings
 						SwitchIrisCameras(false);									//switch cameras
 						stateofIrisCameras = STATE_AUX_IRIS;
+						m_ProjPtr = true;		//Added by Mo
 						break;
 					case STATE_MAIN_IRIS:
 						// enable main cameras and set
@@ -1362,13 +1363,69 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						MainIrisSettings();											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
+						m_ProjPtr = true;		//Added by Mo
 						break;
 					}
 					break;
 	}
 
+/*	if(system_state  == STATE_MOVE_MOTOR  || last_system_state  == STATE_MOVE_MOTOR){
+		m_ProjPtr = false;
+	}*/
+
+	/*no_move_area.x = rectX/scaling;
+	no_move_area.y = rectY/scaling + targetOffset;
+	no_move_area.width = rectW/scaling;
+	no_move_area.height = (rectH)/scaling -targetOffset*2;*/
+
+	cv::Rect projFace;
+	//Scaling out projFace coordinates
+	projFace.x = face.x * scaling;		//column
+	projFace.y = rectY - (targetOffset * scaling);
+	projFace.width = face.width * scaling;
+	projFace.height = rectH + (targetOffset * scaling);
+
+	//char filename[100];
+	//sprintf(filename,"FaceImage_%d_ProjPtr_%d.pgm", FaceCameraFrameNo, m_ProjPtr);
+	// printf("PushToQueue foundEyes %d FaceFrameNo %d face x = %d  face y = %d face width = %d  face height = %d \n", foundEyes, FaceCameraQFrameNo, face.x,  face.y,  face.width, face.height);
+	if(system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){
+		if(m_ProjPtr){
+			m_LeftCameraFaceInfo.ScaledFaceCoord = projFace;
+			m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
+			m_LeftCameraFaceInfo.m_startTime = starttimestamp;
+			m_LeftCameraFaceInfo.projPtr = m_ProjPtr;
+
+			m_RightCameraFaceInfo.ScaledFaceCoord = projFace;
+			m_RightCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
+			m_RightCameraFaceInfo.m_startTime = starttimestamp;
+			m_RightCameraFaceInfo.projPtr = m_ProjPtr;
+
+			//printf("Mapping: Push to Left Queue FaceFrameNo: %d\n", FaceCameraQFrameNo);
+			g_pLeftCameraFaceQueue->TryPush(m_LeftCameraFaceInfo);
+			//printf("Mapping: Push to Right Queue FaceFrameNo: %d\n", FaceCameraQFrameNo);
+			g_pRightCameraFaceQueue->TryPush(m_RightCameraFaceInfo);
+		}
+	 }
 
 		// printf("DoRunMode_test face.x %d face.y %d face.width %d face.height %d\n",  face.x,face.y,face.width,face.height);
+
+
+			EyelockLog(logger, DEBUG, "FaceFrameNo:%d STATE:%8s LAST_STATE:%8s NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) Proj:%d MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",FaceCameraFrameNo, StateText(system_state),
+					StateText(last_system_state),
+							noFaceCounter,
+							foundFace?'E':'.',
+						eyesInDetect?'D':'.',
+						eyesInViewOfIriscam?'V':'.',
+								eye_size,
+								eyes.x,
+								eyes.y,
+								m_ProjPtr,
+								last_angle_move,
+								process_time,
+								agc_set_gain,
+								g_MatchState
+								);
+
 
 
 		if(bShowFaceTracking){
@@ -1388,7 +1445,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 #ifdef DEBUG_SESSION
 	if (bDebugSessions)
 	{
-		if (foundEyes)
+		if (foundFace)
 		{
 			struct stat st = {0};
 			if (stat(m_sessionDir.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
