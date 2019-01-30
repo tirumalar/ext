@@ -55,13 +55,11 @@
 
 #define SCALE 3
 
-#define MODE_CHANGE_FREEZE 10
-
 #define MIN_IRIS_FRAMES 10
 #define FRAME_DELAY 	100
 
 // this defines how many frames without a face will cause a switch back to face mode ie look for faces
-#define NO_FACE_SWITCH_FACE 10
+#define NO_FACE_SWITCH_FACE 1
 #define ANGLE_TO_STEPS 		5
 #define smallMoveTo 		2		//limiting motor movement
 
@@ -102,6 +100,7 @@ void *DoTamper(void *arg);
 
 class FaceTracker{
 private:
+	bool m_ProjPtr;
 	int rectX, rectY, rectW, rectH;
 	int previousEye_distance;
 	int cur_pos;

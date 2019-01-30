@@ -388,12 +388,14 @@ m_LedConsolidator = NULL;
 		rectY = CalRectConfig.getValue("FTracker.targetRectY",497);
 		rectW = CalRectConfig.getValue("FTracker.targetRectWidth",960);
 		rectH = CalRectConfig.getValue("FTracker.targetRectHeight",121);
+		//ERROR_CHECK_EYES = m_FaceConfig.getValue("FTracker.ERROR_CHECK_EYES",float(0.06));
 	}else{
 		// To support old devices which don't have cal rect file stored on OIM
 		rectX = m_FaceConfig.getValue("FTracker.targetRectX",0);
 		rectY = m_FaceConfig.getValue("FTracker.targetRectY",497);
 		rectW = m_FaceConfig.getValue("FTracker.targetRectWidth",960);
 		rectH = m_FaceConfig.getValue("FTracker.targetRectHeight",121);
+		//ERROR_CHECK_EYES = m_FaceConfig.getValue("FTracker.ERROR_CHECK_EYES",float(0.06));
 	}
 	magOffMainl = m_FaceConfig.getValue("FTracker.magOffsetMainLeftCam",float(0.15));
 	magOffMainR = m_FaceConfig.getValue("FTracker.magOffsetMainRightCam",float(0.15));
@@ -440,6 +442,48 @@ m_LedConsolidator = NULL;
 	mm_pCMXHandle = new CmxHandler(*pConf);
 	m_bShouldSend =pConf->getValue("Eyelock.EyeMessage",true);
 }
+
+/*
+//Use this if we later decided to move from no_move_area to search_eye_area for projection
+#if 1
+cv::Rect ImageProcessor::seacrhEyeArea(cv::Rect no_move_area){
+	/// printf("no_move_area 	x: %d	y: %d	w: %d	h: %d\n", no_move_area.x, no_move_area.y, no_move_area.height, no_move_area.width);
+	//printf("ERROR_CHECK_EYES %3.3f \n", ERROR_CHECK_EYES);
+
+	float hclip = float(no_move_area.height - float(no_move_area.height * ERROR_CHECK_EYES));
+	//printf("hclip::::: %3.3f\n", hclip);
+
+	//float yclip = cvRound(hclip/2.0);
+	float c = 1.0/2.0;
+	float yclip = hclip * c;
+	//printf("yclip::::: %3.3f\n", yclip);
+
+
+	cv::Rect modRect;
+	modRect.x = no_move_area.x;
+	modRect.width = no_move_area.width;
+
+	modRect.y = no_move_area.y + yclip;
+	modRect.height = no_move_area.height - hclip;
+
+	// printf("search_eye_area 	x: %d	y: %d	w: %d	h: %d\n", modRect.x, modRect.y, modRect.height, modRect.width);
+
+#if 1 // To check if needed
+	if(modRect.x < 0)
+		modRect.x = 0;
+	if(modRect.y < 0)
+			modRect.y = 0;
+	if(modRect.width > m_Imagewidth)
+			modRect.width = m_Imagewidth;
+	if(modRect.height > m_Imageheight)
+			modRect.height = m_Imageheight;
+#endif
+
+	return modRect;
+}
+#endif
+*/
+
 
 static void flipOnYAxis(int &x, int &/*y*/, int width, int /* height */)
 {
@@ -878,13 +922,24 @@ void ImageProcessor::GenMsgToNormal(BinMessage& msg){
 	msg.SetData(Buffer,len);
 }
 
+//ProjectPtr2() input(x,y) needs to be scaled out to the input image size
 cv::Point2i ImageProcessor::ProjectPtr2(float x, float y, cv::Point2f constant, float ConstDiv)
 {
+	/*
+	x = ((y-c)/m);
+
+	Here, m is magnification offset (ConstDiv)
+	c is the intersection in Iris plane (constant)
+	y is the coordinates in Face plane
+	calculated x will be the coordinate of Iris plane
+	*/
+
 	cv::Point2i ptr2;
 
 	ptr2.x = (x-constant.x)*ConstDiv;
 	ptr2.y = (y-constant.y)*ConstDiv;
 
+	//Condition check for y
 	if (ptr2.y > m_Imageheight) {
 		ptr2.y = m_Imageheight;
 	}
@@ -893,21 +948,48 @@ cv::Point2i ImageProcessor::ProjectPtr2(float x, float y, cv::Point2f constant, 
 		ptr2.y = 0;
 	}
 
+	//Condition check for x
+	if (ptr2.x < 0)
+		ptr2.x = 0;
+
+	if (ptr2.x > m_Imagewidth)
+		ptr2.x = m_Imagewidth;
+
 	return ptr2;
 
 }
 
+//projectPointsPtr1() input needs to be scaled out to the input image size
 cv::Point2i ImageProcessor::projectPointsPtr1(cv::Rect projFace, cv::Point2f constant, float ConstDiv)
 {
+	/*
+	x = ((y-c)/m);
+
+	Here, m is magnification offset (ConstDiv)
+	c is the intersection in Iris plane (constant)
+	y is the coordinates in Face plane
+	calculated x will be the coordinate of Iris plane
+	*/
+
 	cv::Point2i ptr1;
 	ptr1.x = (projFace.x - constant.x) * ConstDiv;
 	ptr1.y = (projFace.y - constant.y) * ConstDiv;
 
+	//Condition check for x
 	if (ptr1.x < 0)
 		ptr1.x = 0;
 
 	if (ptr1.x > m_Imagewidth)
 		ptr1.x = m_Imagewidth;
+
+	////Condition check for y
+	if (ptr1.y > m_Imageheight) {
+		ptr1.y = m_Imageheight;
+	}
+
+	if (ptr1.y < 0) {
+		ptr1.y = 0;
+	}
 
 	return ptr1;
 }
@@ -915,7 +997,6 @@ cv::Point2i ImageProcessor::projectPointsPtr1(cv::Rect projFace, cv::Point2f con
 cv::Rect ImageProcessor::CeateRect(cv::Point2i ptr1, cv::Point2i ptr2, bool useOffest, float projOffset)
 {
 	cv::Rect ret1;
-	//create RECT
 	ret1.x = ptr1.x;
 	ret1.y = ptr1.y;
 	ret1.width = abs(ptr1.x - ptr2.x);
@@ -934,6 +1015,7 @@ cv::Rect ImageProcessor::CeateRect(cv::Point2i ptr1, cv::Point2i ptr2, bool useO
 		ret1.height = ret1.height - int(projOffset);
 	}
 
+	//take the full image if projection fail
 	if (ret1.width == 0 || ret1.height == 0) {
 		ret1.x = 0;
 		ret1.y = 0;
@@ -941,21 +1023,28 @@ cv::Rect ImageProcessor::CeateRect(cv::Point2i ptr1, cv::Point2i ptr2, bool useO
 		ret1.height = m_Imageheight;
 	}
 
+
+/*	double cutThresh;
+	double per = 1.0/2.0;
+	double cut = ret1.width * (100 - cutThresh) * per;*/
+
+
+	// printf("\n \n ret1.x....%d ret1.y....%d ret1.width....%d ret1.height %d \n \n", ret1.x, ret1.y, ret1.width, ret1.height);
+
 	return ret1;
 
 }
 
-cv::Rect ImageProcessor::projectRectNew(cv::Rect face, int CameraId)
+cv::Rect ImageProcessor::projectRectNew(cv::Rect projFace, int CameraId)
 {
-	double scaling = 8.0;
+	double scaling = 8.0;	//scaling for Pyramid level 3
 	float scale = 1.0;
 	int targetOffset1;
 	cv::Rect IrisProjRect;
-	targetOffset1 = 3;
+	targetOffset1 = 3;	//it is used in face tracking as an offset that need/not need to be scaled (further test)
 	double scalingDiv = 1.0/scaling;
 
-	cv::Rect projFace;
-	cv::Rect faceP = face;
+
 	bool useOffest = false;
 	float projOffset;
 
@@ -968,38 +1057,77 @@ cv::Rect ImageProcessor::projectRectNew(cv::Rect face, int CameraId)
 	}
 	// printf("projectRect face x = %d  face y = %d face width = %d  face height = %d CameraId %d\n", faceP.x, faceP.y, faceP.width, faceP.height, CameraId);
 
+/*
+// we can use this part of the code if we later decided to move from no_move_area to search_eye_area for projection
+#if 0
+	cv::Rect search_eye_area;
+	cv::Rect no_move_area;
+
+	no_move_area.x = rectX/scaling;
+	no_move_area.y = rectY/scaling + targetOffset1;
+	no_move_area.width = rectW/scaling;
+	no_move_area.height = (rectH)/scaling -targetOffset1*2;
+
+	search_eye_area = seacrhEyeArea(no_move_area);
+
+	//faceP.y = (search_eye_area.y*scalingDiv) + targetOffset1;
+	//faceP.height = (search_eye_area.height)*scalingDiv -(targetOffset1*2);
+
+	projFace.x = face.x * scaling;		//column
+	projFace.y = search_eye_area.y * scaling;	//row
+	projFace.width = face.width * scaling;
+	projFace.height = search_eye_area.height * scaling;
+
+#else
 	faceP.y = (rectY*scalingDiv) + targetOffset1;
 	faceP.height = (rectH)*scalingDiv -(targetOffset1*2);
 
 	projFace.x = face.x * scaling;		//column
-	projFace.y = rectY + targetOffset1;	//row
+	projFace.y = rectY + targetOffset1 * scaling;	//row
 	projFace.width = face.width * scaling;
-	projFace.height = rectH - (targetOffset1 * 2);
+	projFace.height = rectH - (targetOffset1 *scaling * 2);
+#endif
+
+*/
+
+
+/*
+	//Testing targetoffset (If needed)
+	projFace.x = face.x * scaling;		//column
+	projFace.y = rectY + targetOffset1 * scaling;	//row
+	projFace.width = face.width * scaling;
+	projFace.height = rectH - (targetOffset1 *scaling * 2);
+	*/
+
 	cv::Point2i ptr1, ptr2;
 
 
 	if (CameraId == IRISCAM_MAIN_LEFT) {
 		ptr1 = projectPointsPtr1(projFace, constantMainl, magOffMainlDiv);
-		ptr2 = ProjectPtr2((face.x + face.width), (projFace.y + projFace.height), constantMainl, magOffMainlDiv),
+		//ptr2 = ProjectPtr2((face.x * scaling + face.width * scaling), (projFace.y + projFace.height), constantMainl, magOffMainlDiv);
+		ptr2 = ProjectPtr2((projFace.x + projFace.width), (projFace.y + projFace.height), constantMainl, magOffMainlDiv);
 		IrisProjRect = CeateRect(ptr1, ptr2, useOffest, projOffset);
 
 	} else if (CameraId == IRISCAM_AUX_LEFT) {
 		//project two coordinates diagonally a part in face frame into Iris
 		ptr1 = projectPointsPtr1(projFace, constantAuxl, magOffAuxlDiv);
-		ptr2 = ProjectPtr2((face.x + face.width), (projFace.y + projFace.height), constantAuxl, magOffAuxlDiv),
+		//ptr2 = ProjectPtr2((face.x * scaling + face.width * scaling), (projFace.y + projFace.height), constantAuxl, magOffAuxlDiv);
+		ptr2 = ProjectPtr2((projFace.x + projFace.width), (projFace.y + projFace.height), constantAuxl, magOffAuxlDiv);
 		IrisProjRect = CeateRect(ptr1, ptr2, useOffest, projOffset);
 
 	} else if (CameraId == IRISCAM_MAIN_RIGHT) {
 		//project two coordinates diagonally a part in face frame into Iris
 		ptr1 = projectPointsPtr1(projFace, constantMainR, magOffMainRDiv);
-		ptr2 = ProjectPtr2((face.x + face.width), (projFace.y + projFace.height), constantMainR, magOffMainRDiv),
+		//ptr2 = ProjectPtr2((face.x * scaling + face.width * scaling), (projFace.y + projFace.height), constantMainR, magOffMainRDiv);
+		ptr2 = ProjectPtr2((projFace.x + projFace.width), (projFace.y + projFace.height), constantMainR, magOffMainRDiv);
 		IrisProjRect = CeateRect(ptr1, ptr2, useOffest, projOffset);
 
 	} else if (CameraId == IRISCAM_AUX_RIGHT) {
 		//project two coordinates diagonally a part in face frame into Iris
 		ptr1 = projectPointsPtr1(projFace, constantAuxR, magOffAuxRDiv);
-		ptr2 = ProjectPtr2((face.x + face.width), (projFace.y + projFace.height), constantAuxR, magOffAuxRDiv),
-		IrisProjRect =  CeateRect(ptr1, ptr2, useOffest, projOffset);;
+		//ptr2 = ProjectPtr2((face.x * scaling + face.width * scaling), (projFace.y + projFace.height), constantAuxR, magOffAuxRDiv);
+		ptr2 = ProjectPtr2((projFace.x + projFace.width), (projFace.y + projFace.height), constantAuxR, magOffAuxRDiv);
+		IrisProjRect =  CeateRect(ptr1, ptr2, useOffest, projOffset);
 
 	}
 	// IrisProjRect.width = projFace.width;
@@ -1027,10 +1155,16 @@ FaceMapping ImageProcessor::GetFaceInfoFromQueue(int CameraId, char IrisFrameNo)
 		// Synchronization
 		if (FaceInfo.FaceFrameNo == IrisFrameNo){
 			//printf("Mapping: Face and Iris Match  cam_idd %d FaceFrameNo:%d IrisFrameNo:%d \n",CameraId, FaceInfo.FaceFrameNo, IrisFrameNo);
-			FaceImageQueue FaceInfo = (FaceImageQueue) g_pCameraFaceQueue->Pop();
-			m_FaceMap.IrisProj = projectRectNew(FaceInfo.FaceCoord, CameraId);
-			m_FaceMap.bDoMapping = true;
-			return m_FaceMap; // return IrisProj;
+
+			//Follow projPtr bool coming from FaceTrcaker to check and run Mapping
+			if(FaceInfo.projPtr){
+				//printf("\n \n >>>>>>>>>>>>>>>>> \n \n >>>>>>>>>>>>> active projection \n \n >>>>>>>>>>>\n \n");
+				FaceImageQueue FaceInfo = (FaceImageQueue) g_pCameraFaceQueue->Pop();
+				m_FaceMap.IrisProj = projectRectNew(FaceInfo.ScaledFaceCoord, CameraId);
+				m_FaceMap.bDoMapping = true;
+				return m_FaceMap; // return IrisProj;
+			}
+
 		}else if(DiffFrameNo > 0){
 			// No Matching face for the Iris; Face is ahead of us.
 			//printf("Mapping: Face is ahead cam_idd %d FaceFrameNo:%d IrisFrameNo:%d \n", CameraId, FaceInfo.FaceFrameNo, IrisFrameNo);
@@ -1099,15 +1233,17 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	}
 #endif
 
+	char temp[50];
+
+	int cam_id = frame->imageData[2]&0xff;
+
 	if(m_SaveFullFrame){
 		sprintf(filename,"InputImage_%d_%d.pgm", cam_idd, m_faceIndex);
 		cv::Mat mateye = cv::cvarrToMat(frame);
-		imwrite(filename, mateye);		
+		imwrite(filename, mateye);
+		// cvSaveImage(filename, frame);
 	}
-
-	char temp[50];
 #if 1 // Loading Offset file - PGM
-	int cam_id = frame->imageData[2]&0xff;
 	if(m_EnableOffsetCorrection){
 		static bool m_OffsetImageLoadedMainCamera1 = false;
 		static bool m_OffsetImageLoadedMainCamera2 = false;
@@ -1157,11 +1293,10 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	if (m_FaceIrisMapping) {
 		FaceMapping sFaceMap = GetFaceInfoFromQueue(cam_id, frame_number);
 		if (sFaceMap.bDoMapping) {
-			/*printf(
-			 "Before IrisProj  IrisProj.x %d IrisProj.y %d IrisProj.width %d IrisProj.height %d\n",
+			EyelockLog(logger, DEBUG,
+			 "IrisProjected Coord  IrisProj.x %d IrisProj.y %d IrisProj.width %d IrisProj.height %d \n",
 			 sFaceMap.IrisProj.x, sFaceMap.IrisProj.y,
-			 sFaceMap.IrisProj.width, sFaceMap.IrisProj.height);*/
-
+			 sFaceMap.IrisProj.width, sFaceMap.IrisProj.height);
 			try {
 				cv::Mat OrigFrame = cv::cvarrToMat(frame);
 				cv::Mat image_roi = OrigFrame(sFaceMap.IrisProj);
@@ -1196,7 +1331,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		SetImage(frame)
 	);
 
-	
+
     m_inputImg.Init(frame);
     XTIME_OP("Pyramid",
     m_sframe.SetImage(&m_inputImg);

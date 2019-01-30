@@ -130,6 +130,7 @@ public:
 	cv::Rect CeateRect(cv::Point2i ptr1, cv::Point2i ptr2, bool useOffest, float projOffset);
 	cv::Rect projectRectNew(cv::Rect face, int CameraId);
 	FaceMapping GetFaceInfoFromQueue(int CameraId, char IrisFrameNo);
+	cv::Rect seacrhEyeArea(cv::Rect no_move_area);
 #ifndef UNITTEST    
 protected:
 #endif
@@ -267,6 +268,10 @@ protected:
 	HttpPostSender *m_pHttpPostSender;
 #endif	
 	bool m_bShouldSend;
+
+	//Added by Mo
+	float ERROR_CHECK_EYES;
+
 private:
     void extractSmallCropForFocus(int indx,DetectedEye * eye);
     SocketFactory *m_socketFactory;
