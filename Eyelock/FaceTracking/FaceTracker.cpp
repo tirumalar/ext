@@ -136,8 +136,10 @@ FaceTracker::FaceTracker(char* filename)
 ,maxAngle(136)
 ,minAngle(72)
 ,m_ProjPtr(false)
+,FRAME_DELAY(60)
 {
 
+	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
 	CENTER_POS = FaceConfig.getValue("FTracker.centerPos",164);
 	CENTER_POS_TEST = FaceConfig.getValue("FTracker.centerPosABS",164);
 	cur_pos = CENTER_POS;
