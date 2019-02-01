@@ -232,6 +232,10 @@ private:
 	FaceImageQueue m_LeftCameraFaceInfo;
 	FaceImageQueue m_RightCameraFaceInfo;
 
+	bool bFaceMapDebug;
+
+	bool bActiveCenterPos;
+
 	void SetExp(int cam, int val);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
 	void SelLedDistance(int val); // val between 0 and 100
