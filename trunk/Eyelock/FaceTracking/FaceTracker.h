@@ -131,7 +131,8 @@ private:
 
 	//Reading from faceConfig.ini
 	int CENTER_POS;
-	int CENTER_POS_TEST;
+	//int CENTER_POS_TEST;
+
 	int MIN_POS;
 	int MAX_POS;
 	
@@ -202,6 +203,7 @@ private:
 
 	float motorBottom;
 	float motorTop;
+	float motorCenter;
 
 	// Calibration
 	int calibVolt;
@@ -256,6 +258,7 @@ private:
 	void MoveToAbs(int v);
 	void moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, bool bDebugSessions);
 	void motorInit();
+	void motorInitCenterPos(int v);
 
 	void faceModeState(bool bDebugSessions);
 	int SelectWhichIrisCam(float eye_size, int cur_state);

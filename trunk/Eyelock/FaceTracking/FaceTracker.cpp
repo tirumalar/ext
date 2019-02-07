@@ -144,7 +144,7 @@ FaceTracker::FaceTracker(char* filename)
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
 	CENTER_POS = FaceConfig.getValue("FTracker.centerPos",164);
-	CENTER_POS_TEST = FaceConfig.getValue("FTracker.centerPosABS",164);
+
 	cur_pos = CENTER_POS;
 	tempTarget = FaceConfig.getValue("FTracker.tempReadingTimeInMinutes",5);
 	tempTarget = tempTarget * 60;	//converting into sec
@@ -326,7 +326,8 @@ void FaceTracker::MoveTo(int v)
 	EyelockLog(logger, DEBUG,"Move to command %d ",v);
 
 	v=v-CENTER_POS;
-	v=v/ANGLE_TO_STEPS+CENTER_POSITION_ANGLE;
+	//v=v/ANGLE_TO_STEPS+CENTER_POSITION_ANGLE;
+	v=v/ANGLE_TO_STEPS+motorCenter;
 
 	EyelockLog(logger, DEBUG,"Value to MoveToAngle:angle = %d",v);
 
@@ -734,7 +735,20 @@ void FaceTracker::motorInit(){
   MotorLog(Mlogger, DEBUG, "Motor Bottom   %3.3f ------------\n\n\n",motorBottom);
 
 }
-	
+
+void FaceTracker::motorInitCenterPos( int v){
+	char cmd[512];
+	sprintf(cmd,"fx_abs(%d)", v);
+	port_com_send(cmd);
+
+	float sum = 0;
+	for(int i = 0; i < NUMAVG; i++){
+		sum+= read_angle();
+
+	}
+	motorCenter=sum/NUMAVG;
+	MotorLog(Mlogger, DEBUG, "Motor motorCenter   %3.3f ------------\n\n\n",motorCenter);
+}
 
 // Main DoStartCmd configuration for Eyelock matching
 void FaceTracker::DoStartCmd()
@@ -766,16 +780,18 @@ void FaceTracker::DoStartCmd()
 	printf("Motor Int\n");
 	motorInit();
 
-	//Reset the lower motion
+	/*//Reset the lower motion
 	sprintf(cmd, "fx_abs(%i)",MIN_POS);
 	EyelockLog(logger, DEBUG, "Reset to lower position minPos:%d", MIN_POS);
-	port_com_send(cmd);
+	port_com_send(cmd);*/
+
+	motorInitCenterPos(CENTER_POS);
 
 	//move to center position
 	printf("Moving to Center\n");
 	//MoveToAbs(CENTER_POS_TEST);
-	MoveTo(CENTER_POS_TEST);
-	EyelockLog(logger, DEBUG, "Move to center Position:%d", CENTER_POS_TEST);
+	MoveTo(CENTER_POS);
+	EyelockLog(logger, DEBUG, "Move to center Position:%d", CENTER_POS);
 /*
 	sprintf(cmd, "fx_abs(%i)",CENTER_POS);
 	EyelockLog(logger, DEBUG, "Moving to center position");
@@ -1073,8 +1089,9 @@ void FaceTracker::moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, 
 
 void FaceTracker::faceModeState(bool bDebugSessions)
 {
-	//MoveTo(CENTER_POS);
-	MoveToAbs(CENTER_POS_TEST);
+	MoveTo(CENTER_POS);
+	//MoveToAbs(CENTER_POS_TEST);
+
 	run_state = RUN_STATE_FACE;
 	SetFaceMode();
 #ifdef DEBUG_SESSION
@@ -1209,7 +1226,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							// we see eyes but need to move to them
 							if (eyesInDetect && !eyesInViewOfIriscam)
 								{
-								//system_state = STATE_MOVE_MOTOR;		//Setting up this state cause one extra move during face tracking
+								system_state = STATE_MOVE_MOTOR;		//Setting up this state cause one extra move during face tracking
 								moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
 								break;
 								}
@@ -1230,7 +1247,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							}
 						if (eyesInDetect &&  !eyesInViewOfIriscam){
 							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							//system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
+							system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
 						}
 						break;
 	case STATE_AUX_IRIS:
@@ -1242,7 +1259,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							}
 						if (eyesInDetect &&  !eyesInViewOfIriscam){
 							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							//system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
+							system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
 						}
 						break;
 	case STATE_MOVE_MOTOR:
@@ -1316,11 +1333,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						break;
 					case STATE_LOOK_FOR_FACE:
 						// disable iris camera set current for face camera
-						if(bActiveCenterPos){
-							MoveTo(CENTER_POS_TEST);
-						}else{
-							MoveTo(CENTER_POS);
-						}
+						MoveTo(CENTER_POS);
 						SetFaceMode();
 						m_ProjPtr = false;
 						break;
@@ -1346,11 +1359,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							break;
 						case STATE_LOOK_FOR_FACE:
 							// disable iris camera set current for face camera
-							if(bActiveCenterPos){
-								MoveTo(CENTER_POS_TEST);
-							}else{
-								MoveTo(CENTER_POS);
-							}
+							MoveTo(CENTER_POS);
 							SetFaceMode();
 							m_ProjPtr = false;
 							break;
@@ -1371,11 +1380,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					{
 					case STATE_LOOK_FOR_FACE:
 						// disable iris camera set current for face camera
-						if(bActiveCenterPos){
-							MoveTo(CENTER_POS_TEST);
-						}else{
-							MoveTo(CENTER_POS);
-						}
+						MoveTo(CENTER_POS);
 						SetFaceMode();
 						m_ProjPtr = false;
 						break;
