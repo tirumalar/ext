@@ -259,6 +259,10 @@ protected:
 	float projOffset_m, projOffset_a;
 	bool m_showProjection;
 	bool m_FaceIrisMapping;
+	bool m_FaceIrisMappingStrict;
+	bool m_FaceIrisMappingBeforEyeDetection;
+	bool m_bFaceMapDebug;;
+	int m_minIrisDiameter;
 	int m_Imagewidth;
 	int m_Imageheight;
 	bool m_EnableExtHalo;
@@ -269,7 +273,6 @@ protected:
 #endif	
 	bool m_bShouldSend;
 
-	//Added by Mo
 	float ERROR_CHECK_EYES;
 
 private:

@@ -373,9 +373,13 @@ m_LedConsolidator = NULL;
 
 	// Face Mapping Projection
 	m_FaceIrisMapping = pConf->getValue("Eyelock.FaceIrisMapping",false);
+	m_FaceIrisMappingStrict = pConf->getValue("Eyelock.Eyelock.FaceIrisMappingStrict",false);
+	m_FaceIrisMappingBeforEyeDetection = pConf->getValue("Eyelock.FaceIrisMappingBeforEyeDetection",false);
 	m_IrisProjImage = cvCreateImage(cvSize(m_Imagewidth, m_Imageheight),IPL_DEPTH_8U,1);
 	m_SaveProjImage = pConf->getValue("Eyelock.SaveProjectedImage",false);
 	m_showProjection = pConf->getValue("Eyelock.showProjection",false);
+
+	m_minIrisDiameter = pConf->getValue("Eyelock.minIrisDiameter",int(150));
 
 	FileConfiguration m_FaceConfig("/home/root/data/calibration/faceConfig.ini");
 
@@ -421,7 +425,7 @@ m_LedConsolidator = NULL;
 	projOffset_m = m_FaceConfig.getValue("FTracker.projectionOffsetValMain",float(50.00));
 	projOffset_a = m_FaceConfig.getValue("FTracker.projectionOffsetValAux",float(200.00));
 
-
+	m_bFaceMapDebug = m_FaceConfig.getValue("FTracker.FaceMapDebug", false);
 
 #ifdef DEBUG_SESSION
 	m_DebugTesting = pConf->getValue("Eyelock.TestSystemPerformance",false);
@@ -955,6 +959,9 @@ cv::Point2i ImageProcessor::ProjectPtr2(float x, float y, cv::Point2f constant, 
 	if (ptr2.x > m_Imagewidth)
 		ptr2.x = m_Imagewidth;
 
+	if(m_bFaceMapDebug)
+		EyelockLog(logger, DEBUG, "2nd Diagonal Co-ord of Rect ptr2.x %d ptr2.y %d\n", ptr2.x, ptr2.y);
+
 	return ptr2;
 
 }
@@ -991,6 +998,9 @@ cv::Point2i ImageProcessor::projectPointsPtr1(cv::Rect projFace, cv::Point2f con
 		ptr1.y = 0;
 	}
 
+	if(m_bFaceMapDebug)
+		EyelockLog(logger, DEBUG, "1st Diagonal Co-ord of Rect ptr1.x %d ptr1.y %d\n", ptr1.x, ptr1.y);
+
 	return ptr1;
 }
 
@@ -1003,6 +1013,8 @@ cv::Rect ImageProcessor::CeateRect(cv::Point2i ptr1, cv::Point2i ptr2, bool useO
 	ret1.height = abs(ptr1.y - ptr2.y);
 
 	// printf("ret1.width....%d ret1.height %d\n", ret1.width, ret1.height);
+	if(m_bFaceMapDebug)
+		EyelockLog(logger, DEBUG, "Calculated RECT   ret1.x %d 		ret1.y %d 	ret1.width %d 	ret1.height %d \n",  ret1.x, ret1.y, ret1.width, ret1.height);
 
 	//Corner condition for cvSetImageROI assertion fail issue
 	if (ret1.width + ret1.x >= m_Imagewidth)
@@ -1015,6 +1027,12 @@ cv::Rect ImageProcessor::CeateRect(cv::Point2i ptr1, cv::Point2i ptr2, bool useO
 		ret1.height = ret1.height - int(projOffset);
 	}
 
+	//Added feature for mapping to force doing nothing where the crop height or width is less the the minIrisDiameter
+	if(ret1.width < (m_minIrisDiameter - 5) || ret1.height < (m_minIrisDiameter - 5)){
+		ret1.width = 0;
+		ret1.height = 0;
+	}
+
 	//take the full image if projection fail
 	if (ret1.width == 0 || ret1.height == 0) {
 		ret1.x = 0;
@@ -1022,14 +1040,8 @@ cv::Rect ImageProcessor::CeateRect(cv::Point2i ptr1, cv::Point2i ptr2, bool useO
 		ret1.width = m_Imagewidth;
 		ret1.height = m_Imageheight;
 	}
-
-
-/*	double cutThresh;
-	double per = 1.0/2.0;
-	double cut = ret1.width * (100 - cutThresh) * per;*/
-
-
-	// printf("\n \n ret1.x....%d ret1.y....%d ret1.width....%d ret1.height %d \n \n", ret1.x, ret1.y, ret1.width, ret1.height);
+	if(m_bFaceMapDebug)
+		EyelockLog(logger, DEBUG, "Verified RECT   ret1.x %d ret1.y %d 	ret1.width %d ret1.height %d \n",	ret1.x, ret1.y, ret1.width, ret1.height);
 
 	return ret1;
 
@@ -1037,12 +1049,12 @@ cv::Rect ImageProcessor::CeateRect(cv::Point2i ptr1, cv::Point2i ptr2, bool useO
 
 cv::Rect ImageProcessor::projectRectNew(cv::Rect projFace, int CameraId)
 {
-	double scaling = 8.0;	//scaling for Pyramid level 3
-	float scale = 1.0;
-	int targetOffset1;
+	//double scaling = 8.0;	//scaling for Pyramid level 3
+	//float scale = 1.0;
+	//int targetOffset1;
 	cv::Rect IrisProjRect;
-	targetOffset1 = 3;	//it is used in face tracking as an offset that need/not need to be scaled (further test)
-	double scalingDiv = 1.0/scaling;
+	//int targetOffset1 = 3;	//it is used in face tracking as an offset that need/not need to be scaled (further test)
+	//double scalingDiv = 1.0/scaling;
 
 
 	bool useOffest = false;
@@ -1183,11 +1195,10 @@ FaceMapping ImageProcessor::GetFaceInfoFromQueue(int CameraId, char IrisFrameNo)
 	} // End of while
 }
 
+
 bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 {
 	char filename[150];
-
-#ifdef DEBUG_SESSION
 	int cam_idd = 0;
 	char frame_number = 0;
 	if(frame->imageData != NULL)
@@ -1195,7 +1206,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		cam_idd = frame->imageData[2]&0xff;
 		frame_number = frame->imageData[3]&0xff;
 	}
-
+#ifdef DEBUG_SESSION
 	if(m_DebugTesting){
 		struct stat st = {0};
 		if (stat(m_sessionDir.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
@@ -1233,97 +1244,121 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	}
 #endif
 
-	char temp[50];
-
-	int cam_id = frame->imageData[2]&0xff;
-
 	if(m_SaveFullFrame){
 		sprintf(filename,"InputImage_%d_%d.pgm", cam_idd, m_faceIndex);
 		cv::Mat mateye = cv::cvarrToMat(frame);
 		imwrite(filename, mateye);
 		// cvSaveImage(filename, frame);
 	}
-#if 1 // Loading Offset file - PGM
+	// Loading Offset file - PGM
 	if(m_EnableOffsetCorrection){
+		char temp[50];
 		static bool m_OffsetImageLoadedMainCamera1 = false;
 		static bool m_OffsetImageLoadedMainCamera2 = false;
 		static bool m_OffsetImageLoadedAuxCamera1 = false;
 		static bool m_OffsetImageLoadedAuxCamera2 = false;
 
 		// int cam_id = frame->imageData[2]&0xff;
-		sprintf(temp,"cal%02x.pgm",cam_id);
+		sprintf(temp,"cal%02x.pgm",cam_idd);
 		// printf("cam_id....%02x filename...%s\n", cam_id, temp);
 
-		if (m_OffsetImageLoadedMainCamera1 == false && (cam_id == 0x01)) {
+		if (m_OffsetImageLoadedMainCamera1 == false && (cam_idd == 0x01)) {
 			m_OffsetImageMainCamera1 = cvLoadImage("cal01.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedMainCamera1 = true;
 		}
 
-		if (m_OffsetImageLoadedMainCamera2 == false && (cam_id == 0x02)) {
+		if (m_OffsetImageLoadedMainCamera2 == false && (cam_idd == 0x02)) {
 			m_OffsetImageMainCamera2 = cvLoadImage("cal02.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedMainCamera2 = true;
 		}
 
-		if (m_OffsetImageLoadedAuxCamera1 == false && (cam_id == 0x81)) {
+		if (m_OffsetImageLoadedAuxCamera1 == false && (cam_idd == 0x81)) {
 			m_OffsetImageAuxCamera1 = cvLoadImage("cal81.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedAuxCamera1 = true;
 		}
 
-		if (m_OffsetImageLoadedAuxCamera2 == false && (cam_id == 0x82)) {
+		if (m_OffsetImageLoadedAuxCamera2 == false && (cam_idd == 0x82)) {
 			m_OffsetImageAuxCamera2 = cvLoadImage("cal82.pgm", CV_LOAD_IMAGE_GRAYSCALE);
 			m_OffsetImageLoadedAuxCamera2 = true;
 		}
 
-		if (m_OffsetImageLoadedMainCamera1  && (cam_id == 0x01)){
+		if (m_OffsetImageLoadedMainCamera1  && (cam_idd == 0x01)){
 			cvSub(frame,m_OffsetImageMainCamera1,frame);
 		}
-		if (m_OffsetImageLoadedMainCamera2  && (cam_id == 0x02)){
+		if (m_OffsetImageLoadedMainCamera2  && (cam_idd == 0x02)){
 			cvSub(frame,m_OffsetImageMainCamera2,frame);
 		}
-		if (m_OffsetImageLoadedAuxCamera1  && (cam_id == 0x81)){
+		if (m_OffsetImageLoadedAuxCamera1  && (cam_idd == 0x81)){
 			cvSub(frame,m_OffsetImageAuxCamera1,frame);
 		}
-		if (m_OffsetImageLoadedAuxCamera2  && (cam_id == 0x82)){
+		if (m_OffsetImageLoadedAuxCamera2  && (cam_idd == 0x82)){
 			cvSub(frame,m_OffsetImageAuxCamera2,frame);
 		}
 
 	}
-#endif
 
+	FaceMapping sFaceMap;
 	if (m_FaceIrisMapping) {
-		FaceMapping sFaceMap = GetFaceInfoFromQueue(cam_id, frame_number);
-		if (sFaceMap.bDoMapping) {
-			EyelockLog(logger, DEBUG,
-			 "IrisProjected Coord  IrisProj.x %d IrisProj.y %d IrisProj.width %d IrisProj.height %d \n",
-			 sFaceMap.IrisProj.x, sFaceMap.IrisProj.y,
-			 sFaceMap.IrisProj.width, sFaceMap.IrisProj.height);
-			try {
-				cv::Mat OrigFrame = cv::cvarrToMat(frame);
-				cv::Mat image_roi = OrigFrame(sFaceMap.IrisProj);
-				cv::Mat m_BlackImage = cv::Mat::zeros(cv::Size(m_Imagewidth,m_Imageheight), CV_8U);
-				image_roi.copyTo(m_BlackImage(cv::Rect(0, 0, sFaceMap.IrisProj.width, sFaceMap.IrisProj.height)));
-                cvSetZero(frame);
-				memcpy((unsigned char *)frame->imageData, (unsigned char *)m_BlackImage.data, (m_BlackImage.rows*m_BlackImage.cols));
-				if (m_SaveProjImage) {
+		sFaceMap = GetFaceInfoFromQueue(cam_idd, frame_number);
+		if (sFaceMap.bDoMapping)
+		{
+			if(m_bFaceMapDebug)
+				EyelockLog(logger, DEBUG, "IrisProjected Final Co-ord of cam ID %d	Frame no: %d	 x %d 		y %d 	width %d 	height %d \n",  cam_idd, m_faceIndex, sFaceMap.IrisProj.x, sFaceMap.IrisProj.y,  sFaceMap.IrisProj.width, sFaceMap.IrisProj.height);
+
+			// IF m_FaceIrisMappingBeforEyeDetection is false mapping will validate eyecrop later
+			if (m_FaceIrisMappingBeforEyeDetection)
+			{
+				try {
+					cv::Mat OrigFrame = cv::cvarrToMat(frame);
+					cv::Mat image_roi = OrigFrame(sFaceMap.IrisProj);
+					cv::Mat m_BlackImage = cv::Mat::zeros(cv::Size(m_Imagewidth,m_Imageheight), CV_8U);
+					image_roi.copyTo(m_BlackImage(cv::Rect(0, 0, sFaceMap.IrisProj.width, sFaceMap.IrisProj.height)));
+	                cvSetZero(frame);
+					memcpy((unsigned char *)frame->imageData, (unsigned char *)m_BlackImage.data, (m_BlackImage.rows*m_BlackImage.cols));
+					if (m_SaveProjImage) {
+						sprintf(filename, "FaceMapImage_%d_%d.pgm", cam_idd, m_faceIndex);
+						imwrite(filename, m_BlackImage);
+					}
+					if (m_showProjection) {
+						cv::Mat mateye1 = cv::cvarrToMat(frame);
+						imshow("ProjectedOutput", mateye1);
+						cvWaitKey(1);
+					}
+					OrigFrame.release();
+					image_roi.release();
+					m_BlackImage.release();
+				} catch (cv::Exception& e) {
+					cout << e.what() << endl;
+				}
+
+			}
+			else{
+				// Just for saving face mapping images for verification
+				if (m_SaveProjImage){
+					try{
+					cv::Mat OrigFrame = cv::cvarrToMat(frame);
+					cv::Mat image_roi = OrigFrame(sFaceMap.IrisProj);
+					cv::Mat m_BlackImage = cv::Mat::zeros(cv::Size(m_Imagewidth,m_Imageheight), CV_8U);
+					image_roi.copyTo(m_BlackImage(cv::Rect(0, 0, sFaceMap.IrisProj.width, sFaceMap.IrisProj.height)));
+					//cvSetZero(frame);
 					sprintf(filename, "FaceMapImage_%d_%d.pgm", cam_idd, m_faceIndex);
-					cv::Mat mateye1 = cv::cvarrToMat(frame);
-					imwrite(filename, mateye1);
+					imwrite(filename, m_BlackImage);
+					OrigFrame.release();
+					image_roi.release();
+					m_BlackImage.release();
+					}catch (cv::Exception& e) {
+						cout << e.what() << endl;
+					}
 				}
-				if (m_showProjection) {
-					cv::Mat mateye1 = cv::cvarrToMat(frame);
-					imshow("ProjectedOutput", mateye1);
-					cvWaitKey(1);
-				}
-				OrigFrame.release();
-				image_roi.release();
-				m_BlackImage.release();
-			} catch (cv::Exception& e) {
-				cout << e.what() << endl;
+
 			}
 
 		}
-
-		
+		else{
+			sprintf(filename,"FaceMapImage_FAILED_%d_%d.pgm", cam_idd, m_faceIndex);
+			cv::Mat mateye = cv::cvarrToMat(frame);
+			imwrite(filename, mateye);
+		}
 	}
 
 	// printf("Inside ProcessImage\n");
@@ -1344,8 +1379,13 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
     );
 
     int NoOfHaarEyes = m_sframe.GetNumberOfHaarEyes();
-    if(NoOfHaarEyes == 0)
-    	EyelockLog(logger, DEBUG, "After Detect Eyes function: No Eyes detected in Input Frame from Camera %d", cam_idd);
+
+    if(m_bFaceMapDebug){
+		if(NoOfHaarEyes == 0)
+    	EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d\n", cam_idd, m_faceIndex);
+		else
+    	EyelockLog(logger, DEBUG, "%d Eyes detected in Input Frame from Camera %d_%d\n", NoOfHaarEyes, cam_idd, m_faceIndex);
+    }
 
    //  printf("After Detect Eyes\n");
     if(m_shouldLog){
@@ -1367,9 +1407,56 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
         return bSentSomething;
     }
 
+    bool projStatus;
+
+    //Condition of making it strict
+    if (m_FaceIrisMappingStrict)
+    	projStatus = false;
+    else
+    	projStatus = true;
+
     for(int eyeIdx=0;eyeIdx<maxEyes;eyeIdx++){
     	CvPoint2D32f irisCentroid = cvPoint2D32f(0,0);
 		DetectedEye *eye=getNextAvailableEyeBuffer();
+
+		if (!m_FaceIrisMappingBeforEyeDetection)
+		{
+			CEyeCenterPoint& centroid = m_sframe.GetEyeCenterPointList()->at(eyeIdx);
+			EyelockLog(logger, DEBUG, "Centroid of Eyes: x:		%d y:	%d", centroid.m_nCenterPointX, centroid.m_nCenterPointY);
+
+			CvPoint ptCentroid = cvPoint(centroid.m_nCenterPointX,centroid.m_nCenterPointY);
+
+			if(m_binType == 1){
+				ptCentroid.y = ptCentroid.y>>1;
+			}
+			if(m_binType == 2){
+				ptCentroid.x = ptCentroid.x>>1;
+			}
+
+			EyelockLog(logger, DEBUG, "Centroid normalized of Eyes: x:		%d y:	%d", ptCentroid.x, ptCentroid.y);
+
+
+			if (sFaceMap.bDoMapping){
+				if (sFaceMap.IrisProj.contains(ptCentroid)){
+					projStatus = true;
+					if(m_bFaceMapDebug)
+						EyelockLog(logger, DEBUG, "Mapping is true--> Eyecrop Falls in the Projected RECT %d_%d Proj %d\n",cam_idd, m_faceIndex,projStatus);
+				}
+				else{
+					projStatus = false;
+					if(m_bFaceMapDebug)
+						EyelockLog(logger, DEBUG, "Mapping is true--> Eyecrop DOESNOTTTT Fall in the Projected RECT %d_%d Proj %d\n",cam_idd, m_faceIndex,projStatus);
+				}
+			}
+			//Condition of making it strict
+			if ((!sFaceMap.bDoMapping) && m_FaceIrisMappingStrict)
+			{
+				projStatus = false;
+				EyelockLog(logger, DEBUG, "Mapping is FAILED-->Eyecrop DOESNOTTTT Fall in the Projected RECT %d_%d Proj %d\n",cam_idd, m_faceIndex,projStatus);
+			}
+
+		}
+
 		m_sframe.GetCroppedEye(eyeIdx, eye->getEyeCrop(), left, top);
 
 		std::pair<float, float> score;
@@ -1397,7 +1484,11 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
        	}
     }
 #endif
-		if(m_SaveEyeCrops)
+    	bool bSaveEyeCrops = m_SaveEyeCrops;
+    	if(m_FaceIrisMapping)
+    		bSaveEyeCrops = m_SaveEyeCrops && projStatus;
+
+    	if(bSaveEyeCrops)
 		{
 #ifdef DEBUG_SESSION
 			struct stat st = {0};
@@ -1417,36 +1508,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 			// sprintf(filename,"EyeCrop_PG_%d.pgm",eyeIdx);
 			// cvSaveImage(filename, eye->getEyeCrop());
 		}
-#ifdef HBOX_PG
-		if(m_SPAWAREnable){
-			// printf("EyeCropSize.....%d\n", eyeCropSize);
 
-			HTTPPOSTImage iris;
-
-			iris.type = HTTPPOSTImage::IRIS;
-			iris.bppx = 8;
-
-			iris.horLineLength = eye->getEyeCrop()->width;
-			iris.verLineLength = eye->getEyeCrop()->height;
-			iris.size = iris.horLineLength * iris.verLineLength;
-
-			// TODO: review
-			// most likely this copying is not needed. Just provide enquePostIris with a pointer to imageData
-			iris.data = new char[iris.size];
-			memcpy(iris.data, eye->getEyeCrop()->imageData, iris.size);
-
-			int eyePos = (eyeIdx == 1) ? 2 : 1;
-
-			time_t rawtime;
-			time (&rawtime);
-			struct tm timeinfo = *localtime(&rawtime);
-			iris.acquisTime = &timeinfo;
-
-			m_pHttpPostSender->enquePostIris(iris, eyePos);
-
-			delete[] iris.data;
-		}
-#endif
 		if (m_enableLaplacian_focus_Threshold||m_enableLaplacian_focus_ThresholdEnroll){
 			IplImage *im = eye->getEyeCrop();
 			CvRect rect = {160, 120, 320, 240};
@@ -1519,10 +1581,15 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		}
 		else
 		{
-			if(m_EnableExtHalo){
-			if(halo.z > 0 && halo.z < m_haloThreshold){
-				sendToNwQueue(eye);
-				bSentSomething=true;
+			bool bEyeCropRejection = m_EnableExtHalo;
+
+			if(m_FaceIrisMapping)
+				bEyeCropRejection = m_EnableExtHalo && projStatus;
+
+			if(bEyeCropRejection){
+				if(halo.z > 0 && halo.z < m_haloThreshold){
+					sendToNwQueue(eye);
+					bSentSomething=true;
 				}
 			}
 		}
@@ -1549,7 +1616,6 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
     }
     return bSentSomething;
 }
-
 
 bool ImageProcessor::ProcessSpoofFlowImage(IplImage *frame,bool matchmode){
 	XTIME_OP("SetImage",
@@ -1637,6 +1703,7 @@ bool ImageProcessor::ProcessSpoofFlowImage(IplImage *frame,bool matchmode){
 		eyeInfo.handle=eye;
 		eyeMap[eyeIdx]=eyeInfo;
 	}
+
 
     if(m_spoofEnable){
 		std::list<std::pair<void *, void *> > result;
