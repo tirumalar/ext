@@ -154,6 +154,10 @@ private:
 	
 	float ERROR_LOOP_GAIN;	// used for error cal during face tracking and motor movement
 	float ERROR_CHECK_EYES; //Checking for Eyes at the center of the tracking target
+	float ERROR_CHECK_EYES_WL;	// adjust the width of face from left
+	float ERROR_CHECK_EYES_WR;	// adjust the width of face from right
+	float ERROR_CHECK_EYES_HT;	//adjust the calibrated Rect height from top
+	float ERROR_CHECK_EYES_HB;	//adjust the calibrated Rect height from bottom
 
 	//Face size tracking from 90 to 30cm range if the images are bright enough
 	int MIN_FACE_SIZE;
@@ -273,6 +277,7 @@ private:
 
 	//adjust eye Tracking target at the center
 	cv::Rect seacrhEyeArea(cv::Rect no_move_area);
+	cv::Rect adjustWidthDuringFaceDetection(cv::Rect face);
 
 public:
 

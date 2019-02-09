@@ -217,6 +217,11 @@ FaceTracker::FaceTracker(char* filename)
 	FACE_CONTROL_GAIN = FaceConfig.getValue("FTracker.FACE_CONTROL_GAIN",float(500.0));
 	ERROR_LOOP_GAIN = FaceConfig.getValue("FTracker.ERROR_LOOP_GAIN",float(0.08));
 	ERROR_CHECK_EYES = FaceConfig.getValue("FTracker.ERROR_CHECK_EYES",float(0.06));
+	ERROR_CHECK_EYES_HT = FaceConfig.getValue("FTracker.ERROR_CHECK_EYES_HT",float(0.0));
+	ERROR_CHECK_EYES_HB = FaceConfig.getValue("FTracker.ERROR_CHECK_EYES_HB",float(0.06));
+	ERROR_CHECK_EYES_WL = FaceConfig.getValue("FTracker.ERROR_CHECK_EYES_WL",float(0.0));
+	ERROR_CHECK_EYES_WR = FaceConfig.getValue("FTracker.ERROR_CHECK_EYES_WR",float(0.0));
+
 
 	MIN_FACE_SIZE = FaceConfig.getValue("FTracker.MIN_FACE_SIZE",10);
 	MAX_FACE_SIZE = FaceConfig.getValue("FTracker.MAX_FACE_SIZE",70);
@@ -676,6 +681,7 @@ void FaceTracker::SetIrisMode(float CurrentEye_distance)
 
 }
 
+#if 0
 cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 	/// printf("no_move_area 	x: %d	y: %d	w: %d	h: %d\n", no_move_area.x, no_move_area.y, no_move_area.height, no_move_area.width);
 	//printf("ERROR_CHECK_EYES %3.3f \n", ERROR_CHECK_EYES);
@@ -716,6 +722,70 @@ cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 #endif
 
 	return modRect;
+}
+#else
+cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
+
+	if (float(ERROR_CHECK_EYES_HT +  ERROR_CHECK_EYES_HB) >= 0.9){
+		ERROR_CHECK_EYES_HT = 0.0;
+		ERROR_CHECK_EYES_HT = 0.4;
+	}
+
+
+
+	float hclipT = float(no_move_area.height * ERROR_CHECK_EYES_HT);
+	float hclipB = float(no_move_area.height * ERROR_CHECK_EYES_HB);
+
+	Rect modRect;
+	modRect.x = no_move_area.x;
+	modRect.width = no_move_area.width;
+
+
+	//adjust the search REect to Top
+	modRect.y = no_move_area.y + int(hclipT);
+	modRect.height = no_move_area.height - int(hclipT + hclipB);
+
+	// printf("search_eye_area 	x: %d	y: %d	w: %d	h: %d\n", modRect.x, modRect.y, modRect.height, modRect.width);
+
+	if(modRect.x < 0)
+		modRect.x = 0;
+	if(modRect.y < 0)
+			modRect.y = 0;
+	if(modRect.width > WIDTH)
+			modRect.width = WIDTH;
+	if(modRect.height > HEIGHT)
+			modRect.height = HEIGHT;
+
+
+	return modRect;
+}
+#endif
+
+
+cv::Rect FaceTracker::adjustWidthDuringFaceDetection(cv::Rect face){
+	cv::Rect modFace;
+     
+	if(bFaceMapDebug) 
+		EyelockLog(logger, DEBUG, "Before adjustWidthDuringFaceDetection Function face.x	%d face.y	%d face.height	%d face.width	%d\n", face.x, face.y, face.height, face.width);
+
+	if (float(ERROR_CHECK_EYES_WL +  ERROR_CHECK_EYES_WR) >= 0.8){
+		ERROR_CHECK_EYES_WL = 0.1;
+		ERROR_CHECK_EYES_WR = 0.1;
+	}
+
+	float wclipL = float(face.width * ERROR_CHECK_EYES_WL);
+	float wclipR = float(face.width * ERROR_CHECK_EYES_WR);
+
+	modFace.x = face.x + int(wclipL);
+	modFace.width = face.width - int(wclipL + wclipR);
+
+	modFace.y = face.y;
+	modFace.height = face.height;
+
+	if(bFaceMapDebug) 
+		EyelockLog(logger, DEBUG, "After adjustWidthDuringFaceDetection Function face.x	%d face.y	%d face.height	%d face.width	%d\n", face.x, face.y, face.height, face.width);
+
+	return modFace;
 }
 
 #define NUMAVG 10
@@ -1414,6 +1484,10 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	no_move_area.width = rectW/scaling;
 	no_move_area.height = (rectH)/scaling -targetOffset*2;*/
 
+	face = adjustWidthDuringFaceDetection(face);
+	if(bFaceMapDebug)
+		EyelockLog(logger, DEBUG, "in DoRunMode_test face.x	%d face.y	%d face.height	%d face.width	%d\n", face.x, face.y, face.height, face.width);
+
 	cv::Rect projFace;
 	//Scaling out projFace coordinates
 	projFace.x = face.x * scaling;		//column
@@ -1422,9 +1496,11 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	projFace.height = rectH + (targetOffset * scaling);
 
 
+	cv::Mat RotatedfaceImg, saveRotatedImg;
 
 	if(bFaceMapDebug){
-		cv::Mat RotatedfaceImg = rotation90(outImg);
+		RotatedfaceImg = rotation90(outImg);
+		RotatedfaceImg.copyTo(saveRotatedImg);
 		cv::rectangle(RotatedfaceImg, projFace, Scalar(255,0,0),1,0);
 		imshow("RescaledFaceImage", RotatedfaceImg);
 		cvWaitKey(1);
@@ -1456,10 +1532,12 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 				cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
 				cv::rectangle(smallImg, face, Scalar(255,0,0),1,0);
 				// imwrite(filename, smallImg);
-				imwrite(filename, RotatedfaceImg);
+				imwrite(filename, saveRotatedImg);
 			}
 		}
 	 }
+	 RotatedfaceImg.release();
+	 saveRotatedImg.release();
 		// printf("DoRunMode_test face.x %d face.y %d face.width %d face.height %d\n",  face.x,face.y,face.width,face.height);
 
 
