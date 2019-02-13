@@ -364,20 +364,22 @@ FaceCameraQueue *g_pCameraFaceQueue = NULL;
 
 void AllocateFaceQueue(int nSize)
 {
-	printf("Inside AllocateFaceQueue\n");
+	// printf("Inside AllocateFaceQueue\n");
 	g_pLeftCameraFaceQueue = new LeftCameraFaceQueue(nSize);
 	g_pRightCameraFaceQueue = new RightCameraFaceQueue(nSize);
 }
 
-/*
+
 void deallocateOIMQueue()
 {
-	if (OIMQueue)
-		delete [] OIMQueue;
-	if (RingBufferFaceQueue)
-		delete [] RingBufferFaceQueue;
+	if(g_pOIMQueue)
+		delete [] g_pOIMQueue;
+	if(g_pLeftCameraFaceQueue)
+		delete [] g_pLeftCameraFaceQueue;
+	if(g_pRightCameraFaceQueue)
+		delete [] g_pRightCameraFaceQueue;
 }
-*/
+
 
 
 void *init_ec(void * arg) {

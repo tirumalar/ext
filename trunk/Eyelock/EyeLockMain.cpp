@@ -458,6 +458,7 @@ EyeLockMain::~EyeLockMain(){
 	EyelockLog(logger, INFO, "delete CMX Handle");
 	if(pCMXHandle) delete pCMXHandle;
 
+	deallocateOIMQueue();
 	EyelockLog(logger, INFO, "delete ImageProcessor / EyelockThread");
 	if(pImageProcessor) delete pImageProcessor;
    	EyelockLogClose();

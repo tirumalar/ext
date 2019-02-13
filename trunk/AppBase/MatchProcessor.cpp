@@ -643,13 +643,14 @@ IrisData * MatchProcessor::SegmentEye(HTTPPOSTMsg *msg,float *variance){
 		char filename[100];
 		CvPoint3D32f ip = irisData->getIrisCircle();
 		CvPoint3D32f pp = irisData->getPupilCircle();
-		sprintf(filename,"EyeCrop_%d.pgm",msg->getFrameIndex());
+		sprintf(filename,"EyeCrop_%d.bmp",msg->getFrameIndex());
 		cvSetData(m_EyeCrop, (unsigned char*)frame, m_EyeCrop->width);
 		CvScalar color = cvRealScalar(255);
 		draw1( m_EyeCrop, pp, color );
 		draw1( m_EyeCrop, ip, color );
 		cv::Mat mateye = cv::cvarrToMat(m_EyeCrop);
 		imwrite(filename, mateye);
+		mateye.release();
 	}
 	return irisData;
 }

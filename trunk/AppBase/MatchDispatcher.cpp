@@ -273,8 +273,9 @@ void MatchDispatcher::MatchDetected(MatchResult *result,int frindx,int eyeindx)
 	    	double fontScale = 1;
 	    	// putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cv::Scalar::all(150), 3, 4);
 	    	putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cvScalar(0,122,122), 3, 4);
-	    	sprintf(filename,"MRD_%d_%d_%s_%f_%s_%lu_%09lu.pgm", EXTCameraIndex, fr, PersonName, result-> getScore(), time_str, ts.tv_sec, ts.tv_nsec);
+	    	sprintf(filename,"MRD_%d_%d_%s_%f_%s_%lu_%09lu.bmp", EXTCameraIndex, fr, PersonName, result-> getScore(), time_str, ts.tv_sec, ts.tv_nsec);
 	    	imwrite(filename, mateye);
+	    	mateye.release();
 	    }
 
 

@@ -464,9 +464,10 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 				{
 					draw( image, tmp1.pp, color );
 					draw( image, tmp1.ip, color );
-					sprintf(name, "Good_segmented_image_%d.pgm",segmented_count++);
+					sprintf(name, "Good_segmented_image_%d.bmp",segmented_count++);
 					cv::Mat mateye = cv::cvarrToMat(image);
 					imwrite(name, mateye);
+					mateye.release();
 					// cvSaveImage(name,image);
 					//sprintf(filename,"text_%d.txt",segmented_count++);
 					//fp = fopen(filename, "wb");
@@ -478,9 +479,10 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 				{
 					draw( image, tmp1.pp, color );
 					draw( image, tmp1.ip, color );
-					sprintf(name, "Bad_segmented_image_%d.pgm",segmented_count++);
+					sprintf(name, "Bad_segmented_image_%d.bmp",segmented_count++);
 					cv::Mat mateye = cv::cvarrToMat(image);
 					imwrite(name, mateye);
+					mateye.release();
 					// cvSaveImage(name,image);
 					//sprintf(filename,"text_%d.txt",segmented_count++);
 					//fp = fopen(filename, "wb");
@@ -624,9 +626,10 @@ EyeSegmentationOutput EyeSegmentationInterface::GetFlatIrisMask(unsigned char *i
 		EyeSegmentationOutput tmp1 = *m_eso;
 		draw( image, tmp1.pp, color );
 		draw( image, tmp1.ip, color );
-		sprintf(name, "Good_segmented_image_%d.pgm",segmented_count++);
+		sprintf(name, "Good_segmented_image_%d.bmp",segmented_count++);
 		cv::Mat mateye = cv::cvarrToMat(image);
 		imwrite(name, mateye);
+		mateye.release();
 	}
 #if 1
 	if(corruptBitcount <= m_maxCorruptBitsPercAllowed && (AnnularCheck==1)) // && Getiseye() )
