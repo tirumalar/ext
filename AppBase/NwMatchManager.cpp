@@ -1155,8 +1155,9 @@ void NwMatchManager::processmatch(Copyable *inpmsg) {
 					double fontScale = 1;
 					// putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), &font, 0.8, cvScalar(0,143,143), 2, 8);
 					putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cvScalar(0,122,122), 3, 4);
-					sprintf(filename,"MCQ_%d_%d_%s_%f_%s_%lu_%09lu.pgm", irisCurr->getCameraIndex(), irisCurr->getFrameIndex(), PersonName, result-> getScore(), time_str, ts.tv_sec, ts.tv_nsec);
+					sprintf(filename,"MCQ_%d_%d_%s_%f_%s_%lu_%09lu.bmp", irisCurr->getCameraIndex(), irisCurr->getFrameIndex(), PersonName, result-> getScore(), time_str, ts.tv_sec, ts.tv_nsec);
 					imwrite(filename, mateye);
+					mateye.release();
 				}
 			}
 			result->setFrameInfo(irisCurr->getFrameIndex(),irisCurr->getEyeIndex(),(char*)irisCurr->getCamID(),irisCurr->getCameraIndex(), irisCurr->getEyeCrop());

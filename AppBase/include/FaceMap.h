@@ -20,6 +20,7 @@ typedef struct FaceImageQueue{
 
 typedef struct FaceMapping{
 	cv::Rect IrisProj;
+	cv::Rect SFaceCoord;
 	bool bDoMapping;
 };
 

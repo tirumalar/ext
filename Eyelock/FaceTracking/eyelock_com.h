@@ -49,6 +49,7 @@ extern OIMQueue *g_pOIMQueue;
      void RecoverModeDrop();
      void AllocateOIMQueue(int nSize);
      void AllocateFaceQueue(int nSize);
+     void deallocateOIMQueue();
  #ifdef __cplusplus
      }
  #endif

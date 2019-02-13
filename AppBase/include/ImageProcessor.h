@@ -244,6 +244,7 @@ protected:
 	IplImage *m_OffsetImageAuxCamera1;
 	IplImage *m_OffsetImageAuxCamera2;
 	IplImage *m_OffsetOutputImage;
+	IplImage *m_ProcessImageFrame;
 
 	bool m_DebugTesting;
 	std::string m_sessionDir;
@@ -277,6 +278,14 @@ protected:
 
 private:
     void extractSmallCropForFocus(int indx,DetectedEye * eye);
+    FaceMapping sFaceMap;
+    const char *eyeCropFileNamePattern;
+    cv::Mat m_Mateye;
+    IplImage* OffsetImageCorrection(IplImage *frame, int cam_idd);
+    void DebugSessionLogging(IplImage *frame, int cam_idd);
+    FaceMapping DoFaceMapping(IplImage *frame, int cam_idd, int frame_number);
+    bool ValidateEyeCropUsingFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
+    void SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceIndex, int eyeIdx);
     SocketFactory *m_socketFactory;
 
 };
