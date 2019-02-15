@@ -1906,12 +1906,50 @@ bool CalCam(bool calDebug){
 	EyelockLog(logger, DEBUG, "Format the ftp drive");
 	port_com_send("f_formt(0)");
 
-
+	// upload to OIM
 	sprintf(buf, "%s", "wput -B -t 2 CalRect.ini ftp://guest:guest@192.168.4.172");
 	EyelockLog(logger, DEBUG, "Create ftp upload system command");
 	fflush(stdout);
 	RunSystemCmdCal(buf);
 	EyelockLog(logger, DEBUG, "Upload of CalRect File to ftp 192.168.4.172 Successful");
+
+	// Upload the files to FTP for backup
+	int Deviceid;
+	cout << "Enter the device number" << endl;
+	cin >> Deviceid;
+
+	char newCalRectFileName[100];
+	char newfaceConfigFileName[100];
+	// Rename the CalRect.ini file with DeviceId entered
+	sprintf(newCalRectFileName, "CalRect.ini.%d", Deviceid);
+	if(rename("CalRect.ini", newCalRectFileName ) == 0)
+		printf("CalRect.ini file is renamed to %s\n", newCalRectFileName);
+	else
+	   perror("Error renaming CalRect.ini file" );
+	// Copy the faceConfig.ini file to /home/root folder to rename and upload to ftp
+	system("cp data/calibration/faceConfig.ini .");
+
+	// Rename faceConfig.ini file with DeviceId
+	sprintf(newfaceConfigFileName, "faceConfig.ini.%d", Deviceid);
+
+	// printf("faceConfig file ....%s\n", newfaceConfigFileName);
+
+	if(rename("faceConfig.ini", newfaceConfigFileName) == 0)
+		printf("faceConfig.ini file is renamed to %s\n", newfaceConfigFileName);
+	else
+		perror("Error renaming faceConfig.ini file" );
+
+	char FTPDetails[200];
+	sprintf(FTPDetails, "wput -B -t 2 %s ftp://mamigotesters:'C3$W4$gr3+'@107.22.234.115/EXTCalibrationFiles/", newCalRectFileName);
+	fflush(stdout);
+	RunSystemCmdCal(FTPDetails);
+	printf("Upload of %s to ftp mamigotesters Successful\n", newCalRectFileName);
+
+	sprintf(FTPDetails, "wput -B -t 2 %s ftp://mamigotesters:'C3$W4$gr3+'@107.22.234.115/EXTCalibrationFiles/", newfaceConfigFileName);
+	fflush(stdout);
+	RunSystemCmdCal(FTPDetails);
+	printf("Upload of %s to ftp mamigotesters Successful\n", newfaceConfigFileName);
+
 
 /*	//saving Aux Rect info ---> This is the Rect info we will use for face Tracking
 	ofstream auxfile("auxRect.csv");
