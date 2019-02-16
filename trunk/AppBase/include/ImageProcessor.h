@@ -286,6 +286,12 @@ private:
     FaceMapping DoFaceMapping(IplImage *frame, int cam_idd, int frame_number);
     bool ValidateEyeCropUsingFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
     void SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceIndex, int eyeIdx);
+    cv::Point2i projectPoints_IristoFace(cv::Point2i ptrI, cv::Point2f constant, float ConstDiv);
+    int validateLeftRightEyecrops(cv::Rect projFace, cv::Point2i ptr1, int CameraId);
+	bool validateEyecrops_IrisToFaceMapping(cv::Rect projFace, cv::Point2i ptrI, int CameraId);
+	bool ValidateEyeCropUsingIrisToFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
+	bool m_activeEyeSideLabeling;
+	bool m_IrisToFaceMapping;
     SocketFactory *m_socketFactory;
 
 };
