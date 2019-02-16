@@ -382,6 +382,10 @@ m_LedConsolidator = NULL;
 	m_IrisProjImage = cvCreateImage(cvSize(m_Imagewidth, m_Imageheight),IPL_DEPTH_8U,1);
 	m_SaveProjImage = pConf->getValue("Eyelock.SaveProjectedImage",false);
 	m_showProjection = pConf->getValue("Eyelock.showProjection",false);
+	m_IrisToFaceMapping = pConf->getValue("Eyelock.IrisToFaceMapping",false);
+
+	
+	m_activeEyeSideLabeling = pConf->getValue("Eyelock.EyeSideLabeling",false);;
 
 	m_minIrisDiameter = pConf->getValue("Eyelock.minIrisDiameter",int(150));
 
@@ -1011,6 +1015,98 @@ cv::Point2i ImageProcessor::projectPointsPtr1(cv::Rect projFace, cv::Point2f con
 	return ptr1;
 }
 
+//projectPointsPtr1() input needs to be scaled out to the input image size
+cv::Point2i ImageProcessor::projectPoints_IristoFace(cv::Point2i ptrI, cv::Point2f constant, float ConstDiv)
+{
+	/*
+	x = ((y-c)/m);
+
+	y = x*m + c
+
+	Here, m is magnification offset (ConstDiv)
+	c is the intersection in Iris plane (constant)
+	y is the coordinates in Face plane
+	calculated x will be the coordinate of Iris plane
+	*/
+
+	cv::Point2i ptrF;
+
+	float index = 1.0/ConstDiv;
+	ptrF.x = ptrI.x *index + constant.x;
+	ptrF.y = ptrI.y *index + constant.y;
+
+	if(m_bFaceMapDebug)
+		EyelockLog(logger, DEBUG, "IRIS to Face Projection for left right eye ptr1.x %d ptr1.y %d\n", ptrF.x, ptrF.y);
+
+	return ptrF;
+}
+
+
+int ImageProcessor::validateLeftRightEyecrops(cv::Rect projFace, cv::Point2i ptrI, int CameraId){
+	cv::Rect rightRect, leftRect;
+	//Seperate Right eye Rect
+	rightRect.x = projFace.x, rightRect.y = projFace.y;
+	rightRect.height = projFace.height, rightRect.width = projFace.width/2.0;
+
+	//Seperate left eye Rect
+	leftRect.x = projFace.x + (projFace.width/2), leftRect.y = projFace.y;
+	leftRect.height = projFace.height, leftRect.width = projFace.width/2.0;
+
+	cv::Point2i ptrF;
+
+	//Project Iris points to face image
+	if (CameraId == IRISCAM_AUX_LEFT){
+		ptrF = projectPoints_IristoFace(ptrI, constantAuxl, magOffAuxlDiv);
+	}else if (CameraId == IRISCAM_AUX_RIGHT){
+		ptrF = projectPoints_IristoFace(ptrI, constantAuxR, magOffAuxRDiv);
+	}else if (CameraId == IRISCAM_MAIN_LEFT){
+		ptrF = projectPoints_IristoFace(ptrI, constantMainl, magOffMainlDiv);
+	}else if (CameraId == IRISCAM_MAIN_RIGHT){
+		ptrF = projectPoints_IristoFace(ptrI, constantMainR, magOffMainRDiv);
+	}
+
+
+	// Check where the eye belong????
+	if (rightRect.contains(ptrF)){
+		EyelockLog(logger, DEBUG, "Right EYE found	return %d !!!!\n", 1);
+		return 1;
+	}else if (leftRect.contains(ptrF)){
+		EyelockLog(logger, DEBUG, "Left EYE found	return %d !!!!\n", -1);
+		return -1;
+	}else{
+		EyelockLog(logger, DEBUG, "Undefined EYE found	return %d !!!!\n", 0);
+		return 0;
+	}
+}
+
+
+bool ImageProcessor::validateEyecrops_IrisToFaceMapping(cv::Rect projFace, cv::Point2i ptrI, int CameraId){
+
+	cv::Point2i ptrF;
+
+	//Project Iris points to face image
+	if (CameraId == IRISCAM_AUX_LEFT){
+		ptrF = projectPoints_IristoFace(ptrI, constantAuxl, magOffAuxlDiv);
+	}else if (CameraId == IRISCAM_AUX_RIGHT){
+		ptrF = projectPoints_IristoFace(ptrI, constantAuxR, magOffAuxRDiv);
+	}else if (CameraId == IRISCAM_MAIN_LEFT){
+		ptrF = projectPoints_IristoFace(ptrI, constantMainl, magOffMainlDiv);
+	}else if (CameraId == IRISCAM_MAIN_RIGHT){
+		ptrF = projectPoints_IristoFace(ptrI, constantMainR, magOffMainRDiv);
+	}
+
+
+	// Check where the eye belong????
+	if (projFace.contains(ptrF)){
+		EyelockLog(logger, DEBUG, "the target rect contain Eyecrop %d !!!!\n", 1);
+		return true;
+	}else{
+		EyelockLog(logger, DEBUG, "This Eyecrop don't belong to the target Rect %d !!!!\n", 0);
+		return false;
+	}
+}
+
+
 cv::Rect ImageProcessor::CeateRect(cv::Point2i ptr1, cv::Point2i ptr2, bool useOffest, float projOffset)
 {
 	cv::Rect ret1;
@@ -1179,7 +1275,11 @@ FaceMapping ImageProcessor::GetFaceInfoFromQueue(int CameraId, char IrisFrameNo)
 			if(FaceInfo.projPtr){
 				//printf("\n \n >>>>>>>>>>>>>>>>> \n \n >>>>>>>>>>>>> active projection \n \n >>>>>>>>>>>\n \n");
 				FaceImageQueue FaceInfo = (FaceImageQueue) g_pCameraFaceQueue->Pop();
-				m_FaceMap.IrisProj = projectRectNew(FaceInfo.ScaledFaceCoord, CameraId);
+				if(m_IrisToFaceMapping)
+					m_FaceMap.IrisProj = cv::Rect(0,0,m_Imagewidth,m_Imageheight);
+				else
+					m_FaceMap.IrisProj = projectRectNew(FaceInfo.ScaledFaceCoord, CameraId);
+
 				m_FaceMap.SFaceCoord = FaceInfo.ScaledFaceCoord;
 				m_FaceMap.bDoMapping = true;
 				return m_FaceMap; // return IrisProj;
@@ -1328,7 +1428,7 @@ FaceMapping ImageProcessor::DoFaceMapping(IplImage *frame, int cam_idd, int fram
 
 		} else {
 			// Just for saving face mapping images for verification
-			if (m_SaveProjImage) {
+			if (m_SaveProjImage && !(m_IrisToFaceMapping)) {
 				try {
 					cv::Mat OrigFrame = cv::cvarrToMat(frame);
 					cv::Mat image_roi = OrigFrame(sFaceMap.IrisProj);
@@ -1348,7 +1448,7 @@ FaceMapping ImageProcessor::DoFaceMapping(IplImage *frame, int cam_idd, int fram
 		}
 
 	} else {
-		if(m_FaceIrisMapping){
+		if(m_FaceIrisMapping && !(m_IrisToFaceMapping)){
 			sprintf(filename, "FaceMapImage_FAILED_%d_%d.pgm", cam_idd, m_faceIndex);
 			cv::Mat mateye = cv::cvarrToMat(frame);
 			imwrite(filename, mateye);
@@ -1405,9 +1505,46 @@ bool ImageProcessor::ValidateEyeCropUsingFaceMapping(FaceMapping sFaceMap, int c
 	return projStatus;
 }
 
-// Only eyecrops are saved in png, jpg, bmp and pgm formats - full frames are saved only in bmp and pgm formats
-void ImageProcessor::SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceIndex, int eyeIdx)
+
+bool ImageProcessor::ValidateEyeCropUsingIrisToFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx)
 {
+	bool projStatus = true; // May need Initialization.
+	CEyeCenterPoint& centroid = m_sframe.GetEyeCenterPointList()->at(eyeIdx);
+	EyelockLog(logger, DEBUG, "Centroid of Eyes: x:		%d y:	%d",
+			centroid.m_nCenterPointX, centroid.m_nCenterPointY);
+
+	cv::Point2i ptCentroid = cv::Point2i(centroid.m_nCenterPointX,
+			centroid.m_nCenterPointY);
+
+	if (m_binType == 1) {
+		ptCentroid.y = ptCentroid.y >> 1;
+	}
+	if (m_binType == 2) {
+		ptCentroid.x = ptCentroid.x >> 1;
+	}
+
+	EyelockLog(logger, DEBUG, "Centroid normalized of Eyes: x:		%d y:	%d",
+			ptCentroid.x, ptCentroid.y);
+
+	projStatus = validateEyecrops_IrisToFaceMapping(sFaceMap.SFaceCoord, ptCentroid, cam_idd);
+
+	return projStatus;
+}
+
+// Only eyecrops are saved in png, jpg, bmp and pgm formats - full frames are saved only in bmp and pgm formats
+void ImageProcessor::SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceIndex, int eyelabel)
+{
+	std::string labelEye;
+	if (eyelabel == 1){
+		labelEye = "RightEye";
+	}else if (eyelabel == -1){
+		labelEye = "LeftEye";
+	}else if (eyelabel == 0){
+		labelEye = "UndefinedEye";
+	}else{
+		labelEye = "NotLabelledbyMapping";
+	}
+
 	m_Mateye = cv::cvarrToMat(eyeCrop);
 	char filename[150];
 #ifdef DEBUG_SESSION
@@ -1418,7 +1555,7 @@ void ImageProcessor::SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceInde
 			compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
 			compression_params.push_back(9);
 			 try {
-				 sprintf(filename, "%s/EyeCrop_PG_CamId_%d_%d_%d.%s", m_sessionDir.c_str(), cam_idd, m_faceIndex, eyeIdx, eyeCropFileNamePattern);
+				 sprintf(filename, "%s/EyeCrop_PG_CamId_%d_%d_%s.%s", m_sessionDir.c_str(), cam_idd, m_faceIndex, labelEye.c_str(), eyeCropFileNamePattern);
 				 imwrite(filename, m_Mateye, compression_params);
 			 }
 			 catch (runtime_error& ex) {
@@ -1429,7 +1566,7 @@ void ImageProcessor::SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceInde
 			compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
 			compression_params.push_back(95);
 			try {
-				sprintf(filename, "%s/EyeCrop_PG_CamId_%d_%d_%d.%s", m_sessionDir.c_str(), cam_idd, m_faceIndex, eyeIdx, eyeCropFileNamePattern);
+				sprintf(filename, "%s/EyeCrop_PG_CamId_%d_%d_%s.%s", m_sessionDir.c_str(), cam_idd, m_faceIndex, labelEye.c_str(), eyeCropFileNamePattern);
 				imwrite(filename, m_Mateye, compression_params);
 			}
 			catch (runtime_error& ex) {
@@ -1437,16 +1574,16 @@ void ImageProcessor::SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceInde
 			}
 
 		}else{
-			sprintf(filename, "%s/EyeCrop_PG_CamId_%d_%d_%d.%s", m_sessionDir.c_str(), cam_idd, m_faceIndex, eyeIdx, eyeCropFileNamePattern);
+			sprintf(filename, "%s/EyeCrop_PG_CamId_%d_%d_%s.%s", m_sessionDir.c_str(), cam_idd, m_faceIndex, labelEye.c_str(), eyeCropFileNamePattern);
 			imwrite(filename, m_Mateye);
 		}
 
 	} else {
-		sprintf(filename, "EyeCrop_PG_CamId_%d_%d_%d.%s", cam_idd, m_faceIndex, eyeIdx, eyeCropFileNamePattern);
+		sprintf(filename, "EyeCrop_PG_CamId_%d_%d_%s.%s", cam_idd, m_faceIndex, labelEye.c_str(), eyeCropFileNamePattern);
 		imwrite(filename, m_Mateye);
 	}
 #else
-	sprintf(filename,"EyeCrop_PG_CamId_%d_%d_%d.pgm", cam_idd, m_faceIndex, eyeIdx); // No debug sessions then default format to save images is pgm
+	sprintf(filename,"EyeCrop_PG_CamId_%d_%d_%s.pgm", cam_idd, m_faceIndex, labelEye.c_str()); // No debug sessions then default format to save images is pgm
 	imwrite(filename, m_Mateye);
 #endif
 
@@ -1537,7 +1674,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
     }
 
     bool projStatus = true;
-
+    int eyeLabel = 0;
     //Condition of making it strict
     if (m_FaceIrisMappingStrict)
     	projStatus = false;
@@ -1550,7 +1687,20 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 
 		if (!m_FaceIrisMappingBeforEyeDetection)
 		{
-			projStatus = ValidateEyeCropUsingFaceMapping(sFaceMap, cam_idd, m_faceIndex, eyeIdx);
+			if (m_IrisToFaceMapping){
+				projStatus = ValidateEyeCropUsingIrisToFaceMapping(sFaceMap, cam_idd, m_faceIndex, eyeIdx);
+			}else{
+				projStatus = ValidateEyeCropUsingFaceMapping(sFaceMap, cam_idd, m_faceIndex, eyeIdx);
+			}
+		}
+
+		CEyeCenterPoint& centroid = m_sframe.GetEyeCenterPointList()->at(eyeIdx);
+		cv::Point2i ptrI= cv::Point2i(centroid.m_nCenterPointX,
+				centroid.m_nCenterPointY);
+
+		if (m_activeEyeSideLabeling && projStatus){
+			eyeLabel = validateLeftRightEyecrops(sFaceMap.SFaceCoord, ptrI, cam_idd);
+			EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d\n", cam_idd, m_faceIndex);
 		}
 
 		m_sframe.GetCroppedEye(eyeIdx, eye->getEyeCrop(), left, top);
@@ -1576,7 +1726,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 
     	if(bSaveEyeCrops)
 		{
-    		SaveEyeCrops(eye->getEyeCrop(), cam_idd, m_faceIndex, eyeIdx);
+    		SaveEyeCrops(eye->getEyeCrop(), cam_idd, m_faceIndex, eyeLabel);
 		}
 
 		if (m_enableLaplacian_focus_Threshold||m_enableLaplacian_focus_ThresholdEnroll){

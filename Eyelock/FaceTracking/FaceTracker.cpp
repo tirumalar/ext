@@ -1498,10 +1498,22 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 	cv::Mat RotatedfaceImg, saveRotatedImg;
 
+	cv::Rect rightRect, leftRect;
+	//Seperate Right eye Rect
+	rightRect.x = projFace.x, rightRect.y = projFace.y;
+	rightRect.height = projFace.height, rightRect.width = projFace.width/2.0;
+
+	//Seperate left eye Rect
+	leftRect.x = projFace.x + (projFace.width/2), leftRect.y = projFace.y;
+	leftRect.height = projFace.height, leftRect.width = projFace.width/2.0;
+
+
 	if(bFaceMapDebug){
 		RotatedfaceImg = rotation90(outImg);
 		RotatedfaceImg.copyTo(saveRotatedImg);
-		cv::rectangle(RotatedfaceImg, projFace, Scalar(255,0,0),1,0);
+		//cv::rectangle(RotatedfaceImg, projFace, Scalar(255,0,0),1,0);
+		cv::rectangle(RotatedfaceImg, rightRect, Scalar(255,0,0),1,0);
+		cv::rectangle(RotatedfaceImg, leftRect, Scalar(255,0,0),1,0);
 		imshow("RescaledFaceImage", RotatedfaceImg);
 		cvWaitKey(1);
 	}
@@ -1532,7 +1544,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 				cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
 				cv::rectangle(smallImg, face, Scalar(255,0,0),1,0);
 				// imwrite(filename, smallImg);
-				imwrite(filename, saveRotatedImg);
+				imwrite(filename, RotatedfaceImg);
 			}
 		}
 	 }
