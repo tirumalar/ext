@@ -217,6 +217,10 @@ upgradeMaster(){
 	cp /home/root/nxtlog.cfg /home/upgradeTemp/root/nxtlog.cfg
 	cp /home/root/SDKRegisterIPs.txt /home/upgradeTemp/root/SDKRegisterIPs.txt
 	
+	# fixing log timestamp format
+	sed -i -e 's/log4j.appender.Rlog.layout.ConversionPattern=%d{yyyy-MM-dd}, %d{HH:mm:ss.SSS}, %-5p, [%c], - %m%n/log4j.appender.Rlog.layout.ConversionPattern=%d{yyyy-MM-dd}{UTC}, %d{HH:mm:ss.SSS}{UTC}, %-5p, [%c], - %m%n/g' /home/upgradeTemp/root/nxtlog.cfg
+	sed -i -e 's/log4j.appender.R.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss}, UTC > %m%n/log4j.appender.R.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss}{UTC}, UTC > %m%n/g' /home/upgradeTemp/root/nxtevent.cfg
+	
 	mv /home/root/interfaces /home/upgradeTemp/root/interfaces
 	mv /home/root/interfaces.md5 /home/upgradeTemp/root/interfaces.md5
 
