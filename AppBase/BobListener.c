@@ -93,10 +93,10 @@ void (*BobInputCB)()= NULL;
 void (*BobRelayTimerCB)()= NULL;
 int (*BobOsdpCB)() = NULL; //has void parameter for ODSP message, 128 bytes max
 int (*BobReaderOsdpCB)() = NULL;
-int internal_read_reg(int fd, unsigned char reg, unsigned int *val);
-int internal_write_reg(int fd, unsigned char reg, unsigned int val);
-int internal_read_array(int fd, unsigned char reg, char *buf, int len);
-int internal_write_array(int fd, unsigned char reg, void *ptr, int len);
+int internal_read_reg(int fd, icmreg_t reg, unsigned int *val);
+int internal_write_reg(int fd, icmreg_t reg, unsigned int val);
+int internal_read_array(int fd, icmreg_t reg, char *buf, int len);
+int internal_write_array(int fd, icmreg_t reg, void *ptr, int len);
 int i2c_start_transaction();
 void DumpBuffer(char *buf, int bytes);
 int myi2cdump(int len);
@@ -669,7 +669,7 @@ void BoBSetACSTamperOut(int polFlag,int tamper)
 	}
 
 }
-int BobReadReg(unsigned char reg, unsigned int *val)
+int BobReadReg(icmreg_t reg, unsigned int *val)
 {
 	int fd = i2c_start_transaction();
 	if(fd == 0)
@@ -684,14 +684,14 @@ int BobReadReg(unsigned char reg, unsigned int *val)
 }
 
 #if defined(HBOX_PG) || defined(CMX_C1)
-int internal_read_reg(int fd, unsigned char reg, unsigned int *val)
+int internal_read_reg(int fd, icmreg_t reg, unsigned int *val)
 {
 	int result;
 	unsigned char buff[5];
 
 	buff[0] = 56;
-	buff[1] = 0x00;
-	buff[2] = reg;
+	buff[1] = (reg >> 8) & 0xFF;
+	buff[2] = reg & 0xFF;
 	buff[3] = 0x01;
 
 	result = write(fd, buff, 4);
@@ -722,13 +722,13 @@ int internal_read_reg(int fd, unsigned char reg, unsigned int *val)
 	return 0;
 }
 #else
-int internal_read_reg(int fd, unsigned char reg, unsigned int *val)
+int internal_read_reg(int fd, icmreg_t reg, unsigned int *val)
 {
 	int result;
 	unsigned char buff[2];
 
-	buff[0] = 0;
-	buff[1] = reg;
+	buff[0] = (reg >> 8) & 0xFF;
+	buff[1] = reg & 0xFF;
 	result = write(fd, buff, 2);
 	if (result != 2) {
 		EyelockLog(logger, ERROR, "BoB => write error in internal_read_reg() - write %s, result %d", strerror(errno), result);
@@ -751,7 +751,7 @@ int internal_read_reg(int fd, unsigned char reg, unsigned int *val)
 	return 0;
 }
 #endif
-int BobReadArray(unsigned char reg, char *buf, int len)
+int BobReadArray(icmreg_t reg, char *buf, int len)
 {
 	int fd = i2c_start_transaction();
 	if(fd == 0)
@@ -765,14 +765,14 @@ int BobReadArray(unsigned char reg, char *buf, int len)
 
 }
 #if defined(HBOX_PG) || defined(CMX_C1)
-int internal_read_array(int fd, unsigned char reg, char *buf, int len)
+int internal_read_array(int fd, icmreg_t reg, char *buf, int len)
 {
 	int result;
 	char buff[6000];	// 0xffff=65535
 
 	buff[0] = 56;
-	buff[1] = 0x00;
-	buff[2] = reg;
+	buff[1] = (reg >> 8) & 0xFF;
+	buff[2] = reg & 0xFF;
 	buff[3] = len;
 	//EyelockLog(logger, DEBUG, "BoB => @@@ read data array fd=%d reg=%d, len=%d @@@", fd, reg, len);
 	//flush(fd);
@@ -804,13 +804,13 @@ int internal_read_array(int fd, unsigned char reg, char *buf, int len)
 	return len-4;
 }
 #else
-int internal_read_array(int fd, unsigned char reg, char *ptr, int len)
+int internal_read_array(int fd, icmreg_t reg, char *ptr, int len)
 {
 	int result;
 	char buff[2];
 
-	buff[0] = 0;
-	buff[1] = reg;
+	buff[0] = (reg >> 8) & 0xFF;
+	buff[1] = reg & 0xFF;
 	//EyelockLog(logger, DEBUG, "BoB => @@@ read data array fd=%d reg=%d, len=%d @@@", fd, reg, len);
 	result = write(fd, buff, 2);
 	if (result != 2) {
@@ -833,7 +833,7 @@ int internal_read_array(int fd, unsigned char reg, char *ptr, int len)
 }
 #endif
 
-int BobWriteReg(unsigned char reg, unsigned int val)
+int BobWriteReg(icmreg_t reg, unsigned int val)
 {
 	int fd = i2c_start_transaction();
 	if(fd == 0)
@@ -848,7 +848,7 @@ int BobWriteReg(unsigned char reg, unsigned int val)
 
 }
 #if defined(HBOX_PG) || defined(CMX_C1)
-int internal_write_reg(int fd, unsigned char reg, unsigned int val)
+int internal_write_reg(int fd, icmreg_t reg, unsigned int val)
 {
 	int result = -1;
 	unsigned char buff[5];
@@ -860,8 +860,8 @@ int internal_write_reg(int fd, unsigned char reg, unsigned int val)
     }
 
 	buff[0] = 57;
-	buff[1] = 0x00;
-	buff[2] = reg;
+	buff[1] = (reg >> 8) & 0xFF;
+	buff[2] = reg & 0xFF;
 	buff[3] = 0x01;
 	buff[4] = val;
 
@@ -885,7 +885,7 @@ int internal_write_reg(int fd, unsigned char reg, unsigned int val)
 	return result;
 }
 #else
-int internal_write_reg(int fd, unsigned char reg, unsigned int val)
+int internal_write_reg(int fd, icmreg_t reg, unsigned int val)
 {
 	int result = -1;
 	unsigned char buff[3];
@@ -896,8 +896,8 @@ int internal_write_reg(int fd, unsigned char reg, unsigned int val)
         return -1;
     }
 
-	buff[0] = 0;
-	buff[1] = reg;
+	buff[0] = (reg >> 8) & 0xFF;
+	buff[1] = reg & 0xFF;
 	buff[2] = val;
 
 	result = write(fd, buff, 3);
@@ -912,7 +912,7 @@ int internal_write_reg(int fd, unsigned char reg, unsigned int val)
 	return result;
 }
 #endif
-int BobWriteArray(unsigned char reg, void *ptr, int len)
+int BobWriteArray(icmreg_t reg, void *ptr, int len)
 {
 	int fd = i2c_start_transaction();
 	if(fd == 0)
@@ -927,7 +927,7 @@ int BobWriteArray(unsigned char reg, void *ptr, int len)
 }
 
 #if defined(HBOX_PG) || defined(CMX_C1)
-int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
+int internal_write_array(int fd, icmreg_t reg, void *ptr, int len)
 {
 	int result;
 	unsigned char buff[MAX_WRITE_LEN];
@@ -938,8 +938,8 @@ int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
         return -1;
     }
 	buff[0] = 57;
-	buff[1] = 0x00;
-	buff[2] = reg;
+	buff[1] = (reg >> 8) & 0xFF;
+	buff[2] = reg & 0xFF;
 	buff[3] = len;
 	// buff[5] = val;
 	if (ptr)
@@ -961,7 +961,7 @@ int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
 	return result;
 }
 #else
-int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
+int internal_write_array(int fd, icmreg_t reg, void *ptr, int len)
 {
 	int result;
 	unsigned char buff[MAX_WRITE_LEN];
@@ -971,8 +971,8 @@ int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
 		EyelockLog(logger, ERROR, "BoB => Error starting interface");
         return -1;
     }
-	buff[0] = 0;
-	buff[1] = reg;
+	buff[0] = (reg >> 8) & 0xFF;
+	buff[1] = reg & 0xFF;
 	if (ptr)
 		memcpy(&buff[2],ptr,len);
 	else
@@ -1309,15 +1309,15 @@ int BobSetOSDPBaudRate(int rate, int reader)
 	usleep(100);
 	BobMutexStart();
 	if (reader)
-		result = BobWriteReg(BOB_OSDP_READER_CMD_OFFSET, command);
+		result = BobWriteReg(BOB_OSDP_READER_BAUDRATE_OFFSET, baudValue);
 	else
-		result = BobWriteReg(BOB_OSDP_CMD_OFFSET, command);
+		result = BobWriteReg(BOB_OSDP_BAUDRATE_OFFSET, baudValue);
 	if (result == 0) {
 		usleep(100);
 		if (reader)
-			result = BobWriteReg(BOB_OSDP_READER_BAUDRATE_OFFSET, baudValue);
+			result = BobWriteReg(BOB_OSDP_READER_CMD_OFFSET, command);
 		else
-			result = BobWriteReg(BOB_OSDP_BAUDRATE_OFFSET, baudValue);
+			result = BobWriteReg(BOB_OSDP_CMD_OFFSET, command);
 	}
 	BobMutexEnd();
 	return result;

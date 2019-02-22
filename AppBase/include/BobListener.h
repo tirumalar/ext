@@ -29,7 +29,7 @@
 // Version Address
 #define BOB_SW_VERSION_OFFSET			67	// 3 bytes
 #define BOB_HW_VERSION_OFFSET			70	// 3 bytes
-#define BOB_ACCESS_DATA_OFFSET 			73	// 20 bytes
+#define BOB_ACCESS_DATA_OFFSET 			228 + 128 //73	// 20 bytes
 // OSDP Address
 #define BOB_OSDP_CMD_OFFSET 			73+20	//(0x49)
 #define BOB_OSDP_STATUS_OFFSET 			74+20	//(0x4A)
@@ -52,6 +52,7 @@
 #define BOB_ACCESS_TYPE_SING_DUAL_BASE	0
 #define BOB_ACCESS_TYPE_TOC_BASE		50
 #define BOB_ACCESS_TYPE_PASS_BASE		100
+#define BOB_ACCESS_TYPE_PIN_PASS_BASE	150
 
 // Command
 #define BOB_COMMAND_NONE	 			0
@@ -224,10 +225,19 @@ int BoBOSDPReaderMsg();
 int BobGetOSDPPanelData(unsigned char *ptr);
 int BobGetOSDPReaderData(unsigned char *ptr);
 
-int BobReadReg(unsigned char reg, unsigned int *val);
-int BobWriteReg(unsigned char reg, unsigned int val);
-int BobReadArray(unsigned char reg, char *buf, int len);
-int BobWriteArray(unsigned char reg, void *ptr, int len);
+#define ICM_REGISTERS_16
+
+#ifndef ICM_REGISTERS_16
+	typedef unsigned char icmreg_t;
+#else
+	typedef unsigned short icmreg_t;
+#endif
+
+int BobReadReg(icmreg_t reg, unsigned int *val);
+int BobWriteReg(icmreg_t reg, unsigned int val);
+int BobReadArray(icmreg_t reg, char *buf, int len);
+int BobWriteArray(icmreg_t reg, void *ptr, int len);
+
 
 unsigned long BobCurrentTimeInMS();
 
