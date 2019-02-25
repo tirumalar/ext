@@ -114,6 +114,8 @@ private:
 	PortServerInfo *leftCServerInfo;
 	PortServerInfo *rightCServerInfo;
 
+	float m_audioVolume;
+
 #endif	// CMX_C1
 #ifdef HBOX_PG
 public:

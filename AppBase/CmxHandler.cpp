@@ -2229,6 +2229,9 @@ rightCServerInfo(0)
 	m_pOIMQueue = NULL;
 	//Eyelock.ExposureTime
 				//int exposuretime = get
+
+	m_audioVolume = conf.getValue("GRI.AuthorizationToneVolume", 0.0f);
+
 #ifdef HBOX_PG
 	m_width = conf.getValue("FrameSize.width",0);
 	m_height = conf.getValue("FrameSize.height",0);
@@ -2571,7 +2574,14 @@ void CmxHandler::HandleSendMsg(char *msg, unsigned short randomseed){
 			if ((msg[2] == 0) && (msg[3] != 0) && (msg[4] == 0)) {
 				regs[0] = Green;
 					len = sprintf(buf, "play_snd(0)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
-					SendMessage(buf, len, randomseed);
+					if (m_audioVolume < 0.0)
+					{
+						EyelockLog(logger, ERROR, "Not sending play_snd command due to negative setting");
+					}
+					else
+					{
+						SendMessage(buf, len, randomseed);
+					}
 			}
 			if ((msg[2] != 0) && (msg[3] == 0) && (msg[4] == 0)) {
 				regs[0] = Red;
@@ -2636,11 +2646,25 @@ void CmxHandler::HandleSendMsg(char *msg, unsigned short randomseed){
 					break;
 				case 2:
 					len = sprintf(buf, "play_snd(1)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
-					SendMessage(buf, len, randomseed);
+					if (m_audioVolume < 0.0)
+					{
+						EyelockLog(logger, ERROR, "Not sending play_snd command due to negative setting");
+					}
+					else
+					{
+						SendMessage(buf, len, randomseed);
+					}
 					break;
 				case 3:
 					len = sprintf(buf, "play_snd(2)|play_snd(2)|play_snd(2)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
-					SendMessage(buf, len, randomseed);
+					if (m_audioVolume < 0.0)
+					{
+						EyelockLog(logger, ERROR, "Not sending play_snd command due to negative setting");
+					}
+					else
+					{
+						SendMessage(buf, len, randomseed);
+					}
 					break;
 				default:
 					break;
