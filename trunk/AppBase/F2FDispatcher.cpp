@@ -23,6 +23,7 @@
 #include "logging.h"
 #include "SDKDispatcher.h"
 #include "OSDPMessage.h"
+#include "NwListener.h"
 #include "time.h"
 extern "C" {
 #include "include/BobListener.h"
@@ -36,9 +37,20 @@ using namespace std;
 const char logger[30] = "F2FDispatcher";
 extern char * getACSTestData(int & bytes, int & bitlen);
 
+// Copied from EyeLockThread.h. Including this header requires referencing Eyelock app project in AppBase. Should be refactored
+enum EyelockProcessMode {
+	EyelockCamera = 0, // 0
+	EyelockMatcher,    // 1
+	EyelockDual,       // 2
+	EyelockEnroll,     // 3
+	EyelockCamera2,     // 4
+	EyelockSleep,       //5
+	EyelockWakeUP       //6
+};
+
 
 // Relay iff wiegand
-F2FDispatcher::F2FDispatcher(Configuration& conf):ResultDispatcher(conf), m_pMatched(0), m_RelayTimeInMs(RELAY_TIME_IN_MS),m_Debug(false),m_ledConsolidator(NULL),
+F2FDispatcher::F2FDispatcher(Configuration& conf):ResultDispatcher(conf), m_pMatched(0), m_RelayTimeInMs(RELAY_TIME_IN_MS),m_Debug(false),m_ledConsolidator(NULL),pHTTPPostMessageHandler(NULL),
 		m_socketFactory(NULL),m_socketFactoryTamper(NULL),m_tamperDestAddr(NULL),m_resultDestAddr(NULL), m_pMatchType(NULL), m_pinNumberRcvd(0)
 {
 #ifdef DEBUG_SESSION
@@ -526,7 +538,10 @@ void F2FDispatcher::ProcessBoBAcsChange()
 
 		// Device is in process state
 		if (m_dualAuth)
+		{
 			EyelockLog(logger, INFO, "Ready for Card");
+			StopEyesProcessing();
+		}
 		else if (!m_transTOC)
 			EyelockLog(logger, INFO, "Ready for Eyes");
 		EyelockEvent("System Ready for Authentication");
@@ -796,6 +811,7 @@ void F2FDispatcher::ProcessBoBCardReader() {
 		if (m_pMatchType->m_dualAuthMatched == CARD_MATCHED) {
 			if (m_dualAuth) {
 				SetLED(DUAL_AUTHN_CARD);
+				StartEyesProcessing();
 				BoBSetTimer(CardMatchTimeoutCB, m_dualAuthWaitIrisTime, 0, this);	// 10 sec
 			}
 			else if (m_transTOC) {
@@ -803,6 +819,7 @@ void F2FDispatcher::ProcessBoBCardReader() {
 				 
 				if (m_pMatchType->m_numOfCard == 1) {
 					SetLED(DUAL_AUTHN_CARD);
+					StartEyesProcessing();
 					BoBSetTimer(CardMatchTimeoutCB, CHECK_TOC_TIME, 999999, this);	// 1 sec, repeat 999999
 				}
 			}
@@ -1582,7 +1599,13 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 		}
 		else {
 			EyelockLog(logger, DEBUG, "Match success ID is %s CameraId:%d FrameId:%d MatchScore:%f", PersonName, EXTCameraIndex, frameNo, MatchScore);
-			EyelockEvent("Match success ID is %s  MatchScore:%f", PersonName, MatchScore);
+			if(m_DebugTesting){
+				EyelockEvent("Match success ID is %s  MatchScore:%f", PersonName, MatchScore);
+			}
+			else
+			{
+				EyelockEvent("Match success ID is %s", msg->getName().c_str());
+			}
 			sprintf(tmp, "Match success ID is %s", PersonName);
 			sprintf(DebugSession, "Match success ID is %s CameraId:%d FrameId:%d MatchScore:%f", PersonName, EXTCameraIndex, frameNo, MatchScore);
 		}
@@ -1703,6 +1726,7 @@ void F2FDispatcher::process(MatchResult *msg)
 				if (m_dualAuth || m_transTOC) {
 					ResetReaderLED();
 					m_pMatchType->clearCardData();
+					StopEyesProcessing();
 				}
 
 				if(m_Debug)
@@ -1807,5 +1831,31 @@ int F2FDispatcher::End()
 	BobCloseComs();
 }
 
+void F2FDispatcher::StopEyesProcessing()
+{
+	EyelockLog(logger, DEBUG, "Stopping eyes processing");
+	ChangeEyeLockMode(EyelockSleep);
+}
 
+void F2FDispatcher::StartEyesProcessing()
+{
+	EyelockLog(logger, DEBUG, "Starting eyes processing");
+	ChangeEyeLockMode(EyelockWakeUP);
+}
+
+void F2FDispatcher::ChangeEyeLockMode(int mode)
+{
+	if (pHTTPPostMessageHandler != NULL)
+	{
+		EyelockLog(logger, DEBUG, "Changing EyeLock Mode to %d", mode);
+		char msgStr[16];
+		sprintf(msgStr, "EYELOCK_MODE;%d;", mode);
+		HTTPPOSTMsg eyelockModeMsg(msgStr, strlen(msgStr)+1);
+		pHTTPPostMessageHandler->Handle(eyelockModeMsg, 0);
+	}
+	else
+	{
+		EyelockLog(logger, DEBUG, "EyeLock Mode Handler is undefined");
+	}
+}
 

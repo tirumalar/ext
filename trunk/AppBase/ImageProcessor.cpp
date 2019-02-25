@@ -125,7 +125,7 @@ m_LedConsolidator = NULL;
     }
 
 // read values from config
-    m_shouldDetect = pConf->getValue("GRI.shouldDetectEye", true);
+    m_shouldDetect = checkLicense() ? pConf->getValue("GRI.shouldDetectEye", true) : false;
     m_saveCount = pConf->getValue("GRI.saveCount", 0);
     m_outSaveCount = pConf->getValue("GRI.OutsaveCount", 0);
     m_shouldLog = pConf->getValue("GRI.shouldLog", false);
@@ -150,15 +150,6 @@ m_LedConsolidator = NULL;
 	}
 	printf("EyeDetect Level = %d\n",m_eyeDetectionLevel);
 
-	// check license on device
-	if (m_shouldDetect && access("/etc/FactoryLicense", F_OK ) != -1) {
-		// device licensed, but no user license
-		if( access("/home/UserLicense", F_OK ) == -1) {
-			m_shouldDetect = false;
-			printf(" No user license installed - stop iris detection\n");
-		}
-	}
-	
     if(m_shouldDetect)
     {
         m_pSrv = new EyeDetectAndMatchServer(w, h,m_eyeDetectionLevel,m_LogFileName);
@@ -2419,3 +2410,17 @@ void ImageProcessor::logResults(int frameIndex){
 }
 
 #endif
+
+bool ImageProcessor::checkLicense()
+{
+	// check license on device
+	if (access("/etc/FactoryLicense", F_OK ) != -1) {
+		// device licensed, but no user license
+		if( access("/home/UserLicense", F_OK ) == -1) {
+			printf(" No user license installed - stop iris detection\n");
+			return false;
+		}
+	}
+	return true;
+}
+

@@ -25,6 +25,7 @@ class MatchManagerInterface;
 class SDKDispatcher;
 class OSDPMessage;
 class MatchType;
+class HTTPPostMessageHandler;
 
 enum F2FSTATE{eF2FSTART=0, eF2FSTOP};
 
@@ -36,6 +37,7 @@ public:
 	void SetLEDConsolidator(LEDConsolidator *ptr){ m_ledConsolidator = ptr;}
 	void SetMatchManager(MatchManagerInterface *ptr);
 	void SetSDKDispatcher(SDKDispatcher *ptr){m_sdkDispatcher = ptr;}
+	void SetHTTPPostMessageHandler(HTTPPostMessageHandler *ptr){pHTTPPostMessageHandler = ptr;}
 	virtual ~F2FDispatcher();
 	virtual int End();
 	const char *getName(){
@@ -125,6 +127,10 @@ protected:
 	void ResetReaderLED();
 	void SetLedInitState(int initLed);
 
+	void StopEyesProcessing();
+	void StartEyesProcessing();
+	void ChangeEyeLockMode(int mode);
+
 	MatchedSignal *m_pMatched;
 	MatchType *m_pMatchType;
 	bool m_pac;
@@ -170,6 +176,7 @@ protected:
 	SocketFactory *m_socketFactoryTamper;
 	MatchManagerInterface *m_matchManager;
 	SDKDispatcher *m_sdkDispatcher;
+	HTTPPostMessageHandler *pHTTPPostMessageHandler;
 	char m_tamperMsg[256];
 	int m_initialState;
 	int m_silencePeriodAfterMatchMs;

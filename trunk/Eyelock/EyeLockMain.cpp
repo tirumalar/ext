@@ -360,6 +360,7 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 					{
 						m_matchDispatcher->addProcessor(pF2FDispatcher);
 						pF2FDispatcher->SetLEDConsolidator(pledConsolidator);
+						pF2FDispatcher->SetHTTPPostMessageHandler(pImageProcessor->GetEyelockModeMessageHandler());
 					}
 				}
 			}

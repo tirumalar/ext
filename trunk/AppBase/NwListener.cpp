@@ -328,7 +328,7 @@ bool NwListener::do_serv_task(Socket& client) {
 					return true;
 			}
 			if (m_pIp){
-				if(m_pIp->getShouldDetectEyes() == false){
+				if(!m_pIp->checkLicense()){
 					EyelockLog(logger, DEBUG, "No license installed");
 					return true;
 				}
