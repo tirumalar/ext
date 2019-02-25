@@ -121,9 +121,11 @@ public:
     void  SetLEDConsolidator(ProcessorChain *ptr) {m_LedConsolidator = ptr;}
 
 	void setFrameType(int val){ m_testImageSendLevel = val;}
-	void setShouldDetectEyes(bool val){ m_shouldDetect = val;}
+	void setShouldDetectEyes(bool val){ if (checkLicense()) m_shouldDetect = val; }
 	int getFrameType() { return m_testImageSendLevel;}
 	bool getShouldDetectEyes() { return m_shouldDetect;}
+
+	bool checkLicense();
 
 	cv::Point2i ProjectPtr2(float x, float y, cv::Point2f constant, float ConstDiv);
 	cv::Point2i projectPointsPtr1(cv::Rect projFace, cv::Point2f constant, float ConstDiv);

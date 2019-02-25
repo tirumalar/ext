@@ -1276,39 +1276,36 @@ void EyeLockThread::MatchBestEyes() {
 
 unsigned int EyeLockThread::ChangeProcessingMode(EyelockProcessMode mode, const char *address)
 {
-	bool changemode= true;
-	m_PreviousMode = m_Mode;
 	if(m_Master){
-		if((m_PreviousMode == EyelockSleep)){
-			if(mode == EyelockWakeUP){
-				changemode = true;
-			}else
-				changemode = false;
+		// EyEnroll can set either EyelockCamera or EyelockMatcher
+		// EyEnroll is not aware of current mode, so basing on this check return to EyelockSleep after enrollment
+		if((m_PreviousMode == EyelockSleep && mode == EyelockMatcher)){
+			mode = EyelockSleep;
 		}
 	}
-	if(changemode)
-		m_Mode = mode;
+	m_PreviousMode = m_Mode;
+	m_Mode = mode;
 
 	m_pEyeDispatcher->ClearAddressList(); // Remove first address list (locking)
 	if(address != 0)
 	{
-		if(changemode)m_pEyeDispatcher->AddAddress(address);
+		m_pEyeDispatcher->AddAddress(address);
 	}
 	MT9P001FrameGrabber *pFrameGrabber = dynamic_cast<MT9P001FrameGrabber*>(m_ImageProcessor->GetFrameGrabber());
 
-	if(m_Master&&changemode){
-		if((EyelockSleep == m_Mode)){
-			if(pFrameGrabber){
-				if(EyelockSleep == m_Mode)
-					pFrameGrabber->setShouldGrab(false);
-			}
-		}else{
-			if(EyelockWakeUP == m_Mode){
-				pFrameGrabber->setShouldGrab(true);
-			}
-			FormatProcessModeMessage(m_Mode, address);
-			SendMessageToSlave(m_ProcessModeMsg);
-		}
+	if((EyelockSleep == m_Mode))
+	{
+		m_ImageProcessor->setShouldDetectEyes(false);
+	}
+	else
+	{
+		m_ImageProcessor->setShouldDetectEyes(true);
+	}
+
+	if(m_Master)
+	{
+		FormatProcessModeMessage(m_Mode, address);
+		SendMessageToSlave(m_ProcessModeMsg);
 	}
 
 	EyelockLog(logger, DEBUG, "Eyelock processing mode change: %d; flush buffers...", (int)m_Mode); fflush( stdout);
@@ -1317,8 +1314,6 @@ unsigned int EyeLockThread::ChangeProcessingMode(EyelockProcessMode mode, const 
 	if(m_pEyeDispatcher) {
 		m_pEyeDispatcher->FlushAll();
 	}
-	if(!changemode)
-		return 0;
 
 	if(pFrameGrabber)
 	{
@@ -1333,7 +1328,7 @@ unsigned int EyeLockThread::ChangeProcessingMode(EyelockProcessMode mode, const 
 			pFrameGrabber->SetDoAlternating(true);
 		}
 	}
-	
+	return 0;
 }
 
 void EyeLockThread::ProcessEyelockMode(){
@@ -1404,7 +1399,10 @@ unsigned int EyeLockThread::MainLoop() {
 			}
 			else
 			{
-				m_ImageProcessor->process(); // increment m_FaceIndex then call sendLiveImages()
+				if (m_Mode != EyelockSleep) // skipping image processing in EyelockSleep mode
+				{
+					m_ImageProcessor->process(); // increment m_FaceIndex then call sendLiveImages()
+				}
 				citerator<CircularAccess<SafeFrameMsg *> , SafeFrameMsg *> sendIter(outMsgQueue);
 				SafeFrameMsg *msg = 0;
 				for (int i = 0; i < m_outQSize; i++) {
