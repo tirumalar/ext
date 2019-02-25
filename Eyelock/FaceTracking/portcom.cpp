@@ -22,12 +22,12 @@ static int sockfd;
 
 const char logger[30] = "PortCom";
 
-pthread_mutex_t lock;
+pthread_mutex_t lock1;
 
 int portcom_start() {
 	EyelockLog(logger, TRACE, "portcom_start");
 
-	pthread_mutex_init(&lock,NULL);
+	pthread_mutex_init(&lock1,NULL);
 
 	struct sockaddr_in dest;
 
@@ -63,7 +63,7 @@ int in_send = 0;
 void port_com_send(char *cmd_in, float *pr_time)
 {
 	EyelockLog(logger, TRACE, "port_com_send");
-	pthread_mutex_lock(&lock);
+	pthread_mutex_lock(&lock1);
 
 	char buffer[512];
 	char cmd[512];
@@ -108,12 +108,12 @@ void port_com_send(char *cmd_in, float *pr_time)
 	if (pr_time)
 		*pr_time=(float) (clock() - t) / CLOCKS_PER_SEC;
 
-	pthread_mutex_unlock(&lock);
+	pthread_mutex_unlock(&lock1);
 }
 
 int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	EyelockLog(logger, TRACE, "port_com_send");
-	pthread_mutex_lock(&lock);
+	pthread_mutex_lock(&lock1);
 
 
 	// REMOVE TRAILING CRS
@@ -174,7 +174,7 @@ while (1)
 	PortComLog(logger, DEBUG, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
 					(float) clock() / CLOCKS_PER_SEC,
 					(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
-	pthread_mutex_unlock(&lock);
+	pthread_mutex_unlock(&lock1);
 
 	return strlen(buffer);
 }
