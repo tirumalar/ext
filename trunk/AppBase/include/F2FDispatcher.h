@@ -91,7 +91,7 @@ public:
 	bool modifyACD(string acd, int acdlen, string acdnop, string new_acd, string new_acdnop, string ping);
 
 	void gettime();
-	void settime();
+	int settime();
 	void StartLocateDevice();
 	void StopLocateDevice();
 	static void* LocateDeviceLoop(void *f2fDispatcherPtr);

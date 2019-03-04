@@ -1245,12 +1245,12 @@ void F2FDispatcher::SendData(MatchResult *msg)
 
 #define bcd2bin(x)	(((x) & 0x0f) + ((x) >> 4) * 10)
 #define bin2bcd(x)	((((x) / 10) << 4) + (x) % 10)
-void F2FDispatcher::settime()
+int F2FDispatcher::settime()
 {
 	EyelockLog(logger, TRACE, "Hardware clock sync");
 	unsigned char regs[8];
 	time_t rawtime;
-	struct tm* tm1;
+	struct tm* tm1, tm_out;
 
 	printf("setting time...\n");
 	time(&rawtime);
@@ -1268,7 +1268,33 @@ void F2FDispatcher::settime()
 		regs[6] = bin2bcd(tm1->tm_mon + 1);
 		regs[7] = bin2bcd(tm1->tm_year - 100);
 		printf("setting time to 0x%0x: 0x%0x: 0x%0x,0x%0x: 0x%0x,0x%0x: 0x%0x...\n",regs[1],regs[2],regs[3],regs[4],regs[5],regs[6],regs[7]);
-		BobSetDataAndRunCommand(regs,8,BOB_COMMAND_RTCWRITE_CMD);
+
+		char time_data_out[8];
+		int result = BobSetRtc(regs,(void*)&time_data_out,10);
+		if (result != 0)
+		{
+			return -1;
+		}
+
+		tm_out.tm_sec = bcd2bin(time_data_out[1] & 0x7f);
+		tm_out.tm_min = bcd2bin(time_data_out[2] & 0x7f);
+		tm_out.tm_hour = bcd2bin(time_data_out[3] & 0x3f);
+		tm_out.tm_mday = bcd2bin(time_data_out[4] & 0x3f);
+		tm_out.tm_wday = time_data_out[5] & 0x7;
+		tm_out.tm_mon = bcd2bin(time_data_out[6] & 0x1f) - 1;
+		tm_out.tm_year = bcd2bin(time_data_out[7]) + 100;
+		tm_out.tm_isdst = -1;
+
+
+
+		time_t result_time = mktime(&tm_out);
+		time_t time_diff = result_time - rawtime;
+		const time_t time_diff_max = 3;
+		printf("time was set to %s\n. Initial time: %d, result rtc time: %d\n",asctime(&tm_out), rawtime, result_time);
+		if (time_diff > time_diff_max)
+		{
+			return -5;
+		}
 }
 void setLED(int x)
 {

@@ -4,9 +4,15 @@
 
 sleep 10
 
+# need to be commented out after after adding systemd module responsible for retrieving RTC time
 chmod +x /home/root/i2cHandler
 /home/root/i2cHandler -t
 sleep 2 
+
+# start clock sync
+chmod +x /home/root/timesync.sh
+chmod +x /home/root/ntpdate
+/home/root/timesync.sh &
 
 NOW=$(date -u +"%Y-%m-%d %T, %Z")
 echo "$NOW > Eyelock NXT Start" >> /home/root/nxtEvent.log
