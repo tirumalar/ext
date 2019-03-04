@@ -312,7 +312,7 @@ void *VideoStream::ThreadServer(void *arg)
 					if (!queueItem.m_ptr)
 					{
 						pkgs_missed++;
-						printf("no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
+						//printf("no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
 						databuf = dummy_buff;
 					}
 					else
