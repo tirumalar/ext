@@ -440,7 +440,21 @@ bool NwListener::do_serv_task(Socket& client) {
 		{
 			if(m_nwMatchManager){
 				F2FDispatcher * mf2f = m_nwMatchManager->GetF2FDispatcher();
-				mf2f->settime();
+				int settime_result = mf2f->settime();
+
+				BinMessage Matchack(32);
+				const char *format = "%s;";
+				int len = 0;
+				if (settime_result != 0)
+				{
+					len = sprintf(Matchack.GetBuffer(),format, "RTCFAILURE");
+				}
+				else
+				{
+					len = sprintf(Matchack.GetBuffer(),format, "RTCSUCCESS");
+				}
+				Matchack.SetSize(len);
+				client.Send(Matchack);
 			}
 		}
 		else if (m_HTTPMsg->getMsgType() == LOCATEDEVICE_MSG)

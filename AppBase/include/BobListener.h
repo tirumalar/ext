@@ -152,6 +152,7 @@ int BobSetData(void *ptr, int len);
 int BobSetACSType(int val);
 int BobSetCommand(int val);
 int BobSetDataAndRunCommand(void *ptr, int len, int cmd);
+int BobSetRtc(void *ptr, void* time_data_out, long int timeoutSec);
 int BoBGetCommand();
 int BobSetDataLength(int val);
 int BobSetACSOutput(unsigned int value);

@@ -97,6 +97,11 @@ int internal_read_reg(int fd, icmreg_t reg, unsigned int *val);
 int internal_write_reg(int fd, icmreg_t reg, unsigned int val);
 int internal_read_array(int fd, icmreg_t reg, char *buf, int len);
 int internal_write_array(int fd, icmreg_t reg, void *ptr, int len);
+int internal_read_reg_timeout(int fd, icmreg_t reg, unsigned int *val, long int timeout_sec);
+int internal_write_reg_timeout(int fd, icmreg_t reg, unsigned int val, long int timeout_sec);
+int internal_read_array_timeout(int fd, icmreg_t reg, char *buf, int len, long int timeout_sec);
+int internal_write_array_timeout(int fd, icmreg_t reg, void *ptr, int len, long int timeout_sec);
+
 int i2c_start_transaction();
 void DumpBuffer(char *buf, int bytes);
 int myi2cdump(int len);
@@ -721,6 +726,86 @@ int internal_read_reg(int fd, icmreg_t reg, unsigned int *val)
 		*val = buff[4];
 	return 0;
 }
+int internal_read_reg_timeout(int fd, icmreg_t reg, unsigned int *val, long int timeout_sec)
+{
+	int result = -1, select_result = -1;
+	unsigned char temp_buf[5];
+	struct timeval timeout;
+	fd_set select_set;
+
+	if(fd == 0)
+    {
+		//EyelockLog(logger, ERROR, "BoB => Error starting interface");
+        return -1;
+    }
+
+	temp_buf[0] = 56;
+	temp_buf[1] = (reg >> 8) & 0xFF;
+	temp_buf[2] = reg & 0xFF;
+	temp_buf[3] = 0x01;
+
+	timeout.tv_sec = timeout_sec;
+	timeout.tv_usec = 0;
+
+	FD_ZERO(&select_set);
+	FD_SET(fd, &select_set);
+
+	select_result = select(FD_SETSIZE, NULL, &select_set, NULL, &timeout);
+	if (select_result == 1)
+	{
+		result = write(fd, temp_buf, 4);
+		if (result != 4) {
+			//EyelockLog(logger, ERROR, "BoB => write error in internal_read_reg() - write %s, result %d", strerror(errno), result);
+			//perror("write");
+			return -1;
+		}
+	}
+	else if (select_result == 0)
+	{
+		EyelockLog(logger, ERROR, "BoB => write error in internal_read_reg_timeout() - write timeout");
+		//fprintf(stderr, "internal_read_array: write timeout\n");
+		return -2;
+	}
+	else
+	{
+		EyelockLog(logger, ERROR, "BoB => write error in internal_read_reg_timeout() - select failed on write (%s)", strerror(errno));
+		//fprintf(stderr, "internal_read_array: select failed on write (%s)\n", strerror(errno));
+		return -2;
+	}
+
+	memset(temp_buf, 0, sizeof temp_buf);
+
+	FD_ZERO(&select_set);
+	FD_SET(fd, &select_set);
+	select_result = select(FD_SETSIZE, &select_set, NULL, NULL, &timeout);
+	if (select_result == 1)
+	{
+		result = read(fd, temp_buf, sizeof temp_buf);
+		if (result != sizeof temp_buf)
+		{
+			//EyelockLog(logger, ERROR, "BoB => read error in internal_read_reg() - read %s, result %d", strerror(errno), result);
+			//perror("read");
+			return -1;
+		}
+		if (val)
+		{
+			*val = temp_buf[4];
+		}
+		return 0;
+	}
+	else if (select_result == 0)
+	{
+		EyelockLog(logger, ERROR, "BoB => write error in internal_read_reg_timeout() - read timeout");
+		//fprintf(stderr, "internal_read_array: read timeout\n");
+		return -2;
+	}
+	else
+	{
+		EyelockLog(logger, ERROR, "BoB => write error in internal_read_reg_timeout() - select failed on read (%s)", strerror(errno));
+		//fprintf(stderr, "internal_read_array: select failed on read (%s)\n", strerror(errno));
+		return -2;
+	}
+}
 #else
 int internal_read_reg(int fd, icmreg_t reg, unsigned int *val)
 {
@@ -803,6 +888,86 @@ int internal_read_array(int fd, icmreg_t reg, char *buf, int len)
 
 	return len-4;
 }
+int internal_read_array_timeout(int fd, icmreg_t reg, char *out_buf, int len, long int timeout_sec)
+{
+	int result = -1, select_result = -1;
+	char temp_buf[4];	// 0xffff=65535
+	struct timeval timeout;
+	fd_set select_set;
+
+	if(fd == 0)
+    {
+		//EyelockLog(logger, ERROR, "BoB => Error starting interface");
+        return -1;
+    }
+
+	temp_buf[0] = 56;
+	temp_buf[1] = (reg >> 8) & 0xFF;
+	temp_buf[2] = reg & 0xFF;
+	temp_buf[3] = len;
+	//EyelockLog(logger, DEBUG, "BoB => @@@ read data array fd=%d reg=%d, len=%d @@@", fd, reg, len);
+
+	timeout.tv_sec = timeout_sec;
+	timeout.tv_usec = 0;
+
+	FD_ZERO(&select_set);
+	FD_SET(fd, &select_set);
+
+	select_result = select(FD_SETSIZE, NULL, &select_set, NULL, &timeout);
+	if (select_result == 1)
+	{
+		result = write(fd, temp_buf, sizeof temp_buf);
+		if (result != sizeof temp_buf) {
+			//EyelockLog(logger, ERROR, "BoB => write error in internal_read_array() - write %s, result %d", strerror(errno), result);
+			//perror("write");
+			return -1;
+		}
+	}
+	else if (select_result == 0)
+	{
+		EyelockLog(logger, ERROR, "BoB => write error in internal_read_array() - write timeout");
+		//fprintf(stderr, "internal_read_array: write timeout\n");
+		return -2;
+	}
+	else
+	{
+		EyelockLog(logger, ERROR, "BoB => write error in internal_read_array() - select failed on write (%s)", strerror(errno));
+		//fprintf(stderr, "internal_read_array: select failed on write (%s)\n", strerror(errno));
+		return -2;
+	}
+
+	memset(temp_buf, 0, sizeof temp_buf);
+
+	FD_ZERO(&select_set);
+	FD_SET(fd, &select_set);
+	select_result = select(FD_SETSIZE, &select_set, NULL, NULL, &timeout);
+	if (select_result == 1)
+	{
+		result = read(fd, temp_buf, sizeof temp_buf);
+		if (result != sizeof temp_buf)
+		{
+			//EyelockLog(logger, ERROR, "BoB => read error in internal_read_array() - read %s, result %d", strerror(errno), result);
+			//perror("read");
+			return -1;
+		}
+		if (out_buf != NULL)
+		{
+			return read(fd, out_buf, len);
+		}
+	}
+	else if (select_result == 0)
+	{
+		EyelockLog(logger, ERROR, "BoB => write error in internal_read_array() - read timeout");
+		//fprintf(stderr, "internal_read_array: read timeout\n");
+		return -2;
+	}
+	else
+	{
+		EyelockLog(logger, ERROR, "BoB => write error in internal_read_array() - select failed on read (%s)", strerror(errno));
+		//fprintf(stderr, "internal_read_array: select failed on read (%s)\n", strerror(errno));
+		return -2;
+	}
+}
 #else
 int internal_read_array(int fd, icmreg_t reg, char *ptr, int len)
 {
@@ -884,6 +1049,68 @@ int internal_write_reg(int fd, icmreg_t reg, unsigned int val)
 	read(fd, buff,4);
 	return result;
 }
+int internal_write_reg_timeout(int fd, icmreg_t reg, unsigned int val, long int timeout_sec)
+{
+	int result = -1, select_result = -1;
+	unsigned char temp_buf[5];
+	struct timeval timeout;
+	fd_set select_set;
+
+	if(fd == 0)
+    {
+		//EyelockLog(logger, ERROR, "BoB => Error starting interface");
+        return -1;
+    }
+
+	temp_buf[0] = 57;
+	temp_buf[1] = (reg >> 8) & 0xFF;
+	temp_buf[2] = reg & 0xFF;
+	temp_buf[3] = 0x01;
+	temp_buf[4] = val;
+
+	timeout.tv_sec = timeout_sec;
+	timeout.tv_usec = 0;
+
+	FD_ZERO(&select_set);
+	FD_SET(fd, &select_set);
+
+	select_result = select(FD_SETSIZE, NULL, &select_set, NULL, &timeout);
+	if (select_result == 1)
+	{
+		result = write(fd, temp_buf, 5);
+		if (result != 5)
+		{
+			EyelockLog(logger, ERROR, "BoB => internal_write_reg_timeout - write %s", strerror(errno));
+		}
+		else
+		{
+			result = 0;
+		}
+	}
+	else if (select_result == 0)
+	{
+		EyelockLog(logger, ERROR, "BoB => internal_write_reg_timeout - write timeout");
+		//fprintf(stderr, "internal_write_reg: write timeout\n");
+		return -2;
+	}
+	else
+	{
+		EyelockLog(logger, ERROR, "BoB => internal_write_reg_timeout - select failed on write (%s)", strerror(errno));
+		//fprintf(stderr, "internal_write_reg: select failed on write (%s)\n", strerror(errno));
+		return -2;
+	}
+
+	//response is ignored
+	FD_ZERO(&select_set);
+	FD_SET(fd, &select_set);
+	select_result = select(FD_SETSIZE, &select_set, NULL, NULL, &timeout);
+	if (select_result == 1)
+	{
+		read(fd, temp_buf, 4);
+		//printf("response: %x.%x.%x.%x\n", buff[0], buff[1], buff[2], buff[3]);
+	}
+	return result;
+}
 #else
 int internal_write_reg(int fd, icmreg_t reg, unsigned int val)
 {
@@ -958,6 +1185,83 @@ int internal_write_array(int fd, icmreg_t reg, void *ptr, int len)
 
 	usleep(50);
 	read(fd, buff,4);
+	return result;
+}
+int internal_write_array_timeout(int fd, icmreg_t reg, void *in_buf, int len, long int timeout_sec)
+{
+	int result = -1, select_result = -1;
+	unsigned char temp_buf[MAX_WRITE_LEN];
+	struct timeval timeout;
+	fd_set select_set;
+	//EyelockLog(logger, DEBUG, "BoB => @@@ write data array reg=%d, len=%d @@@", reg, len);
+
+	if (fd == 0)
+    {
+		// EyelockLog(logger, ERROR, "BoB => Error starting interface");
+        return -1;
+    }
+	if (len > MAX_WRITE_LEN - 4)
+	{
+		EyelockLog(logger, ERROR, "BoB => internal_write_reg_timeout - too much data to write (%d > max=%d)", len, MAX_WRITE_LEN - 4);
+		return -1;
+	}
+
+	temp_buf[0] = 57;
+	temp_buf[1] = (reg >> 8) & 0xFF;
+	temp_buf[2] = reg & 0xFF;
+	temp_buf[3] = len;
+	if (in_buf != NULL)
+	{
+		memcpy(&temp_buf[4], in_buf, len);
+	}
+	else
+	{
+		memset(&temp_buf[4], 0, MAX_WRITE_LEN-4);
+	}
+
+	timeout.tv_sec = timeout_sec;
+	timeout.tv_usec = 0;
+
+	FD_ZERO(&select_set);
+	FD_SET(fd, &select_set);
+
+	select_result = select(FD_SETSIZE, NULL, &select_set, NULL, &timeout);
+	if (select_result == 1)
+	{
+		result = write(fd, temp_buf, len+4);
+		if (result != len+4)
+		{
+			//EyelockLog(logger, ERROR, "BoB => internal_write_array_timeout - write %s", strerror(errno));
+			//perror("write");
+		}
+		else
+		{
+			result = 0;
+		}
+		usleep(50);
+	}
+	else if (select_result == 0)
+	{
+		EyelockLog(logger, ERROR, "BoB => internal_write_array_timeout - write timeout");
+		//fprintf(stderr, "internal_write_array: write timeout\n");
+		return -2;
+	}
+	else
+	{
+		EyelockLog(logger, ERROR, "BoB => internal_write_array_timeout: select failed on write (%s)", strerror(errno));
+		//fprintf(stderr, "internal_write_array: select failed on write (%s)\n", strerror(errno));
+		return -2;
+	}
+
+	//response is ignored
+	FD_ZERO(&select_set);
+	FD_SET(fd, &select_set);
+	select_result = select(FD_SETSIZE, &select_set, NULL, NULL, &timeout);
+	if (select_result == 1)
+	{
+		read(fd, temp_buf, 4);
+		//printf("response: %x.%x.%x.%x\n", buff[0], buff[1], buff[2], buff[3]);
+	}
 	return result;
 }
 #else
@@ -1105,6 +1409,23 @@ void   BobMutexEnd(void)
 	pthread_mutex_unlock(&lock);
 }
 
+int BobMutexStartTimeout(int timeoutSec)
+{
+	struct timespec timeoutAbs;
+	int mutex_result = 0;
+	//printf("BobMutexStartTimeout : BoB => trying to retrieve clock_gettime\n");
+	clock_gettime(CLOCK_REALTIME, &timeoutAbs);
+	timeoutAbs.tv_sec += timeoutSec;
+	EyelockLog(logger, TRACE, "BobMutexStartTimeout : BoB => trying to acquire lock, absolute timeout %d:%d", timeoutAbs.tv_sec, timeoutAbs.tv_nsec);
+	mutex_result = pthread_mutex_timedlock(&lock, &timeoutAbs);
+	if (mutex_result != 0)
+	{
+		EyelockLog(logger, ERROR, "BobMutexStartTimeout : BoB => failed to acquire mutex (%d)", mutex_result);
+		//printf("BobMutexStartTimeout : BoB => failed to acquire mutex: %s (%d)\n", strerror(mutex_result), mutex_result);
+	}
+	return mutex_result;
+}
+
 int BobSetCardReadAck()
 {
 	printf("inside BobSetCardReadAck\n ");
@@ -1224,6 +1545,65 @@ int BobSetCommand(int val)
 	result = BobWriteReg(BOB_COMMAND_OFFSET, val);
 	BobMutexEnd();
 	return result;
+}
+
+int BobSetRtc(void *time_data_in, void* time_data_out, long int timeoutSec)
+{
+	int result = 1;
+	if (time_data_out == NULL)
+	{
+		return -1;
+	}
+
+	usleep(100);
+	result = BobMutexStartTimeout(timeoutSec);
+	if (result != 0)
+	{
+		return -3;
+	}
+
+	int fd = i2c_start_transaction();
+	if(fd == 0)
+	{
+		EyelockLog(logger, ERROR, "BobSetRtc : BoB => Error starting interface");
+		BobMutexEnd();
+		return -1;
+	}
+	result = internal_write_array_timeout(fd, BOB_ACCESS_DATA_OFFSET, time_data_in, 8, timeoutSec);
+	if (result != 0)
+	{
+		BobMutexEnd();
+		return -2;
+	}
+	usleep(5000);
+	result = internal_write_reg_timeout(fd, BOB_COMMAND_OFFSET, BOB_COMMAND_RTCWRITE_CMD, timeoutSec);
+	if (result)
+	{
+		BobMutexEnd();
+		return result;
+	}
+
+	//printf("retrieving RTC time...\n");
+	usleep(5000);
+	result = internal_write_reg_timeout(fd, BOB_COMMAND_OFFSET, BOB_COMMAND_RTCREAD_CMD, timeoutSec);
+	if (result)
+	{
+		EyelockLog(logger, ERROR, "BobSetRtc : BoB => Error sending RTC time get command");
+		BobMutexEnd();
+		return result;
+	}
+
+	usleep(5000);
+	result = internal_read_array_timeout(fd, BOB_ACCESS_DATA_OFFSET, time_data_out, 8, timeoutSec);
+	if (result < 0)
+	{
+		EyelockLog(logger, ERROR, "BobSetRtc : BoB => Error reading RTC time");
+		BobMutexEnd();
+		return result;
+	}
+
+	BobMutexEnd();
+	return 0;
 }
 
 int BobSetDataAndRunCommand(void *ptr, int len, int cmd)

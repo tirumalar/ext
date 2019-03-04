@@ -414,10 +414,10 @@ function handleResponse(theResponse)
 	 	HideOnlyWaitingDlg();
 
             // Current time match is also 'success'
-            if ((update[1] === '') || (update[1].indexOf("current time matches remote time") != -1))
-                ShowMessageBox(GlobalStrings.MessageBoxSuccess, GlobalStrings.DeviceTimeSynchronized, update[2], "MB_ICONINFORMATION", "OK");
+            if ((update[1] === 'success'))
+                ShowMessageBox(GlobalStrings.MessageBoxSuccess, GlobalStrings.DeviceTimeSynchronized, "", "MB_ICONINFORMATION", "OK");
             else
-                ShowMessageBox(GlobalStrings.MessageBoxFailed, GlobalStrings.DeviceTimeSyncFailed, update[1], "MB_ICONERROR", "OK");
+                ShowMessageBox(GlobalStrings.MessageBoxFailed, GlobalStrings.DeviceTimeSyncFailed, update[2], "MB_ICONERROR", "OK");
 	 }
         else if (update[0] === 'gettime') {
             // Current time match is also 'success'

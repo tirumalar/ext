@@ -631,7 +631,12 @@ int32_t EyelockNanoDeviceHandler::SyncTime(const int64_t nanoTime, const int64_t
 		{
 
 #ifdef CMX_C1
-			m_pF2FDispatcher->settime();
+			result = m_pF2FDispatcher->settime();
+			if (result != 0)
+			{
+				EyelockLog(logger, ERROR, "Failed to set RTC time (%d)", result);
+				return UNSUCCESSFUL;
+			}
 #else
 			RunSystemCmd("/sbin/hwclock -w");
 #endif
