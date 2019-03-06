@@ -15,6 +15,8 @@
 
 #include <termios.h>
 
+#define TWO_BYTES_OFFSET
+
 #define MAX_WRITE_LEN 		255
 
 #define BOB_COMMAND_RTCREAD_CMD	 		5
@@ -25,7 +27,16 @@
 #define BOB_COMMAND_OFFSET				2
 #define BOB_SW_VERSION_OFFSET			67	// 3 bytes
 #define BOB_HW_VERSION_OFFSET			70	// 3 bytes
+
+
+#ifdef TWO_BYTES_OFFSET
+#define BOB_ACCESS_DATA_OFFSET 			228+128
+typedef unsigned short icmreg_t;
+#else
 #define BOB_ACCESS_DATA_OFFSET 			73	// 20 bytes
+typedef unsigned char icmreg_t;
+#endif
+
 #define I2C_BUS	"/dev/ttyACM0"
 
 #define bcd2bin(x)	(((x) & 0x0f) + ((x) >> 4) * 10)
@@ -92,7 +103,7 @@ int set_interface_attribs(int fd, int speed)
 	return 0;
 }
 
-int internal_read_array(int fd, unsigned char reg, char *buf, int len)
+int internal_read_array(int fd, icmreg_t reg, char *buf, int len)
 {
 	int result = -1;
 	char buff[6000];
@@ -103,8 +114,8 @@ int internal_read_array(int fd, unsigned char reg, char *buf, int len)
 	}
 
 	buff[0] = 56;
-	buff[1] = 0x00;
-	buff[2] = reg;
+	buff[1] = (reg >> 8) & 0xFF;
+	buff[2] = reg & 0xFF;
 	buff[3] = len;
 
 	struct timeval timeout;
@@ -171,7 +182,7 @@ int internal_read_array(int fd, unsigned char reg, char *buf, int len)
 	return 0;
 }
 
-int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
+int internal_write_array(int fd, icmreg_t reg, void *ptr, int len)
 {
 	int result = -1;
 	unsigned char buff[MAX_WRITE_LEN];
@@ -182,8 +193,8 @@ int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
 	}
 
 	buff[0] = 57;
-	buff[1] = 0x00;
-	buff[2] = reg;
+	buff[1] = (reg >> 8) & 0xFF;
+	buff[2] = reg & 0xFF;
 	buff[3] = len;
 
 	if (ptr)
@@ -232,7 +243,7 @@ int internal_write_array(int fd, unsigned char reg, void *ptr, int len)
 	return 0;
 }
 
-int internal_write_reg(int fd, unsigned char reg, unsigned int val)
+int internal_write_reg(int fd, icmreg_t reg, unsigned int val)
 {
 	int result = -1;
 	int response_len = -1;
@@ -244,8 +255,8 @@ int internal_write_reg(int fd, unsigned char reg, unsigned int val)
 	}
 
 	buff[0] = 57;
-	buff[1] = 0x00;
-	buff[2] = reg;
+	buff[1] = (reg >> 8) & 0xFF;
+	buff[2] = reg & 0xFF;
 	buff[3] = 0x01;
 	buff[4] = val;
 
