@@ -1,0 +1,2183 @@
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"EZI2C_CAM_I2C_BOOT.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.EZI2C_CAM_I2CResposeInsert,"ax",%progbits
+  20              		.align	2
+  21              		.code	16
+  22              		.thumb_func
+  23              		.type	EZI2C_CAM_I2CResposeInsert, %function
+  24              	EZI2C_CAM_I2CResposeInsert:
+  25              	.LFB5:
+  26              		.file 1 "Generated_Source\\PSoC4\\EZI2C_CAM_I2C_BOOT.c"
+   1:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /***************************************************************************//**
+   2:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * \file EZI2C_CAM_I2C_BOOT.c
+   3:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * \version 3.20
+   4:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+   5:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * \brief
+   6:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  This file provides the source code of the bootloader communication APIs
+   7:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  for the SCB Component I2C mode.
+   8:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+   9:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * Note:
+  10:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+  11:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** ********************************************************************************
+  12:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * \copyright
+  13:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * Copyright 2013-2016, Cypress Semiconductor Corporation.  All rights reserved.
+  14:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * You may use this file only in accordance with the license, terms, conditions,
+  15:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * disclaimers, and limitations in the end user license agreement accompanying
+  16:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * the software package with which this file was provided.
+  17:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *******************************************************************************/
+  18:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  19:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** #include "EZI2C_CAM_BOOT.h"
+  20:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** #include "EZI2C_CAM_I2C_PVT.h"
+  21:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  22:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** #if defined(CYDEV_BOOTLOADER_IO_COMP) && (EZI2C_CAM_I2C_BTLDR_COMM_ENABLED)
+  23:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  24:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /***************************************
+  25:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *    Private I/O Component Vars
+  26:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** ***************************************/
+  27:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  28:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /* Writes to this buffer */
+  29:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** static uint8 EZI2C_CAM_slReadBuf[EZI2C_CAM_I2C_BTLDR_SIZEOF_READ_BUFFER];
+  30:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  31:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /* Reads from this buffer */
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 2
+
+
+  32:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** static uint8 EZI2C_CAM_slWriteBuf[EZI2C_CAM_I2C_BTLDR_SIZEOF_WRITE_BUFFER];
+  33:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  34:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /* Flag to release buffer to be read */
+  35:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** static uint32 EZI2C_CAM_applyBuffer;
+  36:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  37:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  38:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /***************************************
+  39:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *    Private Function Prototypes
+  40:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** ***************************************/
+  41:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  42:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** static void EZI2C_CAM_I2CResposeInsert(void);
+  43:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  44:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  45:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /*******************************************************************************
+  46:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * Function Name: EZI2C_CAM_I2CCyBtldrCommStart
+  47:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** ****************************************************************************//**
+  48:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+  49:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  Starts the I2C component and enables its interrupt.
+  50:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  Every incoming I2C write transaction is treated as a command for the
+  51:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  bootloader.
+  52:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  Every incoming I2C read transaction returns 0xFF until the bootloader
+  53:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  provides a response to the executed command.
+  54:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+  55:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * \globalvars
+  56:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  EZI2C_CAM_applyBuffer - the flag to release the buffer with a response
+  57:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  to be read by the host.
+  58:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+  59:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *******************************************************************************/
+  60:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** void EZI2C_CAM_I2CCyBtldrCommStart(void)
+  61:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** {
+  62:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_I2CSlaveInitWriteBuf(EZI2C_CAM_slWriteBuf, EZI2C_CAM_I2C_BTLDR_SIZEOF_WRITE_BUFFER);
+  63:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_I2CSlaveInitReadBuf (EZI2C_CAM_slReadBuf, 0u);
+  64:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  65:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_SetCustomInterruptHandler(&EZI2C_CAM_I2CResposeInsert);
+  66:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_applyBuffer = 0u;
+  67:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  68:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_Start();
+  69:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** }
+  70:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  71:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  72:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /*******************************************************************************
+  73:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * Function Name: EZI2C_CAM_I2CCyBtldrCommStop
+  74:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** ****************************************************************************//**
+  75:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+  76:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  Disables the I2C component.
+  77:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+  78:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *******************************************************************************/
+  79:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** void EZI2C_CAM_I2CCyBtldrCommStop(void)
+  80:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** {
+  81:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_Stop();
+  82:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** }
+  83:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  84:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+  85:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /*******************************************************************************
+  86:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * Function Name: EZI2C_CAM_I2CCyBtldrCommReset
+  87:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** ****************************************************************************//**
+  88:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 3
+
+
+  89:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  Resets read and write I2C buffers to the initial state and resets the slave
+  90:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  status.
+  91:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+  92:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * \globalvars
+  93:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  EZI2C_CAM_slRdBufSize - used to store slave read buffer size.
+  94:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  EZI2C_CAM_slRdBufIndex - used to store the current index within the
+  95:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  slave read buffer.
+  96:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  EZI2C_CAM_slWrBufIndex - used to store current index within slave
+  97:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  write buffer.
+  98:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  EZI2C_CAM_slStatus  - used to store current status of I2C slave.
+  99:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 100:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *******************************************************************************/
+ 101:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** void EZI2C_CAM_I2CCyBtldrCommReset(void)
+ 102:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** {
+ 103:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     /* Make read buffer full */
+ 104:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_slRdBufSize = 0u;
+ 105:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 106:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     /* Reset write buffer and Read buffer */
+ 107:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_slRdBufIndex = 0u;
+ 108:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_slWrBufIndex = 0u;
+ 109:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 110:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     /* Clear read and write status */
+ 111:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_slStatus = 0u;
+ 112:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** }
+ 113:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 114:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 115:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /*******************************************************************************
+ 116:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * Function Name: EZI2C_CAM_I2CCyBtldrCommRead
+ 117:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** ****************************************************************************//**
+ 118:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 119:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  Allows the caller to read data from the bootloader host (the host writes the
+ 120:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  data). The function handles polling to allow a block of data to be completely
+ 121:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  received from the host device.
+ 122:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 123:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  \param pData: Pointer to storage for the block of data to be read from the
+ 124:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   bootloader host
+ 125:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  \param size: Number of bytes to be read.
+ 126:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  \param count: Pointer to the variable to write the number of bytes actually
+ 127:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   read.
+ 128:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  \param timeOut: Number of units in 10 ms to wait before returning
+ 129:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   because of a timeout.
+ 130:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 131:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  \return
+ 132:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   Returns CYRET_SUCCESS if no problem was encountered or returns the value
+ 133:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   that best describes the problem. For more information refer to the
+ 134:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   "Return Codes" section of the System Reference Guide.
+ 135:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 136:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * \globalvars
+ 137:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  EZI2C_CAM_slStatus  - used to store current status of I2C slave.
+ 138:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  EZI2C_CAM_slWriteBuf - used to store received command.
+ 139:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  EZI2C_CAM_slWrBufIndex - used to store current index within slave
+ 140:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  write buffer.
+ 141:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 142:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *******************************************************************************/
+ 143:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** cystatus EZI2C_CAM_I2CCyBtldrCommRead(uint8 pData[], uint16 size, uint16 * count, uint8 timeOut)
+ 144:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** {
+ 145:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     cystatus status;
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 4
+
+
+ 146:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     uint32 timeoutMs;
+ 147:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 148:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     status = CYRET_BAD_PARAM;
+ 149:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 150:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     if ((NULL != pData) && (size > 0u))
+ 151:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     {
+ 152:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         status = CYRET_TIMEOUT;
+ 153:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         timeoutMs = ((uint32) 10u * timeOut); /* Convert from 10mS check to 1mS checks */
+ 154:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 155:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         while (0u != timeoutMs)
+ 156:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         {
+ 157:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             /* Check if host complete write */
+ 158:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             if (0u != (EZI2C_CAM_I2C_SSTAT_WR_CMPLT & EZI2C_CAM_slStatus))
+ 159:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             {
+ 160:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 /* Copy number of written bytes */
+ 161:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 *count = (uint16) EZI2C_CAM_slWrBufIndex;
+ 162:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 163:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 /* Clear slave status and write index */
+ 164:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 EZI2C_CAM_slStatus = 0u;
+ 165:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 EZI2C_CAM_slWrBufIndex = 0u;
+ 166:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 167:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 /* Copy command into bootloader buffer */
+ 168:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 (void) memcpy((void *) pData, (const void *) EZI2C_CAM_slWriteBuf,
+ 169:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                                               EZI2C_CAM_BYTES_TO_COPY(*count, size));
+ 170:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 171:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 status = CYRET_SUCCESS;
+ 172:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 break;
+ 173:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             }
+ 174:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 175:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             CyDelay(EZI2C_CAM_WAIT_1_MS);
+ 176:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             --timeoutMs;
+ 177:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         }
+ 178:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     }
+ 179:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 180:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     return(status);
+ 181:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** }
+ 182:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 183:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 184:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /*******************************************************************************
+ 185:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * Function Name: EZI2C_CAM_I2CCyBtldrCommWrite
+ 186:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** ****************************************************************************//**
+ 187:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 188:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  Allows the caller to write data to the bootloader host (the host reads the
+ 189:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  data). The function does not use timeout and returns after data has been
+ 190:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  copied into the slave read buffer. This data is available to be read by the
+ 191:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  bootloader host until following host data write.
+ 192:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 193:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  \param pData: Pointer to the block of data to be written to the bootloader
+ 194:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   host.
+ 195:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  \param size: Number of bytes to be written.
+ 196:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  \param count: Pointer to the variable to write the number of bytes actually
+ 197:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   written.
+ 198:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  \param timeOut: Number of units in 10 ms to wait before returning
+ 199:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   because of a timeout.
+ 200:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 201:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  \return
+ 202:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   Returns CYRET_SUCCESS if no problem was encountered or returns the value
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 5
+
+
+ 203:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   that best describes the problem. For more information refer to the
+ 204:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *   "Return Codes" section of the System Reference Guide.
+ 205:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 206:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * \globalvars
+ 207:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  EZI2C_CAM_applyBuffer - the flag to release the buffer with
+ 208:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  to be read by the host.
+ 209:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 210:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *******************************************************************************/
+ 211:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** cystatus EZI2C_CAM_I2CCyBtldrCommWrite(const uint8 pData[], uint16 size, uint16 * count, uint8 time
+ 212:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** {
+ 213:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     cystatus status;
+ 214:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 215:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     status = CYRET_BAD_PARAM;
+ 216:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 217:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     if ((NULL != pData) && (size > 0u))
+ 218:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     {
+ 219:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         /* Copy response into read buffer */
+ 220:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         *count = size;
+ 221:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         (void) memcpy((void *) EZI2C_CAM_slReadBuf, (const void *) pData, (uint32) size);
+ 222:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 223:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         /* Read buffer is ready to be released to host */
+ 224:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         EZI2C_CAM_applyBuffer = (uint32) size;
+ 225:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 226:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         if (0u != timeOut)
+ 227:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         {
+ 228:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             /* Suppress compiler warning */
+ 229:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         }
+ 230:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 231:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         status = CYRET_SUCCESS;
+ 232:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     }
+ 233:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 234:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     return(status);
+ 235:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** }
+ 236:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 237:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 238:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** /*******************************************************************************
+ 239:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * Function Name: EZI2C_CAM_I2CResposeInsert
+ 240:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** ****************************************************************************//**
+ 241:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 242:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  Releases the read buffer to be read when a response is copied to the buffer
+ 243:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  and a new read transaction starts.
+ 244:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  Closes the read buffer when write transaction is started.
+ 245:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 246:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** * \globalvars
+ 247:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  EZI2C_CAM_applyBuffer - the flag to release the buffer with a response
+ 248:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *  to be read by the host.
+ 249:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *
+ 250:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** *******************************************************************************/
+ 251:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** static void EZI2C_CAM_I2CResposeInsert(void)
+ 252:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** {
+  27              		.loc 1 252 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+ 253:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     if (EZI2C_CAM_CHECK_INTR_SLAVE_MASKED(EZI2C_CAM_INTR_SLAVE_I2C_ADDR_MATCH))
+  32              		.loc 1 253 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 6
+
+
+  33 0000 0F4B     		ldr	r3, .L4
+  34 0002 1B68     		ldr	r3, [r3]
+  35 0004 5B06     		lsls	r3, r3, #25
+  36 0006 19D5     		bpl	.L1
+ 254:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     {
+ 255:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         if (EZI2C_CAM_CHECK_I2C_STATUS(EZI2C_CAM_I2C_STATUS_S_READ))
+  37              		.loc 1 255 0
+  38 0008 0E4B     		ldr	r3, .L4+4
+  39 000a 1B68     		ldr	r3, [r3]
+  40 000c DB06     		lsls	r3, r3, #27
+  41 000e 0BD5     		bpl	.L3
+ 256:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         {
+ 257:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             /* Address phase, host reads: release read buffer */
+ 258:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             if (0u != EZI2C_CAM_applyBuffer)
+  42              		.loc 1 258 0
+  43 0010 0D4B     		ldr	r3, .L4+8
+  44 0012 1B68     		ldr	r3, [r3]
+  45 0014 002B     		cmp	r3, #0
+  46 0016 11D0     		beq	.L1
+ 259:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             {
+ 260:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 EZI2C_CAM_slRdBufSize  = EZI2C_CAM_applyBuffer;
+  47              		.loc 1 260 0
+  48 0018 0C4A     		ldr	r2, .L4+12
+  49 001a 1360     		str	r3, [r2]
+ 261:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 EZI2C_CAM_slRdBufIndex = 0u;
+  50              		.loc 1 261 0
+  51 001c 0023     		movs	r3, #0
+  52 001e 0C4A     		ldr	r2, .L4+16
+  53 0020 1360     		str	r3, [r2]
+ 262:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 EZI2C_CAM_applyBuffer  = 0u;
+  54              		.loc 1 262 0
+  55 0022 094A     		ldr	r2, .L4+8
+  56 0024 1360     		str	r3, [r2]
+  57 0026 09E0     		b	.L1
+  58              	.L3:
+ 263:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             }
+ 264:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         }
+ 265:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         else
+ 266:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         {
+ 267:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             /* Address phase, host writes: close read buffer */
+ 268:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             if (EZI2C_CAM_slRdBufIndex != EZI2C_CAM_slRdBufSize)
+  59              		.loc 1 268 0
+  60 0028 094B     		ldr	r3, .L4+16
+  61 002a 1A68     		ldr	r2, [r3]
+  62 002c 074B     		ldr	r3, .L4+12
+  63 002e 1B68     		ldr	r3, [r3]
+  64 0030 9A42     		cmp	r2, r3
+  65 0032 03D0     		beq	.L1
+ 269:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             {
+ 270:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 EZI2C_CAM_slRdBufIndex = EZI2C_CAM_slRdBufSize;
+  66              		.loc 1 270 0
+  67 0034 054B     		ldr	r3, .L4+12
+  68 0036 1A68     		ldr	r2, [r3]
+  69 0038 054B     		ldr	r3, .L4+16
+  70 003a 1A60     		str	r2, [r3]
+  71              	.L1:
+ 271:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             }
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 7
+
+
+ 272:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         }
+ 273:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     }
+ 274:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** }
+  72              		.loc 1 274 0
+  73              		@ sp needed
+  74 003c 7047     		bx	lr
+  75              	.L5:
+  76 003e C046     		.align	2
+  77              	.L4:
+  78 0040 4C0F0740 		.word	1074204492
+  79 0044 64000740 		.word	1074200676
+  80 0048 00000000 		.word	.LANCHOR0
+  81 004c 00000000 		.word	EZI2C_CAM_slRdBufSize
+  82 0050 00000000 		.word	EZI2C_CAM_slRdBufIndex
+  83              		.cfi_endproc
+  84              	.LFE5:
+  85              		.size	EZI2C_CAM_I2CResposeInsert, .-EZI2C_CAM_I2CResposeInsert
+  86              		.section	.text.EZI2C_CAM_I2CCyBtldrCommStart,"ax",%progbits
+  87              		.align	2
+  88              		.global	EZI2C_CAM_I2CCyBtldrCommStart
+  89              		.code	16
+  90              		.thumb_func
+  91              		.type	EZI2C_CAM_I2CCyBtldrCommStart, %function
+  92              	EZI2C_CAM_I2CCyBtldrCommStart:
+  93              	.LFB0:
+  61:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_I2CSlaveInitWriteBuf(EZI2C_CAM_slWriteBuf, EZI2C_CAM_I2C_BTLDR_SIZEOF_WRITE_BUFFER);
+  94              		.loc 1 61 0
+  95              		.cfi_startproc
+  96              		@ args = 0, pretend = 0, frame = 0
+  97              		@ frame_needed = 0, uses_anonymous_args = 0
+  98 0000 10B5     		push	{r4, lr}
+  99              		.cfi_def_cfa_offset 8
+ 100              		.cfi_offset 4, -8
+ 101              		.cfi_offset 14, -4
+  62:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_I2CSlaveInitReadBuf (EZI2C_CAM_slReadBuf, 0u);
+ 102              		.loc 1 62 0
+ 103 0002 094C     		ldr	r4, .L7
+ 104 0004 201D     		adds	r0, r4, #4
+ 105 0006 4021     		movs	r1, #64
+ 106 0008 FFF7FEFF 		bl	EZI2C_CAM_I2CSlaveInitWriteBuf
+ 107              	.LVL0:
+  63:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 108              		.loc 1 63 0
+ 109 000c 2000     		movs	r0, r4
+ 110 000e 4430     		adds	r0, r0, #68
+ 111 0010 0021     		movs	r1, #0
+ 112 0012 FFF7FEFF 		bl	EZI2C_CAM_I2CSlaveInitReadBuf
+ 113              	.LVL1:
+  65:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_applyBuffer = 0u;
+ 114              		.loc 1 65 0
+ 115 0016 0548     		ldr	r0, .L7+4
+ 116 0018 FFF7FEFF 		bl	EZI2C_CAM_SetCustomInterruptHandler
+ 117              	.LVL2:
+  66:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 118              		.loc 1 66 0
+ 119 001c 0023     		movs	r3, #0
+ 120 001e 2360     		str	r3, [r4]
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 8
+
+
+  68:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** }
+ 121              		.loc 1 68 0
+ 122 0020 FFF7FEFF 		bl	EZI2C_CAM_Start
+ 123              	.LVL3:
+  69:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 124              		.loc 1 69 0
+ 125              		@ sp needed
+ 126 0024 10BD     		pop	{r4, pc}
+ 127              	.L8:
+ 128 0026 C046     		.align	2
+ 129              	.L7:
+ 130 0028 00000000 		.word	.LANCHOR0
+ 131 002c 00000000 		.word	EZI2C_CAM_I2CResposeInsert
+ 132              		.cfi_endproc
+ 133              	.LFE0:
+ 134              		.size	EZI2C_CAM_I2CCyBtldrCommStart, .-EZI2C_CAM_I2CCyBtldrCommStart
+ 135              		.section	.text.EZI2C_CAM_I2CCyBtldrCommStop,"ax",%progbits
+ 136              		.align	2
+ 137              		.global	EZI2C_CAM_I2CCyBtldrCommStop
+ 138              		.code	16
+ 139              		.thumb_func
+ 140              		.type	EZI2C_CAM_I2CCyBtldrCommStop, %function
+ 141              	EZI2C_CAM_I2CCyBtldrCommStop:
+ 142              	.LFB1:
+  80:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_Stop();
+ 143              		.loc 1 80 0
+ 144              		.cfi_startproc
+ 145              		@ args = 0, pretend = 0, frame = 0
+ 146              		@ frame_needed = 0, uses_anonymous_args = 0
+ 147 0000 10B5     		push	{r4, lr}
+ 148              		.cfi_def_cfa_offset 8
+ 149              		.cfi_offset 4, -8
+ 150              		.cfi_offset 14, -4
+  81:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** }
+ 151              		.loc 1 81 0
+ 152 0002 FFF7FEFF 		bl	EZI2C_CAM_Stop
+ 153              	.LVL4:
+  82:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 154              		.loc 1 82 0
+ 155              		@ sp needed
+ 156 0006 10BD     		pop	{r4, pc}
+ 157              		.cfi_endproc
+ 158              	.LFE1:
+ 159              		.size	EZI2C_CAM_I2CCyBtldrCommStop, .-EZI2C_CAM_I2CCyBtldrCommStop
+ 160              		.section	.text.EZI2C_CAM_I2CCyBtldrCommReset,"ax",%progbits
+ 161              		.align	2
+ 162              		.global	EZI2C_CAM_I2CCyBtldrCommReset
+ 163              		.code	16
+ 164              		.thumb_func
+ 165              		.type	EZI2C_CAM_I2CCyBtldrCommReset, %function
+ 166              	EZI2C_CAM_I2CCyBtldrCommReset:
+ 167              	.LFB2:
+ 102:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     /* Make read buffer full */
+ 168              		.loc 1 102 0
+ 169              		.cfi_startproc
+ 170              		@ args = 0, pretend = 0, frame = 0
+ 171              		@ frame_needed = 0, uses_anonymous_args = 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 9
+
+
+ 172              		@ link register save eliminated.
+ 104:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 173              		.loc 1 104 0
+ 174 0000 0023     		movs	r3, #0
+ 175 0002 044A     		ldr	r2, .L11
+ 176 0004 1360     		str	r3, [r2]
+ 107:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     EZI2C_CAM_slWrBufIndex = 0u;
+ 177              		.loc 1 107 0
+ 178 0006 044A     		ldr	r2, .L11+4
+ 179 0008 1360     		str	r3, [r2]
+ 108:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 180              		.loc 1 108 0
+ 181 000a 044A     		ldr	r2, .L11+8
+ 182 000c 1360     		str	r3, [r2]
+ 111:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** }
+ 183              		.loc 1 111 0
+ 184 000e 044A     		ldr	r2, .L11+12
+ 185 0010 1370     		strb	r3, [r2]
+ 112:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 186              		.loc 1 112 0
+ 187              		@ sp needed
+ 188 0012 7047     		bx	lr
+ 189              	.L12:
+ 190              		.align	2
+ 191              	.L11:
+ 192 0014 00000000 		.word	EZI2C_CAM_slRdBufSize
+ 193 0018 00000000 		.word	EZI2C_CAM_slRdBufIndex
+ 194 001c 00000000 		.word	EZI2C_CAM_slWrBufIndex
+ 195 0020 00000000 		.word	EZI2C_CAM_slStatus
+ 196              		.cfi_endproc
+ 197              	.LFE2:
+ 198              		.size	EZI2C_CAM_I2CCyBtldrCommReset, .-EZI2C_CAM_I2CCyBtldrCommReset
+ 199              		.section	.text.EZI2C_CAM_I2CCyBtldrCommRead,"ax",%progbits
+ 200              		.align	2
+ 201              		.global	EZI2C_CAM_I2CCyBtldrCommRead
+ 202              		.code	16
+ 203              		.thumb_func
+ 204              		.type	EZI2C_CAM_I2CCyBtldrCommRead, %function
+ 205              	EZI2C_CAM_I2CCyBtldrCommRead:
+ 206              	.LFB3:
+ 144:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     cystatus status;
+ 207              		.loc 1 144 0
+ 208              		.cfi_startproc
+ 209              		@ args = 0, pretend = 0, frame = 0
+ 210              		@ frame_needed = 0, uses_anonymous_args = 0
+ 211              	.LVL5:
+ 212 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+ 213              		.cfi_def_cfa_offset 24
+ 214              		.cfi_offset 3, -24
+ 215              		.cfi_offset 4, -20
+ 216              		.cfi_offset 5, -16
+ 217              		.cfi_offset 6, -12
+ 218              		.cfi_offset 7, -8
+ 219              		.cfi_offset 14, -4
+ 220 0002 0700     		movs	r7, r0
+ 221 0004 0E00     		movs	r6, r1
+ 222 0006 1500     		movs	r5, r2
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 10
+
+
+ 223              	.LVL6:
+ 150:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     {
+ 224              		.loc 1 150 0
+ 225 0008 0028     		cmp	r0, #0
+ 226 000a 25D0     		beq	.L19
+ 150:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     {
+ 227              		.loc 1 150 0 is_stmt 0 discriminator 1
+ 228 000c 0029     		cmp	r1, #0
+ 229 000e 25D0     		beq	.L20
+ 230              	.LVL7:
+ 153:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 231              		.loc 1 153 0 is_stmt 1
+ 232 0010 9A00     		lsls	r2, r3, #2
+ 233              	.LVL8:
+ 234 0012 D318     		adds	r3, r2, r3
+ 235              	.LVL9:
+ 236 0014 5C00     		lsls	r4, r3, #1
+ 237              	.LVL10:
+ 155:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         {
+ 238              		.loc 1 155 0
+ 239 0016 1BE0     		b	.L15
+ 240              	.LVL11:
+ 241              	.L18:
+ 158:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             {
+ 242              		.loc 1 158 0
+ 243 0018 114B     		ldr	r3, .L21
+ 244 001a 1B78     		ldrb	r3, [r3]
+ 245 001c DB06     		lsls	r3, r3, #27
+ 246 001e 13D5     		bpl	.L16
+ 161:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 247              		.loc 1 161 0
+ 248 0020 104B     		ldr	r3, .L21+4
+ 249 0022 1A68     		ldr	r2, [r3]
+ 250 0024 2A80     		strh	r2, [r5]
+ 164:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 EZI2C_CAM_slWrBufIndex = 0u;
+ 251              		.loc 1 164 0
+ 252 0026 0022     		movs	r2, #0
+ 253 0028 0D49     		ldr	r1, .L21
+ 254 002a 0A70     		strb	r2, [r1]
+ 165:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 255              		.loc 1 165 0
+ 256 002c 1A60     		str	r2, [r3]
+ 169:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 257              		.loc 1 169 0
+ 258 002e 2B88     		ldrh	r3, [r5]
+ 259 0030 321C     		adds	r2, r6, #0
+ 260 0032 9E42     		cmp	r6, r3
+ 261 0034 00D9     		bls	.L17
+ 262 0036 1A1C     		adds	r2, r3, #0
+ 263              	.L17:
+ 264 0038 92B2     		uxth	r2, r2
+ 168:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                                               EZI2C_CAM_BYTES_TO_COPY(*count, size));
+ 265              		.loc 1 168 0
+ 266 003a 0B49     		ldr	r1, .L21+8
+ 267 003c 0431     		adds	r1, r1, #4
+ 268 003e 3800     		movs	r0, r7
+ 269 0040 FFF7FEFF 		bl	memcpy
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 11
+
+
+ 270              	.LVL12:
+ 171:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****                 break;
+ 271              		.loc 1 171 0
+ 272 0044 0020     		movs	r0, #0
+ 172:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             }
+ 273              		.loc 1 172 0
+ 274 0046 0AE0     		b	.L14
+ 275              	.LVL13:
+ 276              	.L16:
+ 175:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****             --timeoutMs;
+ 277              		.loc 1 175 0
+ 278 0048 0120     		movs	r0, #1
+ 279 004a FFF7FEFF 		bl	CyDelay
+ 280              	.LVL14:
+ 176:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         }
+ 281              		.loc 1 176 0
+ 282 004e 013C     		subs	r4, r4, #1
+ 283              	.LVL15:
+ 284              	.L15:
+ 155:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         {
+ 285              		.loc 1 155 0
+ 286 0050 002C     		cmp	r4, #0
+ 287 0052 E1D1     		bne	.L18
+ 152:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         timeoutMs = ((uint32) 10u * timeOut); /* Convert from 10mS check to 1mS checks */
+ 288              		.loc 1 152 0
+ 289 0054 1020     		movs	r0, #16
+ 290 0056 02E0     		b	.L14
+ 291              	.LVL16:
+ 292              	.L19:
+ 148:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 293              		.loc 1 148 0
+ 294 0058 0120     		movs	r0, #1
+ 295              	.LVL17:
+ 296 005a 00E0     		b	.L14
+ 297              	.LVL18:
+ 298              	.L20:
+ 299 005c 0120     		movs	r0, #1
+ 300              	.LVL19:
+ 301              	.L14:
+ 181:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 302              		.loc 1 181 0
+ 303              		@ sp needed
+ 304              	.LVL20:
+ 305              	.LVL21:
+ 306 005e F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 307              	.L22:
+ 308              		.align	2
+ 309              	.L21:
+ 310 0060 00000000 		.word	EZI2C_CAM_slStatus
+ 311 0064 00000000 		.word	EZI2C_CAM_slWrBufIndex
+ 312 0068 00000000 		.word	.LANCHOR0
+ 313              		.cfi_endproc
+ 314              	.LFE3:
+ 315              		.size	EZI2C_CAM_I2CCyBtldrCommRead, .-EZI2C_CAM_I2CCyBtldrCommRead
+ 316              		.section	.text.EZI2C_CAM_I2CCyBtldrCommWrite,"ax",%progbits
+ 317              		.align	2
+ 318              		.global	EZI2C_CAM_I2CCyBtldrCommWrite
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 12
+
+
+ 319              		.code	16
+ 320              		.thumb_func
+ 321              		.type	EZI2C_CAM_I2CCyBtldrCommWrite, %function
+ 322              	EZI2C_CAM_I2CCyBtldrCommWrite:
+ 323              	.LFB4:
+ 212:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     cystatus status;
+ 324              		.loc 1 212 0
+ 325              		.cfi_startproc
+ 326              		@ args = 0, pretend = 0, frame = 0
+ 327              		@ frame_needed = 0, uses_anonymous_args = 0
+ 328              	.LVL22:
+ 329 0000 70B5     		push	{r4, r5, r6, lr}
+ 330              		.cfi_def_cfa_offset 16
+ 331              		.cfi_offset 4, -16
+ 332              		.cfi_offset 5, -12
+ 333              		.cfi_offset 6, -8
+ 334              		.cfi_offset 14, -4
+ 335 0002 0C00     		movs	r4, r1
+ 336              	.LVL23:
+ 217:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     {
+ 337              		.loc 1 217 0
+ 338 0004 0028     		cmp	r0, #0
+ 339 0006 0DD0     		beq	.L25
+ 217:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     {
+ 340              		.loc 1 217 0 is_stmt 0 discriminator 1
+ 341 0008 0029     		cmp	r1, #0
+ 342 000a 0DD0     		beq	.L26
+ 220:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****         (void) memcpy((void *) EZI2C_CAM_slReadBuf, (const void *) pData, (uint32) size);
+ 343              		.loc 1 220 0 is_stmt 1
+ 344 000c 1180     		strh	r1, [r2]
+ 221:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 345              		.loc 1 221 0
+ 346 000e 074D     		ldr	r5, .L27
+ 347 0010 2B00     		movs	r3, r5
+ 348              	.LVL24:
+ 349 0012 4433     		adds	r3, r3, #68
+ 350 0014 0A00     		movs	r2, r1
+ 351              	.LVL25:
+ 352 0016 0100     		movs	r1, r0
+ 353              	.LVL26:
+ 354 0018 1800     		movs	r0, r3
+ 355              	.LVL27:
+ 356 001a FFF7FEFF 		bl	memcpy
+ 357              	.LVL28:
+ 224:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 358              		.loc 1 224 0
+ 359 001e 2C60     		str	r4, [r5]
+ 360              	.LVL29:
+ 231:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c ****     }
+ 361              		.loc 1 231 0
+ 362 0020 0020     		movs	r0, #0
+ 363 0022 02E0     		b	.L24
+ 364              	.LVL30:
+ 365              	.L25:
+ 215:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 366              		.loc 1 215 0
+ 367 0024 0120     		movs	r0, #1
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 13
+
+
+ 368              	.LVL31:
+ 369 0026 00E0     		b	.L24
+ 370              	.LVL32:
+ 371              	.L26:
+ 372 0028 0120     		movs	r0, #1
+ 373              	.LVL33:
+ 374              	.L24:
+ 235:Generated_Source\PSoC4/EZI2C_CAM_I2C_BOOT.c **** 
+ 375              		.loc 1 235 0
+ 376              		@ sp needed
+ 377 002a 70BD     		pop	{r4, r5, r6, pc}
+ 378              	.L28:
+ 379              		.align	2
+ 380              	.L27:
+ 381 002c 00000000 		.word	.LANCHOR0
+ 382              		.cfi_endproc
+ 383              	.LFE4:
+ 384              		.size	EZI2C_CAM_I2CCyBtldrCommWrite, .-EZI2C_CAM_I2CCyBtldrCommWrite
+ 385              		.bss
+ 386              		.align	2
+ 387              		.set	.LANCHOR0,. + 0
+ 388              		.type	EZI2C_CAM_applyBuffer, %object
+ 389              		.size	EZI2C_CAM_applyBuffer, 4
+ 390              	EZI2C_CAM_applyBuffer:
+ 391 0000 00000000 		.space	4
+ 392              		.type	EZI2C_CAM_slWriteBuf, %object
+ 393              		.size	EZI2C_CAM_slWriteBuf, 64
+ 394              	EZI2C_CAM_slWriteBuf:
+ 395 0004 00000000 		.space	64
+ 395      00000000 
+ 395      00000000 
+ 395      00000000 
+ 395      00000000 
+ 396              		.type	EZI2C_CAM_slReadBuf, %object
+ 397              		.size	EZI2C_CAM_slReadBuf, 64
+ 398              	EZI2C_CAM_slReadBuf:
+ 399 0044 00000000 		.space	64
+ 399      00000000 
+ 399      00000000 
+ 399      00000000 
+ 399      00000000 
+ 400              		.text
+ 401              	.Letext0:
+ 402              		.file 2 "Generated_Source\\PSoC4/cytypes.h"
+ 403              		.file 3 "Generated_Source\\PSoC4\\EZI2C_CAM_I2C_PVT.h"
+ 404              		.file 4 "Generated_Source\\PSoC4\\EZI2C_CAM_I2C.h"
+ 405              		.file 5 "Generated_Source\\PSoC4\\EZI2C_CAM.h"
+ 406              		.file 6 "Generated_Source\\PSoC4/CyLib.h"
+ 407              		.section	.debug_info,"",%progbits
+ 408              	.Ldebug_info0:
+ 409 0000 72030000 		.4byte	0x372
+ 410 0004 0400     		.2byte	0x4
+ 411 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 412 000a 04       		.byte	0x4
+ 413 000b 01       		.uleb128 0x1
+ 414 000c B3010000 		.4byte	.LASF42
+ 415 0010 0C       		.byte	0xc
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 14
+
+
+ 416 0011 AE020000 		.4byte	.LASF43
+ 417 0015 8C010000 		.4byte	.LASF44
+ 418 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 419 001d 00000000 		.4byte	0
+ 420 0021 00000000 		.4byte	.Ldebug_line0
+ 421 0025 02       		.uleb128 0x2
+ 422 0026 01       		.byte	0x1
+ 423 0027 06       		.byte	0x6
+ 424 0028 48030000 		.4byte	.LASF0
+ 425 002c 02       		.uleb128 0x2
+ 426 002d 01       		.byte	0x1
+ 427 002e 08       		.byte	0x8
+ 428 002f EB000000 		.4byte	.LASF1
+ 429 0033 02       		.uleb128 0x2
+ 430 0034 02       		.byte	0x2
+ 431 0035 05       		.byte	0x5
+ 432 0036 DA020000 		.4byte	.LASF2
+ 433 003a 02       		.uleb128 0x2
+ 434 003b 02       		.byte	0x2
+ 435 003c 07       		.byte	0x7
+ 436 003d 86020000 		.4byte	.LASF3
+ 437 0041 02       		.uleb128 0x2
+ 438 0042 04       		.byte	0x4
+ 439 0043 05       		.byte	0x5
+ 440 0044 2E030000 		.4byte	.LASF4
+ 441 0048 02       		.uleb128 0x2
+ 442 0049 04       		.byte	0x4
+ 443 004a 07       		.byte	0x7
+ 444 004b D3000000 		.4byte	.LASF5
+ 445 004f 02       		.uleb128 0x2
+ 446 0050 08       		.byte	0x8
+ 447 0051 05       		.byte	0x5
+ 448 0052 99020000 		.4byte	.LASF6
+ 449 0056 02       		.uleb128 0x2
+ 450 0057 08       		.byte	0x8
+ 451 0058 07       		.byte	0x7
+ 452 0059 6D010000 		.4byte	.LASF7
+ 453 005d 03       		.uleb128 0x3
+ 454 005e 04       		.byte	0x4
+ 455 005f 05       		.byte	0x5
+ 456 0060 696E7400 		.ascii	"int\000"
+ 457 0064 02       		.uleb128 0x2
+ 458 0065 04       		.byte	0x4
+ 459 0066 07       		.byte	0x7
+ 460 0067 43010000 		.4byte	.LASF8
+ 461 006b 04       		.uleb128 0x4
+ 462 006c E5000000 		.4byte	.LASF9
+ 463 0070 02       		.byte	0x2
+ 464 0071 E401     		.2byte	0x1e4
+ 465 0073 2C000000 		.4byte	0x2c
+ 466 0077 04       		.uleb128 0x4
+ 467 0078 1F010000 		.4byte	.LASF10
+ 468 007c 02       		.byte	0x2
+ 469 007d E501     		.2byte	0x1e5
+ 470 007f 3A000000 		.4byte	0x3a
+ 471 0083 04       		.uleb128 0x4
+ 472 0084 26010000 		.4byte	.LASF11
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 15
+
+
+ 473 0088 02       		.byte	0x2
+ 474 0089 E601     		.2byte	0x1e6
+ 475 008b 48000000 		.4byte	0x48
+ 476 008f 02       		.uleb128 0x2
+ 477 0090 04       		.byte	0x4
+ 478 0091 04       		.byte	0x4
+ 479 0092 B4000000 		.4byte	.LASF12
+ 480 0096 02       		.uleb128 0x2
+ 481 0097 08       		.byte	0x8
+ 482 0098 04       		.byte	0x4
+ 483 0099 18010000 		.4byte	.LASF13
+ 484 009d 02       		.uleb128 0x2
+ 485 009e 01       		.byte	0x1
+ 486 009f 08       		.byte	0x8
+ 487 00a0 37030000 		.4byte	.LASF14
+ 488 00a4 04       		.uleb128 0x4
+ 489 00a5 1E000000 		.4byte	.LASF15
+ 490 00a9 02       		.byte	0x2
+ 491 00aa 8602     		.2byte	0x286
+ 492 00ac 48000000 		.4byte	0x48
+ 493 00b0 05       		.uleb128 0x5
+ 494 00b1 6B000000 		.4byte	0x6b
+ 495 00b5 04       		.uleb128 0x4
+ 496 00b6 27000000 		.4byte	.LASF16
+ 497 00ba 02       		.byte	0x2
+ 498 00bb 9002     		.2byte	0x290
+ 499 00bd C1000000 		.4byte	0xc1
+ 500 00c1 05       		.uleb128 0x5
+ 501 00c2 83000000 		.4byte	0x83
+ 502 00c6 02       		.uleb128 0x2
+ 503 00c7 08       		.byte	0x8
+ 504 00c8 04       		.byte	0x4
+ 505 00c9 3C030000 		.4byte	.LASF17
+ 506 00cd 02       		.uleb128 0x2
+ 507 00ce 04       		.byte	0x4
+ 508 00cf 07       		.byte	0x7
+ 509 00d0 7D020000 		.4byte	.LASF18
+ 510 00d4 06       		.uleb128 0x6
+ 511 00d5 53000000 		.4byte	.LASF45
+ 512 00d9 01       		.byte	0x1
+ 513 00da FB       		.byte	0xfb
+ 514 00db 00000000 		.4byte	.LFB5
+ 515 00df 54000000 		.4byte	.LFE5-.LFB5
+ 516 00e3 01       		.uleb128 0x1
+ 517 00e4 9C       		.byte	0x9c
+ 518 00e5 07       		.uleb128 0x7
+ 519 00e6 41020000 		.4byte	.LASF19
+ 520 00ea 01       		.byte	0x1
+ 521 00eb 3C       		.byte	0x3c
+ 522 00ec 00000000 		.4byte	.LFB0
+ 523 00f0 30000000 		.4byte	.LFE0-.LFB0
+ 524 00f4 01       		.uleb128 0x1
+ 525 00f5 9C       		.byte	0x9c
+ 526 00f6 4F010000 		.4byte	0x14f
+ 527 00fa 08       		.uleb128 0x8
+ 528 00fb 0C000000 		.4byte	.LVL0
+ 529 00ff 28030000 		.4byte	0x328
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 16
+
+
+ 530 0103 14010000 		.4byte	0x114
+ 531 0107 09       		.uleb128 0x9
+ 532 0108 01       		.uleb128 0x1
+ 533 0109 50       		.byte	0x50
+ 534 010a 02       		.uleb128 0x2
+ 535 010b 74       		.byte	0x74
+ 536 010c 04       		.sleb128 4
+ 537 010d 09       		.uleb128 0x9
+ 538 010e 01       		.uleb128 0x1
+ 539 010f 51       		.byte	0x51
+ 540 0110 02       		.uleb128 0x2
+ 541 0111 08       		.byte	0x8
+ 542 0112 40       		.byte	0x40
+ 543 0113 00       		.byte	0
+ 544 0114 08       		.uleb128 0x8
+ 545 0115 16000000 		.4byte	.LVL1
+ 546 0119 34030000 		.4byte	0x334
+ 547 011d 2E010000 		.4byte	0x12e
+ 548 0121 09       		.uleb128 0x9
+ 549 0122 01       		.uleb128 0x1
+ 550 0123 50       		.byte	0x50
+ 551 0124 03       		.uleb128 0x3
+ 552 0125 74       		.byte	0x74
+ 553 0126 C400     		.sleb128 68
+ 554 0128 09       		.uleb128 0x9
+ 555 0129 01       		.uleb128 0x1
+ 556 012a 51       		.byte	0x51
+ 557 012b 01       		.uleb128 0x1
+ 558 012c 30       		.byte	0x30
+ 559 012d 00       		.byte	0
+ 560 012e 08       		.uleb128 0x8
+ 561 012f 1C000000 		.4byte	.LVL2
+ 562 0133 40030000 		.4byte	0x340
+ 563 0137 45010000 		.4byte	0x145
+ 564 013b 09       		.uleb128 0x9
+ 565 013c 01       		.uleb128 0x1
+ 566 013d 50       		.byte	0x50
+ 567 013e 05       		.uleb128 0x5
+ 568 013f 03       		.byte	0x3
+ 569 0140 00000000 		.4byte	EZI2C_CAM_I2CResposeInsert
+ 570 0144 00       		.byte	0
+ 571 0145 0A       		.uleb128 0xa
+ 572 0146 24000000 		.4byte	.LVL3
+ 573 014a 4B030000 		.4byte	0x34b
+ 574 014e 00       		.byte	0
+ 575 014f 07       		.uleb128 0x7
+ 576 0150 50010000 		.4byte	.LASF20
+ 577 0154 01       		.byte	0x1
+ 578 0155 4F       		.byte	0x4f
+ 579 0156 00000000 		.4byte	.LFB1
+ 580 015a 08000000 		.4byte	.LFE1-.LFB1
+ 581 015e 01       		.uleb128 0x1
+ 582 015f 9C       		.byte	0x9c
+ 583 0160 6E010000 		.4byte	0x16e
+ 584 0164 0A       		.uleb128 0xa
+ 585 0165 06000000 		.4byte	.LVL4
+ 586 0169 56030000 		.4byte	0x356
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 17
+
+
+ 587 016d 00       		.byte	0
+ 588 016e 0B       		.uleb128 0xb
+ 589 016f 5F020000 		.4byte	.LASF46
+ 590 0173 01       		.byte	0x1
+ 591 0174 65       		.byte	0x65
+ 592 0175 00000000 		.4byte	.LFB2
+ 593 0179 24000000 		.4byte	.LFE2-.LFB2
+ 594 017d 01       		.uleb128 0x1
+ 595 017e 9C       		.byte	0x9c
+ 596 017f 0C       		.uleb128 0xc
+ 597 0180 7B030000 		.4byte	.LASF27
+ 598 0184 01       		.byte	0x1
+ 599 0185 8F       		.byte	0x8f
+ 600 0186 A4000000 		.4byte	0xa4
+ 601 018a 00000000 		.4byte	.LFB3
+ 602 018e 6C000000 		.4byte	.LFE3-.LFB3
+ 603 0192 01       		.uleb128 0x1
+ 604 0193 9C       		.byte	0x9c
+ 605 0194 1F020000 		.4byte	0x21f
+ 606 0198 0D       		.uleb128 0xd
+ 607 0199 AE000000 		.4byte	.LASF21
+ 608 019d 01       		.byte	0x1
+ 609 019e 8F       		.byte	0x8f
+ 610 019f 1F020000 		.4byte	0x21f
+ 611 01a3 00000000 		.4byte	.LLST0
+ 612 01a7 0D       		.uleb128 0xd
+ 613 01a8 CE000000 		.4byte	.LASF22
+ 614 01ac 01       		.byte	0x1
+ 615 01ad 8F       		.byte	0x8f
+ 616 01ae 77000000 		.4byte	0x77
+ 617 01b2 58000000 		.4byte	.LLST1
+ 618 01b6 0D       		.uleb128 0xd
+ 619 01b7 4D000000 		.4byte	.LASF23
+ 620 01bb 01       		.byte	0x1
+ 621 01bc 8F       		.byte	0x8f
+ 622 01bd 25020000 		.4byte	0x225
+ 623 01c1 92000000 		.4byte	.LLST2
+ 624 01c5 0D       		.uleb128 0xd
+ 625 01c6 84010000 		.4byte	.LASF24
+ 626 01ca 01       		.byte	0x1
+ 627 01cb 8F       		.byte	0x8f
+ 628 01cc 6B000000 		.4byte	0x6b
+ 629 01d0 D4000000 		.4byte	.LLST3
+ 630 01d4 0E       		.uleb128 0xe
+ 631 01d5 98000000 		.4byte	.LASF25
+ 632 01d9 01       		.byte	0x1
+ 633 01da 91       		.byte	0x91
+ 634 01db A4000000 		.4byte	0xa4
+ 635 01df 0E010000 		.4byte	.LLST4
+ 636 01e3 0E       		.uleb128 0xe
+ 637 01e4 2D000000 		.4byte	.LASF26
+ 638 01e8 01       		.byte	0x1
+ 639 01e9 92       		.byte	0x92
+ 640 01ea 83000000 		.4byte	0x83
+ 641 01ee 5D010000 		.4byte	.LLST5
+ 642 01f2 08       		.uleb128 0x8
+ 643 01f3 44000000 		.4byte	.LVL12
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 18
+
+
+ 644 01f7 61030000 		.4byte	0x361
+ 645 01fb 0F020000 		.4byte	0x20f
+ 646 01ff 09       		.uleb128 0x9
+ 647 0200 01       		.uleb128 0x1
+ 648 0201 50       		.byte	0x50
+ 649 0202 02       		.uleb128 0x2
+ 650 0203 77       		.byte	0x77
+ 651 0204 00       		.sleb128 0
+ 652 0205 09       		.uleb128 0x9
+ 653 0206 01       		.uleb128 0x1
+ 654 0207 51       		.byte	0x51
+ 655 0208 05       		.uleb128 0x5
+ 656 0209 03       		.byte	0x3
+ 657 020a 04000000 		.4byte	.LANCHOR0+4
+ 658 020e 00       		.byte	0
+ 659 020f 0F       		.uleb128 0xf
+ 660 0210 4E000000 		.4byte	.LVL14
+ 661 0214 6A030000 		.4byte	0x36a
+ 662 0218 09       		.uleb128 0x9
+ 663 0219 01       		.uleb128 0x1
+ 664 021a 50       		.byte	0x50
+ 665 021b 01       		.uleb128 0x1
+ 666 021c 31       		.byte	0x31
+ 667 021d 00       		.byte	0
+ 668 021e 00       		.byte	0
+ 669 021f 10       		.uleb128 0x10
+ 670 0220 04       		.byte	0x4
+ 671 0221 6B000000 		.4byte	0x6b
+ 672 0225 10       		.uleb128 0x10
+ 673 0226 04       		.byte	0x4
+ 674 0227 77000000 		.4byte	0x77
+ 675 022b 0C       		.uleb128 0xc
+ 676 022c 00000000 		.4byte	.LASF28
+ 677 0230 01       		.byte	0x1
+ 678 0231 D3       		.byte	0xd3
+ 679 0232 A4000000 		.4byte	0xa4
+ 680 0236 00000000 		.4byte	.LFB4
+ 681 023a 30000000 		.4byte	.LFE4-.LFB4
+ 682 023e 01       		.uleb128 0x1
+ 683 023f 9C       		.byte	0x9c
+ 684 0240 AE020000 		.4byte	0x2ae
+ 685 0244 0D       		.uleb128 0xd
+ 686 0245 AE000000 		.4byte	.LASF21
+ 687 0249 01       		.byte	0x1
+ 688 024a D3       		.byte	0xd3
+ 689 024b AE020000 		.4byte	0x2ae
+ 690 024f 70010000 		.4byte	.LLST6
+ 691 0253 0D       		.uleb128 0xd
+ 692 0254 CE000000 		.4byte	.LASF22
+ 693 0258 01       		.byte	0x1
+ 694 0259 D3       		.byte	0xd3
+ 695 025a 77000000 		.4byte	0x77
+ 696 025e CE010000 		.4byte	.LLST7
+ 697 0262 0D       		.uleb128 0xd
+ 698 0263 4D000000 		.4byte	.LASF23
+ 699 0267 01       		.byte	0x1
+ 700 0268 D3       		.byte	0xd3
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 19
+
+
+ 701 0269 25020000 		.4byte	0x225
+ 702 026d 15020000 		.4byte	.LLST8
+ 703 0271 0D       		.uleb128 0xd
+ 704 0272 84010000 		.4byte	.LASF24
+ 705 0276 01       		.byte	0x1
+ 706 0277 D3       		.byte	0xd3
+ 707 0278 6B000000 		.4byte	0x6b
+ 708 027c 4F020000 		.4byte	.LLST9
+ 709 0280 0E       		.uleb128 0xe
+ 710 0281 98000000 		.4byte	.LASF25
+ 711 0285 01       		.byte	0x1
+ 712 0286 D5       		.byte	0xd5
+ 713 0287 A4000000 		.4byte	0xa4
+ 714 028b 89020000 		.4byte	.LLST10
+ 715 028f 0F       		.uleb128 0xf
+ 716 0290 1E000000 		.4byte	.LVL28
+ 717 0294 61030000 		.4byte	0x361
+ 718 0298 09       		.uleb128 0x9
+ 719 0299 01       		.uleb128 0x1
+ 720 029a 50       		.byte	0x50
+ 721 029b 03       		.uleb128 0x3
+ 722 029c 75       		.byte	0x75
+ 723 029d C400     		.sleb128 68
+ 724 029f 09       		.uleb128 0x9
+ 725 02a0 01       		.uleb128 0x1
+ 726 02a1 51       		.byte	0x51
+ 727 02a2 03       		.uleb128 0x3
+ 728 02a3 F3       		.byte	0xf3
+ 729 02a4 01       		.uleb128 0x1
+ 730 02a5 50       		.byte	0x50
+ 731 02a6 09       		.uleb128 0x9
+ 732 02a7 01       		.uleb128 0x1
+ 733 02a8 52       		.byte	0x52
+ 734 02a9 02       		.uleb128 0x2
+ 735 02aa 74       		.byte	0x74
+ 736 02ab 00       		.sleb128 0
+ 737 02ac 00       		.byte	0
+ 738 02ad 00       		.byte	0
+ 739 02ae 10       		.uleb128 0x10
+ 740 02af 04       		.byte	0x4
+ 741 02b0 B4020000 		.4byte	0x2b4
+ 742 02b4 11       		.uleb128 0x11
+ 743 02b5 6B000000 		.4byte	0x6b
+ 744 02b9 12       		.uleb128 0x12
+ 745 02ba 6B000000 		.4byte	0x6b
+ 746 02be C9020000 		.4byte	0x2c9
+ 747 02c2 13       		.uleb128 0x13
+ 748 02c3 CD000000 		.4byte	0xcd
+ 749 02c7 3F       		.byte	0x3f
+ 750 02c8 00       		.byte	0
+ 751 02c9 14       		.uleb128 0x14
+ 752 02ca BA000000 		.4byte	.LASF29
+ 753 02ce 01       		.byte	0x1
+ 754 02cf 1D       		.byte	0x1d
+ 755 02d0 B9020000 		.4byte	0x2b9
+ 756 02d4 05       		.uleb128 0x5
+ 757 02d5 03       		.byte	0x3
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 20
+
+
+ 758 02d6 44000000 		.4byte	EZI2C_CAM_slReadBuf
+ 759 02da 14       		.uleb128 0x14
+ 760 02db 98030000 		.4byte	.LASF30
+ 761 02df 01       		.byte	0x1
+ 762 02e0 20       		.byte	0x20
+ 763 02e1 B9020000 		.4byte	0x2b9
+ 764 02e5 05       		.uleb128 0x5
+ 765 02e6 03       		.byte	0x3
+ 766 02e7 04000000 		.4byte	EZI2C_CAM_slWriteBuf
+ 767 02eb 14       		.uleb128 0x14
+ 768 02ec 2D010000 		.4byte	.LASF31
+ 769 02f0 01       		.byte	0x1
+ 770 02f1 23       		.byte	0x23
+ 771 02f2 83000000 		.4byte	0x83
+ 772 02f6 05       		.uleb128 0x5
+ 773 02f7 03       		.byte	0x3
+ 774 02f8 00000000 		.4byte	EZI2C_CAM_applyBuffer
+ 775 02fc 15       		.uleb128 0x15
+ 776 02fd 85000000 		.4byte	.LASF32
+ 777 0301 03       		.byte	0x3
+ 778 0302 21       		.byte	0x21
+ 779 0303 B0000000 		.4byte	0xb0
+ 780 0307 15       		.uleb128 0x15
+ 781 0308 54030000 		.4byte	.LASF33
+ 782 030c 03       		.byte	0x3
+ 783 030d 26       		.byte	0x26
+ 784 030e C1000000 		.4byte	0xc1
+ 785 0312 15       		.uleb128 0x15
+ 786 0313 37000000 		.4byte	.LASF34
+ 787 0317 03       		.byte	0x3
+ 788 0318 2A       		.byte	0x2a
+ 789 0319 C1000000 		.4byte	0xc1
+ 790 031d 15       		.uleb128 0x15
+ 791 031e 6E000000 		.4byte	.LASF35
+ 792 0322 03       		.byte	0x3
+ 793 0323 2B       		.byte	0x2b
+ 794 0324 C1000000 		.4byte	0xc1
+ 795 0328 16       		.uleb128 0x16
+ 796 0329 F9000000 		.4byte	.LASF36
+ 797 032d F9000000 		.4byte	.LASF36
+ 798 0331 04       		.byte	0x4
+ 799 0332 2F01     		.2byte	0x12f
+ 800 0334 16       		.uleb128 0x16
+ 801 0335 E4020000 		.4byte	.LASF37
+ 802 0339 E4020000 		.4byte	.LASF37
+ 803 033d 04       		.byte	0x4
+ 804 033e 2E01     		.2byte	0x12e
+ 805 0340 17       		.uleb128 0x17
+ 806 0341 02030000 		.4byte	.LASF38
+ 807 0345 02030000 		.4byte	.LASF38
+ 808 0349 05       		.byte	0x5
+ 809 034a 82       		.byte	0x82
+ 810 034b 17       		.uleb128 0x17
+ 811 034c 6B030000 		.4byte	.LASF39
+ 812 0350 6B030000 		.4byte	.LASF39
+ 813 0354 05       		.byte	0x5
+ 814 0355 6E       		.byte	0x6e
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 21
+
+
+ 815 0356 17       		.uleb128 0x17
+ 816 0357 9F000000 		.4byte	.LASF40
+ 817 035b 9F000000 		.4byte	.LASF40
+ 818 035f 05       		.byte	0x5
+ 819 0360 6F       		.byte	0x6f
+ 820 0361 18       		.uleb128 0x18
+ 821 0362 A7020000 		.4byte	.LASF47
+ 822 0366 A7020000 		.4byte	.LASF47
+ 823 036a 17       		.uleb128 0x17
+ 824 036b 26030000 		.4byte	.LASF41
+ 825 036f 26030000 		.4byte	.LASF41
+ 826 0373 06       		.byte	0x6
+ 827 0374 D9       		.byte	0xd9
+ 828 0375 00       		.byte	0
+ 829              		.section	.debug_abbrev,"",%progbits
+ 830              	.Ldebug_abbrev0:
+ 831 0000 01       		.uleb128 0x1
+ 832 0001 11       		.uleb128 0x11
+ 833 0002 01       		.byte	0x1
+ 834 0003 25       		.uleb128 0x25
+ 835 0004 0E       		.uleb128 0xe
+ 836 0005 13       		.uleb128 0x13
+ 837 0006 0B       		.uleb128 0xb
+ 838 0007 03       		.uleb128 0x3
+ 839 0008 0E       		.uleb128 0xe
+ 840 0009 1B       		.uleb128 0x1b
+ 841 000a 0E       		.uleb128 0xe
+ 842 000b 55       		.uleb128 0x55
+ 843 000c 17       		.uleb128 0x17
+ 844 000d 11       		.uleb128 0x11
+ 845 000e 01       		.uleb128 0x1
+ 846 000f 10       		.uleb128 0x10
+ 847 0010 17       		.uleb128 0x17
+ 848 0011 00       		.byte	0
+ 849 0012 00       		.byte	0
+ 850 0013 02       		.uleb128 0x2
+ 851 0014 24       		.uleb128 0x24
+ 852 0015 00       		.byte	0
+ 853 0016 0B       		.uleb128 0xb
+ 854 0017 0B       		.uleb128 0xb
+ 855 0018 3E       		.uleb128 0x3e
+ 856 0019 0B       		.uleb128 0xb
+ 857 001a 03       		.uleb128 0x3
+ 858 001b 0E       		.uleb128 0xe
+ 859 001c 00       		.byte	0
+ 860 001d 00       		.byte	0
+ 861 001e 03       		.uleb128 0x3
+ 862 001f 24       		.uleb128 0x24
+ 863 0020 00       		.byte	0
+ 864 0021 0B       		.uleb128 0xb
+ 865 0022 0B       		.uleb128 0xb
+ 866 0023 3E       		.uleb128 0x3e
+ 867 0024 0B       		.uleb128 0xb
+ 868 0025 03       		.uleb128 0x3
+ 869 0026 08       		.uleb128 0x8
+ 870 0027 00       		.byte	0
+ 871 0028 00       		.byte	0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 22
+
+
+ 872 0029 04       		.uleb128 0x4
+ 873 002a 16       		.uleb128 0x16
+ 874 002b 00       		.byte	0
+ 875 002c 03       		.uleb128 0x3
+ 876 002d 0E       		.uleb128 0xe
+ 877 002e 3A       		.uleb128 0x3a
+ 878 002f 0B       		.uleb128 0xb
+ 879 0030 3B       		.uleb128 0x3b
+ 880 0031 05       		.uleb128 0x5
+ 881 0032 49       		.uleb128 0x49
+ 882 0033 13       		.uleb128 0x13
+ 883 0034 00       		.byte	0
+ 884 0035 00       		.byte	0
+ 885 0036 05       		.uleb128 0x5
+ 886 0037 35       		.uleb128 0x35
+ 887 0038 00       		.byte	0
+ 888 0039 49       		.uleb128 0x49
+ 889 003a 13       		.uleb128 0x13
+ 890 003b 00       		.byte	0
+ 891 003c 00       		.byte	0
+ 892 003d 06       		.uleb128 0x6
+ 893 003e 2E       		.uleb128 0x2e
+ 894 003f 00       		.byte	0
+ 895 0040 03       		.uleb128 0x3
+ 896 0041 0E       		.uleb128 0xe
+ 897 0042 3A       		.uleb128 0x3a
+ 898 0043 0B       		.uleb128 0xb
+ 899 0044 3B       		.uleb128 0x3b
+ 900 0045 0B       		.uleb128 0xb
+ 901 0046 27       		.uleb128 0x27
+ 902 0047 19       		.uleb128 0x19
+ 903 0048 11       		.uleb128 0x11
+ 904 0049 01       		.uleb128 0x1
+ 905 004a 12       		.uleb128 0x12
+ 906 004b 06       		.uleb128 0x6
+ 907 004c 40       		.uleb128 0x40
+ 908 004d 18       		.uleb128 0x18
+ 909 004e 9742     		.uleb128 0x2117
+ 910 0050 19       		.uleb128 0x19
+ 911 0051 00       		.byte	0
+ 912 0052 00       		.byte	0
+ 913 0053 07       		.uleb128 0x7
+ 914 0054 2E       		.uleb128 0x2e
+ 915 0055 01       		.byte	0x1
+ 916 0056 3F       		.uleb128 0x3f
+ 917 0057 19       		.uleb128 0x19
+ 918 0058 03       		.uleb128 0x3
+ 919 0059 0E       		.uleb128 0xe
+ 920 005a 3A       		.uleb128 0x3a
+ 921 005b 0B       		.uleb128 0xb
+ 922 005c 3B       		.uleb128 0x3b
+ 923 005d 0B       		.uleb128 0xb
+ 924 005e 27       		.uleb128 0x27
+ 925 005f 19       		.uleb128 0x19
+ 926 0060 11       		.uleb128 0x11
+ 927 0061 01       		.uleb128 0x1
+ 928 0062 12       		.uleb128 0x12
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 23
+
+
+ 929 0063 06       		.uleb128 0x6
+ 930 0064 40       		.uleb128 0x40
+ 931 0065 18       		.uleb128 0x18
+ 932 0066 9742     		.uleb128 0x2117
+ 933 0068 19       		.uleb128 0x19
+ 934 0069 01       		.uleb128 0x1
+ 935 006a 13       		.uleb128 0x13
+ 936 006b 00       		.byte	0
+ 937 006c 00       		.byte	0
+ 938 006d 08       		.uleb128 0x8
+ 939 006e 898201   		.uleb128 0x4109
+ 940 0071 01       		.byte	0x1
+ 941 0072 11       		.uleb128 0x11
+ 942 0073 01       		.uleb128 0x1
+ 943 0074 31       		.uleb128 0x31
+ 944 0075 13       		.uleb128 0x13
+ 945 0076 01       		.uleb128 0x1
+ 946 0077 13       		.uleb128 0x13
+ 947 0078 00       		.byte	0
+ 948 0079 00       		.byte	0
+ 949 007a 09       		.uleb128 0x9
+ 950 007b 8A8201   		.uleb128 0x410a
+ 951 007e 00       		.byte	0
+ 952 007f 02       		.uleb128 0x2
+ 953 0080 18       		.uleb128 0x18
+ 954 0081 9142     		.uleb128 0x2111
+ 955 0083 18       		.uleb128 0x18
+ 956 0084 00       		.byte	0
+ 957 0085 00       		.byte	0
+ 958 0086 0A       		.uleb128 0xa
+ 959 0087 898201   		.uleb128 0x4109
+ 960 008a 00       		.byte	0
+ 961 008b 11       		.uleb128 0x11
+ 962 008c 01       		.uleb128 0x1
+ 963 008d 31       		.uleb128 0x31
+ 964 008e 13       		.uleb128 0x13
+ 965 008f 00       		.byte	0
+ 966 0090 00       		.byte	0
+ 967 0091 0B       		.uleb128 0xb
+ 968 0092 2E       		.uleb128 0x2e
+ 969 0093 00       		.byte	0
+ 970 0094 3F       		.uleb128 0x3f
+ 971 0095 19       		.uleb128 0x19
+ 972 0096 03       		.uleb128 0x3
+ 973 0097 0E       		.uleb128 0xe
+ 974 0098 3A       		.uleb128 0x3a
+ 975 0099 0B       		.uleb128 0xb
+ 976 009a 3B       		.uleb128 0x3b
+ 977 009b 0B       		.uleb128 0xb
+ 978 009c 27       		.uleb128 0x27
+ 979 009d 19       		.uleb128 0x19
+ 980 009e 11       		.uleb128 0x11
+ 981 009f 01       		.uleb128 0x1
+ 982 00a0 12       		.uleb128 0x12
+ 983 00a1 06       		.uleb128 0x6
+ 984 00a2 40       		.uleb128 0x40
+ 985 00a3 18       		.uleb128 0x18
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 24
+
+
+ 986 00a4 9742     		.uleb128 0x2117
+ 987 00a6 19       		.uleb128 0x19
+ 988 00a7 00       		.byte	0
+ 989 00a8 00       		.byte	0
+ 990 00a9 0C       		.uleb128 0xc
+ 991 00aa 2E       		.uleb128 0x2e
+ 992 00ab 01       		.byte	0x1
+ 993 00ac 3F       		.uleb128 0x3f
+ 994 00ad 19       		.uleb128 0x19
+ 995 00ae 03       		.uleb128 0x3
+ 996 00af 0E       		.uleb128 0xe
+ 997 00b0 3A       		.uleb128 0x3a
+ 998 00b1 0B       		.uleb128 0xb
+ 999 00b2 3B       		.uleb128 0x3b
+ 1000 00b3 0B       		.uleb128 0xb
+ 1001 00b4 27       		.uleb128 0x27
+ 1002 00b5 19       		.uleb128 0x19
+ 1003 00b6 49       		.uleb128 0x49
+ 1004 00b7 13       		.uleb128 0x13
+ 1005 00b8 11       		.uleb128 0x11
+ 1006 00b9 01       		.uleb128 0x1
+ 1007 00ba 12       		.uleb128 0x12
+ 1008 00bb 06       		.uleb128 0x6
+ 1009 00bc 40       		.uleb128 0x40
+ 1010 00bd 18       		.uleb128 0x18
+ 1011 00be 9742     		.uleb128 0x2117
+ 1012 00c0 19       		.uleb128 0x19
+ 1013 00c1 01       		.uleb128 0x1
+ 1014 00c2 13       		.uleb128 0x13
+ 1015 00c3 00       		.byte	0
+ 1016 00c4 00       		.byte	0
+ 1017 00c5 0D       		.uleb128 0xd
+ 1018 00c6 05       		.uleb128 0x5
+ 1019 00c7 00       		.byte	0
+ 1020 00c8 03       		.uleb128 0x3
+ 1021 00c9 0E       		.uleb128 0xe
+ 1022 00ca 3A       		.uleb128 0x3a
+ 1023 00cb 0B       		.uleb128 0xb
+ 1024 00cc 3B       		.uleb128 0x3b
+ 1025 00cd 0B       		.uleb128 0xb
+ 1026 00ce 49       		.uleb128 0x49
+ 1027 00cf 13       		.uleb128 0x13
+ 1028 00d0 02       		.uleb128 0x2
+ 1029 00d1 17       		.uleb128 0x17
+ 1030 00d2 00       		.byte	0
+ 1031 00d3 00       		.byte	0
+ 1032 00d4 0E       		.uleb128 0xe
+ 1033 00d5 34       		.uleb128 0x34
+ 1034 00d6 00       		.byte	0
+ 1035 00d7 03       		.uleb128 0x3
+ 1036 00d8 0E       		.uleb128 0xe
+ 1037 00d9 3A       		.uleb128 0x3a
+ 1038 00da 0B       		.uleb128 0xb
+ 1039 00db 3B       		.uleb128 0x3b
+ 1040 00dc 0B       		.uleb128 0xb
+ 1041 00dd 49       		.uleb128 0x49
+ 1042 00de 13       		.uleb128 0x13
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 25
+
+
+ 1043 00df 02       		.uleb128 0x2
+ 1044 00e0 17       		.uleb128 0x17
+ 1045 00e1 00       		.byte	0
+ 1046 00e2 00       		.byte	0
+ 1047 00e3 0F       		.uleb128 0xf
+ 1048 00e4 898201   		.uleb128 0x4109
+ 1049 00e7 01       		.byte	0x1
+ 1050 00e8 11       		.uleb128 0x11
+ 1051 00e9 01       		.uleb128 0x1
+ 1052 00ea 31       		.uleb128 0x31
+ 1053 00eb 13       		.uleb128 0x13
+ 1054 00ec 00       		.byte	0
+ 1055 00ed 00       		.byte	0
+ 1056 00ee 10       		.uleb128 0x10
+ 1057 00ef 0F       		.uleb128 0xf
+ 1058 00f0 00       		.byte	0
+ 1059 00f1 0B       		.uleb128 0xb
+ 1060 00f2 0B       		.uleb128 0xb
+ 1061 00f3 49       		.uleb128 0x49
+ 1062 00f4 13       		.uleb128 0x13
+ 1063 00f5 00       		.byte	0
+ 1064 00f6 00       		.byte	0
+ 1065 00f7 11       		.uleb128 0x11
+ 1066 00f8 26       		.uleb128 0x26
+ 1067 00f9 00       		.byte	0
+ 1068 00fa 49       		.uleb128 0x49
+ 1069 00fb 13       		.uleb128 0x13
+ 1070 00fc 00       		.byte	0
+ 1071 00fd 00       		.byte	0
+ 1072 00fe 12       		.uleb128 0x12
+ 1073 00ff 01       		.uleb128 0x1
+ 1074 0100 01       		.byte	0x1
+ 1075 0101 49       		.uleb128 0x49
+ 1076 0102 13       		.uleb128 0x13
+ 1077 0103 01       		.uleb128 0x1
+ 1078 0104 13       		.uleb128 0x13
+ 1079 0105 00       		.byte	0
+ 1080 0106 00       		.byte	0
+ 1081 0107 13       		.uleb128 0x13
+ 1082 0108 21       		.uleb128 0x21
+ 1083 0109 00       		.byte	0
+ 1084 010a 49       		.uleb128 0x49
+ 1085 010b 13       		.uleb128 0x13
+ 1086 010c 2F       		.uleb128 0x2f
+ 1087 010d 0B       		.uleb128 0xb
+ 1088 010e 00       		.byte	0
+ 1089 010f 00       		.byte	0
+ 1090 0110 14       		.uleb128 0x14
+ 1091 0111 34       		.uleb128 0x34
+ 1092 0112 00       		.byte	0
+ 1093 0113 03       		.uleb128 0x3
+ 1094 0114 0E       		.uleb128 0xe
+ 1095 0115 3A       		.uleb128 0x3a
+ 1096 0116 0B       		.uleb128 0xb
+ 1097 0117 3B       		.uleb128 0x3b
+ 1098 0118 0B       		.uleb128 0xb
+ 1099 0119 49       		.uleb128 0x49
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 26
+
+
+ 1100 011a 13       		.uleb128 0x13
+ 1101 011b 02       		.uleb128 0x2
+ 1102 011c 18       		.uleb128 0x18
+ 1103 011d 00       		.byte	0
+ 1104 011e 00       		.byte	0
+ 1105 011f 15       		.uleb128 0x15
+ 1106 0120 34       		.uleb128 0x34
+ 1107 0121 00       		.byte	0
+ 1108 0122 03       		.uleb128 0x3
+ 1109 0123 0E       		.uleb128 0xe
+ 1110 0124 3A       		.uleb128 0x3a
+ 1111 0125 0B       		.uleb128 0xb
+ 1112 0126 3B       		.uleb128 0x3b
+ 1113 0127 0B       		.uleb128 0xb
+ 1114 0128 49       		.uleb128 0x49
+ 1115 0129 13       		.uleb128 0x13
+ 1116 012a 3F       		.uleb128 0x3f
+ 1117 012b 19       		.uleb128 0x19
+ 1118 012c 3C       		.uleb128 0x3c
+ 1119 012d 19       		.uleb128 0x19
+ 1120 012e 00       		.byte	0
+ 1121 012f 00       		.byte	0
+ 1122 0130 16       		.uleb128 0x16
+ 1123 0131 2E       		.uleb128 0x2e
+ 1124 0132 00       		.byte	0
+ 1125 0133 3F       		.uleb128 0x3f
+ 1126 0134 19       		.uleb128 0x19
+ 1127 0135 3C       		.uleb128 0x3c
+ 1128 0136 19       		.uleb128 0x19
+ 1129 0137 6E       		.uleb128 0x6e
+ 1130 0138 0E       		.uleb128 0xe
+ 1131 0139 03       		.uleb128 0x3
+ 1132 013a 0E       		.uleb128 0xe
+ 1133 013b 3A       		.uleb128 0x3a
+ 1134 013c 0B       		.uleb128 0xb
+ 1135 013d 3B       		.uleb128 0x3b
+ 1136 013e 05       		.uleb128 0x5
+ 1137 013f 00       		.byte	0
+ 1138 0140 00       		.byte	0
+ 1139 0141 17       		.uleb128 0x17
+ 1140 0142 2E       		.uleb128 0x2e
+ 1141 0143 00       		.byte	0
+ 1142 0144 3F       		.uleb128 0x3f
+ 1143 0145 19       		.uleb128 0x19
+ 1144 0146 3C       		.uleb128 0x3c
+ 1145 0147 19       		.uleb128 0x19
+ 1146 0148 6E       		.uleb128 0x6e
+ 1147 0149 0E       		.uleb128 0xe
+ 1148 014a 03       		.uleb128 0x3
+ 1149 014b 0E       		.uleb128 0xe
+ 1150 014c 3A       		.uleb128 0x3a
+ 1151 014d 0B       		.uleb128 0xb
+ 1152 014e 3B       		.uleb128 0x3b
+ 1153 014f 0B       		.uleb128 0xb
+ 1154 0150 00       		.byte	0
+ 1155 0151 00       		.byte	0
+ 1156 0152 18       		.uleb128 0x18
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 27
+
+
+ 1157 0153 2E       		.uleb128 0x2e
+ 1158 0154 00       		.byte	0
+ 1159 0155 3F       		.uleb128 0x3f
+ 1160 0156 19       		.uleb128 0x19
+ 1161 0157 3C       		.uleb128 0x3c
+ 1162 0158 19       		.uleb128 0x19
+ 1163 0159 6E       		.uleb128 0x6e
+ 1164 015a 0E       		.uleb128 0xe
+ 1165 015b 03       		.uleb128 0x3
+ 1166 015c 0E       		.uleb128 0xe
+ 1167 015d 00       		.byte	0
+ 1168 015e 00       		.byte	0
+ 1169 015f 00       		.byte	0
+ 1170              		.section	.debug_loc,"",%progbits
+ 1171              	.Ldebug_loc0:
+ 1172              	.LLST0:
+ 1173 0000 00000000 		.4byte	.LVL5
+ 1174 0004 18000000 		.4byte	.LVL11
+ 1175 0008 0100     		.2byte	0x1
+ 1176 000a 50       		.byte	0x50
+ 1177 000b 18000000 		.4byte	.LVL11
+ 1178 000f 58000000 		.4byte	.LVL16
+ 1179 0013 0100     		.2byte	0x1
+ 1180 0015 57       		.byte	0x57
+ 1181 0016 58000000 		.4byte	.LVL16
+ 1182 001a 5A000000 		.4byte	.LVL17
+ 1183 001e 0100     		.2byte	0x1
+ 1184 0020 50       		.byte	0x50
+ 1185 0021 5A000000 		.4byte	.LVL17
+ 1186 0025 5C000000 		.4byte	.LVL18
+ 1187 0029 0100     		.2byte	0x1
+ 1188 002b 57       		.byte	0x57
+ 1189 002c 5C000000 		.4byte	.LVL18
+ 1190 0030 5E000000 		.4byte	.LVL19
+ 1191 0034 0100     		.2byte	0x1
+ 1192 0036 50       		.byte	0x50
+ 1193 0037 5E000000 		.4byte	.LVL19
+ 1194 003b 5E000000 		.4byte	.LVL21
+ 1195 003f 0100     		.2byte	0x1
+ 1196 0041 57       		.byte	0x57
+ 1197 0042 5E000000 		.4byte	.LVL21
+ 1198 0046 6C000000 		.4byte	.LFE3
+ 1199 004a 0400     		.2byte	0x4
+ 1200 004c F3       		.byte	0xf3
+ 1201 004d 01       		.uleb128 0x1
+ 1202 004e 50       		.byte	0x50
+ 1203 004f 9F       		.byte	0x9f
+ 1204 0050 00000000 		.4byte	0
+ 1205 0054 00000000 		.4byte	0
+ 1206              	.LLST1:
+ 1207 0058 00000000 		.4byte	.LVL5
+ 1208 005c 18000000 		.4byte	.LVL11
+ 1209 0060 0100     		.2byte	0x1
+ 1210 0062 51       		.byte	0x51
+ 1211 0063 18000000 		.4byte	.LVL11
+ 1212 0067 58000000 		.4byte	.LVL16
+ 1213 006b 0400     		.2byte	0x4
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 28
+
+
+ 1214 006d F3       		.byte	0xf3
+ 1215 006e 01       		.uleb128 0x1
+ 1216 006f 51       		.byte	0x51
+ 1217 0070 9F       		.byte	0x9f
+ 1218 0071 58000000 		.4byte	.LVL16
+ 1219 0075 5E000000 		.4byte	.LVL19
+ 1220 0079 0100     		.2byte	0x1
+ 1221 007b 51       		.byte	0x51
+ 1222 007c 5E000000 		.4byte	.LVL19
+ 1223 0080 6C000000 		.4byte	.LFE3
+ 1224 0084 0400     		.2byte	0x4
+ 1225 0086 F3       		.byte	0xf3
+ 1226 0087 01       		.uleb128 0x1
+ 1227 0088 51       		.byte	0x51
+ 1228 0089 9F       		.byte	0x9f
+ 1229 008a 00000000 		.4byte	0
+ 1230 008e 00000000 		.4byte	0
+ 1231              	.LLST2:
+ 1232 0092 00000000 		.4byte	.LVL5
+ 1233 0096 12000000 		.4byte	.LVL8
+ 1234 009a 0100     		.2byte	0x1
+ 1235 009c 52       		.byte	0x52
+ 1236 009d 12000000 		.4byte	.LVL8
+ 1237 00a1 58000000 		.4byte	.LVL16
+ 1238 00a5 0100     		.2byte	0x1
+ 1239 00a7 55       		.byte	0x55
+ 1240 00a8 58000000 		.4byte	.LVL16
+ 1241 00ac 5E000000 		.4byte	.LVL19
+ 1242 00b0 0100     		.2byte	0x1
+ 1243 00b2 52       		.byte	0x52
+ 1244 00b3 5E000000 		.4byte	.LVL19
+ 1245 00b7 5E000000 		.4byte	.LVL20
+ 1246 00bb 0100     		.2byte	0x1
+ 1247 00bd 55       		.byte	0x55
+ 1248 00be 5E000000 		.4byte	.LVL20
+ 1249 00c2 6C000000 		.4byte	.LFE3
+ 1250 00c6 0400     		.2byte	0x4
+ 1251 00c8 F3       		.byte	0xf3
+ 1252 00c9 01       		.uleb128 0x1
+ 1253 00ca 52       		.byte	0x52
+ 1254 00cb 9F       		.byte	0x9f
+ 1255 00cc 00000000 		.4byte	0
+ 1256 00d0 00000000 		.4byte	0
+ 1257              	.LLST3:
+ 1258 00d4 00000000 		.4byte	.LVL5
+ 1259 00d8 14000000 		.4byte	.LVL9
+ 1260 00dc 0100     		.2byte	0x1
+ 1261 00de 53       		.byte	0x53
+ 1262 00df 14000000 		.4byte	.LVL9
+ 1263 00e3 58000000 		.4byte	.LVL16
+ 1264 00e7 0400     		.2byte	0x4
+ 1265 00e9 F3       		.byte	0xf3
+ 1266 00ea 01       		.uleb128 0x1
+ 1267 00eb 53       		.byte	0x53
+ 1268 00ec 9F       		.byte	0x9f
+ 1269 00ed 58000000 		.4byte	.LVL16
+ 1270 00f1 5E000000 		.4byte	.LVL19
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 29
+
+
+ 1271 00f5 0100     		.2byte	0x1
+ 1272 00f7 53       		.byte	0x53
+ 1273 00f8 5E000000 		.4byte	.LVL19
+ 1274 00fc 6C000000 		.4byte	.LFE3
+ 1275 0100 0400     		.2byte	0x4
+ 1276 0102 F3       		.byte	0xf3
+ 1277 0103 01       		.uleb128 0x1
+ 1278 0104 53       		.byte	0x53
+ 1279 0105 9F       		.byte	0x9f
+ 1280 0106 00000000 		.4byte	0
+ 1281 010a 00000000 		.4byte	0
+ 1282              	.LLST4:
+ 1283 010e 08000000 		.4byte	.LVL6
+ 1284 0112 10000000 		.4byte	.LVL7
+ 1285 0116 0200     		.2byte	0x2
+ 1286 0118 31       		.byte	0x31
+ 1287 0119 9F       		.byte	0x9f
+ 1288 011a 10000000 		.4byte	.LVL7
+ 1289 011e 44000000 		.4byte	.LVL12
+ 1290 0122 0200     		.2byte	0x2
+ 1291 0124 40       		.byte	0x40
+ 1292 0125 9F       		.byte	0x9f
+ 1293 0126 44000000 		.4byte	.LVL12
+ 1294 012a 48000000 		.4byte	.LVL13
+ 1295 012e 0200     		.2byte	0x2
+ 1296 0130 30       		.byte	0x30
+ 1297 0131 9F       		.byte	0x9f
+ 1298 0132 48000000 		.4byte	.LVL13
+ 1299 0136 58000000 		.4byte	.LVL16
+ 1300 013a 0200     		.2byte	0x2
+ 1301 013c 40       		.byte	0x40
+ 1302 013d 9F       		.byte	0x9f
+ 1303 013e 58000000 		.4byte	.LVL16
+ 1304 0142 5E000000 		.4byte	.LVL19
+ 1305 0146 0200     		.2byte	0x2
+ 1306 0148 31       		.byte	0x31
+ 1307 0149 9F       		.byte	0x9f
+ 1308 014a 5E000000 		.4byte	.LVL19
+ 1309 014e 6C000000 		.4byte	.LFE3
+ 1310 0152 0100     		.2byte	0x1
+ 1311 0154 50       		.byte	0x50
+ 1312 0155 00000000 		.4byte	0
+ 1313 0159 00000000 		.4byte	0
+ 1314              	.LLST5:
+ 1315 015d 16000000 		.4byte	.LVL10
+ 1316 0161 58000000 		.4byte	.LVL16
+ 1317 0165 0100     		.2byte	0x1
+ 1318 0167 54       		.byte	0x54
+ 1319 0168 00000000 		.4byte	0
+ 1320 016c 00000000 		.4byte	0
+ 1321              	.LLST6:
+ 1322 0170 00000000 		.4byte	.LVL22
+ 1323 0174 1A000000 		.4byte	.LVL27
+ 1324 0178 0100     		.2byte	0x1
+ 1325 017a 50       		.byte	0x50
+ 1326 017b 1A000000 		.4byte	.LVL27
+ 1327 017f 1D000000 		.4byte	.LVL28-1
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 30
+
+
+ 1328 0183 0100     		.2byte	0x1
+ 1329 0185 51       		.byte	0x51
+ 1330 0186 1D000000 		.4byte	.LVL28-1
+ 1331 018a 24000000 		.4byte	.LVL30
+ 1332 018e 0400     		.2byte	0x4
+ 1333 0190 F3       		.byte	0xf3
+ 1334 0191 01       		.uleb128 0x1
+ 1335 0192 50       		.byte	0x50
+ 1336 0193 9F       		.byte	0x9f
+ 1337 0194 24000000 		.4byte	.LVL30
+ 1338 0198 26000000 		.4byte	.LVL31
+ 1339 019c 0100     		.2byte	0x1
+ 1340 019e 50       		.byte	0x50
+ 1341 019f 26000000 		.4byte	.LVL31
+ 1342 01a3 28000000 		.4byte	.LVL32
+ 1343 01a7 0400     		.2byte	0x4
+ 1344 01a9 F3       		.byte	0xf3
+ 1345 01aa 01       		.uleb128 0x1
+ 1346 01ab 50       		.byte	0x50
+ 1347 01ac 9F       		.byte	0x9f
+ 1348 01ad 28000000 		.4byte	.LVL32
+ 1349 01b1 2A000000 		.4byte	.LVL33
+ 1350 01b5 0100     		.2byte	0x1
+ 1351 01b7 50       		.byte	0x50
+ 1352 01b8 2A000000 		.4byte	.LVL33
+ 1353 01bc 30000000 		.4byte	.LFE4
+ 1354 01c0 0400     		.2byte	0x4
+ 1355 01c2 F3       		.byte	0xf3
+ 1356 01c3 01       		.uleb128 0x1
+ 1357 01c4 50       		.byte	0x50
+ 1358 01c5 9F       		.byte	0x9f
+ 1359 01c6 00000000 		.4byte	0
+ 1360 01ca 00000000 		.4byte	0
+ 1361              	.LLST7:
+ 1362 01ce 00000000 		.4byte	.LVL22
+ 1363 01d2 18000000 		.4byte	.LVL26
+ 1364 01d6 0100     		.2byte	0x1
+ 1365 01d8 51       		.byte	0x51
+ 1366 01d9 18000000 		.4byte	.LVL26
+ 1367 01dd 1D000000 		.4byte	.LVL28-1
+ 1368 01e1 0300     		.2byte	0x3
+ 1369 01e3 F3       		.byte	0xf3
+ 1370 01e4 01       		.uleb128 0x1
+ 1371 01e5 52       		.byte	0x52
+ 1372 01e6 1D000000 		.4byte	.LVL28-1
+ 1373 01ea 24000000 		.4byte	.LVL30
+ 1374 01ee 0400     		.2byte	0x4
+ 1375 01f0 F3       		.byte	0xf3
+ 1376 01f1 01       		.uleb128 0x1
+ 1377 01f2 51       		.byte	0x51
+ 1378 01f3 9F       		.byte	0x9f
+ 1379 01f4 24000000 		.4byte	.LVL30
+ 1380 01f8 2A000000 		.4byte	.LVL33
+ 1381 01fc 0100     		.2byte	0x1
+ 1382 01fe 51       		.byte	0x51
+ 1383 01ff 2A000000 		.4byte	.LVL33
+ 1384 0203 30000000 		.4byte	.LFE4
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 31
+
+
+ 1385 0207 0400     		.2byte	0x4
+ 1386 0209 F3       		.byte	0xf3
+ 1387 020a 01       		.uleb128 0x1
+ 1388 020b 51       		.byte	0x51
+ 1389 020c 9F       		.byte	0x9f
+ 1390 020d 00000000 		.4byte	0
+ 1391 0211 00000000 		.4byte	0
+ 1392              	.LLST8:
+ 1393 0215 00000000 		.4byte	.LVL22
+ 1394 0219 16000000 		.4byte	.LVL25
+ 1395 021d 0100     		.2byte	0x1
+ 1396 021f 52       		.byte	0x52
+ 1397 0220 16000000 		.4byte	.LVL25
+ 1398 0224 24000000 		.4byte	.LVL30
+ 1399 0228 0400     		.2byte	0x4
+ 1400 022a F3       		.byte	0xf3
+ 1401 022b 01       		.uleb128 0x1
+ 1402 022c 52       		.byte	0x52
+ 1403 022d 9F       		.byte	0x9f
+ 1404 022e 24000000 		.4byte	.LVL30
+ 1405 0232 2A000000 		.4byte	.LVL33
+ 1406 0236 0100     		.2byte	0x1
+ 1407 0238 52       		.byte	0x52
+ 1408 0239 2A000000 		.4byte	.LVL33
+ 1409 023d 30000000 		.4byte	.LFE4
+ 1410 0241 0400     		.2byte	0x4
+ 1411 0243 F3       		.byte	0xf3
+ 1412 0244 01       		.uleb128 0x1
+ 1413 0245 52       		.byte	0x52
+ 1414 0246 9F       		.byte	0x9f
+ 1415 0247 00000000 		.4byte	0
+ 1416 024b 00000000 		.4byte	0
+ 1417              	.LLST9:
+ 1418 024f 00000000 		.4byte	.LVL22
+ 1419 0253 12000000 		.4byte	.LVL24
+ 1420 0257 0100     		.2byte	0x1
+ 1421 0259 53       		.byte	0x53
+ 1422 025a 12000000 		.4byte	.LVL24
+ 1423 025e 24000000 		.4byte	.LVL30
+ 1424 0262 0400     		.2byte	0x4
+ 1425 0264 F3       		.byte	0xf3
+ 1426 0265 01       		.uleb128 0x1
+ 1427 0266 53       		.byte	0x53
+ 1428 0267 9F       		.byte	0x9f
+ 1429 0268 24000000 		.4byte	.LVL30
+ 1430 026c 2A000000 		.4byte	.LVL33
+ 1431 0270 0100     		.2byte	0x1
+ 1432 0272 53       		.byte	0x53
+ 1433 0273 2A000000 		.4byte	.LVL33
+ 1434 0277 30000000 		.4byte	.LFE4
+ 1435 027b 0400     		.2byte	0x4
+ 1436 027d F3       		.byte	0xf3
+ 1437 027e 01       		.uleb128 0x1
+ 1438 027f 53       		.byte	0x53
+ 1439 0280 9F       		.byte	0x9f
+ 1440 0281 00000000 		.4byte	0
+ 1441 0285 00000000 		.4byte	0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 32
+
+
+ 1442              	.LLST10:
+ 1443 0289 04000000 		.4byte	.LVL23
+ 1444 028d 20000000 		.4byte	.LVL29
+ 1445 0291 0200     		.2byte	0x2
+ 1446 0293 31       		.byte	0x31
+ 1447 0294 9F       		.byte	0x9f
+ 1448 0295 20000000 		.4byte	.LVL29
+ 1449 0299 24000000 		.4byte	.LVL30
+ 1450 029d 0200     		.2byte	0x2
+ 1451 029f 30       		.byte	0x30
+ 1452 02a0 9F       		.byte	0x9f
+ 1453 02a1 24000000 		.4byte	.LVL30
+ 1454 02a5 2A000000 		.4byte	.LVL33
+ 1455 02a9 0200     		.2byte	0x2
+ 1456 02ab 31       		.byte	0x31
+ 1457 02ac 9F       		.byte	0x9f
+ 1458 02ad 2A000000 		.4byte	.LVL33
+ 1459 02b1 30000000 		.4byte	.LFE4
+ 1460 02b5 0100     		.2byte	0x1
+ 1461 02b7 50       		.byte	0x50
+ 1462 02b8 00000000 		.4byte	0
+ 1463 02bc 00000000 		.4byte	0
+ 1464              		.section	.debug_aranges,"",%progbits
+ 1465 0000 44000000 		.4byte	0x44
+ 1466 0004 0200     		.2byte	0x2
+ 1467 0006 00000000 		.4byte	.Ldebug_info0
+ 1468 000a 04       		.byte	0x4
+ 1469 000b 00       		.byte	0
+ 1470 000c 0000     		.2byte	0
+ 1471 000e 0000     		.2byte	0
+ 1472 0010 00000000 		.4byte	.LFB5
+ 1473 0014 54000000 		.4byte	.LFE5-.LFB5
+ 1474 0018 00000000 		.4byte	.LFB0
+ 1475 001c 30000000 		.4byte	.LFE0-.LFB0
+ 1476 0020 00000000 		.4byte	.LFB1
+ 1477 0024 08000000 		.4byte	.LFE1-.LFB1
+ 1478 0028 00000000 		.4byte	.LFB2
+ 1479 002c 24000000 		.4byte	.LFE2-.LFB2
+ 1480 0030 00000000 		.4byte	.LFB3
+ 1481 0034 6C000000 		.4byte	.LFE3-.LFB3
+ 1482 0038 00000000 		.4byte	.LFB4
+ 1483 003c 30000000 		.4byte	.LFE4-.LFB4
+ 1484 0040 00000000 		.4byte	0
+ 1485 0044 00000000 		.4byte	0
+ 1486              		.section	.debug_ranges,"",%progbits
+ 1487              	.Ldebug_ranges0:
+ 1488 0000 00000000 		.4byte	.LFB5
+ 1489 0004 54000000 		.4byte	.LFE5
+ 1490 0008 00000000 		.4byte	.LFB0
+ 1491 000c 30000000 		.4byte	.LFE0
+ 1492 0010 00000000 		.4byte	.LFB1
+ 1493 0014 08000000 		.4byte	.LFE1
+ 1494 0018 00000000 		.4byte	.LFB2
+ 1495 001c 24000000 		.4byte	.LFE2
+ 1496 0020 00000000 		.4byte	.LFB3
+ 1497 0024 6C000000 		.4byte	.LFE3
+ 1498 0028 00000000 		.4byte	.LFB4
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 33
+
+
+ 1499 002c 30000000 		.4byte	.LFE4
+ 1500 0030 00000000 		.4byte	0
+ 1501 0034 00000000 		.4byte	0
+ 1502              		.section	.debug_line,"",%progbits
+ 1503              	.Ldebug_line0:
+ 1504 0000 3C010000 		.section	.debug_str,"MS",%progbits,1
+ 1504      02009300 
+ 1504      00000201 
+ 1504      FB0E0D00 
+ 1504      01010101 
+ 1505              	.LASF28:
+ 1506 0000 455A4932 		.ascii	"EZI2C_CAM_I2CCyBtldrCommWrite\000"
+ 1506      435F4341 
+ 1506      4D5F4932 
+ 1506      43437942 
+ 1506      746C6472 
+ 1507              	.LASF15:
+ 1508 001e 63797374 		.ascii	"cystatus\000"
+ 1508      61747573 
+ 1508      00
+ 1509              	.LASF16:
+ 1510 0027 72656733 		.ascii	"reg32\000"
+ 1510      3200
+ 1511              	.LASF26:
+ 1512 002d 74696D65 		.ascii	"timeoutMs\000"
+ 1512      6F75744D 
+ 1512      7300
+ 1513              	.LASF34:
+ 1514 0037 455A4932 		.ascii	"EZI2C_CAM_slRdBufSize\000"
+ 1514      435F4341 
+ 1514      4D5F736C 
+ 1514      52644275 
+ 1514      6653697A 
+ 1515              	.LASF23:
+ 1516 004d 636F756E 		.ascii	"count\000"
+ 1516      7400
+ 1517              	.LASF45:
+ 1518 0053 455A4932 		.ascii	"EZI2C_CAM_I2CResposeInsert\000"
+ 1518      435F4341 
+ 1518      4D5F4932 
+ 1518      43526573 
+ 1518      706F7365 
+ 1519              	.LASF35:
+ 1520 006e 455A4932 		.ascii	"EZI2C_CAM_slRdBufIndex\000"
+ 1520      435F4341 
+ 1520      4D5F736C 
+ 1520      52644275 
+ 1520      66496E64 
+ 1521              	.LASF32:
+ 1522 0085 455A4932 		.ascii	"EZI2C_CAM_slStatus\000"
+ 1522      435F4341 
+ 1522      4D5F736C 
+ 1522      53746174 
+ 1522      757300
+ 1523              	.LASF25:
+ 1524 0098 73746174 		.ascii	"status\000"
+ 1524      757300
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 34
+
+
+ 1525              	.LASF40:
+ 1526 009f 455A4932 		.ascii	"EZI2C_CAM_Stop\000"
+ 1526      435F4341 
+ 1526      4D5F5374 
+ 1526      6F7000
+ 1527              	.LASF21:
+ 1528 00ae 70446174 		.ascii	"pData\000"
+ 1528      6100
+ 1529              	.LASF12:
+ 1530 00b4 666C6F61 		.ascii	"float\000"
+ 1530      7400
+ 1531              	.LASF29:
+ 1532 00ba 455A4932 		.ascii	"EZI2C_CAM_slReadBuf\000"
+ 1532      435F4341 
+ 1532      4D5F736C 
+ 1532      52656164 
+ 1532      42756600 
+ 1533              	.LASF22:
+ 1534 00ce 73697A65 		.ascii	"size\000"
+ 1534      00
+ 1535              	.LASF5:
+ 1536 00d3 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1536      20756E73 
+ 1536      69676E65 
+ 1536      6420696E 
+ 1536      7400
+ 1537              	.LASF9:
+ 1538 00e5 75696E74 		.ascii	"uint8\000"
+ 1538      3800
+ 1539              	.LASF1:
+ 1540 00eb 756E7369 		.ascii	"unsigned char\000"
+ 1540      676E6564 
+ 1540      20636861 
+ 1540      7200
+ 1541              	.LASF36:
+ 1542 00f9 455A4932 		.ascii	"EZI2C_CAM_I2CSlaveInitWriteBuf\000"
+ 1542      435F4341 
+ 1542      4D5F4932 
+ 1542      43536C61 
+ 1542      7665496E 
+ 1543              	.LASF13:
+ 1544 0118 646F7562 		.ascii	"double\000"
+ 1544      6C6500
+ 1545              	.LASF10:
+ 1546 011f 75696E74 		.ascii	"uint16\000"
+ 1546      313600
+ 1547              	.LASF11:
+ 1548 0126 75696E74 		.ascii	"uint32\000"
+ 1548      333200
+ 1549              	.LASF31:
+ 1550 012d 455A4932 		.ascii	"EZI2C_CAM_applyBuffer\000"
+ 1550      435F4341 
+ 1550      4D5F6170 
+ 1550      706C7942 
+ 1550      75666665 
+ 1551              	.LASF8:
+ 1552 0143 756E7369 		.ascii	"unsigned int\000"
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 35
+
+
+ 1552      676E6564 
+ 1552      20696E74 
+ 1552      00
+ 1553              	.LASF20:
+ 1554 0150 455A4932 		.ascii	"EZI2C_CAM_I2CCyBtldrCommStop\000"
+ 1554      435F4341 
+ 1554      4D5F4932 
+ 1554      43437942 
+ 1554      746C6472 
+ 1555              	.LASF7:
+ 1556 016d 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1556      206C6F6E 
+ 1556      6720756E 
+ 1556      7369676E 
+ 1556      65642069 
+ 1557              	.LASF24:
+ 1558 0184 74696D65 		.ascii	"timeOut\000"
+ 1558      4F757400 
+ 1559              	.LASF44:
+ 1560 018c 433A5C70 		.ascii	"C:\\psoc\\chamonix\\fixed_boot\\boot.cydsn\000"
+ 1560      736F635C 
+ 1560      6368616D 
+ 1560      6F6E6978 
+ 1560      5C666978 
+ 1561              	.LASF42:
+ 1562 01b3 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1562      43313120 
+ 1562      352E342E 
+ 1562      31203230 
+ 1562      31363036 
+ 1563 01e6 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0 -mthumb -g -O"
+ 1563      20726576 
+ 1563      6973696F 
+ 1563      6E203233 
+ 1563      37373135 
+ 1564 0219 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 1564      66756E63 
+ 1564      74696F6E 
+ 1564      2D736563 
+ 1564      74696F6E 
+ 1565              	.LASF19:
+ 1566 0241 455A4932 		.ascii	"EZI2C_CAM_I2CCyBtldrCommStart\000"
+ 1566      435F4341 
+ 1566      4D5F4932 
+ 1566      43437942 
+ 1566      746C6472 
+ 1567              	.LASF46:
+ 1568 025f 455A4932 		.ascii	"EZI2C_CAM_I2CCyBtldrCommReset\000"
+ 1568      435F4341 
+ 1568      4D5F4932 
+ 1568      43437942 
+ 1568      746C6472 
+ 1569              	.LASF18:
+ 1570 027d 73697A65 		.ascii	"sizetype\000"
+ 1570      74797065 
+ 1570      00
+ 1571              	.LASF3:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 36
+
+
+ 1572 0286 73686F72 		.ascii	"short unsigned int\000"
+ 1572      7420756E 
+ 1572      7369676E 
+ 1572      65642069 
+ 1572      6E7400
+ 1573              	.LASF6:
+ 1574 0299 6C6F6E67 		.ascii	"long long int\000"
+ 1574      206C6F6E 
+ 1574      6720696E 
+ 1574      7400
+ 1575              	.LASF47:
+ 1576 02a7 6D656D63 		.ascii	"memcpy\000"
+ 1576      707900
+ 1577              	.LASF43:
+ 1578 02ae 47656E65 		.ascii	"Generated_Source\\PSoC4\\EZI2C_CAM_I2C_BOOT.c\000"
+ 1578      72617465 
+ 1578      645F536F 
+ 1578      75726365 
+ 1578      5C50536F 
+ 1579              	.LASF2:
+ 1580 02da 73686F72 		.ascii	"short int\000"
+ 1580      7420696E 
+ 1580      7400
+ 1581              	.LASF37:
+ 1582 02e4 455A4932 		.ascii	"EZI2C_CAM_I2CSlaveInitReadBuf\000"
+ 1582      435F4341 
+ 1582      4D5F4932 
+ 1582      43536C61 
+ 1582      7665496E 
+ 1583              	.LASF38:
+ 1584 0302 455A4932 		.ascii	"EZI2C_CAM_SetCustomInterruptHandler\000"
+ 1584      435F4341 
+ 1584      4D5F5365 
+ 1584      74437573 
+ 1584      746F6D49 
+ 1585              	.LASF41:
+ 1586 0326 43794465 		.ascii	"CyDelay\000"
+ 1586      6C617900 
+ 1587              	.LASF4:
+ 1588 032e 6C6F6E67 		.ascii	"long int\000"
+ 1588      20696E74 
+ 1588      00
+ 1589              	.LASF14:
+ 1590 0337 63686172 		.ascii	"char\000"
+ 1590      00
+ 1591              	.LASF17:
+ 1592 033c 6C6F6E67 		.ascii	"long double\000"
+ 1592      20646F75 
+ 1592      626C6500 
+ 1593              	.LASF0:
+ 1594 0348 7369676E 		.ascii	"signed char\000"
+ 1594      65642063 
+ 1594      68617200 
+ 1595              	.LASF33:
+ 1596 0354 455A4932 		.ascii	"EZI2C_CAM_slWrBufIndex\000"
+ 1596      435F4341 
+ 1596      4D5F736C 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccXJghua.s 			page 37
+
+
+ 1596      57724275 
+ 1596      66496E64 
+ 1597              	.LASF39:
+ 1598 036b 455A4932 		.ascii	"EZI2C_CAM_Start\000"
+ 1598      435F4341 
+ 1598      4D5F5374 
+ 1598      61727400 
+ 1599              	.LASF27:
+ 1600 037b 455A4932 		.ascii	"EZI2C_CAM_I2CCyBtldrCommRead\000"
+ 1600      435F4341 
+ 1600      4D5F4932 
+ 1600      43437942 
+ 1600      746C6472 
+ 1601              	.LASF30:
+ 1602 0398 455A4932 		.ascii	"EZI2C_CAM_slWriteBuf\000"
+ 1602      435F4341 
+ 1602      4D5F736C 
+ 1602      57726974 
+ 1602      65427566 
+ 1603              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran
