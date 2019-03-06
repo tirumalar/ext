@@ -1,0 +1,1577 @@
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 2
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"bb_i2c_sl.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.Init_bb_i2c,"ax",%progbits
+  20              		.align	2
+  21              		.global	Init_bb_i2c
+  22              		.code	16
+  23              		.thumb_func
+  24              		.type	Init_bb_i2c, %function
+  25              	Init_bb_i2c:
+  26              	.LFB34:
+  27              		.file 1 "bb_i2c_sl.c"
+   1:bb_i2c_sl.c   **** #include "project.h"
+   2:bb_i2c_sl.c   **** 
+   3:bb_i2c_sl.c   **** 
+   4:bb_i2c_sl.c   **** #define STATE_IDLE 0
+   5:bb_i2c_sl.c   **** #define STATE_START 1
+   6:bb_i2c_sl.c   **** #define STATE_ACK   2
+   7:bb_i2c_sl.c   **** #define STATE_ACK_DONE 3
+   8:bb_i2c_sl.c   **** uint8 state = STATE_IDLE;
+   9:bb_i2c_sl.c   **** 
+  10:bb_i2c_sl.c   **** uint8 my_address = 0x32;
+  11:bb_i2c_sl.c   **** uint8 pSDA=1;
+  12:bb_i2c_sl.c   **** uint8 pSCL=1;
+  13:bb_i2c_sl.c   **** uint8 SCL=1,SDA=1;
+  14:bb_i2c_sl.c   **** uint8 rxbyte,bit_count=0;
+  15:bb_i2c_sl.c   **** uint8 txbyte=0;
+  16:bb_i2c_sl.c   **** uint8 icnt=0;
+  17:bb_i2c_sl.c   **** uint8 reg_ptr=0;
+  18:bb_i2c_sl.c   **** //uint8 a_space[255];
+  19:bb_i2c_sl.c   **** uint8 *a_space;
+  20:bb_i2c_sl.c   **** #define BYTE_MODE_IDLE 0
+  21:bb_i2c_sl.c   **** #define BYTE_MODE_ADDRESS_WRITE 1
+  22:bb_i2c_sl.c   **** #define BYTE_MODE_DATA_WRITE 2
+  23:bb_i2c_sl.c   **** #define BYTE_MODE_DATA_READ 3
+  24:bb_i2c_sl.c   **** uint8 byte_mode=0;
+  25:bb_i2c_sl.c   **** int acnt =0;
+  26:bb_i2c_sl.c   **** void Init_bb_i2c(uint8 *space)
+  27:bb_i2c_sl.c   **** {
+  28              		.loc 1 27 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 2
+
+
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+  33              	.LVL0:
+  28:bb_i2c_sl.c   **** 
+  29:bb_i2c_sl.c   ****        a_space=space;
+  34              		.loc 1 29 0
+  35 0000 014B     		ldr	r3, .L2
+  30:bb_i2c_sl.c   **** }
+  36              		.loc 1 30 0
+  37              		@ sp needed
+  29:bb_i2c_sl.c   **** }
+  38              		.loc 1 29 0
+  39 0002 1860     		str	r0, [r3]
+  40              		.loc 1 30 0
+  41 0004 7047     		bx	lr
+  42              	.L3:
+  43 0006 C046     		.align	2
+  44              	.L2:
+  45 0008 00000000 		.word	a_space
+  46              		.cfi_endproc
+  47              	.LFE34:
+  48              		.size	Init_bb_i2c, .-Init_bb_i2c
+  49              		.section	.text.bb_i2c_ISR,"ax",%progbits
+  50              		.align	2
+  51              		.global	bb_i2c_ISR
+  52              		.code	16
+  53              		.thumb_func
+  54              		.type	bb_i2c_ISR, %function
+  55              	bb_i2c_ISR:
+  56              	.LFB35:
+  31:bb_i2c_sl.c   **** 
+  32:bb_i2c_sl.c   **** char st[256];
+  33:bb_i2c_sl.c   **** void bb_i2c_ISR(void)
+  34:bb_i2c_sl.c   **** {   
+  57              		.loc 1 34 0
+  58              		.cfi_startproc
+  59              		@ args = 0, pretend = 0, frame = 0
+  60              		@ frame_needed = 0, uses_anonymous_args = 0
+  61 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+  62              		.cfi_def_cfa_offset 20
+  63              		.cfi_offset 4, -20
+  64              		.cfi_offset 5, -16
+  65              		.cfi_offset 6, -12
+  66              		.cfi_offset 7, -8
+  67              		.cfi_offset 14, -4
+  68 0002 4746     		mov	r7, r8
+  69 0004 80B4     		push	{r7}
+  70              		.cfi_def_cfa_offset 24
+  71              		.cfi_offset 8, -24
+  35:bb_i2c_sl.c   ****     pSCL=SCL;
+  72              		.loc 1 35 0
+  73 0006 6A4C     		ldr	r4, .L67
+  74 0008 6378     		ldrb	r3, [r4, #1]
+  75 000a 2370     		strb	r3, [r4]
+  36:bb_i2c_sl.c   ****     pSDA=SDA;
+  76              		.loc 1 36 0
+  77 000c E378     		ldrb	r3, [r4, #3]
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 3
+
+
+  78 000e A370     		strb	r3, [r4, #2]
+  37:bb_i2c_sl.c   ****     SCL=OLD_SCL_Read();
+  79              		.loc 1 37 0
+  80 0010 FFF7FEFF 		bl	OLD_SCL_Read
+  81              	.LVL1:
+  82 0014 6070     		strb	r0, [r4, #1]
+  38:bb_i2c_sl.c   ****    SDA=OLD_SDA_Read();
+  83              		.loc 1 38 0
+  84 0016 FFF7FEFF 		bl	OLD_SDA_Read
+  85              	.LVL2:
+  39:bb_i2c_sl.c   ****   //  st[icnt]=(SCL<<1)|SDA;
+  40:bb_i2c_sl.c   ****    // icnt++;
+  41:bb_i2c_sl.c   ****     if (state==STATE_IDLE && (!SDA) && pSDA)
+  86              		.loc 1 41 0
+  87 001a 664D     		ldr	r5, .L67+4
+  38:bb_i2c_sl.c   ****    SDA=OLD_SDA_Read();
+  88              		.loc 1 38 0
+  89 001c C0B2     		uxtb	r0, r0
+  90              		.loc 1 41 0
+  91 001e 2B78     		ldrb	r3, [r5]
+  38:bb_i2c_sl.c   ****    SDA=OLD_SDA_Read();
+  92              		.loc 1 38 0
+  93 0020 E070     		strb	r0, [r4, #3]
+  94              		.loc 1 41 0
+  95 0022 002B     		cmp	r3, #0
+  96 0024 10D1     		bne	.L5
+  97              		.loc 1 41 0 is_stmt 0 discriminator 1
+  98 0026 0028     		cmp	r0, #0
+  99 0028 39D0     		beq	.L60
+ 100              	.L58:
+ 101 002a 6378     		ldrb	r3, [r4, #1]
+ 102              	.L23:
+  42:bb_i2c_sl.c   ****         {
+  43:bb_i2c_sl.c   ****         state=STATE_START;
+  44:bb_i2c_sl.c   ****         bit_count=0;
+  45:bb_i2c_sl.c   ****           byte_mode=   BYTE_MODE_IDLE;
+  46:bb_i2c_sl.c   ****         return;
+  47:bb_i2c_sl.c   ****         }
+  48:bb_i2c_sl.c   **** 
+  49:bb_i2c_sl.c   **** 
+  50:bb_i2c_sl.c   ****     if (state==STATE_START && (!pSCL) && (SCL)) // rising edge sample bit
+  51:bb_i2c_sl.c   ****        {
+  52:bb_i2c_sl.c   ****         if (byte_mode!=BYTE_MODE_DATA_READ)
+  53:bb_i2c_sl.c   ****             {
+  54:bb_i2c_sl.c   ****             rxbyte=rxbyte<<1;
+  55:bb_i2c_sl.c   ****                 SDA=OLD_SDA_Read();
+  56:bb_i2c_sl.c   ****             if (SDA)
+  57:bb_i2c_sl.c   ****              rxbyte|=0x1;
+  58:bb_i2c_sl.c   ****              bit_count++;
+  59:bb_i2c_sl.c   ****             }
+  60:bb_i2c_sl.c   ****         if (bit_count==9)
+  61:bb_i2c_sl.c   ****                     bit_count=0;
+  62:bb_i2c_sl.c   ****         if (bit_count==8 && byte_mode!=BYTE_MODE_DATA_READ)
+  63:bb_i2c_sl.c   ****            {
+  64:bb_i2c_sl.c   ****            if (BYTE_MODE_IDLE == byte_mode)
+  65:bb_i2c_sl.c   ****                 {
+  66:bb_i2c_sl.c   ****                      acnt++;
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 4
+
+
+  67:bb_i2c_sl.c   ****                 if ((rxbyte&0xfe)==(my_address<<1))
+  68:bb_i2c_sl.c   ****                     {
+  69:bb_i2c_sl.c   ****                        
+  70:bb_i2c_sl.c   ****                     state=STATE_ACK;
+  71:bb_i2c_sl.c   ****                         OLD_SDA_Write(0);
+  72:bb_i2c_sl.c   ****                     if (rxbyte&0x1)
+  73:bb_i2c_sl.c   ****                         {
+  74:bb_i2c_sl.c   ****                         byte_mode=BYTE_MODE_DATA_READ;
+  75:bb_i2c_sl.c   ****                         txbyte=a_space[reg_ptr++];
+  76:bb_i2c_sl.c   ****                         bit_count=0;
+  77:bb_i2c_sl.c   ****                         }
+  78:bb_i2c_sl.c   ****                     else
+  79:bb_i2c_sl.c   ****                         byte_mode=BYTE_MODE_ADDRESS_WRITE;
+  80:bb_i2c_sl.c   ****                     }
+  81:bb_i2c_sl.c   ****                else
+  82:bb_i2c_sl.c   ****                     state = STATE_IDLE;
+  83:bb_i2c_sl.c   ****                 }
+  84:bb_i2c_sl.c   ****             else
+  85:bb_i2c_sl.c   ****             if (BYTE_MODE_ADDRESS_WRITE == byte_mode)
+  86:bb_i2c_sl.c   ****                 {
+  87:bb_i2c_sl.c   ****                     reg_ptr= rxbyte;
+  88:bb_i2c_sl.c   ****                     state = STATE_ACK;
+  89:bb_i2c_sl.c   ****                     byte_mode=BYTE_MODE_DATA_WRITE;
+  90:bb_i2c_sl.c   ****                 }
+  91:bb_i2c_sl.c   ****             else
+  92:bb_i2c_sl.c   ****               if (byte_mode==BYTE_MODE_DATA_WRITE)
+  93:bb_i2c_sl.c   ****                 {
+  94:bb_i2c_sl.c   ****                 a_space[reg_ptr++]=rxbyte;
+  95:bb_i2c_sl.c   ****                 state = STATE_ACK;
+  96:bb_i2c_sl.c   ****                 }
+  97:bb_i2c_sl.c   **** 
+  98:bb_i2c_sl.c   ****            }
+  99:bb_i2c_sl.c   ****        }
+ 100:bb_i2c_sl.c   ****     
+ 101:bb_i2c_sl.c   ****     /// falling edge of clock we change the data
+ 102:bb_i2c_sl.c   ****    if (state==STATE_ACK &&   (pSCL) && (!SCL))
+ 103:bb_i2c_sl.c   ****         {
+ 104:bb_i2c_sl.c   ****             OLD_SDA_Write(0);
+ 105:bb_i2c_sl.c   ****             state = STATE_START;
+ 106:bb_i2c_sl.c   ****          //   bit_count=0;
+ 107:bb_i2c_sl.c   ****         }
+ 108:bb_i2c_sl.c   ****     else
+ 109:bb_i2c_sl.c   ****         if (state==STATE_START && (pSCL) && (!SCL))
+ 110:bb_i2c_sl.c   ****         {
+ 111:bb_i2c_sl.c   ****         OLD_SDA_Write(1);
+ 112:bb_i2c_sl.c   **** 
+ 113:bb_i2c_sl.c   ****        if (byte_mode==BYTE_MODE_DATA_READ)
+ 114:bb_i2c_sl.c   ****           {
+ 115:bb_i2c_sl.c   ****             bit_count++;
+ 116:bb_i2c_sl.c   ****             if ((txbyte&0x80)|| bit_count>=8)
+ 117:bb_i2c_sl.c   ****                  OLD_SDA_Write(1);
+ 118:bb_i2c_sl.c   ****             else
+ 119:bb_i2c_sl.c   ****                  OLD_SDA_Write(0);
+ 120:bb_i2c_sl.c   ****             txbyte=txbyte<<1;
+ 121:bb_i2c_sl.c   **** 
+ 122:bb_i2c_sl.c   ****             if (bit_count==9)
+ 123:bb_i2c_sl.c   ****                 {
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 5
+
+
+ 124:bb_i2c_sl.c   ****                   st[icnt]=reg_ptr;
+ 125:bb_i2c_sl.c   ****                  icnt++;
+ 126:bb_i2c_sl.c   ****                 bit_count=0;
+ 127:bb_i2c_sl.c   ****                 txbyte=a_space[reg_ptr++];
+ 128:bb_i2c_sl.c   ****  
+ 129:bb_i2c_sl.c   ****                 }
+ 130:bb_i2c_sl.c   ****  
+ 131:bb_i2c_sl.c   ****           }
+ 132:bb_i2c_sl.c   ****         }
+ 133:bb_i2c_sl.c   ****     if (SCL && SDA && (pSDA==0))
+ 103              		.loc 1 133 0 is_stmt 1
+ 104 002c 002B     		cmp	r3, #0
+ 105 002e 08D0     		beq	.L4
+ 106              	.L31:
+ 107 0030 E378     		ldrb	r3, [r4, #3]
+ 108 0032 002B     		cmp	r3, #0
+ 109 0034 05D0     		beq	.L4
+ 110              		.loc 1 133 0 is_stmt 0 discriminator 2
+ 111 0036 A378     		ldrb	r3, [r4, #2]
+ 112 0038 002B     		cmp	r3, #0
+ 113 003a 02D1     		bne	.L4
+ 134:bb_i2c_sl.c   ****         {
+ 135:bb_i2c_sl.c   ****             state = STATE_IDLE;
+ 114              		.loc 1 135 0 is_stmt 1
+ 115 003c 2B70     		strb	r3, [r5]
+ 136:bb_i2c_sl.c   ****             byte_mode=BYTE_MODE_IDLE ;
+ 116              		.loc 1 136 0
+ 117 003e AB70     		strb	r3, [r5, #2]
+ 137:bb_i2c_sl.c   ****             bit_count=0;
+ 118              		.loc 1 137 0
+ 119 0040 6B70     		strb	r3, [r5, #1]
+ 120              	.L4:
+ 138:bb_i2c_sl.c   ****             
+ 139:bb_i2c_sl.c   ****         }
+ 140:bb_i2c_sl.c   **** }
+ 121              		.loc 1 140 0
+ 122              		@ sp needed
+ 123 0042 04BC     		pop	{r2}
+ 124 0044 9046     		mov	r8, r2
+ 125 0046 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 126              	.L5:
+  50:bb_i2c_sl.c   ****        {
+ 127              		.loc 1 50 0
+ 128 0048 012B     		cmp	r3, #1
+ 129 004a 30D1     		bne	.L8
+  50:bb_i2c_sl.c   ****        {
+ 130              		.loc 1 50 0 is_stmt 0 discriminator 1
+ 131 004c 2378     		ldrb	r3, [r4]
+ 132 004e 002B     		cmp	r3, #0
+ 133 0050 3CD1     		bne	.L61
+  50:bb_i2c_sl.c   ****        {
+ 134              		.loc 1 50 0 discriminator 2
+ 135 0052 6378     		ldrb	r3, [r4, #1]
+ 136 0054 002B     		cmp	r3, #0
+ 137 0056 F4D0     		beq	.L4
+  52:bb_i2c_sl.c   ****             {
+ 138              		.loc 1 52 0 is_stmt 1
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 6
+
+
+ 139 0058 AB78     		ldrb	r3, [r5, #2]
+ 140 005a 032B     		cmp	r3, #3
+ 141 005c 60D0     		beq	.L62
+  54:bb_i2c_sl.c   ****                 SDA=OLD_SDA_Read();
+ 142              		.loc 1 54 0
+ 143 005e 564E     		ldr	r6, .L67+8
+ 144 0060 3378     		ldrb	r3, [r6]
+ 145 0062 5B00     		lsls	r3, r3, #1
+ 146 0064 3370     		strb	r3, [r6]
+  55:bb_i2c_sl.c   ****             if (SDA)
+ 147              		.loc 1 55 0
+ 148 0066 FFF7FEFF 		bl	OLD_SDA_Read
+ 149              	.LVL3:
+ 150 006a C0B2     		uxtb	r0, r0
+ 151 006c E070     		strb	r0, [r4, #3]
+  56:bb_i2c_sl.c   ****              rxbyte|=0x1;
+ 152              		.loc 1 56 0
+ 153 006e 0028     		cmp	r0, #0
+ 154 0070 03D0     		beq	.L14
+  57:bb_i2c_sl.c   ****              bit_count++;
+ 155              		.loc 1 57 0
+ 156 0072 0123     		movs	r3, #1
+ 157 0074 3278     		ldrb	r2, [r6]
+ 158 0076 1343     		orrs	r3, r2
+ 159 0078 3370     		strb	r3, [r6]
+ 160              	.L14:
+  58:bb_i2c_sl.c   ****             }
+ 161              		.loc 1 58 0
+ 162 007a 6B78     		ldrb	r3, [r5, #1]
+ 163 007c 0133     		adds	r3, r3, #1
+ 164 007e DBB2     		uxtb	r3, r3
+ 165 0080 6B70     		strb	r3, [r5, #1]
+ 166              	.L13:
+  60:bb_i2c_sl.c   ****                     bit_count=0;
+ 167              		.loc 1 60 0
+ 168 0082 092B     		cmp	r3, #9
+ 169 0084 61D0     		beq	.L63
+  62:bb_i2c_sl.c   ****            {
+ 170              		.loc 1 62 0
+ 171 0086 082B     		cmp	r3, #8
+ 172 0088 4CD0     		beq	.L64
+ 173              	.L16:
+ 102:bb_i2c_sl.c   ****         {
+ 174              		.loc 1 102 0
+ 175 008a 2B78     		ldrb	r3, [r5]
+ 176 008c 022B     		cmp	r3, #2
+ 177 008e 10D0     		beq	.L21
+ 109:bb_i2c_sl.c   ****         {
+ 178              		.loc 1 109 0
+ 179 0090 012B     		cmp	r3, #1
+ 180 0092 CAD1     		bne	.L58
+ 181 0094 2278     		ldrb	r2, [r4]
+ 182 0096 6378     		ldrb	r3, [r4, #1]
+ 183 0098 002A     		cmp	r2, #0
+ 184 009a C7D0     		beq	.L23
+ 185 009c 17E0     		b	.L10
+ 186              	.L60:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 7
+
+
+  41:bb_i2c_sl.c   ****         {
+ 187              		.loc 1 41 0 discriminator 2
+ 188 009e A378     		ldrb	r3, [r4, #2]
+ 189 00a0 002B     		cmp	r3, #0
+ 190 00a2 C2D0     		beq	.L58
+  43:bb_i2c_sl.c   ****         bit_count=0;
+ 191              		.loc 1 43 0
+ 192 00a4 0123     		movs	r3, #1
+  44:bb_i2c_sl.c   ****           byte_mode=   BYTE_MODE_IDLE;
+ 193              		.loc 1 44 0
+ 194 00a6 6870     		strb	r0, [r5, #1]
+  43:bb_i2c_sl.c   ****         bit_count=0;
+ 195              		.loc 1 43 0
+ 196 00a8 2B70     		strb	r3, [r5]
+  45:bb_i2c_sl.c   ****         return;
+ 197              		.loc 1 45 0
+ 198 00aa A870     		strb	r0, [r5, #2]
+  46:bb_i2c_sl.c   ****         }
+ 199              		.loc 1 46 0
+ 200 00ac C9E7     		b	.L4
+ 201              	.L8:
+ 102:bb_i2c_sl.c   ****         {
+ 202              		.loc 1 102 0
+ 203 00ae 022B     		cmp	r3, #2
+ 204 00b0 BBD1     		bne	.L58
+ 205              	.L21:
+ 206 00b2 2378     		ldrb	r3, [r4]
+ 207 00b4 002B     		cmp	r3, #0
+ 208 00b6 B8D0     		beq	.L58
+ 102:bb_i2c_sl.c   ****         {
+ 209              		.loc 1 102 0 is_stmt 0 discriminator 2
+ 210 00b8 6378     		ldrb	r3, [r4, #1]
+ 211 00ba 002B     		cmp	r3, #0
+ 212 00bc B8D1     		bne	.L31
+ 213              	.LBB2:
+ 104:bb_i2c_sl.c   ****             state = STATE_START;
+ 214              		.loc 1 104 0 is_stmt 1
+ 215 00be 0020     		movs	r0, #0
+ 216 00c0 FFF7FEFF 		bl	OLD_SDA_Write
+ 217              	.LVL4:
+ 105:bb_i2c_sl.c   ****          //   bit_count=0;
+ 218              		.loc 1 105 0
+ 219 00c4 0123     		movs	r3, #1
+ 220 00c6 2B70     		strb	r3, [r5]
+ 221 00c8 6378     		ldrb	r3, [r4, #1]
+ 222              	.LBE2:
+ 103:bb_i2c_sl.c   ****             OLD_SDA_Write(0);
+ 223              		.loc 1 103 0
+ 224 00ca AFE7     		b	.L23
+ 225              	.L61:
+ 226 00cc 6378     		ldrb	r3, [r4, #1]
+ 227              	.L10:
+ 109:bb_i2c_sl.c   ****         {
+ 228              		.loc 1 109 0 discriminator 2
+ 229 00ce 002B     		cmp	r3, #0
+ 230 00d0 AED1     		bne	.L31
+ 231              	.LBB3:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 8
+
+
+ 111:bb_i2c_sl.c   **** 
+ 232              		.loc 1 111 0
+ 233 00d2 0120     		movs	r0, #1
+ 234 00d4 FFF7FEFF 		bl	OLD_SDA_Write
+ 235              	.LVL5:
+ 113:bb_i2c_sl.c   ****           {
+ 236              		.loc 1 113 0
+ 237 00d8 AB78     		ldrb	r3, [r5, #2]
+ 238 00da 032B     		cmp	r3, #3
+ 239 00dc A5D1     		bne	.L58
+ 115:bb_i2c_sl.c   ****             if ((txbyte&0x80)|| bit_count>=8)
+ 240              		.loc 1 115 0
+ 241 00de 6B78     		ldrb	r3, [r5, #1]
+ 116:bb_i2c_sl.c   ****                  OLD_SDA_Write(1);
+ 242              		.loc 1 116 0
+ 243 00e0 6A7A     		ldrb	r2, [r5, #9]
+ 115:bb_i2c_sl.c   ****             if ((txbyte&0x80)|| bit_count>=8)
+ 244              		.loc 1 115 0
+ 245 00e2 0133     		adds	r3, r3, #1
+ 246 00e4 DBB2     		uxtb	r3, r3
+ 247 00e6 6B70     		strb	r3, [r5, #1]
+ 116:bb_i2c_sl.c   ****                  OLD_SDA_Write(1);
+ 248              		.loc 1 116 0
+ 249 00e8 7F2A     		cmp	r2, #127
+ 250 00ea 01D8     		bhi	.L27
+ 116:bb_i2c_sl.c   ****                  OLD_SDA_Write(1);
+ 251              		.loc 1 116 0 is_stmt 0 discriminator 1
+ 252 00ec 072B     		cmp	r3, #7
+ 253 00ee 3DD9     		bls	.L28
+ 254              	.L27:
+ 117:bb_i2c_sl.c   ****             else
+ 255              		.loc 1 117 0 is_stmt 1
+ 256 00f0 0120     		movs	r0, #1
+ 257 00f2 FFF7FEFF 		bl	OLD_SDA_Write
+ 258              	.LVL6:
+ 259              	.L29:
+ 120:bb_i2c_sl.c   **** 
+ 260              		.loc 1 120 0
+ 261 00f6 6B7A     		ldrb	r3, [r5, #9]
+ 262 00f8 5B00     		lsls	r3, r3, #1
+ 263 00fa 6B72     		strb	r3, [r5, #9]
+ 122:bb_i2c_sl.c   ****                 {
+ 264              		.loc 1 122 0
+ 265 00fc 6B78     		ldrb	r3, [r5, #1]
+ 266 00fe 092B     		cmp	r3, #9
+ 267 0100 93D1     		bne	.L58
+ 124:bb_i2c_sl.c   ****                  icnt++;
+ 268              		.loc 1 124 0
+ 269 0102 2A7A     		ldrb	r2, [r5, #8]
+ 270 0104 AB7A     		ldrb	r3, [r5, #10]
+ 271 0106 2D49     		ldr	r1, .L67+12
+ 272 0108 CA54     		strb	r2, [r1, r3]
+ 125:bb_i2c_sl.c   ****                 bit_count=0;
+ 273              		.loc 1 125 0
+ 274 010a 0133     		adds	r3, r3, #1
+ 275 010c AB72     		strb	r3, [r5, #10]
+ 126:bb_i2c_sl.c   ****                 txbyte=a_space[reg_ptr++];
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 9
+
+
+ 276              		.loc 1 126 0
+ 277 010e 0023     		movs	r3, #0
+ 278 0110 6B70     		strb	r3, [r5, #1]
+ 127:bb_i2c_sl.c   ****  
+ 279              		.loc 1 127 0
+ 280 0112 2B4B     		ldr	r3, .L67+16
+ 281 0114 511C     		adds	r1, r2, #1
+ 282 0116 1B68     		ldr	r3, [r3]
+ 283 0118 2972     		strb	r1, [r5, #8]
+ 284 011a 9B5C     		ldrb	r3, [r3, r2]
+ 285 011c 6B72     		strb	r3, [r5, #9]
+ 286 011e 84E7     		b	.L58
+ 287              	.L62:
+ 288 0120 6B78     		ldrb	r3, [r5, #1]
+ 289 0122 AEE7     		b	.L13
+ 290              	.L64:
+ 291              	.LBE3:
+  62:bb_i2c_sl.c   ****            {
+ 292              		.loc 1 62 0 discriminator 1
+ 293 0124 AE78     		ldrb	r6, [r5, #2]
+ 294 0126 032E     		cmp	r6, #3
+ 295 0128 AFD0     		beq	.L16
+  64:bb_i2c_sl.c   ****                 {
+ 296              		.loc 1 64 0
+ 297 012a 002E     		cmp	r6, #0
+ 298 012c 10D1     		bne	.L17
+  67:bb_i2c_sl.c   ****                     {
+ 299              		.loc 1 67 0
+ 300 012e 0127     		movs	r7, #1
+  66:bb_i2c_sl.c   ****                 if ((rxbyte&0xfe)==(my_address<<1))
+ 301              		.loc 1 66 0
+ 302 0130 6B68     		ldr	r3, [r5, #4]
+ 303 0132 0133     		adds	r3, r3, #1
+ 304 0134 6B60     		str	r3, [r5, #4]
+  67:bb_i2c_sl.c   ****                     {
+ 305              		.loc 1 67 0
+ 306 0136 204B     		ldr	r3, .L67+8
+ 307 0138 1A78     		ldrb	r2, [r3]
+ 308 013a 9846     		mov	r8, r3
+ 309 013c 2379     		ldrb	r3, [r4, #4]
+ 310 013e BA43     		bics	r2, r7
+ 311 0140 5B00     		lsls	r3, r3, #1
+ 312 0142 9A42     		cmp	r2, r3
+ 313 0144 1DD0     		beq	.L65
+  82:bb_i2c_sl.c   ****                 }
+ 314              		.loc 1 82 0
+ 315 0146 2E70     		strb	r6, [r5]
+ 316 0148 6FE7     		b	.L58
+ 317              	.L63:
+  61:bb_i2c_sl.c   ****         if (bit_count==8 && byte_mode!=BYTE_MODE_DATA_READ)
+ 318              		.loc 1 61 0
+ 319 014a 0023     		movs	r3, #0
+ 320 014c 6B70     		strb	r3, [r5, #1]
+ 321 014e 9CE7     		b	.L16
+ 322              	.L17:
+  85:bb_i2c_sl.c   ****                 {
+ 323              		.loc 1 85 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 10
+
+
+ 324 0150 012E     		cmp	r6, #1
+ 325 0152 0FD0     		beq	.L66
+  92:bb_i2c_sl.c   ****                 {
+ 326              		.loc 1 92 0
+ 327 0154 022E     		cmp	r6, #2
+ 328 0156 98D1     		bne	.L16
+  94:bb_i2c_sl.c   ****                 state = STATE_ACK;
+ 329              		.loc 1 94 0
+ 330 0158 194B     		ldr	r3, .L67+16
+ 331 015a 1A68     		ldr	r2, [r3]
+ 332 015c 2B7A     		ldrb	r3, [r5, #8]
+ 333 015e 591C     		adds	r1, r3, #1
+ 334 0160 2972     		strb	r1, [r5, #8]
+ 335 0162 1549     		ldr	r1, .L67+8
+ 336 0164 0978     		ldrb	r1, [r1]
+ 337 0166 D154     		strb	r1, [r2, r3]
+  95:bb_i2c_sl.c   ****                 }
+ 338              		.loc 1 95 0
+ 339 0168 2E70     		strb	r6, [r5]
+ 340 016a A2E7     		b	.L21
+ 341              	.L28:
+ 342              	.LBB4:
+ 119:bb_i2c_sl.c   ****             txbyte=txbyte<<1;
+ 343              		.loc 1 119 0
+ 344 016c 0020     		movs	r0, #0
+ 345 016e FFF7FEFF 		bl	OLD_SDA_Write
+ 346              	.LVL7:
+ 347 0172 C0E7     		b	.L29
+ 348              	.L66:
+ 349              	.LBE4:
+  87:bb_i2c_sl.c   ****                     state = STATE_ACK;
+ 350              		.loc 1 87 0
+ 351 0174 104B     		ldr	r3, .L67+8
+ 352 0176 1B78     		ldrb	r3, [r3]
+ 353 0178 2B72     		strb	r3, [r5, #8]
+  88:bb_i2c_sl.c   ****                     byte_mode=BYTE_MODE_DATA_WRITE;
+ 354              		.loc 1 88 0
+ 355 017a 0223     		movs	r3, #2
+ 356 017c 2B70     		strb	r3, [r5]
+  89:bb_i2c_sl.c   ****                 }
+ 357              		.loc 1 89 0
+ 358 017e AB70     		strb	r3, [r5, #2]
+ 359 0180 97E7     		b	.L21
+ 360              	.L65:
+ 361              	.LBB5:
+  70:bb_i2c_sl.c   ****                         OLD_SDA_Write(0);
+ 362              		.loc 1 70 0
+ 363 0182 0223     		movs	r3, #2
+  71:bb_i2c_sl.c   ****                     if (rxbyte&0x1)
+ 364              		.loc 1 71 0
+ 365 0184 0020     		movs	r0, #0
+  70:bb_i2c_sl.c   ****                         OLD_SDA_Write(0);
+ 366              		.loc 1 70 0
+ 367 0186 2B70     		strb	r3, [r5]
+  71:bb_i2c_sl.c   ****                     if (rxbyte&0x1)
+ 368              		.loc 1 71 0
+ 369 0188 FFF7FEFF 		bl	OLD_SDA_Write
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 11
+
+
+ 370              	.LVL8:
+  72:bb_i2c_sl.c   ****                         {
+ 371              		.loc 1 72 0
+ 372 018c 4346     		mov	r3, r8
+ 373 018e 1B78     		ldrb	r3, [r3]
+ 374 0190 3B42     		tst	r3, r7
+ 375 0192 0AD0     		beq	.L19
+  74:bb_i2c_sl.c   ****                         txbyte=a_space[reg_ptr++];
+ 376              		.loc 1 74 0
+ 377 0194 0323     		movs	r3, #3
+ 378 0196 AB70     		strb	r3, [r5, #2]
+  75:bb_i2c_sl.c   ****                         bit_count=0;
+ 379              		.loc 1 75 0
+ 380 0198 094B     		ldr	r3, .L67+16
+ 381 019a 1A68     		ldr	r2, [r3]
+ 382 019c 2B7A     		ldrb	r3, [r5, #8]
+ 383 019e D919     		adds	r1, r3, r7
+ 384 01a0 2972     		strb	r1, [r5, #8]
+ 385 01a2 D35C     		ldrb	r3, [r2, r3]
+  76:bb_i2c_sl.c   ****                         }
+ 386              		.loc 1 76 0
+ 387 01a4 6E70     		strb	r6, [r5, #1]
+  75:bb_i2c_sl.c   ****                         bit_count=0;
+ 388              		.loc 1 75 0
+ 389 01a6 6B72     		strb	r3, [r5, #9]
+ 390 01a8 6FE7     		b	.L16
+ 391              	.L19:
+  79:bb_i2c_sl.c   ****                     }
+ 392              		.loc 1 79 0
+ 393 01aa AF70     		strb	r7, [r5, #2]
+ 394 01ac 6DE7     		b	.L16
+ 395              	.L68:
+ 396 01ae C046     		.align	2
+ 397              	.L67:
+ 398 01b0 00000000 		.word	.LANCHOR0
+ 399 01b4 00000000 		.word	.LANCHOR1
+ 400 01b8 00000000 		.word	rxbyte
+ 401 01bc 00000000 		.word	st
+ 402 01c0 00000000 		.word	a_space
+ 403              	.LBE5:
+ 404              		.cfi_endproc
+ 405              	.LFE35:
+ 406              		.size	bb_i2c_ISR, .-bb_i2c_ISR
+ 407              		.comm	st,256,4
+ 408              		.global	acnt
+ 409              		.global	byte_mode
+ 410              		.comm	a_space,4,4
+ 411              		.global	reg_ptr
+ 412              		.global	icnt
+ 413              		.global	txbyte
+ 414              		.global	bit_count
+ 415              		.comm	rxbyte,1,1
+ 416              		.global	SDA
+ 417              		.global	SCL
+ 418              		.global	pSCL
+ 419              		.global	pSDA
+ 420              		.global	my_address
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 12
+
+
+ 421              		.global	state
+ 422              		.data
+ 423              		.set	.LANCHOR0,. + 0
+ 424              		.type	pSCL, %object
+ 425              		.size	pSCL, 1
+ 426              	pSCL:
+ 427 0000 01       		.byte	1
+ 428              		.type	SCL, %object
+ 429              		.size	SCL, 1
+ 430              	SCL:
+ 431 0001 01       		.byte	1
+ 432              		.type	pSDA, %object
+ 433              		.size	pSDA, 1
+ 434              	pSDA:
+ 435 0002 01       		.byte	1
+ 436              		.type	SDA, %object
+ 437              		.size	SDA, 1
+ 438              	SDA:
+ 439 0003 01       		.byte	1
+ 440              		.type	my_address, %object
+ 441              		.size	my_address, 1
+ 442              	my_address:
+ 443 0004 32       		.byte	50
+ 444              		.bss
+ 445              		.align	2
+ 446              		.set	.LANCHOR1,. + 0
+ 447              		.type	state, %object
+ 448              		.size	state, 1
+ 449              	state:
+ 450 0000 00       		.space	1
+ 451              		.type	bit_count, %object
+ 452              		.size	bit_count, 1
+ 453              	bit_count:
+ 454 0001 00       		.space	1
+ 455              		.type	byte_mode, %object
+ 456              		.size	byte_mode, 1
+ 457              	byte_mode:
+ 458 0002 00       		.space	1
+ 459 0003 00       		.space	1
+ 460              		.type	acnt, %object
+ 461              		.size	acnt, 4
+ 462              	acnt:
+ 463 0004 00000000 		.space	4
+ 464              		.type	reg_ptr, %object
+ 465              		.size	reg_ptr, 1
+ 466              	reg_ptr:
+ 467 0008 00       		.space	1
+ 468              		.type	txbyte, %object
+ 469              		.size	txbyte, 1
+ 470              	txbyte:
+ 471 0009 00       		.space	1
+ 472              		.type	icnt, %object
+ 473              		.size	icnt, 1
+ 474              	icnt:
+ 475 000a 00       		.space	1
+ 476              		.text
+ 477              	.Letext0:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 13
+
+
+ 478              		.file 2 "Generated_Source\\PSoC4/cytypes.h"
+ 479              		.section	.debug_info,"",%progbits
+ 480              	.Ldebug_info0:
+ 481 0000 EE020000 		.4byte	0x2ee
+ 482 0004 0400     		.2byte	0x4
+ 483 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 484 000a 04       		.byte	0x4
+ 485 000b 01       		.uleb128 0x1
+ 486 000c 96000000 		.4byte	.LASF31
+ 487 0010 0C       		.byte	0xc
+ 488 0011 9B010000 		.4byte	.LASF32
+ 489 0015 B4010000 		.4byte	.LASF33
+ 490 0019 18000000 		.4byte	.Ldebug_ranges0+0x18
+ 491 001d 00000000 		.4byte	0
+ 492 0021 00000000 		.4byte	.Ldebug_line0
+ 493 0025 02       		.uleb128 0x2
+ 494 0026 01       		.byte	0x1
+ 495 0027 06       		.byte	0x6
+ 496 0028 E7010000 		.4byte	.LASF0
+ 497 002c 02       		.uleb128 0x2
+ 498 002d 01       		.byte	0x1
+ 499 002e 08       		.byte	0x8
+ 500 002f 50000000 		.4byte	.LASF1
+ 501 0033 02       		.uleb128 0x2
+ 502 0034 02       		.byte	0x2
+ 503 0035 05       		.byte	0x5
+ 504 0036 2B010000 		.4byte	.LASF2
+ 505 003a 02       		.uleb128 0x2
+ 506 003b 02       		.byte	0x2
+ 507 003c 07       		.byte	0x7
+ 508 003d 1D000000 		.4byte	.LASF3
+ 509 0041 02       		.uleb128 0x2
+ 510 0042 04       		.byte	0x4
+ 511 0043 05       		.byte	0x5
+ 512 0044 D2010000 		.4byte	.LASF4
+ 513 0048 02       		.uleb128 0x2
+ 514 0049 04       		.byte	0x4
+ 515 004a 07       		.byte	0x7
+ 516 004b 75000000 		.4byte	.LASF5
+ 517 004f 02       		.uleb128 0x2
+ 518 0050 08       		.byte	0x8
+ 519 0051 05       		.byte	0x5
+ 520 0052 88010000 		.4byte	.LASF6
+ 521 0056 02       		.uleb128 0x2
+ 522 0057 08       		.byte	0x8
+ 523 0058 07       		.byte	0x7
+ 524 0059 5B010000 		.4byte	.LASF7
+ 525 005d 03       		.uleb128 0x3
+ 526 005e 04       		.byte	0x4
+ 527 005f 05       		.byte	0x5
+ 528 0060 696E7400 		.ascii	"int\000"
+ 529 0064 02       		.uleb128 0x2
+ 530 0065 04       		.byte	0x4
+ 531 0066 07       		.byte	0x7
+ 532 0067 40010000 		.4byte	.LASF8
+ 533 006b 04       		.uleb128 0x4
+ 534 006c A7010000 		.4byte	.LASF34
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 14
+
+
+ 535 0070 02       		.byte	0x2
+ 536 0071 D201     		.2byte	0x1d2
+ 537 0073 2C000000 		.4byte	0x2c
+ 538 0077 02       		.uleb128 0x2
+ 539 0078 04       		.byte	0x4
+ 540 0079 04       		.byte	0x4
+ 541 007a 4A000000 		.4byte	.LASF9
+ 542 007e 02       		.uleb128 0x2
+ 543 007f 08       		.byte	0x8
+ 544 0080 04       		.byte	0x4
+ 545 0081 24010000 		.4byte	.LASF10
+ 546 0085 02       		.uleb128 0x2
+ 547 0086 01       		.byte	0x1
+ 548 0087 08       		.byte	0x8
+ 549 0088 96010000 		.4byte	.LASF11
+ 550 008c 02       		.uleb128 0x2
+ 551 008d 08       		.byte	0x8
+ 552 008e 04       		.byte	0x4
+ 553 008f DB010000 		.4byte	.LASF12
+ 554 0093 02       		.uleb128 0x2
+ 555 0094 04       		.byte	0x4
+ 556 0095 07       		.byte	0x7
+ 557 0096 7F010000 		.4byte	.LASF13
+ 558 009a 05       		.uleb128 0x5
+ 559 009b 30000000 		.4byte	.LASF14
+ 560 009f 01       		.byte	0x1
+ 561 00a0 1A       		.byte	0x1a
+ 562 00a1 00000000 		.4byte	.LFB34
+ 563 00a5 0C000000 		.4byte	.LFE34-.LFB34
+ 564 00a9 01       		.uleb128 0x1
+ 565 00aa 9C       		.byte	0x9c
+ 566 00ab BD000000 		.4byte	0xbd
+ 567 00af 06       		.uleb128 0x6
+ 568 00b0 44000000 		.4byte	.LASF35
+ 569 00b4 01       		.byte	0x1
+ 570 00b5 1A       		.byte	0x1a
+ 571 00b6 BD000000 		.4byte	0xbd
+ 572 00ba 01       		.uleb128 0x1
+ 573 00bb 50       		.byte	0x50
+ 574 00bc 00       		.byte	0
+ 575 00bd 07       		.uleb128 0x7
+ 576 00be 04       		.byte	0x4
+ 577 00bf 6B000000 		.4byte	0x6b
+ 578 00c3 05       		.uleb128 0x5
+ 579 00c4 0B000000 		.4byte	.LASF15
+ 580 00c8 01       		.byte	0x1
+ 581 00c9 21       		.byte	0x21
+ 582 00ca 00000000 		.4byte	.LFB35
+ 583 00ce C4010000 		.4byte	.LFE35-.LFB35
+ 584 00d2 01       		.uleb128 0x1
+ 585 00d3 9C       		.byte	0x9c
+ 586 00d4 C2010000 		.4byte	0x1c2
+ 587 00d8 08       		.uleb128 0x8
+ 588 00d9 F3010000 		.4byte	.LASF16
+ 589 00dd 01       		.byte	0x1
+ 590 00de 25       		.byte	0x25
+ 591 00df 5D000000 		.4byte	0x5d
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 15
+
+
+ 592 00e3 E9000000 		.4byte	0xe9
+ 593 00e7 09       		.uleb128 0x9
+ 594 00e8 00       		.byte	0
+ 595 00e9 08       		.uleb128 0x8
+ 596 00ea 72010000 		.4byte	.LASF17
+ 597 00ee 01       		.byte	0x1
+ 598 00ef 26       		.byte	0x26
+ 599 00f0 5D000000 		.4byte	0x5d
+ 600 00f4 FA000000 		.4byte	0xfa
+ 601 00f8 09       		.uleb128 0x9
+ 602 00f9 00       		.byte	0
+ 603 00fa 0A       		.uleb128 0xa
+ 604 00fb BE000000 		.4byte	.LBB2
+ 605 00ff 0C000000 		.4byte	.LBE2-.LBB2
+ 606 0103 28010000 		.4byte	0x128
+ 607 0107 08       		.uleb128 0x8
+ 608 0108 4D010000 		.4byte	.LASF18
+ 609 010c 01       		.byte	0x1
+ 610 010d 47       		.byte	0x47
+ 611 010e 5D000000 		.4byte	0x5d
+ 612 0112 18010000 		.4byte	0x118
+ 613 0116 09       		.uleb128 0x9
+ 614 0117 00       		.byte	0
+ 615 0118 0B       		.uleb128 0xb
+ 616 0119 C4000000 		.4byte	.LVL4
+ 617 011d D0020000 		.4byte	0x2d0
+ 618 0121 0C       		.uleb128 0xc
+ 619 0122 01       		.uleb128 0x1
+ 620 0123 50       		.byte	0x50
+ 621 0124 01       		.uleb128 0x1
+ 622 0125 30       		.byte	0x30
+ 623 0126 00       		.byte	0
+ 624 0127 00       		.byte	0
+ 625 0128 0D       		.uleb128 0xd
+ 626 0129 00000000 		.4byte	.Ldebug_ranges0+0
+ 627 012d 78010000 		.4byte	0x178
+ 628 0131 08       		.uleb128 0x8
+ 629 0132 4D010000 		.4byte	.LASF18
+ 630 0136 01       		.byte	0x1
+ 631 0137 47       		.byte	0x47
+ 632 0138 5D000000 		.4byte	0x5d
+ 633 013c 42010000 		.4byte	0x142
+ 634 0140 09       		.uleb128 0x9
+ 635 0141 00       		.byte	0
+ 636 0142 0E       		.uleb128 0xe
+ 637 0143 D8000000 		.4byte	.LVL5
+ 638 0147 D0020000 		.4byte	0x2d0
+ 639 014b 55010000 		.4byte	0x155
+ 640 014f 0C       		.uleb128 0xc
+ 641 0150 01       		.uleb128 0x1
+ 642 0151 50       		.byte	0x50
+ 643 0152 01       		.uleb128 0x1
+ 644 0153 31       		.byte	0x31
+ 645 0154 00       		.byte	0
+ 646 0155 0E       		.uleb128 0xe
+ 647 0156 F6000000 		.4byte	.LVL6
+ 648 015a D0020000 		.4byte	0x2d0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 16
+
+
+ 649 015e 68010000 		.4byte	0x168
+ 650 0162 0C       		.uleb128 0xc
+ 651 0163 01       		.uleb128 0x1
+ 652 0164 50       		.byte	0x50
+ 653 0165 01       		.uleb128 0x1
+ 654 0166 31       		.byte	0x31
+ 655 0167 00       		.byte	0
+ 656 0168 0B       		.uleb128 0xb
+ 657 0169 72010000 		.4byte	.LVL7
+ 658 016d D0020000 		.4byte	0x2d0
+ 659 0171 0C       		.uleb128 0xc
+ 660 0172 01       		.uleb128 0x1
+ 661 0173 50       		.byte	0x50
+ 662 0174 01       		.uleb128 0x1
+ 663 0175 30       		.byte	0x30
+ 664 0176 00       		.byte	0
+ 665 0177 00       		.byte	0
+ 666 0178 0A       		.uleb128 0xa
+ 667 0179 82010000 		.4byte	.LBB5
+ 668 017d 42000000 		.4byte	.LBE5-.LBB5
+ 669 0181 A6010000 		.4byte	0x1a6
+ 670 0185 08       		.uleb128 0x8
+ 671 0186 4D010000 		.4byte	.LASF18
+ 672 018a 01       		.byte	0x1
+ 673 018b 47       		.byte	0x47
+ 674 018c 5D000000 		.4byte	0x5d
+ 675 0190 96010000 		.4byte	0x196
+ 676 0194 09       		.uleb128 0x9
+ 677 0195 00       		.byte	0
+ 678 0196 0B       		.uleb128 0xb
+ 679 0197 8C010000 		.4byte	.LVL8
+ 680 019b D0020000 		.4byte	0x2d0
+ 681 019f 0C       		.uleb128 0xc
+ 682 01a0 01       		.uleb128 0x1
+ 683 01a1 50       		.byte	0x50
+ 684 01a2 01       		.uleb128 0x1
+ 685 01a3 30       		.byte	0x30
+ 686 01a4 00       		.byte	0
+ 687 01a5 00       		.byte	0
+ 688 01a6 0F       		.uleb128 0xf
+ 689 01a7 14000000 		.4byte	.LVL1
+ 690 01ab DB020000 		.4byte	0x2db
+ 691 01af 0F       		.uleb128 0xf
+ 692 01b0 1A000000 		.4byte	.LVL2
+ 693 01b4 E6020000 		.4byte	0x2e6
+ 694 01b8 0F       		.uleb128 0xf
+ 695 01b9 6A000000 		.4byte	.LVL3
+ 696 01bd E6020000 		.4byte	0x2e6
+ 697 01c1 00       		.byte	0
+ 698 01c2 10       		.uleb128 0x10
+ 699 01c3 05000000 		.4byte	.LASF19
+ 700 01c7 01       		.byte	0x1
+ 701 01c8 08       		.byte	0x8
+ 702 01c9 6B000000 		.4byte	0x6b
+ 703 01cd 05       		.uleb128 0x5
+ 704 01ce 03       		.byte	0x3
+ 705 01cf 00000000 		.4byte	state
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 17
+
+
+ 706 01d3 10       		.uleb128 0x10
+ 707 01d4 35010000 		.4byte	.LASF20
+ 708 01d8 01       		.byte	0x1
+ 709 01d9 0A       		.byte	0xa
+ 710 01da 6B000000 		.4byte	0x6b
+ 711 01de 05       		.uleb128 0x5
+ 712 01df 03       		.byte	0x3
+ 713 01e0 00000000 		.4byte	my_address
+ 714 01e4 10       		.uleb128 0x10
+ 715 01e5 91000000 		.4byte	.LASF21
+ 716 01e9 01       		.byte	0x1
+ 717 01ea 0B       		.byte	0xb
+ 718 01eb 6B000000 		.4byte	0x6b
+ 719 01ef 05       		.uleb128 0x5
+ 720 01f0 03       		.byte	0x3
+ 721 01f1 00000000 		.4byte	pSDA
+ 722 01f5 10       		.uleb128 0x10
+ 723 01f6 00020000 		.4byte	.LASF22
+ 724 01fa 01       		.byte	0x1
+ 725 01fb 0C       		.byte	0xc
+ 726 01fc 6B000000 		.4byte	0x6b
+ 727 0200 05       		.uleb128 0x5
+ 728 0201 03       		.byte	0x3
+ 729 0202 00000000 		.4byte	pSCL
+ 730 0206 11       		.uleb128 0x11
+ 731 0207 53434C00 		.ascii	"SCL\000"
+ 732 020b 01       		.byte	0x1
+ 733 020c 0D       		.byte	0xd
+ 734 020d 6B000000 		.4byte	0x6b
+ 735 0211 05       		.uleb128 0x5
+ 736 0212 03       		.byte	0x3
+ 737 0213 00000000 		.4byte	SCL
+ 738 0217 11       		.uleb128 0x11
+ 739 0218 53444100 		.ascii	"SDA\000"
+ 740 021c 01       		.byte	0x1
+ 741 021d 0D       		.byte	0xd
+ 742 021e 6B000000 		.4byte	0x6b
+ 743 0222 05       		.uleb128 0x5
+ 744 0223 03       		.byte	0x3
+ 745 0224 00000000 		.4byte	SDA
+ 746 0228 10       		.uleb128 0x10
+ 747 0229 16000000 		.4byte	.LASF23
+ 748 022d 01       		.byte	0x1
+ 749 022e 0E       		.byte	0xe
+ 750 022f 6B000000 		.4byte	0x6b
+ 751 0233 05       		.uleb128 0x5
+ 752 0234 03       		.byte	0x3
+ 753 0235 00000000 		.4byte	rxbyte
+ 754 0239 10       		.uleb128 0x10
+ 755 023a 87000000 		.4byte	.LASF24
+ 756 023e 01       		.byte	0x1
+ 757 023f 0E       		.byte	0xe
+ 758 0240 6B000000 		.4byte	0x6b
+ 759 0244 05       		.uleb128 0x5
+ 760 0245 03       		.byte	0x3
+ 761 0246 00000000 		.4byte	bit_count
+ 762 024a 10       		.uleb128 0x10
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 18
+
+
+ 763 024b AD010000 		.4byte	.LASF25
+ 764 024f 01       		.byte	0x1
+ 765 0250 0F       		.byte	0xf
+ 766 0251 6B000000 		.4byte	0x6b
+ 767 0255 05       		.uleb128 0x5
+ 768 0256 03       		.byte	0x3
+ 769 0257 00000000 		.4byte	txbyte
+ 770 025b 10       		.uleb128 0x10
+ 771 025c 00000000 		.4byte	.LASF26
+ 772 0260 01       		.byte	0x1
+ 773 0261 10       		.byte	0x10
+ 774 0262 6B000000 		.4byte	0x6b
+ 775 0266 05       		.uleb128 0x5
+ 776 0267 03       		.byte	0x3
+ 777 0268 00000000 		.4byte	icnt
+ 778 026c 10       		.uleb128 0x10
+ 779 026d 63000000 		.4byte	.LASF27
+ 780 0271 01       		.byte	0x1
+ 781 0272 11       		.byte	0x11
+ 782 0273 6B000000 		.4byte	0x6b
+ 783 0277 05       		.uleb128 0x5
+ 784 0278 03       		.byte	0x3
+ 785 0279 00000000 		.4byte	reg_ptr
+ 786 027d 10       		.uleb128 0x10
+ 787 027e 3C000000 		.4byte	.LASF28
+ 788 0282 01       		.byte	0x1
+ 789 0283 13       		.byte	0x13
+ 790 0284 BD000000 		.4byte	0xbd
+ 791 0288 05       		.uleb128 0x5
+ 792 0289 03       		.byte	0x3
+ 793 028a 00000000 		.4byte	a_space
+ 794 028e 10       		.uleb128 0x10
+ 795 028f 6B000000 		.4byte	.LASF29
+ 796 0293 01       		.byte	0x1
+ 797 0294 18       		.byte	0x18
+ 798 0295 6B000000 		.4byte	0x6b
+ 799 0299 05       		.uleb128 0x5
+ 800 029a 03       		.byte	0x3
+ 801 029b 00000000 		.4byte	byte_mode
+ 802 029f 10       		.uleb128 0x10
+ 803 02a0 5E000000 		.4byte	.LASF30
+ 804 02a4 01       		.byte	0x1
+ 805 02a5 19       		.byte	0x19
+ 806 02a6 5D000000 		.4byte	0x5d
+ 807 02aa 05       		.uleb128 0x5
+ 808 02ab 03       		.byte	0x3
+ 809 02ac 00000000 		.4byte	acnt
+ 810 02b0 12       		.uleb128 0x12
+ 811 02b1 85000000 		.4byte	0x85
+ 812 02b5 C0020000 		.4byte	0x2c0
+ 813 02b9 13       		.uleb128 0x13
+ 814 02ba 93000000 		.4byte	0x93
+ 815 02be FF       		.byte	0xff
+ 816 02bf 00       		.byte	0
+ 817 02c0 11       		.uleb128 0x11
+ 818 02c1 737400   		.ascii	"st\000"
+ 819 02c4 01       		.byte	0x1
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 19
+
+
+ 820 02c5 20       		.byte	0x20
+ 821 02c6 B0020000 		.4byte	0x2b0
+ 822 02ca 05       		.uleb128 0x5
+ 823 02cb 03       		.byte	0x3
+ 824 02cc 00000000 		.4byte	st
+ 825 02d0 14       		.uleb128 0x14
+ 826 02d1 4D010000 		.4byte	.LASF18
+ 827 02d5 4D010000 		.4byte	.LASF18
+ 828 02d9 01       		.byte	0x1
+ 829 02da 47       		.byte	0x47
+ 830 02db 14       		.uleb128 0x14
+ 831 02dc F3010000 		.4byte	.LASF16
+ 832 02e0 F3010000 		.4byte	.LASF16
+ 833 02e4 01       		.byte	0x1
+ 834 02e5 25       		.byte	0x25
+ 835 02e6 14       		.uleb128 0x14
+ 836 02e7 72010000 		.4byte	.LASF17
+ 837 02eb 72010000 		.4byte	.LASF17
+ 838 02ef 01       		.byte	0x1
+ 839 02f0 26       		.byte	0x26
+ 840 02f1 00       		.byte	0
+ 841              		.section	.debug_abbrev,"",%progbits
+ 842              	.Ldebug_abbrev0:
+ 843 0000 01       		.uleb128 0x1
+ 844 0001 11       		.uleb128 0x11
+ 845 0002 01       		.byte	0x1
+ 846 0003 25       		.uleb128 0x25
+ 847 0004 0E       		.uleb128 0xe
+ 848 0005 13       		.uleb128 0x13
+ 849 0006 0B       		.uleb128 0xb
+ 850 0007 03       		.uleb128 0x3
+ 851 0008 0E       		.uleb128 0xe
+ 852 0009 1B       		.uleb128 0x1b
+ 853 000a 0E       		.uleb128 0xe
+ 854 000b 55       		.uleb128 0x55
+ 855 000c 17       		.uleb128 0x17
+ 856 000d 11       		.uleb128 0x11
+ 857 000e 01       		.uleb128 0x1
+ 858 000f 10       		.uleb128 0x10
+ 859 0010 17       		.uleb128 0x17
+ 860 0011 00       		.byte	0
+ 861 0012 00       		.byte	0
+ 862 0013 02       		.uleb128 0x2
+ 863 0014 24       		.uleb128 0x24
+ 864 0015 00       		.byte	0
+ 865 0016 0B       		.uleb128 0xb
+ 866 0017 0B       		.uleb128 0xb
+ 867 0018 3E       		.uleb128 0x3e
+ 868 0019 0B       		.uleb128 0xb
+ 869 001a 03       		.uleb128 0x3
+ 870 001b 0E       		.uleb128 0xe
+ 871 001c 00       		.byte	0
+ 872 001d 00       		.byte	0
+ 873 001e 03       		.uleb128 0x3
+ 874 001f 24       		.uleb128 0x24
+ 875 0020 00       		.byte	0
+ 876 0021 0B       		.uleb128 0xb
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 20
+
+
+ 877 0022 0B       		.uleb128 0xb
+ 878 0023 3E       		.uleb128 0x3e
+ 879 0024 0B       		.uleb128 0xb
+ 880 0025 03       		.uleb128 0x3
+ 881 0026 08       		.uleb128 0x8
+ 882 0027 00       		.byte	0
+ 883 0028 00       		.byte	0
+ 884 0029 04       		.uleb128 0x4
+ 885 002a 16       		.uleb128 0x16
+ 886 002b 00       		.byte	0
+ 887 002c 03       		.uleb128 0x3
+ 888 002d 0E       		.uleb128 0xe
+ 889 002e 3A       		.uleb128 0x3a
+ 890 002f 0B       		.uleb128 0xb
+ 891 0030 3B       		.uleb128 0x3b
+ 892 0031 05       		.uleb128 0x5
+ 893 0032 49       		.uleb128 0x49
+ 894 0033 13       		.uleb128 0x13
+ 895 0034 00       		.byte	0
+ 896 0035 00       		.byte	0
+ 897 0036 05       		.uleb128 0x5
+ 898 0037 2E       		.uleb128 0x2e
+ 899 0038 01       		.byte	0x1
+ 900 0039 3F       		.uleb128 0x3f
+ 901 003a 19       		.uleb128 0x19
+ 902 003b 03       		.uleb128 0x3
+ 903 003c 0E       		.uleb128 0xe
+ 904 003d 3A       		.uleb128 0x3a
+ 905 003e 0B       		.uleb128 0xb
+ 906 003f 3B       		.uleb128 0x3b
+ 907 0040 0B       		.uleb128 0xb
+ 908 0041 27       		.uleb128 0x27
+ 909 0042 19       		.uleb128 0x19
+ 910 0043 11       		.uleb128 0x11
+ 911 0044 01       		.uleb128 0x1
+ 912 0045 12       		.uleb128 0x12
+ 913 0046 06       		.uleb128 0x6
+ 914 0047 40       		.uleb128 0x40
+ 915 0048 18       		.uleb128 0x18
+ 916 0049 9742     		.uleb128 0x2117
+ 917 004b 19       		.uleb128 0x19
+ 918 004c 01       		.uleb128 0x1
+ 919 004d 13       		.uleb128 0x13
+ 920 004e 00       		.byte	0
+ 921 004f 00       		.byte	0
+ 922 0050 06       		.uleb128 0x6
+ 923 0051 05       		.uleb128 0x5
+ 924 0052 00       		.byte	0
+ 925 0053 03       		.uleb128 0x3
+ 926 0054 0E       		.uleb128 0xe
+ 927 0055 3A       		.uleb128 0x3a
+ 928 0056 0B       		.uleb128 0xb
+ 929 0057 3B       		.uleb128 0x3b
+ 930 0058 0B       		.uleb128 0xb
+ 931 0059 49       		.uleb128 0x49
+ 932 005a 13       		.uleb128 0x13
+ 933 005b 02       		.uleb128 0x2
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 21
+
+
+ 934 005c 18       		.uleb128 0x18
+ 935 005d 00       		.byte	0
+ 936 005e 00       		.byte	0
+ 937 005f 07       		.uleb128 0x7
+ 938 0060 0F       		.uleb128 0xf
+ 939 0061 00       		.byte	0
+ 940 0062 0B       		.uleb128 0xb
+ 941 0063 0B       		.uleb128 0xb
+ 942 0064 49       		.uleb128 0x49
+ 943 0065 13       		.uleb128 0x13
+ 944 0066 00       		.byte	0
+ 945 0067 00       		.byte	0
+ 946 0068 08       		.uleb128 0x8
+ 947 0069 2E       		.uleb128 0x2e
+ 948 006a 01       		.byte	0x1
+ 949 006b 3F       		.uleb128 0x3f
+ 950 006c 19       		.uleb128 0x19
+ 951 006d 03       		.uleb128 0x3
+ 952 006e 0E       		.uleb128 0xe
+ 953 006f 3A       		.uleb128 0x3a
+ 954 0070 0B       		.uleb128 0xb
+ 955 0071 3B       		.uleb128 0x3b
+ 956 0072 0B       		.uleb128 0xb
+ 957 0073 49       		.uleb128 0x49
+ 958 0074 13       		.uleb128 0x13
+ 959 0075 3C       		.uleb128 0x3c
+ 960 0076 19       		.uleb128 0x19
+ 961 0077 01       		.uleb128 0x1
+ 962 0078 13       		.uleb128 0x13
+ 963 0079 00       		.byte	0
+ 964 007a 00       		.byte	0
+ 965 007b 09       		.uleb128 0x9
+ 966 007c 18       		.uleb128 0x18
+ 967 007d 00       		.byte	0
+ 968 007e 00       		.byte	0
+ 969 007f 00       		.byte	0
+ 970 0080 0A       		.uleb128 0xa
+ 971 0081 0B       		.uleb128 0xb
+ 972 0082 01       		.byte	0x1
+ 973 0083 11       		.uleb128 0x11
+ 974 0084 01       		.uleb128 0x1
+ 975 0085 12       		.uleb128 0x12
+ 976 0086 06       		.uleb128 0x6
+ 977 0087 01       		.uleb128 0x1
+ 978 0088 13       		.uleb128 0x13
+ 979 0089 00       		.byte	0
+ 980 008a 00       		.byte	0
+ 981 008b 0B       		.uleb128 0xb
+ 982 008c 898201   		.uleb128 0x4109
+ 983 008f 01       		.byte	0x1
+ 984 0090 11       		.uleb128 0x11
+ 985 0091 01       		.uleb128 0x1
+ 986 0092 31       		.uleb128 0x31
+ 987 0093 13       		.uleb128 0x13
+ 988 0094 00       		.byte	0
+ 989 0095 00       		.byte	0
+ 990 0096 0C       		.uleb128 0xc
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 22
+
+
+ 991 0097 8A8201   		.uleb128 0x410a
+ 992 009a 00       		.byte	0
+ 993 009b 02       		.uleb128 0x2
+ 994 009c 18       		.uleb128 0x18
+ 995 009d 9142     		.uleb128 0x2111
+ 996 009f 18       		.uleb128 0x18
+ 997 00a0 00       		.byte	0
+ 998 00a1 00       		.byte	0
+ 999 00a2 0D       		.uleb128 0xd
+ 1000 00a3 0B       		.uleb128 0xb
+ 1001 00a4 01       		.byte	0x1
+ 1002 00a5 55       		.uleb128 0x55
+ 1003 00a6 17       		.uleb128 0x17
+ 1004 00a7 01       		.uleb128 0x1
+ 1005 00a8 13       		.uleb128 0x13
+ 1006 00a9 00       		.byte	0
+ 1007 00aa 00       		.byte	0
+ 1008 00ab 0E       		.uleb128 0xe
+ 1009 00ac 898201   		.uleb128 0x4109
+ 1010 00af 01       		.byte	0x1
+ 1011 00b0 11       		.uleb128 0x11
+ 1012 00b1 01       		.uleb128 0x1
+ 1013 00b2 31       		.uleb128 0x31
+ 1014 00b3 13       		.uleb128 0x13
+ 1015 00b4 01       		.uleb128 0x1
+ 1016 00b5 13       		.uleb128 0x13
+ 1017 00b6 00       		.byte	0
+ 1018 00b7 00       		.byte	0
+ 1019 00b8 0F       		.uleb128 0xf
+ 1020 00b9 898201   		.uleb128 0x4109
+ 1021 00bc 00       		.byte	0
+ 1022 00bd 11       		.uleb128 0x11
+ 1023 00be 01       		.uleb128 0x1
+ 1024 00bf 31       		.uleb128 0x31
+ 1025 00c0 13       		.uleb128 0x13
+ 1026 00c1 00       		.byte	0
+ 1027 00c2 00       		.byte	0
+ 1028 00c3 10       		.uleb128 0x10
+ 1029 00c4 34       		.uleb128 0x34
+ 1030 00c5 00       		.byte	0
+ 1031 00c6 03       		.uleb128 0x3
+ 1032 00c7 0E       		.uleb128 0xe
+ 1033 00c8 3A       		.uleb128 0x3a
+ 1034 00c9 0B       		.uleb128 0xb
+ 1035 00ca 3B       		.uleb128 0x3b
+ 1036 00cb 0B       		.uleb128 0xb
+ 1037 00cc 49       		.uleb128 0x49
+ 1038 00cd 13       		.uleb128 0x13
+ 1039 00ce 3F       		.uleb128 0x3f
+ 1040 00cf 19       		.uleb128 0x19
+ 1041 00d0 02       		.uleb128 0x2
+ 1042 00d1 18       		.uleb128 0x18
+ 1043 00d2 00       		.byte	0
+ 1044 00d3 00       		.byte	0
+ 1045 00d4 11       		.uleb128 0x11
+ 1046 00d5 34       		.uleb128 0x34
+ 1047 00d6 00       		.byte	0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 23
+
+
+ 1048 00d7 03       		.uleb128 0x3
+ 1049 00d8 08       		.uleb128 0x8
+ 1050 00d9 3A       		.uleb128 0x3a
+ 1051 00da 0B       		.uleb128 0xb
+ 1052 00db 3B       		.uleb128 0x3b
+ 1053 00dc 0B       		.uleb128 0xb
+ 1054 00dd 49       		.uleb128 0x49
+ 1055 00de 13       		.uleb128 0x13
+ 1056 00df 3F       		.uleb128 0x3f
+ 1057 00e0 19       		.uleb128 0x19
+ 1058 00e1 02       		.uleb128 0x2
+ 1059 00e2 18       		.uleb128 0x18
+ 1060 00e3 00       		.byte	0
+ 1061 00e4 00       		.byte	0
+ 1062 00e5 12       		.uleb128 0x12
+ 1063 00e6 01       		.uleb128 0x1
+ 1064 00e7 01       		.byte	0x1
+ 1065 00e8 49       		.uleb128 0x49
+ 1066 00e9 13       		.uleb128 0x13
+ 1067 00ea 01       		.uleb128 0x1
+ 1068 00eb 13       		.uleb128 0x13
+ 1069 00ec 00       		.byte	0
+ 1070 00ed 00       		.byte	0
+ 1071 00ee 13       		.uleb128 0x13
+ 1072 00ef 21       		.uleb128 0x21
+ 1073 00f0 00       		.byte	0
+ 1074 00f1 49       		.uleb128 0x49
+ 1075 00f2 13       		.uleb128 0x13
+ 1076 00f3 2F       		.uleb128 0x2f
+ 1077 00f4 0B       		.uleb128 0xb
+ 1078 00f5 00       		.byte	0
+ 1079 00f6 00       		.byte	0
+ 1080 00f7 14       		.uleb128 0x14
+ 1081 00f8 2E       		.uleb128 0x2e
+ 1082 00f9 00       		.byte	0
+ 1083 00fa 3F       		.uleb128 0x3f
+ 1084 00fb 19       		.uleb128 0x19
+ 1085 00fc 3C       		.uleb128 0x3c
+ 1086 00fd 19       		.uleb128 0x19
+ 1087 00fe 6E       		.uleb128 0x6e
+ 1088 00ff 0E       		.uleb128 0xe
+ 1089 0100 03       		.uleb128 0x3
+ 1090 0101 0E       		.uleb128 0xe
+ 1091 0102 3A       		.uleb128 0x3a
+ 1092 0103 0B       		.uleb128 0xb
+ 1093 0104 3B       		.uleb128 0x3b
+ 1094 0105 0B       		.uleb128 0xb
+ 1095 0106 00       		.byte	0
+ 1096 0107 00       		.byte	0
+ 1097 0108 00       		.byte	0
+ 1098              		.section	.debug_aranges,"",%progbits
+ 1099 0000 24000000 		.4byte	0x24
+ 1100 0004 0200     		.2byte	0x2
+ 1101 0006 00000000 		.4byte	.Ldebug_info0
+ 1102 000a 04       		.byte	0x4
+ 1103 000b 00       		.byte	0
+ 1104 000c 0000     		.2byte	0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 24
+
+
+ 1105 000e 0000     		.2byte	0
+ 1106 0010 00000000 		.4byte	.LFB34
+ 1107 0014 0C000000 		.4byte	.LFE34-.LFB34
+ 1108 0018 00000000 		.4byte	.LFB35
+ 1109 001c C4010000 		.4byte	.LFE35-.LFB35
+ 1110 0020 00000000 		.4byte	0
+ 1111 0024 00000000 		.4byte	0
+ 1112              		.section	.debug_ranges,"",%progbits
+ 1113              	.Ldebug_ranges0:
+ 1114 0000 D2000000 		.4byte	.LBB3
+ 1115 0004 24010000 		.4byte	.LBE3
+ 1116 0008 6C010000 		.4byte	.LBB4
+ 1117 000c 74010000 		.4byte	.LBE4
+ 1118 0010 00000000 		.4byte	0
+ 1119 0014 00000000 		.4byte	0
+ 1120 0018 00000000 		.4byte	.LFB34
+ 1121 001c 0C000000 		.4byte	.LFE34
+ 1122 0020 00000000 		.4byte	.LFB35
+ 1123 0024 C4010000 		.4byte	.LFE35
+ 1124 0028 00000000 		.4byte	0
+ 1125 002c 00000000 		.4byte	0
+ 1126              		.section	.debug_line,"",%progbits
+ 1127              	.Ldebug_line0:
+ 1128 0000 08010000 		.section	.debug_str,"MS",%progbits,1
+ 1128      02004600 
+ 1128      00000201 
+ 1128      FB0E0D00 
+ 1128      01010101 
+ 1129              	.LASF26:
+ 1130 0000 69636E74 		.ascii	"icnt\000"
+ 1130      00
+ 1131              	.LASF19:
+ 1132 0005 73746174 		.ascii	"state\000"
+ 1132      6500
+ 1133              	.LASF15:
+ 1134 000b 62625F69 		.ascii	"bb_i2c_ISR\000"
+ 1134      32635F49 
+ 1134      535200
+ 1135              	.LASF23:
+ 1136 0016 72786279 		.ascii	"rxbyte\000"
+ 1136      746500
+ 1137              	.LASF3:
+ 1138 001d 73686F72 		.ascii	"short unsigned int\000"
+ 1138      7420756E 
+ 1138      7369676E 
+ 1138      65642069 
+ 1138      6E7400
+ 1139              	.LASF14:
+ 1140 0030 496E6974 		.ascii	"Init_bb_i2c\000"
+ 1140      5F62625F 
+ 1140      69326300 
+ 1141              	.LASF28:
+ 1142 003c 615F7370 		.ascii	"a_space\000"
+ 1142      61636500 
+ 1143              	.LASF35:
+ 1144 0044 73706163 		.ascii	"space\000"
+ 1144      6500
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 25
+
+
+ 1145              	.LASF9:
+ 1146 004a 666C6F61 		.ascii	"float\000"
+ 1146      7400
+ 1147              	.LASF1:
+ 1148 0050 756E7369 		.ascii	"unsigned char\000"
+ 1148      676E6564 
+ 1148      20636861 
+ 1148      7200
+ 1149              	.LASF30:
+ 1150 005e 61636E74 		.ascii	"acnt\000"
+ 1150      00
+ 1151              	.LASF27:
+ 1152 0063 7265675F 		.ascii	"reg_ptr\000"
+ 1152      70747200 
+ 1153              	.LASF29:
+ 1154 006b 62797465 		.ascii	"byte_mode\000"
+ 1154      5F6D6F64 
+ 1154      6500
+ 1155              	.LASF5:
+ 1156 0075 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1156      20756E73 
+ 1156      69676E65 
+ 1156      6420696E 
+ 1156      7400
+ 1157              	.LASF24:
+ 1158 0087 6269745F 		.ascii	"bit_count\000"
+ 1158      636F756E 
+ 1158      7400
+ 1159              	.LASF21:
+ 1160 0091 70534441 		.ascii	"pSDA\000"
+ 1160      00
+ 1161              	.LASF31:
+ 1162 0096 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1162      43313120 
+ 1162      352E342E 
+ 1162      31203230 
+ 1162      31363036 
+ 1163 00c9 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0 -mthumb -g -O"
+ 1163      20726576 
+ 1163      6973696F 
+ 1163      6E203233 
+ 1163      37373135 
+ 1164 00fc 33202D66 		.ascii	"3 -ffunction-sections -ffat-lto-objects\000"
+ 1164      66756E63 
+ 1164      74696F6E 
+ 1164      2D736563 
+ 1164      74696F6E 
+ 1165              	.LASF10:
+ 1166 0124 646F7562 		.ascii	"double\000"
+ 1166      6C6500
+ 1167              	.LASF2:
+ 1168 012b 73686F72 		.ascii	"short int\000"
+ 1168      7420696E 
+ 1168      7400
+ 1169              	.LASF20:
+ 1170 0135 6D795F61 		.ascii	"my_address\000"
+ 1170      64647265 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 26
+
+
+ 1170      737300
+ 1171              	.LASF8:
+ 1172 0140 756E7369 		.ascii	"unsigned int\000"
+ 1172      676E6564 
+ 1172      20696E74 
+ 1172      00
+ 1173              	.LASF18:
+ 1174 014d 4F4C445F 		.ascii	"OLD_SDA_Write\000"
+ 1174      5344415F 
+ 1174      57726974 
+ 1174      6500
+ 1175              	.LASF7:
+ 1176 015b 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1176      206C6F6E 
+ 1176      6720756E 
+ 1176      7369676E 
+ 1176      65642069 
+ 1177              	.LASF17:
+ 1178 0172 4F4C445F 		.ascii	"OLD_SDA_Read\000"
+ 1178      5344415F 
+ 1178      52656164 
+ 1178      00
+ 1179              	.LASF13:
+ 1180 017f 73697A65 		.ascii	"sizetype\000"
+ 1180      74797065 
+ 1180      00
+ 1181              	.LASF6:
+ 1182 0188 6C6F6E67 		.ascii	"long long int\000"
+ 1182      206C6F6E 
+ 1182      6720696E 
+ 1182      7400
+ 1183              	.LASF11:
+ 1184 0196 63686172 		.ascii	"char\000"
+ 1184      00
+ 1185              	.LASF32:
+ 1186 019b 62625F69 		.ascii	"bb_i2c_sl.c\000"
+ 1186      32635F73 
+ 1186      6C2E6300 
+ 1187              	.LASF34:
+ 1188 01a7 75696E74 		.ascii	"uint8\000"
+ 1188      3800
+ 1189              	.LASF25:
+ 1190 01ad 74786279 		.ascii	"txbyte\000"
+ 1190      746500
+ 1191              	.LASF33:
+ 1192 01b4 433A5C70 		.ascii	"C:\\psoc\\chamonix\\camera.cydsn\000"
+ 1192      736F635C 
+ 1192      6368616D 
+ 1192      6F6E6978 
+ 1192      5C63616D 
+ 1193              	.LASF4:
+ 1194 01d2 6C6F6E67 		.ascii	"long int\000"
+ 1194      20696E74 
+ 1194      00
+ 1195              	.LASF12:
+ 1196 01db 6C6F6E67 		.ascii	"long double\000"
+ 1196      20646F75 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccbHwZtC.s 			page 27
+
+
+ 1196      626C6500 
+ 1197              	.LASF0:
+ 1198 01e7 7369676E 		.ascii	"signed char\000"
+ 1198      65642063 
+ 1198      68617200 
+ 1199              	.LASF16:
+ 1200 01f3 4F4C445F 		.ascii	"OLD_SCL_Read\000"
+ 1200      53434C5F 
+ 1200      52656164 
+ 1200      00
+ 1201              	.LASF22:
+ 1202 0200 7053434C 		.ascii	"pSCL\000"
+ 1202      00
+ 1203              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran
