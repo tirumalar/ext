@@ -1553,7 +1553,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 		// printf("DoRunMode_test face.x %d face.y %d face.width %d face.height %d\n",  face.x,face.y,face.width,face.height);
 
 
-			EyelockLog(logger, DEBUG, "FaceFrameNo:%d STATE:%8s LAST_STATE:%8s NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) Proj:%d MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",FaceCameraFrameNo, StateText(system_state),
+			EyelockLog(logger, TRACE, "FaceFrameNo:%d STATE:%8s LAST_STATE:%8s NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) Proj:%d MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",FaceCameraFrameNo, StateText(system_state),
 					StateText(last_system_state),
 							noFaceCounter,
 							foundFace?'E':'.',
