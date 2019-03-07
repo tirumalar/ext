@@ -135,6 +135,43 @@ function setIrisCaptureResetDelay(myTimeout)
 }
 
 
+$(function () {
+    $("#imagequality").slider({
+        min: 1,
+        max: 100,
+        value: document.getElementById('Eyelock_J2KImageQuality').value,
+        range: "min",
+        animate: true,
+        step: 1,
+        slide: function (event, ui) {
+            if (ui.value < 0)
+                return false;
+            if (ui.value > 100)
+                ui.value = 100;
+            setImageQualityTimeout((ui.value));
+        },
+        create: function (event, ui) {
+            setSliderTicks(event.target);
+        }
+    });
+});
+
+
+$(document).ready(function () {
+    $('#CM_ImageQuality').change(function () {
+        //do your update here
+        debugvalue = this.value;
+        $("#imagequality").slider("value", parseFloat(debugvalue));
+    })
+})
+
+function setImageQualityTimeout(myTimeout) 
+{
+    var timeoutEdit = document.getElementById('Eyelock_J2KImageQuality');
+    timeoutEdit.value = myTimeout;
+}
+
+
 ///////////////////////////
 
 $(function () {
