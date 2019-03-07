@@ -1962,7 +1962,7 @@ function handleAuthenticationSelector()
 
 $(document).ready(function () {
     handleAuthenticationSelector();
-    handleIrisCaptureDataModeSelector();
+    handleIrisCaptureImageFormatSelector();
 });
 
 
@@ -1975,21 +1975,20 @@ $(document).ready(function () {
 });
 
 
-
-function handleIrisCaptureDataModeSelector()
+function handleIrisCaptureImageFormatSelector()
 {
- 	 var cSelect = document.getElementById("irisdatamode");
+ 	 var cSelect = document.getElementById("httppostpayloadformat");
 
-	 if (cSelect.options[cSelect.selectedIndex].value == "irisbestpair")
-        $('#bestpairfields').show();
+	 if (cSelect.options[cSelect.selectedIndex].value == "FORMAT_J2K")
+        $('#imagequalityfields').show();
      else
-        $('#bestpairfields').hide();
+        $('#imagequalityfields').hide();
 }
 
 // Handle Authentication select (show hide some controls based on selected protocol)
 $(document).ready(function () {
-    $('#irisdatamode').change(function () {
-         handleIrisCaptureDataModeSelector();
+    $('#httppostpayloadformat').change(function () {
+         handleIrisCaptureImageFormatSelector();
     });
 });
 
