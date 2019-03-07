@@ -2566,6 +2566,9 @@ void CmxHandler::HandleSendMsg(char *msg, unsigned short randomseed){
 			{
 				bSend=false;
 			}
+			regs[0] = white;
+			BobSetData(regs,1);
+			BobSetCommand(BOB_COMMAND_SET_LED);
 			if(bSend)
 			{
 				len = sprintf(buf, "fixed_set_rgb(%d,%d,%d)\n", msg[2], msg[3], msg[4]);	// set_rgb(r,g,b)
@@ -2656,6 +2659,9 @@ void CmxHandler::HandleSendMsg(char *msg, unsigned short randomseed){
 					}
 					break;
 				case 3:
+					regs[0] = Purple;
+					BobSetData(regs,1);
+					BobSetCommand(BOB_COMMAND_SET_LED); 
 					len = sprintf(buf, "play_snd(2)|play_snd(2)|play_snd(2)\n");	// set_sound(1) // 1-PASS 2-FAIL 3-TAMPER
 					if (m_audioVolume < 0.0)
 					{
