@@ -63,14 +63,14 @@ $(function ()
 
 $(function () {
     $("#iriscapturetimeout").slider({
-        min: 100,
+        min: 1000,
         max: 60000,
         value: document.getElementById('Eyelock_IrisCaptureTimeout').value,
         range: "min",
         animate: true,
         step: 50,
         slide: function (event, ui) {
-            if (ui.value < 100)
+            if (ui.value < 1000)
                 return false;
             if (ui.value > 60000)
                 ui.value = 60000;
