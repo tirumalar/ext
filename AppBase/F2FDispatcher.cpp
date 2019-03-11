@@ -1295,6 +1295,7 @@ int F2FDispatcher::settime()
 		{
 			return -5;
 		}
+		return 0;
 }
 void setLED(int x)
 {
