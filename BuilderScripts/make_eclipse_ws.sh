@@ -12,6 +12,9 @@ EyeDetection
 Eyelock
 EyelockConfigurationLib
 EyeSegmentationLib
+EyeSortingLib
+HttpPostSender
+ISOBiometricCodecLib
 EyeTracking
 FocusEyeSelector
 MamigoBaseIPL

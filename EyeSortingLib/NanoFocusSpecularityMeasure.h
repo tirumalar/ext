@@ -1,15 +1,8 @@
 #pragma once
 
-#ifdef _WIN32
-#include "EyeSortingLib_def.h"
-typedef unsigned long uint64_t;
-#else
-#define EYESORTINGLIB_API
-#endif
-
 #include <opencv/cxcore.h>
 
-class EYESORTINGLIB_API NanoFocusSpecularityMeasure
+class NanoFocusSpecularityMeasure
 {
 public:
 	NanoFocusSpecularityMeasure();

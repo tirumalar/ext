@@ -12,7 +12,6 @@
 #include "getdata_bwCPP.h"
 #include "LaplacianBasedFocusDetector.h"
 #include "detectCorrupt.h"
-#include "eyeSideDetectorLib.h"
 #ifndef EL_IOS
 #include <apr.h>
 #include <apr_pools.h>
@@ -20,6 +19,11 @@
 #endif
 #include "opencv/highgui.h"
 
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv/cv.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #ifdef _WIN32
 	#if _MSC_VER == 1500
@@ -33,6 +37,7 @@
 	#endif
 #endif
 
+#define cvSetImageData cvSetData
 
 EnrollmentServer::EnrollmentServer(int FeatureScale, IrisMatchInterface *pMatcher, int maxSpecularityValue, bool myris_Enroll) : m_EarlyTimeout(ENROLLMENT_EARLY_TIMEOUT)
 	, m_GlobalTimeout(ENROLLMENT_GLOBAL_TIMEOUT)
@@ -695,8 +700,9 @@ bool EnrollmentServer::GetBestPairOfEyes(unsigned char *image, int id, int camer
 			{
 //						fprintf(fDump, "\n HERE first!");
 
+#if 0 //DMOREMOVE
 				IplImage *imgHeader = cvCreateImageHeader(cvSize(640, 480), IPL_DEPTH_8U, 1);
-				cvSetData(imgHeader, m_BestPairOfEyes.first->GetImage(), 640);
+				cvSetImageData(imgHeader, m_BestPairOfEyes.first->GetImage(), 640);
 
 				sprintf(buffer, "%sBestImage_%d_first.pgm", szFullPath, m_BestPairOfEyes.first->GetImageId());
 				if (!cvSaveImage(buffer, imgHeader)) ;//fprintf(fDump, "\n Unable to save Image:%s", buffer);
@@ -705,14 +711,16 @@ bool EnrollmentServer::GetBestPairOfEyes(unsigned char *image, int id, int camer
 //					fprintf(fDump, "\nFirst Image Saved:%s", buffer);
 				}
 				cvReleaseImageHeader(&imgHeader);
+#endif //DMOREMOVE
 			}
 
 			if (m_BestPairOfEyes.second)
 			{
+				#if 0//DMOREMOVE
 //						fprintf(fDump, "\n HEREsecond!");
 
 				IplImage *imgHeader = cvCreateImageHeader(cvSize(640, 480), IPL_DEPTH_8U, 1);
-				cvSetData(imgHeader, m_BestPairOfEyes.second->GetImage(), 640);
+				cvSetImageData(imgHeader, m_BestPairOfEyes.second->GetImage(), 640);
 
 				sprintf(buffer, "%sBestImage_%d_second.pgm", szFullPath, m_BestPairOfEyes.second->GetImageId());
 				if (!cvSaveImage(buffer, imgHeader)) ;//fprintf(fDump, "\n Unable to save Image:%s", buffer);
@@ -722,6 +730,7 @@ bool EnrollmentServer::GetBestPairOfEyes(unsigned char *image, int id, int camer
 				}
 
 				cvReleaseImageHeader(&imgHeader);
+#endif //DMOREMOVE
 			}
 
 //			fprintf(fDump, "\nDone", buffer);
@@ -784,7 +793,7 @@ bool EnrollmentServer::DetectCorruptImage(unsigned char *img,int Width, int Heig
 	cvReleaseImageHeader(&iplFrame);
 	return ret;
 }
-
+#if 0
 int EnrollmentServer::eyeSideDetectionMyrisLib(unsigned char *img,int Width, int Height)
 {
 	IplImage * iplFrame = cvCreateImageHeader(cvSize(Width, Height), IPL_DEPTH_8U, 1);
@@ -794,6 +803,7 @@ int EnrollmentServer::eyeSideDetectionMyrisLib(unsigned char *img,int Width, int
 	cvReleaseImageHeader(&iplFrame);
 	return ret;
 }
+#endif
 double EnrollmentServer::CalculateSwapLaplacianScore(unsigned char * frame, int Width, int Height)
 {
 	//OutputDebugStringA("a");
@@ -865,7 +875,7 @@ std::pair <double,double> EnrollmentServer::CalcCalibPara(int width,int height,u
 	percentile = (Ptotal*100)/total;
 	average=average/validPix;
 
-	pair <double,double> Final;
+	std::pair <double,double> Final;
 	Final.first = percentile;
 	Final.second = average;
 	return Final;
@@ -1044,8 +1054,57 @@ fDump = fopen(szFullFilename, "a");
 }
 
  
+void Drawit(IplImage *pImage, CircleParameters1 pt, CvScalar color)
+{
+	CvPoint center = {(int)(pt.x), (int)(pt.y)};
+	int radius = (int)(pt.r);
+	cvCircle( pImage, center, radius, color, 1, 8, 0 );
+}
 
+void SaveOurImage(unsigned char *image, int frameID, bool bBefore, IrisPupilCircles *pCircles)
+{
+	char buf2[1024];
 
+	if (frameID == -1)
+		return;
+
+	IplImage *imgHeader = cvCreateImageHeader(cvSize(640,480), IPL_DEPTH_8U, 1);
+	cvSetImageData(imgHeader, image, 640);
+#if 0
+	if (bBefore)
+	{
+		sprintf(buf2,"GetIrisCode_BEFORE_%d.bmp",frameID);
+	}
+	else
+	{
+		sprintf(buf2,"GetIrisCode_Results_%d.bmp",frameID);
+
+		CvScalar color = cvRealScalar(255);
+
+		Drawit(imgHeader, pCircles->pp, color);
+		Drawit(imgHeader, pCircles->ip, color);
+	}
+	cv::Mat mateye = cv::cvarrToMat(imgHeader);
+	imwrite(buf2, mateye);
+
+#else
+	if(bBefore){
+		sprintf(buf2, "GetIrisCode_Results_%d.bmp", frameID);
+
+		CvScalar color = cvRealScalar(255);
+
+		Drawit(imgHeader, pCircles->pp, color);
+		Drawit(imgHeader, pCircles->ip, color);
+		cv::Mat mateye = cv::cvarrToMat(imgHeader);
+		imwrite(buf2, mateye);
+		mateye.release();
+
+	}
+
+#endif
+
+	cvReleaseImageHeader(&imgHeader);
+}
 std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned char *image, int id, int cameraId, int frameId, int imageId, int numberOfImages, float scale, int x, int y, int width, int height, 
 	int score, int maxValue, char *fileName, int diameter, Iris *&iris, float haloScore,bool illumState, int side, float laplacianScore) 
 {
@@ -1072,7 +1131,7 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 		//Always check for the file, it may have a path override in it...
 		if (CheckForceLoggingFileExists(szFullLoggingPath))
 		{
-			SetEyeSortingLogEnable(true); // Force on
+			// SetEyeSortingLogEnable(true); // Force on // Anita switched off the logging
 
 			//Check for PATH...  format MUST be PATH=<theFullFolderPath>
 			std::string key;
@@ -1147,13 +1206,16 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 	unsigned char *pCode = new unsigned char[length * 2];
 	IrisPupilCircles irisPupilCircles;
 	bool valid = GetEyeSegmentationInterface()->GetIrisCode(image, 640,	480, 640, pCode, pCode + length, &irisPupilCircles); /* circles optional, last */
+	if (m_eyeSortingLogEnable)
+		SaveOurImage(image, imageId, false, &irisPupilCircles);
+
 	//Occlusion
 	IplImage *FlatMask = cvCreateImage(cvSize(480,64),IPL_DEPTH_8U,1);
 	GetEyeSegmentationInterface()->GetFlatMask((unsigned char*)FlatMask->imageData,FlatMask->width,FlatMask->height,FlatMask->widthStep);
 	double Occlusion = ((double)cvCountNonZero(FlatMask))*100/(48*640);
 	cvReleaseImage(&FlatMask);
 	//Camera Calibration Check
-	pair<double,double> CalibValues = CalcCalibPara(640,480,image);
+	std::pair<double,double> CalibValues = CalcCalibPara(640,480,image);
 	//
 	int corruptBitCountMask = GetEyeSegmentationInterface()->checkBitCorruption(pCode+length);						
 	/* If segmentation worked, then create a record and add it to our list */
@@ -1211,7 +1273,7 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 		GetEyeSegmentationInterface()->GetFeatureVariances(variance);
 #endif
 		IplImage *imgHeader = cvCreateImageHeader(cvSize(640,480), IPL_DEPTH_8U, 1);
-		cvSetData(imgHeader, image, 640);
+		cvSetImageData(imgHeader, image, 640);
 		pIris->SetCorruptBit_Mask(corruptBitCountMask);
 		float  fs;
 
@@ -1235,7 +1297,8 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 		CvPoint2D32f specCent=m_focusServer->GetSpecularityCentroid();
 		//printf("Frame %d Halo %f\n",frameId,fs);	
 		int corruptBitsAbsoluteThresh = (GetCorruptBitsPercentageThresh()/100)*10240;	
-		bool flag = (haloScore!=-3000.0f || (fs!=-400.0f && oldHalo!=-1));	
+		// bool flag = (haloScore!=-3000.0f || (fs!=-400.0f && oldHalo!=-1));
+		bool flag = true; //Anita on 6th Feb 2019 as Halo is no longer used for acquisition mode
 		bool segmentOK = true;
 		bool isBoundaryInValid = false;
 #ifndef __linux__ //not implemented for embedded codebase yet
@@ -1254,7 +1317,24 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 		//throw "test";
 		//printf("Frame %d segmentOK %d\n", frameId, segmentOK);
 
-		//m_eyeSortingLogEnable = true; // Forced True for debug output...
+		if(m_eyeSortingLogEnable)
+		{
+			printf("======= SEGMENTATION RESULTS IMAGE #%d ==========\n", imageId);
+			printf("segmentOK = %d\n", segmentOK);
+			printf("(!isBoundaryInValid) = %d\n", (!isBoundaryInValid));
+			printf("pupilDiameter = %d\n", pupilDiameter);
+			printf("GetMinPupilDiameter() = %d\n", GetMinPupilDiameter());
+			printf("GetMaxPupilDiameter() = %d\n", GetMaxPupilDiameter());
+			printf("IrisDiameter = %d\n", irisDiameter);
+			printf("GetMinIrisDiameter() = %d\n", GetMinIrisDiameter());
+			printf("GetMaxIrisDiameter() = %d\n", GetMaxIrisDiameter());
+			printf("corruptBitCountMask = %d\n", corruptBitCountMask);
+			printf("corruptBitsAbsoluteThresh = %d\n", corruptBitsAbsoluteThresh);
+			printf("oldHalo<m_HaloThresh = %d\n", oldHalo<m_HaloThresh);
+
+			printf("variance[0]>GetFeatureVarianceAbsoluteThresh() = %d\n", variance[0]>GetFeatureVarianceAbsoluteThresh());
+			printf("======= END SEGMENTATION RESULTS IMAGE #%d ==========\n", imageId);
+		}
 
 		if(flag==true && segmentOK && (!isBoundaryInValid) && irisDiameter>GetMinIrisDiameter() && irisDiameter<GetMaxIrisDiameter() && corruptBitCountMask<corruptBitsAbsoluteThresh && variance[0]>GetFeatureVarianceAbsoluteThresh() && oldHalo<m_HaloThresh && pupilDiameter >GetMinPupilDiameter()  && pupilDiameter < GetMaxPupilDiameter() &&  maxXDelta < GetMaxXdelta() &&  maxYDelta < GetMaxYdelta() && irisImagecentre_distX < GetMaxIrisImagecentreDistX() && irisImagecentre_distY < GetMaxIrisImagecentreDistY() )
 		{			
@@ -1268,7 +1348,7 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 			cvReleaseImageHeader(&imgHeader);
 
 			pIris->setFeatureVariances(variance);
-			pIris->SetHaloScore(fs);
+			pIris->SetHaloScore(0);
 			pIris->SetLaplacianScore(laplacianScore);
 			pIris->setSide(side);
 			
@@ -1322,13 +1402,9 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 #ifdef _WIN32
 				sprintf(szFullPath, "%sGoodImages\\", GetLoggingBasePath());
 				sprintf(szFullFilename, "%sGoodImages.txt", szFullPath);
-		//DMOOLD		sprintf(szFullPath, "%s\\Eyelock Corporation\\EyeSortingImagesLog\\Output\\%s\\", path, m_UniqueFolderName);
-		//DMOOLD		sprintf(szFullFilename, "%sGoodImages.txt", szFullPath);
 #else
 				sprintf(szFullPath, "%sGoodImages/", GetLoggingBasePath());
 				sprintf(szFullFilename, "%sGoodImages.txt", szFullPath);
-		//DMOOLD		sprintf(szFullPath, "./EyeSortingImagesLog/Output/");
-		//DMOOLD		sprintf(szFullFilename, "%sGoodImages.txt", szFullPath);
 #endif
 
 				FILE *fDump = fopen(szFullFilename, "a");
@@ -1470,10 +1546,11 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 
 				//BadImages are saved
 				sprintf(buffer,"%sImage_%d_%d.pgm",szFullPath, imageCount, frameId);
-
+#if 0 //DMOREMOVE
 				if (!cvSaveImage(buffer,imgHeader))
 					printf("\n Unable to save Image");
 				else 
+#endif //DMOREMOVE
 				{
 					fprintf(fDump,"========================================================\n"
 							"BadImageFileName: %s\n"
@@ -1536,7 +1613,7 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 #else
 	// Move local IrisSelector to member variable to allow access to intermediate results:
 	//m_pIrisSelector->Clear();
-	if(false)//m_eyeSortingLogEnable)
+	if(m_eyeSortingLogEnable)
 	{
 		char szFullPath[256];
 		char szFullFilename[256];

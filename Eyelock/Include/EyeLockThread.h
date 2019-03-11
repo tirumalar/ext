@@ -178,7 +178,7 @@ public:
 	void SendHBStatus();
 	bool ShouldIDie() const { return m_MustDie; }
 	int getFramcount(){ return m_FrameCount;}
-#ifdef HBOX_PG
+#ifdef IRIS_CAPTURE
 	HttpPostSender *m_HttpPostSender;
 #endif
 #ifndef UT_EYELOCK
@@ -238,8 +238,8 @@ protected:
 	bool m_tsDestAddrpresent;
 	SoftwareType m_softwareType;
 	int m_sleepTimeFlow;
-#ifdef HBOX_PG
-	bool m_SPAWAREnable;
+#ifdef IRIS_CAPTURE
+	bool m_bIrisCaptureEnabled;
 	int m_HeartBeatFrequency;
 #endif
 };

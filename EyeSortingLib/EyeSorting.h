@@ -27,13 +27,6 @@
 // EYESORTINGLIB_API functions as being imported from a DLL, whereas this DLL sees symbols
 // defined with this macro as being exported.
 
-#ifdef _WIN32
-#include "EyeSortingLib_def.h"
-typedef unsigned long uint64_t;
-#else
-#define EYESORTINGLIB_API
-#endif
-
 #ifndef EL_IOS
 class Iris;
 class IrisSelector;
@@ -47,7 +40,7 @@ class NanoFocusSpecularityMeasure;
 
 
 
-class EYESORTINGLIB_API EnrollmentServer {
+class EnrollmentServer {
 public:
 struct EyeSortingFeedback
 {

@@ -212,7 +212,7 @@ PostMsg PostIris::generatePostMsg(std::string msgformat, std::string soapnamespa
 
 		// Do the right
 		jsonstring += "\"RightIrisImageData\":\"";
-		jsonstring += ((iris2.elr == 1) ? iris1.data : iris2.data);
+		jsonstring += ((iris1.elr == 1) ? iris2.data : iris1.data);	// No matter what, can't send same eye twice so... it is what it is...
 		jsonstring += "\",\n";
 
 		// Do the station

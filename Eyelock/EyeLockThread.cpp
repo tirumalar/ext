@@ -28,7 +28,7 @@
 #include "NetworkUtilities.h"
 #include "SocketFactory.h"
 #include "logging.h"
-#ifdef HBOX_PG
+#ifdef IRIS_CAPTURE
 #include "PostMessages.h"
 #endif
 //#undef TIME_OP
@@ -113,7 +113,6 @@ void RGBControllerNano::SetRGB(unsigned char mask) {
 #endif
 
 }
-
 
 
 #include <strings.h>
@@ -359,13 +358,13 @@ EyeLockThread::EyeLockThread(Configuration& conf) :
 
 	m_pEyelockMessageHandler = 0;
 	m_pEyelockMessageHandler = new EyelockModeMessageHandler;
-#ifdef HBOX_PG	
-	m_SPAWAREnable = conf.getValue("Eyelock.SPAWAREnable",false);
-	m_HeartBeatFrequency = conf.getValue("Eyelock.SPAWARHeartBeatFrequency", 5);
-	if (m_SPAWAREnable)
-	{
-		m_HttpPostSender = new HttpPostSender(conf);
-	}
+#ifdef IRIS_CAPTURE
+	m_bIrisCaptureEnabled = conf.getValue("Eyelock.IrisMode", 1) == 2;
+	m_HeartBeatFrequency = conf.getValue("Eyelock.IrisCaptureHeartBeatFrequency", 5);
+//	DMOOUT WHy is this here?  if (m_SPAWAREnable)  this instance is assigned by EyelockMain... or at least it should be...
+//	{
+//		m_HttpPostSender = new HttpPostSender(conf);
+//	}
 #endif	
 	// Parse pipe "|" separate list of slave IP addresses for processing mode notification
 	// e.g., nano019-1.local|nano019-2.local|nano019-3.local
@@ -1364,11 +1363,12 @@ unsigned int EyeLockThread::MainLoop() {
 
 	std::string name = "EyeLockThread::";
 	try {
-#ifdef HBOX_PG
+#ifdef IRIS_CAPTURE
 	struct timeval start;
-	if(m_SPAWAREnable){
-		m_HttpPostSender->init();
-		m_HttpPostSender->Begin();
+	if(m_bIrisCaptureEnabled)
+	{
+//	DMOOUT - should be started arlready by EyelockMain...	m_HttpPostSender->init();
+//		m_HttpPostSender->Begin();
 		gettimeofday(&start, 0);
 	}
 
@@ -1417,8 +1417,9 @@ unsigned int EyeLockThread::MainLoop() {
 					sendIter.next();
 				}
 			}
-#ifdef HBOX_PG
-			if(m_SPAWAREnable){
+#ifdef IRIS_CAPTURE
+			if(m_bIrisCaptureEnabled)
+			{
 				struct timeval end;
 				gettimeofday(&end, 0);
 				long mtime, seconds, useconds;

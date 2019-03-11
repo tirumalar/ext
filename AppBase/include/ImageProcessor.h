@@ -24,11 +24,14 @@
 #include "CmxHandler.h"
 #include "socket.h"
 #include "NanoFocusSpecularityBasedSpoofDetector.h"
-#include "HTTPPOSTMsg.h"
 #include "CommonDefs.h"
-#ifdef HBOX_PG
-#include "PostMessages.h"
+#include "HTTPPOSTMsg.h"
+
+#ifdef IRIS_CAPTURE
+	#include "PostMessages.h"
+	#include "EyeSortingWrap.h"
 #endif
+
 #include "FileConfiguration.h"
 #include "FaceMap.h"
 
@@ -40,6 +43,9 @@ class SocketFactory;
 class ProcessorChain;
 class LaplacianBasedFocusDetector;
 //class DecodeZBar;
+#ifdef IRIS_CAPTURE
+class CmxHandler;
+#endif
 
 typedef struct SpoofTrackerResult{
 	int m_frIdx1,m_frIdx2;
@@ -54,8 +60,8 @@ typedef struct NanoSpoofResult{
 
 #define IRISCAM_MAIN_LEFT  01
 #define IRISCAM_MAIN_RIGHT 02
-#define IRISCAM_AUX_LEFT   129
-#define IRISCAM_AUX_RIGHT  130
+#define IRISCAM_AUX_LEFT   129 // 0x81
+#define IRISCAM_AUX_RIGHT  130 // 0x82
 
 // Simple base class to define interface for low latency callbacks
 class ImageHandler
@@ -87,6 +93,9 @@ public:
     IplImage *m_src;
     void SetImage(IplImage *ptr);
     bool ProcessImage(IplImage *frame,bool matchmode=true);
+    bool ProcessImageMatchMode(IplImage *frame,bool matchmode);
+    bool ProcessImageAcquisitionMode(IplImage *frame,bool matchmode);
+    bool ProcessImageAcquisitionModeBKUP(IplImage *frame,bool matchmode);
     bool ProcessSpoofFlowImage(IplImage *frame,bool matchmode=true);
     bool ClassifySpoof(DetectedEye *& eyel,DetectedEye *& eyer);
     void RotateSpoofEyes(IplImage *inp,IplImage* out);
@@ -136,7 +145,7 @@ public:
 #ifndef UNITTEST    
 protected:
 #endif
-	//CmxHandler *m_pCmxHandler;
+	
     bool m_tsDestAddrpresent;
     ProcessorChain *m_nwLedDispatcher;
     ProcessorChain *m_LedConsolidator;
@@ -240,6 +249,7 @@ protected:
 	volatile bool m_matchingmode,m_lapdebug;
 	bool m_SaveEyeCrops;
 	bool m_SaveFullFrame;
+	bool m_IrisCameraPreview;
 	bool m_EnableOffsetCorrection;
 	IplImage *m_OffsetImageMainCamera1;
 	IplImage *m_OffsetImageMainCamera2;
@@ -264,16 +274,58 @@ protected:
 	bool m_FaceIrisMapping;
 	bool m_FaceIrisMappingStrict;
 	bool m_FaceIrisMappingBeforEyeDetection;
+	bool m_projStatus;
 	bool m_bFaceMapDebug;;
 	int m_minIrisDiameter;
 	int m_Imagewidth;
 	int m_Imageheight;
 	bool m_EnableExtHalo;
-#ifdef HBOX_PG	
-	bool m_SPAWAREnable;
 
+	int m_EyelockIrisMode; // Select between Authentication and Capture Mode, by default Authentication Mode; Authentication=1 Capture=2
+	bool m_CameraMode;
+#ifdef IRIS_CAPTURE
+public:
 	HttpPostSender *m_pHttpPostSender;
-#endif	
+	// Settings
+	bool m_bIrisCapture;
+
+	int m_IrisCaptureEarlyTimeout; //was sortingEarlyTimeout
+	int m_IrisCaptureTimeout; // was sortingGlobalTimeout
+	int m_IrisCaptureResetDelay; // was m_httpPostSenderDelay
+	char *m_IrisImageFormat;
+	int m_IrisCaptureDataMode;
+	int m_IrisCaptureBestPairMax;
+	int m_nMinIrisDiameter;
+	int m_nMaxIrisDiameter;
+	bool m_bIrisCaptureEnableResize;
+	int m_expectedIrisWidth;
+	int m_actualIrisWidth;
+	bool m_bSortingLogEnable;
+
+	int m_xPixelResolutionPerCM;
+	int m_yPixelResolutionPerCM;
+
+	int terminate;
+	EyeSortingWrap *eyeSortingWrapObj;
+	bool shouldIBeginSorting;
+
+	bool m_EnableISOSharpness;
+	int m_ISOSharpnessThreshold;
+
+	IplImage *m_LastEyecrop;
+	CmxHandler *m_pCMXHandler;
+
+	IplImage *tmpImage;
+	IplImage *imgHeader1;
+	IplImage *imgHeader2;
+	IplImage *m_scaleDest;
+	IplImage *m_scaleSrcHeader;
+
+	//functions
+	IplImage * ResizeFrame(int width, int height, unsigned char *frame);
+	void SetCMXHandler(CmxHandler *pCmxHandler);
+
+#endif	// IRIS_CAPTURE
 	bool m_bShouldSend;
 
 	float ERROR_CHECK_EYES;
@@ -287,9 +339,9 @@ private:
     void DebugSessionLogging(IplImage *frame, int cam_idd);
     FaceMapping DoFaceMapping(IplImage *frame, int cam_idd, int frame_number);
     bool ValidateEyeCropUsingFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
-    void SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceIndex, int eyeIdx);
+    void SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceIndex, unsigned int eyeLabel);
     cv::Point2i projectPoints_IristoFace(cv::Point2i ptrI, cv::Point2f constant, float ConstDiv);
-    int validateLeftRightEyecrops(cv::Rect projFace, cv::Point2i ptr1, int CameraId);
+    unsigned int validateLeftRightEyecrops(cv::Rect projFace, cv::Point2i ptr1, int CameraId);
 	bool validateEyecrops_IrisToFaceMapping(cv::Rect projFace, cv::Point2i ptrI, int CameraId);
 	bool ValidateEyeCropUsingIrisToFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
 	bool m_activeEyeSideLabeling;

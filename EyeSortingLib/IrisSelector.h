@@ -8,13 +8,7 @@
 #include <deque>
 #include <map>
 #include <utility> 
-#ifdef _WIN32
-#include "EyeSortingLib_def.h"
-//typedef unsigned long uint64_t;
-#else
-#define EYESORTINGLIB_API
-#endif
-
+#include <bitset>
 //namespace IrisSelectorNS
  
 #define IRIS_CODE_LENGTH 2560
@@ -477,7 +471,7 @@ protected:
 * Could use more abstracted Graph base class akin to boost.
 * Let's not reinvent the wheel for now.
 */
-class EYESORTINGLIB_API AdjacencyMatrix {
+class AdjacencyMatrix {
 public:
 	AdjacencyMatrix() : m_Size(0) { }
 	AdjacencyMatrix(int n) : m_Size(n) { } 
@@ -492,7 +486,7 @@ protected:
 	std::set<std::pair<unsigned int, unsigned int> > m_Connected;
 };
 
-class EYESORTINGLIB_API ConnectedComponents {
+class ConnectedComponents {
 public:
 	ConnectedComponents(AdjacencyMatrix &graph); 
 	bool Visited(int v) const { return m_Visited[v]; }
@@ -509,7 +503,7 @@ protected:
 
 class IrisMatchInterface;
 class CiRefineGraph;
-class EYESORTINGLIB_API IrisSelector
+class IrisSelector
 {
 public:
 
@@ -591,7 +585,7 @@ public:
 	CiRefineGraph* m_RefineGPtr;
 };
 
-class EYESORTINGLIB_API CiRefineGraph{
+class CiRefineGraph{
 public:
 	CiRefineGraph():CorrelationFactor(0.5){}
 	void initRefineGraph(AdjacencyMatrix &G);

@@ -17,8 +17,6 @@
 #define __SOUND__
 #endif
 
-
-
 #ifdef __SOUND__
 #include "AudioDispatcher.h"
 #include "TonePlayer.h"
@@ -41,7 +39,6 @@
 #include "UtilityFunctions.h"
 #define __NW_THREAD__
 
-
 int EyeLockMain::m_watchdogfd=-1;
 struct sigaction EyeLockMain::sa;
 struct iniParameter_t {
@@ -56,6 +53,7 @@ struct iniParameter_t {
 extern bool DoTamper1(void);
 extern void DoTemperatureLog();
 extern void *init_facetracking(void * arg);
+
 
 enum LEDType { MiniLED, NanoLED, EyelockLED, PicoLED, NoLED }; // TODO: Make LEDControllerFctory for thisvoid
 const char logger[30] = "EyelockMain";
@@ -202,6 +200,7 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 		if (pCMXHandle)
 		{
 			pCMXHandle->SetImageProcessor(pImageProcessor->m_ImageProcessor);
+			pImageProcessor->m_ImageProcessor->SetCMXHandler(pCMXHandle);
 			pCMXHandle->SetFaceTrackingQueue(g_pOIMQueue); //DMO configure facetracking queue
 		}
 #endif
@@ -414,6 +413,46 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 	m_timeSync = (char *)conf.getValue("GRI.InternetTimeSync","false");
 	m_timeServAddr = (char *)conf.getValue("GRI.InternetTimeAddr","");
 
+
+#ifdef IRIS_CAPTURE
+	pHttpPostSender = NULL;
+
+	m_IrisCaptureMatchingDisable = conf.getValue("Eyelock.MatchDisable", false);
+
+	if (conf.getValue("Eyelock.IrisMode", 1) == 2)
+	{
+		pHttpPostSender = new HttpPostSender(conf);
+		pHttpPostSender->init();
+		pHttpPostSender->Begin();
+
+		// set it to the appropriate processors basing on ini configuration
+		// processors pointer checks assume that if the processor is not (properly) initialized then its pointer is NULL
+		if (pImageProcessor->m_ImageProcessor != NULL)
+		{
+			// for SignalHeartBeat, which is triggered by EyelockThread
+			pImageProcessor->m_HttpPostSender = pHttpPostSender;
+
+			if (conf.getValue("Eyelock.IrisCapturePostAfterGrabbing", false))
+			{
+				pImageProcessor->m_ImageProcessor->m_pHttpPostSender = pHttpPostSender;
+			}
+		}
+
+		if (conf.getValue("Eyelock.IrisCapturePostAfterSegmentation", true))
+		{
+			// TODO: ensure this is the correct instance of BiOmega. There are 2 now. The other is in pNwMatchManager (private)
+			if (pMatchProcessor != NULL)
+			{
+				BiOmega *pBiOmega = pMatchProcessor->GetbioInstance();
+				if (pBiOmega != NULL)
+				{
+					pBiOmega->m_pHttpPostSender = pHttpPostSender;
+				}
+			}
+		}
+	}
+#endif
+
 	EyelockLog(logger, DEBUG, "EyeLockMain() End");
 }
 
@@ -482,28 +521,39 @@ void EyeLockMain::run(){
 	EyelockLog(logger, DEBUG, "EyeLockMain::run() Start");
 	// we need to make nwListener know about a few processors;
 	// if they were not instantiated it will not matter
-#ifdef __NW_THREAD__
-	if(pMasterSlaveNwListener){
-		pMasterSlaveNwListener->m_pEyeDispatcher = pEyeDispatcher;
-		pMasterSlaveNwListener->m_ledConsolidator = pledConsolidator;
-	}
-	nwListener.m_ledConsolidator=pledConsolidator;
-	nwListener.m_DBDispatcher = pDBReceive;
-	nwListener.m_F2FDispatcher = pF2FDispatcher;
-	nwListener.m_pEyeDispatcher = pEyeDispatcher;
+#ifdef IRIS_CAPTURE
+	if(!m_IrisCaptureMatchingDisable)
 #endif
+	{
 
-	pImageProcessor->m_MatchProcessor =  pMatchProcessor;
-	pImageProcessor->m_ledConsolidator = pledConsolidator;
-	pImageProcessor->m_pEyeDispatcher = pEyeDispatcher;
-	pImageProcessor->m_nwLedDispatcher = pnwLEDDispatcher;
+	#ifdef __NW_THREAD__
+		if(pMasterSlaveNwListener){
+			pMasterSlaveNwListener->m_pEyeDispatcher = pEyeDispatcher;
+			pMasterSlaveNwListener->m_ledConsolidator = pledConsolidator;
+		}
+		nwListener.m_ledConsolidator=pledConsolidator;
+		nwListener.m_DBDispatcher = pDBReceive;
+		nwListener.m_F2FDispatcher = pF2FDispatcher;
+		nwListener.m_pEyeDispatcher = pEyeDispatcher;
+	#endif
 
-	if(pMatchProcessor && pledDispatcher)
-		pMatchProcessor->SetLedDispatcher(pledDispatcher);
+		pImageProcessor->m_MatchProcessor =  pMatchProcessor;
+		pImageProcessor->m_ledConsolidator = pledConsolidator;
+		pImageProcessor->m_pEyeDispatcher = pEyeDispatcher;
+		pImageProcessor->m_nwLedDispatcher = pnwLEDDispatcher;
+
+		if(pMatchProcessor && pledDispatcher)
+			pMatchProcessor->SetLedDispatcher(pledDispatcher);
+	}
 
 	EyelockLog(logger, INFO, "startWithMatching");
 	startWithMatching();
-	PushAllThreads();
+
+
+#ifdef IRIS_CAPTURE
+	if(!m_IrisCaptureMatchingDisable)
+#endif
+		PushAllThreads();
 
 #ifdef HAS_SPI_WDT
 	if(m_Master && m_enable_newWD)
@@ -649,103 +699,114 @@ void EyeLockMain::run(){
 }
 
 void EyeLockMain::startWithMatching(){
-#ifdef __NW_THREAD__
-	nwListener.m_matchProcessor = pMatchProcessor;
-	nwListener.addProcessor(pImageProcessor);
-#endif
 
-	if((pledDispatcher)&&(m_SendLed)&&(pMatchProcessor)){
-		pMatchProcessor->addProcessor(pledDispatcher);
-	}
-	if(pF2FDispatcher&&(pMatchProcessor))
+#ifdef IRIS_CAPTURE
+	if(m_IrisCaptureMatchingDisable)
 	{
-		pMatchProcessor->addProcessor(pF2FDispatcher);
-		EyelockLog(logger, DEBUG, "Add F2FDispatcher");
-	}// Launch Threads
+		if(pCMXHandle) pCMXHandle->Begin();
+			pImageProcessor->Begin();
+	}
+	else
+#endif
+	{
+	#ifdef __NW_THREAD__
+		nwListener.m_matchProcessor = pMatchProcessor;
+		nwListener.addProcessor(pImageProcessor);
+	#endif
 
-	if(m_Master){
-		if(pNwMatchManager && pDBReceive)
-			pDBReceive->addProcessor(pNwMatchManager);
-
-		if((pF2FDispatcher && pNwDispatcher)){
-			pF2FDispatcher->addProcessor(pNwDispatcher);
-			if(pNwDispatcher)pNwDispatcher->Begin();
+		if((pledDispatcher)&&(m_SendLed)&&(pMatchProcessor)){
+			pMatchProcessor->addProcessor(pledDispatcher);
 		}
-		if(m_softwareType==ePICO){
+		if(pF2FDispatcher&&(pMatchProcessor))
+		{
+			pMatchProcessor->addProcessor(pF2FDispatcher);
+			EyelockLog(logger, DEBUG, "Add F2FDispatcher");
+		}// Launch Threads
+
+		if(m_Master){
+			if(pNwMatchManager && pDBReceive)
+				pDBReceive->addProcessor(pNwMatchManager);
+
+			if((pF2FDispatcher && pNwDispatcher)){
+				pF2FDispatcher->addProcessor(pNwDispatcher);
+				if(pNwDispatcher)pNwDispatcher->Begin();
+			}
+			if(m_softwareType==ePICO){
+				if(pDBReceive){
+					pDBReceive->addProcessor(pImageProcessor);
+				}
+				if(pMatchProcessor)pMatchProcessor->addProcessor(pNwDispatcher);
+				if(pNwDispatcher)pNwDispatcher->Begin();
+			}
+		}else{
 			if(pDBReceive){
 				pDBReceive->addProcessor(pImageProcessor);
 			}
-			if(pMatchProcessor)pMatchProcessor->addProcessor(pNwDispatcher);
-			if(pNwDispatcher)pNwDispatcher->Begin();
+			if(pNwDispatcher&&(pMatchProcessor)){
+				pMatchProcessor->addProcessor(pNwDispatcher);
+				pNwDispatcher->Begin();
+			}
 		}
-	}else{
-		if(pDBReceive){
-			pDBReceive->addProcessor(pImageProcessor);
+	#ifdef __SOUND__
+		if(pAudioDispatcher)
+			pAudioDispatcher->Begin();
+	#endif
+		if(pnwLEDDispatcher)
+			pnwLEDDispatcher->Begin();
+
+		if(pledConsolidator&&(m_softwareType==eNTSGLM))
+		   pledConsolidator->Begin();
+
+		if(pledDispatcher)
+			pledDispatcher->Begin();
+
+		if(pF2FDispatcher)
+			pF2FDispatcher->Begin();
+
+		if(pDBReceive)
+			pDBReceive->Begin();
+
+		if(pEyeDispatcher)
+			pEyeDispatcher->Begin();
+
+		if(pNwMatchManager)
+			pNwMatchManager->Begin();
+
+		if(m_pLiquidLens)
+			m_pLiquidLens->Begin();
+
+		if(pLoiteringDetector)
+			pLoiteringDetector->Begin();
+
+		if(pSDKDispatcher)
+			pSDKDispatcher->Begin();
+
+		if(pEyelockNanoSdkThread)
+			pEyelockNanoSdkThread->Begin();
+
+		// start listening for messages last
+		if(pMasterSlaveNwListener)pMasterSlaveNwListener->Begin();
+		if(pCMXHandle) pCMXHandle->Begin();
+
+		pImageProcessor->Begin();
+
+	#define DO_SLAVE_NWLISTENER 1 /* DJH: Added to support NWListener thread on slave boards for dynamic configuration */
+	#ifdef __NW_THREAD__
+	#if !DO_SLAVE_NWLISTENER
+		if(!m_Slave)
+	#endif
+		{
+			strcpy(nwListener.m_version, EYELOCK_VERSION);
+			nwListener.Begin();
 		}
-		if(pNwDispatcher&&(pMatchProcessor)){
-			pMatchProcessor->addProcessor(pNwDispatcher);
-			pNwDispatcher->Begin();
+
+	#endif
+
+		//match dispatcher
+		if(m_matchDispatcher)
+		{
+			m_matchDispatcher->Begin();
 		}
-	}
-#ifdef __SOUND__
-	if(pAudioDispatcher)
-		pAudioDispatcher->Begin();
-#endif
-	if(pnwLEDDispatcher)
-		pnwLEDDispatcher->Begin();
-
-	if(pledConsolidator&&(m_softwareType==eNTSGLM))
-	   pledConsolidator->Begin();
-
-	if(pledDispatcher)
-		pledDispatcher->Begin();
-
-	if(pF2FDispatcher)
-		pF2FDispatcher->Begin();
-
-	if(pDBReceive)
-		pDBReceive->Begin();
-
-	if(pEyeDispatcher)
-		pEyeDispatcher->Begin();
-
-	if(pNwMatchManager)
-		pNwMatchManager->Begin();
-
-	if(m_pLiquidLens)
-		m_pLiquidLens->Begin();
-
-	if(pLoiteringDetector)
-		pLoiteringDetector->Begin();
-
-	if(pSDKDispatcher)
-		pSDKDispatcher->Begin();
-
-   	if(pEyelockNanoSdkThread)
-   		pEyelockNanoSdkThread->Begin();
-
-	// start listening for messages last
-   	if(pMasterSlaveNwListener)pMasterSlaveNwListener->Begin();
-   	if(pCMXHandle) pCMXHandle->Begin();
-
-	pImageProcessor->Begin();
-
-#define DO_SLAVE_NWLISTENER 1 /* DJH: Added to support NWListener thread on slave boards for dynamic configuration */
-#ifdef __NW_THREAD__
-#if !DO_SLAVE_NWLISTENER
-	if(!m_Slave)
-#endif
-	{
-		strcpy(nwListener.m_version, EYELOCK_VERSION);
-		nwListener.Begin();
-	}
-
-#endif
-
-	//match dispatcher
-	if(m_matchDispatcher)
-	{
-		m_matchDispatcher->Begin();
 	}
 }
 

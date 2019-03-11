@@ -459,6 +459,8 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 			else
 		       segresult = false;
 
+			int fontFace = CV_FONT_HERSHEY_SIMPLEX;
+			double fontScale = 1;
 			if(SaveSegImages){
 				if (segresult)
 				{
@@ -466,6 +468,9 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 					draw( image, tmp1.ip, color );
 					sprintf(name, "Good_segmented_image_%d.bmp",segmented_count++);
 					cv::Mat mateye = cv::cvarrToMat(image);
+					std::ostringstream ssCoInfo;
+					ssCoInfo << "pp=" << tmp1.pp.z << "ip" << tmp1.ip.z;
+					putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cvScalar(0,122,122), 3, 4);
 					imwrite(name, mateye);
 					mateye.release();
 					// cvSaveImage(name,image);
@@ -481,6 +486,9 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 					draw( image, tmp1.ip, color );
 					sprintf(name, "Bad_segmented_image_%d.bmp",segmented_count++);
 					cv::Mat mateye = cv::cvarrToMat(image);
+					std::ostringstream ssCoInfo;
+					ssCoInfo << "pp=" << tmp1.pp.z << "ip=" << tmp1.ip.z;
+					putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cvScalar(0,122,122), 3, 4);
 					imwrite(name, mateye);
 					mateye.release();
 					// cvSaveImage(name,image);

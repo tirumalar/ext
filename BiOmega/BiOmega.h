@@ -11,6 +11,10 @@ struct _IplImage;
 struct CvPoint2D32f;
 struct CvPoint3D32f;
 
+#ifdef IRIS_CAPTURE
+	class HttpPostSender;
+#endif
+
 class BIOMEGA_DLL_EXPORTS BiOmega
 {
 public:
@@ -46,6 +50,13 @@ public:
 	const char *GetVersion() const;
 	IrisMatchInterface *GetMatchInterface(){ return m_pIrisMatchInterface;}
 	EyeSegmentationInterface *GetEyeSegmentationInterface() { return m_pEyeSegmentInterface; }
+
+#ifdef IRIS_CAPTURE
+	// doesn't take ownership of HttpPostSender instance
+	// HttpPostSender instance must be initialized outside
+	HttpPostSender *m_pHttpPostSender;
+#endif
+
 private:
 	IrisMatchInterface *m_pIrisMatchInterface;
 	EyeSegmentationInterface *m_pEyeSegmentInterface;
