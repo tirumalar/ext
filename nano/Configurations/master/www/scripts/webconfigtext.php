@@ -243,6 +243,19 @@ function defineStrings($HardwareType)
             //////////////////////////////////////////////////////
             define ("AUTHENTICATION_TABLABEL", "Iris Processing");
             define ("AUTHENTICATION_HEADING", "Configure Iris Processing Details");
+            define ("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "Iris Processing Mode");
+            define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLMODE", "Access Control Authentication Mode");
+            define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLAUTHENTICATION", "Access Control Authentication");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTUREMODE", "Iris Capture Mode");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTURE", "Iris Capture");
+            define ("DEVICE_EXTERNAL_POSTSCHEME", "Iris Post Scheme:");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTURESETTINGS", "Iris Capture Settings");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTURETIMEOUT", "Iris Capture Timeout:");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTURERESETDELAY", "Iris Capture Reset Delay:");
+            define ("AUTHENTICATION_SETTINGS_HTTPPOSTMSGFORMAT", "Http Post Message Format:");
+            define ("AUTHENTICATION_SETTINGS_IRISIMAGEFORMAT", "Iris Image Format:");
+            define ("AUTHENTICATION_SETTINGS_IRISIMAGEQUALITY", "Image Quality:");
+            define ("AUTHENTICATION_SETTINGS_100LOSSLESS", "(100 = Lossless)");
             define ("AUTHENTICATION_MODE_GROUPTITLE", "Matching");
             define ("AUTHENTICATION_MODE_SINGLEEYELABEL", "Use Single Eye");
             define ("AUTHENTICATION_MODE_DUALEYELABEL", "Use Both Eyes");
@@ -827,9 +840,27 @@ function defineStrings($HardwareType)
             define ("TOOLTIP_AUTHENTICATION_NETWORKMSGMSG", "<span style='font-size: 16px; font-style:bold'>Network Message Format</span>
                                                 <ul style='padding-left: 1em'><li>Specify the format string for the message that will be sent to the location above when a successful match/authentication occurs.</li>
                                                 <li>Default value: Matched:%d;Score:%0.4f;Time:%llu;ID:</li></ul>");
-
-
-
+            define ("TOOLTIP_AUTHENTICATION_CAPTURETIMEOUT", "<span style='font-size: 16px; font-style:bold'>Iris Capture Timeout</span>
+                                                <ul style='padding-left: 1em'><li>Specify the during in milliseconds for processing user irises until sending the message to the HTTP endpoint.</li>
+                                                <li>Range (Milliseconds): 1000-60000.</li>
+                                                <li>Default value: 5000.</li></ul>");
+            define ("TOOLTIP_AUTHENTICATION_CAPTURERESETDELAY", "<span style='font-size: 16px; font-style:bold'>Iris Capture Reset Delay</span>
+                                                <ul style='padding-left: 1em'><li>Specify the delay in milliseconds that the device will wait after capturing irises before processing the next user.</li>
+                                                <li>Range (Milliseconds): 1000-300000.</li>
+                                                <li>Default value: 5000.</li></ul>");
+            define ("TOOLTIP_AUTHENTICATION_MESSAGEFORMAT", "<span style='font-size: 16px; font-style:bold'>HTTP Message Format</span>
+                                                <ul style='padding-left: 1em'><li>Specify the format of the message which will be sent to the HTTP Endpoint.</li>
+                                                <li>Default value: SOAP (see documentation for schema of SOAP message)</li>
+                                                <li>Alertnate value: JSON (see documentation for schema of JSON message)</li></ul>");
+            define ("TOOLTIP_AUTHENTICATION_PAYLOADFORMAT", "<span style='font-size: 16px; font-style:bold'>Message Image Payload Format</span>
+                                                <ul style='padding-left: 1em'><li>Specify the graphical format of the iris images which will be sent to the HTTP Endpoint.</li>
+                                                <li>Option 1: RAW - 8-bit, Single Channel image</li>
+                                                <li>Option 2: PNG</li>
+                                                <li>Option 2: J2K (JPEG 2000)</li>
+                                                <li>Default value: RAW - 8-bit, Single Channel image</li></ul>");
+            define ("TOOLTIP_AUTHENTICATION_IRISIMAGEQUALITY", "<span style='font-size: 16px; font-style:bold'>Iris Image Quality</span>
+                                                <ul style='padding-left: 1em'><li>Specify the quality of the encoded JPEG 2000 iris image.  A value of 100 uses lossless compression.</li>
+                                                <li>Default value: 100</li></ul>");
             define ("TOOLTIP_DATABASE_TAB", "<b><i>Database Tab</i></b><br>".$NXTText."  database configuration. (Network Matcher and Database Statistics)");
             define ("TOOLTIP_DATABASE_ENABLENETWORKMATCHER", "<span style='font-size: 16px; font-style:bold'>Enable Network Matcher</span>
                                                 <ul style='padding-left: 1em'><li>Select this option to enable additional, off-device processing of biometric data using the <i>Eyelock Network Matcher Service</i>.</li></ul>");
@@ -1067,6 +1098,13 @@ function defineStrings($HardwareType)
         define("DEVICE_EXTERNAL_HEARTBEATURL", "HeartBeat Endpoint:");
         define("DEVICE_EXTERNAL_MAINTENANCEURL", "Maintenance Endpoint:");
         define("DEVICE_EXTERNAL_POSTSCHEMEURL", "POST Scheme:");
+        define("AUTHENTICATION_SETTINGS_IRISCAPTURESETTINGS", "Iris Capture Settings");
+        define("AUTHENTICATION_SETTINGS_IRISCAPTURETIMEOUT", "Iris Capture Timeout:");
+        define("AUTHENTICATION_SETTINGS_IRISCAPTURERESETDELAY", "Iris Capture Reset Delay:");
+        define("AUTHENTICATION_SETTINGS_HTTPPOSTMSGFORMAT", "Http Post Message Format:");
+        define("AUTHENTICATION_SETTINGS_IRISIMAGEFORMAT", "Iris Image Format:");
+        define("AUTHENTICATION_SETTINGS_IRISIMAGEQUALITY", "Image Quality:");
+        define("AUTHENTICATION_SETTINGS_100LOSSLESS", "(100 = Lossless)");
 		define("DEVICE_ADVSETTINGS_GROUPTITLE", "Расширенные настройки устройства");
 		define("DEVICE_ADVSETTINGS_LISTENINGPORTLABEL", "Порт ожидания:");
 		define("DEVICE_ADVSETTINGS_EYEDESTADDR", "IP-адрес назначения изображения:");
@@ -1118,6 +1156,19 @@ function defineStrings($HardwareType)
 		define("SOFTWARE_RESTORE_DELETERESTOREPOINTS", "Удалить...");
 		define("AUTHENTICATION_TABLABEL", "Аутентификация");
 		define("AUTHENTICATION_HEADING", "Настройки аутентификации");
+        define("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "Iris Processing Mode");
+        define("AUTHENTICATION_SETTINGS_ACCESSCONTROLMODE", "Access Control Authentication");
+        define("AUTHENTICATION_SETTINGS_ACCESSCONTROLAUTHENTICATION", "Access Control Authentication");
+        define("AUTHENTICATION_SETTINGS_IRISCAPTUREMODE", "Iris Capture Mode");
+        define("AUTHENTICATION_SETTINGS_IRISCAPTURE", "Iris Capture");
+        define("DEVICE_EXTERNAL_POSTSCHEME", "Iris Post Scheme:");
+        define("AUTHENTICATION_SETTINGS_IRISCAPTURESETTINGS", "Iris Capture Settings");
+        define("AUTHENTICATION_SETTINGS_IRISCAPTURETIMEOUT", "Iris Capture Timeout:");
+        define("AUTHENTICATION_SETTINGS_IRISCAPTURERESETDELAY", "Iris Capture Reset Delay:");
+        define("AUTHENTICATION_SETTINGS_HTTPPOSTMSGFORMAT", "Http Post Message Format:");
+        define("AUTHENTICATION_SETTINGS_IRISIMAGEFORMAT", "Iris Image Format:");
+        define("AUTHENTICATION_SETTINGS_IRISIMAGEQUALITY", "Image Quality:");
+        define("AUTHENTICATION_SETTINGS_100LOSSLESS", "(100 = Lossless)");
 		define("AUTHENTICATION_MODE_GROUPTITLE", "Совпадение");
 		define("AUTHENTICATION_MODE_SINGLEEYELABEL", "Использовать один глаз");
 		define("AUTHENTICATION_MODE_DUALEYELABEL", "Использовать оба глаза");
@@ -1412,6 +1463,27 @@ function defineStrings($HardwareType)
 		define("TOOLTIP_AUTHENTICATION_NETWORKMSGADDR", " <span style='font-size: 16px; font-style:bold'>IP Адрес уведомлений</span> <ul style='padding-left: 1em'><li>Укажите адрес IP системы или приложения, которое будет получать <i>Network Match</i> уведомления.</li></ul>");
 		define("TOOLTIP_AUTHENTICATION_NETWORKMSGPORT", " <span style='font-size: 16px; font-style:bold'>Порт уведомлений</span> <ul style='padding-left: 1em'><li>Укажите порт системы или приложения, которое будет получать <i>Network Match</i> уведомления.</li></ul>");
 		define("TOOLTIP_AUTHENTICATION_NETWORKMSGMSG", " <span style='font-size: 16px; font-style:bold'>Формат Сетевых Сообщений</span> <ul style='padding-left: 1em'><li>Укажите формат строки сообщения, которое будет отсылаться по указанному выше адресу при успешном сравнении/идентификации.</li> <li>Значение по умолчанию: Matched:%d;Score:%0.4f;Time:%llu;ID:</li></ul>");
+        define ("TOOLTIP_AUTHENTICATION_CAPTURETIMEOUT", "<span style='font-size: 16px; font-style:bold'>Iris Capture Timeout</span>
+                                            <ul style='padding-left: 1em'><li>Specify the during in milliseconds for processing user irises until sending the message to the HTTP endpoint.</li>
+                                            <li>Range (Milliseconds): 1000-60000.</li>
+                                            <li>Default value: 5000.</li></ul>");
+        define ("TOOLTIP_AUTHENTICATION_CAPTURERESETDELAY", "<span style='font-size: 16px; font-style:bold'>Iris Capture Reset Delay</span>
+                                            <ul style='padding-left: 1em'><li>Specify the delay in milliseconds that the device will wait after capturing irises before processing the next user.</li>
+                                            <li>Range (Milliseconds): 1000-300000.</li>
+                                            <li>Default value: 5000.</li></ul>");
+        define ("TOOLTIP_AUTHENTICATION_MESSAGEFORMAT", "<span style='font-size: 16px; font-style:bold'>HTTP Message Format</span>
+                                            <ul style='padding-left: 1em'><li>Specify the format of the message which will be sent to the HTTP Endpoint.</li>
+                                            <li>Default value: SOAP (see documentation for schema of SOAP message)</li>
+                                            <li>Alertnate value: JSON (see documentation for schema of JSON message)</li></ul>");
+        define ("TOOLTIP_AUTHENTICATION_PAYLOADFORMAT", "<span style='font-size: 16px; font-style:bold'>Message Image Payload Format</span>
+                                            <ul style='padding-left: 1em'><li>Specify the graphical format of the iris images which will be sent to the HTTP Endpoint.</li>
+                                            <li>Option 1: RAW - 8-bit, Single Channel image</li>
+                                            <li>Option 2: PNG</li>
+                                            <li>Option 2: J2K (JPEG 2000)</li>
+                                            <li>Default value: RAW - 8-bit, Single Channel image</li></ul>");
+        define ("TOOLTIP_AUTHENTICATION_IRISIMAGEQUALITY", "<span style='font-size: 16px; font-style:bold'>Iris Image Quality</span>
+                                            <ul style='padding-left: 1em'><li>Specify the quality of the encoded JPEG 2000 iris image.  A value of 100 uses lossless compression.</li>
+                                            <li>Default value: 100</li></ul>");
 		define("TOOLTIP_DATABASE_TAB", " <b><i>База Данных</i></b><br>Конфигурация Базы Данных ".$NXTText.". (статистика Network Matcher и базы данных )");
 		define("TOOLTIP_DATABASE_ENABLENETWORKMATCHER", " <span style='font-size: 16px; font-style:bold'>Включить Network Matcher</span> <ul style='padding-left: 1em'><li>Выберите эту настройку, чтобы включить дополнительную (вне устройства) обработку биометрических данных, используя <i>Eyelock Network Matcher Service</i>.</li></ul>");
 		define("TOOLTIP_DATABASE_NETWORKMATCHERADDR", " <span style='font-size: 16px; font-style:bold'>Адрес Network Matcher</span> <ul style='padding-left: 1em'><li>Укажите IP адрес Eyelock Network Matcher Service, который будет обрабатывать запросы идентификации.</li></ul>");
@@ -1703,6 +1775,12 @@ function defineStrings($HardwareType)
             //////////////////////////////////////////////////////
             define ("AUTHENTICATION_TABLABEL", "Autenticação");
             define ("AUTHENTICATION_HEADING", "Configurar Detalhes de Autenticação");
+            define ("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "Iris Processing Mode");
+            define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLMODE", "Access Control Authentication");
+            define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLAUTHENTICATION", "Access Control Authentication");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTUREMODE", "Iris Capture Mode");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTURE", "Iris Capture");
+            define ("DEVICE_EXTERNAL_POSTSCHEME", "Iris Post Scheme:");
             define ("AUTHENTICATION_MODE_GROUPTITLE", "Combinando");
             define ("AUTHENTICATION_MODE_SINGLEEYELABEL", "Usar Apenas Um Olho");
             define ("AUTHENTICATION_MODE_DUALEYELABEL", "Usar Ambos os Olhos");
@@ -2281,6 +2359,27 @@ define("TOOLTIP_AUTHENTICATION_NETWORKMSGPORT"," <span style='font-size: 16px; f
 define("TOOLTIP_AUTHENTICATION_NETWORKMSGMSG"," <span style='font-size: 16px; font-style:bold'>Formato de Mensagem de Rede</span>
                                                 <ul style='padding-left: 1em'><li>Indica a string de formato para a mensagem que será enviada ao local descrito acima quando uma autenticação/correspondência bem-sucedida ocorrer.</li>
                                                 <li>Valor padrão: Correspondidos:%d;Contagem:%0.4f;Tempo:%llu;ID:</li></ul>");
+define ("TOOLTIP_AUTHENTICATION_CAPTURETIMEOUT", "<span style='font-size: 16px; font-style:bold'>Iris Capture Timeout</span>
+                                    <ul style='padding-left: 1em'><li>Specify the during in milliseconds for processing user irises until sending the message to the HTTP endpoint.</li>
+                                    <li>Range (Milliseconds): 1000-60000.</li>
+                                    <li>Default value: 5000.</li></ul>");
+define ("TOOLTIP_AUTHENTICATION_CAPTURERESETDELAY", "<span style='font-size: 16px; font-style:bold'>Iris Capture Reset Delay</span>
+                                    <ul style='padding-left: 1em'><li>Specify the delay in milliseconds that the device will wait after capturing irises before processing the next user.</li>
+                                    <li>Range (Milliseconds): 1000-300000.</li>
+                                    <li>Default value: 5000.</li></ul>");
+define ("TOOLTIP_AUTHENTICATION_MESSAGEFORMAT", "<span style='font-size: 16px; font-style:bold'>HTTP Message Format</span>
+                                    <ul style='padding-left: 1em'><li>Specify the format of the message which will be sent to the HTTP Endpoint.</li>
+                                    <li>Default value: SOAP (see documentation for schema of SOAP message)</li>
+                                    <li>Alertnate value: JSON (see documentation for schema of JSON message)</li></ul>");
+define ("TOOLTIP_AUTHENTICATION_PAYLOADFORMAT", "<span style='font-size: 16px; font-style:bold'>Message Image Payload Format</span>
+                                    <ul style='padding-left: 1em'><li>Specify the graphical format of the iris images which will be sent to the HTTP Endpoint.</li>
+                                    <li>Option 1: RAW - 8-bit, Single Channel image</li>
+                                    <li>Option 2: PNG</li>
+                                    <li>Option 2: J2K (JPEG 2000)</li>
+                                    <li>Default value: RAW - 8-bit, Single Channel image</li></ul>");
+define ("TOOLTIP_AUTHENTICATION_IRISIMAGEQUALITY", "<span style='font-size: 16px; font-style:bold'>Iris Image Quality</span>
+                                    <ul style='padding-left: 1em'><li>Specify the quality of the encoded JPEG 2000 iris image.  A value of 100 uses lossless compression.</li>
+                                    <li>Default value: 100</li></ul>");
 
 		
 
