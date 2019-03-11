@@ -45,6 +45,7 @@ EyeSortingWrap::EyeSortingWrap(int FeatureScale, int maxSpecularityValue, int Ea
 		{
 			weightSum += (weights[i]);
 		}
+		
 		int featureMask = 0xffffffff;
 
 		float commonBitScale = float(weightSum) / 8;
@@ -242,7 +243,21 @@ std::pair<IrisDetail *, IrisDetail *> EyeSortingWrap::GetSortedPairEyesDetail(vo
 	 return result;
 }
 
-
+#ifdef EYE_SIDE
+bool EyeSortingWrap::GetBestPairOfEyes(unsigned char *image, int id, int cameraId, int frameId, int imageId, int numberOfImages, float scale, int x, int y, int width, int height, int score, int maxValue, long time, float haloScore, int side, float laplacianScore)
+{
+	 bool ret = true;
+	 bool firstUpdated;
+     bool secondUpdated;
+	 std::pair<Iris *, Iris *> result((Iris *)0, (Iris *)0);
+     Iris *piris = NULL;
+     if(m_deviceType==MYRIS)
+    	 ret=  m_pEyeSorting->GetBestPairOfEyes(image,id, cameraId,frameId,imageId,numberOfImages,1,x,y, width,height,score,maxValue,0,240,(unsigned long)time,result,piris,firstUpdated,secondUpdated,-3000,true, side, laplacianScore);
+     else
+    	 ret=  m_pEyeSorting->GetBestPairOfEyes(image,id, cameraId,frameId,imageId,numberOfImages,1,x,y, width,height,score,maxValue,0,240,(unsigned long)time,result,piris,firstUpdated,secondUpdated,haloScore,true, side, laplacianScore);
+   return ret;
+}
+#else
 bool EyeSortingWrap::GetBestPairOfEyes(unsigned char *image, int id, int cameraId, int frameId, int imageId, int numberOfImages, float scale, int x, int y, int width, int height, int score, int maxValue, long time, float haloScore, float laplacianScore)
 {
 	 bool ret = true;
@@ -256,6 +271,7 @@ bool EyeSortingWrap::GetBestPairOfEyes(unsigned char *image, int id, int cameraI
     	 ret=  m_pEyeSorting->GetBestPairOfEyes(image,id, cameraId,frameId,imageId,numberOfImages,1,x,y, width,height,score,maxValue,0,240,(unsigned long)time,result,piris,firstUpdated,secondUpdated,haloScore,true, 0, laplacianScore);
    return ret;
 }
+#endif
 
 bool EyeSortingWrap::GetBestPairOfEyes(unsigned char *image, uint64_t time, std::pair<Iris *, Iris *> &output, Iris *&iris)
 {
@@ -310,6 +326,11 @@ EyeSortingWrap::~EyeSortingWrap()
 
 	if(m_UserIris.first) {delete m_UserIris.first; m_UserIris.first= (IrisCodeMask *)0;}
 	if(m_UserIris.second) {delete m_UserIris.second; m_UserIris.second= (IrisCodeMask *)0;}
+}
+
+void EyeSortingWrap::clearAllEyes()
+{
+	m_pEyeSorting->Clear();
 }
 
 EyeSegmentationInterface * EyeSortingWrap::GetEyeSegmentationInterface()

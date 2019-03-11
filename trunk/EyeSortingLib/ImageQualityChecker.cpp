@@ -1093,12 +1093,13 @@ int ImageQualityChecker::ConsolidateResultsVerticalBlurring(IplImage* imgOrig)
 return flagPassOverall;
 } //end of function
 
+#define cvSetImageData cvSetData
 
 int ImageQualityChecker::checkQualityNano2(unsigned char *imgBuff,int width,int height,int widthStep,IrisParameters irisParams)
 {
 	IplImage img;
 	cvInitImageHeader(&img,cvSize(width,height),IPL_DEPTH_8U,1);
-	cvSetData(&img,imgBuff,widthStep);
+	cvSetImageData(&img,imgBuff,widthStep);
 	return ConsolidateResultsVerticalBlurringGeneralized2(&img,(StripDirection) 0,60,irisParams);
 }
 

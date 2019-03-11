@@ -1,20 +1,14 @@
-#if defined(NO_SORTWRAP)
-#pragma once
-
 #include <string>
 #include <opencv/highgui.h>
-#ifdef _WIN32
-#include "EyeSortingLib_def.h"
-//typedef unsigned long uint64_t;
-#else
-#define EYESORTINGLIB_API
-#endif
 class EyeSegmentationInterface;
 class IrisMatchInterface;
 class EnrollmentServer;
 //class Iris;
 //class IrisDetail;
 #include "IrisSelector.h"
+
+#define EYE_SIDE
+
 enum DeviceType{
 	Nano=0,
 	MYRIS=1
@@ -28,7 +22,6 @@ struct EyeSortingWrapperFeedback
 	bool calibration;
 	bool irisPupilRatio;
 };
-
 
 // DMO - Total HACK ALERT.  The Iris() class implmented within this library is created within the Global namespace
 // There is ANOTHER Iris() class defined in MyrisDeviceNI_types.h.  So any client wanting to use the Iris() class
@@ -118,7 +111,7 @@ public :
 
 
 };
-class EYESORTINGLIB_API EyeSortingWrap 
+class EyeSortingWrap
 {
     private:
         int m_imgQltyBenchMark,m_focusBenchMark;
@@ -149,13 +142,18 @@ class EYESORTINGLIB_API EyeSortingWrap
 		std::pair<IrisDetail *, IrisDetail *> GetSortedPairEyesDetail(void);
 	    std::pair<unsigned char*,unsigned char*> GetBestSortedPairOfEye(void);
 		//bool GetBestPairOfEyes(std::pair<Iris *, Iris *> &output,long time_cur);//eyelock::videoFrame Video_frame,std::pair<Iris *, Iris *> &output,long time_cur);
-        bool GetBestPairOfEyes(unsigned char *image, int id, int cameraId, int frameId, int imageId, int numberOfImages, float scale, int x, int y, int width, int height, int score, int maxValue, long time, float haloScore, float laplacianScore = 0.0f);
+#ifdef EYE_SIDE
+	    bool GetBestPairOfEyes(unsigned char *image, int id, int cameraId, int frameId, int imageId, int numberOfImages, float scale, int x, int y, int width, int height, int score, int maxValue, long time, float haloScore, int side, float laplacianScore = 0.0f);
+#else
+		bool GetBestPairOfEyes(unsigned char *image, int id, int cameraId, int frameId, int imageId, int numberOfImages, float scale, int x, int y, int width, int height, int score, int maxValue, long time, float haloScore, float laplacianScore = 0.0f);
+#endif
 		bool GetBestPairOfEyes(unsigned char *image, uint64_t time, std::pair< ::Iris *, ::Iris *> &output, ::Iris *&iris);
 		std::vector< std::vector< ::Iris *> * >& GetRankedEyeClusters();
 	    EyeSortingWrap(int FeatureScale, int maxSpecularityValue, int EarlyTimeoutMS, int GlobalTimeoutMS); 
 		bool ResizeFrame(unsigned char *input, int inwidth, int inheight, int instride, unsigned char *output, int outwidth, int outheight);
         bool ScaleFrame(unsigned char *input, unsigned char *output, int width, int height, int widthStep, float ratio);
 		EyeSortingWrapperFeedback GetEyeSortingFeedback();
+		void clearAllEyes();
         ~EyeSortingWrap();
         EyeSegmentationInterface * GetEyeSegmentationInterface();
         private:
@@ -164,4 +162,4 @@ class EYESORTINGLIB_API EyeSortingWrap
 		EnrollmentServer *m_pEyeSorting;
 		DeviceType m_deviceType;
 };
-#endif
+

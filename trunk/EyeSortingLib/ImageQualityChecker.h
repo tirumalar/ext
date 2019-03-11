@@ -1,12 +1,5 @@
 #pragma once
 
-#ifdef _WIN32
-#include "EyeSortingLib_def.h"
-typedef unsigned long uint64_t;
-#else
-#define EYESORTINGLIB_API
-#endif
-
 #include <opencv/cxcore.h>
 //#include "ippdefs.h"
 #include <list>
@@ -25,7 +18,7 @@ typedef struct
 	int r;
 } IrisParameters;
 
-class EYESORTINGLIB_API ImageQualityChecker
+class ImageQualityChecker
 {
 public:
 	typedef std::multimap<float, int > MapType;

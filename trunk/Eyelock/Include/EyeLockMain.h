@@ -125,6 +125,11 @@ private:
 	bool m_tamper;
 	char *m_timeSync;
 	char *m_timeServAddr;
+#ifdef IRIS_CAPTURE
+	bool m_IrisCaptureMatchingDisable;
+	HttpPostSender *pHttpPostSender;
+#endif
+
 };
 
 #endif /* EYELOCKMAIN_H_ */
