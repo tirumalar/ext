@@ -840,6 +840,10 @@ function defineStrings($HardwareType)
             define ("TOOLTIP_AUTHENTICATION_NETWORKMSGMSG", "<span style='font-size: 16px; font-style:bold'>Network Message Format</span>
                                                 <ul style='padding-left: 1em'><li>Specify the format string for the message that will be sent to the location above when a successful match/authentication occurs.</li>
                                                 <li>Default value: Matched:%d;Score:%0.4f;Time:%llu;ID:</li></ul>");
+            define ("TOOLTIP_AUTHENTICATION_IRISPROCESSINGMODE", "<span style='font-size: 16px; font-style:bold'>Iris Processing Mode</span>
+                                                <ul style='padding-left: 1em'><li>Specify the mode for processing irises.  There are two options:</li>
+                                                <li>Access Control Authentication - Uses matching feature to authenticate user irises and, optionally, interface with ACS systems.</li>
+                                                <li>Iris Capture Mode - Capture irises and send them to a remote HTTP Endpoint.  No matching or ACS integration occurs.</li></ul>");
             define ("TOOLTIP_AUTHENTICATION_CAPTURETIMEOUT", "<span style='font-size: 16px; font-style:bold'>Iris Capture Timeout</span>
                                                 <ul style='padding-left: 1em'><li>Specify the during in milliseconds for processing user irises until sending the message to the HTTP endpoint.</li>
                                                 <li>Range (Milliseconds): 1000-60000.</li>
@@ -1463,6 +1467,10 @@ function defineStrings($HardwareType)
 		define("TOOLTIP_AUTHENTICATION_NETWORKMSGADDR", " <span style='font-size: 16px; font-style:bold'>IP Адрес уведомлений</span> <ul style='padding-left: 1em'><li>Укажите адрес IP системы или приложения, которое будет получать <i>Network Match</i> уведомления.</li></ul>");
 		define("TOOLTIP_AUTHENTICATION_NETWORKMSGPORT", " <span style='font-size: 16px; font-style:bold'>Порт уведомлений</span> <ul style='padding-left: 1em'><li>Укажите порт системы или приложения, которое будет получать <i>Network Match</i> уведомления.</li></ul>");
 		define("TOOLTIP_AUTHENTICATION_NETWORKMSGMSG", " <span style='font-size: 16px; font-style:bold'>Формат Сетевых Сообщений</span> <ul style='padding-left: 1em'><li>Укажите формат строки сообщения, которое будет отсылаться по указанному выше адресу при успешном сравнении/идентификации.</li> <li>Значение по умолчанию: Matched:%d;Score:%0.4f;Time:%llu;ID:</li></ul>");
+        define ("TOOLTIP_AUTHENTICATION_IRISPROCESSINGMODE", "<span style='font-size: 16px; font-style:bold'>Iris Processing Mode</span>
+                                            <ul style='padding-left: 1em'><li>Specify the mode for processing irises.  There are two options:</li>
+                                            <li>Access Control Authentication - Uses matching feature to authenticate user irises and, optionally, interface with ACS systems.</li>
+                                            <li>Iris Capture Mode - Capture irises and send them to a remote HTTP Endpoint.  No matching or ACS integration occurs.</li></ul>");
         define ("TOOLTIP_AUTHENTICATION_CAPTURETIMEOUT", "<span style='font-size: 16px; font-style:bold'>Iris Capture Timeout</span>
                                             <ul style='padding-left: 1em'><li>Specify the during in milliseconds for processing user irises until sending the message to the HTTP endpoint.</li>
                                             <li>Range (Milliseconds): 1000-60000.</li>
@@ -2359,6 +2367,10 @@ define("TOOLTIP_AUTHENTICATION_NETWORKMSGPORT"," <span style='font-size: 16px; f
 define("TOOLTIP_AUTHENTICATION_NETWORKMSGMSG"," <span style='font-size: 16px; font-style:bold'>Formato de Mensagem de Rede</span>
                                                 <ul style='padding-left: 1em'><li>Indica a string de formato para a mensagem que será enviada ao local descrito acima quando uma autenticação/correspondência bem-sucedida ocorrer.</li>
                                                 <li>Valor padrão: Correspondidos:%d;Contagem:%0.4f;Tempo:%llu;ID:</li></ul>");
+define ("TOOLTIP_AUTHENTICATION_IRISPROCESSINGMODE", "<span style='font-size: 16px; font-style:bold'>Iris Processing Mode</span>
+                                    <ul style='padding-left: 1em'><li>Specify the mode for processing irises.  There are two options:</li>
+                                    <li>Access Control Authentication - Uses matching feature to authenticate user irises and, optionally, interface with ACS systems.</li>
+                                    <li>Iris Capture Mode - Capture irises and send them to a remote HTTP Endpoint.  No matching or ACS integration occurs.</li></ul>");
 define ("TOOLTIP_AUTHENTICATION_CAPTURETIMEOUT", "<span style='font-size: 16px; font-style:bold'>Iris Capture Timeout</span>
                                     <ul style='padding-left: 1em'><li>Specify the during in milliseconds for processing user irises until sending the message to the HTTP endpoint.</li>
                                     <li>Range (Milliseconds): 1000-60000.</li>
