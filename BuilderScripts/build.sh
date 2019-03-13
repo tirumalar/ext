@@ -16,6 +16,9 @@ EdgeImage
 EyeDetection
 MamigoBaseIPL
 EyeSegmentationLib
+EyeSortingLib
+HttpPostSender
+ISOBiometricCodecLib
 EyeTracking
 FocusEyeSelector
 mamigoShared
