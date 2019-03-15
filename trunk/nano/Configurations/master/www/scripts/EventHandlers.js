@@ -2105,7 +2105,7 @@ function enable802Fields()
             $('#CAcertToUpload').removeAttr('disabled');
             $('#browseClientCertButton').removeAttr('disabled');
             $('#ClientCertbutton').removeAttr('disabled');
-            $('#ClientCertToUpload').removeAttr('disabled');
+            $('#ClientcertToUpload').removeAttr('disabled');
             $('#browsePrivateKeyButton').removeAttr('disabled');
             $('#PrivateKeybutton').removeAttr('disabled');
             $('#PrivateKeyToUpload').removeAttr('disabled');

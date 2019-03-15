@@ -9,7 +9,7 @@ if (!isset($_SESSION["LoggedIn"]) || $_SESSION["LoggedIn"] == false)
 }
 
 
-$target_dir = "/home/802.1XCerts/";
+$target_dir = "/home/www-internal/802.1XCerts/";
 $target_file = $target_dir . basename($_FILES["0"]["name"]);
 $certType = $_POST["certType"];
 $uploadOk = 1;
