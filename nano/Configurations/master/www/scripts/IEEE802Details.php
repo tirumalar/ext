@@ -38,7 +38,7 @@ class IEEE802Details
 	function __construct ()
 	{
         // Then parse results to populate variables...
-        $this->CertFolder = "/home/802.1XCerts";
+        $this->CertFolder = "/home/www-internal/802.1XCerts";
         $this->ConfigFilename = "wpa_supplicant-wired.conf";
 	}
 
@@ -52,9 +52,9 @@ class IEEE802Details
 
     function PreParseConfig()
     {
-    	if (file_exists("/home/802.1XCerts/wpa_supplicant-wired.conf"))
+    	if (file_exists("/home/www-internal/802.1XCerts/wpa_supplicant-wired.conf"))
         {
-            $ConfigFileContents = file_get_contents("/home/802.1XCerts/wpa_supplicant-wired.conf");
+            $ConfigFileContents = file_get_contents("/home/www-internal/802.1XCerts/wpa_supplicant-wired.conf");
             $this->Parse802Config($ConfigFileContents);
             return TRUE;
 	    }
@@ -107,7 +107,7 @@ class IEEE802Details
     // We populate our string, then just rewrite the conf file contents with the string
     function Update802ConfigFile($row, $bEnabled)
     {
-   //     $cert_dir = "/home/802.1XCerts/";
+   //     $cert_dir = "/home/www-internal/802.1XCerts/";
    //  	shell_exec(sprintf("mkdir %s", escapeshellarg($cert_dir)));
 
 	//	error_log("update802ConfigFile...");
@@ -199,7 +199,7 @@ class IEEE802Details
 	    $ConfigFileContents .= sprintf("private_key=\"%s\"\n", $this->ClientPrivateKeyFullPath);
 	    $ConfigFileContents .= sprintf("private_key_passwd=\"%s\"\n}", $this->PrivateKeyPassword);
 
-        file_put_contents("/home/802.1XCerts/wpa_supplicant-wired.conf", $ConfigFileContents);
+        file_put_contents("/home/www-internal/802.1XCerts/wpa_supplicant-wired.conf", $ConfigFileContents);
 
 
        return $bRetVal;

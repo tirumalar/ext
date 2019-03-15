@@ -5,7 +5,17 @@ configureStatic(){
 	sleep 1
 	ifconfig "${IFACE}" hw ether "${MAC}"
 	sleep 1
-	ifconfig "${IFACE}" inet "${IP}" hw ether "${MAC}" netmask "${MASK}" broadcast "${BRDCAST}" up
+	ifconfig "${IFACE}" inet "${IP}" netmask "${MASK}" broadcast "${BRDCAST}" up
+	
+	if [[ ${ENABLED_8021X} == 'true' ]]
+	then
+		# in NXT it is /home/wpa_supplicant
+		killall -KILL wpa_supplicant
+		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - 802.1x is enabled, starting wpa_supplicant" >> /home/root/nxtLog.log
+		wpa_supplicant -c /home/www-internal/802.1XCerts/wpa_supplicant-wired.conf -D wired -i "${IFACE}" -ddd -t >> /home/root/wpa_supplicant.log &
+	fi
+	#sleep "${WPA_TIMEOUT}"
+
 	route add default gw "${GW}"
 }
 
@@ -13,8 +23,20 @@ configureDhcp(){
 	killall -KILL dhclient
 	ifconfig "${IFACE}" down
 	sleep 1
-	ifconfig "${IFACE}" hw ether "${MAC}" up
-	sleep 2
+	ifconfig "${IFACE}" hw ether "${MAC}"
+	sleep 1
+	ifconfig "${IFACE}" up
+	sleep 1
+
+	if [[ ${ENABLED_8021X} == 'true' ]]
+	then
+		# in NXT it is /home/wpa_supplicant
+		killall -KILL wpa_supplicant
+		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - 802.1x is enabled, starting wpa_supplicant" >> /home/root/nxtLog.log
+		wpa_supplicant -c /home/www-internal/802.1XCerts/wpa_supplicant-wired.conf -D wired -i "${IFACE}" -ddd -t >> /home/root/wpa_supplicant.log &
+		sleep "${WPA_TIMEOUT}"
+	fi
+
 	bash -c "dhclient -1 -d -v -4 ${IFACE}" &
 }
 
@@ -25,9 +47,29 @@ INTERFACES_FILE='/home/www-internal/interfaces'
 IFACE='usbnet0'
 DHCP_RETRIES=3
 DHCP_TIMEOUT=15
+WPA_TIMEOUT=60
 
 MAC="$(grep '^hwaddress ether' ${INTERFACES_FILE} | cut -d' ' -f3)"
 echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - MAC address: ${MAC}" >> /home/root/nxtLog.log
+
+# 802.1X
+if grep -q "^#EnableIEEE8021X=true" /home/www-internal/802.1XCerts/wpa_supplicant-wired.conf
+then
+	ENABLED_8021X='true'
+else
+	ENABLED_8021X='false'
+fi
+# 1 if string not found in file
+# 2 if file not found
+if [[ ${ENABLED_8021X} == 'false' ]]
+then
+	echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - 802.1x is disabled" >> /home/root/nxtLog.log
+else
+	echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - 802.1x is enabled, wpa_supplicant will be started" >> /home/root/nxtLog.log
+		
+	#log rotation
+	bash -c "while true; do ./rotateLogs.sh /home/root/wpa_supplicant.log 1000; sleep 10; done" &
+fi
 
 if grep -q "${IFACE} inet static" "${INTERFACES_FILE}"
 then
