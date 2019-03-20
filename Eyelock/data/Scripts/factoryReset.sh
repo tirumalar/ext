@@ -48,9 +48,17 @@ if [ -f interfaces.md5 ]
 then
     rm interfaces.md5
 fi
-if [ -d /home/802.1XCerts ]
+if grep -qi '^eyelock.hardwaretype=1' '/home/default/Eyelock.ini'
 then
-    rm /home/802.1XCerts/*
+	if [ -d '/home/www-internal/802.1XCerts' ]
+	then
+		rm -r '/home/www-internal/802.1XCerts'
+	fi
+else
+	if [ -d /home/802.1XCerts ]
+	then
+		rm /home/802.1XCerts/*
+	fi
 fi
 if [ -f SDKRegisterIPs.txt ]
 then
