@@ -131,7 +131,7 @@ if (isset($_REQUEST['action']))
             unset($_SESSION["UserName"]);
 
            	chmod("/home/root/scripts/factoryReset.sh", 0777);
-            $strResult = NXTW_shell_exec("37");//"/home/root/scripts/factoryReset.sh");
+            $strResult = NXTW_shell_exec("37", true);//"/home/root/scripts/factoryReset.sh");
             echo "factoryreset|factoryreset done";
 /**
             $strScriptFolder = "/home/root";
