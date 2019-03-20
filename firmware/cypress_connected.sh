@@ -68,7 +68,7 @@ else
 	echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - 802.1x is enabled, wpa_supplicant will be started" >> /home/root/nxtLog.log
 		
 	#log rotation
-	bash -c "while true; do ./rotateLogs.sh /home/root/wpa_supplicant.log 1000; sleep 10; done" &
+	bash -c "while true; do /home/root/rotateLogs.sh /home/root/wpa_supplicant.log 1000; sleep 10; done" &
 fi
 
 if grep -q "${IFACE} inet static" "${INTERFACES_FILE}"
