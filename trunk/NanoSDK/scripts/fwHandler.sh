@@ -233,6 +233,15 @@ upgradeMaster(){
 	if [[ $? -ne 0 ]]
 	then
 		${logger} -L"Error: FW test failed"
+		
+		# moving back the original items to keep the existing configuration
+		mv /home/upgradeTemp/root/test.db /home/root 
+		mv /home/upgradeTemp/root/keys.db /home/root
+		mv /home/upgradeTemp/root/*.log /home/root	
+		mv /home/upgradeTemp/root/interfaces /home/root/interfaces
+		mv /home/upgradeTemp/root/interfaces.md5 /home/root/interfaces.md5
+		mv /home/upgradeTemp/root/Calibration.ini /home/root/Calibration.ini
+		
 		return 1
 	fi
 	${logger} -L"Test passed."
