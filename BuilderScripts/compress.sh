@@ -139,7 +139,7 @@ tar -czf "${TARGET_DIR}/${FWHANDLER_FILE}" -C "${TARGET_DIR}/" 'fwHandler'
 openssl dgst -sha256 -sign "${KEY_FILE}" -out "${TARGET_DIR}/${FWHANDLER_FILE}.sig" "${TARGET_DIR}/${FWHANDLER_FILE}"
 
 # -----------------------------------------------------------------------------------------------------------
-cp "${EYELOCK_WS_EXT}/ICMBinary/nanoNxt_ICM.cyacd" "${TARGET_DIR}/${ICM_FILE}"
+cp "${EYELOCK_WS_EXT}/ICMBinary/ext_pim.cyacd" "${TARGET_DIR}/${ICM_FILE}"
 
 cp "${EYELOCK_WS_EXT}/OIMBinaries/output12.bin" "${TARGET_DIR}/${FPGA_FILE}"
 cp "${EYELOCK_WS_EXT}/OIMBinaries/fixed.cyacd" "${TARGET_DIR}/${FIXED_BRD_FILE}"
