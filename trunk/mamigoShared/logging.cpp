@@ -42,7 +42,7 @@ void EyelockEvent(const char * fmt, ...)
 {
 	pthread_mutex_lock(&m_LogLock);
 	LoggerPtr logger(Logger::getLogger("EyelockEvent"));
-	PropertyConfigurator::configure("nxtevent.cfg");
+//	PropertyConfigurator::configure("nxtevent.cfg");
 
 	va_list args;
 	va_start(args, fmt);
@@ -59,6 +59,11 @@ void EyelockLogLevel(int logLevel) {
 	printf("log level %d\n", m_LogLevel);
 }
 void EyelockLogInit() {
+	PropertyConfigurator::configure("nxtlog.cfg");
+	PropertyConfigurator::configure("facetrackerlog.cfg");
+	PropertyConfigurator::configure("motorlog.cfg");
+	PropertyConfigurator::configure("nxtevent.cfg");
+
 	if (pthread_mutex_init(&m_LogLock, NULL) != 0 || pthread_mutex_init(&m_EventLock, NULL) != 0)
 	{
 	    printf("\n mutex init failed\n");
@@ -74,7 +79,7 @@ void EyelockLog(const char *filename, LogType level, const char *fmt, ...) {
 
 	pthread_mutex_lock(&m_LogLock);
 	LoggerPtr logger(Logger::getLogger(filename));
-	PropertyConfigurator::configure("nxtlog.cfg");
+//LEAKS (moved to EyelockLogInit only call it once...)	PropertyConfigurator::configure("nxtlog.cfg");
 
 	va_list va;
 	static char msg[256];
@@ -117,7 +122,6 @@ void PortComLog(const char *filename, LogType level, const char *fmt, ...) {
 
 	pthread_mutex_lock(&m_LogLock);
 	LoggerPtr logger(Logger::getLogger(filename));
-	PropertyConfigurator::configure("facetrackerlog.cfg");
 
 	va_list va;
 	static char msg[256];
@@ -160,7 +164,6 @@ void MotorLog(const char *filename, LogType level, const char *fmt, ...) {
 
 	pthread_mutex_lock(&m_LogLock);
 	LoggerPtr logger(Logger::getLogger(filename));
-	PropertyConfigurator::configure("motorlog.cfg");
 
 	va_list va;
 	static char msg[256];
