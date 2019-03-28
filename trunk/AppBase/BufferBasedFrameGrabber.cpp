@@ -33,11 +33,20 @@ BufferBasedFrameGrabber::~BufferBasedFrameGrabber() {
 	}
 
 	//DMOLEAK
-	delete [] m_pImageBuffer;
-	delete m_pRingBuffer;
-	delete m_RingBufferOffset;
-	delete m_FreeBuffer;
-	delete m_ProcessBuffer;
+	if (0 != m_pImageBuffer)
+		delete [] m_pImageBuffer;
+
+	if (0 != m_pRingBuffer)
+		delete m_pRingBuffer;
+
+	if (0 != m_RingBufferOffset)
+		delete m_RingBufferOffset;
+
+	if (0 != m_FreeBuffer)
+		delete m_FreeBuffer;
+
+	if (0 != m_ProcessBuffer)
+		delete m_ProcessBuffer;
 
 }
 
@@ -356,13 +365,22 @@ void BufferBasedFrameGrabber::setLatestFrame_raw(char *ptr){
 void BufferBasedFrameGrabber::term()
 {
 	if(m_pImageBuffer)
+	{
 		delete [] m_pImageBuffer;
+		m_pImageBuffer = 0;
+	}
 	if (m_RingBufferOffset)
+	{
 		delete m_RingBufferOffset;
+		m_RingBufferOffset = 0;
+	}
 	if (m_pRingBuffer)
+	{
 		delete m_pRingBuffer;
-	if(m_ImageQueueItem.m_ptr)
-			delete [] m_ImageQueueItem.m_ptr;
+		m_pRingBuffer = 0;
+	}
+//	if(m_ImageQueueItem.m_ptr)
+//			delete [] m_ImageQueueItem.m_ptr;
 
 	//TODO: destrutor for all allocated m_ImageQueueItem
 }
