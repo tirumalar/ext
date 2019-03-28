@@ -31,6 +31,14 @@ BufferBasedFrameGrabber::~BufferBasedFrameGrabber() {
 			delete[] qi.m_ptr;
 		}
 	}
+
+	//DMOLEAK
+	delete [] m_pImageBuffer;
+	delete m_pRingBuffer;
+	delete m_RingBufferOffset;
+	delete m_FreeBuffer;
+	delete m_ProcessBuffer;
+
 }
 
 void BufferBasedFrameGrabber::ReleaseProcessBuffer(ImageQueueItem m)
@@ -148,7 +156,7 @@ void BufferBasedFrameGrabber::init(Configuration *pConf){
 		EyelockLog(logger, DEBUG, "W H S = %d %d %d ",m_Width,m_Height,m_ImageSize);
 	}
 	m_pImageBuffer = new char[m_ImageSize];
-	m_ImageQueueItem.m_ptr = new unsigned char[m_ImageSize];
+//DMOLEAK	m_ImageQueueItem.m_ptr = new unsigned char[m_ImageSize];
 
 	int numbits = pConf->getValue("Eyelock.NumBits", 8);
 	m_numbits = numbits > 8 ? 16 : numbits;
