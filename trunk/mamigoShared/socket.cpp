@@ -61,7 +61,7 @@ SimpleString::SimpleString(const SimpleString& s)
 
 SimpleString::~SimpleString(void)
 {
-	delete Buffer;
+	delete [] Buffer;
 }
 
 //-----------------------------------------------------------------------------
@@ -72,7 +72,7 @@ void SimpleString::Append(const char* s)
 	char *tmps=new char[Length+1];
 	strcpy(tmps, Buffer);
 	strcat(tmps, s);
-	delete Buffer;
+	delete [] Buffer;
 	Buffer = tmps;
 }
 
@@ -82,7 +82,7 @@ void SimpleString::Append(const SimpleString& s)
 	char *tmps=new char[Length+1];
 	strcpy(tmps, Buffer);
 	strcat(tmps, s.GetString());
-	delete Buffer;
+	delete [] Buffer;
 	Buffer = tmps;
 }
 
