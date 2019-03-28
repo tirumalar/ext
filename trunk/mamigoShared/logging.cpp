@@ -59,10 +59,16 @@ void EyelockLogLevel(int logLevel) {
 	printf("log level %d\n", m_LogLevel);
 }
 void EyelockLogInit() {
+	//DMO for now... ALL logging goes into this single file...
+	// WE can support multiple appenders later, but it will require larger
+	// changes to our logging system
+	//  This configure() call leaks, so it was moved into here for a one-time initialization
+	// instead of the old way of calling it for each and every Logging request which was
+	// horribly inefficient and leaky.
 	PropertyConfigurator::configure("nxtlog.cfg");
-	PropertyConfigurator::configure("facetrackerlog.cfg");
-	PropertyConfigurator::configure("motorlog.cfg");
-	PropertyConfigurator::configure("nxtevent.cfg");
+//	PropertyConfigurator::configure("facetrackerlog.cfg");
+//	PropertyConfigurator::configure("motorlog.cfg");
+//	PropertyConfigurator::configure("nxtevent.cfg");
 
 	if (pthread_mutex_init(&m_LogLock, NULL) != 0 || pthread_mutex_init(&m_EventLock, NULL) != 0)
 	{
