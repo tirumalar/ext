@@ -17,6 +17,7 @@
 #define __SOUND__
 #endif
 
+
 #ifdef __SOUND__
 #include "AudioDispatcher.h"
 #include "TonePlayer.h"
@@ -64,7 +65,8 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 			   pAudioDispatcher(0), m_pLiquidLens(0),pLoiteringDetector(0),m_matchDispatcher(0),pledConsolidator(0),pnwLEDDispatcher(0),
 			   pSDKDispatcher(NULL),pMasterSlaveNwListener(NULL),pCMXHandle(NULL){
 
-	void EyelockLogInit();
+	//void EyelockLogInit();
+	EyelockLogInit();
 	EyelockLog(logger, DEBUG, "EyeLockMain() Start");
 
 	m_KeepAlive.lock();
@@ -184,7 +186,6 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 
 	pnwLEDDispatcher = new NwLEDDispatcher(conf);
 	pnwLEDDispatcher->init();
-
 
 	if(m_Master){
 #ifdef CMX_C1
