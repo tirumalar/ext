@@ -70,6 +70,11 @@ VideoStream::~VideoStream()
 			delete[] qi.m_ptr;
 		}
 	}
+
+	//DMOLEAK
+	delete m_pRingBuffer;
+	delete m_FreeBuffer;
+	delete m_ProcessBuffer;
 }
 
 int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, char get_last)
