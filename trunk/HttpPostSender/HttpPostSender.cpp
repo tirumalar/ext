@@ -230,6 +230,8 @@ void HttpPostSender::init()
        curl = (void*) curl_easy_init();
        if (curl)
        {
+#if 0 //LEAK
+
     	   m_debug = getConf()->getValue("Eyelock.HttpPostSenderDebug", false);
            if (m_debug)
            {
@@ -239,6 +241,7 @@ void HttpPostSender::init()
            curl_easy_setopt(curl, CURLOPT_POST, 1L);
            int requestTimeout = getConf()->getValue("Eyelock.HttpPostSenderRequestTimeout", 0);
            curl_easy_setopt(curl, CURLOPT_TIMEOUT, requestTimeout);
+#endif
        }
        else
        {
@@ -261,12 +264,26 @@ void HttpPostSender::process(Copyable *inputMsg)
        }
        else
        {
-
     	   // http://gotmb.gov/%s
     	   // Build POST headers here...
-
            if (curl)
            {
+        	   // LEAK
+        	   curl_easy_reset(curl);
+
+			   m_debug = getConf()->getValue("Eyelock.HttpPostSenderDebug", false);
+			   if (m_debug)
+			   {
+						/* ask libcurl to show us the verbose output */
+				   curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+			   }
+			   curl_easy_setopt(curl, CURLOPT_POST, 1L);
+			   int requestTimeout = getConf()->getValue("Eyelock.HttpPostSenderRequestTimeout", 0);
+			   curl_easy_setopt(curl, CURLOPT_TIMEOUT, requestTimeout);
+        	   // ENDLEAK
+
+
+
         	    curl_slist_free_all(headers); /* free the header list */
         	    headers = NULL;
 
@@ -321,7 +338,6 @@ void HttpPostSender::process(Copyable *inputMsg)
 				 EyelockLog(logger, ERROR, "process() failed, no curl object, message not sent");
 				 return;
 		  }
-
 		  string dest = destScheme + "://" + destUrl;
   		// printf("Sending message to %s", dest.c_str());
 
@@ -860,6 +876,8 @@ bool HttpPostSender::enquePostIris(ISOBiometric& ISOBiometricData)
 	PostMsg postMsg = bBothEyes ? PostIris(IrisFirst, IrisSecond).generatePostMsg(msgformat, soapnamespace) : PostSingleIris(IrisFirst).generatePostMsg(msgformat, soapnamespace);
 
 
+	// LEAK... DMO, the minute we start calling this... we leak.
+	// Tomorrow.  Limit the work done here to the very minimum... then check.
 	if (!enqueMsg(postMsg))
 	{
 		EyelockLog(logger, ERROR, "Unable to enque PostIris");
