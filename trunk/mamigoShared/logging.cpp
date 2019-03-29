@@ -41,8 +41,7 @@ pthread_mutex_t m_EventLock;
 void EyelockEvent(const char * fmt, ...)
 {
 	pthread_mutex_lock(&m_LogLock);
-	LoggerPtr logger(Logger::getLogger("EyelockEvent"));
-//	PropertyConfigurator::configure("nxtevent.cfg");
+	LoggerPtr logger(Logger::getLogger("eventlog"));
 
 	va_list args;
 	va_start(args, fmt);
@@ -59,16 +58,7 @@ void EyelockLogLevel(int logLevel) {
 	printf("log level %d\n", m_LogLevel);
 }
 void EyelockLogInit() {
-	//DMO for now... ALL logging goes into this single file...
-	// WE can support multiple appenders later, but it will require larger
-	// changes to our logging system
-	//  This configure() call leaks, so it was moved into here for a one-time initialization
-	// instead of the old way of calling it for each and every Logging request which was
-	// horribly inefficient and leaky.
 	PropertyConfigurator::configure("nxtlog.cfg");
-//	PropertyConfigurator::configure("facetrackerlog.cfg");
-//	PropertyConfigurator::configure("motorlog.cfg");
-//	PropertyConfigurator::configure("nxtevent.cfg");
 
 	if (pthread_mutex_init(&m_LogLock, NULL) != 0 || pthread_mutex_init(&m_EventLock, NULL) != 0)
 	{
@@ -84,14 +74,17 @@ void EyelockLog(const char *filename, LogType level, const char *fmt, ...) {
 		return;
 
 	pthread_mutex_lock(&m_LogLock);
-	LoggerPtr logger(Logger::getLogger(filename));
-//LEAKS (moved to EyelockLogInit only call it once...)	PropertyConfigurator::configure("nxtlog.cfg");
+	LoggerPtr logger(Logger::getLogger("nxtlog"));
 
 	va_list va;
-	static char msg[256];
+	static char msg[1024];
+	static char tmpmsg[256];
 	va_start(va, fmt);
-	vsnprintf(msg, 256, fmt, va);
+	vsnprintf(tmpmsg, 256, fmt, va);
 	va_end(va);
+
+	sprintf(msg, "[%s] - %s", filename, tmpmsg);
+
 
 	switch (level) {
 		case TRACE:
@@ -127,13 +120,16 @@ void PortComLog(const char *filename, LogType level, const char *fmt, ...) {
 		return;
 
 	pthread_mutex_lock(&m_LogLock);
-	LoggerPtr logger(Logger::getLogger(filename));
+	LoggerPtr logger(Logger::getLogger("facetrackinglog"));
 
 	va_list va;
 	static char msg[256];
+	static char tmpmsg[256];
 	va_start(va, fmt);
-	vsnprintf(msg, 256, fmt, va);
+	vsnprintf(tmpmsg, 256, fmt, va);
 	va_end(va);
+
+	sprintf(msg, "[%s] - %s", filename, tmpmsg);
 
 	switch (level) {
 		case TRACE:
@@ -169,13 +165,16 @@ void MotorLog(const char *filename, LogType level, const char *fmt, ...) {
 		return;
 
 	pthread_mutex_lock(&m_LogLock);
-	LoggerPtr logger(Logger::getLogger(filename));
+	LoggerPtr logger(Logger::getLogger("motorlog"));
 
 	va_list va;
+	static char tmpmsg[256];
 	static char msg[256];
 	va_start(va, fmt);
-	vsnprintf(msg, 256, fmt, va);
+	vsnprintf(tmpmsg, 256, fmt, va);
 	va_end(va);
+
+	sprintf(msg, "[%s] - %s", filename, tmpmsg);
 
 	switch (level) {
 		case TRACE:
