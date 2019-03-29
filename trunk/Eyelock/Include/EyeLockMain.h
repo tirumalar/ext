@@ -125,6 +125,7 @@ private:
 	bool m_tamper;
 	char *m_timeSync;
 	char *m_timeServAddr;
+	unsigned int m_FaceFrameQueueSize;
 #ifdef IRIS_CAPTURE
 	bool m_IrisCaptureMatchingDisable;
 	HttpPostSender *pHttpPostSender;

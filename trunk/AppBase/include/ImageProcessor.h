@@ -140,7 +140,7 @@ public:
 	cv::Point2i projectPointsPtr1(cv::Rect projFace, cv::Point2f constant, float ConstDiv);
 	cv::Rect CeateRect(cv::Point2i ptr1, cv::Point2i ptr2, bool useOffest, float projOffset);
 	cv::Rect projectRectNew(cv::Rect face, int CameraId);
-	FaceMapping GetFaceInfoFromQueue(int CameraId, char IrisFrameNo);
+	FaceMapping GetFaceInfoFromQueueFacetoIrisMapping(int CameraId, char IrisFrameNo);
 	cv::Rect seacrhEyeArea(cv::Rect no_move_area);
 #ifndef UNITTEST    
 protected:
@@ -334,18 +334,21 @@ private:
     void extractSmallCropForFocus(int indx,DetectedEye * eye);
     FaceMapping sFaceMap;
     const char *eyeCropFileNamePattern;
-    cv::Mat m_Mateye;
+	unsigned int m_eyeLabel;
     IplImage* OffsetImageCorrection(IplImage *frame, int cam_idd);
     void DebugSessionLogging(IplImage *frame, int cam_idd);
     FaceMapping DoFaceMapping(IplImage *frame, int cam_idd, int frame_number);
     bool ValidateEyeCropUsingFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
     void SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceIndex, unsigned int eyeLabel);
     cv::Point2i projectPoints_IristoFace(cv::Point2i ptrI, cv::Point2f constant, float ConstDiv);
-    unsigned int validateLeftRightEyecrops(cv::Rect projFace, cv::Point2i ptr1, int CameraId);
+    FaceImageQueue GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char IrisFrameNo);
+    unsigned int validateLeftRightEyecrops(cv::Rect FaceCoord, cv::Point2i ptrI, int CameraId, unsigned char *faceImagePtr, int m_faceIndex);
 	bool validateEyecrops_IrisToFaceMapping(cv::Rect projFace, cv::Point2i ptrI, int CameraId);
 	bool ValidateEyeCropUsingIrisToFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
 	bool m_activeEyeSideLabeling;
 	bool m_IrisToFaceMapping;
+	bool bIrisToFaceMapDebug;
+	bool m_DHSScreens;
     SocketFactory *m_socketFactory;
 
 };

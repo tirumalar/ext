@@ -11,11 +11,11 @@
 #include "Synchronization.h"
 
 typedef struct FaceImageQueue{
-	bool FoundEyes;
+	bool FoundFace;
 	cv::Rect ScaledFaceCoord;
-	char FaceFrameNo;
+	unsigned char FaceFrameNo;
 	bool projPtr;
-	__int64_t m_startTime;
+	unsigned char *faceImagePtr;	// image size 1152000
 };
 
 typedef struct FaceMapping{

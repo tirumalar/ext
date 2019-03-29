@@ -264,6 +264,10 @@ FaceTracker::FaceTracker(char* filename)
 
 	m_OIMFTPEnabled = EyelockConfig.getValue("Eyelock.OIMFTPEnable", true);
 
+	int m_ImageSize = 1200*960;
+	m_LeftCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
+	m_RightCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
+
 	if (m_OIMFTPEnabled) {
 		// Calibration Parameters from CalRectFromOIM.ini
 		FileConfiguration CalRectConfig("/home/root/CalRect.ini");
@@ -289,7 +293,10 @@ FaceTracker::FaceTracker(char* filename)
 
 FaceTracker::~FaceTracker()
 {
-
+	if(m_LeftCameraFaceInfo.faceImagePtr)
+		delete [] m_LeftCameraFaceInfo.faceImagePtr;
+	if(m_RightCameraFaceInfo.faceImagePtr)
+		delete [] m_RightCameraFaceInfo.faceImagePtr;
 }
 
 void FaceTracker::SetExp(int cam, int val)
@@ -1245,11 +1252,10 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	cv::Rect face;
 	int start_process_time = clock();
 
-	char FaceCameraQFrameNo = (int)outImg.at<uchar>(0,3);
-	int FaceCameraFrameNo = (int)outImg.at<uchar>(0,3);
+	unsigned char FaceCameraFrameNo = (int)outImg.at<uchar>(0,3);
 
-	int FaceFrameIndex=0;
-	static int FaceCtrIndex=0;
+	unsigned int FaceFrameIndex=0;
+	static unsigned int FaceCtrIndex=0;
 
 	if(FaceCtrIndex != 0)
 		FaceFrameIndex = (255 * FaceCtrIndex) + FaceCameraFrameNo;
@@ -1488,25 +1494,27 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	if(bFaceMapDebug)
 		EyelockLog(logger, DEBUG, "in DoRunMode_test face.x	%d face.y	%d face.height	%d face.width	%d\n", face.x, face.y, face.height, face.width);
 
-	cv::Rect projFace;
+	
 	//Scaling out projFace coordinates
-	projFace.x = face.x * scaling;		//column
-	projFace.y = rectY - (targetOffset * scaling);
-	projFace.width = face.width * scaling;
-	projFace.height = rectH + (targetOffset * scaling);
+	cv::Rect FaceCoord;
+	FaceCoord.x = face.x * scaling;		//column
+	FaceCoord.y = face.y * scaling; // rectY - (targetOffset * scaling);
+	FaceCoord.width = face.width * scaling;
+	FaceCoord.height = face.height *scaling; // rectH + (targetOffset * scaling);
 
 
 	cv::Mat RotatedfaceImg, saveRotatedImg;
 
 	cv::Rect rightRect, leftRect;
 	//Seperate Right eye Rect
-	rightRect.x = projFace.x, rightRect.y = projFace.y;
-	rightRect.height = projFace.height, rightRect.width = projFace.width/2.0;
+	rightRect.x = FaceCoord.x; rightRect.y = FaceCoord.y;
+	rightRect.height = FaceCoord.height; rightRect.width = FaceCoord.width/2.0;
 
 	//Seperate left eye Rect
-	leftRect.x = projFace.x + (projFace.width/2), leftRect.y = projFace.y;
-	leftRect.height = projFace.height, leftRect.width = projFace.width/2.0;
+	leftRect.x = FaceCoord.x + (FaceCoord.width/2); leftRect.y = FaceCoord.y;
+	leftRect.height = FaceCoord.height; leftRect.width = FaceCoord.width/2.0;
 
+	int ImageSize = 1200*960;
 
 	if(bFaceMapDebug){
 		RotatedfaceImg = rotation90(outImg);
@@ -1519,23 +1527,22 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	}
 
 	// printf("PushToQueue foundEyes %d FaceFrameNo %d face x = %d  face y = %d face width = %d  face height = %d \n", foundEyes, FaceCameraQFrameNo, face.x,  face.y,  face.width, face.height);
-	if(system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){
-		if(m_ProjPtr && eyesInViewOfIriscamNoMove){
-			m_LeftCameraFaceInfo.ScaledFaceCoord = projFace;
+	 if(system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){ // Removed for odriod by Anita
+		RotatedfaceImg = rotation90(outImg);
+//		if(m_ProjPtr && eyesInViewOfIriscamNoMove){ // Removed by sarvesh
+			m_LeftCameraFaceInfo.ScaledFaceCoord = FaceCoord;
 			m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
-			m_LeftCameraFaceInfo.m_startTime = starttimestamp;
 			m_LeftCameraFaceInfo.projPtr = m_ProjPtr;
+			memcpy(m_LeftCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
 
-			m_RightCameraFaceInfo.ScaledFaceCoord = projFace;
+			m_RightCameraFaceInfo.ScaledFaceCoord = FaceCoord;
 			m_RightCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
-			m_RightCameraFaceInfo.m_startTime = starttimestamp;
 			m_RightCameraFaceInfo.projPtr = m_ProjPtr;
+			memcpy(m_RightCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
 
-			//printf("Mapping: Push to Left Queue FaceFrameNo: %d\n", FaceCameraQFrameNo);
-			g_pLeftCameraFaceQueue->TryPush(m_LeftCameraFaceInfo);
-			//printf("Mapping: Push to Right Queue FaceFrameNo: %d\n", FaceCameraQFrameNo);
-			g_pRightCameraFaceQueue->TryPush(m_RightCameraFaceInfo);
-			
+			g_pLeftCameraFaceQueue->Push(m_LeftCameraFaceInfo);
+			g_pRightCameraFaceQueue->Push(m_RightCameraFaceInfo);
+
 			if(bFaceMapDebug){
 				char filename[100];
 				sprintf(filename,"FaceImage_%d_ProjPtr_%d.pgm", FaceCameraFrameNo, m_ProjPtr);
@@ -1547,7 +1554,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 				imwrite(filename, RotatedfaceImg);
 			}
 		}
-	 }
+	// }
 	 RotatedfaceImg.release();
 	 saveRotatedImg.release();
 		// printf("DoRunMode_test face.x %d face.y %d face.width %d face.height %d\n",  face.x,face.y,face.width,face.height);

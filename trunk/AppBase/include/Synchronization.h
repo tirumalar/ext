@@ -203,6 +203,21 @@ T Peek() // wait and peek
 		pthread_cond_signal(&m_NotFull);
 		return value;
 	}
+
+T at(int index) // Get element in the queue
+	{
+		ScopeLock lock(m_Lock);
+		if(m_Buffer.empty())
+			return (m_Buffer.front());
+
+		int size = m_Buffer.size();
+		if(index < size - 1){
+			T value = m_Buffer.at(index);
+			return value;
+		}else{
+			return (m_Buffer.front());
+		}
+	}
 };
 
 
