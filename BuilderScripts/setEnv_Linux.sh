@@ -30,6 +30,7 @@ export SOCI_BASE=${PKG_PATH}/soci-3.2.1
 export BOOST="${EYELOCK_3DPARTY}/boost/boost_1_53_0"
 export LIBEVENT=${PKG_PATH}/libevent-2.0.21-stable
 export ZLIB=${PKG_PATH}/zlib-1.2.8
+export OPEN_JPEG_INC=${PKG_PATH}/openjpeg23/include
 
 # for MultiChannelLogger
 export POCO_BASE=${PKG_PATH}/poco-1.9.0
@@ -41,6 +42,7 @@ export OPENSSL_102N_BASE=${PKG_PATH}/openssl-1.0.2n
 #export CLM_INC=${EYELOCK_WS_EXTLINUX}/EXTFaceDetection/CLM/include
 export OPENCV_NEW_INC=${PKG_PATH}/opencv3.4/include
 export OPENCV_NEW_LIBS=${PKG_PATH}/opencv3.4/lib
+export OPEN_JPEG_LIB=${PKG_PATH}/openjpeg23/lib
 
 #for OIMCalibration
 export ARUCO_INC=${PKG_PATH}/opencv3.4/aruco/include/aruco
