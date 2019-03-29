@@ -83,7 +83,7 @@ m_DetectedEyeWriteIterator(m_DetectedEyesQueue),m_MotionDetection(0),m_Futuristi
 m_SpoofTrackerCount(0),m_nanoSpoofDetector(0),m_nanoSpoofDataCount(0),m_FocusImageLevel(0),m_smallCroppedEye(0),m_maxEyes(10),m_blackThreshold(0),m_enableBlackLevel(false),
 m_enableAreaFocus(false),m_blackMinThreshold(0.0),m_NumTrackedEyes(0),m_socketFactory(0),m_saveDiscardedEyes(false),m_discardedSaveCount(0),m_prevTS(0),m_timegapForStaleframe(250000),
 m_haloMinCount(20),m_haloMaxCount(110),m_il0(0),m_faceIndex(0),m_secondLevelImage(NULL),m_confusionTimeThresholduSec(0),m_prevConfusionTS(0),m_checkConfusion(false),
-m_haloTopPixelsPercentage(25.0f),m_haloCountByBottomPixels(6),m_haloBottomPixelsIntensityThresh(91),m_MHaloNegationThresh(350),m_FaceIrisMapping(false),m_projStatus(true),m_IrisCameraPreview(false){
+m_haloTopPixelsPercentage(25.0f),m_haloCountByBottomPixels(6),m_haloBottomPixelsIntensityThresh(91),m_MHaloNegationThresh(350),m_FaceIrisMapping(false),bIrisToFaceMapDebug(false),m_projStatus(true),m_IrisCameraPreview(false){
 printf("ImageProcessor::ImageProcessor: set the configuration file\n"); fflush(stdout);
 
 m_tsDestAddrpresent=false;
@@ -396,7 +396,9 @@ m_LedConsolidator = NULL;
 	m_showProjection = pConf->getValue("Eyelock.showProjection",false);
 	m_IrisToFaceMapping = pConf->getValue("Eyelock.IrisToFaceMapping",false);
 
+	bIrisToFaceMapDebug = pConf->getValue("Eyelock.IrisToFaceMapDebug", false);
 	
+
 	m_activeEyeSideLabeling = pConf->getValue("Eyelock.EyeSideLabeling",false);;
 
 	m_minIrisDiameter = pConf->getValue("Eyelock.minIrisDiameter",int(150));
@@ -485,6 +487,7 @@ m_LedConsolidator = NULL;
 
 	if (m_bIrisCapture)
 	{
+		m_DHSScreens = pConf->getValue("Eyelock.DHSScreens", false);
 		m_pHttpPostSender = new HttpPostSender(*pConf);
 		m_pHttpPostSender->init();
 		m_pHttpPostSender->Begin();
@@ -701,7 +704,7 @@ ImageProcessor::~ImageProcessor() {
 	if(m_IrisProjImage){
 		cvReleaseImage(&m_IrisProjImage);
 	}
-	m_Mateye.release();
+
 #ifdef IRIS_CAPTURE
 	if(m_pHttpPostSender)
 		delete m_pHttpPostSender;
@@ -1127,9 +1130,11 @@ cv::Point2i ImageProcessor::projectPoints_IristoFace(cv::Point2i ptrI, cv::Point
 
 	cv::Point2i ptrF;
 
-	float index = 1.0/ConstDiv;
-	ptrF.x = ptrI.x *index + constant.x;
-	ptrF.y = ptrI.y *index + constant.y;
+	ptrF.x = ptrI.x *ConstDiv + constant.x;
+	ptrF.y = ptrI.y *ConstDiv + constant.y;
+
+	ptrF.x-=20;
+	ptrF.y+=20;
 
 	if(m_bFaceMapDebug)
 		EyelockLog(logger, DEBUG, "IRIS to Face Projection for left right eye ptr1.x %d ptr1.y %d\n", ptrF.x, ptrF.y);
@@ -1138,40 +1143,105 @@ cv::Point2i ImageProcessor::projectPoints_IristoFace(cv::Point2i ptrI, cv::Point
 }
 
 
-unsigned int ImageProcessor::validateLeftRightEyecrops(cv::Rect projFace, cv::Point2i ptrI, int CameraId){
-	cv::Rect rightRect, leftRect;
-	//Seperate Right eye Rect
-	rightRect.x = projFace.x, rightRect.y = projFace.y;
-	rightRect.height = projFace.height, rightRect.width = projFace.width/2.0;
+unsigned int ImageProcessor::validateLeftRightEyecrops(cv::Rect FaceCoord, cv::Point2i ptrI, int CameraId, unsigned char *faceImagePtr, int m_faceIndex){
 
-	//Seperate left eye Rect
-	leftRect.x = projFace.x + (projFace.width/2), leftRect.y = projFace.y;
-	leftRect.height = projFace.height, leftRect.width = projFace.width/2.0;
+	cv::Rect rightRect, leftRect;
+
+	//Separate Right eye Rect
+	rightRect.x = FaceCoord.x;
+	rightRect.y = FaceCoord.y;
+	rightRect.height = FaceCoord.height;
+	rightRect.width = FaceCoord.width/2.0;
+
+	//Separate left eye Rect
+	leftRect.x = FaceCoord.x + (FaceCoord.width/2.0);
+	leftRect.y = FaceCoord.y;
+	leftRect.height = FaceCoord.height;
+	leftRect.width = FaceCoord.width/2.0;
 
 	cv::Point2i ptrF;
 
 	//Project Iris points to face image
 	if (CameraId == IRISCAM_AUX_LEFT){
-		ptrF = projectPoints_IristoFace(ptrI, constantAuxl, magOffAuxlDiv);
+		ptrF = projectPoints_IristoFace(ptrI, constantAuxl, magOffAuxl);
 	}else if (CameraId == IRISCAM_AUX_RIGHT){
-		ptrF = projectPoints_IristoFace(ptrI, constantAuxR, magOffAuxRDiv);
+		ptrF = projectPoints_IristoFace(ptrI, constantAuxR, magOffAuxR);
 	}else if (CameraId == IRISCAM_MAIN_LEFT){
-		ptrF = projectPoints_IristoFace(ptrI, constantMainl, magOffMainlDiv);
+		ptrF = projectPoints_IristoFace(ptrI, constantMainl, magOffMainl);
 	}else if (CameraId == IRISCAM_MAIN_RIGHT){
-		ptrF = projectPoints_IristoFace(ptrI, constantMainR, magOffMainRDiv);
+		ptrF = projectPoints_IristoFace(ptrI, constantMainR, magOffMainR);
 	}
 
+	if(bIrisToFaceMapDebug){
 
-	// Check where the eye belong????
+		cv::Mat face = cv::Mat(1200, 960, CV_8UC1, faceImagePtr);
+		/*
+		cv::Mat face;
+		cv::resize(OrigImage, face, cv::Size(), (1 / 0.8), (1 / 8.0), cv::INTER_NEAREST);*/
+		// char filename[100];
+		int x = 0;
+		int y = 0;
+		if (CameraId == IRISCAM_AUX_LEFT) {
+			ptrF = projectPoints_IristoFace(ptrI, constantAuxl, magOffAuxl);
+			x = 30;
+			y = 30;
+		} else if (CameraId == IRISCAM_AUX_RIGHT) {
+			ptrF = projectPoints_IristoFace(ptrI, constantAuxR, magOffAuxR);
+			x = 100;
+			y = 100;
+		} else if (CameraId == IRISCAM_MAIN_LEFT) {
+			x = 30;
+			y = 30;
+			ptrF = projectPoints_IristoFace(ptrI, constantMainl, magOffMainl);
+		} else if (CameraId == IRISCAM_MAIN_RIGHT) {
+			x = 100;
+			y = 100;
+			ptrF = projectPoints_IristoFace(ptrI, constantMainR, magOffMainR);
+		}
+		try{
+			cv::rectangle(face, rightRect, cv::Scalar(255,0,0),1,0);
+			cv::rectangle(face, leftRect, cv::Scalar(255,0,0),1,0);
+			std::ostringstream ssCoInfo;
+			std::ostringstream ssCoInfo1;
+			std::ostringstream ssColeft;
+			std::ostringstream ssCoright;
+			ssCoInfo1 << ptrF.x << "," << ptrF.y;
+			putText(face,ssCoInfo1.str().c_str(),cv::Point(x,y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(128,128,128),2);
+			ssCoInfo << "+"; // ptrF.x << "," << ptrF.y;
+			putText(face,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(128,128,128),2);
+			ssColeft << "leftRect" << leftRect.x << "," << leftRect.y << "," << leftRect.width << "," << leftRect.height;
+			ssCoright << "rightRect" << rightRect.x << "," << rightRect.y << "," << rightRect.width << "," << rightRect.height;
+			putText(face,ssColeft.str().c_str(),cv::Point(200, 200), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(128,128,128),2);
+			putText(face,ssCoright.str().c_str(),cv::Point(300, 300), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(128,128,128),2);
+			imshow("IrisToFaceMap", face);
+			cvWaitKey(2);
+		}catch (cv::Exception& e) {
+			cout << e.what() << endl;
+		}
+		face.release();
+	}
 	// 1 - Left; 2 - Right; 0-Undefined
 	if (leftRect.contains(ptrF)){
 		EyelockLog(logger, DEBUG, "Left EYE found	return %d !!!!\n", 1);
+		/*
+		sprintf(filename,"FaceImages_%d_%d_left.pgm", CameraId, m_faceIndex);
+		cv::Mat dst = face.clone();
+		imwrite(filename, dst);
+		dst.release();*/
 		return 1;
 	}else if (rightRect.contains(ptrF)){
 		EyelockLog(logger, DEBUG, "Right EYE found	return %d !!!!\n", 2);
+		/*sprintf(filename,"FaceImages_%d_%d_Right.pgm", CameraId, m_faceIndex);
+		cv::Mat dst1 = face.clone();
+		imwrite(filename, dst1);
+		dst1.release();*/
 		return 2;
 	}else{
 		EyelockLog(logger, DEBUG, "Undefined EYE found	return %d !!!!\n", 0);
+		/*sprintf(filename,"FaceImages_%d_%d_Undefined.pgm", CameraId, m_faceIndex);
+		cv::Mat dst2 = face.clone();
+		imwrite(filename, dst2);
+		dst2.release();*/
 		return 0;
 	}
 }
@@ -1183,13 +1253,13 @@ bool ImageProcessor::validateEyecrops_IrisToFaceMapping(cv::Rect projFace, cv::P
 
 	//Project Iris points to face image
 	if (CameraId == IRISCAM_AUX_LEFT){
-		ptrF = projectPoints_IristoFace(ptrI, constantAuxl, magOffAuxlDiv);
+		ptrF = projectPoints_IristoFace(ptrI, constantAuxl, magOffAuxl);
 	}else if (CameraId == IRISCAM_AUX_RIGHT){
-		ptrF = projectPoints_IristoFace(ptrI, constantAuxR, magOffAuxRDiv);
+		ptrF = projectPoints_IristoFace(ptrI, constantAuxR, magOffAuxR);
 	}else if (CameraId == IRISCAM_MAIN_LEFT){
-		ptrF = projectPoints_IristoFace(ptrI, constantMainl, magOffMainlDiv);
+		ptrF = projectPoints_IristoFace(ptrI, constantMainl, magOffMainl);
 	}else if (CameraId == IRISCAM_MAIN_RIGHT){
-		ptrF = projectPoints_IristoFace(ptrI, constantMainR, magOffMainRDiv);
+		ptrF = projectPoints_IristoFace(ptrI, constantMainR, magOffMainR);
 	}
 
 
@@ -1347,7 +1417,7 @@ cv::Rect ImageProcessor::projectRectNew(cv::Rect projFace, int CameraId)
 
 }
 
-FaceMapping ImageProcessor::GetFaceInfoFromQueue(int CameraId, char IrisFrameNo)
+FaceMapping ImageProcessor::GetFaceInfoFromQueueFacetoIrisMapping(int CameraId, char IrisFrameNo)
 {
 	FaceMapping m_FaceMap;
 	cv::Rect IrisProj1;
@@ -1400,6 +1470,46 @@ FaceMapping ImageProcessor::GetFaceInfoFromQueue(int CameraId, char IrisFrameNo)
 	} // End of while
 }
 
+FaceImageQueue ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char IrisFrameNo)
+{
+	// FaceMapping m_FaceMap;
+
+	if (CameraId == IRISCAM_AUX_LEFT || CameraId == IRISCAM_MAIN_LEFT)
+		g_pCameraFaceQueue = g_pLeftCameraFaceQueue;
+	else
+		g_pCameraFaceQueue = g_pRightCameraFaceQueue;
+
+	if (g_pCameraFaceQueue == NULL) {
+		EyelockLog(logger, TRACE, "ImageProcessor::GetFaceDataMessage(): g_pRingBufferFaceQueue uninitialized!");
+	}
+
+	while(1){
+		FaceImageQueue FaceInfo = (FaceImageQueue) g_pCameraFaceQueue->Peek();
+		char DiffFrameNo = ( char) (FaceInfo.FaceFrameNo - IrisFrameNo);
+		// printf("DiffFrameNo %d\n", DiffFrameNo);
+		// Synchronization
+		if (FaceInfo.FaceFrameNo == IrisFrameNo){
+			// printf("Mapping: Face and Iris Match  cam_idd %d FaceFrameNo:%d IrisFrameNo:%d \n",CameraId, FaceInfo.FaceFrameNo, IrisFrameNo);
+			// FaceImageQueue FaceInfo = (FaceImageQueue) g_pCameraFaceQueue->Pop();
+			return FaceInfo;
+		}else if(DiffFrameNo > 0){
+			// No Matching face for the Iris; Face is ahead of us.
+			// printf("Mapping: Face is ahead cam_idd %d FaceFrameNo:%d IrisFrameNo:%d \n", CameraId, FaceInfo.FaceFrameNo, IrisFrameNo);
+			int sizeofqueue = g_pCameraFaceQueue->Size();
+			for(int idx = 0; idx < sizeofqueue; idx++){
+				FaceImageQueue FaceInfo = (FaceImageQueue) g_pCameraFaceQueue->at(idx);
+				printf("Dif > 0 ....FaceInfo.FaceFrameNo....%d\n", FaceInfo.FaceFrameNo);
+				if (FaceInfo.FaceFrameNo == IrisFrameNo)
+					return FaceInfo;
+			}
+			return FaceInfo;
+		}else if(DiffFrameNo < 0){
+			// printf("Mapping: Iris is ahead waiting for face cam_idd %d FaceFrameNo:%d IrisFrameNo:%d \n", CameraId, FaceInfo.FaceFrameNo, IrisFrameNo);
+			FaceImageQueue FaceInfo = (FaceImageQueue) g_pCameraFaceQueue->Pop();
+			continue;
+		}
+	} // End of while
+}
 
 IplImage* ImageProcessor::OffsetImageCorrection(IplImage *frame, int cam_idd)
 {
@@ -1488,7 +1598,7 @@ void ImageProcessor::DebugSessionLogging(IplImage *frame, int cam_idd)
 FaceMapping ImageProcessor::DoFaceMapping(IplImage *frame, int cam_idd, int frame_number)
 {
 	char filename[150];
-	sFaceMap = GetFaceInfoFromQueue(cam_idd, frame_number);
+	sFaceMap = GetFaceInfoFromQueueFacetoIrisMapping(cam_idd, frame_number);
 	if (sFaceMap.bDoMapping) {
 		if (m_bFaceMapDebug)
 			EyelockLog(logger, DEBUG,
@@ -1642,7 +1752,7 @@ void ImageProcessor::SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceInde
 		labelEye = "NotLabelledbyMapping";
 	}
 
-	m_Mateye = cv::cvarrToMat(eyeCrop);
+	cv::Mat mateye = cv::cvarrToMat(eyeCrop);
 	char filename[150];
 #ifdef DEBUG_SESSION
 	struct stat st = { 0 };
@@ -1653,7 +1763,8 @@ void ImageProcessor::SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceInde
 			compression_params.push_back(9);
 			 try {
 				 sprintf(filename, "%s/EyeCrop_PG_CamId_%d_%d_%s.%s", m_sessionDir.c_str(), cam_idd, m_faceIndex, labelEye.c_str(), eyeCropFileNamePattern);
-				 imwrite(filename, m_Mateye, compression_params);
+				 imwrite(filename, mateye, compression_params);
+				 mateye.release();
 			 }
 			 catch (runtime_error& ex) {
 				 fprintf(stderr, "Exception converting image to PNG format: %s\n", ex.what());
@@ -1664,7 +1775,8 @@ void ImageProcessor::SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceInde
 			compression_params.push_back(95);
 			try {
 				sprintf(filename, "%s/EyeCrop_PG_CamId_%d_%d_%s.%s", m_sessionDir.c_str(), cam_idd, m_faceIndex, labelEye.c_str(), eyeCropFileNamePattern);
-				imwrite(filename, m_Mateye, compression_params);
+				imwrite(filename, mateye, compression_params);
+				mateye.release();
 			}
 			catch (runtime_error& ex) {
 				fprintf(stderr, "Exception converting image to JPG format: %s\n", ex.what());
@@ -1672,16 +1784,19 @@ void ImageProcessor::SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceInde
 
 		}else{
 			sprintf(filename, "%s/EyeCrop_PG_CamId_%d_%d_%s.%s", m_sessionDir.c_str(), cam_idd, m_faceIndex, labelEye.c_str(), eyeCropFileNamePattern);
-			imwrite(filename, m_Mateye);
+			imwrite(filename, mateye);
+			mateye.release();
 		}
 
 	} else {
 		sprintf(filename, "EyeCrop_PG_CamId_%d_%d_%s.%s", cam_idd, m_faceIndex, labelEye.c_str(), eyeCropFileNamePattern);
-		imwrite(filename, m_Mateye);
+		imwrite(filename, mateye);
+		mateye.release();
 	}
 #else
 	sprintf(filename,"EyeCrop_PG_CamId_%d_%d_%s.pgm", cam_idd, m_faceIndex, labelEye.c_str()); // No debug sessions then default format to save images is pgm
-	imwrite(filename, m_Mateye);
+	imwrite(filename, mateye);
+	mateye.release();
 #endif
 
 }
@@ -1696,6 +1811,228 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	 }
 }
 
+bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
+{
+	char filename[150];
+	int cam_idd = 0;
+	unsigned char frame_number = 0;
+
+	if(frame->imageData != NULL)
+	{
+		cam_idd = frame->imageData[2]&0xff;
+		frame_number = frame->imageData[3]&0xff;
+	}
+
+#ifdef DEBUG_SESSION
+	if(m_DebugTesting){
+		DebugSessionLogging(frame, cam_idd);
+	}
+#endif
+
+	if(m_IrisCameraPreview && (frame->imageData != NULL)){
+		cv::Mat mateye = cv::cvarrToMat(frame);
+		std::ostringstream ssCoInfo;
+		ssCoInfo << "CAM " <<  cam_idd  <<  (cam_idd & 0x80 ?  "AUX":"MAIN");
+		putText(mateye,ssCoInfo.str().c_str(),cv::Point(10,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
+		imshow("IrisCamera", mateye);
+		cvWaitKey(1);
+	}
+
+	if(m_SaveFullFrame){
+		sprintf(filename,"InputImage_%d_%d.pgm", cam_idd, m_faceIndex);
+		cv::Mat mateye = cv::cvarrToMat(frame);
+		imwrite(filename, mateye);
+		mateye.release();
+	}
+
+	// Loading Offset file - PGM
+	if(m_EnableOffsetCorrection){
+		m_ProcessImageFrame = OffsetImageCorrection(frame, cam_idd);
+		cvCopy(m_ProcessImageFrame,frame);
+	}
+
+	// printf("Inside ProcessImage\n");
+	XTIME_OP("SetImage",
+		SetImage(frame)
+	);
+
+
+    m_inputImg.Init(frame);
+    XTIME_OP("Pyramid",
+    m_sframe.SetImage(&m_inputImg);
+    );
+    ComputeMotion();
+    bool detect;
+
+    XTIME_OP("Detect",
+    	detect = m_pSrv->Detect(&m_sframe,m_eyeDetectionLevel)
+    );
+
+    int NoOfHaarEyes = m_sframe.GetNumberOfHaarEyes();
+
+
+    FaceImageQueue FaceInfo;
+    if(m_IrisToFaceMapping)
+    	FaceInfo = GetFaceInfoForIristoFaceMapping(cam_idd, frame_number);
+
+   //  printf("After Detect Eyes\n");
+    if(m_shouldLog){
+        logResults(m_faceIndex);
+    }
+    if(m_saveCount > 0){
+        m_saveCount--;
+        m_sframe.saveImage("result", m_faceIndex);
+    }
+    bool bSentSomething = false;
+    int left, top;
+    std::map<int,EyeInfo> eyeMap;
+    int maxEyes = m_sframe.GetEyeCenterPointList()->size();
+    if(m_Debug)
+    	printf("NumEyes %d \n", maxEyes);
+
+    if(maxEyes > m_maxEyes){
+    	int clear = ClearEyes(m_faceIndex);
+        return bSentSomething;
+    }
+
+    for(int eyeIdx=0;eyeIdx<maxEyes;eyeIdx++){
+    	CvPoint2D32f irisCentroid = cvPoint2D32f(0,0);
+		DetectedEye *eye=getNextAvailableEyeBuffer();
+
+		CEyeCenterPoint& centroid = m_sframe.GetEyeCenterPointList()->at(eyeIdx);
+		cv::Point2i ptrI= cv::Point2i(centroid.m_nCenterPointX,
+				centroid.m_nCenterPointY);
+
+		if (m_IrisToFaceMapping){
+			m_eyeLabel = validateLeftRightEyecrops(FaceInfo.ScaledFaceCoord, ptrI, cam_idd, FaceInfo.faceImagePtr, frame_number);
+			// printf("eye Label Information Cam_idd %d frameidx %d eyeLabel %d projStatus %d\n", cam_idd, m_faceIndex, eyeLabel, m_projStatus);
+			EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d label %d\n", cam_idd, m_faceIndex, m_eyeLabel);
+		}
+
+		m_sframe.GetCroppedEye(eyeIdx, eye->getEyeCrop(), left, top);
+
+		std::pair<float, float> score;
+		XTIME_OP("Check_image",
+			score = m_nanoSpoofDetector->check_image(eye->getEyeCrop()->imageData,eye->getEyeCrop()->width, eye->getEyeCrop()->height,eye->getEyeCrop()->widthStep)
+		);
+		CvPoint3D32f halo ;
+		XTIME_OP("Halo",
+				//halo =  m_nanoSpoofDetector->ComputeHaloScore(eye->getEyeCrop(),m_currMaxSpecValue)
+			halo =  m_nanoSpoofDetector->ComputeTopPointsBasedHaloScore(eye->getEyeCrop(),m_currMaxSpecValue,m_haloCountByBottomPixels,m_haloTopPixelsPercentage,m_haloBottomPixelsIntensityThresh,m_haloThreshold,m_enableHaloThreshold,m_MHaloNegationThresh);
+		);
+		CheckForHaloScoreThreshold(halo);
+		CvPoint3D32f output;
+		output.x = -1.0f;
+
+		// Save EyeCrops
+    	if(m_SaveEyeCrops)
+		{
+    		SaveEyeCrops(eye->getEyeCrop(), cam_idd, m_faceIndex, m_eyeLabel);
+		}
+
+		if (m_enableLaplacian_focus_Threshold||m_enableLaplacian_focus_ThresholdEnroll){
+			IplImage *im = eye->getEyeCrop();
+			CvRect rect = {160, 120, 320, 240};
+			IplImage *cec = NULL;
+			LaplacianBasedFocusDetector *lapdetector=NULL;
+			if(m_enableLaplacian_focus_Threshold && m_matchingmode){
+				cec = m_centreEyecrop;
+				lapdetector = m_lapdetector;
+				//printf("Cmmg in Matching Lap \n");
+			}else if(m_enableLaplacian_focus_ThresholdEnroll && (!m_matchingmode)){
+				cec = m_centreEyecropEnroll;
+				lapdetector = m_lapdetectorEnroll;
+				//printf("Cmmg in Enroll Lap \n");
+			}else{
+				//printf("Cmmg in Junk Lap \n");
+			}
+			if(cec && lapdetector){
+				rect.x = MAX(0,(m_rotatedEyecrop->width-cec->width)/2);
+				rect.y = MAX(0,(m_rotatedEyecrop->height-cec->height)/2);
+				rect.width = cec->width;
+				rect.height = cec->height;
+				if(m_shouldRotate){
+					cvTranspose(im, m_rotatedEyecrop);
+					XTIME_OP("cvFlip",cvFlip(m_rotatedEyecrop, m_rotatedEyecrop, 1););
+					cvSetImageROI(m_rotatedEyecrop,rect);
+					cvCopy(m_rotatedEyecrop,cec);
+					cvResetImageROI(m_rotatedEyecrop);
+				}else{
+					cvSetImageROI(im,rect);
+					cvCopy(im,cec);
+					cvResetImageROI(im);
+				}
+				XTIME_OP("Laplacian : ", output = lapdetector->ComputeRegressionFocus(cec, m_maxSpecValue););
+				printf("%d -> [LS:HS] =[%f , %f] \n",m_faceIndex,output.x,halo.z);
+			}
+  		}
+
+		std::pair<int, int> blt = m_nanoSpoofDetector->GetIrisPupilIntensities();
+		irisCentroid = m_nanoSpoofDetector->GetSpecularityCentroid();
+
+		if(m_shouldRotate){
+			//If rotated then swap centroid values.
+			float temp =  irisCentroid.x;
+			irisCentroid.x = irisCentroid.y;
+			irisCentroid.y = temp;
+		}
+		eye->init(cam_idd, eyeIdx,m_faceIndex,maxEyes,left, top,irisCentroid,m_il0,1,output.x,score.second,blt.first,halo.z);
+		eye->setTimeStamp(m_timestampBeforeGrabbing);
+		eye->setUpdated(true);
+
+		if(m_FocusBasedRejectionType||m_spoofEnable)
+		{
+		    extractSmallCropForFocus(eyeIdx,eye);
+			XTIME_OP("FocusCalc.ComputeFeatureVector",
+				m_IrisSelectSvr->ComputeFeatureVector(m_smallCroppedEye,m_FocusRoi,m_IrisSelectFeatVect)
+			);
+			//Set the score value
+			eye->setScore(m_IrisSelectFeatVect[1]);
+
+			EyeInfo eyeInfo;
+			eyeInfo.x=left;
+			eyeInfo.y=top;
+			eyeInfo.score=m_IrisSelectFeatVect[1];
+			eyeInfo.handle=eye;
+			eyeMap[eyeIdx]=eyeInfo;
+			if(m_shouldLog){
+				logFocusScore(eyeInfo.score);
+			}
+			//if(m_Debug)printf("Score[%d]=%d ",eyeIdx,eyeInfo.score);
+		}
+		else
+		{
+			if(m_EnableExtHalo){
+				if(halo.z > 0 && halo.z < m_haloThreshold){
+					sendToNwQueue(eye);
+					bSentSomething=true;
+				}
+			}
+		}
+	}
+
+    if(m_FocusBasedRejectionType){
+        std::map<std::pair<int,int> ,void*> result = m_EyeTracker->Track(m_faceIndex, eyeMap);
+        if(m_shouldLog){
+            logFocusResults(result);
+        }
+        if(!result.empty()){
+            m_DetectedMsg.lock();
+            m_DetectedMsg.setUpdated(true);
+            m_DetectedMsg.unlock();
+        }
+        std::map<std::pair<int,int> ,void*>::iterator rit = result.begin();
+        for(;rit != result.end();rit++){
+            DetectedEye *eye = (DetectedEye*)(((rit->second)));
+            if(eye->isSame(rit->first.first, rit->first.second)){
+                sendToNwQueue(eye);
+                bSentSomething = true;
+            }
+        }
+    }
+    return bSentSomething;
+}
+#if 0 // Anita Backup for reference will delete later
 bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 {
 	char filename[150];
@@ -1953,6 +2290,7 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
     }
     return bSentSomething;
 }
+#endif
 
 #ifdef IRIS_CAPTURE
 
@@ -2195,7 +2533,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		m_ProcessImageFrame = OffsetImageCorrection(frame, cam_idd);
 		cvCopy(m_ProcessImageFrame,frame);
 	}
-
+#if 0
 	if (m_FaceIrisMapping) {
 		sFaceMap = DoFaceMapping(frame, cam_idd, frame_number);
 		if(m_bFaceMapDebug){
@@ -2203,7 +2541,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			EyelockLog(logger, DEBUG, "In ProcessImage IrisProj sFaceMap.IrisProj.x	%d sFaceMap.IrisProj.y %d sFaceMap.IrisProj.width %d sFaceMap.IrisProj.height %d\n", sFaceMap.IrisProj.x, sFaceMap.IrisProj.y, sFaceMap.IrisProj.width, sFaceMap.IrisProj.height);
 		}
 	}
-
+#endif
 	XTIME_OP("SetImage",
 		SetImage(frame)
 	);
@@ -2221,12 +2559,10 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
     int NoOfHaarEyes = m_sframe.GetNumberOfHaarEyes();
 
-    if(m_bFaceMapDebug){
-		if(NoOfHaarEyes == 0)
-    	EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d\n", cam_idd, m_faceIndex);
-		else
-    	EyelockLog(logger, DEBUG, "%d Eyes detected in Input Frame from Camera %d_%d\n", NoOfHaarEyes, cam_idd, m_faceIndex);
-    }
+    FaceImageQueue FaceInfo;
+    if(m_IrisToFaceMapping)
+       	FaceInfo = GetFaceInfoForIristoFaceMapping(cam_idd, frame_number);
+
 
     if(m_shouldLog){
         logResults(m_faceIndex);
@@ -2249,14 +2585,17 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
         return bSentSomething;
     }
 
-    bool projStatus = true;
-    unsigned int eyeLabel = 0;
-
-    //Condition of making it strict
-    if (m_FaceIrisMappingStrict)
-    	projStatus = false;
-    else
-    	projStatus = true;
+    cv::Mat Screen;
+   
+    if(m_DHSScreens){
+		if(shouldIBeginSorting == false){
+			Screen = cv::imread("/home/root/screens/Slide1.BMP", cv::IMREAD_COLOR);
+			cvNamedWindow("EXT", CV_WINDOW_NORMAL);
+			cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+			imshow("EXT", Screen);
+			cvWaitKey(500);
+		}
+    }
 
     if (maxEyes > 0)
     {
@@ -2264,24 +2603,16 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		{
 			CvPoint2D32f irisCentroid = cvPoint2D32f(0,0);
 			DetectedEye *eye=getNextAvailableEyeBuffer();
-    		if (!m_FaceIrisMappingBeforEyeDetection)
-    		{
-    			if (m_IrisToFaceMapping){
-    				projStatus = ValidateEyeCropUsingIrisToFaceMapping(sFaceMap, cam_idd, m_faceIndex, eyeIdx);
-    			}else{
-    				projStatus = ValidateEyeCropUsingFaceMapping(sFaceMap, cam_idd, m_faceIndex, eyeIdx);
-    			}
-    		}
 
     		CEyeCenterPoint& centroid = m_sframe.GetEyeCenterPointList()->at(eyeIdx);
     		cv::Point2i ptrI= cv::Point2i(centroid.m_nCenterPointX,
     				centroid.m_nCenterPointY);
 
-    		if (m_activeEyeSideLabeling && projStatus){
-    			eyeLabel = validateLeftRightEyecrops(sFaceMap.SFaceCoord, ptrI, cam_idd);
-    			// printf("EyesideIndise ImageProcessor....%d\n", eyeLabel);
-    			EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d\n", cam_idd, m_faceIndex);
-    		}
+    		if (m_IrisToFaceMapping){
+    			m_eyeLabel = validateLeftRightEyecrops(FaceInfo.ScaledFaceCoord, ptrI, cam_idd, FaceInfo.faceImagePtr, frame_number);
+    			// printf("eye Label Information Cam_idd %d frameidx %d eyeLabel %d projStatus %d\n", cam_idd, m_faceIndex, eyeLabel, m_projStatus);
+    			EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d label %d\n", cam_idd, m_faceIndex, m_eyeLabel);
+			}
 
 			m_sframe.GetCroppedEye(eyeIdx, eye->getEyeCrop(), left, top);
 
@@ -2299,10 +2630,10 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			output.x = -1.0f;
 
     		// Save EyeCrops
-        	bool bSaveEyeCrops = m_SaveEyeCrops;
+        	//bool bSaveEyeCrops = m_SaveEyeCrops;
 
-        	if(m_FaceIrisMapping)
-        		bSaveEyeCrops = m_SaveEyeCrops && projStatus;
+        	//if(m_FaceIrisMapping)
+        	//	bSaveEyeCrops = m_SaveEyeCrops && projStatus;
 
     			if (m_enableLaplacian_focus_Threshold || m_enableLaplacian_focus_ThresholdEnroll) {
     				printf("Inside focus thershold\n");
@@ -2353,14 +2684,15 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				}
 
 
-	        	if(bSaveEyeCrops)
+	        	if(m_SaveEyeCrops)
 	    		{
-	        		SaveEyeCrops(eye->getEyeCrop(), cam_idd, m_faceIndex, eyeLabel);
+	        		SaveEyeCrops(eye->getEyeCrop(), cam_idd, m_faceIndex, m_eyeLabel);
 	    		}
 
 				if (m_bIrisCapture) // For Iris Capture mode we do sorting...
 				{
 
+					
 
 #ifndef NEW_LAPLACIAN_METHOD
 					if (output.x > m_laplacian_focusThreshold)
@@ -2388,6 +2720,13 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 							// printf("output.x  output.xoutput.x %f\n", output.x);
 
 						 if(output.x  > m_ISOSharpnessThreshold){
+							 if(m_DHSScreens){
+									if (shouldIBeginSorting == true) {
+										Screen = cv::imread("/home/root/screens/Slide2.BMP", cv::IMREAD_COLOR);
+										imshow("EXT", Screen);
+										cvWaitKey(100);
+									}
+							 	 }
 							if (shouldIBeginSorting == false) // Begining a sorting
 							{
 								time_newms= ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
@@ -2398,7 +2737,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 								eyeSortingWrapObj->BeginSorting((long) time_newms);
 								terminate = false; //We begin sorting. So terminate is false
 #ifdef EYE_SIDE
-								terminate = eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, time_newms, 0.0, eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
+								terminate = eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, time_newms, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
 #else
 								terminate = eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, time_newms, 0.0, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
 #endif
@@ -2414,7 +2753,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 								if (!terminate)
 								{
 #ifdef EYE_SIDE
-									terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, currTimems, 0.0, eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
+									terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, currTimems, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
 #else
 									terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, currTimems, 0.0, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
 #endif
@@ -2464,23 +2803,6 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				}
 				//if(m_Debug)printf("Score[%d]=%d ",eyeIdx,eyeInfo.score);
 			}
-#if 0 // Anita check // Not neeeded for Acquisition Mode
-			else
-			{
-			bool bEyeCropRejection = m_EnableExtHalo;
-
-			if(m_FaceIrisMapping)
-				bEyeCropRejection = m_EnableExtHalo && projStatus;
-
-			if(bEyeCropRejection){
-				if(halo.z > 0 && halo.z < m_haloThreshold){
-					sendToNwQueue(eye);
-					bSentSomething=true;
-					}
-				}
-
-			}
-#endif
 		} // end of (for)
 	}
     else // No eyes detected...
@@ -2494,7 +2816,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			if (!terminate)
 			{
 #ifdef EYE_SIDE
-				terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0,eyeLabel); //Need to pass all the halo, laplacian, and all other info here from computation
+				terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0, m_eyeLabel); //Need to pass all the halo, laplacian, and all other info here from computation
 #else
 				terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0); //Need to pass all the halo, laplacian, and all other info here from computation
 #endif
@@ -2628,6 +2950,12 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 		if (bSentCaptureImage)
 		{
+			if(m_DHSScreens){
+				Screen = cv::imread("/home/root/screens/Slide3.BMP", cv::IMREAD_COLOR);
+				imshow("EXT", Screen);
+				cvWaitKey(100);
+			}
+
 			unsigned char buf[256];
 			buf[0] = CMX_LED_CMD;
 			buf[1] = 3;
@@ -2646,27 +2974,6 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		usleep(m_IrisCaptureResetDelay*1000);
 		// eyeSortingWrapObj->clearAllEyes(); // Check Anita later should be uncommented
 	} // End of terminate
-#if 0 // Not neeeded for Acquisition Mode
-    if(m_FocusBasedRejectionType){
-        std::map<std::pair<int,int> ,void*> result = m_EyeTracker->Track(m_faceIndex, eyeMap);
-        if(m_shouldLog){
-            logFocusResults(result);
-        }
-        if(!result.empty()){
-            m_DetectedMsg.lock();
-            m_DetectedMsg.setUpdated(true);
-            m_DetectedMsg.unlock();
-        }
-        std::map<std::pair<int,int> ,void*>::iterator rit = result.begin();
-        for(;rit != result.end();rit++){
-            DetectedEye *eye = (DetectedEye*)(((rit->second)));
-            if(eye->isSame(rit->first.first, rit->first.second)){
-                sendToNwQueue(eye);
-                bSentSomething = true;
-            }
-        }
-    }
-#endif
     return bSentSomething;
 }
 
@@ -2785,7 +3092,7 @@ bool ImageProcessor::ProcessImageAcquisitionModeBKUP(IplImage *frame,bool matchm
     				centroid.m_nCenterPointY);
 
     		if (m_activeEyeSideLabeling && projStatus){
-    			eyeLabel = validateLeftRightEyecrops(sFaceMap.SFaceCoord, ptrI, cam_idd);
+    			// eyeLabel = validateLeftRightEyecrops(sFaceMap.SFaceCoord, ptrI, cam_idd);
     			printf("EyesideIndise ImageProcessor....%d\n", eyeLabel);
     			EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d\n", cam_idd, m_faceIndex);
     		}

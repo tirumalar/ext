@@ -63,7 +63,7 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 			   pF2FDispatcher(0),pDBReceive(0),pledDispatcher(0),pEyeDispatcher(0),pNwMatchManager(0),m_SendLed(true),m_curval(0),
 			   m_outMsg(256),m_FuturisticTime(0),m_svrAddr(0),m_Debug(false),m_Master(false),m_Slave(false),pEyelockNanoSdkThread(NULL),
 			   pAudioDispatcher(0), m_pLiquidLens(0),pLoiteringDetector(0),m_matchDispatcher(0),pledConsolidator(0),pnwLEDDispatcher(0),
-			   pSDKDispatcher(NULL),pMasterSlaveNwListener(NULL),pCMXHandle(NULL){
+			   pSDKDispatcher(NULL),pMasterSlaveNwListener(NULL),pCMXHandle(NULL),m_FaceFrameQueueSize(10){
 
 	//void EyelockLogInit();
 	EyelockLogInit();
@@ -187,11 +187,12 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 	pnwLEDDispatcher = new NwLEDDispatcher(conf);
 	pnwLEDDispatcher->init();
 
+	m_FaceFrameQueueSize = conf.getValue("Eyelock.FaceQueueSize", 10);
 	if(m_Master){
 #ifdef CMX_C1
 		//Allocate our Facetracking <--->  Eyelock message queue
 		AllocateOIMQueue(10); // 10 is queue sizee.  Can be replaced with config value later if necessary
-		AllocateFaceQueue(10);
+		AllocateFaceQueue(m_FaceFrameQueueSize);
 
 		// Start facetracking threads
 		startFaceTracking();
