@@ -312,6 +312,8 @@ public:
 	bool m_EnableISOSharpness;
 	int m_ISOSharpnessThreshold;
 
+	int m_DHSScreenResetDelay;
+
 	IplImage *m_LastEyecrop;
 	CmxHandler *m_pCMXHandler;
 
