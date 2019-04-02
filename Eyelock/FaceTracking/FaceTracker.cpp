@@ -115,7 +115,6 @@ void DoTemperatureLog()
 	}
 }
 
-
 FaceTracker::FaceTracker(char* filename)
 :FaceConfig(filename)
 ,previousEye_distance(0)
@@ -140,6 +139,7 @@ FaceTracker::FaceTracker(char* filename)
 ,FRAME_DELAY(60)
 ,bFaceMapDebug(false)
 ,bActiveCenterPos(false)
+,bIrisToFaceMapDebug(false)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -263,6 +263,8 @@ FaceTracker::FaceTracker(char* filename)
 	m_ImageAuthentication = EyelockConfig.getValue("Eyelock.ImageAuthentication", true);
 
 	m_OIMFTPEnabled = EyelockConfig.getValue("Eyelock.OIMFTPEnable", true);
+
+	bIrisToFaceMapDebug = EyelockConfig.getValue("Eyelock.IrisToFaceMapDebug", false);
 
 	int m_ImageSize = 1200*960;
 	m_LeftCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
@@ -1323,7 +1325,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							}
 						if (eyesInDetect &&  !eyesInViewOfIriscam){
 							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
+							//system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
 						}
 						break;
 	case STATE_AUX_IRIS:
@@ -1335,7 +1337,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							}
 						if (eyesInDetect &&  !eyesInViewOfIriscam){
 							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
+							//system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
 						}
 						break;
 	case STATE_MOVE_MOTOR:
@@ -1376,7 +1378,6 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					case STATE_MOVE_MOTOR:
 						// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
 						//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-
 						// flush after moving to get more accurate motion on next loop
 						vs->flush();
 						m_ProjPtr = false;
@@ -1528,20 +1529,24 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 	// printf("PushToQueue foundEyes %d FaceFrameNo %d face x = %d  face y = %d face width = %d  face height = %d \n", foundEyes, FaceCameraQFrameNo, face.x,  face.y,  face.width, face.height);
 	 if(system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){ // Removed for odriod by Anita
-		RotatedfaceImg = rotation90(outImg);
+
 //		if(m_ProjPtr && eyesInViewOfIriscamNoMove){ // Removed by sarvesh
 			m_LeftCameraFaceInfo.ScaledFaceCoord = FaceCoord;
 			m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
 			m_LeftCameraFaceInfo.projPtr = m_ProjPtr;
-			memcpy(m_LeftCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
 
 			m_RightCameraFaceInfo.ScaledFaceCoord = FaceCoord;
 			m_RightCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
 			m_RightCameraFaceInfo.projPtr = m_ProjPtr;
-			memcpy(m_RightCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
 
-			g_pLeftCameraFaceQueue->Push(m_LeftCameraFaceInfo);
-			g_pRightCameraFaceQueue->Push(m_RightCameraFaceInfo);
+			if(bIrisToFaceMapDebug){
+				RotatedfaceImg = rotation90(outImg);
+				memcpy(m_LeftCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
+				memcpy(m_RightCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
+			}
+
+			g_pLeftCameraFaceQueue->TryPush(m_LeftCameraFaceInfo);
+			g_pRightCameraFaceQueue->TryPush(m_RightCameraFaceInfo);
 
 			if(bFaceMapDebug){
 				char filename[100];

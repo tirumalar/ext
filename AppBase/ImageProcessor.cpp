@@ -488,6 +488,8 @@ m_LedConsolidator = NULL;
 	if (m_bIrisCapture)
 	{
 		m_DHSScreens = pConf->getValue("Eyelock.DHSScreens", false);
+		m_DHSScreenResetDelay = pConf->getValue("Eyelock.DHSScreensResetDelay", 2);
+
 		m_pHttpPostSender = new HttpPostSender(*pConf);
 		m_pHttpPostSender->init();
 		m_pHttpPostSender->Begin();
@@ -2593,7 +2595,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			cvNamedWindow("EXT", CV_WINDOW_NORMAL);
 			cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
 			imshow("EXT", Screen);
-			cvWaitKey(500);
+			cvWaitKey(m_DHSScreenResetDelay*100);
 		}
     }
 

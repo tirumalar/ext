@@ -77,7 +77,7 @@
 #define MAX_CAL_CURENT 	20
 
 int system_state = STATE_LOOK_FOR_FACE;
-static int last_system_state = STATE_LOOK_FOR_FACE;
+int last_system_state = STATE_LOOK_FOR_FACE;
 int run_state=RUN_STATE_FACE;
 
 int move_counts = 0;
@@ -241,6 +241,8 @@ private:
 	bool bFaceMapDebug;
 
 	bool bActiveCenterPos;
+
+	bool bIrisToFaceMapDebug;
 
 	void SetExp(int cam, int val);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
