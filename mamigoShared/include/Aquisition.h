@@ -18,6 +18,7 @@ public:
 	Aquisition(Configuration *pConf,bool bSingleFrame=false);
 	virtual ~Aquisition();
 	virtual IplImage *getFrame();
+	virtual IplImage *getFrame_nowait();
 	virtual void getDims(int& width, int& height){framer->getDims(width,height);}
 	size_t getSingleFrame(void * buff,size_t cnt);
 	virtual void setLatestFrame_raw(char *ptr){}
