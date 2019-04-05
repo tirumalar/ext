@@ -25,6 +25,7 @@ public:
 
 	// must implement
 	virtual void getDims(int& width, int& height) const{}
+	virtual char *getLatestFrame_raw_nowait(){return NULL;}
 	virtual char *getLatestFrame_raw(){return 0;}
 	//virtual void getIlluminator(int& il0,int& il1){ il0 = m_ill0;il1 = m_frameIndex;}
 	virtual void getIlluminatorState(__int64_t& ts,int &il0,int& il1){ ts = m_ts,il0 = m_ill0; il1 = m_frameIndex;}
