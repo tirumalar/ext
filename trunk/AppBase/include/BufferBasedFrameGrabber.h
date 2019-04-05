@@ -39,11 +39,13 @@ public:
 	virtual bool stop(){return true;}
 	virtual bool isRunning(){ return true;}
 	virtual void getDims(int& width, int& height) const;
+	virtual char *getLatestFrame_raw_nowait();
 	virtual char *getLatestFrame_raw();
 	void setLatestFrame_raw(char *ptr);
 	void clearFrameBuffer();
 	ImageQueueItem GetFreeBuffer();
 	void ReleaseProcessBuffer(ImageQueueItem m);
+	bool TryReleaseProcessBuffer(ImageQueueItem m);
 	void PushProcessBuffer(ImageQueueItem m);
 private:
 	int m_Width,m_Height,m_WidthStep;
