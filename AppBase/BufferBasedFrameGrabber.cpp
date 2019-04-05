@@ -52,8 +52,19 @@ BufferBasedFrameGrabber::~BufferBasedFrameGrabber() {
 
 void BufferBasedFrameGrabber::ReleaseProcessBuffer(ImageQueueItem m)
 {
+	printf("\n\n BEFORE PUSH \n\n");
 	m_FreeBuffer->Push(m);
+	printf("\n\n After PUSH \n\n");
+
 }
+
+
+bool BufferBasedFrameGrabber::TryReleaseProcessBuffer(ImageQueueItem m)
+{
+	return m_FreeBuffer->TryPush(m);
+
+}
+
 
 ImageQueueItem BufferBasedFrameGrabber::GetFreeBuffer()
 {
@@ -242,7 +253,8 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw(){
     if (m_current_process_queue_item.m_ptr!=0)
     	ReleaseProcessBuffer(m_current_process_queue_item);
 
-    bool status = false;
+
+    bool status = false; // reset
 
 	while(1)
 		{
@@ -307,6 +319,102 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw(){
 
 #endif
 }
+
+char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
+	//if (m_Debug)
+		//EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::getLatestFrame_raw() Start");
+
+	int length = (m_Width * m_Height);
+	if (m_numbits != 8)
+		length = length * 2;
+
+
+    bool status = true;
+
+	// release the previously processed buffer it it is real;
+    if (m_current_process_queue_item.m_ptr!=0)
+    	status = TryReleaseProcessBuffer(m_current_process_queue_item);//DMO changed to "Try" so we don't block on a full buffer.
+
+    if (!status)
+    {
+		usleep(1000);
+    	return NULL;
+    }
+
+    status = false; // reset
+
+	while(1)
+		{
+		 if (m_ProcessBuffer->Empty())
+		 {
+			usleep(1000);
+			 return NULL;
+		 }
+
+		 status=m_ProcessBuffer->TryPop(m_current_process_queue_item);
+
+		if (status)
+			break; //something to process
+
+		usleep(1000);
+		}
+	m_ill0 = m_current_process_queue_item.m_ill0;
+	m_frameIndex = m_current_process_queue_item.m_frameIndex;
+	m_ts = m_current_process_queue_item.m_endTime;
+
+	EyelockLog(logger, TRACE, "get image queue m_ill0 %d, m_frameIndex %d, time %llu", m_ill0,m_frameIndex, m_ts);
+
+#if 0
+	char filename[100];
+	static int i;
+	sprintf(filename,"image_%d.bin",i++);
+	FILE *f = fopen(filename, "wb");
+	fwrite(m_current_process_queue_item.m_ptr, length, 1, f);
+	fclose(f);
+
+#endif
+	return m_current_process_queue_item.m_ptr;
+
+#if 0
+	// ImageQueue val;
+	//while(!ShouldIQuit()&&!m_pRingBuffer->TryPop(val))
+
+	bool status = false;
+
+	while(1)
+		{
+		status=m_pRingBuffer->TryPop(m_ImageQueue);
+		if (status)
+			break;
+		usleep(1000);
+		}
+
+	if (status == true) {
+#if 0
+		if (m_Debug)
+			EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::getLatestFrame_raw() get image queue");
+#endif
+		// unsigned char *ptr = m_ImageQueue.m_ptr;
+		m_ill0 = m_ImageQueue.m_ill0;
+		m_frameIndex = m_ImageQueue.m_frameIndex;
+		m_ts = m_ImageQueue.m_endTime;
+		memcpy(m_pImageBuffer, m_ImageQueue.m_ptr, length);
+		int static cntr=0;
+		cntr++;
+//		printf("popped so far .. %d\n",cntr);
+	}
+	else {
+		memset(m_pImageBuffer, 0, length);
+	}
+#if 0
+	if (m_Debug)
+		EyelockLog(logger, DEBUG, "get image queue m_ill0 %d, m_frameIndex %d, time %llu", m_ill0,m_frameIndex, m_ts);
+#endif
+	return m_pImageBuffer;
+
+#endif
+}
+
 #endif
 
 void BufferBasedFrameGrabber::setLatestFrame_raw(char *ptr){
