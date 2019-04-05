@@ -69,6 +69,27 @@ IplImage *Aquisition::getFrame()
 
 }
 
+
+IplImage *Aquisition::getFrame_nowait()
+{
+	if(!framer->isRunning()){
+		if(!framer->start()){
+			throw "could not start framer";
+		}
+	}
+
+	printf ("\n\n Acquisition GetframeNoWait() \n\n");
+	// return immediately even if queue empty
+    char *raw = framer->getLatestFrame_raw_nowait();
+
+    if (raw == NULL)
+    	return NULL;
+
+    temp_header->imageData=raw;
+    return temp_header;
+}
+
+
 AquisitionFile::AquisitionFile(Configuration *pConf, int binType):Aquisition()
 {
 	int width, height;
@@ -126,6 +147,8 @@ void AquisitionBuffer::setLatestFrame_raw(char *ptr){
 void AquisitionBuffer::clearFrameBuffer(){
 	framer->clearFrameBuffer();
 }
+
+
 IplImage *AquisitionBuffer::getFrame()
 {
 	if(!framer->isRunning()){
@@ -141,6 +164,7 @@ IplImage *AquisitionBuffer::getFrame()
     temp_header->imageData=raw;
     return temp_header;
 }
+
 
 void AquisitionBuffer::getDims(int& width, int& height){
 	framer->getDims(width,height);
