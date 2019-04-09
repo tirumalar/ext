@@ -281,7 +281,7 @@ protected:
 	int m_Imageheight;
 	bool m_EnableExtHalo;
 
-	int m_EyelockIrisMode; // Select between Authentication and Capture Mode, by default Authentication Mode; Authentication=1 Capture=2
+	unsigned int m_EyelockIrisMode; // Select between Authentication and Capture Mode, by default Authentication Mode; Authentication=1 Capture=2
 	bool m_CameraMode;
 #ifdef IRIS_CAPTURE
 public:
@@ -311,8 +311,6 @@ public:
 
 	bool m_EnableISOSharpness;
 	int m_ISOSharpnessThreshold;
-
-	int m_DHSScreenResetDelay;
 
 	IplImage *m_LastEyecrop;
 	CmxHandler *m_pCMXHandler;
@@ -351,6 +349,7 @@ private:
 	bool m_IrisToFaceMapping;
 	bool bIrisToFaceMapDebug;
 	bool m_DHSScreens;
+	cv::Mat Screen;
     SocketFactory *m_socketFactory;
 
 };

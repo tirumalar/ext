@@ -2517,7 +2517,7 @@ void CmxHandler::SendMessage(char *outMsg, int len, unsigned short randomseed)
 		EyelockLog(logger, TRACE, "CmxHandler::SendMessage(): OIMQueue size = %d...", m_pOIMQueue->Size());
 
 
-	m_pOIMQueue->Push(theItem);
+	m_pOIMQueue->TryPush(theItem);
 
 }
 #endif
