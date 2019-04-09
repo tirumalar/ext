@@ -1710,7 +1710,7 @@ void BoBSendOSDPResponse(void * data, int length)
 	if (BobWriteArray(BOB_OSDP_DATA_OFFSET, data, length) || BobWriteReg(BOB_OSDP_DATA_LENGTH_OFFSET, length))
 		;//EyelockLog(logger, ERROR, "BoB => Error to write OSDP data");
 	else {
-		usleep(10); //usleep(100);
+		usleep(1); //usleep(100);
 		result = BobWriteReg(BOB_OSDP_CMD_OFFSET, BOB_OSDP_CMD_SEND_DATA);
 	}
 }
