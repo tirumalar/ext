@@ -1503,7 +1503,6 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	FaceCoord.width = face.width * scaling;
 	FaceCoord.height = face.height *scaling; // rectH + (targetOffset * scaling);
 
-
 	cv::Mat RotatedfaceImg, saveRotatedImg;
 
 	cv::Rect rightRect, leftRect;
@@ -1528,7 +1527,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	}
 
 	// printf("PushToQueue foundEyes %d FaceFrameNo %d face x = %d  face y = %d face width = %d  face height = %d \n", foundEyes, FaceCameraQFrameNo, face.x,  face.y,  face.width, face.height);
-	 if(system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){ // Removed for odriod by Anita
+	 // if(system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){ // Removed for odriod by Anita
 
 //		if(m_ProjPtr && eyesInViewOfIriscamNoMove){ // Removed by sarvesh
 			m_LeftCameraFaceInfo.ScaledFaceCoord = FaceCoord;
@@ -1558,7 +1557,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 				// imwrite(filename, smallImg);
 				imwrite(filename, RotatedfaceImg);
 			}
-		}
+		// }
 	// }
 	 RotatedfaceImg.release();
 	 saveRotatedImg.release();
@@ -1580,7 +1579,6 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 								agc_set_gain,
 								g_MatchState
 								);
-
 
 
 		if(bShowFaceTracking){

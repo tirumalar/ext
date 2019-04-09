@@ -78,7 +78,7 @@ IplImage *Aquisition::getFrame_nowait()
 		}
 	}
 
-	printf ("\n\n Acquisition GetframeNoWait() \n\n");
+	// printf ("\n\n Acquisition GetframeNoWait() \n\n");
 	// return immediately even if queue empty
     char *raw = framer->getLatestFrame_raw_nowait();
 
