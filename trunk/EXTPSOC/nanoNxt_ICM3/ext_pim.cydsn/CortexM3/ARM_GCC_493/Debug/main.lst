@@ -1,0 +1,4485 @@
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"main.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	s,40,4
+  19              		.comm	currentAccessType,1,1
+  20              		.comm	hw_old,1,1
+  21              		.comm	tp_old,1,1
+  22              		.comm	tamperCR_polarity,4,4
+  23              		.comm	tamper_out_polarity,4,4
+  24              		.comm	card_ack,4,4
+  25              		.comm	card_in_buf,4,4
+  26              		.comm	MyI2C_Regs,6276,4
+  27              		.comm	run_mode,1,1
+  28              		.comm	passmode_timeout,4,4
+  29              		.section	.text.SetVersion,"ax",%progbits
+  30              		.align	2
+  31              		.global	SetVersion
+  32              		.thumb
+  33              		.thumb_func
+  34              		.type	SetVersion, %function
+  35              	SetVersion:
+  36              	.LFB63:
+  37              		.file 1 ".\\main.c"
+   1:.\main.c      **** /* ========================================
+   2:.\main.c      ****  *
+   3:.\main.c      ****  * NanoNXT Breakout Board
+   4:.\main.c      ****  * Copyright Eyelock.Inc, 2014, 2015
+   5:.\main.c      ****  * All Rights Reserved
+   6:.\main.c      ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   7:.\main.c      ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:.\main.c      ****  * 
+   9:.\main.c      ****  * Version History:
+  10:.\main.c      ****  * ================
+  11:.\main.c      ****  * 3.0.0 : Ported Nano Breakout board functionality without HID/F2F.
+  12:.\main.c      ****  * 3.0.1 : Relay output moved from regular output mode to auxillary output mode
+  13:.\main.c      ****  * 3.0.2 : F2F functionality Added.
+  14:.\main.c      ****  * 3.0.3 : HID functionality added using SW UART for 26 bit weigand & SW UART tested on PAC comapti
+  15:.\main.c      ****  * 3.0.4 : Tamper In is directly routed to Tamper out
+  16:.\main.c      ****  * 3.0.5 : Software Reset button functionality added
+  17:.\main.c      ****  * 3.0.6 : HID functionality modified to support all types of weigand bit formats. 
+  18:.\main.c      ****  * 3.0.7 : Bootloader functionality added.
+  19:.\main.c      ****  * 3.0.8 : Reed Tamper Inverted for Beta.
+  20:.\main.c      ****  * 3.0.9 : Ported code for ICM 3(PSOC 5).
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 2
+
+
+  21:.\main.c      ****  * 3.1.0 : Bootloader functionality added to ICM3.
+  22:.\main.c      ****  * 3.1.1 : GRI 1-13-15: Tamper signals repaired. Tamper moved to main code block.  Tamper polarity 
+  23:.\main.c      ****  * 3.1.2 : GRI 1-28-15: Tamper moved to HandleInputs.  I2C bus clock was corrected to be 100kHz to 
+  24:.\main.c      ****  * 3.1.3 : GRI 1-30-15: Removed all "ClearBuffer()" instances.
+  25:.\main.c      ****  * 3.1.4 : GRI 2-02-15: Added ACK bit for card reads to prevent hanging after card read. PSoC will 
+  26:.\main.c      ****  * 3.1.5 : GRI 2-04-15: Extensive revision to input signal handler to add noise immunity/debounce (
+  27:.\main.c      ****  * 3.1.6 : Added F2F card reader functionality
+  28:.\main.c      ****  * 3.1.7 : Debouncer added to WD0 && Functionality added to detect pulsewidth in F2F
+  29:.\main.c      ****  * 3.1.8 : Added F2F conditionality to turn on timers
+  30:.\main.c      ****  * 3.1.9 : Fixed the bootloader bug for PSOC creator 3.1  Use the debug NxtICM3_bootloader for refe
+  31:.\main.c      ****  * 3.1.10 : Make F2F pulse timing adaptive to the input signal
+  32:.\main.c      ****  * 3.1.15 : OSDP Dual Authentication
+  33:.\main.c      ****  * 3.1.16 : support F2F variable length messages
+  34:.\main.c      ****  * 3.2.0 : Fix F2F to accommodate prompt signal ATH-870
+  35:.\main.c      ****  * 3.2.1 : support Tamper Out Polarity Settings in the Web
+  36:.\main.c      ****  * 3.2.2 : reverse the tamper output polarity
+  37:.\main.c      ****  * 3.2.3 : 16 bits I2C
+  38:.\main.c      ****  * 3.2.4 : branched from 3.2.2, fixed pulse width narrowed by tamper interrupt problem
+  39:.\main.c      ****  * 3.2.5 : help firmware set the card in status again in one second if no ack comming.
+  40:.\main.c      ****  * 3.3.2 : same as 3.2.5 for GA release
+  41:.\main.c      ****  * 3.4.3 : add TOC template on card
+  42:.\main.c      ****  * 3.4.4 : add Pass Through mode
+  43:.\main.c      ****  * 3.4.5 : Increased the timeout delay on PAC for Pass Through Mode.
+  44:.\main.c      ****  * 3.4.6 : Add PAC for TOC Mode.
+  45:.\main.c      ****  * 3.4.7 : Add RS485 sending function for the BLE Mode and the Iris Timeout interface commands.
+  46:.\main.c      ****  * 3.4.8 : Fixed OSDP compiling issue, use osdp.h function prototype.
+  47:.\main.c      ****  * 3.4.9 : Fixed ATH-1171 - Pass through (Iris or Card mode) does not 
+  48:.\main.c      ****             authenticate two consecutive cards problem
+  49:.\main.c      ****  * ========================================
+  50:.\main.c      **** */
+  51:.\main.c      **** #include <project.h>
+  52:.\main.c      **** #include "system.h"
+  53:.\main.c      **** #include "wiegand.h"
+  54:.\main.c      **** #include "f2f.h"
+  55:.\main.c      **** #include "power.h"
+  56:.\main.c      **** #include "inout.h"
+  57:.\main.c      **** #include "i2cuart.h"
+  58:.\main.c      **** #include "osdp.h"
+  59:.\main.c      **** #include "toc.h"
+  60:.\main.c      **** 
+  61:.\main.c      **** I2C_Regs MyI2C_Regs;
+  62:.\main.c      **** char run_mode;
+  63:.\main.c      **** int passmode_timeout;
+  64:.\main.c      **** 
+  65:.\main.c      **** void SU_Isr(SOFT_UART_STRUCT *s);
+  66:.\main.c      **** void ReadImageCard(void);
+  67:.\main.c      **** 
+  68:.\main.c      **** /***********************************
+  69:.\main.c      ****     Sets the breakout board version.
+  70:.\main.c      **** *************************************/
+  71:.\main.c      **** void SetVersion()
+  72:.\main.c      **** {
+  38              		.loc 1 72 0
+  39              		.cfi_startproc
+  40              		@ args = 0, pretend = 0, frame = 0
+  41              		@ frame_needed = 1, uses_anonymous_args = 0
+  42              		@ link register save eliminated.
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 3
+
+
+  43 0000 80B4     		push	{r7}
+  44              		.cfi_def_cfa_offset 4
+  45              		.cfi_offset 7, -4
+  46 0002 00AF     		add	r7, sp, #0
+  47              		.cfi_def_cfa_register 7
+  73:.\main.c      ****     MyI2C_Regs.hw_version[0] = 0x71;
+  48              		.loc 1 73 0
+  49 0004 0D4B     		ldr	r3, .L2
+  50 0006 7122     		movs	r2, #113
+  51 0008 83F84620 		strb	r2, [r3, #70]
+  74:.\main.c      ****     MyI2C_Regs.hw_version[1] = 0x42;
+  52              		.loc 1 74 0
+  53 000c 0B4B     		ldr	r3, .L2
+  54 000e 4222     		movs	r2, #66
+  55 0010 83F84720 		strb	r2, [r3, #71]
+  75:.\main.c      ****     MyI2C_Regs.hw_version[2] = 0x0A;
+  56              		.loc 1 75 0
+  57 0014 094B     		ldr	r3, .L2
+  58 0016 0A22     		movs	r2, #10
+  59 0018 83F84820 		strb	r2, [r3, #72]
+  76:.\main.c      ****     
+  77:.\main.c      ****     MyI2C_Regs.sw_version[0] = 3;
+  60              		.loc 1 77 0
+  61 001c 074B     		ldr	r3, .L2
+  62 001e 0322     		movs	r2, #3
+  63 0020 83F84320 		strb	r2, [r3, #67]
+  78:.\main.c      ****     MyI2C_Regs.sw_version[1] = 5;
+  64              		.loc 1 78 0
+  65 0024 054B     		ldr	r3, .L2
+  66 0026 0522     		movs	r2, #5
+  67 0028 83F84420 		strb	r2, [r3, #68]
+  79:.\main.c      ****     MyI2C_Regs.sw_version[2] = 2;
+  68              		.loc 1 79 0
+  69 002c 034B     		ldr	r3, .L2
+  70 002e 0222     		movs	r2, #2
+  71 0030 83F84520 		strb	r2, [r3, #69]
+  80:.\main.c      **** }
+  72              		.loc 1 80 0
+  73 0034 BD46     		mov	sp, r7
+  74              		.cfi_def_cfa_register 13
+  75              		@ sp needed
+  76 0036 5DF8047B 		ldr	r7, [sp], #4
+  77              		.cfi_restore 7
+  78              		.cfi_def_cfa_offset 0
+  79 003a 7047     		bx	lr
+  80              	.L3:
+  81              		.align	2
+  82              	.L2:
+  83 003c 00000000 		.word	MyI2C_Regs
+  84              		.cfi_endproc
+  85              	.LFE63:
+  86              		.size	SetVersion, .-SetVersion
+  87              		.section	.text.SetBuffer,"ax",%progbits
+  88              		.align	2
+  89              		.global	SetBuffer
+  90              		.thumb
+  91              		.thumb_func
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 4
+
+
+  92              		.type	SetBuffer, %function
+  93              	SetBuffer:
+  94              	.LFB64:
+  81:.\main.c      **** 
+  82:.\main.c      **** 
+  83:.\main.c      **** /**************************************
+  84:.\main.c      ****   Debug Method: To Set I2C data buffer
+  85:.\main.c      **** ***************************************/
+  86:.\main.c      **** void SetBuffer()
+  87:.\main.c      **** {
+  95              		.loc 1 87 0
+  96              		.cfi_startproc
+  97              		@ args = 0, pretend = 0, frame = 0
+  98              		@ frame_needed = 1, uses_anonymous_args = 0
+  99              		@ link register save eliminated.
+ 100 0000 80B4     		push	{r7}
+ 101              		.cfi_def_cfa_offset 4
+ 102              		.cfi_offset 7, -4
+ 103 0002 00AF     		add	r7, sp, #0
+ 104              		.cfi_def_cfa_register 7
+  88:.\main.c      ****     MyI2C_Regs.buffer[0] = 0x02;
+ 105              		.loc 1 88 0
+ 106 0004 194B     		ldr	r3, .L5
+ 107 0006 0222     		movs	r2, #2
+ 108 0008 83F84920 		strb	r2, [r3, #73]
+  89:.\main.c      ****     MyI2C_Regs.buffer[1] = 0x32;
+ 109              		.loc 1 89 0
+ 110 000c 174B     		ldr	r3, .L5
+ 111 000e 3222     		movs	r2, #50
+ 112 0010 83F84A20 		strb	r2, [r3, #74]
+  90:.\main.c      ****     MyI2C_Regs.buffer[2] = 0x30;
+ 113              		.loc 1 90 0
+ 114 0014 154B     		ldr	r3, .L5
+ 115 0016 3022     		movs	r2, #48
+ 116 0018 83F84B20 		strb	r2, [r3, #75]
+  91:.\main.c      ****     MyI2C_Regs.buffer[3] = 0x42;
+ 117              		.loc 1 91 0
+ 118 001c 134B     		ldr	r3, .L5
+ 119 001e 4222     		movs	r2, #66
+ 120 0020 83F84C20 		strb	r2, [r3, #76]
+  92:.\main.c      ****     MyI2C_Regs.buffer[4] = 0x35;
+ 121              		.loc 1 92 0
+ 122 0024 114B     		ldr	r3, .L5
+ 123 0026 3522     		movs	r2, #53
+ 124 0028 83F84D20 		strb	r2, [r3, #77]
+  93:.\main.c      ****     MyI2C_Regs.buffer[5] = 0x32;
+ 125              		.loc 1 93 0
+ 126 002c 0F4B     		ldr	r3, .L5
+ 127 002e 3222     		movs	r2, #50
+ 128 0030 83F84E20 		strb	r2, [r3, #78]
+  94:.\main.c      ****     MyI2C_Regs.buffer[6] = 0x36;
+ 129              		.loc 1 94 0
+ 130 0034 0D4B     		ldr	r3, .L5
+ 131 0036 3622     		movs	r2, #54
+ 132 0038 83F84F20 		strb	r2, [r3, #79]
+  95:.\main.c      ****     MyI2C_Regs.buffer[7] = 0x42;
+ 133              		.loc 1 95 0
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 5
+
+
+ 134 003c 0B4B     		ldr	r3, .L5
+ 135 003e 4222     		movs	r2, #66
+ 136 0040 83F85020 		strb	r2, [r3, #80]
+  96:.\main.c      ****     MyI2C_Regs.buffer[8] = 0x35;
+ 137              		.loc 1 96 0
+ 138 0044 094B     		ldr	r3, .L5
+ 139 0046 3522     		movs	r2, #53
+ 140 0048 83F85120 		strb	r2, [r3, #81]
+  97:.\main.c      ****     MyI2C_Regs.buffer[9] = 0x42;
+ 141              		.loc 1 97 0
+ 142 004c 074B     		ldr	r3, .L5
+ 143 004e 4222     		movs	r2, #66
+ 144 0050 83F85220 		strb	r2, [r3, #82]
+  98:.\main.c      ****     MyI2C_Regs.buffer[10] = 0x31;
+ 145              		.loc 1 98 0
+ 146 0054 054B     		ldr	r3, .L5
+ 147 0056 3122     		movs	r2, #49
+ 148 0058 83F85320 		strb	r2, [r3, #83]
+  99:.\main.c      ****     MyI2C_Regs.buffer[11] = 0x77;
+ 149              		.loc 1 99 0
+ 150 005c 034B     		ldr	r3, .L5
+ 151 005e 7722     		movs	r2, #119
+ 152 0060 83F85420 		strb	r2, [r3, #84]
+ 100:.\main.c      **** }
+ 153              		.loc 1 100 0
+ 154 0064 BD46     		mov	sp, r7
+ 155              		.cfi_def_cfa_register 13
+ 156              		@ sp needed
+ 157 0066 5DF8047B 		ldr	r7, [sp], #4
+ 158              		.cfi_restore 7
+ 159              		.cfi_def_cfa_offset 0
+ 160 006a 7047     		bx	lr
+ 161              	.L6:
+ 162              		.align	2
+ 163              	.L5:
+ 164 006c 00000000 		.word	MyI2C_Regs
+ 165              		.cfi_endproc
+ 166              	.LFE64:
+ 167              		.size	SetBuffer, .-SetBuffer
+ 168              		.section	.text.ClearBuffer,"ax",%progbits
+ 169              		.align	2
+ 170              		.global	ClearBuffer
+ 171              		.thumb
+ 172              		.thumb_func
+ 173              		.type	ClearBuffer, %function
+ 174              	ClearBuffer:
+ 175              	.LFB65:
+ 101:.\main.c      **** 
+ 102:.\main.c      **** void ClearBuffer()
+ 103:.\main.c      **** {
+ 176              		.loc 1 103 0
+ 177              		.cfi_startproc
+ 178              		@ args = 0, pretend = 0, frame = 8
+ 179              		@ frame_needed = 1, uses_anonymous_args = 0
+ 180 0000 80B5     		push	{r7, lr}
+ 181              		.cfi_def_cfa_offset 8
+ 182              		.cfi_offset 7, -8
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 6
+
+
+ 183              		.cfi_offset 14, -4
+ 184 0002 82B0     		sub	sp, sp, #8
+ 185              		.cfi_def_cfa_offset 16
+ 186 0004 00AF     		add	r7, sp, #0
+ 187              		.cfi_def_cfa_register 7
+ 104:.\main.c      ****     int i;
+ 105:.\main.c      ****     for(i=0; i < BUFFER_LENGTH; i++)
+ 188              		.loc 1 105 0
+ 189 0006 0023     		movs	r3, #0
+ 190 0008 7B60     		str	r3, [r7, #4]
+ 191 000a 0BE0     		b	.L8
+ 192              	.L9:
+ 106:.\main.c      ****     {
+ 107:.\main.c      ****         MyI2C_Regs.buffer[i] = 0;
+ 193              		.loc 1 107 0 discriminator 3
+ 194 000c 084A     		ldr	r2, .L10
+ 195 000e 7B68     		ldr	r3, [r7, #4]
+ 196 0010 1344     		add	r3, r3, r2
+ 197 0012 4833     		adds	r3, r3, #72
+ 198 0014 0022     		movs	r2, #0
+ 199 0016 5A70     		strb	r2, [r3, #1]
+ 108:.\main.c      ****         CyDelayUs(1u); //need little delay for Release
+ 200              		.loc 1 108 0 discriminator 3
+ 201 0018 0120     		movs	r0, #1
+ 202 001a FFF7FEFF 		bl	CyDelayUs
+ 105:.\main.c      ****     {
+ 203              		.loc 1 105 0 discriminator 3
+ 204 001e 7B68     		ldr	r3, [r7, #4]
+ 205 0020 0133     		adds	r3, r3, #1
+ 206 0022 7B60     		str	r3, [r7, #4]
+ 207              	.L8:
+ 105:.\main.c      ****     {
+ 208              		.loc 1 105 0 is_stmt 0 discriminator 1
+ 209 0024 7B68     		ldr	r3, [r7, #4]
+ 210 0026 132B     		cmp	r3, #19
+ 211 0028 F0DD     		ble	.L9
+ 109:.\main.c      ****     }
+ 110:.\main.c      **** }
+ 212              		.loc 1 110 0 is_stmt 1
+ 213 002a 0837     		adds	r7, r7, #8
+ 214              		.cfi_def_cfa_offset 8
+ 215 002c BD46     		mov	sp, r7
+ 216              		.cfi_def_cfa_register 13
+ 217              		@ sp needed
+ 218 002e 80BD     		pop	{r7, pc}
+ 219              	.L11:
+ 220              		.align	2
+ 221              	.L10:
+ 222 0030 00000000 		.word	MyI2C_Regs
+ 223              		.cfi_endproc
+ 224              	.LFE65:
+ 225              		.size	ClearBuffer, .-ClearBuffer
+ 226              		.section	.text.SendHID_SP533,"ax",%progbits
+ 227              		.align	2
+ 228              		.global	SendHID_SP533
+ 229              		.thumb
+ 230              		.thumb_func
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 7
+
+
+ 231              		.type	SendHID_SP533, %function
+ 232              	SendHID_SP533:
+ 233              	.LFB66:
+ 111:.\main.c      **** 
+ 112:.\main.c      **** /***********************************************
+ 113:.\main.c      ****             Weigand -HID Protocol
+ 114:.\main.c      ****   Procedure to send weigand data in serial format
+ 115:.\main.c      ****   Baud Rate: 57600 Databits: 8 
+ 116:.\main.c      ****   Stop Bits: 2 Parity: Even 
+ 117:.\main.c      ****   Bits to transmit : 18 bytes
+ 118:.\main.c      ****   Zero paddings to the left before the weigand data 
+ 119:.\main.c      **** 
+ 120:.\main.c      **** ************************************************/
+ 121:.\main.c      **** 
+ 122:.\main.c      **** void SendHID_SP533()
+ 123:.\main.c      **** {
+ 234              		.loc 1 123 0
+ 235              		.cfi_startproc
+ 236              		@ args = 0, pretend = 0, frame = 8
+ 237              		@ frame_needed = 1, uses_anonymous_args = 0
+ 238 0000 80B5     		push	{r7, lr}
+ 239              		.cfi_def_cfa_offset 8
+ 240              		.cfi_offset 7, -8
+ 241              		.cfi_offset 14, -4
+ 242 0002 82B0     		sub	sp, sp, #8
+ 243              		.cfi_def_cfa_offset 16
+ 244 0004 00AF     		add	r7, sp, #0
+ 245              		.cfi_def_cfa_register 7
+ 124:.\main.c      ****     int len;
+ 125:.\main.c      ****     len = (MyI2C_Regs.data_length[0] << 8) + MyI2C_Regs.data_length[1];
+ 246              		.loc 1 125 0
+ 247 0006 184B     		ldr	r3, .L14
+ 248 0008 DB79     		ldrb	r3, [r3, #7]	@ zero_extendqisi2
+ 249 000a 1B02     		lsls	r3, r3, #8
+ 250 000c 164A     		ldr	r2, .L14
+ 251 000e 127A     		ldrb	r2, [r2, #8]	@ zero_extendqisi2
+ 252 0010 1344     		add	r3, r3, r2
+ 253 0012 7B60     		str	r3, [r7, #4]
+ 126:.\main.c      ****     Clock_5_SetDividerValue(CLKDV_9600); //set the baud rate to default 9600
+ 254              		.loc 1 126 0
+ 255 0014 4FF41C70 		mov	r0, #624
+ 256 0018 0121     		movs	r1, #1
+ 257 001a FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 127:.\main.c      ****     UART_ACS_Init();
+ 258              		.loc 1 127 0
+ 259 001e FFF7FEFF 		bl	UART_ACS_Init
+ 128:.\main.c      ****     CyDelay(20);
+ 260              		.loc 1 128 0
+ 261 0022 1420     		movs	r0, #20
+ 262 0024 FFF7FEFF 		bl	CyDelay
+ 129:.\main.c      ****     Mode_Sel_ACS_Write(0); //set io chip to RS232
+ 263              		.loc 1 129 0
+ 264 0028 0020     		movs	r0, #0
+ 265 002a FFF7FEFF 		bl	Mode_Sel_ACS_Write
+ 130:.\main.c      ****     TX_EN_Write(1);
+ 266              		.loc 1 130 0
+ 267 002e 0120     		movs	r0, #1
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 8
+
+
+ 268 0030 FFF7FEFF 		bl	TX_EN_Write
+ 131:.\main.c      ****     UART_ACS_LoadTxConfig();
+ 269              		.loc 1 131 0
+ 270 0034 FFF7FEFF 		bl	UART_ACS_LoadTxConfig
+ 132:.\main.c      ****     CyDelay(1); //Driver Output Enable Time, do not reduce. 
+ 271              		.loc 1 132 0
+ 272 0038 0120     		movs	r0, #1
+ 273 003a FFF7FEFF 		bl	CyDelay
+ 133:.\main.c      ****     UART_ACS_PutArray(MyI2C_Regs.buffer,len/8); 
+ 274              		.loc 1 133 0
+ 275 003e 7B68     		ldr	r3, [r7, #4]
+ 276 0040 002B     		cmp	r3, #0
+ 277 0042 00DA     		bge	.L13
+ 278 0044 0733     		adds	r3, r3, #7
+ 279              	.L13:
+ 280 0046 DB10     		asrs	r3, r3, #3
+ 281 0048 DBB2     		uxtb	r3, r3
+ 282 004a 0848     		ldr	r0, .L14+4
+ 283 004c 1946     		mov	r1, r3
+ 284 004e FFF7FEFF 		bl	UART_ACS_PutArray
+ 134:.\main.c      ****     CyDelay(5); //minmum 4m
+ 285              		.loc 1 134 0
+ 286 0052 0520     		movs	r0, #5
+ 287 0054 FFF7FEFF 		bl	CyDelay
+ 135:.\main.c      ****     UART_ACS_LoadRxConfig();
+ 288              		.loc 1 135 0
+ 289 0058 FFF7FEFF 		bl	UART_ACS_LoadRxConfig
+ 136:.\main.c      ****     TX_EN_Write(0);
+ 290              		.loc 1 136 0
+ 291 005c 0020     		movs	r0, #0
+ 292 005e FFF7FEFF 		bl	TX_EN_Write
+ 137:.\main.c      **** }
+ 293              		.loc 1 137 0
+ 294 0062 0837     		adds	r7, r7, #8
+ 295              		.cfi_def_cfa_offset 8
+ 296 0064 BD46     		mov	sp, r7
+ 297              		.cfi_def_cfa_register 13
+ 298              		@ sp needed
+ 299 0066 80BD     		pop	{r7, pc}
+ 300              	.L15:
+ 301              		.align	2
+ 302              	.L14:
+ 303 0068 00000000 		.word	MyI2C_Regs
+ 304 006c 49000000 		.word	MyI2C_Regs+73
+ 305              		.cfi_endproc
+ 306              	.LFE66:
+ 307              		.size	SendHID_SP533, .-SendHID_SP533
+ 308              		.section	.text.SendHID,"ax",%progbits
+ 309              		.align	2
+ 310              		.global	SendHID
+ 311              		.thumb
+ 312              		.thumb_func
+ 313              		.type	SendHID, %function
+ 314              	SendHID:
+ 315              	.LFB67:
+ 138:.\main.c      **** 
+ 139:.\main.c      **** 
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 9
+
+
+ 140:.\main.c      **** void SendHID()
+ 141:.\main.c      **** {
+ 316              		.loc 1 141 0
+ 317              		.cfi_startproc
+ 318              		@ args = 0, pretend = 0, frame = 48
+ 319              		@ frame_needed = 1, uses_anonymous_args = 0
+ 320 0000 80B5     		push	{r7, lr}
+ 321              		.cfi_def_cfa_offset 8
+ 322              		.cfi_offset 7, -8
+ 323              		.cfi_offset 14, -4
+ 324 0002 8CB0     		sub	sp, sp, #48
+ 325              		.cfi_def_cfa_offset 56
+ 326 0004 00AF     		add	r7, sp, #0
+ 327              		.cfi_def_cfa_register 7
+ 142:.\main.c      ****     Tamper_Timer_Stop();
+ 328              		.loc 1 142 0
+ 329 0006 FFF7FEFF 		bl	Tamper_Timer_Stop
+ 143:.\main.c      ****     
+ 144:.\main.c      ****     char serialOut[20];
+ 145:.\main.c      **** 	char tmp;
+ 146:.\main.c      **** 	int i,j;
+ 147:.\main.c      **** 	int padBytes;
+ 148:.\main.c      ****     int xbytes;
+ 149:.\main.c      ****     int ybits;
+ 150:.\main.c      ****     MyI2C_Regs.data_length[0] = 0;
+ 330              		.loc 1 150 0
+ 331 000a 594B     		ldr	r3, .L22
+ 332 000c 0022     		movs	r2, #0
+ 333 000e DA71     		strb	r2, [r3, #7]
+ 151:.\main.c      ****     MyI2C_Regs.data_length[1] = 26;
+ 334              		.loc 1 151 0
+ 335 0010 574B     		ldr	r3, .L22
+ 336 0012 1A22     		movs	r2, #26
+ 337 0014 1A72     		strb	r2, [r3, #8]
+ 152:.\main.c      ****     xbytes =  MyI2C_Regs.data_length[1]/8;
+ 338              		.loc 1 152 0
+ 339 0016 564B     		ldr	r3, .L22
+ 340 0018 1B7A     		ldrb	r3, [r3, #8]	@ zero_extendqisi2
+ 341 001a DB08     		lsrs	r3, r3, #3
+ 342 001c DBB2     		uxtb	r3, r3
+ 343 001e 3B62     		str	r3, [r7, #32]
+ 153:.\main.c      ****     ybits =   MyI2C_Regs.data_length[1] - (xbytes*8);
+ 344              		.loc 1 153 0
+ 345 0020 534B     		ldr	r3, .L22
+ 346 0022 1B7A     		ldrb	r3, [r3, #8]	@ zero_extendqisi2
+ 347 0024 1946     		mov	r1, r3
+ 348 0026 3A6A     		ldr	r2, [r7, #32]
+ 349 0028 1346     		mov	r3, r2
+ 350 002a 5B07     		lsls	r3, r3, #29
+ 351 002c 9B1A     		subs	r3, r3, r2
+ 352 002e DB00     		lsls	r3, r3, #3
+ 353 0030 0B44     		add	r3, r3, r1
+ 354 0032 FB61     		str	r3, [r7, #28]
+ 154:.\main.c      ****     padBytes = 18  -  xbytes;
+ 355              		.loc 1 154 0
+ 356 0034 3B6A     		ldr	r3, [r7, #32]
+ 357 0036 C3F11203 		rsb	r3, r3, #18
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 10
+
+
+ 358 003a 7B62     		str	r3, [r7, #36]
+ 155:.\main.c      ****     
+ 156:.\main.c      ****     if(ybits  >  0)
+ 359              		.loc 1 156 0
+ 360 003c FB69     		ldr	r3, [r7, #28]
+ 361 003e 002B     		cmp	r3, #0
+ 362 0040 02DD     		ble	.L17
+ 157:.\main.c      **** 	   padBytes = padBytes - 1;
+ 363              		.loc 1 157 0
+ 364 0042 7B6A     		ldr	r3, [r7, #36]
+ 365 0044 013B     		subs	r3, r3, #1
+ 366 0046 7B62     		str	r3, [r7, #36]
+ 367              	.L17:
+ 158:.\main.c      ****     
+ 159:.\main.c      ****     for (i = 0;i < padBytes;i++)
+ 368              		.loc 1 159 0
+ 369 0048 0023     		movs	r3, #0
+ 370 004a FB62     		str	r3, [r7, #44]
+ 371 004c 0FE0     		b	.L18
+ 372              	.L19:
+ 160:.\main.c      ****     {
+ 161:.\main.c      ****        serialOut[i] = 0x00;
+ 373              		.loc 1 161 0 discriminator 3
+ 374 004e 3A1D     		adds	r2, r7, #4
+ 375 0050 FB6A     		ldr	r3, [r7, #44]
+ 376 0052 1344     		add	r3, r3, r2
+ 377 0054 0022     		movs	r2, #0
+ 378 0056 1A70     		strb	r2, [r3]
+ 162:.\main.c      ****        SU_PutChar(&s,serialOut[i]);
+ 379              		.loc 1 162 0 discriminator 3
+ 380 0058 3A1D     		adds	r2, r7, #4
+ 381 005a FB6A     		ldr	r3, [r7, #44]
+ 382 005c 1344     		add	r3, r3, r2
+ 383 005e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 384 0060 4448     		ldr	r0, .L22+4
+ 385 0062 1946     		mov	r1, r3
+ 386 0064 FFF7FEFF 		bl	SU_PutChar
+ 159:.\main.c      ****     {
+ 387              		.loc 1 159 0 discriminator 3
+ 388 0068 FB6A     		ldr	r3, [r7, #44]
+ 389 006a 0133     		adds	r3, r3, #1
+ 390 006c FB62     		str	r3, [r7, #44]
+ 391              	.L18:
+ 159:.\main.c      ****     {
+ 392              		.loc 1 159 0 is_stmt 0 discriminator 1
+ 393 006e FA6A     		ldr	r2, [r7, #44]
+ 394 0070 7B6A     		ldr	r3, [r7, #36]
+ 395 0072 9A42     		cmp	r2, r3
+ 396 0074 EBDB     		blt	.L19
+ 163:.\main.c      ****     }
+ 164:.\main.c      **** 	
+ 165:.\main.c      ****     serialOut[14] = 0x01 << ybits;
+ 397              		.loc 1 165 0 is_stmt 1
+ 398 0076 0122     		movs	r2, #1
+ 399 0078 FB69     		ldr	r3, [r7, #28]
+ 400 007a 02FA03F3 		lsl	r3, r2, r3
+ 401 007e DBB2     		uxtb	r3, r3
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 11
+
+
+ 402 0080 BB74     		strb	r3, [r7, #18]
+ 166:.\main.c      **** 	tmp = MyI2C_Regs.buffer[0] & (0xFF << (8-ybits));		
+ 403              		.loc 1 166 0
+ 404 0082 3B4B     		ldr	r3, .L22
+ 405 0084 93F84930 		ldrb	r3, [r3, #73]	@ zero_extendqisi2
+ 406 0088 D9B2     		uxtb	r1, r3
+ 407 008a FB69     		ldr	r3, [r7, #28]
+ 408 008c C3F10803 		rsb	r3, r3, #8
+ 409 0090 FF22     		movs	r2, #255
+ 410 0092 02FA03F3 		lsl	r3, r2, r3
+ 411 0096 DBB2     		uxtb	r3, r3
+ 412 0098 0A46     		mov	r2, r1
+ 413 009a 1340     		ands	r3, r3, r2
+ 414 009c DBB2     		uxtb	r3, r3
+ 415 009e FB76     		strb	r3, [r7, #27]
+ 167:.\main.c      ****     tmp = tmp >> (8-ybits);
+ 416              		.loc 1 167 0
+ 417 00a0 FA7E     		ldrb	r2, [r7, #27]	@ zero_extendqisi2
+ 418 00a2 FB69     		ldr	r3, [r7, #28]
+ 419 00a4 C3F10803 		rsb	r3, r3, #8
+ 420 00a8 42FA03F3 		asr	r3, r2, r3
+ 421 00ac FB76     		strb	r3, [r7, #27]
+ 168:.\main.c      **** 	serialOut[i] |= tmp; 
+ 422              		.loc 1 168 0
+ 423 00ae 3A1D     		adds	r2, r7, #4
+ 424 00b0 FB6A     		ldr	r3, [r7, #44]
+ 425 00b2 1344     		add	r3, r3, r2
+ 426 00b4 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 427 00b6 FB7E     		ldrb	r3, [r7, #27]
+ 428 00b8 1343     		orrs	r3, r3, r2
+ 429 00ba D9B2     		uxtb	r1, r3
+ 430 00bc 3A1D     		adds	r2, r7, #4
+ 431 00be FB6A     		ldr	r3, [r7, #44]
+ 432 00c0 1344     		add	r3, r3, r2
+ 433 00c2 0A46     		mov	r2, r1
+ 434 00c4 1A70     		strb	r2, [r3]
+ 169:.\main.c      **** 	SU_PutChar(&s,serialOut[i]);
+ 435              		.loc 1 169 0
+ 436 00c6 3A1D     		adds	r2, r7, #4
+ 437 00c8 FB6A     		ldr	r3, [r7, #44]
+ 438 00ca 1344     		add	r3, r3, r2
+ 439 00cc 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 440 00ce 2948     		ldr	r0, .L22+4
+ 441 00d0 1946     		mov	r1, r3
+ 442 00d2 FFF7FEFF 		bl	SU_PutChar
+ 170:.\main.c      **** 	i++;
+ 443              		.loc 1 170 0
+ 444 00d6 FB6A     		ldr	r3, [r7, #44]
+ 445 00d8 0133     		adds	r3, r3, #1
+ 446 00da FB62     		str	r3, [r7, #44]
+ 171:.\main.c      **** 		
+ 172:.\main.c      **** 	for (j = 1; j< (18- padBytes); j++)
+ 447              		.loc 1 172 0
+ 448 00dc 0123     		movs	r3, #1
+ 449 00de BB62     		str	r3, [r7, #40]
+ 450 00e0 35E0     		b	.L20
+ 451              	.L21:
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 12
+
+
+ 173:.\main.c      **** 	{
+ 174:.\main.c      **** 		serialOut[i] = (MyI2C_Regs.buffer[j-1] << ybits );// & (0xFF << ybits);
+ 452              		.loc 1 174 0 discriminator 3
+ 453 00e2 BB6A     		ldr	r3, [r7, #40]
+ 454 00e4 013B     		subs	r3, r3, #1
+ 455 00e6 224A     		ldr	r2, .L22
+ 456 00e8 1344     		add	r3, r3, r2
+ 457 00ea 93F84930 		ldrb	r3, [r3, #73]	@ zero_extendqisi2
+ 458 00ee 1A46     		mov	r2, r3
+ 459 00f0 FB69     		ldr	r3, [r7, #28]
+ 460 00f2 02FA03F3 		lsl	r3, r2, r3
+ 461 00f6 D9B2     		uxtb	r1, r3
+ 462 00f8 3A1D     		adds	r2, r7, #4
+ 463 00fa FB6A     		ldr	r3, [r7, #44]
+ 464 00fc 1344     		add	r3, r3, r2
+ 465 00fe 0A46     		mov	r2, r1
+ 466 0100 1A70     		strb	r2, [r3]
+ 175:.\main.c      **** 		tmp = (MyI2C_Regs.buffer[j] >> (8-ybits));// & (0xFF >> (8-ybits));
+ 467              		.loc 1 175 0 discriminator 3
+ 468 0102 1B4A     		ldr	r2, .L22
+ 469 0104 BB6A     		ldr	r3, [r7, #40]
+ 470 0106 1344     		add	r3, r3, r2
+ 471 0108 4833     		adds	r3, r3, #72
+ 472 010a 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 473 010c 1A46     		mov	r2, r3
+ 474 010e FB69     		ldr	r3, [r7, #28]
+ 475 0110 C3F10803 		rsb	r3, r3, #8
+ 476 0114 42FA03F3 		asr	r3, r2, r3
+ 477 0118 FB76     		strb	r3, [r7, #27]
+ 176:.\main.c      **** 		serialOut[i] |= tmp;
+ 478              		.loc 1 176 0 discriminator 3
+ 479 011a 3A1D     		adds	r2, r7, #4
+ 480 011c FB6A     		ldr	r3, [r7, #44]
+ 481 011e 1344     		add	r3, r3, r2
+ 482 0120 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 483 0122 FB7E     		ldrb	r3, [r7, #27]
+ 484 0124 1343     		orrs	r3, r3, r2
+ 485 0126 D9B2     		uxtb	r1, r3
+ 486 0128 3A1D     		adds	r2, r7, #4
+ 487 012a FB6A     		ldr	r3, [r7, #44]
+ 488 012c 1344     		add	r3, r3, r2
+ 489 012e 0A46     		mov	r2, r1
+ 490 0130 1A70     		strb	r2, [r3]
+ 177:.\main.c      **** 		SU_PutChar(&s,serialOut[i]);
+ 491              		.loc 1 177 0 discriminator 3
+ 492 0132 3A1D     		adds	r2, r7, #4
+ 493 0134 FB6A     		ldr	r3, [r7, #44]
+ 494 0136 1344     		add	r3, r3, r2
+ 495 0138 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 496 013a 0E48     		ldr	r0, .L22+4
+ 497 013c 1946     		mov	r1, r3
+ 498 013e FFF7FEFF 		bl	SU_PutChar
+ 178:.\main.c      **** 		i++;
+ 499              		.loc 1 178 0 discriminator 3
+ 500 0142 FB6A     		ldr	r3, [r7, #44]
+ 501 0144 0133     		adds	r3, r3, #1
+ 502 0146 FB62     		str	r3, [r7, #44]
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 13
+
+
+ 172:.\main.c      **** 	{
+ 503              		.loc 1 172 0 discriminator 3
+ 504 0148 BB6A     		ldr	r3, [r7, #40]
+ 505 014a 0133     		adds	r3, r3, #1
+ 506 014c BB62     		str	r3, [r7, #40]
+ 507              	.L20:
+ 172:.\main.c      **** 	{
+ 508              		.loc 1 172 0 is_stmt 0 discriminator 1
+ 509 014e 7B6A     		ldr	r3, [r7, #36]
+ 510 0150 C3F11202 		rsb	r2, r3, #18
+ 511 0154 BB6A     		ldr	r3, [r7, #40]
+ 512 0156 9A42     		cmp	r2, r3
+ 513 0158 C3DC     		bgt	.L21
+ 179:.\main.c      **** 	}
+ 180:.\main.c      ****     
+ 181:.\main.c      ****     Tamper_Timer_Start();    
+ 514              		.loc 1 181 0 is_stmt 1
+ 515 015a FFF7FEFF 		bl	Tamper_Timer_Start
+ 182:.\main.c      ****     serialOut[i] = 0x00;
+ 516              		.loc 1 182 0
+ 517 015e 3A1D     		adds	r2, r7, #4
+ 518 0160 FB6A     		ldr	r3, [r7, #44]
+ 519 0162 1344     		add	r3, r3, r2
+ 520 0164 0022     		movs	r2, #0
+ 521 0166 1A70     		strb	r2, [r3]
+ 183:.\main.c      **** }
+ 522              		.loc 1 183 0
+ 523 0168 3037     		adds	r7, r7, #48
+ 524              		.cfi_def_cfa_offset 8
+ 525 016a BD46     		mov	sp, r7
+ 526              		.cfi_def_cfa_register 13
+ 527              		@ sp needed
+ 528 016c 80BD     		pop	{r7, pc}
+ 529              	.L23:
+ 530 016e 00BF     		.align	2
+ 531              	.L22:
+ 532 0170 00000000 		.word	MyI2C_Regs
+ 533 0174 00000000 		.word	s
+ 534              		.cfi_endproc
+ 535              	.LFE67:
+ 536              		.size	SendHID, .-SendHID
+ 537              		.section	.text.InitOSDP,"ax",%progbits
+ 538              		.align	2
+ 539              		.global	InitOSDP
+ 540              		.thumb
+ 541              		.thumb_func
+ 542              		.type	InitOSDP, %function
+ 543              	InitOSDP:
+ 544              	.LFB68:
+ 184:.\main.c      **** 
+ 185:.\main.c      **** 
+ 186:.\main.c      **** void InitOSDP(){
+ 545              		.loc 1 186 0
+ 546              		.cfi_startproc
+ 547              		@ args = 0, pretend = 0, frame = 0
+ 548              		@ frame_needed = 1, uses_anonymous_args = 0
+ 549 0000 80B5     		push	{r7, lr}
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 14
+
+
+ 550              		.cfi_def_cfa_offset 8
+ 551              		.cfi_offset 7, -8
+ 552              		.cfi_offset 14, -4
+ 553 0002 00AF     		add	r7, sp, #0
+ 554              		.cfi_def_cfa_register 7
+ 187:.\main.c      ****     
+ 188:.\main.c      ****     //initialize the OSDP
+ 189:.\main.c      ****     Clock_5_Enable();
+ 555              		.loc 1 189 0
+ 556 0004 FFF7FEFF 		bl	Clock_5_Start
+ 190:.\main.c      ****     Clock_5_SetDividerValue(CLKDV_9600); //set the baud rate to default 9600
+ 557              		.loc 1 190 0
+ 558 0008 4FF41C70 		mov	r0, #624
+ 559 000c 0121     		movs	r1, #1
+ 560 000e FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 191:.\main.c      ****     UART_ACS_Start();
+ 561              		.loc 1 191 0
+ 562 0012 FFF7FEFF 		bl	UART_ACS_Start
+ 192:.\main.c      ****     ClearOsdpBuffer();
+ 563              		.loc 1 192 0
+ 564 0016 FFF7FEFF 		bl	ClearOsdpBuffer
+ 193:.\main.c      ****     
+ 194:.\main.c      ****     Clock_6_Enable();
+ 565              		.loc 1 194 0
+ 566 001a FFF7FEFF 		bl	Clock_6_Start
+ 195:.\main.c      ****     Clock_6_SetDividerValue(CLKDV_9600); //set the baud rate to default 9600
+ 567              		.loc 1 195 0
+ 568 001e 4FF41C70 		mov	r0, #624
+ 569 0022 0121     		movs	r1, #1
+ 570 0024 FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 196:.\main.c      ****     UART_READER_Start();
+ 571              		.loc 1 196 0
+ 572 0028 FFF7FEFF 		bl	UART_READER_Start
+ 197:.\main.c      ****     ClearOsdpReaderBuffer();
+ 573              		.loc 1 197 0
+ 574 002c FFF7FEFF 		bl	ClearOsdpReaderBuffer
+ 198:.\main.c      ****     
+ 199:.\main.c      ****     isr_keepalive_StartEx(KeepAliveInterruptHandler);
+ 575              		.loc 1 199 0
+ 576 0030 0348     		ldr	r0, .L25
+ 577 0032 FFF7FEFF 		bl	isr_keepalive_StartEx
+ 200:.\main.c      ****     OSDPReaderTimer_Start();
+ 578              		.loc 1 200 0
+ 579 0036 FFF7FEFF 		bl	OSDPReaderTimer_Start
+ 201:.\main.c      ****     initOSDPReaderUART();
+ 580              		.loc 1 201 0
+ 581 003a FFF7FEFF 		bl	initOSDPReaderUART
+ 202:.\main.c      **** }
+ 582              		.loc 1 202 0
+ 583 003e 80BD     		pop	{r7, pc}
+ 584              	.L26:
+ 585              		.align	2
+ 586              	.L25:
+ 587 0040 00000000 		.word	KeepAliveInterruptHandler
+ 588              		.cfi_endproc
+ 589              	.LFE68:
+ 590              		.size	InitOSDP, .-InitOSDP
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 15
+
+
+ 591              		.section	.text.displayError,"ax",%progbits
+ 592              		.align	2
+ 593              		.global	displayError
+ 594              		.thumb
+ 595              		.thumb_func
+ 596              		.type	displayError, %function
+ 597              	displayError:
+ 598              	.LFB69:
+ 203:.\main.c      **** 
+ 204:.\main.c      ****  /***********************************************
+ 205:.\main.c      ****      Debug Code : Software UART for PAC Protocol
+ 206:.\main.c      ****   ************************************************
+ 207:.\main.c      ****  void SendPACTest()
+ 208:.\main.c      **** {
+ 209:.\main.c      ****       int i,j;
+ 210:.\main.c      ****     LED_GRN_Write(ON);
+ 211:.\main.c      ****     LED_YEL_Write(OFF);
+ 212:.\main.c      ****   
+ 213:.\main.c      ****     for( i = 0; i < 20; i++)
+ 214:.\main.c      ****     {
+ 215:.\main.c      ****         for( j= 0; j < 12 ; j++)
+ 216:.\main.c      ****         {
+ 217:.\main.c      ****             char c = MyI2C_Regs.buffer[j];
+ 218:.\main.c      ****          SU_PutChar(&s,c);
+ 219:.\main.c      ****         }
+ 220:.\main.c      ****     }
+ 221:.\main.c      **** 
+ 222:.\main.c      ****     LED_GRN_Write(OFF);
+ 223:.\main.c      ****     LED_YEL_Write(OFF);
+ 224:.\main.c      **** }
+ 225:.\main.c      **** 
+ 226:.\main.c      **** ****************************************************/
+ 227:.\main.c      **** 
+ 228:.\main.c      **** void displayError(int n){
+ 599              		.loc 1 228 0
+ 600              		.cfi_startproc
+ 601              		@ args = 0, pretend = 0, frame = 16
+ 602              		@ frame_needed = 1, uses_anonymous_args = 0
+ 603 0000 80B5     		push	{r7, lr}
+ 604              		.cfi_def_cfa_offset 8
+ 605              		.cfi_offset 7, -8
+ 606              		.cfi_offset 14, -4
+ 607 0002 84B0     		sub	sp, sp, #16
+ 608              		.cfi_def_cfa_offset 24
+ 609 0004 00AF     		add	r7, sp, #0
+ 610              		.cfi_def_cfa_register 7
+ 611 0006 7860     		str	r0, [r7, #4]
+ 229:.\main.c      **** int i;
+ 230:.\main.c      ****     for (i = 0; i< n; i++) 
+ 612              		.loc 1 230 0
+ 613 0008 0023     		movs	r3, #0
+ 614 000a FB60     		str	r3, [r7, #12]
+ 615 000c 10E0     		b	.L28
+ 616              	.L29:
+ 231:.\main.c      ****     {
+ 232:.\main.c      ****         LED_RED_Write(OFF); //display error
+ 617              		.loc 1 232 0 discriminator 3
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 16
+
+
+ 618 000e 0120     		movs	r0, #1
+ 619 0010 FFF7FEFF 		bl	LED_RED_Write
+ 233:.\main.c      ****         CyDelay(300);
+ 620              		.loc 1 233 0 discriminator 3
+ 621 0014 4FF49670 		mov	r0, #300
+ 622 0018 FFF7FEFF 		bl	CyDelay
+ 234:.\main.c      ****         LED_RED_Write(ON);
+ 623              		.loc 1 234 0 discriminator 3
+ 624 001c 0020     		movs	r0, #0
+ 625 001e FFF7FEFF 		bl	LED_RED_Write
+ 235:.\main.c      ****         CyDelay(300);
+ 626              		.loc 1 235 0 discriminator 3
+ 627 0022 4FF49670 		mov	r0, #300
+ 628 0026 FFF7FEFF 		bl	CyDelay
+ 230:.\main.c      ****     {
+ 629              		.loc 1 230 0 discriminator 3
+ 630 002a FB68     		ldr	r3, [r7, #12]
+ 631 002c 0133     		adds	r3, r3, #1
+ 632 002e FB60     		str	r3, [r7, #12]
+ 633              	.L28:
+ 230:.\main.c      ****     {
+ 634              		.loc 1 230 0 is_stmt 0 discriminator 1
+ 635 0030 FA68     		ldr	r2, [r7, #12]
+ 636 0032 7B68     		ldr	r3, [r7, #4]
+ 637 0034 9A42     		cmp	r2, r3
+ 638 0036 EADB     		blt	.L29
+ 236:.\main.c      ****     } 
+ 237:.\main.c      **** }
+ 639              		.loc 1 237 0 is_stmt 1
+ 640 0038 1037     		adds	r7, r7, #16
+ 641              		.cfi_def_cfa_offset 8
+ 642 003a BD46     		mov	sp, r7
+ 643              		.cfi_def_cfa_register 13
+ 644              		@ sp needed
+ 645 003c 80BD     		pop	{r7, pc}
+ 646              		.cfi_endproc
+ 647              	.LFE69:
+ 648              		.size	displayError, .-displayError
+ 649              		.global	f2f_alive_message
+ 650 003e 00BF     		.data
+ 651              		.align	2
+ 652              		.type	f2f_alive_message, %object
+ 653              		.size	f2f_alive_message, 9
+ 654              	f2f_alive_message:
+ 655 0000 00       		.byte	0
+ 656 0001 34       		.byte	52
+ 657 0002 E3       		.byte	-29
+ 658 0003 FD       		.byte	-3
+ 659 0004 A0       		.byte	-96
+ 660 0005 00       		.byte	0
+ 661 0006 00       		.byte	0
+ 662 0007 00       		.byte	0
+ 663 0008 00       		.byte	0
+ 664              		.comm	TOC_port_init,1,1
+ 665              		.global	sendDebugMsg
+ 666              		.type	sendDebugMsg, %object
+ 667              		.size	sendDebugMsg, 1
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 17
+
+
+ 668              	sendDebugMsg:
+ 669 0009 01       		.byte	1
+ 670              		.comm	debug_msg_delay,4,4
+ 671 000a 0000     		.section	.text.HandleCommand,"ax",%progbits
+ 672              		.align	2
+ 673              		.global	HandleCommand
+ 674              		.thumb
+ 675              		.thumb_func
+ 676              		.type	HandleCommand, %function
+ 677              	HandleCommand:
+ 678              	.LFB70:
+ 238:.\main.c      **** 
+ 239:.\main.c      **** 
+ 240:.\main.c      **** unsigned char f2f_alive_message[] = {0x0,0x34,0xE3,0xFD,0xA0,0x0,0x0,0x0,0x0};
+ 241:.\main.c      **** char TOC_port_init;
+ 242:.\main.c      **** char sendDebugMsg = 1;  //yqh debug mode
+ 243:.\main.c      **** int debug_msg_delay;
+ 244:.\main.c      **** /****************************************
+ 245:.\main.c      ****    Method to handle commands
+ 246:.\main.c      ****    coming from device
+ 247:.\main.c      **** 
+ 248:.\main.c      **** *****************************************/
+ 249:.\main.c      **** void HandleCommand()
+ 250:.\main.c      **** {
+ 679              		.loc 1 250 0
+ 680              		.cfi_startproc
+ 681              		@ args = 0, pretend = 0, frame = 16
+ 682              		@ frame_needed = 1, uses_anonymous_args = 0
+ 683 0000 80B5     		push	{r7, lr}
+ 684              		.cfi_def_cfa_offset 8
+ 685              		.cfi_offset 7, -8
+ 686              		.cfi_offset 14, -4
+ 687 0002 84B0     		sub	sp, sp, #16
+ 688              		.cfi_def_cfa_offset 24
+ 689 0004 00AF     		add	r7, sp, #0
+ 690              		.cfi_def_cfa_register 7
+ 251:.\main.c      ****     char cmd;
+ 252:.\main.c      ****     int len;
+ 253:.\main.c      ****     int i;
+ 254:.\main.c      ****     
+ 255:.\main.c      ****     if (sendDebugMsg) //debug mode
+ 691              		.loc 1 255 0
+ 692 0006 CA4B     		ldr	r3, .L93
+ 693 0008 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 694 000a 002B     		cmp	r3, #0
+ 695 000c 6ED0     		beq	.L31
+ 256:.\main.c      ****     {
+ 257:.\main.c      ****         MyI2C_Regs.mode = BASE_TOC + MODE_WIEGAND;
+ 696              		.loc 1 257 0
+ 697 000e C94B     		ldr	r3, .L93+4
+ 698 0010 3822     		movs	r2, #56
+ 699 0012 DA70     		strb	r2, [r3, #3]
+ 258:.\main.c      ****         MyI2C_Regs.cmd = CMD_SEND_TOC_READER;
+ 700              		.loc 1 258 0
+ 701 0014 C74B     		ldr	r3, .L93+4
+ 702 0016 0422     		movs	r2, #4
+ 703 0018 9A70     		strb	r2, [r3, #2]
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 18
+
+
+ 259:.\main.c      **** //        MyI2C_Regs.buffer[0] = CMD_PING;
+ 260:.\main.c      **** //        MyI2C_Regs.buffer[0] = CMD_CLEAR_EM_DATA;
+ 261:.\main.c      **** //        MyI2C_Regs.buffer[1] = 0;
+ 262:.\main.c      **** //        MyI2C_Regs.buffer[2] = 0;
+ 263:.\main.c      ****         //B1 01 4E
+ 264:.\main.c      **** //        MyI2C_Regs.buffer[0]=0xB1;
+ 265:.\main.c      **** //        MyI2C_Regs.buffer[1]=0x01;
+ 266:.\main.c      **** //        MyI2C_Regs.buffer[2]=0x4E;
+ 267:.\main.c      **** //*
+ 268:.\main.c      ****         MyI2C_Regs.buffer[0]=0x6E;
+ 704              		.loc 1 268 0
+ 705 001a C64B     		ldr	r3, .L93+4
+ 706 001c 6E22     		movs	r2, #110
+ 707 001e 83F84920 		strb	r2, [r3, #73]
+ 269:.\main.c      ****         MyI2C_Regs.buffer[1]=22;
+ 708              		.loc 1 269 0
+ 709 0022 C44B     		ldr	r3, .L93+4
+ 710 0024 1622     		movs	r2, #22
+ 711 0026 83F84A20 		strb	r2, [r3, #74]
+ 270:.\main.c      ****         MyI2C_Regs.buffer[2]=0;
+ 712              		.loc 1 270 0
+ 713 002a C24B     		ldr	r3, .L93+4
+ 714 002c 0022     		movs	r2, #0
+ 715 002e 83F84B20 		strb	r2, [r3, #75]
+ 271:.\main.c      ****         MyI2C_Regs.buffer[3]=1;
+ 716              		.loc 1 271 0
+ 717 0032 C04B     		ldr	r3, .L93+4
+ 718 0034 0122     		movs	r2, #1
+ 719 0036 83F84C20 		strb	r2, [r3, #76]
+ 272:.\main.c      ****         MyI2C_Regs.buffer[4]=2;
+ 720              		.loc 1 272 0
+ 721 003a BE4B     		ldr	r3, .L93+4
+ 722 003c 0222     		movs	r2, #2
+ 723 003e 83F84D20 		strb	r2, [r3, #77]
+ 273:.\main.c      ****         MyI2C_Regs.buffer[5]=3;
+ 724              		.loc 1 273 0
+ 725 0042 BC4B     		ldr	r3, .L93+4
+ 726 0044 0322     		movs	r2, #3
+ 727 0046 83F84E20 		strb	r2, [r3, #78]
+ 274:.\main.c      ****         MyI2C_Regs.buffer[6]=4;
+ 728              		.loc 1 274 0
+ 729 004a BA4B     		ldr	r3, .L93+4
+ 730 004c 0422     		movs	r2, #4
+ 731 004e 83F84F20 		strb	r2, [r3, #79]
+ 275:.\main.c      ****         MyI2C_Regs.buffer[7]=5;
+ 732              		.loc 1 275 0
+ 733 0052 B84B     		ldr	r3, .L93+4
+ 734 0054 0522     		movs	r2, #5
+ 735 0056 83F85020 		strb	r2, [r3, #80]
+ 276:.\main.c      ****         MyI2C_Regs.buffer[8]=6;
+ 736              		.loc 1 276 0
+ 737 005a B64B     		ldr	r3, .L93+4
+ 738 005c 0622     		movs	r2, #6
+ 739 005e 83F85120 		strb	r2, [r3, #81]
+ 277:.\main.c      ****         MyI2C_Regs.buffer[9]=7;
+ 740              		.loc 1 277 0
+ 741 0062 B44B     		ldr	r3, .L93+4
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 19
+
+
+ 742 0064 0722     		movs	r2, #7
+ 743 0066 83F85220 		strb	r2, [r3, #82]
+ 278:.\main.c      ****         MyI2C_Regs.buffer[10]=8;
+ 744              		.loc 1 278 0
+ 745 006a B24B     		ldr	r3, .L93+4
+ 746 006c 0822     		movs	r2, #8
+ 747 006e 83F85320 		strb	r2, [r3, #83]
+ 279:.\main.c      ****         MyI2C_Regs.buffer[11]=9;
+ 748              		.loc 1 279 0
+ 749 0072 B04B     		ldr	r3, .L93+4
+ 750 0074 0922     		movs	r2, #9
+ 751 0076 83F85420 		strb	r2, [r3, #84]
+ 280:.\main.c      ****         MyI2C_Regs.buffer[12]=0x6E;
+ 752              		.loc 1 280 0
+ 753 007a AE4B     		ldr	r3, .L93+4
+ 754 007c 6E22     		movs	r2, #110
+ 755 007e 83F85520 		strb	r2, [r3, #85]
+ 281:.\main.c      ****         MyI2C_Regs.buffer[13]=0x0b;
+ 756              		.loc 1 281 0
+ 757 0082 AC4B     		ldr	r3, .L93+4
+ 758 0084 0B22     		movs	r2, #11
+ 759 0086 83F85620 		strb	r2, [r3, #86]
+ 282:.\main.c      ****         MyI2C_Regs.buffer[14]=0;
+ 760              		.loc 1 282 0
+ 761 008a AA4B     		ldr	r3, .L93+4
+ 762 008c 0022     		movs	r2, #0
+ 763 008e 83F85720 		strb	r2, [r3, #87]
+ 283:.\main.c      ****         MyI2C_Regs.buffer[15]=1;
+ 764              		.loc 1 283 0
+ 765 0092 A84B     		ldr	r3, .L93+4
+ 766 0094 0122     		movs	r2, #1
+ 767 0096 83F85820 		strb	r2, [r3, #88]
+ 284:.\main.c      ****         MyI2C_Regs.buffer[16]=2;
+ 768              		.loc 1 284 0
+ 769 009a A64B     		ldr	r3, .L93+4
+ 770 009c 0222     		movs	r2, #2
+ 771 009e 83F85920 		strb	r2, [r3, #89]
+ 285:.\main.c      ****         MyI2C_Regs.buffer[17]=3;
+ 772              		.loc 1 285 0
+ 773 00a2 A44B     		ldr	r3, .L93+4
+ 774 00a4 0322     		movs	r2, #3
+ 775 00a6 83F85A20 		strb	r2, [r3, #90]
+ 286:.\main.c      ****         MyI2C_Regs.buffer[18]=4;
+ 776              		.loc 1 286 0
+ 777 00aa A24B     		ldr	r3, .L93+4
+ 778 00ac 0422     		movs	r2, #4
+ 779 00ae 83F85B20 		strb	r2, [r3, #91]
+ 287:.\main.c      ****         MyI2C_Regs.buffer[19]=5;
+ 780              		.loc 1 287 0
+ 781 00b2 A04B     		ldr	r3, .L93+4
+ 782 00b4 0522     		movs	r2, #5
+ 783 00b6 83F85C20 		strb	r2, [r3, #92]
+ 288:.\main.c      ****         MyI2C_Regs.buffer[20]=6;
+ 784              		.loc 1 288 0
+ 785 00ba 9E4B     		ldr	r3, .L93+4
+ 786 00bc 0622     		movs	r2, #6
+ 787 00be 83F85D20 		strb	r2, [r3, #93]
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 20
+
+
+ 289:.\main.c      ****         MyI2C_Regs.buffer[21]=7;
+ 788              		.loc 1 289 0
+ 789 00c2 9C4B     		ldr	r3, .L93+4
+ 790 00c4 0722     		movs	r2, #7
+ 791 00c6 83F85E20 		strb	r2, [r3, #94]
+ 290:.\main.c      ****         MyI2C_Regs.buffer[22]=8;
+ 792              		.loc 1 290 0
+ 793 00ca 9A4B     		ldr	r3, .L93+4
+ 794 00cc 0822     		movs	r2, #8
+ 795 00ce 83F85F20 		strb	r2, [r3, #95]
+ 291:.\main.c      ****         MyI2C_Regs.buffer[23]=9;
+ 796              		.loc 1 291 0
+ 797 00d2 984B     		ldr	r3, .L93+4
+ 798 00d4 0922     		movs	r2, #9
+ 799 00d6 83F86020 		strb	r2, [r3, #96]
+ 292:.\main.c      **** //*/        
+ 293:.\main.c      ****         MyI2C_Regs.data_length[0] = 0;
+ 800              		.loc 1 293 0
+ 801 00da 964B     		ldr	r3, .L93+4
+ 802 00dc 0022     		movs	r2, #0
+ 803 00de DA71     		strb	r2, [r3, #7]
+ 294:.\main.c      **** //        MyI2C_Regs.data_length[1] = 2;
+ 295:.\main.c      **** //        MyI2C_Regs.data_length[1] = 3;
+ 296:.\main.c      ****         MyI2C_Regs.data_length[1] = 24;
+ 804              		.loc 1 296 0
+ 805 00e0 944B     		ldr	r3, .L93+4
+ 806 00e2 1822     		movs	r2, #24
+ 807 00e4 1A72     		strb	r2, [r3, #8]
+ 297:.\main.c      **** 
+ 298:.\main.c      ****         sendDebugMsg = 0;
+ 808              		.loc 1 298 0
+ 809 00e6 924B     		ldr	r3, .L93
+ 810 00e8 0022     		movs	r2, #0
+ 811 00ea 1A70     		strb	r2, [r3]
+ 812              	.L31:
+ 299:.\main.c      ****     }
+ 300:.\main.c      ****     
+ 301:.\main.c      ****     cmd = MyI2C_Regs.cmd;
+ 813              		.loc 1 301 0
+ 814 00ec 914B     		ldr	r3, .L93+4
+ 815 00ee 9B78     		ldrb	r3, [r3, #2]
+ 816 00f0 FB72     		strb	r3, [r7, #11]
+ 302:.\main.c      ****     run_mode = MyI2C_Regs.mode;
+ 817              		.loc 1 302 0
+ 818 00f2 904B     		ldr	r3, .L93+4
+ 819 00f4 DA78     		ldrb	r2, [r3, #3]	@ zero_extendqisi2
+ 820 00f6 904B     		ldr	r3, .L93+8
+ 821 00f8 1A70     		strb	r2, [r3]
+ 303:.\main.c      ****     len = (MyI2C_Regs.data_length[0] << 8) + MyI2C_Regs.data_length[1];
+ 822              		.loc 1 303 0
+ 823 00fa 8E4B     		ldr	r3, .L93+4
+ 824 00fc DB79     		ldrb	r3, [r3, #7]	@ zero_extendqisi2
+ 825 00fe 1B02     		lsls	r3, r3, #8
+ 826 0100 8C4A     		ldr	r2, .L93+4
+ 827 0102 127A     		ldrb	r2, [r2, #8]	@ zero_extendqisi2
+ 828 0104 1344     		add	r3, r3, r2
+ 829 0106 7B60     		str	r3, [r7, #4]
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 21
+
+
+ 304:.\main.c      ****     
+ 305:.\main.c      **** 
+ 306:.\main.c      ****     switch (run_mode)
+ 830              		.loc 1 306 0
+ 831 0108 8B4B     		ldr	r3, .L93+8
+ 832 010a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 833 010c 342B     		cmp	r3, #52
+ 834 010e 0BD0     		beq	.L33
+ 835 0110 342B     		cmp	r3, #52
+ 836 0112 04DC     		bgt	.L34
+ 837 0114 022B     		cmp	r3, #2
+ 838 0116 07D0     		beq	.L33
+ 839 0118 052B     		cmp	r3, #5
+ 840 011a 0FD0     		beq	.L35
+ 841 011c 22E0     		b	.L32
+ 842              	.L34:
+ 843 011e 662B     		cmp	r3, #102
+ 844 0120 02D0     		beq	.L33
+ 845 0122 692B     		cmp	r3, #105
+ 846 0124 0AD0     		beq	.L35
+ 847 0126 1DE0     		b	.L32
+ 848              	.L33:
+ 307:.\main.c      ****     {
+ 308:.\main.c      ****         case MODE_OSDP:
+ 309:.\main.c      ****         case MODE_OSDP + BASE_PASS:
+ 310:.\main.c      ****         case MODE_OSDP + BASE_TOC:
+ 311:.\main.c      ****             if(0==isr_keepalive_GetState())
+ 849              		.loc 1 311 0
+ 850 0128 FFF7FEFF 		bl	isr_keepalive_GetState
+ 851 012c 0346     		mov	r3, r0
+ 852 012e 002B     		cmp	r3, #0
+ 853 0130 01D1     		bne	.L36
+ 312:.\main.c      ****             {
+ 313:.\main.c      ****                 InitOSDP();
+ 854              		.loc 1 313 0
+ 855 0132 FFF7FEFF 		bl	InitOSDP
+ 856              	.L36:
+ 314:.\main.c      ****             }
+ 315:.\main.c      ****             HandleOSDP();
+ 857              		.loc 1 315 0
+ 858 0136 FFF7FEFF 		bl	HandleOSDP
+ 316:.\main.c      ****             return;
+ 859              		.loc 1 316 0
+ 860 013a BDE2     		b	.L30
+ 861              	.L35:
+ 317:.\main.c      ****         case MODE_F2F:
+ 318:.\main.c      ****         case MODE_F2F + BASE_PASS:
+ 319:.\main.c      ****             if (f2f_send_alive)
+ 862              		.loc 1 319 0
+ 863 013c 7F4B     		ldr	r3, .L93+12
+ 864 013e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 865 0140 002B     		cmp	r3, #0
+ 866 0142 0ED0     		beq	.L38
+ 320:.\main.c      ****             {
+ 321:.\main.c      ****                 SendF2F(f2f_alive_message,5);
+ 867              		.loc 1 321 0
+ 868 0144 7E48     		ldr	r0, .L93+16
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 22
+
+
+ 869 0146 0521     		movs	r1, #5
+ 870 0148 FFF7FEFF 		bl	SendF2F
+ 322:.\main.c      ****                 Tamper_Timer_ISR_Disable();
+ 871              		.loc 1 322 0
+ 872 014c FFF7FEFF 		bl	Tamper_Timer_ISR_Disable
+ 323:.\main.c      ****                 f2f_send_alive = 0;
+ 873              		.loc 1 323 0
+ 874 0150 7A4B     		ldr	r3, .L93+12
+ 875 0152 0022     		movs	r2, #0
+ 876 0154 1A70     		strb	r2, [r3]
+ 324:.\main.c      ****                 f2f_alive_delay_cnt = 0;
+ 877              		.loc 1 324 0
+ 878 0156 7B4B     		ldr	r3, .L93+20
+ 879 0158 0022     		movs	r2, #0
+ 880 015a 1A60     		str	r2, [r3]
+ 325:.\main.c      ****                 Tamper_Timer_ISR_Enable();
+ 881              		.loc 1 325 0
+ 882 015c FFF7FEFF 		bl	Tamper_Timer_ISR_Enable
+ 326:.\main.c      ****             }
+ 327:.\main.c      ****             break;
+ 883              		.loc 1 327 0
+ 884 0160 FFE7     		b	.L89
+ 885              	.L38:
+ 886              	.L89:
+ 887 0162 00BF     		nop
+ 888              	.L32:
+ 328:.\main.c      ****         default:;
+ 329:.\main.c      ****     }                        
+ 330:.\main.c      **** 	switch (cmd)
+ 889              		.loc 1 330 0
+ 890 0164 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 891 0166 042B     		cmp	r3, #4
+ 892 0168 00F2A682 		bhi	.L30
+ 893 016c 01A2     		adr	r2, .L40
+ 894 016e 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 895 0172 00BF     		.p2align 2
+ 896              	.L40:
+ 897 0174 89010000 		.word	.L39+1
+ 898 0178 B9060000 		.word	.L30+1
+ 899 017c 3B020000 		.word	.L42+1
+ 900 0180 03040000 		.word	.L43+1
+ 901 0184 4F060000 		.word	.L44+1
+ 902              		.p2align 1
+ 903              	.L39:
+ 331:.\main.c      ****     {
+ 332:.\main.c      ****         case CMD_NONE: //caution:Fang use CMD_NONE as the pass through read
+ 333:.\main.c      ****                 // process mode
+ 334:.\main.c      ****                 switch (run_mode)
+ 904              		.loc 1 334 0
+ 905 0188 6B4B     		ldr	r3, .L93+8
+ 906 018a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 907 018c 662B     		cmp	r3, #102
+ 908 018e 0DD0     		beq	.L46
+ 909 0190 662B     		cmp	r3, #102
+ 910 0192 04DC     		bgt	.L47
+ 911 0194 022B     		cmp	r3, #2
+ 912 0196 09D0     		beq	.L46
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 23
+
+
+ 913 0198 342B     		cmp	r3, #52
+ 914 019a 07D0     		beq	.L46
+ 335:.\main.c      ****                 {
+ 336:.\main.c      ****                     case MODE_OSDP:
+ 337:.\main.c      ****                     case MODE_OSDP + BASE_PASS:
+ 338:.\main.c      ****                     case MODE_OSDP + BASE_TOC:
+ 339:.\main.c      ****                         if(0==isr_keepalive_GetState())
+ 340:.\main.c      ****                         {
+ 341:.\main.c      ****                             InitOSDP();
+ 342:.\main.c      ****                         }
+ 343:.\main.c      ****                         HandleOSDP();
+ 344:.\main.c      ****                         return;
+ 345:.\main.c      ****                     case MODE_WIEGAND + BASE_PASS: //pass through
+ 346:.\main.c      ****                         LED_GRN_Write(OFF);
+ 347:.\main.c      ****                         for (i=0; i<10; i++){ //wait a while
+ 348:.\main.c      ****                             ReadWeigand(MyI2C_Regs.bits,1);
+ 349:.\main.c      ****                         }
+ 350:.\main.c      ****                         LED_GRN_Write(ON);
+ 351:.\main.c      ****                         break;
+ 352:.\main.c      ****                     case MODE_PAC + BASE_PASS:
+ 353:.\main.c      ****                         LED_GRN_Write(OFF);
+ 354:.\main.c      ****                         SetupUART(PAC);
+ 355:.\main.c      ****                         ReadPAC(1);
+ 356:.\main.c      ****                         LED_GRN_Write(ON);
+ 357:.\main.c      ****                         OptSelect_Write(1);
+ 358:.\main.c      ****                         break;
+ 359:.\main.c      ****                     case MODE_F2F + BASE_PASS:
+ 360:.\main.c      ****                         LED_GRN_Write(OFF);
+ 361:.\main.c      ****                         for (i=0; i<10; i++){ //wait a while
+ 362:.\main.c      ****                             ReadF2F(MyI2C_Regs.bits,1);
+ 363:.\main.c      ****                         }
+ 364:.\main.c      ****                         LED_GRN_Write(ON);
+ 365:.\main.c      ****                         break;
+ 366:.\main.c      ****                     default:;
+ 367:.\main.c      ****                 }                    
+ 368:.\main.c      ****                 break;
+ 915              		.loc 1 368 0
+ 916 019c 8CE2     		b	.L30
+ 917              	.L47:
+ 334:.\main.c      ****                 {
+ 918              		.loc 1 334 0
+ 919 019e 692B     		cmp	r3, #105
+ 920 01a0 34D0     		beq	.L48
+ 921 01a2 6A2B     		cmp	r3, #106
+ 922 01a4 0CD0     		beq	.L49
+ 923 01a6 682B     		cmp	r3, #104
+ 924 01a8 20D0     		beq	.L50
+ 925              		.loc 1 368 0
+ 926 01aa 85E2     		b	.L30
+ 927              	.L46:
+ 339:.\main.c      ****                         {
+ 928              		.loc 1 339 0
+ 929 01ac FFF7FEFF 		bl	isr_keepalive_GetState
+ 930 01b0 0346     		mov	r3, r0
+ 931 01b2 002B     		cmp	r3, #0
+ 932 01b4 01D1     		bne	.L51
+ 341:.\main.c      ****                         }
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 24
+
+
+ 933              		.loc 1 341 0
+ 934 01b6 FFF7FEFF 		bl	InitOSDP
+ 935              	.L51:
+ 343:.\main.c      ****                         return;
+ 936              		.loc 1 343 0
+ 937 01ba FFF7FEFF 		bl	HandleOSDP
+ 344:.\main.c      ****                     case MODE_WIEGAND + BASE_PASS: //pass through
+ 938              		.loc 1 344 0
+ 939 01be 7BE2     		b	.L30
+ 940              	.L49:
+ 346:.\main.c      ****                         for (i=0; i<10; i++){ //wait a while
+ 941              		.loc 1 346 0
+ 942 01c0 0120     		movs	r0, #1
+ 943 01c2 FFF7FEFF 		bl	LED_GRN_Write
+ 347:.\main.c      ****                             ReadWeigand(MyI2C_Regs.bits,1);
+ 944              		.loc 1 347 0
+ 945 01c6 0023     		movs	r3, #0
+ 946 01c8 FB60     		str	r3, [r7, #12]
+ 947 01ca 08E0     		b	.L52
+ 948              	.L53:
+ 348:.\main.c      ****                         }
+ 949              		.loc 1 348 0 discriminator 3
+ 950 01cc 594B     		ldr	r3, .L93+4
+ 951 01ce 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 952 01d0 1846     		mov	r0, r3
+ 953 01d2 0121     		movs	r1, #1
+ 954 01d4 FFF7FEFF 		bl	ReadWeigand
+ 347:.\main.c      ****                             ReadWeigand(MyI2C_Regs.bits,1);
+ 955              		.loc 1 347 0 discriminator 3
+ 956 01d8 FB68     		ldr	r3, [r7, #12]
+ 957 01da 0133     		adds	r3, r3, #1
+ 958 01dc FB60     		str	r3, [r7, #12]
+ 959              	.L52:
+ 347:.\main.c      ****                             ReadWeigand(MyI2C_Regs.bits,1);
+ 960              		.loc 1 347 0 is_stmt 0 discriminator 1
+ 961 01de FB68     		ldr	r3, [r7, #12]
+ 962 01e0 092B     		cmp	r3, #9
+ 963 01e2 F3DD     		ble	.L53
+ 350:.\main.c      ****                         break;
+ 964              		.loc 1 350 0 is_stmt 1
+ 965 01e4 0020     		movs	r0, #0
+ 966 01e6 FFF7FEFF 		bl	LED_GRN_Write
+ 351:.\main.c      ****                     case MODE_PAC + BASE_PASS:
+ 967              		.loc 1 351 0
+ 968 01ea 25E0     		b	.L45
+ 969              	.L50:
+ 353:.\main.c      ****                         SetupUART(PAC);
+ 970              		.loc 1 353 0
+ 971 01ec 0120     		movs	r0, #1
+ 972 01ee FFF7FEFF 		bl	LED_GRN_Write
+ 354:.\main.c      ****                         ReadPAC(1);
+ 973              		.loc 1 354 0
+ 974 01f2 0C20     		movs	r0, #12
+ 975 01f4 FFF7FEFF 		bl	SetupUART
+ 355:.\main.c      ****                         LED_GRN_Write(ON);
+ 976              		.loc 1 355 0
+ 977 01f8 0120     		movs	r0, #1
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 25
+
+
+ 978 01fa FFF7FEFF 		bl	ReadPAC
+ 356:.\main.c      ****                         OptSelect_Write(1);
+ 979              		.loc 1 356 0
+ 980 01fe 0020     		movs	r0, #0
+ 981 0200 FFF7FEFF 		bl	LED_GRN_Write
+ 357:.\main.c      ****                         break;
+ 982              		.loc 1 357 0
+ 983 0204 0120     		movs	r0, #1
+ 984 0206 FFF7FEFF 		bl	OptSelect_Write
+ 358:.\main.c      ****                     case MODE_F2F + BASE_PASS:
+ 985              		.loc 1 358 0
+ 986 020a 15E0     		b	.L45
+ 987              	.L48:
+ 360:.\main.c      ****                         for (i=0; i<10; i++){ //wait a while
+ 988              		.loc 1 360 0
+ 989 020c 0120     		movs	r0, #1
+ 990 020e FFF7FEFF 		bl	LED_GRN_Write
+ 361:.\main.c      ****                             ReadF2F(MyI2C_Regs.bits,1);
+ 991              		.loc 1 361 0
+ 992 0212 0023     		movs	r3, #0
+ 993 0214 FB60     		str	r3, [r7, #12]
+ 994 0216 08E0     		b	.L54
+ 995              	.L55:
+ 362:.\main.c      ****                         }
+ 996              		.loc 1 362 0 discriminator 3
+ 997 0218 464B     		ldr	r3, .L93+4
+ 998 021a 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 999 021c 1846     		mov	r0, r3
+ 1000 021e 0121     		movs	r1, #1
+ 1001 0220 FFF7FEFF 		bl	ReadF2F
+ 361:.\main.c      ****                             ReadF2F(MyI2C_Regs.bits,1);
+ 1002              		.loc 1 361 0 discriminator 3
+ 1003 0224 FB68     		ldr	r3, [r7, #12]
+ 1004 0226 0133     		adds	r3, r3, #1
+ 1005 0228 FB60     		str	r3, [r7, #12]
+ 1006              	.L54:
+ 361:.\main.c      ****                             ReadF2F(MyI2C_Regs.bits,1);
+ 1007              		.loc 1 361 0 is_stmt 0 discriminator 1
+ 1008 022a FB68     		ldr	r3, [r7, #12]
+ 1009 022c 092B     		cmp	r3, #9
+ 1010 022e F3DD     		ble	.L55
+ 364:.\main.c      ****                         break;
+ 1011              		.loc 1 364 0 is_stmt 1
+ 1012 0230 0020     		movs	r0, #0
+ 1013 0232 FFF7FEFF 		bl	LED_GRN_Write
+ 365:.\main.c      ****                     default:;
+ 1014              		.loc 1 365 0
+ 1015 0236 00BF     		nop
+ 1016              	.L45:
+ 1017              		.loc 1 368 0
+ 1018 0238 3EE2     		b	.L30
+ 1019              	.L42:
+ 369:.\main.c      ****         case CMD_BOOTLOAD:
+ 370:.\main.c      **** //                BootloadableI2C_Load();  //yqh debug mode
+ 371:.\main.c      ****                 break;
+ 372:.\main.c      ****         case CMD_READ:
+ 373:.\main.c      ****                 switch ( run_mode )
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 26
+
+
+ 1020              		.loc 1 373 0
+ 1021 023a 3F4B     		ldr	r3, .L93+8
+ 1022 023c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1023 023e 023B     		subs	r3, r3, #2
+ 1024 0240 362B     		cmp	r3, #54
+ 1025 0242 00F2DC80 		bhi	.L90
+ 1026 0246 01A2     		adr	r2, .L58
+ 1027 0248 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 1028              		.p2align 2
+ 1029              	.L58:
+ 1030 024c FF030000 		.word	.L90+1
+ 1031 0250 FF030000 		.word	.L90+1
+ 1032 0254 6D030000 		.word	.L59+1
+ 1033 0258 A1030000 		.word	.L60+1
+ 1034 025c 29030000 		.word	.L61+1
+ 1035 0260 FF030000 		.word	.L90+1
+ 1036 0264 FF030000 		.word	.L90+1
+ 1037 0268 FF030000 		.word	.L90+1
+ 1038 026c FF030000 		.word	.L90+1
+ 1039 0270 FF030000 		.word	.L90+1
+ 1040 0274 FF030000 		.word	.L90+1
+ 1041 0278 FF030000 		.word	.L90+1
+ 1042 027c FF030000 		.word	.L90+1
+ 1043 0280 FF030000 		.word	.L90+1
+ 1044 0284 FF030000 		.word	.L90+1
+ 1045 0288 FF030000 		.word	.L90+1
+ 1046 028c FF030000 		.word	.L90+1
+ 1047 0290 FF030000 		.word	.L90+1
+ 1048 0294 FF030000 		.word	.L90+1
+ 1049 0298 FF030000 		.word	.L90+1
+ 1050 029c FF030000 		.word	.L90+1
+ 1051 02a0 FF030000 		.word	.L90+1
+ 1052 02a4 FF030000 		.word	.L90+1
+ 1053 02a8 FF030000 		.word	.L90+1
+ 1054 02ac FF030000 		.word	.L90+1
+ 1055 02b0 FF030000 		.word	.L90+1
+ 1056 02b4 FF030000 		.word	.L90+1
+ 1057 02b8 FF030000 		.word	.L90+1
+ 1058 02bc FF030000 		.word	.L90+1
+ 1059 02c0 FF030000 		.word	.L90+1
+ 1060 02c4 FF030000 		.word	.L90+1
+ 1061 02c8 FF030000 		.word	.L90+1
+ 1062 02cc FF030000 		.word	.L90+1
+ 1063 02d0 FF030000 		.word	.L90+1
+ 1064 02d4 FF030000 		.word	.L90+1
+ 1065 02d8 FF030000 		.word	.L90+1
+ 1066 02dc FF030000 		.word	.L90+1
+ 1067 02e0 FF030000 		.word	.L90+1
+ 1068 02e4 FF030000 		.word	.L90+1
+ 1069 02e8 FF030000 		.word	.L90+1
+ 1070 02ec FF030000 		.word	.L90+1
+ 1071 02f0 FF030000 		.word	.L90+1
+ 1072 02f4 FF030000 		.word	.L90+1
+ 1073 02f8 FF030000 		.word	.L90+1
+ 1074 02fc FF030000 		.word	.L90+1
+ 1075 0300 FF030000 		.word	.L90+1
+ 1076 0304 FF030000 		.word	.L90+1
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 27
+
+
+ 1077 0308 FF030000 		.word	.L90+1
+ 1078 030c FF030000 		.word	.L90+1
+ 1079 0310 FF030000 		.word	.L90+1
+ 1080 0314 CD030000 		.word	.L62+1
+ 1081 0318 CD030000 		.word	.L62+1
+ 1082 031c CD030000 		.word	.L62+1
+ 1083 0320 CD030000 		.word	.L62+1
+ 1084 0324 CD030000 		.word	.L62+1
+ 1085              		.p2align 1
+ 1086              	.L61:
+ 374:.\main.c      ****                 {
+ 375:.\main.c      ****                     case MODE_WIEGAND:
+ 376:.\main.c      ****                         LED_GRN_Write(OFF);
+ 1087              		.loc 1 376 0
+ 1088 0328 0120     		movs	r0, #1
+ 1089 032a FFF7FEFF 		bl	LED_GRN_Write
+ 377:.\main.c      ****                         //ClearBuffer(); //seems better than without
+ 378:.\main.c      ****                         while(ReadWeigand(MyI2C_Regs.bits,0) == 0)
+ 1090              		.loc 1 378 0
+ 1091 032e 10E0     		b	.L63
+ 1092              	.L94:
+ 1093              		.align	2
+ 1094              	.L93:
+ 1095 0330 00000000 		.word	sendDebugMsg
+ 1096 0334 00000000 		.word	MyI2C_Regs
+ 1097 0338 00000000 		.word	run_mode
+ 1098 033c 00000000 		.word	f2f_send_alive
+ 1099 0340 00000000 		.word	f2f_alive_message
+ 1100 0344 00000000 		.word	f2f_alive_delay_cnt
+ 1101              	.L65:
+ 379:.\main.c      ****                         {
+ 380:.\main.c      ****                             if(MyI2C_Regs.cmd !=CMD_READ ) 
+ 1102              		.loc 1 380 0
+ 1103 0348 D24B     		ldr	r3, .L95
+ 1104 034a 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 1105 034c 022B     		cmp	r3, #2
+ 1106 034e 00D0     		beq	.L63
+ 381:.\main.c      ****                                 break;
+ 1107              		.loc 1 381 0
+ 1108 0350 08E0     		b	.L64
+ 1109              	.L63:
+ 378:.\main.c      ****                         {
+ 1110              		.loc 1 378 0
+ 1111 0352 D04B     		ldr	r3, .L95
+ 1112 0354 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 1113 0356 1846     		mov	r0, r3
+ 1114 0358 0021     		movs	r1, #0
+ 1115 035a FFF7FEFF 		bl	ReadWeigand
+ 1116 035e 0346     		mov	r3, r0
+ 1117 0360 002B     		cmp	r3, #0
+ 1118 0362 F1D0     		beq	.L65
+ 1119              	.L64:
+ 382:.\main.c      ****                         };
+ 383:.\main.c      ****                         LED_GRN_Write(ON);
+ 1120              		.loc 1 383 0
+ 1121 0364 0020     		movs	r0, #0
+ 1122 0366 FFF7FEFF 		bl	LED_GRN_Write
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 28
+
+
+ 384:.\main.c      ****                         break;
+ 1123              		.loc 1 384 0
+ 1124 036a 49E0     		b	.L66
+ 1125              	.L59:
+ 385:.\main.c      ****                     case MODE_PAC:
+ 386:.\main.c      ****                         LED_GRN_Write(OFF);
+ 1126              		.loc 1 386 0
+ 1127 036c 0120     		movs	r0, #1
+ 1128 036e FFF7FEFF 		bl	LED_GRN_Write
+ 387:.\main.c      ****                         ClearBuffer(); // added here - GRI 2/2/15
+ 1129              		.loc 1 387 0
+ 1130 0372 FFF7FEFF 		bl	ClearBuffer
+ 388:.\main.c      ****                         SetupUART(PAC);
+ 1131              		.loc 1 388 0
+ 1132 0376 0C20     		movs	r0, #12
+ 1133 0378 FFF7FEFF 		bl	SetupUART
+ 389:.\main.c      ****                         while(ReadPAC(0)== 0)
+ 1134              		.loc 1 389 0
+ 1135 037c 03E0     		b	.L67
+ 1136              	.L69:
+ 390:.\main.c      ****                         {
+ 391:.\main.c      ****                             if(cmd != CMD_READ )
+ 1137              		.loc 1 391 0
+ 1138 037e FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1139 0380 022B     		cmp	r3, #2
+ 1140 0382 00D0     		beq	.L67
+ 392:.\main.c      ****                             break;
+ 1141              		.loc 1 392 0
+ 1142 0384 05E0     		b	.L68
+ 1143              	.L67:
+ 389:.\main.c      ****                         while(ReadPAC(0)== 0)
+ 1144              		.loc 1 389 0
+ 1145 0386 0020     		movs	r0, #0
+ 1146 0388 FFF7FEFF 		bl	ReadPAC
+ 1147 038c 0346     		mov	r3, r0
+ 1148 038e 002B     		cmp	r3, #0
+ 1149 0390 F5D0     		beq	.L69
+ 1150              	.L68:
+ 393:.\main.c      ****                         }
+ 394:.\main.c      ****                         LED_GRN_Write(ON);
+ 1151              		.loc 1 394 0
+ 1152 0392 0020     		movs	r0, #0
+ 1153 0394 FFF7FEFF 		bl	LED_GRN_Write
+ 395:.\main.c      ****                         OptSelect_Write(1);
+ 1154              		.loc 1 395 0
+ 1155 0398 0120     		movs	r0, #1
+ 1156 039a FFF7FEFF 		bl	OptSelect_Write
+ 396:.\main.c      ****                         break;
+ 1157              		.loc 1 396 0
+ 1158 039e 2FE0     		b	.L66
+ 1159              	.L60:
+ 397:.\main.c      ****                     case MODE_F2F:
+ 398:.\main.c      ****                         LED_GRN_Write(OFF);
+ 1160              		.loc 1 398 0
+ 1161 03a0 0120     		movs	r0, #1
+ 1162 03a2 FFF7FEFF 		bl	LED_GRN_Write
+ 399:.\main.c      ****                         while(ReadF2F(MyI2C_Regs.bits,0) == 0)
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 29
+
+
+ 1163              		.loc 1 399 0
+ 1164 03a6 04E0     		b	.L70
+ 1165              	.L72:
+ 400:.\main.c      ****                         {
+ 401:.\main.c      ****                             if( MyI2C_Regs.cmd != CMD_READ ) 
+ 1166              		.loc 1 401 0
+ 1167 03a8 BA4B     		ldr	r3, .L95
+ 1168 03aa 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 1169 03ac 022B     		cmp	r3, #2
+ 1170 03ae 00D0     		beq	.L70
+ 402:.\main.c      ****                                 break;
+ 1171              		.loc 1 402 0
+ 1172 03b0 08E0     		b	.L71
+ 1173              	.L70:
+ 399:.\main.c      ****                         while(ReadF2F(MyI2C_Regs.bits,0) == 0)
+ 1174              		.loc 1 399 0
+ 1175 03b2 B84B     		ldr	r3, .L95
+ 1176 03b4 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 1177 03b6 1846     		mov	r0, r3
+ 1178 03b8 0021     		movs	r1, #0
+ 1179 03ba FFF7FEFF 		bl	ReadF2F
+ 1180 03be 0346     		mov	r3, r0
+ 1181 03c0 002B     		cmp	r3, #0
+ 1182 03c2 F1D0     		beq	.L72
+ 1183              	.L71:
+ 403:.\main.c      ****                         };
+ 404:.\main.c      ****                         LED_GRN_Write(ON);
+ 1184              		.loc 1 404 0
+ 1185 03c4 0020     		movs	r0, #0
+ 1186 03c6 FFF7FEFF 		bl	LED_GRN_Write
+ 405:.\main.c      ****                         break;
+ 1187              		.loc 1 405 0
+ 1188 03ca 19E0     		b	.L66
+ 1189              	.L62:
+ 406:.\main.c      ****                     case MODE_OSDP:
+ 407:.\main.c      ****                         break;
+ 408:.\main.c      ****                     case BASE_TOC + MODE_WIEGAND:
+ 409:.\main.c      ****                     case BASE_TOC + MODE_PAC:
+ 410:.\main.c      ****                     case BASE_TOC + MODE_F2F:
+ 411:.\main.c      ****                     case BASE_TOC + MODE_HID:
+ 412:.\main.c      ****                     case BASE_TOC + MODE_OSDP:
+ 413:.\main.c      ****                         if (card_in_buf == 0 && card_ack == 1)
+ 1190              		.loc 1 413 0
+ 1191 03cc B24B     		ldr	r3, .L95+4
+ 1192 03ce 1B68     		ldr	r3, [r3]
+ 1193 03d0 002B     		cmp	r3, #0
+ 1194 03d2 08D1     		bne	.L73
+ 1195              		.loc 1 413 0 is_stmt 0 discriminator 1
+ 1196 03d4 B14B     		ldr	r3, .L95+8
+ 1197 03d6 1B68     		ldr	r3, [r3]
+ 1198 03d8 012B     		cmp	r3, #1
+ 1199 03da 04D1     		bne	.L73
+ 414:.\main.c      ****                         {
+ 415:.\main.c      ****                             card_ack = 0;
+ 1200              		.loc 1 415 0 is_stmt 1
+ 1201 03dc AF4B     		ldr	r3, .L95+8
+ 1202 03de 0022     		movs	r2, #0
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 30
+
+
+ 1203 03e0 1A60     		str	r2, [r3]
+ 416:.\main.c      ****                             resetImgBuf();
+ 1204              		.loc 1 416 0
+ 1205 03e2 FFF7FEFF 		bl	resetImgBuf
+ 1206              	.L73:
+ 417:.\main.c      ****                         }
+ 418:.\main.c      ****                         if (TOC_port_init == 0)
+ 1207              		.loc 1 418 0
+ 1208 03e6 AE4B     		ldr	r3, .L95+12
+ 1209 03e8 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1210 03ea 002B     		cmp	r3, #0
+ 1211 03ec 01D1     		bne	.L74
+ 419:.\main.c      ****                         {
+ 420:.\main.c      ****                             initTocReaderUART();
+ 1212              		.loc 1 420 0
+ 1213 03ee FFF7FEFF 		bl	initTocReaderUART
+ 1214              	.L74:
+ 421:.\main.c      ****                         }
+ 422:.\main.c      ****                         TOC_port_init = 1;
+ 1215              		.loc 1 422 0
+ 1216 03f2 AB4B     		ldr	r3, .L95+12
+ 1217 03f4 0122     		movs	r2, #1
+ 1218 03f6 1A70     		strb	r2, [r3]
+ 423:.\main.c      ****                         ReadImageCard();
+ 1219              		.loc 1 423 0
+ 1220 03f8 FFF7FEFF 		bl	ReadImageCard
+ 424:.\main.c      ****                         break;
+ 1221              		.loc 1 424 0
+ 1222 03fc 00E0     		b	.L66
+ 1223              	.L90:
+ 425:.\main.c      ****                     default:
+ 426:.\main.c      ****                         break;
+ 1224              		.loc 1 426 0
+ 1225 03fe 00BF     		nop
+ 1226              	.L66:
+ 427:.\main.c      ****                 }
+ 428:.\main.c      ****                 break;
+ 1227              		.loc 1 428 0 discriminator 3
+ 1228 0400 5AE1     		b	.L30
+ 1229              	.L43:
+ 429:.\main.c      **** 	    case CMD_SEND:
+ 430:.\main.c      ****                 if (run_mode == 0) run_mode = MODE_WIEGAND; //garbage in
+ 1230              		.loc 1 430 0
+ 1231 0402 A84B     		ldr	r3, .L95+16
+ 1232 0404 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1233 0406 002B     		cmp	r3, #0
+ 1234 0408 02D1     		bne	.L75
+ 1235              		.loc 1 430 0 is_stmt 0 discriminator 1
+ 1236 040a A64B     		ldr	r3, .L95+16
+ 1237 040c 0622     		movs	r2, #6
+ 1238 040e 1A70     		strb	r2, [r3]
+ 1239              	.L75:
+ 431:.\main.c      ****                 if (MyI2C_Regs.bits == 0) MyI2C_Regs.bits = 0x1A; //garbage in, right out
+ 1240              		.loc 1 431 0 is_stmt 1
+ 1241 0410 A04B     		ldr	r3, .L95
+ 1242 0412 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 1243 0414 002B     		cmp	r3, #0
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 31
+
+
+ 1244 0416 02D1     		bne	.L76
+ 1245              		.loc 1 431 0 is_stmt 0 discriminator 1
+ 1246 0418 9E4B     		ldr	r3, .L95
+ 1247 041a 1A22     		movs	r2, #26
+ 1248 041c 5A72     		strb	r2, [r3, #9]
+ 1249              	.L76:
+ 432:.\main.c      ****                 switch( run_mode )
+ 1250              		.loc 1 432 0 is_stmt 1
+ 1251 041e A14B     		ldr	r3, .L95+16
+ 1252 0420 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1253 0422 033B     		subs	r3, r3, #3
+ 1254 0424 672B     		cmp	r3, #103
+ 1255 0426 00F21081 		bhi	.L91
+ 1256 042a 01A2     		adr	r2, .L79
+ 1257 042c 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 1258              		.p2align 2
+ 1259              	.L79:
+ 1260 0430 0D060000 		.word	.L78+1
+ 1261 0434 D1050000 		.word	.L80+1
+ 1262 0438 F1050000 		.word	.L81+1
+ 1263 043c 2B060000 		.word	.L82+1
+ 1264 0440 4B060000 		.word	.L91+1
+ 1265 0444 4B060000 		.word	.L91+1
+ 1266 0448 4B060000 		.word	.L91+1
+ 1267 044c 4B060000 		.word	.L91+1
+ 1268 0450 4B060000 		.word	.L91+1
+ 1269 0454 4B060000 		.word	.L91+1
+ 1270 0458 4B060000 		.word	.L91+1
+ 1271 045c 4B060000 		.word	.L91+1
+ 1272 0460 4B060000 		.word	.L91+1
+ 1273 0464 4B060000 		.word	.L91+1
+ 1274 0468 4B060000 		.word	.L91+1
+ 1275 046c 4B060000 		.word	.L91+1
+ 1276 0470 4B060000 		.word	.L91+1
+ 1277 0474 4B060000 		.word	.L91+1
+ 1278 0478 4B060000 		.word	.L91+1
+ 1279 047c 4B060000 		.word	.L91+1
+ 1280 0480 4B060000 		.word	.L91+1
+ 1281 0484 4B060000 		.word	.L91+1
+ 1282 0488 4B060000 		.word	.L91+1
+ 1283 048c 4B060000 		.word	.L91+1
+ 1284 0490 4B060000 		.word	.L91+1
+ 1285 0494 4B060000 		.word	.L91+1
+ 1286 0498 4B060000 		.word	.L91+1
+ 1287 049c 4B060000 		.word	.L91+1
+ 1288 04a0 4B060000 		.word	.L91+1
+ 1289 04a4 4B060000 		.word	.L91+1
+ 1290 04a8 4B060000 		.word	.L91+1
+ 1291 04ac 4B060000 		.word	.L91+1
+ 1292 04b0 4B060000 		.word	.L91+1
+ 1293 04b4 4B060000 		.word	.L91+1
+ 1294 04b8 4B060000 		.word	.L91+1
+ 1295 04bc 4B060000 		.word	.L91+1
+ 1296 04c0 4B060000 		.word	.L91+1
+ 1297 04c4 4B060000 		.word	.L91+1
+ 1298 04c8 4B060000 		.word	.L91+1
+ 1299 04cc 4B060000 		.word	.L91+1
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 32
+
+
+ 1300 04d0 4B060000 		.word	.L91+1
+ 1301 04d4 4B060000 		.word	.L91+1
+ 1302 04d8 4B060000 		.word	.L91+1
+ 1303 04dc 4B060000 		.word	.L91+1
+ 1304 04e0 4B060000 		.word	.L91+1
+ 1305 04e4 4B060000 		.word	.L91+1
+ 1306 04e8 4B060000 		.word	.L91+1
+ 1307 04ec 4B060000 		.word	.L91+1
+ 1308 04f0 4B060000 		.word	.L91+1
+ 1309 04f4 4B060000 		.word	.L91+1
+ 1310 04f8 0D060000 		.word	.L78+1
+ 1311 04fc D1050000 		.word	.L80+1
+ 1312 0500 F1050000 		.word	.L81+1
+ 1313 0504 2B060000 		.word	.L82+1
+ 1314 0508 4B060000 		.word	.L91+1
+ 1315 050c 4B060000 		.word	.L91+1
+ 1316 0510 4B060000 		.word	.L91+1
+ 1317 0514 4B060000 		.word	.L91+1
+ 1318 0518 4B060000 		.word	.L91+1
+ 1319 051c 4B060000 		.word	.L91+1
+ 1320 0520 4B060000 		.word	.L91+1
+ 1321 0524 4B060000 		.word	.L91+1
+ 1322 0528 4B060000 		.word	.L91+1
+ 1323 052c 4B060000 		.word	.L91+1
+ 1324 0530 4B060000 		.word	.L91+1
+ 1325 0534 4B060000 		.word	.L91+1
+ 1326 0538 4B060000 		.word	.L91+1
+ 1327 053c 4B060000 		.word	.L91+1
+ 1328 0540 4B060000 		.word	.L91+1
+ 1329 0544 4B060000 		.word	.L91+1
+ 1330 0548 4B060000 		.word	.L91+1
+ 1331 054c 4B060000 		.word	.L91+1
+ 1332 0550 4B060000 		.word	.L91+1
+ 1333 0554 4B060000 		.word	.L91+1
+ 1334 0558 4B060000 		.word	.L91+1
+ 1335 055c 4B060000 		.word	.L91+1
+ 1336 0560 4B060000 		.word	.L91+1
+ 1337 0564 4B060000 		.word	.L91+1
+ 1338 0568 4B060000 		.word	.L91+1
+ 1339 056c 4B060000 		.word	.L91+1
+ 1340 0570 4B060000 		.word	.L91+1
+ 1341 0574 4B060000 		.word	.L91+1
+ 1342 0578 4B060000 		.word	.L91+1
+ 1343 057c 4B060000 		.word	.L91+1
+ 1344 0580 4B060000 		.word	.L91+1
+ 1345 0584 4B060000 		.word	.L91+1
+ 1346 0588 4B060000 		.word	.L91+1
+ 1347 058c 4B060000 		.word	.L91+1
+ 1348 0590 4B060000 		.word	.L91+1
+ 1349 0594 4B060000 		.word	.L91+1
+ 1350 0598 4B060000 		.word	.L91+1
+ 1351 059c 4B060000 		.word	.L91+1
+ 1352 05a0 4B060000 		.word	.L91+1
+ 1353 05a4 4B060000 		.word	.L91+1
+ 1354 05a8 4B060000 		.word	.L91+1
+ 1355 05ac 4B060000 		.word	.L91+1
+ 1356 05b0 4B060000 		.word	.L91+1
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 33
+
+
+ 1357 05b4 4B060000 		.word	.L91+1
+ 1358 05b8 4B060000 		.word	.L91+1
+ 1359 05bc 4B060000 		.word	.L91+1
+ 1360 05c0 0D060000 		.word	.L78+1
+ 1361 05c4 D1050000 		.word	.L80+1
+ 1362 05c8 F1050000 		.word	.L81+1
+ 1363 05cc 2B060000 		.word	.L82+1
+ 1364              		.p2align 1
+ 1365              	.L80:
+ 433:.\main.c      ****                 {
+ 434:.\main.c      ****                     case MODE_PAC:
+ 435:.\main.c      ****                     case MODE_PAC + BASE_TOC:
+ 436:.\main.c      ****                     case MODE_PAC + BASE_PASS:
+ 437:.\main.c      ****                         LED_YEL_Write(OFF);
+ 1366              		.loc 1 437 0
+ 1367 05d0 0120     		movs	r0, #1
+ 1368 05d2 FFF7FEFF 		bl	LED_YEL_Write
+ 438:.\main.c      ****                         SetupUART(PAC);
+ 1369              		.loc 1 438 0
+ 1370 05d6 0C20     		movs	r0, #12
+ 1371 05d8 FFF7FEFF 		bl	SetupUART
+ 439:.\main.c      ****                         SendPAC(MyI2C_Regs.buffer);
+ 1372              		.loc 1 439 0
+ 1373 05dc 3248     		ldr	r0, .L95+20
+ 1374 05de FFF7FEFF 		bl	SendPAC
+ 440:.\main.c      ****                         MyI2C_Regs.cmd = CMD_NONE;
+ 1375              		.loc 1 440 0
+ 1376 05e2 2C4B     		ldr	r3, .L95
+ 1377 05e4 0022     		movs	r2, #0
+ 1378 05e6 9A70     		strb	r2, [r3, #2]
+ 441:.\main.c      ****                         LED_YEL_Write(ON);
+ 1379              		.loc 1 441 0
+ 1380 05e8 0020     		movs	r0, #0
+ 1381 05ea FFF7FEFF 		bl	LED_YEL_Write
+ 442:.\main.c      ****         				break;
+ 1382              		.loc 1 442 0
+ 1383 05ee 2DE0     		b	.L83
+ 1384              	.L81:
+ 443:.\main.c      ****                         
+ 444:.\main.c      ****                     case MODE_F2F:
+ 445:.\main.c      ****                     case MODE_F2F + BASE_TOC:
+ 446:.\main.c      ****                     case MODE_F2F + BASE_PASS:    
+ 447:.\main.c      ****                         LED_YEL_Write(OFF);
+ 1385              		.loc 1 447 0
+ 1386 05f0 0120     		movs	r0, #1
+ 1387 05f2 FFF7FEFF 		bl	LED_YEL_Write
+ 448:.\main.c      ****         				SendF2F(MyI2C_Regs.buffer, len);  //len is bytes
+ 1388              		.loc 1 448 0
+ 1389 05f6 2C48     		ldr	r0, .L95+20
+ 1390 05f8 7968     		ldr	r1, [r7, #4]
+ 1391 05fa FFF7FEFF 		bl	SendF2F
+ 449:.\main.c      ****                         MyI2C_Regs.cmd = CMD_NONE;
+ 1392              		.loc 1 449 0
+ 1393 05fe 254B     		ldr	r3, .L95
+ 1394 0600 0022     		movs	r2, #0
+ 1395 0602 9A70     		strb	r2, [r3, #2]
+ 450:.\main.c      ****                         LED_YEL_Write(ON);
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 34
+
+
+ 1396              		.loc 1 450 0
+ 1397 0604 0020     		movs	r0, #0
+ 1398 0606 FFF7FEFF 		bl	LED_YEL_Write
+ 451:.\main.c      ****         			    break;        
+ 1399              		.loc 1 451 0
+ 1400 060a 1FE0     		b	.L83
+ 1401              	.L78:
+ 452:.\main.c      ****                         
+ 453:.\main.c      ****                     case MODE_HID:
+ 454:.\main.c      ****                     case MODE_HID + BASE_TOC:
+ 455:.\main.c      ****                     case MODE_HID + BASE_PASS:
+ 456:.\main.c      ****                        LED_YEL_Write(OFF);
+ 1402              		.loc 1 456 0
+ 1403 060c 0120     		movs	r0, #1
+ 1404 060e FFF7FEFF 		bl	LED_YEL_Write
+ 457:.\main.c      ****                        OptSelect_Write(1);
+ 1405              		.loc 1 457 0
+ 1406 0612 0120     		movs	r0, #1
+ 1407 0614 FFF7FEFF 		bl	OptSelect_Write
+ 458:.\main.c      ****         //               SendHID_SP533();
+ 459:.\main.c      ****                        SendHID();
+ 1408              		.loc 1 459 0
+ 1409 0618 FFF7FEFF 		bl	SendHID
+ 460:.\main.c      ****                        MyI2C_Regs.cmd = CMD_NONE;
+ 1410              		.loc 1 460 0
+ 1411 061c 1D4B     		ldr	r3, .L95
+ 1412 061e 0022     		movs	r2, #0
+ 1413 0620 9A70     		strb	r2, [r3, #2]
+ 461:.\main.c      ****                        LED_YEL_Write(ON);
+ 1414              		.loc 1 461 0
+ 1415 0622 0020     		movs	r0, #0
+ 1416 0624 FFF7FEFF 		bl	LED_YEL_Write
+ 462:.\main.c      ****         			   break;
+ 1417              		.loc 1 462 0
+ 1418 0628 10E0     		b	.L83
+ 1419              	.L82:
+ 463:.\main.c      ****                     
+ 464:.\main.c      ****                     case MODE_WIEGAND:
+ 465:.\main.c      ****                     case MODE_WIEGAND + BASE_TOC:
+ 466:.\main.c      ****                     case MODE_WIEGAND + BASE_PASS:
+ 467:.\main.c      ****                         LED_YEL_Write(ON);
+ 1420              		.loc 1 467 0
+ 1421 062a 0020     		movs	r0, #0
+ 1422 062c FFF7FEFF 		bl	LED_YEL_Write
+ 468:.\main.c      ****             			SendWeigand(MyI2C_Regs.buffer, MyI2C_Regs.bits);
+ 1423              		.loc 1 468 0
+ 1424 0630 184B     		ldr	r3, .L95
+ 1425 0632 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 1426 0634 1C48     		ldr	r0, .L95+20
+ 1427 0636 1946     		mov	r1, r3
+ 1428 0638 FFF7FEFF 		bl	SendWeigand
+ 469:.\main.c      ****                         MyI2C_Regs.cmd = CMD_NONE;
+ 1429              		.loc 1 469 0
+ 1430 063c 154B     		ldr	r3, .L95
+ 1431 063e 0022     		movs	r2, #0
+ 1432 0640 9A70     		strb	r2, [r3, #2]
+ 470:.\main.c      ****                         LED_YEL_Write(OFF);
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 35
+
+
+ 1433              		.loc 1 470 0
+ 1434 0642 0120     		movs	r0, #1
+ 1435 0644 FFF7FEFF 		bl	LED_YEL_Write
+ 471:.\main.c      ****         				break;  
+ 1436              		.loc 1 471 0
+ 1437 0648 00E0     		b	.L83
+ 1438              	.L91:
+ 472:.\main.c      ****                     default:
+ 473:.\main.c      ****                         //displayError(100);
+ 474:.\main.c      ****                         break;
+ 1439              		.loc 1 474 0
+ 1440 064a 00BF     		nop
+ 1441              	.L83:
+ 475:.\main.c      ****                 }
+ 476:.\main.c      ****                 break;
+ 1442              		.loc 1 476 0 discriminator 6
+ 1443 064c 34E0     		b	.L30
+ 1444              	.L44:
+ 477:.\main.c      ****         case CMD_SEND_TOC_READER:
+ 478:.\main.c      ****                 switch ( run_mode )
+ 1445              		.loc 1 478 0
+ 1446 064e 154B     		ldr	r3, .L95+16
+ 1447 0650 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1448 0652 343B     		subs	r3, r3, #52
+ 1449 0654 042B     		cmp	r3, #4
+ 1450 0656 2DD8     		bhi	.L92
+ 479:.\main.c      ****                 {
+ 480:.\main.c      ****                     case BASE_TOC + MODE_WIEGAND:
+ 481:.\main.c      ****                     case BASE_TOC + MODE_PAC:
+ 482:.\main.c      ****                     case BASE_TOC + MODE_F2F:
+ 483:.\main.c      ****                     case BASE_TOC + MODE_HID:
+ 484:.\main.c      ****                     case BASE_TOC + MODE_OSDP:
+ 485:.\main.c      ****                         if (card_ack == 1)
+ 1451              		.loc 1 485 0
+ 1452 0658 104B     		ldr	r3, .L95+8
+ 1453 065a 1B68     		ldr	r3, [r3]
+ 1454 065c 012B     		cmp	r3, #1
+ 1455 065e 02D1     		bne	.L86
+ 486:.\main.c      ****                         {
+ 487:.\main.c      ****                             card_ack = 0;
+ 1456              		.loc 1 487 0
+ 1457 0660 0E4B     		ldr	r3, .L95+8
+ 1458 0662 0022     		movs	r2, #0
+ 1459 0664 1A60     		str	r2, [r3]
+ 1460              	.L86:
+ 488:.\main.c      ****                         }
+ 489:.\main.c      ****                         if (TOC_port_init == 0)
+ 1461              		.loc 1 489 0
+ 1462 0666 0E4B     		ldr	r3, .L95+12
+ 1463 0668 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1464 066a 002B     		cmp	r3, #0
+ 1465 066c 04D1     		bne	.L87
+ 490:.\main.c      ****                         {
+ 491:.\main.c      ****                             initTocReaderUART();
+ 1466              		.loc 1 491 0
+ 1467 066e FFF7FEFF 		bl	initTocReaderUART
+ 492:.\main.c      ****                             TOC_port_init = 1;
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 36
+
+
+ 1468              		.loc 1 492 0
+ 1469 0672 0B4B     		ldr	r3, .L95+12
+ 1470 0674 0122     		movs	r2, #1
+ 1471 0676 1A70     		strb	r2, [r3]
+ 1472              	.L87:
+ 493:.\main.c      ****                         }
+ 494:.\main.c      ****                         SendWaveLynxReader(MyI2C_Regs.buffer,len);
+ 1473              		.loc 1 494 0
+ 1474 0678 0B48     		ldr	r0, .L95+20
+ 1475 067a 7968     		ldr	r1, [r7, #4]
+ 1476 067c FFF7FEFF 		bl	SendWaveLynxReader
+ 495:.\main.c      ****                         rxi = 0;
+ 1477              		.loc 1 495 0
+ 1478 0680 0A4B     		ldr	r3, .L95+24
+ 1479 0682 0022     		movs	r2, #0
+ 1480 0684 1A60     		str	r2, [r3]
+ 496:.\main.c      ****                         tlv_ready=0;
+ 1481              		.loc 1 496 0
+ 1482 0686 0A4B     		ldr	r3, .L95+28
+ 1483 0688 0022     		movs	r2, #0
+ 1484 068a 1A70     		strb	r2, [r3]
+ 497:.\main.c      ****                         MyI2C_Regs.cmd = CMD_READ;
+ 1485              		.loc 1 497 0
+ 1486 068c 014B     		ldr	r3, .L95
+ 1487 068e 0222     		movs	r2, #2
+ 1488 0690 9A70     		strb	r2, [r3, #2]
+ 498:.\main.c      ****                         break;
+ 1489              		.loc 1 498 0
+ 1490 0692 10E0     		b	.L88
+ 1491              	.L96:
+ 1492              		.align	2
+ 1493              	.L95:
+ 1494 0694 00000000 		.word	MyI2C_Regs
+ 1495 0698 00000000 		.word	card_in_buf
+ 1496 069c 00000000 		.word	card_ack
+ 1497 06a0 00000000 		.word	TOC_port_init
+ 1498 06a4 00000000 		.word	run_mode
+ 1499 06a8 49000000 		.word	MyI2C_Regs+73
+ 1500 06ac 00000000 		.word	rxi
+ 1501 06b0 00000000 		.word	tlv_ready
+ 1502              	.L92:
+ 499:.\main.c      ****                     default:
+ 500:.\main.c      ****                         break;
+ 1503              		.loc 1 500 0
+ 1504 06b4 00BF     		nop
+ 1505              	.L88:
+ 501:.\main.c      ****                 }                
+ 502:.\main.c      ****                 break;
+ 1506              		.loc 1 502 0 discriminator 8
+ 1507 06b6 00BF     		nop
+ 1508              	.L30:
+ 503:.\main.c      ****         default:;   //cmd
+ 504:.\main.c      **** 	}
+ 505:.\main.c      **** }
+ 1509              		.loc 1 505 0
+ 1510 06b8 1037     		adds	r7, r7, #16
+ 1511              		.cfi_def_cfa_offset 8
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 37
+
+
+ 1512 06ba BD46     		mov	sp, r7
+ 1513              		.cfi_def_cfa_register 13
+ 1514              		@ sp needed
+ 1515 06bc 80BD     		pop	{r7, pc}
+ 1516              		.cfi_endproc
+ 1517              	.LFE70:
+ 1518              		.size	HandleCommand, .-HandleCommand
+ 1519 06be 00BF     		.section	.text.ReadImageCard,"ax",%progbits
+ 1520              		.align	2
+ 1521              		.global	ReadImageCard
+ 1522              		.thumb
+ 1523              		.thumb_func
+ 1524              		.type	ReadImageCard, %function
+ 1525              	ReadImageCard:
+ 1526              	.LFB71:
+ 506:.\main.c      **** 
+ 507:.\main.c      **** void ReadImageCard()
+ 508:.\main.c      **** {
+ 1527              		.loc 1 508 0
+ 1528              		.cfi_startproc
+ 1529              		@ args = 0, pretend = 0, frame = 8
+ 1530              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1531 0000 80B5     		push	{r7, lr}
+ 1532              		.cfi_def_cfa_offset 8
+ 1533              		.cfi_offset 7, -8
+ 1534              		.cfi_offset 14, -4
+ 1535 0002 82B0     		sub	sp, sp, #8
+ 1536              		.cfi_def_cfa_offset 16
+ 1537 0004 00AF     		add	r7, sp, #0
+ 1538              		.cfi_def_cfa_register 7
+ 509:.\main.c      ****     int k;
+ 510:.\main.c      ****     if(tlv_ready == 1)
+ 1539              		.loc 1 510 0
+ 1540 0006 2B4B     		ldr	r3, .L103
+ 1541 0008 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1542 000a 012B     		cmp	r3, #1
+ 1543 000c 4ED1     		bne	.L97
+ 511:.\main.c      ****     {
+ 512:.\main.c      ****         tlv_ready = 0;
+ 1544              		.loc 1 512 0
+ 1545 000e 294B     		ldr	r3, .L103
+ 1546 0010 0022     		movs	r2, #0
+ 1547 0012 1A70     		strb	r2, [r3]
+ 513:.\main.c      ****         if (rxi == 0) return; //wrong size
+ 1548              		.loc 1 513 0
+ 1549 0014 284B     		ldr	r3, .L103+4
+ 1550 0016 1B68     		ldr	r3, [r3]
+ 1551 0018 002B     		cmp	r3, #0
+ 1552 001a 00D1     		bne	.L99
+ 1553 001c 46E0     		b	.L97
+ 1554              	.L99:
+ 514:.\main.c      ****         if (rxi <= IMAGE_TEMP_SIZE )
+ 1555              		.loc 1 514 0
+ 1556 001e 264B     		ldr	r3, .L103+4
+ 1557 0020 1B68     		ldr	r3, [r3]
+ 1558 0022 41F2F442 		movw	r2, #5364
+ 1559 0026 9342     		cmp	r3, r2
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 38
+
+
+ 1560 0028 3DDC     		bgt	.L100
+ 515:.\main.c      ****         {
+ 516:.\main.c      ****             for (k=0; k<rxi; k++)
+ 1561              		.loc 1 516 0
+ 1562 002a 0023     		movs	r3, #0
+ 1563 002c 7B60     		str	r3, [r7, #4]
+ 1564 002e 0FE0     		b	.L101
+ 1565              	.L102:
+ 517:.\main.c      ****             {
+ 518:.\main.c      ****                 MyI2C_Regs.buffer[k] = ReaderRxBuffer[k];
+ 1566              		.loc 1 518 0 discriminator 3
+ 1567 0030 224A     		ldr	r2, .L103+8
+ 1568 0032 7B68     		ldr	r3, [r7, #4]
+ 1569 0034 1344     		add	r3, r3, r2
+ 1570 0036 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 1571 0038 214A     		ldr	r2, .L103+12
+ 1572 003a 7B68     		ldr	r3, [r7, #4]
+ 1573 003c 1344     		add	r3, r3, r2
+ 1574 003e 4833     		adds	r3, r3, #72
+ 1575 0040 0A46     		mov	r2, r1
+ 1576 0042 5A70     		strb	r2, [r3, #1]
+ 519:.\main.c      ****                 CyDelayUs(1);   //needed for Release Codes
+ 1577              		.loc 1 519 0 discriminator 3
+ 1578 0044 0120     		movs	r0, #1
+ 1579 0046 FFF7FEFF 		bl	CyDelayUs
+ 516:.\main.c      ****             {
+ 1580              		.loc 1 516 0 discriminator 3
+ 1581 004a 7B68     		ldr	r3, [r7, #4]
+ 1582 004c 0133     		adds	r3, r3, #1
+ 1583 004e 7B60     		str	r3, [r7, #4]
+ 1584              	.L101:
+ 516:.\main.c      ****             {
+ 1585              		.loc 1 516 0 is_stmt 0 discriminator 1
+ 1586 0050 194B     		ldr	r3, .L103+4
+ 1587 0052 1B68     		ldr	r3, [r3]
+ 1588 0054 7A68     		ldr	r2, [r7, #4]
+ 1589 0056 9A42     		cmp	r2, r3
+ 1590 0058 EADB     		blt	.L102
+ 520:.\main.c      ****             }
+ 521:.\main.c      ****             rxi = 0;  //ready for next image
+ 1591              		.loc 1 521 0 is_stmt 1
+ 1592 005a 174B     		ldr	r3, .L103+4
+ 1593 005c 0022     		movs	r2, #0
+ 1594 005e 1A60     		str	r2, [r3]
+ 522:.\main.c      ****             MyI2C_Regs.data_length[0]= k>>8;   //higher 8 bits
+ 1595              		.loc 1 522 0
+ 1596 0060 7B68     		ldr	r3, [r7, #4]
+ 1597 0062 1B12     		asrs	r3, r3, #8
+ 1598 0064 DAB2     		uxtb	r2, r3
+ 1599 0066 164B     		ldr	r3, .L103+12
+ 1600 0068 DA71     		strb	r2, [r3, #7]
+ 523:.\main.c      ****             MyI2C_Regs.data_length[1]= k;        //lower 8 bits.
+ 1601              		.loc 1 523 0
+ 1602 006a 7B68     		ldr	r3, [r7, #4]
+ 1603 006c DAB2     		uxtb	r2, r3
+ 1604 006e 144B     		ldr	r3, .L103+12
+ 1605 0070 1A72     		strb	r2, [r3, #8]
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 39
+
+
+ 524:.\main.c      ****             MyI2C_Regs.dummy0[0]= (k>>8) & 0xFF;   //higher 8 bits
+ 1606              		.loc 1 524 0
+ 1607 0072 7B68     		ldr	r3, [r7, #4]
+ 1608 0074 1B12     		asrs	r3, r3, #8
+ 1609 0076 DAB2     		uxtb	r2, r3
+ 1610 0078 114B     		ldr	r3, .L103+12
+ 1611 007a 9A73     		strb	r2, [r3, #14]
+ 525:.\main.c      ****             MyI2C_Regs.dummy0[1]= k & 0xFF;        //lower 8 bits.
+ 1612              		.loc 1 525 0
+ 1613 007c 7B68     		ldr	r3, [r7, #4]
+ 1614 007e DAB2     		uxtb	r2, r3
+ 1615 0080 0F4B     		ldr	r3, .L103+12
+ 1616 0082 DA73     		strb	r2, [r3, #15]
+ 526:.\main.c      ****             card_ack = 0;
+ 1617              		.loc 1 526 0
+ 1618 0084 0F4B     		ldr	r3, .L103+16
+ 1619 0086 0022     		movs	r2, #0
+ 1620 0088 1A60     		str	r2, [r3]
+ 527:.\main.c      ****             card_in_buf = 1;
+ 1621              		.loc 1 527 0
+ 1622 008a 0F4B     		ldr	r3, .L103+20
+ 1623 008c 0122     		movs	r2, #1
+ 1624 008e 1A60     		str	r2, [r3]
+ 528:.\main.c      ****             MyI2C_Regs.status |= STAT_CHANGE | STAT_CARD_IN;
+ 1625              		.loc 1 528 0
+ 1626 0090 0B4B     		ldr	r3, .L103+12
+ 1627 0092 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1628 0094 43F00303 		orr	r3, r3, #3
+ 1629 0098 DAB2     		uxtb	r2, r3
+ 1630 009a 094B     		ldr	r3, .L103+12
+ 1631 009c 1A70     		strb	r2, [r3]
+ 529:.\main.c      ****             MyI2C_Regs.cmd = CMD_NONE; //prevent to read it again
+ 1632              		.loc 1 529 0
+ 1633 009e 084B     		ldr	r3, .L103+12
+ 1634 00a0 0022     		movs	r2, #0
+ 1635 00a2 9A70     		strb	r2, [r3, #2]
+ 1636 00a4 02E0     		b	.L97
+ 1637              	.L100:
+ 530:.\main.c      ****         }
+ 531:.\main.c      ****         else
+ 532:.\main.c      ****         {
+ 533:.\main.c      ****             rxi = 0; //data is too big, read again
+ 1638              		.loc 1 533 0
+ 1639 00a6 044B     		ldr	r3, .L103+4
+ 1640 00a8 0022     		movs	r2, #0
+ 1641 00aa 1A60     		str	r2, [r3]
+ 1642              	.L97:
+ 534:.\main.c      ****         }
+ 535:.\main.c      ****     } //if
+ 536:.\main.c      **** }
+ 1643              		.loc 1 536 0
+ 1644 00ac 0837     		adds	r7, r7, #8
+ 1645              		.cfi_def_cfa_offset 8
+ 1646 00ae BD46     		mov	sp, r7
+ 1647              		.cfi_def_cfa_register 13
+ 1648              		@ sp needed
+ 1649 00b0 80BD     		pop	{r7, pc}
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 40
+
+
+ 1650              	.L104:
+ 1651 00b2 00BF     		.align	2
+ 1652              	.L103:
+ 1653 00b4 00000000 		.word	tlv_ready
+ 1654 00b8 00000000 		.word	rxi
+ 1655 00bc 00000000 		.word	ReaderRxBuffer
+ 1656 00c0 00000000 		.word	MyI2C_Regs
+ 1657 00c4 00000000 		.word	card_ack
+ 1658 00c8 00000000 		.word	card_in_buf
+ 1659              		.cfi_endproc
+ 1660              	.LFE71:
+ 1661              		.size	ReadImageCard, .-ReadImageCard
+ 1662              		.section	.text.main,"ax",%progbits
+ 1663              		.align	2
+ 1664              		.global	main
+ 1665              		.thumb
+ 1666              		.thumb_func
+ 1667              		.type	main, %function
+ 1668              	main:
+ 1669              	.LFB72:
+ 537:.\main.c      **** 
+ 538:.\main.c      **** 
+ 539:.\main.c      **** int main()
+ 540:.\main.c      **** {
+ 1670              		.loc 1 540 0
+ 1671              		.cfi_startproc
+ 1672              		@ args = 0, pretend = 0, frame = 8
+ 1673              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1674 0000 80B5     		push	{r7, lr}
+ 1675              		.cfi_def_cfa_offset 8
+ 1676              		.cfi_offset 7, -8
+ 1677              		.cfi_offset 14, -4
+ 1678 0002 82B0     		sub	sp, sp, #8
+ 1679              		.cfi_def_cfa_offset 16
+ 1680 0004 00AF     		add	r7, sp, #0
+ 1681              		.cfi_def_cfa_register 7
+ 541:.\main.c      ****     int ack_time_cnt; // counter for acknowledge timeout
+ 542:.\main.c      ****     
+ 543:.\main.c      ****     CyGlobalIntEnable;  /* Uncomment this line to enable global interrupts. */
+ 1682              		.loc 1 543 0
+ 1683              	@ 543 ".\main.c" 1
+ 1684 0006 62B6     		CPSIE   i
+ 1685              	@ 0 "" 2
+ 544:.\main.c      **** 
+ 545:.\main.c      **** //    /* Intializing the Timers and interrupts */
+ 546:.\main.c      ****     UART_TIMER_Start();
+ 1686              		.loc 1 546 0
+ 1687              		.thumb
+ 1688 0008 FFF7FEFF 		bl	UART_TIMER_Start
+ 547:.\main.c      **** 	UART_TIMER_ISR_StartEx(UART_TIMER_ISR_Interrupt);
+ 1689              		.loc 1 547 0
+ 1690 000c 3748     		ldr	r0, .L110
+ 1691 000e FFF7FEFF 		bl	UART_TIMER_ISR_StartEx
+ 548:.\main.c      ****     Tamper_Timer_Start();
+ 1692              		.loc 1 548 0
+ 1693 0012 FFF7FEFF 		bl	Tamper_Timer_Start
+ 549:.\main.c      ****     Tamper_Timer_ISR_StartEx(Tamper_Timer_ISR_Interrupt);
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 41
+
+
+ 1694              		.loc 1 549 0
+ 1695 0016 3648     		ldr	r0, .L110+4
+ 1696 0018 FFF7FEFF 		bl	Tamper_Timer_ISR_StartEx
+ 550:.\main.c      ****     Timeout_Timer_Start();
+ 1697              		.loc 1 550 0
+ 1698 001c FFF7FEFF 		bl	Timeout_Timer_Start
+ 551:.\main.c      ****     Timeout_Timer_Isr_StartEx(Timeout_Timer_Isr_Interrupt);
+ 1699              		.loc 1 551 0
+ 1700 0020 3448     		ldr	r0, .L110+8
+ 1701 0022 FFF7FEFF 		bl	Timeout_Timer_Isr_StartEx
+ 552:.\main.c      **** 
+ 553:.\main.c      ****     /*Wiegand*/
+ 554:.\main.c      ****     Pulse_50us_Init();
+ 1702              		.loc 1 554 0
+ 1703 0026 FFF7FEFF 		bl	Pulse_50us_Init
+ 555:.\main.c      ****     isr_50us_StartEx(Pin_50us_Reset);
+ 1704              		.loc 1 555 0
+ 1705 002a 3348     		ldr	r0, .L110+12
+ 1706 002c FFF7FEFF 		bl	isr_50us_StartEx
+ 556:.\main.c      **** 
+ 557:.\main.c      ****     /*F2F*/
+ 558:.\main.c      ****     isr_F2F_edge_StartEx(isr_F2F_edge_Interrupt);
+ 1707              		.loc 1 558 0
+ 1708 0030 3248     		ldr	r0, .L110+16
+ 1709 0032 FFF7FEFF 		bl	isr_F2F_edge_StartEx
+ 559:.\main.c      ****     
+ 560:.\main.c      **** 	/* Starting EZI2C */
+ 561:.\main.c      **** 	EZI2Cs_Start();
+ 1710              		.loc 1 561 0
+ 1711 0036 FFF7FEFF 		bl	EZI2Cs_Start
+ 562:.\main.c      ****     EZI2Cs_SetBuffer1(sizeof(MyI2C_Regs), sizeof(MyI2C_Regs), (volatile uint8 *) &MyI2C_Regs );
+ 1712              		.loc 1 562 0
+ 1713 003a 41F68400 		movw	r0, #6276
+ 1714 003e 41F68401 		movw	r1, #6276
+ 1715 0042 2F4A     		ldr	r2, .L110+20
+ 1716 0044 FFF7FEFF 		bl	EZI2Cs_SetBuffer1
+ 563:.\main.c      ****     
+ 564:.\main.c      ****     /* Starting UART for PAC & HID */
+ 565:.\main.c      ****     UART_1_Start();
+ 1717              		.loc 1 565 0
+ 1718 0048 FFF7FEFF 		bl	UART_1_Start
+ 566:.\main.c      ****     SU_Start(&s,1,PARITY_EVEN,1);
+ 1719              		.loc 1 566 0
+ 1720 004c 2D48     		ldr	r0, .L110+24
+ 1721 004e 0121     		movs	r1, #1
+ 1722 0050 0222     		movs	r2, #2
+ 1723 0052 0123     		movs	r3, #1
+ 1724 0054 FFF7FEFF 		bl	SU_Start
+ 567:.\main.c      ****     
+ 568:.\main.c      ****     /* Turning off both LEDS */
+ 569:.\main.c      ****     LED_GRN_Write(OFF); // LED for signaling Output
+ 1725              		.loc 1 569 0
+ 1726 0058 0120     		movs	r0, #1
+ 1727 005a FFF7FEFF 		bl	LED_GRN_Write
+ 570:.\main.c      ****     LED_YEL_Write(OFF); // LED for signaling Input
+ 1728              		.loc 1 570 0
+ 1729 005e 0120     		movs	r0, #1
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 42
+
+
+ 1730 0060 FFF7FEFF 		bl	LED_YEL_Write
+ 571:.\main.c      ****     LED_RED_Write(OFF); // turn off tamper LED
+ 1731              		.loc 1 571 0
+ 1732 0064 0120     		movs	r0, #1
+ 1733 0066 FFF7FEFF 		bl	LED_RED_Write
+ 572:.\main.c      ****     
+ 573:.\main.c      ****     /* Intializing the I2C Reg value */
+ 574:.\main.c      ****     MyI2C_Regs.factory_reset = 0;
+ 1734              		.loc 1 574 0
+ 1735 006a 254B     		ldr	r3, .L110+20
+ 1736 006c 0022     		movs	r2, #0
+ 1737 006e 9A71     		strb	r2, [r3, #6]
+ 575:.\main.c      ****     SetHardwareVals(TAMPERCR_POL);  // TAMPER_POL defaulted to 1 (normal config with active tamper 
+ 1738              		.loc 1 575 0
+ 1739 0070 0820     		movs	r0, #8
+ 1740 0072 FFF7FEFF 		bl	SetHardwareVals
+ 576:.\main.c      ****     
+ 577:.\main.c      ****     SetVersion();
+ 1741              		.loc 1 577 0
+ 1742 0076 FFF7FEFF 		bl	SetVersion
+ 578:.\main.c      ****     
+ 579:.\main.c      ****     // initialize card reader tamper polarity bit:  1=normal
+ 580:.\main.c      ****     // This is only for TEST and must be set by webconfig/motherboard.
+ 581:.\main.c      ****     // tamperCR_polarity = 1;
+ 582:.\main.c      ****     hw_old = 0;
+ 1743              		.loc 1 582 0
+ 1744 007a 234B     		ldr	r3, .L110+28
+ 1745 007c 0022     		movs	r2, #0
+ 1746 007e 1A70     		strb	r2, [r3]
+ 583:.\main.c      ****     tp_old = 0;
+ 1747              		.loc 1 583 0
+ 1748 0080 224B     		ldr	r3, .L110+32
+ 1749 0082 0022     		movs	r2, #0
+ 1750 0084 1A70     		strb	r2, [r3]
+ 584:.\main.c      ****     TOC_port_init = 0;
+ 1751              		.loc 1 584 0
+ 1752 0086 224B     		ldr	r3, .L110+36
+ 1753 0088 0022     		movs	r2, #0
+ 1754 008a 1A70     		strb	r2, [r3]
+ 585:.\main.c      ****     card_ack = 0;
+ 1755              		.loc 1 585 0
+ 1756 008c 214B     		ldr	r3, .L110+40
+ 1757 008e 0022     		movs	r2, #0
+ 1758 0090 1A60     		str	r2, [r3]
+ 586:.\main.c      ****     
+ 587:.\main.c      ****     InitOSDP();
+ 1759              		.loc 1 587 0
+ 1760 0092 FFF7FEFF 		bl	InitOSDP
+ 588:.\main.c      ****     
+ 589:.\main.c      ****     /* push button */
+ 590:.\main.c      ****     buttonPressed=0;
+ 1761              		.loc 1 590 0
+ 1762 0096 204B     		ldr	r3, .L110+44
+ 1763 0098 0022     		movs	r2, #0
+ 1764 009a 1A70     		strb	r2, [r3]
+ 591:.\main.c      ****     buttonReleased=0;
+ 1765              		.loc 1 591 0
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 43
+
+
+ 1766 009c 1F4B     		ldr	r3, .L110+48
+ 1767 009e 0022     		movs	r2, #0
+ 1768 00a0 1A70     		strb	r2, [r3]
+ 592:.\main.c      ****     buttonDuration=0;
+ 1769              		.loc 1 592 0
+ 1770 00a2 1F4B     		ldr	r3, .L110+52
+ 1771 00a4 0022     		movs	r2, #0
+ 1772 00a6 1A60     		str	r2, [r3]
+ 593:.\main.c      ****     isr_SW_Rst_Start(); 
+ 1773              		.loc 1 593 0
+ 1774 00a8 FFF7FEFF 		bl	isr_SW_Rst_Start
+ 1775              	.L109:
+ 594:.\main.c      ****     
+ 595:.\main.c      ****     while(1)
+ 596:.\main.c      ****     {
+ 597:.\main.c      ****         HandleCommand();
+ 1776              		.loc 1 597 0
+ 1777 00ac FFF7FEFF 		bl	HandleCommand
+ 598:.\main.c      ****         if (card_in_buf == 1)  // card read requires ack from motherboard
+ 1778              		.loc 1 598 0
+ 1779 00b0 1C4B     		ldr	r3, .L110+56
+ 1780 00b2 1B68     		ldr	r3, [r3]
+ 1781 00b4 012B     		cmp	r3, #1
+ 1782 00b6 17D1     		bne	.L106
+ 599:.\main.c      ****         {
+ 600:.\main.c      ****             ack_time_cnt = 0;
+ 1783              		.loc 1 600 0
+ 1784 00b8 0023     		movs	r3, #0
+ 1785 00ba 7B60     		str	r3, [r7, #4]
+ 601:.\main.c      ****             while (card_ack == 0)   // waiting for card read acknowledge here
+ 1786              		.loc 1 601 0
+ 1787 00bc 10E0     		b	.L107
+ 1788              	.L108:
+ 602:.\main.c      ****             {
+ 603:.\main.c      ****                 CyDelay(10);    //
+ 1789              		.loc 1 603 0
+ 1790 00be 0A20     		movs	r0, #10
+ 1791 00c0 FFF7FEFF 		bl	CyDelay
+ 604:.\main.c      ****                 ack_time_cnt++;  // increment time counter every 10ms while waiting for ack
+ 1792              		.loc 1 604 0
+ 1793 00c4 7B68     		ldr	r3, [r7, #4]
+ 1794 00c6 0133     		adds	r3, r3, #1
+ 1795 00c8 7B60     		str	r3, [r7, #4]
+ 605:.\main.c      ****                 if (ack_time_cnt >= 100)    //  re-notify and break.
+ 1796              		.loc 1 605 0
+ 1797 00ca 7B68     		ldr	r3, [r7, #4]
+ 1798 00cc 632B     		cmp	r3, #99
+ 1799 00ce 07DD     		ble	.L107
+ 606:.\main.c      ****                 {
+ 607:.\main.c      ****                     MyI2C_Regs.status |= STAT_CHANGE | STAT_CARD_IN ;   // if timeout, set status b
+ 1800              		.loc 1 607 0
+ 1801 00d0 0B4B     		ldr	r3, .L110+20
+ 1802 00d2 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1803 00d4 43F00303 		orr	r3, r3, #3
+ 1804 00d8 DAB2     		uxtb	r2, r3
+ 1805 00da 094B     		ldr	r3, .L110+20
+ 1806 00dc 1A70     		strb	r2, [r3]
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 44
+
+
+ 608:.\main.c      ****                     break;
+ 1807              		.loc 1 608 0
+ 1808 00de 03E0     		b	.L106
+ 1809              	.L107:
+ 601:.\main.c      ****             {
+ 1810              		.loc 1 601 0
+ 1811 00e0 0C4B     		ldr	r3, .L110+40
+ 1812 00e2 1B68     		ldr	r3, [r3]
+ 1813 00e4 002B     		cmp	r3, #0
+ 1814 00e6 EAD0     		beq	.L108
+ 1815              	.L106:
+ 609:.\main.c      ****                 }
+ 610:.\main.c      ****             }//while
+ 611:.\main.c      ****         } //if
+ 612:.\main.c      ****     } //main loop
+ 1816              		.loc 1 612 0
+ 1817 00e8 E0E7     		b	.L109
+ 1818              	.L111:
+ 1819 00ea 00BF     		.align	2
+ 1820              	.L110:
+ 1821 00ec 00000000 		.word	UART_TIMER_ISR_Interrupt
+ 1822 00f0 00000000 		.word	Tamper_Timer_ISR_Interrupt
+ 1823 00f4 00000000 		.word	Timeout_Timer_Isr_Interrupt
+ 1824 00f8 00000000 		.word	Pin_50us_Reset
+ 1825 00fc 00000000 		.word	isr_F2F_edge_Interrupt
+ 1826 0100 00000000 		.word	MyI2C_Regs
+ 1827 0104 00000000 		.word	s
+ 1828 0108 00000000 		.word	hw_old
+ 1829 010c 00000000 		.word	tp_old
+ 1830 0110 00000000 		.word	TOC_port_init
+ 1831 0114 00000000 		.word	card_ack
+ 1832 0118 00000000 		.word	buttonPressed
+ 1833 011c 00000000 		.word	buttonReleased
+ 1834 0120 00000000 		.word	buttonDuration
+ 1835 0124 00000000 		.word	card_in_buf
+ 1836              		.cfi_endproc
+ 1837              	.LFE72:
+ 1838              		.size	main, .-main
+ 1839              		.text
+ 1840              	.Letext0:
+ 1841              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.
+ 1842              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\3.3\\psoc creator\\import\\gnu\\arm\\4.9.
+ 1843              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 1844              		.file 5 ".\\softuart.h"
+ 1845              		.file 6 ".\\system.h"
+ 1846              		.file 7 "Generated_Source\\PSoC5/core_cm3.h"
+ 1847              		.file 8 ".\\toc.h"
+ 1848              		.section	.debug_info,"",%progbits
+ 1849              	.Ldebug_info0:
+ 1850 0000 50060000 		.4byte	0x650
+ 1851 0004 0400     		.2byte	0x4
+ 1852 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 1853 000a 04       		.byte	0x4
+ 1854 000b 01       		.uleb128 0x1
+ 1855 000c C8010000 		.4byte	.LASF92
+ 1856 0010 01       		.byte	0x1
+ 1857 0011 41040000 		.4byte	.LASF93
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 45
+
+
+ 1858 0015 1C000000 		.4byte	.LASF94
+ 1859 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 1860 001d 00000000 		.4byte	0
+ 1861 0021 00000000 		.4byte	.Ldebug_line0
+ 1862 0025 02       		.uleb128 0x2
+ 1863 0026 01       		.byte	0x1
+ 1864 0027 06       		.byte	0x6
+ 1865 0028 5C010000 		.4byte	.LASF0
+ 1866 002c 02       		.uleb128 0x2
+ 1867 002d 01       		.byte	0x1
+ 1868 002e 08       		.byte	0x8
+ 1869 002f CC020000 		.4byte	.LASF1
+ 1870 0033 02       		.uleb128 0x2
+ 1871 0034 02       		.byte	0x2
+ 1872 0035 05       		.byte	0x5
+ 1873 0036 04010000 		.4byte	.LASF2
+ 1874 003a 02       		.uleb128 0x2
+ 1875 003b 02       		.byte	0x2
+ 1876 003c 07       		.byte	0x7
+ 1877 003d EE030000 		.4byte	.LASF3
+ 1878 0041 03       		.uleb128 0x3
+ 1879 0042 AF030000 		.4byte	.LASF9
+ 1880 0046 02       		.byte	0x2
+ 1881 0047 3F       		.byte	0x3f
+ 1882 0048 4C000000 		.4byte	0x4c
+ 1883 004c 02       		.uleb128 0x2
+ 1884 004d 04       		.byte	0x4
+ 1885 004e 05       		.byte	0x5
+ 1886 004f 0E010000 		.4byte	.LASF4
+ 1887 0053 02       		.uleb128 0x2
+ 1888 0054 04       		.byte	0x4
+ 1889 0055 07       		.byte	0x7
+ 1890 0056 47030000 		.4byte	.LASF5
+ 1891 005a 02       		.uleb128 0x2
+ 1892 005b 08       		.byte	0x8
+ 1893 005c 05       		.byte	0x5
+ 1894 005d D2000000 		.4byte	.LASF6
+ 1895 0061 02       		.uleb128 0x2
+ 1896 0062 08       		.byte	0x8
+ 1897 0063 07       		.byte	0x7
+ 1898 0064 0B030000 		.4byte	.LASF7
+ 1899 0068 04       		.uleb128 0x4
+ 1900 0069 04       		.byte	0x4
+ 1901 006a 05       		.byte	0x5
+ 1902 006b 696E7400 		.ascii	"int\000"
+ 1903 006f 02       		.uleb128 0x2
+ 1904 0070 04       		.byte	0x4
+ 1905 0071 07       		.byte	0x7
+ 1906 0072 30030000 		.4byte	.LASF8
+ 1907 0076 03       		.uleb128 0x3
+ 1908 0077 95030000 		.4byte	.LASF10
+ 1909 007b 03       		.byte	0x3
+ 1910 007c 2C       		.byte	0x2c
+ 1911 007d 41000000 		.4byte	0x41
+ 1912 0081 05       		.uleb128 0x5
+ 1913 0082 3D010000 		.4byte	.LASF11
+ 1914 0086 04       		.byte	0x4
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 46
+
+
+ 1915 0087 9201     		.2byte	0x192
+ 1916 0089 2C000000 		.4byte	0x2c
+ 1917 008d 02       		.uleb128 0x2
+ 1918 008e 04       		.byte	0x4
+ 1919 008f 04       		.byte	0x4
+ 1920 0090 6F010000 		.4byte	.LASF12
+ 1921 0094 02       		.uleb128 0x2
+ 1922 0095 08       		.byte	0x8
+ 1923 0096 04       		.byte	0x4
+ 1924 0097 B0040000 		.4byte	.LASF13
+ 1925 009b 02       		.uleb128 0x2
+ 1926 009c 01       		.byte	0x1
+ 1927 009d 08       		.byte	0x8
+ 1928 009e 7B030000 		.4byte	.LASF14
+ 1929 00a2 02       		.uleb128 0x2
+ 1930 00a3 04       		.byte	0x4
+ 1931 00a4 07       		.byte	0x7
+ 1932 00a5 6E000000 		.4byte	.LASF15
+ 1933 00a9 06       		.uleb128 0x6
+ 1934 00aa 28       		.byte	0x28
+ 1935 00ab 05       		.byte	0x5
+ 1936 00ac 0D       		.byte	0xd
+ 1937 00ad 42010000 		.4byte	0x142
+ 1938 00b1 07       		.uleb128 0x7
+ 1939 00b2 B6020000 		.4byte	.LASF16
+ 1940 00b6 05       		.byte	0x5
+ 1941 00b7 0F       		.byte	0xf
+ 1942 00b8 68000000 		.4byte	0x68
+ 1943 00bc 00       		.byte	0
+ 1944 00bd 07       		.uleb128 0x7
+ 1945 00be 17010000 		.4byte	.LASF17
+ 1946 00c2 05       		.byte	0x5
+ 1947 00c3 10       		.byte	0x10
+ 1948 00c4 68000000 		.4byte	0x68
+ 1949 00c8 04       		.byte	0x4
+ 1950 00c9 07       		.uleb128 0x7
+ 1951 00ca 3D030000 		.4byte	.LASF18
+ 1952 00ce 05       		.byte	0x5
+ 1953 00cf 11       		.byte	0x11
+ 1954 00d0 68000000 		.4byte	0x68
+ 1955 00d4 08       		.byte	0x8
+ 1956 00d5 07       		.uleb128 0x7
+ 1957 00d6 8D010000 		.4byte	.LASF19
+ 1958 00da 05       		.byte	0x5
+ 1959 00db 12       		.byte	0x12
+ 1960 00dc 68000000 		.4byte	0x68
+ 1961 00e0 0C       		.byte	0xc
+ 1962 00e1 07       		.uleb128 0x7
+ 1963 00e2 C8030000 		.4byte	.LASF20
+ 1964 00e6 05       		.byte	0x5
+ 1965 00e7 13       		.byte	0x13
+ 1966 00e8 3A000000 		.4byte	0x3a
+ 1967 00ec 10       		.byte	0x10
+ 1968 00ed 07       		.uleb128 0x7
+ 1969 00ee 72020000 		.4byte	.LASF21
+ 1970 00f2 05       		.byte	0x5
+ 1971 00f3 14       		.byte	0x14
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 47
+
+
+ 1972 00f4 42010000 		.4byte	0x142
+ 1973 00f8 12       		.byte	0x12
+ 1974 00f9 07       		.uleb128 0x7
+ 1975 00fa 6C030000 		.4byte	.LASF22
+ 1976 00fe 05       		.byte	0x5
+ 1977 00ff 15       		.byte	0x15
+ 1978 0100 42010000 		.4byte	0x142
+ 1979 0104 14       		.byte	0x14
+ 1980 0105 07       		.uleb128 0x7
+ 1981 0106 1E010000 		.4byte	.LASF23
+ 1982 010a 05       		.byte	0x5
+ 1983 010b 16       		.byte	0x16
+ 1984 010c 3A000000 		.4byte	0x3a
+ 1985 0110 16       		.byte	0x16
+ 1986 0111 07       		.uleb128 0x7
+ 1987 0112 05030000 		.4byte	.LASF24
+ 1988 0116 05       		.byte	0x5
+ 1989 0117 17       		.byte	0x17
+ 1990 0118 47010000 		.4byte	0x147
+ 1991 011c 18       		.byte	0x18
+ 1992 011d 07       		.uleb128 0x7
+ 1993 011e E5040000 		.4byte	.LASF25
+ 1994 0122 05       		.byte	0x5
+ 1995 0123 18       		.byte	0x18
+ 1996 0124 47010000 		.4byte	0x147
+ 1997 0128 1C       		.byte	0x1c
+ 1998 0129 07       		.uleb128 0x7
+ 1999 012a 56020000 		.4byte	.LASF26
+ 2000 012e 05       		.byte	0x5
+ 2001 012f 19       		.byte	0x19
+ 2002 0130 47010000 		.4byte	0x147
+ 2003 0134 20       		.byte	0x20
+ 2004 0135 07       		.uleb128 0x7
+ 2005 0136 64030000 		.4byte	.LASF27
+ 2006 013a 05       		.byte	0x5
+ 2007 013b 1A       		.byte	0x1a
+ 2008 013c 47010000 		.4byte	0x147
+ 2009 0140 24       		.byte	0x24
+ 2010 0141 00       		.byte	0
+ 2011 0142 08       		.uleb128 0x8
+ 2012 0143 3A000000 		.4byte	0x3a
+ 2013 0147 08       		.uleb128 0x8
+ 2014 0148 68000000 		.4byte	0x68
+ 2015 014c 03       		.uleb128 0x3
+ 2016 014d F3000000 		.4byte	.LASF28
+ 2017 0151 05       		.byte	0x5
+ 2018 0152 1B       		.byte	0x1b
+ 2019 0153 A9000000 		.4byte	0xa9
+ 2020 0157 09       		.uleb128 0x9
+ 2021 0158 2A040000 		.4byte	.LASF54
+ 2022 015c 8418     		.2byte	0x1884
+ 2023 015e 06       		.byte	0x6
+ 2024 015f 1D       		.byte	0x1d
+ 2025 0160 AA020000 		.4byte	0x2aa
+ 2026 0164 07       		.uleb128 0x7
+ 2027 0165 74030000 		.4byte	.LASF29
+ 2028 0169 06       		.byte	0x6
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 48
+
+
+ 2029 016a 1E       		.byte	0x1e
+ 2030 016b 9B000000 		.4byte	0x9b
+ 2031 016f 00       		.byte	0
+ 2032 0170 07       		.uleb128 0x7
+ 2033 0171 20040000 		.4byte	.LASF30
+ 2034 0175 06       		.byte	0x6
+ 2035 0176 1F       		.byte	0x1f
+ 2036 0177 9B000000 		.4byte	0x9b
+ 2037 017b 01       		.byte	0x1
+ 2038 017c 0A       		.uleb128 0xa
+ 2039 017d 636D6400 		.ascii	"cmd\000"
+ 2040 0181 06       		.byte	0x6
+ 2041 0182 20       		.byte	0x20
+ 2042 0183 9B000000 		.4byte	0x9b
+ 2043 0187 02       		.byte	0x2
+ 2044 0188 07       		.uleb128 0x7
+ 2045 0189 E0000000 		.4byte	.LASF31
+ 2046 018d 06       		.byte	0x6
+ 2047 018e 21       		.byte	0x21
+ 2048 018f 2C000000 		.4byte	0x2c
+ 2049 0193 03       		.byte	0x3
+ 2050 0194 07       		.uleb128 0x7
+ 2051 0195 81010000 		.4byte	.LASF32
+ 2052 0199 06       		.byte	0x6
+ 2053 019a 22       		.byte	0x22
+ 2054 019b 9B000000 		.4byte	0x9b
+ 2055 019f 04       		.byte	0x4
+ 2056 01a0 07       		.uleb128 0x7
+ 2057 01a1 59030000 		.4byte	.LASF33
+ 2058 01a5 06       		.byte	0x6
+ 2059 01a6 23       		.byte	0x23
+ 2060 01a7 9B000000 		.4byte	0x9b
+ 2061 01ab 05       		.byte	0x5
+ 2062 01ac 07       		.uleb128 0x7
+ 2063 01ad 9F000000 		.4byte	.LASF34
+ 2064 01b1 06       		.byte	0x6
+ 2065 01b2 24       		.byte	0x24
+ 2066 01b3 9B000000 		.4byte	0x9b
+ 2067 01b7 06       		.byte	0x6
+ 2068 01b8 07       		.uleb128 0x7
+ 2069 01b9 AD000000 		.4byte	.LASF35
+ 2070 01bd 06       		.byte	0x6
+ 2071 01be 25       		.byte	0x25
+ 2072 01bf AA020000 		.4byte	0x2aa
+ 2073 01c3 07       		.byte	0x7
+ 2074 01c4 07       		.uleb128 0x7
+ 2075 01c5 8D010000 		.4byte	.LASF19
+ 2076 01c9 06       		.byte	0x6
+ 2077 01ca 26       		.byte	0x26
+ 2078 01cb 2C000000 		.4byte	0x2c
+ 2079 01cf 09       		.byte	0x9
+ 2080 01d0 07       		.uleb128 0x7
+ 2081 01d1 99020000 		.4byte	.LASF36
+ 2082 01d5 06       		.byte	0x6
+ 2083 01d6 27       		.byte	0x27
+ 2084 01d7 2C000000 		.4byte	0x2c
+ 2085 01db 0A       		.byte	0xa
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 49
+
+
+ 2086 01dc 07       		.uleb128 0x7
+ 2087 01dd 59040000 		.4byte	.LASF37
+ 2088 01e1 06       		.byte	0x6
+ 2089 01e2 28       		.byte	0x28
+ 2090 01e3 2C000000 		.4byte	0x2c
+ 2091 01e7 0B       		.byte	0xb
+ 2092 01e8 07       		.uleb128 0x7
+ 2093 01e9 F9020000 		.4byte	.LASF38
+ 2094 01ed 06       		.byte	0x6
+ 2095 01ee 29       		.byte	0x29
+ 2096 01ef 2C000000 		.4byte	0x2c
+ 2097 01f3 0C       		.byte	0xc
+ 2098 01f4 07       		.uleb128 0x7
+ 2099 01f5 81000000 		.4byte	.LASF39
+ 2100 01f9 06       		.byte	0x6
+ 2101 01fa 2A       		.byte	0x2a
+ 2102 01fb 2C000000 		.4byte	0x2c
+ 2103 01ff 0D       		.byte	0xd
+ 2104 0200 07       		.uleb128 0x7
+ 2105 0201 33040000 		.4byte	.LASF40
+ 2106 0205 06       		.byte	0x6
+ 2107 0206 2B       		.byte	0x2b
+ 2108 0207 BA020000 		.4byte	0x2ba
+ 2109 020b 0E       		.byte	0xe
+ 2110 020c 07       		.uleb128 0x7
+ 2111 020d 79040000 		.4byte	.LASF41
+ 2112 0211 06       		.byte	0x6
+ 2113 0212 2C       		.byte	0x2c
+ 2114 0213 CA020000 		.4byte	0x2ca
+ 2115 0217 43       		.byte	0x43
+ 2116 0218 07       		.uleb128 0x7
+ 2117 0219 D1040000 		.4byte	.LASF42
+ 2118 021d 06       		.byte	0x6
+ 2119 021e 2D       		.byte	0x2d
+ 2120 021f CA020000 		.4byte	0x2ca
+ 2121 0223 46       		.byte	0x46
+ 2122 0224 07       		.uleb128 0x7
+ 2123 0225 E7030000 		.4byte	.LASF43
+ 2124 0229 06       		.byte	0x6
+ 2125 022a 2E       		.byte	0x2e
+ 2126 022b DA020000 		.4byte	0x2da
+ 2127 022f 49       		.byte	0x49
+ 2128 0230 07       		.uleb128 0x7
+ 2129 0231 DC040000 		.4byte	.LASF44
+ 2130 0235 06       		.byte	0x6
+ 2131 0236 2F       		.byte	0x2f
+ 2132 0237 2C000000 		.4byte	0x2c
+ 2133 023b 5D       		.byte	0x5d
+ 2134 023c 07       		.uleb128 0x7
+ 2135 023d 00000000 		.4byte	.LASF45
+ 2136 0241 06       		.byte	0x6
+ 2137 0242 30       		.byte	0x30
+ 2138 0243 2C000000 		.4byte	0x2c
+ 2139 0247 5E       		.byte	0x5e
+ 2140 0248 07       		.uleb128 0x7
+ 2141 0249 BB020000 		.4byte	.LASF46
+ 2142 024d 06       		.byte	0x6
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 50
+
+
+ 2143 024e 31       		.byte	0x31
+ 2144 024f 2C000000 		.4byte	0x2c
+ 2145 0253 5F       		.byte	0x5f
+ 2146 0254 07       		.uleb128 0x7
+ 2147 0255 77000000 		.4byte	.LASF47
+ 2148 0259 06       		.byte	0x6
+ 2149 025a 32       		.byte	0x32
+ 2150 025b 2C000000 		.4byte	0x2c
+ 2151 025f 60       		.byte	0x60
+ 2152 0260 07       		.uleb128 0x7
+ 2153 0261 C6000000 		.4byte	.LASF48
+ 2154 0265 06       		.byte	0x6
+ 2155 0266 33       		.byte	0x33
+ 2156 0267 EA020000 		.4byte	0x2ea
+ 2157 026b 61       		.byte	0x61
+ 2158 026c 07       		.uleb128 0x7
+ 2159 026d 0C000000 		.4byte	.LASF49
+ 2160 0271 06       		.byte	0x6
+ 2161 0272 34       		.byte	0x34
+ 2162 0273 2C000000 		.4byte	0x2c
+ 2163 0277 E1       		.byte	0xe1
+ 2164 0278 07       		.uleb128 0x7
+ 2165 0279 92010000 		.4byte	.LASF50
+ 2166 027d 06       		.byte	0x6
+ 2167 027e 35       		.byte	0x35
+ 2168 027f 2C000000 		.4byte	0x2c
+ 2169 0283 E2       		.byte	0xe2
+ 2170 0284 07       		.uleb128 0x7
+ 2171 0285 88020000 		.4byte	.LASF51
+ 2172 0289 06       		.byte	0x6
+ 2173 028a 36       		.byte	0x36
+ 2174 028b 2C000000 		.4byte	0x2c
+ 2175 028f E3       		.byte	0xe3
+ 2176 0290 07       		.uleb128 0x7
+ 2177 0291 A3020000 		.4byte	.LASF52
+ 2178 0295 06       		.byte	0x6
+ 2179 0296 37       		.byte	0x37
+ 2180 0297 FA020000 		.4byte	0x2fa
+ 2181 029b E4       		.byte	0xe4
+ 2182 029c 0B       		.uleb128 0xb
+ 2183 029d 3A040000 		.4byte	.LASF53
+ 2184 02a1 06       		.byte	0x6
+ 2185 02a2 38       		.byte	0x38
+ 2186 02a3 0A030000 		.4byte	0x30a
+ 2187 02a7 1401     		.2byte	0x114
+ 2188 02a9 00       		.byte	0
+ 2189 02aa 0C       		.uleb128 0xc
+ 2190 02ab 2C000000 		.4byte	0x2c
+ 2191 02af BA020000 		.4byte	0x2ba
+ 2192 02b3 0D       		.uleb128 0xd
+ 2193 02b4 A2000000 		.4byte	0xa2
+ 2194 02b8 01       		.byte	0x1
+ 2195 02b9 00       		.byte	0
+ 2196 02ba 0C       		.uleb128 0xc
+ 2197 02bb 2C000000 		.4byte	0x2c
+ 2198 02bf CA020000 		.4byte	0x2ca
+ 2199 02c3 0D       		.uleb128 0xd
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 51
+
+
+ 2200 02c4 A2000000 		.4byte	0xa2
+ 2201 02c8 34       		.byte	0x34
+ 2202 02c9 00       		.byte	0
+ 2203 02ca 0C       		.uleb128 0xc
+ 2204 02cb 9B000000 		.4byte	0x9b
+ 2205 02cf DA020000 		.4byte	0x2da
+ 2206 02d3 0D       		.uleb128 0xd
+ 2207 02d4 A2000000 		.4byte	0xa2
+ 2208 02d8 02       		.byte	0x2
+ 2209 02d9 00       		.byte	0
+ 2210 02da 0C       		.uleb128 0xc
+ 2211 02db 2C000000 		.4byte	0x2c
+ 2212 02df EA020000 		.4byte	0x2ea
+ 2213 02e3 0D       		.uleb128 0xd
+ 2214 02e4 A2000000 		.4byte	0xa2
+ 2215 02e8 13       		.byte	0x13
+ 2216 02e9 00       		.byte	0
+ 2217 02ea 0C       		.uleb128 0xc
+ 2218 02eb 2C000000 		.4byte	0x2c
+ 2219 02ef FA020000 		.4byte	0x2fa
+ 2220 02f3 0D       		.uleb128 0xd
+ 2221 02f4 A2000000 		.4byte	0xa2
+ 2222 02f8 7F       		.byte	0x7f
+ 2223 02f9 00       		.byte	0
+ 2224 02fa 0C       		.uleb128 0xc
+ 2225 02fb 2C000000 		.4byte	0x2c
+ 2226 02ff 0A030000 		.4byte	0x30a
+ 2227 0303 0D       		.uleb128 0xd
+ 2228 0304 A2000000 		.4byte	0xa2
+ 2229 0308 2F       		.byte	0x2f
+ 2230 0309 00       		.byte	0
+ 2231 030a 0C       		.uleb128 0xc
+ 2232 030b 2C000000 		.4byte	0x2c
+ 2233 030f 1B030000 		.4byte	0x31b
+ 2234 0313 0E       		.uleb128 0xe
+ 2235 0314 A2000000 		.4byte	0xa2
+ 2236 0318 6F17     		.2byte	0x176f
+ 2237 031a 00       		.byte	0
+ 2238 031b 03       		.uleb128 0x3
+ 2239 031c 2A040000 		.4byte	.LASF54
+ 2240 0320 06       		.byte	0x6
+ 2241 0321 39       		.byte	0x39
+ 2242 0322 57010000 		.4byte	0x157
+ 2243 0326 0F       		.uleb128 0xf
+ 2244 0327 01040000 		.4byte	.LASF55
+ 2245 032b 01       		.byte	0x1
+ 2246 032c 47       		.byte	0x47
+ 2247 032d 00000000 		.4byte	.LFB63
+ 2248 0331 40000000 		.4byte	.LFE63-.LFB63
+ 2249 0335 01       		.uleb128 0x1
+ 2250 0336 9C       		.byte	0x9c
+ 2251 0337 0F       		.uleb128 0xf
+ 2252 0338 84040000 		.4byte	.LASF56
+ 2253 033c 01       		.byte	0x1
+ 2254 033d 56       		.byte	0x56
+ 2255 033e 00000000 		.4byte	.LFB64
+ 2256 0342 70000000 		.4byte	.LFE64-.LFB64
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 52
+
+
+ 2257 0346 01       		.uleb128 0x1
+ 2258 0347 9C       		.byte	0x9c
+ 2259 0348 10       		.uleb128 0x10
+ 2260 0349 64040000 		.4byte	.LASF57
+ 2261 034d 01       		.byte	0x1
+ 2262 034e 66       		.byte	0x66
+ 2263 034f 00000000 		.4byte	.LFB65
+ 2264 0353 34000000 		.4byte	.LFE65-.LFB65
+ 2265 0357 01       		.uleb128 0x1
+ 2266 0358 9C       		.byte	0x9c
+ 2267 0359 6A030000 		.4byte	0x36a
+ 2268 035d 11       		.uleb128 0x11
+ 2269 035e 6900     		.ascii	"i\000"
+ 2270 0360 01       		.byte	0x1
+ 2271 0361 68       		.byte	0x68
+ 2272 0362 68000000 		.4byte	0x68
+ 2273 0366 02       		.uleb128 0x2
+ 2274 0367 91       		.byte	0x91
+ 2275 0368 74       		.sleb128 -12
+ 2276 0369 00       		.byte	0
+ 2277 036a 10       		.uleb128 0x10
+ 2278 036b 26010000 		.4byte	.LASF58
+ 2279 036f 01       		.byte	0x1
+ 2280 0370 7A       		.byte	0x7a
+ 2281 0371 00000000 		.4byte	.LFB66
+ 2282 0375 70000000 		.4byte	.LFE66-.LFB66
+ 2283 0379 01       		.uleb128 0x1
+ 2284 037a 9C       		.byte	0x9c
+ 2285 037b 8E030000 		.4byte	0x38e
+ 2286 037f 11       		.uleb128 0x11
+ 2287 0380 6C656E00 		.ascii	"len\000"
+ 2288 0384 01       		.byte	0x1
+ 2289 0385 7C       		.byte	0x7c
+ 2290 0386 68000000 		.4byte	0x68
+ 2291 038a 02       		.uleb128 0x2
+ 2292 038b 91       		.byte	0x91
+ 2293 038c 74       		.sleb128 -12
+ 2294 038d 00       		.byte	0
+ 2295 038e 10       		.uleb128 0x10
+ 2296 038f 43010000 		.4byte	.LASF59
+ 2297 0393 01       		.byte	0x1
+ 2298 0394 8C       		.byte	0x8c
+ 2299 0395 00000000 		.4byte	.LFB67
+ 2300 0399 78010000 		.4byte	.LFE67-.LFB67
+ 2301 039d 01       		.uleb128 0x1
+ 2302 039e 9C       		.byte	0x9c
+ 2303 039f 02040000 		.4byte	0x402
+ 2304 03a3 12       		.uleb128 0x12
+ 2305 03a4 80030000 		.4byte	.LASF60
+ 2306 03a8 01       		.byte	0x1
+ 2307 03a9 90       		.byte	0x90
+ 2308 03aa 02040000 		.4byte	0x402
+ 2309 03ae 02       		.uleb128 0x2
+ 2310 03af 91       		.byte	0x91
+ 2311 03b0 4C       		.sleb128 -52
+ 2312 03b1 11       		.uleb128 0x11
+ 2313 03b2 746D7000 		.ascii	"tmp\000"
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 53
+
+
+ 2314 03b6 01       		.byte	0x1
+ 2315 03b7 91       		.byte	0x91
+ 2316 03b8 9B000000 		.4byte	0x9b
+ 2317 03bc 02       		.uleb128 0x2
+ 2318 03bd 91       		.byte	0x91
+ 2319 03be 63       		.sleb128 -29
+ 2320 03bf 11       		.uleb128 0x11
+ 2321 03c0 6900     		.ascii	"i\000"
+ 2322 03c2 01       		.byte	0x1
+ 2323 03c3 92       		.byte	0x92
+ 2324 03c4 68000000 		.4byte	0x68
+ 2325 03c8 02       		.uleb128 0x2
+ 2326 03c9 91       		.byte	0x91
+ 2327 03ca 74       		.sleb128 -12
+ 2328 03cb 11       		.uleb128 0x11
+ 2329 03cc 6A00     		.ascii	"j\000"
+ 2330 03ce 01       		.byte	0x1
+ 2331 03cf 92       		.byte	0x92
+ 2332 03d0 68000000 		.4byte	0x68
+ 2333 03d4 02       		.uleb128 0x2
+ 2334 03d5 91       		.byte	0x91
+ 2335 03d6 70       		.sleb128 -16
+ 2336 03d7 12       		.uleb128 0x12
+ 2337 03d8 B1010000 		.4byte	.LASF61
+ 2338 03dc 01       		.byte	0x1
+ 2339 03dd 93       		.byte	0x93
+ 2340 03de 68000000 		.4byte	0x68
+ 2341 03e2 02       		.uleb128 0x2
+ 2342 03e3 91       		.byte	0x91
+ 2343 03e4 6C       		.sleb128 -20
+ 2344 03e5 12       		.uleb128 0x12
+ 2345 03e6 E0030000 		.4byte	.LASF62
+ 2346 03ea 01       		.byte	0x1
+ 2347 03eb 94       		.byte	0x94
+ 2348 03ec 68000000 		.4byte	0x68
+ 2349 03f0 02       		.uleb128 0x2
+ 2350 03f1 91       		.byte	0x91
+ 2351 03f2 68       		.sleb128 -24
+ 2352 03f3 12       		.uleb128 0x12
+ 2353 03f4 8F030000 		.4byte	.LASF63
+ 2354 03f8 01       		.byte	0x1
+ 2355 03f9 95       		.byte	0x95
+ 2356 03fa 68000000 		.4byte	0x68
+ 2357 03fe 02       		.uleb128 0x2
+ 2358 03ff 91       		.byte	0x91
+ 2359 0400 64       		.sleb128 -28
+ 2360 0401 00       		.byte	0
+ 2361 0402 0C       		.uleb128 0xc
+ 2362 0403 9B000000 		.4byte	0x9b
+ 2363 0407 12040000 		.4byte	0x412
+ 2364 040b 0D       		.uleb128 0xd
+ 2365 040c A2000000 		.4byte	0xa2
+ 2366 0410 13       		.byte	0x13
+ 2367 0411 00       		.byte	0
+ 2368 0412 13       		.uleb128 0x13
+ 2369 0413 34010000 		.4byte	.LASF64
+ 2370 0417 01       		.byte	0x1
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 54
+
+
+ 2371 0418 BA       		.byte	0xba
+ 2372 0419 00000000 		.4byte	.LFB68
+ 2373 041d 44000000 		.4byte	.LFE68-.LFB68
+ 2374 0421 01       		.uleb128 0x1
+ 2375 0422 9C       		.byte	0x9c
+ 2376 0423 14       		.uleb128 0x14
+ 2377 0424 DA020000 		.4byte	.LASF66
+ 2378 0428 01       		.byte	0x1
+ 2379 0429 E4       		.byte	0xe4
+ 2380 042a 00000000 		.4byte	.LFB69
+ 2381 042e 3E000000 		.4byte	.LFE69-.LFB69
+ 2382 0432 01       		.uleb128 0x1
+ 2383 0433 9C       		.byte	0x9c
+ 2384 0434 51040000 		.4byte	0x451
+ 2385 0438 15       		.uleb128 0x15
+ 2386 0439 6E00     		.ascii	"n\000"
+ 2387 043b 01       		.byte	0x1
+ 2388 043c E4       		.byte	0xe4
+ 2389 043d 68000000 		.4byte	0x68
+ 2390 0441 02       		.uleb128 0x2
+ 2391 0442 91       		.byte	0x91
+ 2392 0443 6C       		.sleb128 -20
+ 2393 0444 11       		.uleb128 0x11
+ 2394 0445 6900     		.ascii	"i\000"
+ 2395 0447 01       		.byte	0x1
+ 2396 0448 E5       		.byte	0xe5
+ 2397 0449 68000000 		.4byte	0x68
+ 2398 044d 02       		.uleb128 0x2
+ 2399 044e 91       		.byte	0x91
+ 2400 044f 74       		.sleb128 -12
+ 2401 0450 00       		.byte	0
+ 2402 0451 10       		.uleb128 0x10
+ 2403 0452 7A020000 		.4byte	.LASF65
+ 2404 0456 01       		.byte	0x1
+ 2405 0457 F9       		.byte	0xf9
+ 2406 0458 00000000 		.4byte	.LFB70
+ 2407 045c BE060000 		.4byte	.LFE70-.LFB70
+ 2408 0460 01       		.uleb128 0x1
+ 2409 0461 9C       		.byte	0x9c
+ 2410 0462 8F040000 		.4byte	0x48f
+ 2411 0466 11       		.uleb128 0x11
+ 2412 0467 636D6400 		.ascii	"cmd\000"
+ 2413 046b 01       		.byte	0x1
+ 2414 046c FB       		.byte	0xfb
+ 2415 046d 9B000000 		.4byte	0x9b
+ 2416 0471 02       		.uleb128 0x2
+ 2417 0472 91       		.byte	0x91
+ 2418 0473 73       		.sleb128 -13
+ 2419 0474 11       		.uleb128 0x11
+ 2420 0475 6C656E00 		.ascii	"len\000"
+ 2421 0479 01       		.byte	0x1
+ 2422 047a FC       		.byte	0xfc
+ 2423 047b 68000000 		.4byte	0x68
+ 2424 047f 02       		.uleb128 0x2
+ 2425 0480 91       		.byte	0x91
+ 2426 0481 6C       		.sleb128 -20
+ 2427 0482 11       		.uleb128 0x11
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 55
+
+
+ 2428 0483 6900     		.ascii	"i\000"
+ 2429 0485 01       		.byte	0x1
+ 2430 0486 FD       		.byte	0xfd
+ 2431 0487 68000000 		.4byte	0x68
+ 2432 048b 02       		.uleb128 0x2
+ 2433 048c 91       		.byte	0x91
+ 2434 048d 74       		.sleb128 -12
+ 2435 048e 00       		.byte	0
+ 2436 048f 16       		.uleb128 0x16
+ 2437 0490 E5000000 		.4byte	.LASF67
+ 2438 0494 01       		.byte	0x1
+ 2439 0495 FB01     		.2byte	0x1fb
+ 2440 0497 00000000 		.4byte	.LFB71
+ 2441 049b CC000000 		.4byte	.LFE71-.LFB71
+ 2442 049f 01       		.uleb128 0x1
+ 2443 04a0 9C       		.byte	0x9c
+ 2444 04a1 B3040000 		.4byte	0x4b3
+ 2445 04a5 17       		.uleb128 0x17
+ 2446 04a6 6B00     		.ascii	"k\000"
+ 2447 04a8 01       		.byte	0x1
+ 2448 04a9 FD01     		.2byte	0x1fd
+ 2449 04ab 68000000 		.4byte	0x68
+ 2450 04af 02       		.uleb128 0x2
+ 2451 04b0 91       		.byte	0x91
+ 2452 04b1 74       		.sleb128 -12
+ 2453 04b2 00       		.byte	0
+ 2454 04b3 18       		.uleb128 0x18
+ 2455 04b4 8A030000 		.4byte	.LASF68
+ 2456 04b8 01       		.byte	0x1
+ 2457 04b9 1B02     		.2byte	0x21b
+ 2458 04bb 68000000 		.4byte	0x68
+ 2459 04bf 00000000 		.4byte	.LFB72
+ 2460 04c3 28010000 		.4byte	.LFE72-.LFB72
+ 2461 04c7 01       		.uleb128 0x1
+ 2462 04c8 9C       		.byte	0x9c
+ 2463 04c9 DD040000 		.4byte	0x4dd
+ 2464 04cd 19       		.uleb128 0x19
+ 2465 04ce B7040000 		.4byte	.LASF69
+ 2466 04d2 01       		.byte	0x1
+ 2467 04d3 1D02     		.2byte	0x21d
+ 2468 04d5 68000000 		.4byte	0x68
+ 2469 04d9 02       		.uleb128 0x2
+ 2470 04da 91       		.byte	0x91
+ 2471 04db 74       		.sleb128 -12
+ 2472 04dc 00       		.byte	0
+ 2473 04dd 1A       		.uleb128 0x1a
+ 2474 04de C4040000 		.4byte	.LASF70
+ 2475 04e2 07       		.byte	0x7
+ 2476 04e3 9606     		.2byte	0x696
+ 2477 04e5 E9040000 		.4byte	0x4e9
+ 2478 04e9 08       		.uleb128 0x8
+ 2479 04ea 76000000 		.4byte	0x76
+ 2480 04ee 1B       		.uleb128 0x1b
+ 2481 04ef 4A040000 		.4byte	.LASF71
+ 2482 04f3 06       		.byte	0x6
+ 2483 04f4 19       		.byte	0x19
+ 2484 04f5 0A030000 		.4byte	0x30a
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 56
+
+
+ 2485 04f9 1C       		.uleb128 0x1c
+ 2486 04fa 63000000 		.4byte	.LASF72
+ 2487 04fe 01       		.byte	0x1
+ 2488 04ff 3D       		.byte	0x3d
+ 2489 0500 1B030000 		.4byte	0x31b
+ 2490 0504 05       		.uleb128 0x5
+ 2491 0505 03       		.byte	0x3
+ 2492 0506 00000000 		.4byte	MyI2C_Regs
+ 2493 050a 1D       		.uleb128 0x1d
+ 2494 050b 7300     		.ascii	"s\000"
+ 2495 050d 06       		.byte	0x6
+ 2496 050e 3C       		.byte	0x3c
+ 2497 050f 4C010000 		.4byte	0x14c
+ 2498 0513 05       		.uleb128 0x5
+ 2499 0514 03       		.byte	0x3
+ 2500 0515 00000000 		.4byte	s
+ 2501 0519 1C       		.uleb128 0x1c
+ 2502 051a A7040000 		.4byte	.LASF73
+ 2503 051e 01       		.byte	0x1
+ 2504 051f 3E       		.byte	0x3e
+ 2505 0520 9B000000 		.4byte	0x9b
+ 2506 0524 05       		.uleb128 0x5
+ 2507 0525 03       		.byte	0x3
+ 2508 0526 00000000 		.4byte	run_mode
+ 2509 052a 1E       		.uleb128 0x1e
+ 2510 052b 72786900 		.ascii	"rxi\000"
+ 2511 052f 06       		.byte	0x6
+ 2512 0530 40       		.byte	0x40
+ 2513 0531 68000000 		.4byte	0x68
+ 2514 0535 1C       		.uleb128 0x1c
+ 2515 0536 B9000000 		.4byte	.LASF74
+ 2516 053a 01       		.byte	0x1
+ 2517 053b F2       		.byte	0xf2
+ 2518 053c 9B000000 		.4byte	0x9b
+ 2519 0540 05       		.uleb128 0x5
+ 2520 0541 03       		.byte	0x3
+ 2521 0542 00000000 		.4byte	sendDebugMsg
+ 2522 0546 1C       		.uleb128 0x1c
+ 2523 0547 9D030000 		.4byte	.LASF75
+ 2524 054b 06       		.byte	0x6
+ 2525 054c 44       		.byte	0x44
+ 2526 054d 9B000000 		.4byte	0x9b
+ 2527 0551 05       		.uleb128 0x5
+ 2528 0552 03       		.byte	0x3
+ 2529 0553 00000000 		.4byte	currentAccessType
+ 2530 0557 1C       		.uleb128 0x1c
+ 2531 0558 AA010000 		.4byte	.LASF76
+ 2532 055c 06       		.byte	0x6
+ 2533 055d 45       		.byte	0x45
+ 2534 055e 9B000000 		.4byte	0x9b
+ 2535 0562 05       		.uleb128 0x5
+ 2536 0563 03       		.byte	0x3
+ 2537 0564 00000000 		.4byte	hw_old
+ 2538 0568 1C       		.uleb128 0x1c
+ 2539 0569 68010000 		.4byte	.LASF77
+ 2540 056d 06       		.byte	0x6
+ 2541 056e 46       		.byte	0x46
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 57
+
+
+ 2542 056f 9B000000 		.4byte	0x9b
+ 2543 0573 05       		.uleb128 0x5
+ 2544 0574 03       		.byte	0x3
+ 2545 0575 00000000 		.4byte	tp_old
+ 2546 0579 1C       		.uleb128 0x1c
+ 2547 057a E7020000 		.4byte	.LASF78
+ 2548 057e 06       		.byte	0x6
+ 2549 057f 47       		.byte	0x47
+ 2550 0580 68000000 		.4byte	0x68
+ 2551 0584 05       		.uleb128 0x5
+ 2552 0585 03       		.byte	0x3
+ 2553 0586 00000000 		.4byte	tamperCR_polarity
+ 2554 058a 1C       		.uleb128 0x1c
+ 2555 058b F2040000 		.4byte	.LASF79
+ 2556 058f 06       		.byte	0x6
+ 2557 0590 48       		.byte	0x48
+ 2558 0591 68000000 		.4byte	0x68
+ 2559 0595 05       		.uleb128 0x5
+ 2560 0596 03       		.byte	0x3
+ 2561 0597 00000000 		.4byte	tamper_out_polarity
+ 2562 059b 1C       		.uleb128 0x1c
+ 2563 059c 70040000 		.4byte	.LASF80
+ 2564 05a0 06       		.byte	0x6
+ 2565 05a1 4B       		.byte	0x4b
+ 2566 05a2 68000000 		.4byte	0x68
+ 2567 05a6 05       		.uleb128 0x5
+ 2568 05a7 03       		.byte	0x3
+ 2569 05a8 00000000 		.4byte	card_ack
+ 2570 05ac 1C       		.uleb128 0x1c
+ 2571 05ad 75010000 		.4byte	.LASF81
+ 2572 05b1 06       		.byte	0x6
+ 2573 05b2 4C       		.byte	0x4c
+ 2574 05b3 68000000 		.4byte	0x68
+ 2575 05b7 05       		.uleb128 0x5
+ 2576 05b8 03       		.byte	0x3
+ 2577 05b9 00000000 		.4byte	card_in_buf
+ 2578 05bd 1B       		.uleb128 0x1b
+ 2579 05be 63020000 		.4byte	.LASF82
+ 2580 05c2 06       		.byte	0x6
+ 2581 05c3 57       		.byte	0x57
+ 2582 05c4 9B000000 		.4byte	0x9b
+ 2583 05c8 1B       		.uleb128 0x1b
+ 2584 05c9 0C040000 		.4byte	.LASF83
+ 2585 05cd 06       		.byte	0x6
+ 2586 05ce 58       		.byte	0x58
+ 2587 05cf 68000000 		.4byte	0x68
+ 2588 05d3 1C       		.uleb128 0x1c
+ 2589 05d4 D0030000 		.4byte	.LASF84
+ 2590 05d8 01       		.byte	0x1
+ 2591 05d9 F3       		.byte	0xf3
+ 2592 05da 68000000 		.4byte	0x68
+ 2593 05de 05       		.uleb128 0x5
+ 2594 05df 03       		.byte	0x3
+ 2595 05e0 00000000 		.4byte	debug_msg_delay
+ 2596 05e4 1C       		.uleb128 0x1c
+ 2597 05e5 4B010000 		.4byte	.LASF85
+ 2598 05e9 01       		.byte	0x1
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 58
+
+
+ 2599 05ea 3F       		.byte	0x3f
+ 2600 05eb 68000000 		.4byte	0x68
+ 2601 05ef 05       		.uleb128 0x5
+ 2602 05f0 03       		.byte	0x3
+ 2603 05f1 00000000 		.4byte	passmode_timeout
+ 2604 05f5 1B       		.uleb128 0x1b
+ 2605 05f6 BA010000 		.4byte	.LASF86
+ 2606 05fa 06       		.byte	0x6
+ 2607 05fb 62       		.byte	0x62
+ 2608 05fc 9B000000 		.4byte	0x9b
+ 2609 0600 1B       		.uleb128 0x1b
+ 2610 0601 B9030000 		.4byte	.LASF87
+ 2611 0605 06       		.byte	0x6
+ 2612 0606 63       		.byte	0x63
+ 2613 0607 9B000000 		.4byte	0x9b
+ 2614 060b 1B       		.uleb128 0x1b
+ 2615 060c 98040000 		.4byte	.LASF88
+ 2616 0610 06       		.byte	0x6
+ 2617 0611 64       		.byte	0x64
+ 2618 0612 4C000000 		.4byte	0x4c
+ 2619 0616 1B       		.uleb128 0x1b
+ 2620 0617 8E040000 		.4byte	.LASF89
+ 2621 061b 08       		.byte	0x8
+ 2622 061c 14       		.byte	0x14
+ 2623 061d 81000000 		.4byte	0x81
+ 2624 0621 0C       		.uleb128 0xc
+ 2625 0622 2C000000 		.4byte	0x2c
+ 2626 0626 31060000 		.4byte	0x631
+ 2627 062a 0D       		.uleb128 0xd
+ 2628 062b A2000000 		.4byte	0xa2
+ 2629 062f 08       		.byte	0x8
+ 2630 0630 00       		.byte	0
+ 2631 0631 1C       		.uleb128 0x1c
+ 2632 0632 8D000000 		.4byte	.LASF90
+ 2633 0636 01       		.byte	0x1
+ 2634 0637 F0       		.byte	0xf0
+ 2635 0638 21060000 		.4byte	0x621
+ 2636 063c 05       		.uleb128 0x5
+ 2637 063d 03       		.byte	0x3
+ 2638 063e 00000000 		.4byte	f2f_alive_message
+ 2639 0642 1C       		.uleb128 0x1c
+ 2640 0643 22030000 		.4byte	.LASF91
+ 2641 0647 01       		.byte	0x1
+ 2642 0648 F1       		.byte	0xf1
+ 2643 0649 9B000000 		.4byte	0x9b
+ 2644 064d 05       		.uleb128 0x5
+ 2645 064e 03       		.byte	0x3
+ 2646 064f 00000000 		.4byte	TOC_port_init
+ 2647 0653 00       		.byte	0
+ 2648              		.section	.debug_abbrev,"",%progbits
+ 2649              	.Ldebug_abbrev0:
+ 2650 0000 01       		.uleb128 0x1
+ 2651 0001 11       		.uleb128 0x11
+ 2652 0002 01       		.byte	0x1
+ 2653 0003 25       		.uleb128 0x25
+ 2654 0004 0E       		.uleb128 0xe
+ 2655 0005 13       		.uleb128 0x13
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 59
+
+
+ 2656 0006 0B       		.uleb128 0xb
+ 2657 0007 03       		.uleb128 0x3
+ 2658 0008 0E       		.uleb128 0xe
+ 2659 0009 1B       		.uleb128 0x1b
+ 2660 000a 0E       		.uleb128 0xe
+ 2661 000b 55       		.uleb128 0x55
+ 2662 000c 17       		.uleb128 0x17
+ 2663 000d 11       		.uleb128 0x11
+ 2664 000e 01       		.uleb128 0x1
+ 2665 000f 10       		.uleb128 0x10
+ 2666 0010 17       		.uleb128 0x17
+ 2667 0011 00       		.byte	0
+ 2668 0012 00       		.byte	0
+ 2669 0013 02       		.uleb128 0x2
+ 2670 0014 24       		.uleb128 0x24
+ 2671 0015 00       		.byte	0
+ 2672 0016 0B       		.uleb128 0xb
+ 2673 0017 0B       		.uleb128 0xb
+ 2674 0018 3E       		.uleb128 0x3e
+ 2675 0019 0B       		.uleb128 0xb
+ 2676 001a 03       		.uleb128 0x3
+ 2677 001b 0E       		.uleb128 0xe
+ 2678 001c 00       		.byte	0
+ 2679 001d 00       		.byte	0
+ 2680 001e 03       		.uleb128 0x3
+ 2681 001f 16       		.uleb128 0x16
+ 2682 0020 00       		.byte	0
+ 2683 0021 03       		.uleb128 0x3
+ 2684 0022 0E       		.uleb128 0xe
+ 2685 0023 3A       		.uleb128 0x3a
+ 2686 0024 0B       		.uleb128 0xb
+ 2687 0025 3B       		.uleb128 0x3b
+ 2688 0026 0B       		.uleb128 0xb
+ 2689 0027 49       		.uleb128 0x49
+ 2690 0028 13       		.uleb128 0x13
+ 2691 0029 00       		.byte	0
+ 2692 002a 00       		.byte	0
+ 2693 002b 04       		.uleb128 0x4
+ 2694 002c 24       		.uleb128 0x24
+ 2695 002d 00       		.byte	0
+ 2696 002e 0B       		.uleb128 0xb
+ 2697 002f 0B       		.uleb128 0xb
+ 2698 0030 3E       		.uleb128 0x3e
+ 2699 0031 0B       		.uleb128 0xb
+ 2700 0032 03       		.uleb128 0x3
+ 2701 0033 08       		.uleb128 0x8
+ 2702 0034 00       		.byte	0
+ 2703 0035 00       		.byte	0
+ 2704 0036 05       		.uleb128 0x5
+ 2705 0037 16       		.uleb128 0x16
+ 2706 0038 00       		.byte	0
+ 2707 0039 03       		.uleb128 0x3
+ 2708 003a 0E       		.uleb128 0xe
+ 2709 003b 3A       		.uleb128 0x3a
+ 2710 003c 0B       		.uleb128 0xb
+ 2711 003d 3B       		.uleb128 0x3b
+ 2712 003e 05       		.uleb128 0x5
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 60
+
+
+ 2713 003f 49       		.uleb128 0x49
+ 2714 0040 13       		.uleb128 0x13
+ 2715 0041 00       		.byte	0
+ 2716 0042 00       		.byte	0
+ 2717 0043 06       		.uleb128 0x6
+ 2718 0044 13       		.uleb128 0x13
+ 2719 0045 01       		.byte	0x1
+ 2720 0046 0B       		.uleb128 0xb
+ 2721 0047 0B       		.uleb128 0xb
+ 2722 0048 3A       		.uleb128 0x3a
+ 2723 0049 0B       		.uleb128 0xb
+ 2724 004a 3B       		.uleb128 0x3b
+ 2725 004b 0B       		.uleb128 0xb
+ 2726 004c 01       		.uleb128 0x1
+ 2727 004d 13       		.uleb128 0x13
+ 2728 004e 00       		.byte	0
+ 2729 004f 00       		.byte	0
+ 2730 0050 07       		.uleb128 0x7
+ 2731 0051 0D       		.uleb128 0xd
+ 2732 0052 00       		.byte	0
+ 2733 0053 03       		.uleb128 0x3
+ 2734 0054 0E       		.uleb128 0xe
+ 2735 0055 3A       		.uleb128 0x3a
+ 2736 0056 0B       		.uleb128 0xb
+ 2737 0057 3B       		.uleb128 0x3b
+ 2738 0058 0B       		.uleb128 0xb
+ 2739 0059 49       		.uleb128 0x49
+ 2740 005a 13       		.uleb128 0x13
+ 2741 005b 38       		.uleb128 0x38
+ 2742 005c 0B       		.uleb128 0xb
+ 2743 005d 00       		.byte	0
+ 2744 005e 00       		.byte	0
+ 2745 005f 08       		.uleb128 0x8
+ 2746 0060 35       		.uleb128 0x35
+ 2747 0061 00       		.byte	0
+ 2748 0062 49       		.uleb128 0x49
+ 2749 0063 13       		.uleb128 0x13
+ 2750 0064 00       		.byte	0
+ 2751 0065 00       		.byte	0
+ 2752 0066 09       		.uleb128 0x9
+ 2753 0067 13       		.uleb128 0x13
+ 2754 0068 01       		.byte	0x1
+ 2755 0069 03       		.uleb128 0x3
+ 2756 006a 0E       		.uleb128 0xe
+ 2757 006b 0B       		.uleb128 0xb
+ 2758 006c 05       		.uleb128 0x5
+ 2759 006d 3A       		.uleb128 0x3a
+ 2760 006e 0B       		.uleb128 0xb
+ 2761 006f 3B       		.uleb128 0x3b
+ 2762 0070 0B       		.uleb128 0xb
+ 2763 0071 01       		.uleb128 0x1
+ 2764 0072 13       		.uleb128 0x13
+ 2765 0073 00       		.byte	0
+ 2766 0074 00       		.byte	0
+ 2767 0075 0A       		.uleb128 0xa
+ 2768 0076 0D       		.uleb128 0xd
+ 2769 0077 00       		.byte	0
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 61
+
+
+ 2770 0078 03       		.uleb128 0x3
+ 2771 0079 08       		.uleb128 0x8
+ 2772 007a 3A       		.uleb128 0x3a
+ 2773 007b 0B       		.uleb128 0xb
+ 2774 007c 3B       		.uleb128 0x3b
+ 2775 007d 0B       		.uleb128 0xb
+ 2776 007e 49       		.uleb128 0x49
+ 2777 007f 13       		.uleb128 0x13
+ 2778 0080 38       		.uleb128 0x38
+ 2779 0081 0B       		.uleb128 0xb
+ 2780 0082 00       		.byte	0
+ 2781 0083 00       		.byte	0
+ 2782 0084 0B       		.uleb128 0xb
+ 2783 0085 0D       		.uleb128 0xd
+ 2784 0086 00       		.byte	0
+ 2785 0087 03       		.uleb128 0x3
+ 2786 0088 0E       		.uleb128 0xe
+ 2787 0089 3A       		.uleb128 0x3a
+ 2788 008a 0B       		.uleb128 0xb
+ 2789 008b 3B       		.uleb128 0x3b
+ 2790 008c 0B       		.uleb128 0xb
+ 2791 008d 49       		.uleb128 0x49
+ 2792 008e 13       		.uleb128 0x13
+ 2793 008f 38       		.uleb128 0x38
+ 2794 0090 05       		.uleb128 0x5
+ 2795 0091 00       		.byte	0
+ 2796 0092 00       		.byte	0
+ 2797 0093 0C       		.uleb128 0xc
+ 2798 0094 01       		.uleb128 0x1
+ 2799 0095 01       		.byte	0x1
+ 2800 0096 49       		.uleb128 0x49
+ 2801 0097 13       		.uleb128 0x13
+ 2802 0098 01       		.uleb128 0x1
+ 2803 0099 13       		.uleb128 0x13
+ 2804 009a 00       		.byte	0
+ 2805 009b 00       		.byte	0
+ 2806 009c 0D       		.uleb128 0xd
+ 2807 009d 21       		.uleb128 0x21
+ 2808 009e 00       		.byte	0
+ 2809 009f 49       		.uleb128 0x49
+ 2810 00a0 13       		.uleb128 0x13
+ 2811 00a1 2F       		.uleb128 0x2f
+ 2812 00a2 0B       		.uleb128 0xb
+ 2813 00a3 00       		.byte	0
+ 2814 00a4 00       		.byte	0
+ 2815 00a5 0E       		.uleb128 0xe
+ 2816 00a6 21       		.uleb128 0x21
+ 2817 00a7 00       		.byte	0
+ 2818 00a8 49       		.uleb128 0x49
+ 2819 00a9 13       		.uleb128 0x13
+ 2820 00aa 2F       		.uleb128 0x2f
+ 2821 00ab 05       		.uleb128 0x5
+ 2822 00ac 00       		.byte	0
+ 2823 00ad 00       		.byte	0
+ 2824 00ae 0F       		.uleb128 0xf
+ 2825 00af 2E       		.uleb128 0x2e
+ 2826 00b0 00       		.byte	0
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 62
+
+
+ 2827 00b1 3F       		.uleb128 0x3f
+ 2828 00b2 19       		.uleb128 0x19
+ 2829 00b3 03       		.uleb128 0x3
+ 2830 00b4 0E       		.uleb128 0xe
+ 2831 00b5 3A       		.uleb128 0x3a
+ 2832 00b6 0B       		.uleb128 0xb
+ 2833 00b7 3B       		.uleb128 0x3b
+ 2834 00b8 0B       		.uleb128 0xb
+ 2835 00b9 11       		.uleb128 0x11
+ 2836 00ba 01       		.uleb128 0x1
+ 2837 00bb 12       		.uleb128 0x12
+ 2838 00bc 06       		.uleb128 0x6
+ 2839 00bd 40       		.uleb128 0x40
+ 2840 00be 18       		.uleb128 0x18
+ 2841 00bf 9742     		.uleb128 0x2117
+ 2842 00c1 19       		.uleb128 0x19
+ 2843 00c2 00       		.byte	0
+ 2844 00c3 00       		.byte	0
+ 2845 00c4 10       		.uleb128 0x10
+ 2846 00c5 2E       		.uleb128 0x2e
+ 2847 00c6 01       		.byte	0x1
+ 2848 00c7 3F       		.uleb128 0x3f
+ 2849 00c8 19       		.uleb128 0x19
+ 2850 00c9 03       		.uleb128 0x3
+ 2851 00ca 0E       		.uleb128 0xe
+ 2852 00cb 3A       		.uleb128 0x3a
+ 2853 00cc 0B       		.uleb128 0xb
+ 2854 00cd 3B       		.uleb128 0x3b
+ 2855 00ce 0B       		.uleb128 0xb
+ 2856 00cf 11       		.uleb128 0x11
+ 2857 00d0 01       		.uleb128 0x1
+ 2858 00d1 12       		.uleb128 0x12
+ 2859 00d2 06       		.uleb128 0x6
+ 2860 00d3 40       		.uleb128 0x40
+ 2861 00d4 18       		.uleb128 0x18
+ 2862 00d5 9642     		.uleb128 0x2116
+ 2863 00d7 19       		.uleb128 0x19
+ 2864 00d8 01       		.uleb128 0x1
+ 2865 00d9 13       		.uleb128 0x13
+ 2866 00da 00       		.byte	0
+ 2867 00db 00       		.byte	0
+ 2868 00dc 11       		.uleb128 0x11
+ 2869 00dd 34       		.uleb128 0x34
+ 2870 00de 00       		.byte	0
+ 2871 00df 03       		.uleb128 0x3
+ 2872 00e0 08       		.uleb128 0x8
+ 2873 00e1 3A       		.uleb128 0x3a
+ 2874 00e2 0B       		.uleb128 0xb
+ 2875 00e3 3B       		.uleb128 0x3b
+ 2876 00e4 0B       		.uleb128 0xb
+ 2877 00e5 49       		.uleb128 0x49
+ 2878 00e6 13       		.uleb128 0x13
+ 2879 00e7 02       		.uleb128 0x2
+ 2880 00e8 18       		.uleb128 0x18
+ 2881 00e9 00       		.byte	0
+ 2882 00ea 00       		.byte	0
+ 2883 00eb 12       		.uleb128 0x12
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 63
+
+
+ 2884 00ec 34       		.uleb128 0x34
+ 2885 00ed 00       		.byte	0
+ 2886 00ee 03       		.uleb128 0x3
+ 2887 00ef 0E       		.uleb128 0xe
+ 2888 00f0 3A       		.uleb128 0x3a
+ 2889 00f1 0B       		.uleb128 0xb
+ 2890 00f2 3B       		.uleb128 0x3b
+ 2891 00f3 0B       		.uleb128 0xb
+ 2892 00f4 49       		.uleb128 0x49
+ 2893 00f5 13       		.uleb128 0x13
+ 2894 00f6 02       		.uleb128 0x2
+ 2895 00f7 18       		.uleb128 0x18
+ 2896 00f8 00       		.byte	0
+ 2897 00f9 00       		.byte	0
+ 2898 00fa 13       		.uleb128 0x13
+ 2899 00fb 2E       		.uleb128 0x2e
+ 2900 00fc 00       		.byte	0
+ 2901 00fd 3F       		.uleb128 0x3f
+ 2902 00fe 19       		.uleb128 0x19
+ 2903 00ff 03       		.uleb128 0x3
+ 2904 0100 0E       		.uleb128 0xe
+ 2905 0101 3A       		.uleb128 0x3a
+ 2906 0102 0B       		.uleb128 0xb
+ 2907 0103 3B       		.uleb128 0x3b
+ 2908 0104 0B       		.uleb128 0xb
+ 2909 0105 11       		.uleb128 0x11
+ 2910 0106 01       		.uleb128 0x1
+ 2911 0107 12       		.uleb128 0x12
+ 2912 0108 06       		.uleb128 0x6
+ 2913 0109 40       		.uleb128 0x40
+ 2914 010a 18       		.uleb128 0x18
+ 2915 010b 9642     		.uleb128 0x2116
+ 2916 010d 19       		.uleb128 0x19
+ 2917 010e 00       		.byte	0
+ 2918 010f 00       		.byte	0
+ 2919 0110 14       		.uleb128 0x14
+ 2920 0111 2E       		.uleb128 0x2e
+ 2921 0112 01       		.byte	0x1
+ 2922 0113 3F       		.uleb128 0x3f
+ 2923 0114 19       		.uleb128 0x19
+ 2924 0115 03       		.uleb128 0x3
+ 2925 0116 0E       		.uleb128 0xe
+ 2926 0117 3A       		.uleb128 0x3a
+ 2927 0118 0B       		.uleb128 0xb
+ 2928 0119 3B       		.uleb128 0x3b
+ 2929 011a 0B       		.uleb128 0xb
+ 2930 011b 27       		.uleb128 0x27
+ 2931 011c 19       		.uleb128 0x19
+ 2932 011d 11       		.uleb128 0x11
+ 2933 011e 01       		.uleb128 0x1
+ 2934 011f 12       		.uleb128 0x12
+ 2935 0120 06       		.uleb128 0x6
+ 2936 0121 40       		.uleb128 0x40
+ 2937 0122 18       		.uleb128 0x18
+ 2938 0123 9642     		.uleb128 0x2116
+ 2939 0125 19       		.uleb128 0x19
+ 2940 0126 01       		.uleb128 0x1
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 64
+
+
+ 2941 0127 13       		.uleb128 0x13
+ 2942 0128 00       		.byte	0
+ 2943 0129 00       		.byte	0
+ 2944 012a 15       		.uleb128 0x15
+ 2945 012b 05       		.uleb128 0x5
+ 2946 012c 00       		.byte	0
+ 2947 012d 03       		.uleb128 0x3
+ 2948 012e 08       		.uleb128 0x8
+ 2949 012f 3A       		.uleb128 0x3a
+ 2950 0130 0B       		.uleb128 0xb
+ 2951 0131 3B       		.uleb128 0x3b
+ 2952 0132 0B       		.uleb128 0xb
+ 2953 0133 49       		.uleb128 0x49
+ 2954 0134 13       		.uleb128 0x13
+ 2955 0135 02       		.uleb128 0x2
+ 2956 0136 18       		.uleb128 0x18
+ 2957 0137 00       		.byte	0
+ 2958 0138 00       		.byte	0
+ 2959 0139 16       		.uleb128 0x16
+ 2960 013a 2E       		.uleb128 0x2e
+ 2961 013b 01       		.byte	0x1
+ 2962 013c 3F       		.uleb128 0x3f
+ 2963 013d 19       		.uleb128 0x19
+ 2964 013e 03       		.uleb128 0x3
+ 2965 013f 0E       		.uleb128 0xe
+ 2966 0140 3A       		.uleb128 0x3a
+ 2967 0141 0B       		.uleb128 0xb
+ 2968 0142 3B       		.uleb128 0x3b
+ 2969 0143 05       		.uleb128 0x5
+ 2970 0144 27       		.uleb128 0x27
+ 2971 0145 19       		.uleb128 0x19
+ 2972 0146 11       		.uleb128 0x11
+ 2973 0147 01       		.uleb128 0x1
+ 2974 0148 12       		.uleb128 0x12
+ 2975 0149 06       		.uleb128 0x6
+ 2976 014a 40       		.uleb128 0x40
+ 2977 014b 18       		.uleb128 0x18
+ 2978 014c 9642     		.uleb128 0x2116
+ 2979 014e 19       		.uleb128 0x19
+ 2980 014f 01       		.uleb128 0x1
+ 2981 0150 13       		.uleb128 0x13
+ 2982 0151 00       		.byte	0
+ 2983 0152 00       		.byte	0
+ 2984 0153 17       		.uleb128 0x17
+ 2985 0154 34       		.uleb128 0x34
+ 2986 0155 00       		.byte	0
+ 2987 0156 03       		.uleb128 0x3
+ 2988 0157 08       		.uleb128 0x8
+ 2989 0158 3A       		.uleb128 0x3a
+ 2990 0159 0B       		.uleb128 0xb
+ 2991 015a 3B       		.uleb128 0x3b
+ 2992 015b 05       		.uleb128 0x5
+ 2993 015c 49       		.uleb128 0x49
+ 2994 015d 13       		.uleb128 0x13
+ 2995 015e 02       		.uleb128 0x2
+ 2996 015f 18       		.uleb128 0x18
+ 2997 0160 00       		.byte	0
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 65
+
+
+ 2998 0161 00       		.byte	0
+ 2999 0162 18       		.uleb128 0x18
+ 3000 0163 2E       		.uleb128 0x2e
+ 3001 0164 01       		.byte	0x1
+ 3002 0165 3F       		.uleb128 0x3f
+ 3003 0166 19       		.uleb128 0x19
+ 3004 0167 03       		.uleb128 0x3
+ 3005 0168 0E       		.uleb128 0xe
+ 3006 0169 3A       		.uleb128 0x3a
+ 3007 016a 0B       		.uleb128 0xb
+ 3008 016b 3B       		.uleb128 0x3b
+ 3009 016c 05       		.uleb128 0x5
+ 3010 016d 49       		.uleb128 0x49
+ 3011 016e 13       		.uleb128 0x13
+ 3012 016f 11       		.uleb128 0x11
+ 3013 0170 01       		.uleb128 0x1
+ 3014 0171 12       		.uleb128 0x12
+ 3015 0172 06       		.uleb128 0x6
+ 3016 0173 40       		.uleb128 0x40
+ 3017 0174 18       		.uleb128 0x18
+ 3018 0175 9642     		.uleb128 0x2116
+ 3019 0177 19       		.uleb128 0x19
+ 3020 0178 01       		.uleb128 0x1
+ 3021 0179 13       		.uleb128 0x13
+ 3022 017a 00       		.byte	0
+ 3023 017b 00       		.byte	0
+ 3024 017c 19       		.uleb128 0x19
+ 3025 017d 34       		.uleb128 0x34
+ 3026 017e 00       		.byte	0
+ 3027 017f 03       		.uleb128 0x3
+ 3028 0180 0E       		.uleb128 0xe
+ 3029 0181 3A       		.uleb128 0x3a
+ 3030 0182 0B       		.uleb128 0xb
+ 3031 0183 3B       		.uleb128 0x3b
+ 3032 0184 05       		.uleb128 0x5
+ 3033 0185 49       		.uleb128 0x49
+ 3034 0186 13       		.uleb128 0x13
+ 3035 0187 02       		.uleb128 0x2
+ 3036 0188 18       		.uleb128 0x18
+ 3037 0189 00       		.byte	0
+ 3038 018a 00       		.byte	0
+ 3039 018b 1A       		.uleb128 0x1a
+ 3040 018c 34       		.uleb128 0x34
+ 3041 018d 00       		.byte	0
+ 3042 018e 03       		.uleb128 0x3
+ 3043 018f 0E       		.uleb128 0xe
+ 3044 0190 3A       		.uleb128 0x3a
+ 3045 0191 0B       		.uleb128 0xb
+ 3046 0192 3B       		.uleb128 0x3b
+ 3047 0193 05       		.uleb128 0x5
+ 3048 0194 49       		.uleb128 0x49
+ 3049 0195 13       		.uleb128 0x13
+ 3050 0196 3F       		.uleb128 0x3f
+ 3051 0197 19       		.uleb128 0x19
+ 3052 0198 3C       		.uleb128 0x3c
+ 3053 0199 19       		.uleb128 0x19
+ 3054 019a 00       		.byte	0
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 66
+
+
+ 3055 019b 00       		.byte	0
+ 3056 019c 1B       		.uleb128 0x1b
+ 3057 019d 34       		.uleb128 0x34
+ 3058 019e 00       		.byte	0
+ 3059 019f 03       		.uleb128 0x3
+ 3060 01a0 0E       		.uleb128 0xe
+ 3061 01a1 3A       		.uleb128 0x3a
+ 3062 01a2 0B       		.uleb128 0xb
+ 3063 01a3 3B       		.uleb128 0x3b
+ 3064 01a4 0B       		.uleb128 0xb
+ 3065 01a5 49       		.uleb128 0x49
+ 3066 01a6 13       		.uleb128 0x13
+ 3067 01a7 3F       		.uleb128 0x3f
+ 3068 01a8 19       		.uleb128 0x19
+ 3069 01a9 3C       		.uleb128 0x3c
+ 3070 01aa 19       		.uleb128 0x19
+ 3071 01ab 00       		.byte	0
+ 3072 01ac 00       		.byte	0
+ 3073 01ad 1C       		.uleb128 0x1c
+ 3074 01ae 34       		.uleb128 0x34
+ 3075 01af 00       		.byte	0
+ 3076 01b0 03       		.uleb128 0x3
+ 3077 01b1 0E       		.uleb128 0xe
+ 3078 01b2 3A       		.uleb128 0x3a
+ 3079 01b3 0B       		.uleb128 0xb
+ 3080 01b4 3B       		.uleb128 0x3b
+ 3081 01b5 0B       		.uleb128 0xb
+ 3082 01b6 49       		.uleb128 0x49
+ 3083 01b7 13       		.uleb128 0x13
+ 3084 01b8 3F       		.uleb128 0x3f
+ 3085 01b9 19       		.uleb128 0x19
+ 3086 01ba 02       		.uleb128 0x2
+ 3087 01bb 18       		.uleb128 0x18
+ 3088 01bc 00       		.byte	0
+ 3089 01bd 00       		.byte	0
+ 3090 01be 1D       		.uleb128 0x1d
+ 3091 01bf 34       		.uleb128 0x34
+ 3092 01c0 00       		.byte	0
+ 3093 01c1 03       		.uleb128 0x3
+ 3094 01c2 08       		.uleb128 0x8
+ 3095 01c3 3A       		.uleb128 0x3a
+ 3096 01c4 0B       		.uleb128 0xb
+ 3097 01c5 3B       		.uleb128 0x3b
+ 3098 01c6 0B       		.uleb128 0xb
+ 3099 01c7 49       		.uleb128 0x49
+ 3100 01c8 13       		.uleb128 0x13
+ 3101 01c9 3F       		.uleb128 0x3f
+ 3102 01ca 19       		.uleb128 0x19
+ 3103 01cb 02       		.uleb128 0x2
+ 3104 01cc 18       		.uleb128 0x18
+ 3105 01cd 00       		.byte	0
+ 3106 01ce 00       		.byte	0
+ 3107 01cf 1E       		.uleb128 0x1e
+ 3108 01d0 34       		.uleb128 0x34
+ 3109 01d1 00       		.byte	0
+ 3110 01d2 03       		.uleb128 0x3
+ 3111 01d3 08       		.uleb128 0x8
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 67
+
+
+ 3112 01d4 3A       		.uleb128 0x3a
+ 3113 01d5 0B       		.uleb128 0xb
+ 3114 01d6 3B       		.uleb128 0x3b
+ 3115 01d7 0B       		.uleb128 0xb
+ 3116 01d8 49       		.uleb128 0x49
+ 3117 01d9 13       		.uleb128 0x13
+ 3118 01da 3F       		.uleb128 0x3f
+ 3119 01db 19       		.uleb128 0x19
+ 3120 01dc 3C       		.uleb128 0x3c
+ 3121 01dd 19       		.uleb128 0x19
+ 3122 01de 00       		.byte	0
+ 3123 01df 00       		.byte	0
+ 3124 01e0 00       		.byte	0
+ 3125              		.section	.debug_aranges,"",%progbits
+ 3126 0000 64000000 		.4byte	0x64
+ 3127 0004 0200     		.2byte	0x2
+ 3128 0006 00000000 		.4byte	.Ldebug_info0
+ 3129 000a 04       		.byte	0x4
+ 3130 000b 00       		.byte	0
+ 3131 000c 0000     		.2byte	0
+ 3132 000e 0000     		.2byte	0
+ 3133 0010 00000000 		.4byte	.LFB63
+ 3134 0014 40000000 		.4byte	.LFE63-.LFB63
+ 3135 0018 00000000 		.4byte	.LFB64
+ 3136 001c 70000000 		.4byte	.LFE64-.LFB64
+ 3137 0020 00000000 		.4byte	.LFB65
+ 3138 0024 34000000 		.4byte	.LFE65-.LFB65
+ 3139 0028 00000000 		.4byte	.LFB66
+ 3140 002c 70000000 		.4byte	.LFE66-.LFB66
+ 3141 0030 00000000 		.4byte	.LFB67
+ 3142 0034 78010000 		.4byte	.LFE67-.LFB67
+ 3143 0038 00000000 		.4byte	.LFB68
+ 3144 003c 44000000 		.4byte	.LFE68-.LFB68
+ 3145 0040 00000000 		.4byte	.LFB69
+ 3146 0044 3E000000 		.4byte	.LFE69-.LFB69
+ 3147 0048 00000000 		.4byte	.LFB70
+ 3148 004c BE060000 		.4byte	.LFE70-.LFB70
+ 3149 0050 00000000 		.4byte	.LFB71
+ 3150 0054 CC000000 		.4byte	.LFE71-.LFB71
+ 3151 0058 00000000 		.4byte	.LFB72
+ 3152 005c 28010000 		.4byte	.LFE72-.LFB72
+ 3153 0060 00000000 		.4byte	0
+ 3154 0064 00000000 		.4byte	0
+ 3155              		.section	.debug_ranges,"",%progbits
+ 3156              	.Ldebug_ranges0:
+ 3157 0000 00000000 		.4byte	.LFB63
+ 3158 0004 40000000 		.4byte	.LFE63
+ 3159 0008 00000000 		.4byte	.LFB64
+ 3160 000c 70000000 		.4byte	.LFE64
+ 3161 0010 00000000 		.4byte	.LFB65
+ 3162 0014 34000000 		.4byte	.LFE65
+ 3163 0018 00000000 		.4byte	.LFB66
+ 3164 001c 70000000 		.4byte	.LFE66
+ 3165 0020 00000000 		.4byte	.LFB67
+ 3166 0024 78010000 		.4byte	.LFE67
+ 3167 0028 00000000 		.4byte	.LFB68
+ 3168 002c 44000000 		.4byte	.LFE68
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 68
+
+
+ 3169 0030 00000000 		.4byte	.LFB69
+ 3170 0034 3E000000 		.4byte	.LFE69
+ 3171 0038 00000000 		.4byte	.LFB70
+ 3172 003c BE060000 		.4byte	.LFE70
+ 3173 0040 00000000 		.4byte	.LFB71
+ 3174 0044 CC000000 		.4byte	.LFE71
+ 3175 0048 00000000 		.4byte	.LFB72
+ 3176 004c 28010000 		.4byte	.LFE72
+ 3177 0050 00000000 		.4byte	0
+ 3178 0054 00000000 		.4byte	0
+ 3179              		.section	.debug_line,"",%progbits
+ 3180              	.Ldebug_line0:
+ 3181 0000 08040000 		.section	.debug_str,"MS",%progbits,1
+ 3181      02007201 
+ 3181      00000201 
+ 3181      FB0E0D00 
+ 3181      01010101 
+ 3182              	.LASF45:
+ 3183 0000 6F736470 		.ascii	"osdp_status\000"
+ 3183      5F737461 
+ 3183      74757300 
+ 3184              	.LASF49:
+ 3185 000c 6F736470 		.ascii	"osdp_reader_cmd\000"
+ 3185      5F726561 
+ 3185      6465725F 
+ 3185      636D6400 
+ 3186              	.LASF94:
+ 3187 001c 433A5C55 		.ascii	"C:\\Users\\yqh\\Documents\\works\\NanoNXT\\Pass_TOC"
+ 3187      73657273 
+ 3187      5C797168 
+ 3187      5C446F63 
+ 3187      756D656E 
+ 3188 0049 5C332E35 		.ascii	"\\3.5.2\\nanoNxt_ICM3.cydsn\000"
+ 3188      2E325C6E 
+ 3188      616E6F4E 
+ 3188      78745F49 
+ 3188      434D332E 
+ 3189              	.LASF72:
+ 3190 0063 4D794932 		.ascii	"MyI2C_Regs\000"
+ 3190      435F5265 
+ 3190      677300
+ 3191              	.LASF15:
+ 3192 006e 73697A65 		.ascii	"sizetype\000"
+ 3192      74797065 
+ 3192      00
+ 3193              	.LASF47:
+ 3194 0077 6F736470 		.ascii	"osdp_rate\000"
+ 3194      5F726174 
+ 3194      6500
+ 3195              	.LASF39:
+ 3196 0081 73656E64 		.ascii	"send_mobile\000"
+ 3196      5F6D6F62 
+ 3196      696C6500 
+ 3197              	.LASF90:
+ 3198 008d 6632665F 		.ascii	"f2f_alive_message\000"
+ 3198      616C6976 
+ 3198      655F6D65 
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 69
+
+
+ 3198      73736167 
+ 3198      6500
+ 3199              	.LASF34:
+ 3200 009f 66616374 		.ascii	"factory_reset\000"
+ 3200      6F72795F 
+ 3200      72657365 
+ 3200      7400
+ 3201              	.LASF35:
+ 3202 00ad 64617461 		.ascii	"data_length\000"
+ 3202      5F6C656E 
+ 3202      67746800 
+ 3203              	.LASF74:
+ 3204 00b9 73656E64 		.ascii	"sendDebugMsg\000"
+ 3204      44656275 
+ 3204      674D7367 
+ 3204      00
+ 3205              	.LASF48:
+ 3206 00c6 6F736470 		.ascii	"osdp_buffer\000"
+ 3206      5F627566 
+ 3206      66657200 
+ 3207              	.LASF6:
+ 3208 00d2 6C6F6E67 		.ascii	"long long int\000"
+ 3208      206C6F6E 
+ 3208      6720696E 
+ 3208      7400
+ 3209              	.LASF31:
+ 3210 00e0 6D6F6465 		.ascii	"mode\000"
+ 3210      00
+ 3211              	.LASF67:
+ 3212 00e5 52656164 		.ascii	"ReadImageCard\000"
+ 3212      496D6167 
+ 3212      65436172 
+ 3212      6400
+ 3213              	.LASF28:
+ 3214 00f3 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 3214      5F554152 
+ 3214      545F5354 
+ 3214      52554354 
+ 3214      00
+ 3215              	.LASF2:
+ 3216 0104 73686F72 		.ascii	"short int\000"
+ 3216      7420696E 
+ 3216      7400
+ 3217              	.LASF4:
+ 3218 010e 6C6F6E67 		.ascii	"long int\000"
+ 3218      20696E74 
+ 3218      00
+ 3219              	.LASF17:
+ 3220 0117 70617269 		.ascii	"parity\000"
+ 3220      747900
+ 3221              	.LASF23:
+ 3222 011e 72785F62 		.ascii	"rx_bits\000"
+ 3222      69747300 
+ 3223              	.LASF58:
+ 3224 0126 53656E64 		.ascii	"SendHID_SP533\000"
+ 3224      4849445F 
+ 3224      53503533 
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 70
+
+
+ 3224      3300
+ 3225              	.LASF64:
+ 3226 0134 496E6974 		.ascii	"InitOSDP\000"
+ 3226      4F534450 
+ 3226      00
+ 3227              	.LASF11:
+ 3228 013d 75696E74 		.ascii	"uint8\000"
+ 3228      3800
+ 3229              	.LASF59:
+ 3230 0143 53656E64 		.ascii	"SendHID\000"
+ 3230      48494400 
+ 3231              	.LASF85:
+ 3232 014b 70617373 		.ascii	"passmode_timeout\000"
+ 3232      6D6F6465 
+ 3232      5F74696D 
+ 3232      656F7574 
+ 3232      00
+ 3233              	.LASF0:
+ 3234 015c 7369676E 		.ascii	"signed char\000"
+ 3234      65642063 
+ 3234      68617200 
+ 3235              	.LASF77:
+ 3236 0168 74705F6F 		.ascii	"tp_old\000"
+ 3236      6C6400
+ 3237              	.LASF12:
+ 3238 016f 666C6F61 		.ascii	"float\000"
+ 3238      7400
+ 3239              	.LASF81:
+ 3240 0175 63617264 		.ascii	"card_in_buf\000"
+ 3240      5F696E5F 
+ 3240      62756600 
+ 3241              	.LASF32:
+ 3242 0181 6163735F 		.ascii	"acs_outputs\000"
+ 3242      6F757470 
+ 3242      75747300 
+ 3243              	.LASF19:
+ 3244 018d 62697473 		.ascii	"bits\000"
+ 3244      00
+ 3245              	.LASF50:
+ 3246 0192 6F736470 		.ascii	"osdp_reader_data_length\000"
+ 3246      5F726561 
+ 3246      6465725F 
+ 3246      64617461 
+ 3246      5F6C656E 
+ 3247              	.LASF76:
+ 3248 01aa 68775F6F 		.ascii	"hw_old\000"
+ 3248      6C6400
+ 3249              	.LASF61:
+ 3250 01b1 70616442 		.ascii	"padBytes\000"
+ 3250      79746573 
+ 3250      00
+ 3251              	.LASF86:
+ 3252 01ba 62757474 		.ascii	"buttonPressed\000"
+ 3252      6F6E5072 
+ 3252      65737365 
+ 3252      6400
+ 3253              	.LASF92:
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 71
+
+
+ 3254 01c8 474E5520 		.ascii	"GNU C 4.9.3 20150303 (release) [ARM/embedded-4_9-br"
+ 3254      4320342E 
+ 3254      392E3320 
+ 3254      32303135 
+ 3254      30333033 
+ 3255 01fb 616E6368 		.ascii	"anch revision 221220] -mcpu=cortex-m3 -mthumb -g -O"
+ 3255      20726576 
+ 3255      6973696F 
+ 3255      6E203232 
+ 3255      31323230 
+ 3256 022e 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 3256      66756E63 
+ 3256      74696F6E 
+ 3256      2D736563 
+ 3256      74696F6E 
+ 3257              	.LASF26:
+ 3258 0256 74696D65 		.ascii	"timer_rx_ctr\000"
+ 3258      725F7278 
+ 3258      5F637472 
+ 3258      00
+ 3259              	.LASF82:
+ 3260 0263 6632665F 		.ascii	"f2f_send_alive\000"
+ 3260      73656E64 
+ 3260      5F616C69 
+ 3260      766500
+ 3261              	.LASF21:
+ 3262 0272 74785F62 		.ascii	"tx_byte\000"
+ 3262      79746500 
+ 3263              	.LASF65:
+ 3264 027a 48616E64 		.ascii	"HandleCommand\000"
+ 3264      6C65436F 
+ 3264      6D6D616E 
+ 3264      6400
+ 3265              	.LASF51:
+ 3266 0288 6F736470 		.ascii	"osdp_reader_rate\000"
+ 3266      5F726561 
+ 3266      6465725F 
+ 3266      72617465 
+ 3266      00
+ 3267              	.LASF36:
+ 3268 0299 74616D70 		.ascii	"tamper_in\000"
+ 3268      65725F69 
+ 3268      6E00
+ 3269              	.LASF52:
+ 3270 02a3 6F736470 		.ascii	"osdp_reader_buffer\000"
+ 3270      5F726561 
+ 3270      6465725F 
+ 3270      62756666 
+ 3270      657200
+ 3271              	.LASF16:
+ 3272 02b6 62617564 		.ascii	"baud\000"
+ 3272      00
+ 3273              	.LASF46:
+ 3274 02bb 6F736470 		.ascii	"osdp_data_length\000"
+ 3274      5F646174 
+ 3274      615F6C65 
+ 3274      6E677468 
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 72
+
+
+ 3274      00
+ 3275              	.LASF1:
+ 3276 02cc 756E7369 		.ascii	"unsigned char\000"
+ 3276      676E6564 
+ 3276      20636861 
+ 3276      7200
+ 3277              	.LASF66:
+ 3278 02da 64697370 		.ascii	"displayError\000"
+ 3278      6C617945 
+ 3278      72726F72 
+ 3278      00
+ 3279              	.LASF78:
+ 3280 02e7 74616D70 		.ascii	"tamperCR_polarity\000"
+ 3280      65724352 
+ 3280      5F706F6C 
+ 3280      61726974 
+ 3280      7900
+ 3281              	.LASF38:
+ 3282 02f9 6D6F6269 		.ascii	"mobile_mode\000"
+ 3282      6C655F6D 
+ 3282      6F646500 
+ 3283              	.LASF24:
+ 3284 0305 666C6167 		.ascii	"flags\000"
+ 3284      7300
+ 3285              	.LASF7:
+ 3286 030b 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 3286      206C6F6E 
+ 3286      6720756E 
+ 3286      7369676E 
+ 3286      65642069 
+ 3287              	.LASF91:
+ 3288 0322 544F435F 		.ascii	"TOC_port_init\000"
+ 3288      706F7274 
+ 3288      5F696E69 
+ 3288      7400
+ 3289              	.LASF8:
+ 3290 0330 756E7369 		.ascii	"unsigned int\000"
+ 3290      676E6564 
+ 3290      20696E74 
+ 3290      00
+ 3291              	.LASF18:
+ 3292 033d 73746F70 		.ascii	"stop_bits\000"
+ 3292      5F626974 
+ 3292      7300
+ 3293              	.LASF5:
+ 3294 0347 6C6F6E67 		.ascii	"long unsigned int\000"
+ 3294      20756E73 
+ 3294      69676E65 
+ 3294      6420696E 
+ 3294      7400
+ 3295              	.LASF33:
+ 3296 0359 6163735F 		.ascii	"acs_inputs\000"
+ 3296      696E7075 
+ 3296      747300
+ 3297              	.LASF27:
+ 3298 0364 72785F72 		.ascii	"rx_recv\000"
+ 3298      65637600 
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 73
+
+
+ 3299              	.LASF22:
+ 3300 036c 74785F62 		.ascii	"tx_bits\000"
+ 3300      69747300 
+ 3301              	.LASF29:
+ 3302 0374 73746174 		.ascii	"status\000"
+ 3302      757300
+ 3303              	.LASF14:
+ 3304 037b 63686172 		.ascii	"char\000"
+ 3304      00
+ 3305              	.LASF60:
+ 3306 0380 73657269 		.ascii	"serialOut\000"
+ 3306      616C4F75 
+ 3306      7400
+ 3307              	.LASF68:
+ 3308 038a 6D61696E 		.ascii	"main\000"
+ 3308      00
+ 3309              	.LASF63:
+ 3310 038f 79626974 		.ascii	"ybits\000"
+ 3310      7300
+ 3311              	.LASF10:
+ 3312 0395 696E7433 		.ascii	"int32_t\000"
+ 3312      325F7400 
+ 3313              	.LASF75:
+ 3314 039d 63757272 		.ascii	"currentAccessType\000"
+ 3314      656E7441 
+ 3314      63636573 
+ 3314      73547970 
+ 3314      6500
+ 3315              	.LASF9:
+ 3316 03af 5F5F696E 		.ascii	"__int32_t\000"
+ 3316      7433325F 
+ 3316      7400
+ 3317              	.LASF87:
+ 3318 03b9 62757474 		.ascii	"buttonReleased\000"
+ 3318      6F6E5265 
+ 3318      6C656173 
+ 3318      656400
+ 3319              	.LASF20:
+ 3320 03c8 72785F62 		.ascii	"rx_byte\000"
+ 3320      79746500 
+ 3321              	.LASF84:
+ 3322 03d0 64656275 		.ascii	"debug_msg_delay\000"
+ 3322      675F6D73 
+ 3322      675F6465 
+ 3322      6C617900 
+ 3323              	.LASF62:
+ 3324 03e0 78627974 		.ascii	"xbytes\000"
+ 3324      657300
+ 3325              	.LASF43:
+ 3326 03e7 62756666 		.ascii	"buffer\000"
+ 3326      657200
+ 3327              	.LASF3:
+ 3328 03ee 73686F72 		.ascii	"short unsigned int\000"
+ 3328      7420756E 
+ 3328      7369676E 
+ 3328      65642069 
+ 3328      6E7400
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 74
+
+
+ 3329              	.LASF55:
+ 3330 0401 53657456 		.ascii	"SetVersion\000"
+ 3330      65727369 
+ 3330      6F6E00
+ 3331              	.LASF83:
+ 3332 040c 6632665F 		.ascii	"f2f_alive_delay_cnt\000"
+ 3332      616C6976 
+ 3332      655F6465 
+ 3332      6C61795F 
+ 3332      636E7400 
+ 3333              	.LASF30:
+ 3334 0420 73746174 		.ascii	"status_in\000"
+ 3334      75735F69 
+ 3334      6E00
+ 3335              	.LASF54:
+ 3336 042a 4932435F 		.ascii	"I2C_Regs\000"
+ 3336      52656773 
+ 3336      00
+ 3337              	.LASF40:
+ 3338 0433 64756D6D 		.ascii	"dummy0\000"
+ 3338      793000
+ 3339              	.LASF53:
+ 3340 043a 64756D6D 		.ascii	"dummy1\000"
+ 3340      793100
+ 3341              	.LASF93:
+ 3342 0441 2E5C6D61 		.ascii	".\\main.c\000"
+ 3342      696E2E63 
+ 3342      00
+ 3343              	.LASF71:
+ 3344 044a 52656164 		.ascii	"ReaderRxBuffer\000"
+ 3344      65725278 
+ 3344      42756666 
+ 3344      657200
+ 3345              	.LASF37:
+ 3346 0459 70757368 		.ascii	"pushbtn_in\000"
+ 3346      62746E5F 
+ 3346      696E00
+ 3347              	.LASF57:
+ 3348 0464 436C6561 		.ascii	"ClearBuffer\000"
+ 3348      72427566 
+ 3348      66657200 
+ 3349              	.LASF80:
+ 3350 0470 63617264 		.ascii	"card_ack\000"
+ 3350      5F61636B 
+ 3350      00
+ 3351              	.LASF41:
+ 3352 0479 73775F76 		.ascii	"sw_version\000"
+ 3352      65727369 
+ 3352      6F6E00
+ 3353              	.LASF56:
+ 3354 0484 53657442 		.ascii	"SetBuffer\000"
+ 3354      75666665 
+ 3354      7200
+ 3355              	.LASF89:
+ 3356 048e 746C765F 		.ascii	"tlv_ready\000"
+ 3356      72656164 
+ 3356      7900
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccWysHWf.s 			page 75
+
+
+ 3357              	.LASF88:
+ 3358 0498 62757474 		.ascii	"buttonDuration\000"
+ 3358      6F6E4475 
+ 3358      72617469 
+ 3358      6F6E00
+ 3359              	.LASF73:
+ 3360 04a7 72756E5F 		.ascii	"run_mode\000"
+ 3360      6D6F6465 
+ 3360      00
+ 3361              	.LASF13:
+ 3362 04b0 646F7562 		.ascii	"double\000"
+ 3362      6C6500
+ 3363              	.LASF69:
+ 3364 04b7 61636B5F 		.ascii	"ack_time_cnt\000"
+ 3364      74696D65 
+ 3364      5F636E74 
+ 3364      00
+ 3365              	.LASF70:
+ 3366 04c4 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 3366      52784275 
+ 3366      66666572 
+ 3366      00
+ 3367              	.LASF42:
+ 3368 04d1 68775F76 		.ascii	"hw_version\000"
+ 3368      65727369 
+ 3368      6F6E00
+ 3369              	.LASF44:
+ 3370 04dc 6F736470 		.ascii	"osdp_cmd\000"
+ 3370      5F636D64 
+ 3370      00
+ 3371              	.LASF25:
+ 3372 04e5 74696D65 		.ascii	"timer_tx_ctr\000"
+ 3372      725F7478 
+ 3372      5F637472 
+ 3372      00
+ 3373              	.LASF79:
+ 3374 04f2 74616D70 		.ascii	"tamper_out_polarity\000"
+ 3374      65725F6F 
+ 3374      75745F70 
+ 3374      6F6C6172 
+ 3374      69747900 
+ 3375              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.9.3 20150303 (release) [ARM/embedded-4_9-br

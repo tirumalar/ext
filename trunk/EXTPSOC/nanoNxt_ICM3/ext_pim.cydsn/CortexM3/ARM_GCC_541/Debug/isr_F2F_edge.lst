@@ -1,0 +1,2496 @@
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"isr_F2F_edge.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	s,40,4
+  20              		.comm	currentAccessType,1,1
+  21              		.comm	hw_old,1,1
+  22              		.comm	tp_old,1,1
+  23              		.comm	tamperCR_polarity,4,4
+  24              		.comm	tamper_out_polarity,4,4
+  25              		.comm	card_ack,4,4
+  26              		.comm	card_in_buf,4,4
+  27              		.comm	f2f_pulsewidth,4,4
+  28              		.comm	f2f_timeout,4,4
+  29              		.comm	f2f_acknowledge_active,1,1
+  30              		.comm	f2f_ack_delay_cnt,1,1
+  31              		.section	.text.isr_F2F_edge_Start,"ax",%progbits
+  32              		.align	2
+  33              		.global	isr_F2F_edge_Start
+  34              		.thumb
+  35              		.thumb_func
+  36              		.type	isr_F2F_edge_Start, %function
+  37              	isr_F2F_edge_Start:
+  38              	.LFB63:
+  39              		.file 1 "Generated_Source\\PSoC5\\isr_F2F_edge.c"
+   1:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+   2:Generated_Source\PSoC5/isr_F2F_edge.c **** * File Name: isr_F2F_edge.c  
+   3:Generated_Source\PSoC5/isr_F2F_edge.c **** * Version 1.70
+   4:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+   5:Generated_Source\PSoC5/isr_F2F_edge.c **** *  Description:
+   6:Generated_Source\PSoC5/isr_F2F_edge.c **** *   API for controlling the state of an interrupt.
+   7:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+   8:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+   9:Generated_Source\PSoC5/isr_F2F_edge.c **** *  Note:
+  10:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  11:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+  12:Generated_Source\PSoC5/isr_F2F_edge.c **** * Copyright 2008-2015, Cypress Semiconductor Corporation.  All rights reserved.
+  13:Generated_Source\PSoC5/isr_F2F_edge.c **** * You may use this file only in accordance with the license, terms, conditions, 
+  14:Generated_Source\PSoC5/isr_F2F_edge.c **** * disclaimers, and limitations in the end user license agreement accompanying 
+  15:Generated_Source\PSoC5/isr_F2F_edge.c **** * the software package with which this file was provided.
+  16:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+  17:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  18:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 2
+
+
+  19:Generated_Source\PSoC5/isr_F2F_edge.c **** #include <cydevice_trm.h>
+  20:Generated_Source\PSoC5/isr_F2F_edge.c **** #include <CyLib.h>
+  21:Generated_Source\PSoC5/isr_F2F_edge.c **** #include <isr_F2F_edge.h>
+  22:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  23:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  24:Generated_Source\PSoC5/isr_F2F_edge.c **** #if !defined(isr_F2F_edge__REMOVED) /* Check for removal by optimization */
+  25:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  26:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+  27:Generated_Source\PSoC5/isr_F2F_edge.c **** *  Place your includes, defines and code here 
+  28:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************/
+  29:Generated_Source\PSoC5/isr_F2F_edge.c **** /* `#START isr_F2F_edge_intc` */
+  30:Generated_Source\PSoC5/isr_F2F_edge.c **** #include "FilterReg.h"
+  31:Generated_Source\PSoC5/isr_F2F_edge.c **** #include "Timeout_Timer_ISR.h"
+  32:Generated_Source\PSoC5/isr_F2F_edge.c **** #include "system.h"
+  33:Generated_Source\PSoC5/isr_F2F_edge.c **** //#include "LED_YEL.h" //debug
+  34:Generated_Source\PSoC5/isr_F2F_edge.c **** //uint8 ledyelon; //debug   
+  35:Generated_Source\PSoC5/isr_F2F_edge.c ****     
+  36:Generated_Source\PSoC5/isr_F2F_edge.c **** int f2f_pulsewidth;
+  37:Generated_Source\PSoC5/isr_F2F_edge.c **** int f2f_timeout;
+  38:Generated_Source\PSoC5/isr_F2F_edge.c ****     
+  39:Generated_Source\PSoC5/isr_F2F_edge.c **** /* F2F reader acknowledgement */
+  40:Generated_Source\PSoC5/isr_F2F_edge.c **** char f2f_acknowledge_active;
+  41:Generated_Source\PSoC5/isr_F2F_edge.c **** char f2f_ack_delay_cnt;
+  42:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  43:Generated_Source\PSoC5/isr_F2F_edge.c ****    
+  44:Generated_Source\PSoC5/isr_F2F_edge.c **** /* `#END` */
+  45:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  46:Generated_Source\PSoC5/isr_F2F_edge.c **** #ifndef CYINT_IRQ_BASE
+  47:Generated_Source\PSoC5/isr_F2F_edge.c **** #define CYINT_IRQ_BASE      16
+  48:Generated_Source\PSoC5/isr_F2F_edge.c **** #endif /* CYINT_IRQ_BASE */
+  49:Generated_Source\PSoC5/isr_F2F_edge.c **** #ifndef CYINT_VECT_TABLE
+  50:Generated_Source\PSoC5/isr_F2F_edge.c **** #define CYINT_VECT_TABLE    ((cyisraddress **) CYREG_NVIC_VECT_OFFSET)
+  51:Generated_Source\PSoC5/isr_F2F_edge.c **** #endif /* CYINT_VECT_TABLE */
+  52:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  53:Generated_Source\PSoC5/isr_F2F_edge.c **** /* Declared in startup, used to set unused interrupts to. */
+  54:Generated_Source\PSoC5/isr_F2F_edge.c **** CY_ISR_PROTO(IntDefaultHandler);
+  55:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  56:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  57:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+  58:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_Start
+  59:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+  60:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  61:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+  62:Generated_Source\PSoC5/isr_F2F_edge.c **** *  Set up the interrupt and enable it. This function disables the interrupt, 
+  63:Generated_Source\PSoC5/isr_F2F_edge.c **** *  sets the default interrupt vector, sets the priority from the value in the
+  64:Generated_Source\PSoC5/isr_F2F_edge.c **** *  Design Wide Resources Interrupt Editor, then enables the interrupt to the 
+  65:Generated_Source\PSoC5/isr_F2F_edge.c **** *  interrupt controller.
+  66:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  67:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:  
+  68:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+  69:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  70:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+  71:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+  72:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  73:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+  74:Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_Start(void)
+  75:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 3
+
+
+  40              		.loc 1 75 0
+  41              		.cfi_startproc
+  42              		@ args = 0, pretend = 0, frame = 0
+  43              		@ frame_needed = 1, uses_anonymous_args = 0
+  44 0000 80B5     		push	{r7, lr}
+  45              		.cfi_def_cfa_offset 8
+  46              		.cfi_offset 7, -8
+  47              		.cfi_offset 14, -4
+  48 0002 00AF     		add	r7, sp, #0
+  49              		.cfi_def_cfa_register 7
+  76:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* For all we know the interrupt is active. */
+  77:Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_Disable();
+  50              		.loc 1 77 0
+  51 0004 FFF7FEFF 		bl	isr_F2F_edge_Disable
+  78:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  79:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Set the ISR to point to the isr_F2F_edge Interrupt. */
+  80:Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_SetVector(&isr_F2F_edge_Interrupt);
+  52              		.loc 1 80 0
+  53 0008 0448     		ldr	r0, .L2
+  54 000a FFF7FEFF 		bl	isr_F2F_edge_SetVector
+  81:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  82:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Set the priority. */
+  83:Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_SetPriority((uint8)isr_F2F_edge_INTC_PRIOR_NUMBER);
+  55              		.loc 1 83 0
+  56 000e 0720     		movs	r0, #7
+  57 0010 FFF7FEFF 		bl	isr_F2F_edge_SetPriority
+  84:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  85:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Enable it. */
+  86:Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_Enable();
+  58              		.loc 1 86 0
+  59 0014 FFF7FEFF 		bl	isr_F2F_edge_Enable
+  87:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+  60              		.loc 1 87 0
+  61 0018 00BF     		nop
+  62 001a 80BD     		pop	{r7, pc}
+  63              	.L3:
+  64              		.align	2
+  65              	.L2:
+  66 001c 00000000 		.word	isr_F2F_edge_Interrupt
+  67              		.cfi_endproc
+  68              	.LFE63:
+  69              		.size	isr_F2F_edge_Start, .-isr_F2F_edge_Start
+  70              		.section	.text.isr_F2F_edge_StartEx,"ax",%progbits
+  71              		.align	2
+  72              		.global	isr_F2F_edge_StartEx
+  73              		.thumb
+  74              		.thumb_func
+  75              		.type	isr_F2F_edge_StartEx, %function
+  76              	isr_F2F_edge_StartEx:
+  77              	.LFB64:
+  88:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  89:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  90:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+  91:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_StartEx
+  92:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+  93:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  94:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 4
+
+
+  95:Generated_Source\PSoC5/isr_F2F_edge.c **** *  Sets up the interrupt and enables it. This function disables the interrupt,
+  96:Generated_Source\PSoC5/isr_F2F_edge.c **** *  sets the interrupt vector based on the address passed in, sets the priority 
+  97:Generated_Source\PSoC5/isr_F2F_edge.c **** *  from the value in the Design Wide Resources Interrupt Editor, then enables 
+  98:Generated_Source\PSoC5/isr_F2F_edge.c **** *  the interrupt to the interrupt controller.
+  99:Generated_Source\PSoC5/isr_F2F_edge.c **** *  
+ 100:Generated_Source\PSoC5/isr_F2F_edge.c **** *  When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
+ 101:Generated_Source\PSoC5/isr_F2F_edge.c **** *  used to provide consistent definition across compilers:
+ 102:Generated_Source\PSoC5/isr_F2F_edge.c **** *  
+ 103:Generated_Source\PSoC5/isr_F2F_edge.c **** *  Function definition example:
+ 104:Generated_Source\PSoC5/isr_F2F_edge.c **** *   CY_ISR(MyISR)
+ 105:Generated_Source\PSoC5/isr_F2F_edge.c **** *   {
+ 106:Generated_Source\PSoC5/isr_F2F_edge.c **** *   }
+ 107:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Function prototype example:
+ 108:Generated_Source\PSoC5/isr_F2F_edge.c **** *   CY_ISR_PROTO(MyISR);
+ 109:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 110:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:  
+ 111:Generated_Source\PSoC5/isr_F2F_edge.c **** *   address: Address of the ISR to set in the interrupt vector table.
+ 112:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 113:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 114:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 115:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 116:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 117:Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_StartEx(cyisraddress address)
+ 118:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+  78              		.loc 1 118 0
+  79              		.cfi_startproc
+  80              		@ args = 0, pretend = 0, frame = 8
+  81              		@ frame_needed = 1, uses_anonymous_args = 0
+  82 0000 80B5     		push	{r7, lr}
+  83              		.cfi_def_cfa_offset 8
+  84              		.cfi_offset 7, -8
+  85              		.cfi_offset 14, -4
+  86 0002 82B0     		sub	sp, sp, #8
+  87              		.cfi_def_cfa_offset 16
+  88 0004 00AF     		add	r7, sp, #0
+  89              		.cfi_def_cfa_register 7
+  90 0006 7860     		str	r0, [r7, #4]
+ 119:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* For all we know the interrupt is active. */
+ 120:Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_Disable();
+  91              		.loc 1 120 0
+  92 0008 FFF7FEFF 		bl	isr_F2F_edge_Disable
+ 121:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 122:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Set the ISR to point to the isr_F2F_edge Interrupt. */
+ 123:Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_SetVector(address);
+  93              		.loc 1 123 0
+  94 000c 7868     		ldr	r0, [r7, #4]
+  95 000e FFF7FEFF 		bl	isr_F2F_edge_SetVector
+ 124:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 125:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Set the priority. */
+ 126:Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_SetPriority((uint8)isr_F2F_edge_INTC_PRIOR_NUMBER);
+  96              		.loc 1 126 0
+  97 0012 0720     		movs	r0, #7
+  98 0014 FFF7FEFF 		bl	isr_F2F_edge_SetPriority
+ 127:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 128:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Enable it. */
+ 129:Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_Enable();
+  99              		.loc 1 129 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 5
+
+
+ 100 0018 FFF7FEFF 		bl	isr_F2F_edge_Enable
+ 130:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 101              		.loc 1 130 0
+ 102 001c 00BF     		nop
+ 103 001e 0837     		adds	r7, r7, #8
+ 104              		.cfi_def_cfa_offset 8
+ 105 0020 BD46     		mov	sp, r7
+ 106              		.cfi_def_cfa_register 13
+ 107              		@ sp needed
+ 108 0022 80BD     		pop	{r7, pc}
+ 109              		.cfi_endproc
+ 110              	.LFE64:
+ 111              		.size	isr_F2F_edge_StartEx, .-isr_F2F_edge_StartEx
+ 112              		.section	.text.isr_F2F_edge_Stop,"ax",%progbits
+ 113              		.align	2
+ 114              		.global	isr_F2F_edge_Stop
+ 115              		.thumb
+ 116              		.thumb_func
+ 117              		.type	isr_F2F_edge_Stop, %function
+ 118              	isr_F2F_edge_Stop:
+ 119              	.LFB65:
+ 131:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 132:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 133:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 134:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_Stop
+ 135:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 136:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 137:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 138:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Disables and removes the interrupt.
+ 139:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 140:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:  
+ 141:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 142:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 143:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 144:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 145:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 146:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 147:Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_Stop(void)
+ 148:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 120              		.loc 1 148 0
+ 121              		.cfi_startproc
+ 122              		@ args = 0, pretend = 0, frame = 0
+ 123              		@ frame_needed = 1, uses_anonymous_args = 0
+ 124 0000 80B5     		push	{r7, lr}
+ 125              		.cfi_def_cfa_offset 8
+ 126              		.cfi_offset 7, -8
+ 127              		.cfi_offset 14, -4
+ 128 0002 00AF     		add	r7, sp, #0
+ 129              		.cfi_def_cfa_register 7
+ 149:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Disable this interrupt. */
+ 150:Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_Disable();
+ 130              		.loc 1 150 0
+ 131 0004 FFF7FEFF 		bl	isr_F2F_edge_Disable
+ 151:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 152:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Set the ISR to point to the passive one. */
+ 153:Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_SetVector(&IntDefaultHandler);
+ 132              		.loc 1 153 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 6
+
+
+ 133 0008 0248     		ldr	r0, .L6
+ 134 000a FFF7FEFF 		bl	isr_F2F_edge_SetVector
+ 154:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 135              		.loc 1 154 0
+ 136 000e 00BF     		nop
+ 137 0010 80BD     		pop	{r7, pc}
+ 138              	.L7:
+ 139 0012 00BF     		.align	2
+ 140              	.L6:
+ 141 0014 00000000 		.word	IntDefaultHandler
+ 142              		.cfi_endproc
+ 143              	.LFE65:
+ 144              		.size	isr_F2F_edge_Stop, .-isr_F2F_edge_Stop
+ 145              		.section	.text.isr_F2F_edge_Interrupt,"ax",%progbits
+ 146              		.align	2
+ 147              		.global	isr_F2F_edge_Interrupt
+ 148              		.thumb
+ 149              		.thumb_func
+ 150              		.type	isr_F2F_edge_Interrupt, %function
+ 151              	isr_F2F_edge_Interrupt:
+ 152              	.LFB66:
+ 155:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 156:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 157:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 158:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_Interrupt
+ 159:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 160:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 161:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 162:Generated_Source\PSoC5/isr_F2F_edge.c **** *   The default Interrupt Service Routine for isr_F2F_edge.
+ 163:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 164:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Add custom code between the coments to keep the next version of this file
+ 165:Generated_Source\PSoC5/isr_F2F_edge.c **** *   from over writting your code.
+ 166:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 167:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:  
+ 168:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 169:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 170:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 171:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 172:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 173:Generated_Source\PSoC5/isr_F2F_edge.c **** CY_ISR(isr_F2F_edge_Interrupt)
+ 174:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 153              		.loc 1 174 0
+ 154              		.cfi_startproc
+ 155              		@ args = 0, pretend = 0, frame = 0
+ 156              		@ frame_needed = 1, uses_anonymous_args = 0
+ 157 0000 80B5     		push	{r7, lr}
+ 158              		.cfi_def_cfa_offset 8
+ 159              		.cfi_offset 7, -8
+ 160              		.cfi_offset 14, -4
+ 161 0002 00AF     		add	r7, sp, #0
+ 162              		.cfi_def_cfa_register 7
+ 175:Generated_Source\PSoC5/isr_F2F_edge.c ****     #ifdef isr_F2F_edge_INTERRUPT_INTERRUPT_CALLBACK
+ 176:Generated_Source\PSoC5/isr_F2F_edge.c ****         isr_F2F_edge_Interrupt_InterruptCallback();
+ 177:Generated_Source\PSoC5/isr_F2F_edge.c ****     #endif /* isr_F2F_edge_INTERRUPT_INTERRUPT_CALLBACK */ 
+ 178:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 179:Generated_Source\PSoC5/isr_F2F_edge.c ****     /*  Place your Interrupt code here. */
+ 180:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* `#START isr_F2F_edge_Interrupt` */
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 7
+
+
+ 181:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 182:Generated_Source\PSoC5/isr_F2F_edge.c ****     FilterReg_Read();  //reset debouncer
+ 163              		.loc 1 182 0
+ 164 0004 FFF7FEFF 		bl	FilterReg_Read
+ 183:Generated_Source\PSoC5/isr_F2F_edge.c ****     if(run_mode == MODE_F2F || run_mode == MODE_F2F + BASE_PASS || run_mode == MODE_F2F + BASE_TOC)
+ 165              		.loc 1 183 0
+ 166 0008 134B     		ldr	r3, .L13
+ 167 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 168 000c 052B     		cmp	r3, #5
+ 169 000e 07D0     		beq	.L9
+ 170              		.loc 1 183 0 is_stmt 0 discriminator 1
+ 171 0010 114B     		ldr	r3, .L13
+ 172 0012 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 173 0014 692B     		cmp	r3, #105
+ 174 0016 03D0     		beq	.L9
+ 175              		.loc 1 183 0 discriminator 2
+ 176 0018 0F4B     		ldr	r3, .L13
+ 177 001a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 178 001c 372B     		cmp	r3, #55
+ 179 001e 18D1     		bne	.L12
+ 180              	.L9:
+ 184:Generated_Source\PSoC5/isr_F2F_edge.c ****     {
+ 185:Generated_Source\PSoC5/isr_F2F_edge.c ****         Timeout_Timer_Isr_Disable();
+ 181              		.loc 1 185 0 is_stmt 1
+ 182 0020 FFF7FEFF 		bl	Timeout_Timer_Isr_Disable
+ 186:Generated_Source\PSoC5/isr_F2F_edge.c ****         f2f_pulsewidth = f2f_timeout;
+ 183              		.loc 1 186 0
+ 184 0024 0D4B     		ldr	r3, .L13+4
+ 185 0026 1B68     		ldr	r3, [r3]
+ 186 0028 0D4A     		ldr	r2, .L13+8
+ 187 002a 1360     		str	r3, [r2]
+ 187:Generated_Source\PSoC5/isr_F2F_edge.c ****         Timeout_Timer_Isr_Enable();
+ 188              		.loc 1 187 0
+ 189 002c FFF7FEFF 		bl	Timeout_Timer_Isr_Enable
+ 188:Generated_Source\PSoC5/isr_F2F_edge.c ****         
+ 189:Generated_Source\PSoC5/isr_F2F_edge.c ****         if (f2f_pulsewidth < 0x40){
+ 190              		.loc 1 189 0
+ 191 0030 0B4B     		ldr	r3, .L13+8
+ 192 0032 1B68     		ldr	r3, [r3]
+ 193 0034 3F2B     		cmp	r3, #63
+ 194 0036 05DC     		bgt	.L11
+ 190:Generated_Source\PSoC5/isr_F2F_edge.c ****             //start an acknowledgement to the F2F reader for the Supervision mode
+ 191:Generated_Source\PSoC5/isr_F2F_edge.c ****             f2f_ack_delay_cnt = 0;
+ 195              		.loc 1 191 0
+ 196 0038 0A4B     		ldr	r3, .L13+12
+ 197 003a 0022     		movs	r2, #0
+ 198 003c 1A70     		strb	r2, [r3]
+ 192:Generated_Source\PSoC5/isr_F2F_edge.c ****             f2f_acknowledge_active = 1;
+ 199              		.loc 1 192 0
+ 200 003e 0A4B     		ldr	r3, .L13+16
+ 201 0040 0122     		movs	r2, #1
+ 202 0042 1A70     		strb	r2, [r3]
+ 203              	.L11:
+ 193:Generated_Source\PSoC5/isr_F2F_edge.c ****         }
+ 194:Generated_Source\PSoC5/isr_F2F_edge.c ****         
+ 195:Generated_Source\PSoC5/isr_F2F_edge.c ****         Timeout_Timer_Isr_Disable();
+ 204              		.loc 1 195 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 8
+
+
+ 205 0044 FFF7FEFF 		bl	Timeout_Timer_Isr_Disable
+ 196:Generated_Source\PSoC5/isr_F2F_edge.c ****         f2f_timeout = 0;
+ 206              		.loc 1 196 0
+ 207 0048 044B     		ldr	r3, .L13+4
+ 208 004a 0022     		movs	r2, #0
+ 209 004c 1A60     		str	r2, [r3]
+ 197:Generated_Source\PSoC5/isr_F2F_edge.c ****         Timeout_Timer_Isr_Enable();
+ 210              		.loc 1 197 0
+ 211 004e FFF7FEFF 		bl	Timeout_Timer_Isr_Enable
+ 212              	.L12:
+ 198:Generated_Source\PSoC5/isr_F2F_edge.c ****     }
+ 199:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 200:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* `#END` */
+ 201:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 213              		.loc 1 201 0
+ 214 0052 00BF     		nop
+ 215 0054 80BD     		pop	{r7, pc}
+ 216              	.L14:
+ 217 0056 00BF     		.align	2
+ 218              	.L13:
+ 219 0058 00000000 		.word	run_mode
+ 220 005c 00000000 		.word	f2f_timeout
+ 221 0060 00000000 		.word	f2f_pulsewidth
+ 222 0064 00000000 		.word	f2f_ack_delay_cnt
+ 223 0068 00000000 		.word	f2f_acknowledge_active
+ 224              		.cfi_endproc
+ 225              	.LFE66:
+ 226              		.size	isr_F2F_edge_Interrupt, .-isr_F2F_edge_Interrupt
+ 227              		.section	.text.isr_F2F_edge_SetVector,"ax",%progbits
+ 228              		.align	2
+ 229              		.global	isr_F2F_edge_SetVector
+ 230              		.thumb
+ 231              		.thumb_func
+ 232              		.type	isr_F2F_edge_SetVector, %function
+ 233              	isr_F2F_edge_SetVector:
+ 234              	.LFB67:
+ 202:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 203:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 204:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 205:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_SetVector
+ 206:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 207:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 208:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 209:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Change the ISR vector for the Interrupt. Note calling isr_F2F_edge_Start
+ 210:Generated_Source\PSoC5/isr_F2F_edge.c **** *   will override any effect this method would have had. To set the vector 
+ 211:Generated_Source\PSoC5/isr_F2F_edge.c **** *   before the component has been started use isr_F2F_edge_StartEx instead.
+ 212:Generated_Source\PSoC5/isr_F2F_edge.c **** * 
+ 213:Generated_Source\PSoC5/isr_F2F_edge.c **** *   When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
+ 214:Generated_Source\PSoC5/isr_F2F_edge.c **** *   used to provide consistent definition across compilers:
+ 215:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 216:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Function definition example:
+ 217:Generated_Source\PSoC5/isr_F2F_edge.c **** *   CY_ISR(MyISR)
+ 218:Generated_Source\PSoC5/isr_F2F_edge.c **** *   {
+ 219:Generated_Source\PSoC5/isr_F2F_edge.c **** *   }
+ 220:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 221:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Function prototype example:
+ 222:Generated_Source\PSoC5/isr_F2F_edge.c **** *     CY_ISR_PROTO(MyISR);
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 9
+
+
+ 223:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 224:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 225:Generated_Source\PSoC5/isr_F2F_edge.c **** *   address: Address of the ISR to set in the interrupt vector table.
+ 226:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 227:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 228:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 229:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 230:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 231:Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_SetVector(cyisraddress address)
+ 232:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 235              		.loc 1 232 0
+ 236              		.cfi_startproc
+ 237              		@ args = 0, pretend = 0, frame = 16
+ 238              		@ frame_needed = 1, uses_anonymous_args = 0
+ 239              		@ link register save eliminated.
+ 240 0000 80B4     		push	{r7}
+ 241              		.cfi_def_cfa_offset 4
+ 242              		.cfi_offset 7, -4
+ 243 0002 85B0     		sub	sp, sp, #20
+ 244              		.cfi_def_cfa_offset 24
+ 245 0004 00AF     		add	r7, sp, #0
+ 246              		.cfi_def_cfa_register 7
+ 247 0006 7860     		str	r0, [r7, #4]
+ 233:Generated_Source\PSoC5/isr_F2F_edge.c ****     cyisraddress * ramVectorTable;
+ 234:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 235:Generated_Source\PSoC5/isr_F2F_edge.c ****     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
+ 248              		.loc 1 235 0
+ 249 0008 054B     		ldr	r3, .L16
+ 250 000a 1B68     		ldr	r3, [r3]
+ 251 000c FB60     		str	r3, [r7, #12]
+ 236:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 237:Generated_Source\PSoC5/isr_F2F_edge.c ****     ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_F2F_edge__INTC_NUMBER] = address;
+ 252              		.loc 1 237 0
+ 253 000e FB68     		ldr	r3, [r7, #12]
+ 254 0010 5C33     		adds	r3, r3, #92
+ 255 0012 7A68     		ldr	r2, [r7, #4]
+ 256 0014 1A60     		str	r2, [r3]
+ 238:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 257              		.loc 1 238 0
+ 258 0016 00BF     		nop
+ 259 0018 1437     		adds	r7, r7, #20
+ 260              		.cfi_def_cfa_offset 4
+ 261 001a BD46     		mov	sp, r7
+ 262              		.cfi_def_cfa_register 13
+ 263              		@ sp needed
+ 264 001c 80BC     		pop	{r7}
+ 265              		.cfi_restore 7
+ 266              		.cfi_def_cfa_offset 0
+ 267 001e 7047     		bx	lr
+ 268              	.L17:
+ 269              		.align	2
+ 270              	.L16:
+ 271 0020 08ED00E0 		.word	-536810232
+ 272              		.cfi_endproc
+ 273              	.LFE67:
+ 274              		.size	isr_F2F_edge_SetVector, .-isr_F2F_edge_SetVector
+ 275              		.section	.text.isr_F2F_edge_GetVector,"ax",%progbits
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 10
+
+
+ 276              		.align	2
+ 277              		.global	isr_F2F_edge_GetVector
+ 278              		.thumb
+ 279              		.thumb_func
+ 280              		.type	isr_F2F_edge_GetVector, %function
+ 281              	isr_F2F_edge_GetVector:
+ 282              	.LFB68:
+ 239:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 240:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 241:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 242:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_GetVector
+ 243:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 244:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 245:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 246:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Gets the "address" of the current ISR vector for the Interrupt.
+ 247:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 248:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 249:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 250:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 251:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 252:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Address of the ISR in the interrupt vector table.
+ 253:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 254:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 255:Generated_Source\PSoC5/isr_F2F_edge.c **** cyisraddress isr_F2F_edge_GetVector(void)
+ 256:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 283              		.loc 1 256 0
+ 284              		.cfi_startproc
+ 285              		@ args = 0, pretend = 0, frame = 8
+ 286              		@ frame_needed = 1, uses_anonymous_args = 0
+ 287              		@ link register save eliminated.
+ 288 0000 80B4     		push	{r7}
+ 289              		.cfi_def_cfa_offset 4
+ 290              		.cfi_offset 7, -4
+ 291 0002 83B0     		sub	sp, sp, #12
+ 292              		.cfi_def_cfa_offset 16
+ 293 0004 00AF     		add	r7, sp, #0
+ 294              		.cfi_def_cfa_register 7
+ 257:Generated_Source\PSoC5/isr_F2F_edge.c ****     cyisraddress * ramVectorTable;
+ 258:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 259:Generated_Source\PSoC5/isr_F2F_edge.c ****     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
+ 295              		.loc 1 259 0
+ 296 0006 054B     		ldr	r3, .L20
+ 297 0008 1B68     		ldr	r3, [r3]
+ 298 000a 7B60     		str	r3, [r7, #4]
+ 260:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 261:Generated_Source\PSoC5/isr_F2F_edge.c ****     return ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_F2F_edge__INTC_NUMBER];
+ 299              		.loc 1 261 0
+ 300 000c 7B68     		ldr	r3, [r7, #4]
+ 301 000e DB6D     		ldr	r3, [r3, #92]
+ 262:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 302              		.loc 1 262 0
+ 303 0010 1846     		mov	r0, r3
+ 304 0012 0C37     		adds	r7, r7, #12
+ 305              		.cfi_def_cfa_offset 4
+ 306 0014 BD46     		mov	sp, r7
+ 307              		.cfi_def_cfa_register 13
+ 308              		@ sp needed
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 11
+
+
+ 309 0016 80BC     		pop	{r7}
+ 310              		.cfi_restore 7
+ 311              		.cfi_def_cfa_offset 0
+ 312 0018 7047     		bx	lr
+ 313              	.L21:
+ 314 001a 00BF     		.align	2
+ 315              	.L20:
+ 316 001c 08ED00E0 		.word	-536810232
+ 317              		.cfi_endproc
+ 318              	.LFE68:
+ 319              		.size	isr_F2F_edge_GetVector, .-isr_F2F_edge_GetVector
+ 320              		.section	.text.isr_F2F_edge_SetPriority,"ax",%progbits
+ 321              		.align	2
+ 322              		.global	isr_F2F_edge_SetPriority
+ 323              		.thumb
+ 324              		.thumb_func
+ 325              		.type	isr_F2F_edge_SetPriority, %function
+ 326              	isr_F2F_edge_SetPriority:
+ 327              	.LFB69:
+ 263:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 264:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 265:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 266:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_SetPriority
+ 267:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 268:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 269:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 270:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Sets the Priority of the Interrupt. 
+ 271:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 272:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Note calling isr_F2F_edge_Start or isr_F2F_edge_StartEx will 
+ 273:Generated_Source\PSoC5/isr_F2F_edge.c **** *   override any effect this API would have had. This API should only be called
+ 274:Generated_Source\PSoC5/isr_F2F_edge.c **** *   after isr_F2F_edge_Start or isr_F2F_edge_StartEx has been called. 
+ 275:Generated_Source\PSoC5/isr_F2F_edge.c **** *   To set the initial priority for the component, use the Design-Wide Resources
+ 276:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Interrupt Editor.
+ 277:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 278:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Note This API has no effect on Non-maskable interrupt NMI).
+ 279:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 280:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 281:Generated_Source\PSoC5/isr_F2F_edge.c **** *   priority: Priority of the interrupt, 0 being the highest priority
+ 282:Generated_Source\PSoC5/isr_F2F_edge.c **** *             PSoC 3 and PSoC 5LP: Priority is from 0 to 7.
+ 283:Generated_Source\PSoC5/isr_F2F_edge.c **** *             PSoC 4: Priority is from 0 to 3.
+ 284:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 285:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 286:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 287:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 288:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 289:Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_SetPriority(uint8 priority)
+ 290:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 328              		.loc 1 290 0
+ 329              		.cfi_startproc
+ 330              		@ args = 0, pretend = 0, frame = 8
+ 331              		@ frame_needed = 1, uses_anonymous_args = 0
+ 332              		@ link register save eliminated.
+ 333 0000 80B4     		push	{r7}
+ 334              		.cfi_def_cfa_offset 4
+ 335              		.cfi_offset 7, -4
+ 336 0002 83B0     		sub	sp, sp, #12
+ 337              		.cfi_def_cfa_offset 16
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 12
+
+
+ 338 0004 00AF     		add	r7, sp, #0
+ 339              		.cfi_def_cfa_register 7
+ 340 0006 0346     		mov	r3, r0
+ 341 0008 FB71     		strb	r3, [r7, #7]
+ 291:Generated_Source\PSoC5/isr_F2F_edge.c ****     *isr_F2F_edge_INTC_PRIOR = priority << 5;
+ 342              		.loc 1 291 0
+ 343 000a 054A     		ldr	r2, .L23
+ 344 000c FB79     		ldrb	r3, [r7, #7]
+ 345 000e 5B01     		lsls	r3, r3, #5
+ 346 0010 DBB2     		uxtb	r3, r3
+ 347 0012 1370     		strb	r3, [r2]
+ 292:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 348              		.loc 1 292 0
+ 349 0014 00BF     		nop
+ 350 0016 0C37     		adds	r7, r7, #12
+ 351              		.cfi_def_cfa_offset 4
+ 352 0018 BD46     		mov	sp, r7
+ 353              		.cfi_def_cfa_register 13
+ 354              		@ sp needed
+ 355 001a 80BC     		pop	{r7}
+ 356              		.cfi_restore 7
+ 357              		.cfi_def_cfa_offset 0
+ 358 001c 7047     		bx	lr
+ 359              	.L24:
+ 360 001e 00BF     		.align	2
+ 361              	.L23:
+ 362 0020 07E400E0 		.word	-536812537
+ 363              		.cfi_endproc
+ 364              	.LFE69:
+ 365              		.size	isr_F2F_edge_SetPriority, .-isr_F2F_edge_SetPriority
+ 366              		.section	.text.isr_F2F_edge_GetPriority,"ax",%progbits
+ 367              		.align	2
+ 368              		.global	isr_F2F_edge_GetPriority
+ 369              		.thumb
+ 370              		.thumb_func
+ 371              		.type	isr_F2F_edge_GetPriority, %function
+ 372              	isr_F2F_edge_GetPriority:
+ 373              	.LFB70:
+ 293:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 294:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 295:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 296:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_GetPriority
+ 297:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 298:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 299:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 300:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Gets the Priority of the Interrupt.
+ 301:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 302:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 303:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 304:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 305:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 306:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Priority of the interrupt, 0 being the highest priority
+ 307:Generated_Source\PSoC5/isr_F2F_edge.c **** *    PSoC 3 and PSoC 5LP: Priority is from 0 to 7.
+ 308:Generated_Source\PSoC5/isr_F2F_edge.c **** *    PSoC 4: Priority is from 0 to 3.
+ 309:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 310:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 311:Generated_Source\PSoC5/isr_F2F_edge.c **** uint8 isr_F2F_edge_GetPriority(void)
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 13
+
+
+ 312:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 374              		.loc 1 312 0
+ 375              		.cfi_startproc
+ 376              		@ args = 0, pretend = 0, frame = 8
+ 377              		@ frame_needed = 1, uses_anonymous_args = 0
+ 378              		@ link register save eliminated.
+ 379 0000 80B4     		push	{r7}
+ 380              		.cfi_def_cfa_offset 4
+ 381              		.cfi_offset 7, -4
+ 382 0002 83B0     		sub	sp, sp, #12
+ 383              		.cfi_def_cfa_offset 16
+ 384 0004 00AF     		add	r7, sp, #0
+ 385              		.cfi_def_cfa_register 7
+ 313:Generated_Source\PSoC5/isr_F2F_edge.c ****     uint8 priority;
+ 314:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 315:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 316:Generated_Source\PSoC5/isr_F2F_edge.c ****     priority = *isr_F2F_edge_INTC_PRIOR >> 5;
+ 386              		.loc 1 316 0
+ 387 0006 054B     		ldr	r3, .L27
+ 388 0008 1B78     		ldrb	r3, [r3]
+ 389 000a DBB2     		uxtb	r3, r3
+ 390 000c 5B09     		lsrs	r3, r3, #5
+ 391 000e FB71     		strb	r3, [r7, #7]
+ 317:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 318:Generated_Source\PSoC5/isr_F2F_edge.c ****     return priority;
+ 392              		.loc 1 318 0
+ 393 0010 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 319:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 394              		.loc 1 319 0
+ 395 0012 1846     		mov	r0, r3
+ 396 0014 0C37     		adds	r7, r7, #12
+ 397              		.cfi_def_cfa_offset 4
+ 398 0016 BD46     		mov	sp, r7
+ 399              		.cfi_def_cfa_register 13
+ 400              		@ sp needed
+ 401 0018 80BC     		pop	{r7}
+ 402              		.cfi_restore 7
+ 403              		.cfi_def_cfa_offset 0
+ 404 001a 7047     		bx	lr
+ 405              	.L28:
+ 406              		.align	2
+ 407              	.L27:
+ 408 001c 07E400E0 		.word	-536812537
+ 409              		.cfi_endproc
+ 410              	.LFE70:
+ 411              		.size	isr_F2F_edge_GetPriority, .-isr_F2F_edge_GetPriority
+ 412              		.section	.text.isr_F2F_edge_Enable,"ax",%progbits
+ 413              		.align	2
+ 414              		.global	isr_F2F_edge_Enable
+ 415              		.thumb
+ 416              		.thumb_func
+ 417              		.type	isr_F2F_edge_Enable, %function
+ 418              	isr_F2F_edge_Enable:
+ 419              	.LFB71:
+ 320:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 321:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 322:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 14
+
+
+ 323:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_Enable
+ 324:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 325:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 326:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 327:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Enables the interrupt to the interrupt controller. Do not call this function
+ 328:Generated_Source\PSoC5/isr_F2F_edge.c **** *   unless ISR_Start() has been called or the functionality of the ISR_Start() 
+ 329:Generated_Source\PSoC5/isr_F2F_edge.c **** *   function, which sets the vector and the priority, has been called.
+ 330:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 331:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 332:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 333:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 334:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 335:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 336:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 337:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 338:Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_Enable(void)
+ 339:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 420              		.loc 1 339 0
+ 421              		.cfi_startproc
+ 422              		@ args = 0, pretend = 0, frame = 0
+ 423              		@ frame_needed = 1, uses_anonymous_args = 0
+ 424              		@ link register save eliminated.
+ 425 0000 80B4     		push	{r7}
+ 426              		.cfi_def_cfa_offset 4
+ 427              		.cfi_offset 7, -4
+ 428 0002 00AF     		add	r7, sp, #0
+ 429              		.cfi_def_cfa_register 7
+ 340:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Enable the general interrupt. */
+ 341:Generated_Source\PSoC5/isr_F2F_edge.c ****     *isr_F2F_edge_INTC_SET_EN = isr_F2F_edge__INTC_MASK;
+ 430              		.loc 1 341 0
+ 431 0004 034B     		ldr	r3, .L30
+ 432 0006 8022     		movs	r2, #128
+ 433 0008 1A60     		str	r2, [r3]
+ 342:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 434              		.loc 1 342 0
+ 435 000a 00BF     		nop
+ 436 000c BD46     		mov	sp, r7
+ 437              		.cfi_def_cfa_register 13
+ 438              		@ sp needed
+ 439 000e 80BC     		pop	{r7}
+ 440              		.cfi_restore 7
+ 441              		.cfi_def_cfa_offset 0
+ 442 0010 7047     		bx	lr
+ 443              	.L31:
+ 444 0012 00BF     		.align	2
+ 445              	.L30:
+ 446 0014 00E100E0 		.word	-536813312
+ 447              		.cfi_endproc
+ 448              	.LFE71:
+ 449              		.size	isr_F2F_edge_Enable, .-isr_F2F_edge_Enable
+ 450              		.section	.text.isr_F2F_edge_GetState,"ax",%progbits
+ 451              		.align	2
+ 452              		.global	isr_F2F_edge_GetState
+ 453              		.thumb
+ 454              		.thumb_func
+ 455              		.type	isr_F2F_edge_GetState, %function
+ 456              	isr_F2F_edge_GetState:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 15
+
+
+ 457              	.LFB72:
+ 343:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 344:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 345:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 346:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_GetState
+ 347:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 348:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 349:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 350:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Gets the state (enabled, disabled) of the Interrupt.
+ 351:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 352:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 353:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 354:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 355:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 356:Generated_Source\PSoC5/isr_F2F_edge.c **** *   1 if enabled, 0 if disabled.
+ 357:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 358:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 359:Generated_Source\PSoC5/isr_F2F_edge.c **** uint8 isr_F2F_edge_GetState(void)
+ 360:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 458              		.loc 1 360 0
+ 459              		.cfi_startproc
+ 460              		@ args = 0, pretend = 0, frame = 0
+ 461              		@ frame_needed = 1, uses_anonymous_args = 0
+ 462              		@ link register save eliminated.
+ 463 0000 80B4     		push	{r7}
+ 464              		.cfi_def_cfa_offset 4
+ 465              		.cfi_offset 7, -4
+ 466 0002 00AF     		add	r7, sp, #0
+ 467              		.cfi_def_cfa_register 7
+ 361:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Get the state of the general interrupt. */
+ 362:Generated_Source\PSoC5/isr_F2F_edge.c ****     return ((*isr_F2F_edge_INTC_SET_EN & (uint32)isr_F2F_edge__INTC_MASK) != 0u) ? 1u:0u;
+ 468              		.loc 1 362 0
+ 469 0004 064B     		ldr	r3, .L36
+ 470 0006 1B68     		ldr	r3, [r3]
+ 471 0008 03F08003 		and	r3, r3, #128
+ 472 000c 002B     		cmp	r3, #0
+ 473 000e 01D0     		beq	.L33
+ 474              		.loc 1 362 0 is_stmt 0 discriminator 1
+ 475 0010 0123     		movs	r3, #1
+ 476 0012 00E0     		b	.L34
+ 477              	.L33:
+ 478              		.loc 1 362 0 discriminator 2
+ 479 0014 0023     		movs	r3, #0
+ 480              	.L34:
+ 363:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 481              		.loc 1 363 0 is_stmt 1 discriminator 4
+ 482 0016 1846     		mov	r0, r3
+ 483 0018 BD46     		mov	sp, r7
+ 484              		.cfi_def_cfa_register 13
+ 485              		@ sp needed
+ 486 001a 80BC     		pop	{r7}
+ 487              		.cfi_restore 7
+ 488              		.cfi_def_cfa_offset 0
+ 489 001c 7047     		bx	lr
+ 490              	.L37:
+ 491 001e 00BF     		.align	2
+ 492              	.L36:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 16
+
+
+ 493 0020 00E100E0 		.word	-536813312
+ 494              		.cfi_endproc
+ 495              	.LFE72:
+ 496              		.size	isr_F2F_edge_GetState, .-isr_F2F_edge_GetState
+ 497              		.section	.text.isr_F2F_edge_Disable,"ax",%progbits
+ 498              		.align	2
+ 499              		.global	isr_F2F_edge_Disable
+ 500              		.thumb
+ 501              		.thumb_func
+ 502              		.type	isr_F2F_edge_Disable, %function
+ 503              	isr_F2F_edge_Disable:
+ 504              	.LFB73:
+ 364:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 365:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 366:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 367:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_Disable
+ 368:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 369:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 370:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 371:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Disables the Interrupt in the interrupt controller.
+ 372:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 373:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 374:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 375:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 376:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 377:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 378:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 379:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 380:Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_Disable(void)
+ 381:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 505              		.loc 1 381 0
+ 506              		.cfi_startproc
+ 507              		@ args = 0, pretend = 0, frame = 0
+ 508              		@ frame_needed = 1, uses_anonymous_args = 0
+ 509              		@ link register save eliminated.
+ 510 0000 80B4     		push	{r7}
+ 511              		.cfi_def_cfa_offset 4
+ 512              		.cfi_offset 7, -4
+ 513 0002 00AF     		add	r7, sp, #0
+ 514              		.cfi_def_cfa_register 7
+ 382:Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Disable the general interrupt. */
+ 383:Generated_Source\PSoC5/isr_F2F_edge.c ****     *isr_F2F_edge_INTC_CLR_EN = isr_F2F_edge__INTC_MASK;
+ 515              		.loc 1 383 0
+ 516 0004 034B     		ldr	r3, .L39
+ 517 0006 8022     		movs	r2, #128
+ 518 0008 1A60     		str	r2, [r3]
+ 384:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 519              		.loc 1 384 0
+ 520 000a 00BF     		nop
+ 521 000c BD46     		mov	sp, r7
+ 522              		.cfi_def_cfa_register 13
+ 523              		@ sp needed
+ 524 000e 80BC     		pop	{r7}
+ 525              		.cfi_restore 7
+ 526              		.cfi_def_cfa_offset 0
+ 527 0010 7047     		bx	lr
+ 528              	.L40:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 17
+
+
+ 529 0012 00BF     		.align	2
+ 530              	.L39:
+ 531 0014 80E100E0 		.word	-536813184
+ 532              		.cfi_endproc
+ 533              	.LFE73:
+ 534              		.size	isr_F2F_edge_Disable, .-isr_F2F_edge_Disable
+ 535              		.section	.text.isr_F2F_edge_SetPending,"ax",%progbits
+ 536              		.align	2
+ 537              		.global	isr_F2F_edge_SetPending
+ 538              		.thumb
+ 539              		.thumb_func
+ 540              		.type	isr_F2F_edge_SetPending, %function
+ 541              	isr_F2F_edge_SetPending:
+ 542              	.LFB74:
+ 385:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 386:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 387:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 388:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_SetPending
+ 389:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 390:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 391:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 392:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Causes the Interrupt to enter the pending state, a software method of
+ 393:Generated_Source\PSoC5/isr_F2F_edge.c **** *   generating the interrupt.
+ 394:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 395:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 396:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 397:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 398:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 399:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 400:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 401:Generated_Source\PSoC5/isr_F2F_edge.c **** * Side Effects:
+ 402:Generated_Source\PSoC5/isr_F2F_edge.c **** *   If interrupts are enabled and the interrupt is set up properly, the ISR is
+ 403:Generated_Source\PSoC5/isr_F2F_edge.c **** *   entered (depending on the priority of this interrupt and other pending 
+ 404:Generated_Source\PSoC5/isr_F2F_edge.c **** *   interrupts).
+ 405:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 406:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 407:Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_SetPending(void)
+ 408:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 543              		.loc 1 408 0
+ 544              		.cfi_startproc
+ 545              		@ args = 0, pretend = 0, frame = 0
+ 546              		@ frame_needed = 1, uses_anonymous_args = 0
+ 547              		@ link register save eliminated.
+ 548 0000 80B4     		push	{r7}
+ 549              		.cfi_def_cfa_offset 4
+ 550              		.cfi_offset 7, -4
+ 551 0002 00AF     		add	r7, sp, #0
+ 552              		.cfi_def_cfa_register 7
+ 409:Generated_Source\PSoC5/isr_F2F_edge.c ****     *isr_F2F_edge_INTC_SET_PD = isr_F2F_edge__INTC_MASK;
+ 553              		.loc 1 409 0
+ 554 0004 034B     		ldr	r3, .L42
+ 555 0006 8022     		movs	r2, #128
+ 556 0008 1A60     		str	r2, [r3]
+ 410:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 557              		.loc 1 410 0
+ 558 000a 00BF     		nop
+ 559 000c BD46     		mov	sp, r7
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 18
+
+
+ 560              		.cfi_def_cfa_register 13
+ 561              		@ sp needed
+ 562 000e 80BC     		pop	{r7}
+ 563              		.cfi_restore 7
+ 564              		.cfi_def_cfa_offset 0
+ 565 0010 7047     		bx	lr
+ 566              	.L43:
+ 567 0012 00BF     		.align	2
+ 568              	.L42:
+ 569 0014 00E200E0 		.word	-536813056
+ 570              		.cfi_endproc
+ 571              	.LFE74:
+ 572              		.size	isr_F2F_edge_SetPending, .-isr_F2F_edge_SetPending
+ 573              		.section	.text.isr_F2F_edge_ClearPending,"ax",%progbits
+ 574              		.align	2
+ 575              		.global	isr_F2F_edge_ClearPending
+ 576              		.thumb
+ 577              		.thumb_func
+ 578              		.type	isr_F2F_edge_ClearPending, %function
+ 579              	isr_F2F_edge_ClearPending:
+ 580              	.LFB75:
+ 411:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 412:Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 413:Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 414:Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_ClearPending
+ 415:Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 416:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 417:Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 418:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Clears a pending interrupt in the interrupt controller.
+ 419:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 420:Generated_Source\PSoC5/isr_F2F_edge.c **** *   Note Some interrupt sources are clear-on-read and require the block 
+ 421:Generated_Source\PSoC5/isr_F2F_edge.c **** *   interrupt/status register to be read/cleared with the appropriate block API 
+ 422:Generated_Source\PSoC5/isr_F2F_edge.c **** *   (GPIO, UART, and so on). Otherwise the ISR will continue to remain in 
+ 423:Generated_Source\PSoC5/isr_F2F_edge.c **** *   pending state even though the interrupt itself is cleared using this API.
+ 424:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 425:Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 426:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 427:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 428:Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 429:Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 430:Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 431:Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 432:Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_ClearPending(void)
+ 433:Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 581              		.loc 1 433 0
+ 582              		.cfi_startproc
+ 583              		@ args = 0, pretend = 0, frame = 0
+ 584              		@ frame_needed = 1, uses_anonymous_args = 0
+ 585              		@ link register save eliminated.
+ 586 0000 80B4     		push	{r7}
+ 587              		.cfi_def_cfa_offset 4
+ 588              		.cfi_offset 7, -4
+ 589 0002 00AF     		add	r7, sp, #0
+ 590              		.cfi_def_cfa_register 7
+ 434:Generated_Source\PSoC5/isr_F2F_edge.c ****     *isr_F2F_edge_INTC_CLR_PD = isr_F2F_edge__INTC_MASK;
+ 591              		.loc 1 434 0
+ 592 0004 034B     		ldr	r3, .L45
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 19
+
+
+ 593 0006 8022     		movs	r2, #128
+ 594 0008 1A60     		str	r2, [r3]
+ 435:Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 595              		.loc 1 435 0
+ 596 000a 00BF     		nop
+ 597 000c BD46     		mov	sp, r7
+ 598              		.cfi_def_cfa_register 13
+ 599              		@ sp needed
+ 600 000e 80BC     		pop	{r7}
+ 601              		.cfi_restore 7
+ 602              		.cfi_def_cfa_offset 0
+ 603 0010 7047     		bx	lr
+ 604              	.L46:
+ 605 0012 00BF     		.align	2
+ 606              	.L45:
+ 607 0014 80E200E0 		.word	-536812928
+ 608              		.cfi_endproc
+ 609              	.LFE75:
+ 610              		.size	isr_F2F_edge_ClearPending, .-isr_F2F_edge_ClearPending
+ 611              		.text
+ 612              	.Letext0:
+ 613              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 614              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 615              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 616              		.file 5 "./softuart.h"
+ 617              		.file 6 "Generated_Source\\PSoC5/core_cm3.h"
+ 618              		.file 7 "./system.h"
+ 619              		.section	.debug_info,"",%progbits
+ 620              	.Ldebug_info0:
+ 621 0000 E8030000 		.4byte	0x3e8
+ 622 0004 0400     		.2byte	0x4
+ 623 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 624 000a 04       		.byte	0x4
+ 625 000b 01       		.uleb128 0x1
+ 626 000c 3F000000 		.4byte	.LASF62
+ 627 0010 0C       		.byte	0xc
+ 628 0011 AA010000 		.4byte	.LASF63
+ 629 0015 00020000 		.4byte	.LASF64
+ 630 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 631 001d 00000000 		.4byte	0
+ 632 0021 00000000 		.4byte	.Ldebug_line0
+ 633 0025 02       		.uleb128 0x2
+ 634 0026 04       		.byte	0x4
+ 635 0027 05       		.byte	0x5
+ 636 0028 696E7400 		.ascii	"int\000"
+ 637 002c 03       		.uleb128 0x3
+ 638 002d 04       		.byte	0x4
+ 639 002e 07       		.byte	0x7
+ 640 002f DC020000 		.4byte	.LASF0
+ 641 0033 03       		.uleb128 0x3
+ 642 0034 08       		.byte	0x8
+ 643 0035 05       		.byte	0x5
+ 644 0036 90010000 		.4byte	.LASF1
+ 645 003a 03       		.uleb128 0x3
+ 646 003b 08       		.byte	0x8
+ 647 003c 04       		.byte	0x4
+ 648 003d 69020000 		.4byte	.LASF2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 20
+
+
+ 649 0041 03       		.uleb128 0x3
+ 650 0042 01       		.byte	0x1
+ 651 0043 06       		.byte	0x6
+ 652 0044 B3020000 		.4byte	.LASF3
+ 653 0048 03       		.uleb128 0x3
+ 654 0049 01       		.byte	0x1
+ 655 004a 08       		.byte	0x8
+ 656 004b 43020000 		.4byte	.LASF4
+ 657 004f 03       		.uleb128 0x3
+ 658 0050 02       		.byte	0x2
+ 659 0051 05       		.byte	0x5
+ 660 0052 1F000000 		.4byte	.LASF5
+ 661 0056 03       		.uleb128 0x3
+ 662 0057 02       		.byte	0x2
+ 663 0058 07       		.byte	0x7
+ 664 0059 51030000 		.4byte	.LASF6
+ 665 005d 04       		.uleb128 0x4
+ 666 005e C3030000 		.4byte	.LASF12
+ 667 0062 02       		.byte	0x2
+ 668 0063 3F       		.byte	0x3f
+ 669 0064 68000000 		.4byte	0x68
+ 670 0068 03       		.uleb128 0x3
+ 671 0069 04       		.byte	0x4
+ 672 006a 05       		.byte	0x5
+ 673 006b D9010000 		.4byte	.LASF7
+ 674 006f 03       		.uleb128 0x3
+ 675 0070 04       		.byte	0x4
+ 676 0071 07       		.byte	0x7
+ 677 0072 AA030000 		.4byte	.LASF8
+ 678 0076 03       		.uleb128 0x3
+ 679 0077 08       		.byte	0x8
+ 680 0078 07       		.byte	0x7
+ 681 0079 C5020000 		.4byte	.LASF9
+ 682 007d 03       		.uleb128 0x3
+ 683 007e 04       		.byte	0x4
+ 684 007f 07       		.byte	0x7
+ 685 0080 29000000 		.4byte	.LASF10
+ 686 0084 03       		.uleb128 0x3
+ 687 0085 01       		.byte	0x1
+ 688 0086 08       		.byte	0x8
+ 689 0087 35030000 		.4byte	.LASF11
+ 690 008b 05       		.uleb128 0x5
+ 691 008c 04       		.byte	0x4
+ 692 008d 91000000 		.4byte	0x91
+ 693 0091 06       		.uleb128 0x6
+ 694 0092 04       		.uleb128 0x4
+ 695 0093 3A030000 		.4byte	.LASF13
+ 696 0097 03       		.byte	0x3
+ 697 0098 2C       		.byte	0x2c
+ 698 0099 5D000000 		.4byte	0x5d
+ 699 009d 07       		.uleb128 0x7
+ 700 009e 64030000 		.4byte	.LASF14
+ 701 00a2 04       		.byte	0x4
+ 702 00a3 9201     		.2byte	0x192
+ 703 00a5 48000000 		.4byte	0x48
+ 704 00a9 07       		.uleb128 0x7
+ 705 00aa 9E030000 		.4byte	.LASF15
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 21
+
+
+ 706 00ae 04       		.byte	0x4
+ 707 00af 9401     		.2byte	0x194
+ 708 00b1 6F000000 		.4byte	0x6f
+ 709 00b5 03       		.uleb128 0x3
+ 710 00b6 04       		.byte	0x4
+ 711 00b7 04       		.byte	0x4
+ 712 00b8 7E010000 		.4byte	.LASF16
+ 713 00bc 03       		.uleb128 0x3
+ 714 00bd 08       		.byte	0x8
+ 715 00be 04       		.byte	0x4
+ 716 00bf BC030000 		.4byte	.LASF17
+ 717 00c3 07       		.uleb128 0x7
+ 718 00c4 A5030000 		.4byte	.LASF18
+ 719 00c8 04       		.byte	0x4
+ 720 00c9 3C02     		.2byte	0x23c
+ 721 00cb CF000000 		.4byte	0xcf
+ 722 00cf 08       		.uleb128 0x8
+ 723 00d0 9D000000 		.4byte	0x9d
+ 724 00d4 07       		.uleb128 0x7
+ 725 00d5 05030000 		.4byte	.LASF19
+ 726 00d9 04       		.byte	0x4
+ 727 00da 3E02     		.2byte	0x23e
+ 728 00dc E0000000 		.4byte	0xe0
+ 729 00e0 08       		.uleb128 0x8
+ 730 00e1 A9000000 		.4byte	0xa9
+ 731 00e5 07       		.uleb128 0x7
+ 732 00e6 93020000 		.4byte	.LASF20
+ 733 00ea 04       		.byte	0x4
+ 734 00eb 4E02     		.2byte	0x24e
+ 735 00ed 8B000000 		.4byte	0x8b
+ 736 00f1 09       		.uleb128 0x9
+ 737 00f2 28       		.byte	0x28
+ 738 00f3 05       		.byte	0x5
+ 739 00f4 0D       		.byte	0xd
+ 740 00f5 8A010000 		.4byte	0x18a
+ 741 00f9 0A       		.uleb128 0xa
+ 742 00fa 75020000 		.4byte	.LASF21
+ 743 00fe 05       		.byte	0x5
+ 744 00ff 0F       		.byte	0xf
+ 745 0100 25000000 		.4byte	0x25
+ 746 0104 00       		.byte	0
+ 747 0105 0A       		.uleb128 0xa
+ 748 0106 F9010000 		.4byte	.LASF22
+ 749 010a 05       		.byte	0x5
+ 750 010b 10       		.byte	0x10
+ 751 010c 25000000 		.4byte	0x25
+ 752 0110 04       		.byte	0x4
+ 753 0111 0A       		.uleb128 0xa
+ 754 0112 E9020000 		.4byte	.LASF23
+ 755 0116 05       		.byte	0x5
+ 756 0117 11       		.byte	0x11
+ 757 0118 25000000 		.4byte	0x25
+ 758 011c 08       		.byte	0x8
+ 759 011d 0A       		.uleb128 0xa
+ 760 011e 9E010000 		.4byte	.LASF24
+ 761 0122 05       		.byte	0x5
+ 762 0123 12       		.byte	0x12
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 22
+
+
+ 763 0124 25000000 		.4byte	0x25
+ 764 0128 0C       		.byte	0xc
+ 765 0129 0A       		.uleb128 0xa
+ 766 012a 81030000 		.4byte	.LASF25
+ 767 012e 05       		.byte	0x5
+ 768 012f 13       		.byte	0x13
+ 769 0130 56000000 		.4byte	0x56
+ 770 0134 10       		.byte	0x10
+ 771 0135 0A       		.uleb128 0xa
+ 772 0136 43010000 		.4byte	.LASF26
+ 773 013a 05       		.byte	0x5
+ 774 013b 14       		.byte	0x14
+ 775 013c 8A010000 		.4byte	0x18a
+ 776 0140 12       		.byte	0x12
+ 777 0141 0A       		.uleb128 0xa
+ 778 0142 2D030000 		.4byte	.LASF27
+ 779 0146 05       		.byte	0x5
+ 780 0147 15       		.byte	0x15
+ 781 0148 8A010000 		.4byte	0x18a
+ 782 014c 14       		.byte	0x14
+ 783 014d 0A       		.uleb128 0xa
+ 784 014e 10010000 		.4byte	.LASF28
+ 785 0152 05       		.byte	0x5
+ 786 0153 16       		.byte	0x16
+ 787 0154 56000000 		.4byte	0x56
+ 788 0158 16       		.byte	0x16
+ 789 0159 0A       		.uleb128 0xa
+ 790 015a BF020000 		.4byte	.LASF29
+ 791 015e 05       		.byte	0x5
+ 792 015f 17       		.byte	0x17
+ 793 0160 8F010000 		.4byte	0x18f
+ 794 0164 18       		.byte	0x18
+ 795 0165 0A       		.uleb128 0xa
+ 796 0166 0C040000 		.4byte	.LASF30
+ 797 016a 05       		.byte	0x5
+ 798 016b 18       		.byte	0x18
+ 799 016c 8F010000 		.4byte	0x18f
+ 800 0170 1C       		.byte	0x1c
+ 801 0171 0A       		.uleb128 0xa
+ 802 0172 32000000 		.4byte	.LASF31
+ 803 0176 05       		.byte	0x5
+ 804 0177 19       		.byte	0x19
+ 805 0178 8F010000 		.4byte	0x18f
+ 806 017c 20       		.byte	0x20
+ 807 017d 0A       		.uleb128 0xa
+ 808 017e 25030000 		.4byte	.LASF32
+ 809 0182 05       		.byte	0x5
+ 810 0183 1A       		.byte	0x1a
+ 811 0184 8F010000 		.4byte	0x18f
+ 812 0188 24       		.byte	0x24
+ 813 0189 00       		.byte	0
+ 814 018a 08       		.uleb128 0x8
+ 815 018b 56000000 		.4byte	0x56
+ 816 018f 08       		.uleb128 0x8
+ 817 0190 25000000 		.4byte	0x25
+ 818 0194 04       		.uleb128 0x4
+ 819 0195 D9000000 		.4byte	.LASF33
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 23
+
+
+ 820 0199 05       		.byte	0x5
+ 821 019a 1B       		.byte	0x1b
+ 822 019b F1000000 		.4byte	0xf1
+ 823 019f 0B       		.uleb128 0xb
+ 824 01a0 A0020000 		.4byte	.LASF34
+ 825 01a4 01       		.byte	0x1
+ 826 01a5 4A       		.byte	0x4a
+ 827 01a6 00000000 		.4byte	.LFB63
+ 828 01aa 20000000 		.4byte	.LFE63-.LFB63
+ 829 01ae 01       		.uleb128 0x1
+ 830 01af 9C       		.byte	0x9c
+ 831 01b0 0C       		.uleb128 0xc
+ 832 01b1 4B010000 		.4byte	.LASF37
+ 833 01b5 01       		.byte	0x1
+ 834 01b6 75       		.byte	0x75
+ 835 01b7 00000000 		.4byte	.LFB64
+ 836 01bb 24000000 		.4byte	.LFE64-.LFB64
+ 837 01bf 01       		.uleb128 0x1
+ 838 01c0 9C       		.byte	0x9c
+ 839 01c1 D4010000 		.4byte	0x1d4
+ 840 01c5 0D       		.uleb128 0xd
+ 841 01c6 E2010000 		.4byte	.LASF39
+ 842 01ca 01       		.byte	0x1
+ 843 01cb 75       		.byte	0x75
+ 844 01cc E5000000 		.4byte	0xe5
+ 845 01d0 02       		.uleb128 0x2
+ 846 01d1 91       		.byte	0x91
+ 847 01d2 74       		.sleb128 -12
+ 848 01d3 00       		.byte	0
+ 849 01d4 0B       		.uleb128 0xb
+ 850 01d5 CD030000 		.4byte	.LASF35
+ 851 01d9 01       		.byte	0x1
+ 852 01da 93       		.byte	0x93
+ 853 01db 00000000 		.4byte	.LFB65
+ 854 01df 18000000 		.4byte	.LFE65-.LFB65
+ 855 01e3 01       		.uleb128 0x1
+ 856 01e4 9C       		.byte	0x9c
+ 857 01e5 0B       		.uleb128 0xb
+ 858 01e6 2C020000 		.4byte	.LASF36
+ 859 01ea 01       		.byte	0x1
+ 860 01eb AD       		.byte	0xad
+ 861 01ec 00000000 		.4byte	.LFB66
+ 862 01f0 6C000000 		.4byte	.LFE66-.LFB66
+ 863 01f4 01       		.uleb128 0x1
+ 864 01f5 9C       		.byte	0x9c
+ 865 01f6 0E       		.uleb128 0xe
+ 866 01f7 6A030000 		.4byte	.LASF38
+ 867 01fb 01       		.byte	0x1
+ 868 01fc E7       		.byte	0xe7
+ 869 01fd 00000000 		.4byte	.LFB67
+ 870 0201 24000000 		.4byte	.LFE67-.LFB67
+ 871 0205 01       		.uleb128 0x1
+ 872 0206 9C       		.byte	0x9c
+ 873 0207 28020000 		.4byte	0x228
+ 874 020b 0D       		.uleb128 0xd
+ 875 020c E2010000 		.4byte	.LASF39
+ 876 0210 01       		.byte	0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 24
+
+
+ 877 0211 E7       		.byte	0xe7
+ 878 0212 E5000000 		.4byte	0xe5
+ 879 0216 02       		.uleb128 0x2
+ 880 0217 91       		.byte	0x91
+ 881 0218 6C       		.sleb128 -20
+ 882 0219 0F       		.uleb128 0xf
+ 883 021a EA010000 		.4byte	.LASF40
+ 884 021e 01       		.byte	0x1
+ 885 021f E9       		.byte	0xe9
+ 886 0220 28020000 		.4byte	0x228
+ 887 0224 02       		.uleb128 0x2
+ 888 0225 91       		.byte	0x91
+ 889 0226 74       		.sleb128 -12
+ 890 0227 00       		.byte	0
+ 891 0228 05       		.uleb128 0x5
+ 892 0229 04       		.byte	0x4
+ 893 022a E5000000 		.4byte	0xe5
+ 894 022e 10       		.uleb128 0x10
+ 895 022f 60010000 		.4byte	.LASF43
+ 896 0233 01       		.byte	0x1
+ 897 0234 FF       		.byte	0xff
+ 898 0235 E5000000 		.4byte	0xe5
+ 899 0239 00000000 		.4byte	.LFB68
+ 900 023d 20000000 		.4byte	.LFE68-.LFB68
+ 901 0241 01       		.uleb128 0x1
+ 902 0242 9C       		.byte	0x9c
+ 903 0243 57020000 		.4byte	0x257
+ 904 0247 11       		.uleb128 0x11
+ 905 0248 EA010000 		.4byte	.LASF40
+ 906 024c 01       		.byte	0x1
+ 907 024d 0101     		.2byte	0x101
+ 908 024f 28020000 		.4byte	0x228
+ 909 0253 02       		.uleb128 0x2
+ 910 0254 91       		.byte	0x91
+ 911 0255 74       		.sleb128 -12
+ 912 0256 00       		.byte	0
+ 913 0257 12       		.uleb128 0x12
+ 914 0258 18010000 		.4byte	.LASF41
+ 915 025c 01       		.byte	0x1
+ 916 025d 2101     		.2byte	0x121
+ 917 025f 00000000 		.4byte	.LFB69
+ 918 0263 24000000 		.4byte	.LFE69-.LFB69
+ 919 0267 01       		.uleb128 0x1
+ 920 0268 9C       		.byte	0x9c
+ 921 0269 7D020000 		.4byte	0x27d
+ 922 026d 13       		.uleb128 0x13
+ 923 026e 16000000 		.4byte	.LASF42
+ 924 0272 01       		.byte	0x1
+ 925 0273 2101     		.2byte	0x121
+ 926 0275 9D000000 		.4byte	0x9d
+ 927 0279 02       		.uleb128 0x2
+ 928 027a 91       		.byte	0x91
+ 929 027b 77       		.sleb128 -9
+ 930 027c 00       		.byte	0
+ 931 027d 14       		.uleb128 0x14
+ 932 027e 7A020000 		.4byte	.LASF44
+ 933 0282 01       		.byte	0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 25
+
+
+ 934 0283 3701     		.2byte	0x137
+ 935 0285 9D000000 		.4byte	0x9d
+ 936 0289 00000000 		.4byte	.LFB70
+ 937 028d 20000000 		.4byte	.LFE70-.LFB70
+ 938 0291 01       		.uleb128 0x1
+ 939 0292 9C       		.byte	0x9c
+ 940 0293 A7020000 		.4byte	0x2a7
+ 941 0297 11       		.uleb128 0x11
+ 942 0298 16000000 		.4byte	.LASF42
+ 943 029c 01       		.byte	0x1
+ 944 029d 3901     		.2byte	0x139
+ 945 029f 9D000000 		.4byte	0x9d
+ 946 02a3 02       		.uleb128 0x2
+ 947 02a4 91       		.byte	0x91
+ 948 02a5 77       		.sleb128 -9
+ 949 02a6 00       		.byte	0
+ 950 02a7 15       		.uleb128 0x15
+ 951 02a8 FC000000 		.4byte	.LASF45
+ 952 02ac 01       		.byte	0x1
+ 953 02ad 5201     		.2byte	0x152
+ 954 02af 00000000 		.4byte	.LFB71
+ 955 02b3 18000000 		.4byte	.LFE71-.LFB71
+ 956 02b7 01       		.uleb128 0x1
+ 957 02b8 9C       		.byte	0x9c
+ 958 02b9 16       		.uleb128 0x16
+ 959 02ba 00000000 		.4byte	.LASF65
+ 960 02be 01       		.byte	0x1
+ 961 02bf 6701     		.2byte	0x167
+ 962 02c1 9D000000 		.4byte	0x9d
+ 963 02c5 00000000 		.4byte	.LFB72
+ 964 02c9 24000000 		.4byte	.LFE72-.LFB72
+ 965 02cd 01       		.uleb128 0x1
+ 966 02ce 9C       		.byte	0x9c
+ 967 02cf 15       		.uleb128 0x15
+ 968 02d0 89030000 		.4byte	.LASF46
+ 969 02d4 01       		.byte	0x1
+ 970 02d5 7C01     		.2byte	0x17c
+ 971 02d7 00000000 		.4byte	.LFB73
+ 972 02db 18000000 		.4byte	.LFE73-.LFB73
+ 973 02df 01       		.uleb128 0x1
+ 974 02e0 9C       		.byte	0x9c
+ 975 02e1 15       		.uleb128 0x15
+ 976 02e2 51020000 		.4byte	.LASF47
+ 977 02e6 01       		.byte	0x1
+ 978 02e7 9701     		.2byte	0x197
+ 979 02e9 00000000 		.4byte	.LFB74
+ 980 02ed 18000000 		.4byte	.LFE74-.LFB74
+ 981 02f1 01       		.uleb128 0x1
+ 982 02f2 9C       		.byte	0x9c
+ 983 02f3 15       		.uleb128 0x15
+ 984 02f4 0B030000 		.4byte	.LASF48
+ 985 02f8 01       		.byte	0x1
+ 986 02f9 B001     		.2byte	0x1b0
+ 987 02fb 00000000 		.4byte	.LFB75
+ 988 02ff 18000000 		.4byte	.LFE75-.LFB75
+ 989 0303 01       		.uleb128 0x1
+ 990 0304 9C       		.byte	0x9c
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 26
+
+
+ 991 0305 17       		.uleb128 0x17
+ 992 0306 FF030000 		.4byte	.LASF49
+ 993 030a 06       		.byte	0x6
+ 994 030b 1207     		.2byte	0x712
+ 995 030d 11030000 		.4byte	0x311
+ 996 0311 08       		.uleb128 0x8
+ 997 0312 92000000 		.4byte	0x92
+ 998 0316 18       		.uleb128 0x18
+ 999 0317 7300     		.ascii	"s\000"
+ 1000 0319 07       		.byte	0x7
+ 1001 031a 3E       		.byte	0x3e
+ 1002 031b 94010000 		.4byte	0x194
+ 1003 031f 05       		.uleb128 0x5
+ 1004 0320 03       		.byte	0x3
+ 1005 0321 00000000 		.4byte	s
+ 1006 0325 19       		.uleb128 0x19
+ 1007 0326 F6030000 		.4byte	.LASF50
+ 1008 032a 07       		.byte	0x7
+ 1009 032b 3F       		.byte	0x3f
+ 1010 032c 48000000 		.4byte	0x48
+ 1011 0330 1A       		.uleb128 0x1a
+ 1012 0331 31010000 		.4byte	.LASF51
+ 1013 0335 07       		.byte	0x7
+ 1014 0336 47       		.byte	0x47
+ 1015 0337 84000000 		.4byte	0x84
+ 1016 033b 05       		.uleb128 0x5
+ 1017 033c 03       		.byte	0x3
+ 1018 033d 00000000 		.4byte	currentAccessType
+ 1019 0341 1A       		.uleb128 0x1a
+ 1020 0342 A3010000 		.4byte	.LASF52
+ 1021 0346 07       		.byte	0x7
+ 1022 0347 48       		.byte	0x48
+ 1023 0348 84000000 		.4byte	0x84
+ 1024 034c 05       		.uleb128 0x5
+ 1025 034d 03       		.byte	0x3
+ 1026 034e 00000000 		.4byte	hw_old
+ 1027 0352 1A       		.uleb128 0x1a
+ 1028 0353 77010000 		.4byte	.LASF53
+ 1029 0357 07       		.byte	0x7
+ 1030 0358 49       		.byte	0x49
+ 1031 0359 84000000 		.4byte	0x84
+ 1032 035d 05       		.uleb128 0x5
+ 1033 035e 03       		.byte	0x3
+ 1034 035f 00000000 		.4byte	tp_old
+ 1035 0363 1A       		.uleb128 0x1a
+ 1036 0364 F3020000 		.4byte	.LASF54
+ 1037 0368 07       		.byte	0x7
+ 1038 0369 4A       		.byte	0x4a
+ 1039 036a 25000000 		.4byte	0x25
+ 1040 036e 05       		.uleb128 0x5
+ 1041 036f 03       		.byte	0x3
+ 1042 0370 00000000 		.4byte	tamperCR_polarity
+ 1043 0374 1A       		.uleb128 0x1a
+ 1044 0375 19040000 		.4byte	.LASF55
+ 1045 0379 07       		.byte	0x7
+ 1046 037a 4B       		.byte	0x4b
+ 1047 037b 25000000 		.4byte	0x25
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 27
+
+
+ 1048 037f 05       		.uleb128 0x5
+ 1049 0380 03       		.byte	0x3
+ 1050 0381 00000000 		.4byte	tamper_out_polarity
+ 1051 0385 1A       		.uleb128 0x1a
+ 1052 0386 D0010000 		.4byte	.LASF56
+ 1053 038a 07       		.byte	0x7
+ 1054 038b 4E       		.byte	0x4e
+ 1055 038c 25000000 		.4byte	0x25
+ 1056 0390 05       		.uleb128 0x5
+ 1057 0391 03       		.byte	0x3
+ 1058 0392 00000000 		.4byte	card_ack
+ 1059 0396 1A       		.uleb128 0x1a
+ 1060 0397 84010000 		.4byte	.LASF57
+ 1061 039b 07       		.byte	0x7
+ 1062 039c 4F       		.byte	0x4f
+ 1063 039d 25000000 		.4byte	0x25
+ 1064 03a1 05       		.uleb128 0x5
+ 1065 03a2 03       		.byte	0x3
+ 1066 03a3 00000000 		.4byte	card_in_buf
+ 1067 03a7 1A       		.uleb128 0x1a
+ 1068 03a8 42030000 		.4byte	.LASF58
+ 1069 03ac 01       		.byte	0x1
+ 1070 03ad 24       		.byte	0x24
+ 1071 03ae 25000000 		.4byte	0x25
+ 1072 03b2 05       		.uleb128 0x5
+ 1073 03b3 03       		.byte	0x3
+ 1074 03b4 00000000 		.4byte	f2f_pulsewidth
+ 1075 03b8 1A       		.uleb128 0x1a
+ 1076 03b9 CD000000 		.4byte	.LASF59
+ 1077 03bd 01       		.byte	0x1
+ 1078 03be 25       		.byte	0x25
+ 1079 03bf 25000000 		.4byte	0x25
+ 1080 03c3 05       		.uleb128 0x5
+ 1081 03c4 03       		.byte	0x3
+ 1082 03c5 00000000 		.4byte	f2f_timeout
+ 1083 03c9 1A       		.uleb128 0x1a
+ 1084 03ca DF030000 		.4byte	.LASF60
+ 1085 03ce 01       		.byte	0x1
+ 1086 03cf 28       		.byte	0x28
+ 1087 03d0 84000000 		.4byte	0x84
+ 1088 03d4 05       		.uleb128 0x5
+ 1089 03d5 03       		.byte	0x3
+ 1090 03d6 00000000 		.4byte	f2f_acknowledge_active
+ 1091 03da 1A       		.uleb128 0x1a
+ 1092 03db EA000000 		.4byte	.LASF61
+ 1093 03df 01       		.byte	0x1
+ 1094 03e0 29       		.byte	0x29
+ 1095 03e1 84000000 		.4byte	0x84
+ 1096 03e5 05       		.uleb128 0x5
+ 1097 03e6 03       		.byte	0x3
+ 1098 03e7 00000000 		.4byte	f2f_ack_delay_cnt
+ 1099 03eb 00       		.byte	0
+ 1100              		.section	.debug_abbrev,"",%progbits
+ 1101              	.Ldebug_abbrev0:
+ 1102 0000 01       		.uleb128 0x1
+ 1103 0001 11       		.uleb128 0x11
+ 1104 0002 01       		.byte	0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 28
+
+
+ 1105 0003 25       		.uleb128 0x25
+ 1106 0004 0E       		.uleb128 0xe
+ 1107 0005 13       		.uleb128 0x13
+ 1108 0006 0B       		.uleb128 0xb
+ 1109 0007 03       		.uleb128 0x3
+ 1110 0008 0E       		.uleb128 0xe
+ 1111 0009 1B       		.uleb128 0x1b
+ 1112 000a 0E       		.uleb128 0xe
+ 1113 000b 55       		.uleb128 0x55
+ 1114 000c 17       		.uleb128 0x17
+ 1115 000d 11       		.uleb128 0x11
+ 1116 000e 01       		.uleb128 0x1
+ 1117 000f 10       		.uleb128 0x10
+ 1118 0010 17       		.uleb128 0x17
+ 1119 0011 00       		.byte	0
+ 1120 0012 00       		.byte	0
+ 1121 0013 02       		.uleb128 0x2
+ 1122 0014 24       		.uleb128 0x24
+ 1123 0015 00       		.byte	0
+ 1124 0016 0B       		.uleb128 0xb
+ 1125 0017 0B       		.uleb128 0xb
+ 1126 0018 3E       		.uleb128 0x3e
+ 1127 0019 0B       		.uleb128 0xb
+ 1128 001a 03       		.uleb128 0x3
+ 1129 001b 08       		.uleb128 0x8
+ 1130 001c 00       		.byte	0
+ 1131 001d 00       		.byte	0
+ 1132 001e 03       		.uleb128 0x3
+ 1133 001f 24       		.uleb128 0x24
+ 1134 0020 00       		.byte	0
+ 1135 0021 0B       		.uleb128 0xb
+ 1136 0022 0B       		.uleb128 0xb
+ 1137 0023 3E       		.uleb128 0x3e
+ 1138 0024 0B       		.uleb128 0xb
+ 1139 0025 03       		.uleb128 0x3
+ 1140 0026 0E       		.uleb128 0xe
+ 1141 0027 00       		.byte	0
+ 1142 0028 00       		.byte	0
+ 1143 0029 04       		.uleb128 0x4
+ 1144 002a 16       		.uleb128 0x16
+ 1145 002b 00       		.byte	0
+ 1146 002c 03       		.uleb128 0x3
+ 1147 002d 0E       		.uleb128 0xe
+ 1148 002e 3A       		.uleb128 0x3a
+ 1149 002f 0B       		.uleb128 0xb
+ 1150 0030 3B       		.uleb128 0x3b
+ 1151 0031 0B       		.uleb128 0xb
+ 1152 0032 49       		.uleb128 0x49
+ 1153 0033 13       		.uleb128 0x13
+ 1154 0034 00       		.byte	0
+ 1155 0035 00       		.byte	0
+ 1156 0036 05       		.uleb128 0x5
+ 1157 0037 0F       		.uleb128 0xf
+ 1158 0038 00       		.byte	0
+ 1159 0039 0B       		.uleb128 0xb
+ 1160 003a 0B       		.uleb128 0xb
+ 1161 003b 49       		.uleb128 0x49
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 29
+
+
+ 1162 003c 13       		.uleb128 0x13
+ 1163 003d 00       		.byte	0
+ 1164 003e 00       		.byte	0
+ 1165 003f 06       		.uleb128 0x6
+ 1166 0040 15       		.uleb128 0x15
+ 1167 0041 00       		.byte	0
+ 1168 0042 27       		.uleb128 0x27
+ 1169 0043 19       		.uleb128 0x19
+ 1170 0044 00       		.byte	0
+ 1171 0045 00       		.byte	0
+ 1172 0046 07       		.uleb128 0x7
+ 1173 0047 16       		.uleb128 0x16
+ 1174 0048 00       		.byte	0
+ 1175 0049 03       		.uleb128 0x3
+ 1176 004a 0E       		.uleb128 0xe
+ 1177 004b 3A       		.uleb128 0x3a
+ 1178 004c 0B       		.uleb128 0xb
+ 1179 004d 3B       		.uleb128 0x3b
+ 1180 004e 05       		.uleb128 0x5
+ 1181 004f 49       		.uleb128 0x49
+ 1182 0050 13       		.uleb128 0x13
+ 1183 0051 00       		.byte	0
+ 1184 0052 00       		.byte	0
+ 1185 0053 08       		.uleb128 0x8
+ 1186 0054 35       		.uleb128 0x35
+ 1187 0055 00       		.byte	0
+ 1188 0056 49       		.uleb128 0x49
+ 1189 0057 13       		.uleb128 0x13
+ 1190 0058 00       		.byte	0
+ 1191 0059 00       		.byte	0
+ 1192 005a 09       		.uleb128 0x9
+ 1193 005b 13       		.uleb128 0x13
+ 1194 005c 01       		.byte	0x1
+ 1195 005d 0B       		.uleb128 0xb
+ 1196 005e 0B       		.uleb128 0xb
+ 1197 005f 3A       		.uleb128 0x3a
+ 1198 0060 0B       		.uleb128 0xb
+ 1199 0061 3B       		.uleb128 0x3b
+ 1200 0062 0B       		.uleb128 0xb
+ 1201 0063 01       		.uleb128 0x1
+ 1202 0064 13       		.uleb128 0x13
+ 1203 0065 00       		.byte	0
+ 1204 0066 00       		.byte	0
+ 1205 0067 0A       		.uleb128 0xa
+ 1206 0068 0D       		.uleb128 0xd
+ 1207 0069 00       		.byte	0
+ 1208 006a 03       		.uleb128 0x3
+ 1209 006b 0E       		.uleb128 0xe
+ 1210 006c 3A       		.uleb128 0x3a
+ 1211 006d 0B       		.uleb128 0xb
+ 1212 006e 3B       		.uleb128 0x3b
+ 1213 006f 0B       		.uleb128 0xb
+ 1214 0070 49       		.uleb128 0x49
+ 1215 0071 13       		.uleb128 0x13
+ 1216 0072 38       		.uleb128 0x38
+ 1217 0073 0B       		.uleb128 0xb
+ 1218 0074 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 30
+
+
+ 1219 0075 00       		.byte	0
+ 1220 0076 0B       		.uleb128 0xb
+ 1221 0077 2E       		.uleb128 0x2e
+ 1222 0078 00       		.byte	0
+ 1223 0079 3F       		.uleb128 0x3f
+ 1224 007a 19       		.uleb128 0x19
+ 1225 007b 03       		.uleb128 0x3
+ 1226 007c 0E       		.uleb128 0xe
+ 1227 007d 3A       		.uleb128 0x3a
+ 1228 007e 0B       		.uleb128 0xb
+ 1229 007f 3B       		.uleb128 0x3b
+ 1230 0080 0B       		.uleb128 0xb
+ 1231 0081 27       		.uleb128 0x27
+ 1232 0082 19       		.uleb128 0x19
+ 1233 0083 11       		.uleb128 0x11
+ 1234 0084 01       		.uleb128 0x1
+ 1235 0085 12       		.uleb128 0x12
+ 1236 0086 06       		.uleb128 0x6
+ 1237 0087 40       		.uleb128 0x40
+ 1238 0088 18       		.uleb128 0x18
+ 1239 0089 9642     		.uleb128 0x2116
+ 1240 008b 19       		.uleb128 0x19
+ 1241 008c 00       		.byte	0
+ 1242 008d 00       		.byte	0
+ 1243 008e 0C       		.uleb128 0xc
+ 1244 008f 2E       		.uleb128 0x2e
+ 1245 0090 01       		.byte	0x1
+ 1246 0091 3F       		.uleb128 0x3f
+ 1247 0092 19       		.uleb128 0x19
+ 1248 0093 03       		.uleb128 0x3
+ 1249 0094 0E       		.uleb128 0xe
+ 1250 0095 3A       		.uleb128 0x3a
+ 1251 0096 0B       		.uleb128 0xb
+ 1252 0097 3B       		.uleb128 0x3b
+ 1253 0098 0B       		.uleb128 0xb
+ 1254 0099 27       		.uleb128 0x27
+ 1255 009a 19       		.uleb128 0x19
+ 1256 009b 11       		.uleb128 0x11
+ 1257 009c 01       		.uleb128 0x1
+ 1258 009d 12       		.uleb128 0x12
+ 1259 009e 06       		.uleb128 0x6
+ 1260 009f 40       		.uleb128 0x40
+ 1261 00a0 18       		.uleb128 0x18
+ 1262 00a1 9642     		.uleb128 0x2116
+ 1263 00a3 19       		.uleb128 0x19
+ 1264 00a4 01       		.uleb128 0x1
+ 1265 00a5 13       		.uleb128 0x13
+ 1266 00a6 00       		.byte	0
+ 1267 00a7 00       		.byte	0
+ 1268 00a8 0D       		.uleb128 0xd
+ 1269 00a9 05       		.uleb128 0x5
+ 1270 00aa 00       		.byte	0
+ 1271 00ab 03       		.uleb128 0x3
+ 1272 00ac 0E       		.uleb128 0xe
+ 1273 00ad 3A       		.uleb128 0x3a
+ 1274 00ae 0B       		.uleb128 0xb
+ 1275 00af 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 31
+
+
+ 1276 00b0 0B       		.uleb128 0xb
+ 1277 00b1 49       		.uleb128 0x49
+ 1278 00b2 13       		.uleb128 0x13
+ 1279 00b3 02       		.uleb128 0x2
+ 1280 00b4 18       		.uleb128 0x18
+ 1281 00b5 00       		.byte	0
+ 1282 00b6 00       		.byte	0
+ 1283 00b7 0E       		.uleb128 0xe
+ 1284 00b8 2E       		.uleb128 0x2e
+ 1285 00b9 01       		.byte	0x1
+ 1286 00ba 3F       		.uleb128 0x3f
+ 1287 00bb 19       		.uleb128 0x19
+ 1288 00bc 03       		.uleb128 0x3
+ 1289 00bd 0E       		.uleb128 0xe
+ 1290 00be 3A       		.uleb128 0x3a
+ 1291 00bf 0B       		.uleb128 0xb
+ 1292 00c0 3B       		.uleb128 0x3b
+ 1293 00c1 0B       		.uleb128 0xb
+ 1294 00c2 27       		.uleb128 0x27
+ 1295 00c3 19       		.uleb128 0x19
+ 1296 00c4 11       		.uleb128 0x11
+ 1297 00c5 01       		.uleb128 0x1
+ 1298 00c6 12       		.uleb128 0x12
+ 1299 00c7 06       		.uleb128 0x6
+ 1300 00c8 40       		.uleb128 0x40
+ 1301 00c9 18       		.uleb128 0x18
+ 1302 00ca 9742     		.uleb128 0x2117
+ 1303 00cc 19       		.uleb128 0x19
+ 1304 00cd 01       		.uleb128 0x1
+ 1305 00ce 13       		.uleb128 0x13
+ 1306 00cf 00       		.byte	0
+ 1307 00d0 00       		.byte	0
+ 1308 00d1 0F       		.uleb128 0xf
+ 1309 00d2 34       		.uleb128 0x34
+ 1310 00d3 00       		.byte	0
+ 1311 00d4 03       		.uleb128 0x3
+ 1312 00d5 0E       		.uleb128 0xe
+ 1313 00d6 3A       		.uleb128 0x3a
+ 1314 00d7 0B       		.uleb128 0xb
+ 1315 00d8 3B       		.uleb128 0x3b
+ 1316 00d9 0B       		.uleb128 0xb
+ 1317 00da 49       		.uleb128 0x49
+ 1318 00db 13       		.uleb128 0x13
+ 1319 00dc 02       		.uleb128 0x2
+ 1320 00dd 18       		.uleb128 0x18
+ 1321 00de 00       		.byte	0
+ 1322 00df 00       		.byte	0
+ 1323 00e0 10       		.uleb128 0x10
+ 1324 00e1 2E       		.uleb128 0x2e
+ 1325 00e2 01       		.byte	0x1
+ 1326 00e3 3F       		.uleb128 0x3f
+ 1327 00e4 19       		.uleb128 0x19
+ 1328 00e5 03       		.uleb128 0x3
+ 1329 00e6 0E       		.uleb128 0xe
+ 1330 00e7 3A       		.uleb128 0x3a
+ 1331 00e8 0B       		.uleb128 0xb
+ 1332 00e9 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 32
+
+
+ 1333 00ea 0B       		.uleb128 0xb
+ 1334 00eb 27       		.uleb128 0x27
+ 1335 00ec 19       		.uleb128 0x19
+ 1336 00ed 49       		.uleb128 0x49
+ 1337 00ee 13       		.uleb128 0x13
+ 1338 00ef 11       		.uleb128 0x11
+ 1339 00f0 01       		.uleb128 0x1
+ 1340 00f1 12       		.uleb128 0x12
+ 1341 00f2 06       		.uleb128 0x6
+ 1342 00f3 40       		.uleb128 0x40
+ 1343 00f4 18       		.uleb128 0x18
+ 1344 00f5 9742     		.uleb128 0x2117
+ 1345 00f7 19       		.uleb128 0x19
+ 1346 00f8 01       		.uleb128 0x1
+ 1347 00f9 13       		.uleb128 0x13
+ 1348 00fa 00       		.byte	0
+ 1349 00fb 00       		.byte	0
+ 1350 00fc 11       		.uleb128 0x11
+ 1351 00fd 34       		.uleb128 0x34
+ 1352 00fe 00       		.byte	0
+ 1353 00ff 03       		.uleb128 0x3
+ 1354 0100 0E       		.uleb128 0xe
+ 1355 0101 3A       		.uleb128 0x3a
+ 1356 0102 0B       		.uleb128 0xb
+ 1357 0103 3B       		.uleb128 0x3b
+ 1358 0104 05       		.uleb128 0x5
+ 1359 0105 49       		.uleb128 0x49
+ 1360 0106 13       		.uleb128 0x13
+ 1361 0107 02       		.uleb128 0x2
+ 1362 0108 18       		.uleb128 0x18
+ 1363 0109 00       		.byte	0
+ 1364 010a 00       		.byte	0
+ 1365 010b 12       		.uleb128 0x12
+ 1366 010c 2E       		.uleb128 0x2e
+ 1367 010d 01       		.byte	0x1
+ 1368 010e 3F       		.uleb128 0x3f
+ 1369 010f 19       		.uleb128 0x19
+ 1370 0110 03       		.uleb128 0x3
+ 1371 0111 0E       		.uleb128 0xe
+ 1372 0112 3A       		.uleb128 0x3a
+ 1373 0113 0B       		.uleb128 0xb
+ 1374 0114 3B       		.uleb128 0x3b
+ 1375 0115 05       		.uleb128 0x5
+ 1376 0116 27       		.uleb128 0x27
+ 1377 0117 19       		.uleb128 0x19
+ 1378 0118 11       		.uleb128 0x11
+ 1379 0119 01       		.uleb128 0x1
+ 1380 011a 12       		.uleb128 0x12
+ 1381 011b 06       		.uleb128 0x6
+ 1382 011c 40       		.uleb128 0x40
+ 1383 011d 18       		.uleb128 0x18
+ 1384 011e 9742     		.uleb128 0x2117
+ 1385 0120 19       		.uleb128 0x19
+ 1386 0121 01       		.uleb128 0x1
+ 1387 0122 13       		.uleb128 0x13
+ 1388 0123 00       		.byte	0
+ 1389 0124 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 33
+
+
+ 1390 0125 13       		.uleb128 0x13
+ 1391 0126 05       		.uleb128 0x5
+ 1392 0127 00       		.byte	0
+ 1393 0128 03       		.uleb128 0x3
+ 1394 0129 0E       		.uleb128 0xe
+ 1395 012a 3A       		.uleb128 0x3a
+ 1396 012b 0B       		.uleb128 0xb
+ 1397 012c 3B       		.uleb128 0x3b
+ 1398 012d 05       		.uleb128 0x5
+ 1399 012e 49       		.uleb128 0x49
+ 1400 012f 13       		.uleb128 0x13
+ 1401 0130 02       		.uleb128 0x2
+ 1402 0131 18       		.uleb128 0x18
+ 1403 0132 00       		.byte	0
+ 1404 0133 00       		.byte	0
+ 1405 0134 14       		.uleb128 0x14
+ 1406 0135 2E       		.uleb128 0x2e
+ 1407 0136 01       		.byte	0x1
+ 1408 0137 3F       		.uleb128 0x3f
+ 1409 0138 19       		.uleb128 0x19
+ 1410 0139 03       		.uleb128 0x3
+ 1411 013a 0E       		.uleb128 0xe
+ 1412 013b 3A       		.uleb128 0x3a
+ 1413 013c 0B       		.uleb128 0xb
+ 1414 013d 3B       		.uleb128 0x3b
+ 1415 013e 05       		.uleb128 0x5
+ 1416 013f 27       		.uleb128 0x27
+ 1417 0140 19       		.uleb128 0x19
+ 1418 0141 49       		.uleb128 0x49
+ 1419 0142 13       		.uleb128 0x13
+ 1420 0143 11       		.uleb128 0x11
+ 1421 0144 01       		.uleb128 0x1
+ 1422 0145 12       		.uleb128 0x12
+ 1423 0146 06       		.uleb128 0x6
+ 1424 0147 40       		.uleb128 0x40
+ 1425 0148 18       		.uleb128 0x18
+ 1426 0149 9742     		.uleb128 0x2117
+ 1427 014b 19       		.uleb128 0x19
+ 1428 014c 01       		.uleb128 0x1
+ 1429 014d 13       		.uleb128 0x13
+ 1430 014e 00       		.byte	0
+ 1431 014f 00       		.byte	0
+ 1432 0150 15       		.uleb128 0x15
+ 1433 0151 2E       		.uleb128 0x2e
+ 1434 0152 00       		.byte	0
+ 1435 0153 3F       		.uleb128 0x3f
+ 1436 0154 19       		.uleb128 0x19
+ 1437 0155 03       		.uleb128 0x3
+ 1438 0156 0E       		.uleb128 0xe
+ 1439 0157 3A       		.uleb128 0x3a
+ 1440 0158 0B       		.uleb128 0xb
+ 1441 0159 3B       		.uleb128 0x3b
+ 1442 015a 05       		.uleb128 0x5
+ 1443 015b 27       		.uleb128 0x27
+ 1444 015c 19       		.uleb128 0x19
+ 1445 015d 11       		.uleb128 0x11
+ 1446 015e 01       		.uleb128 0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 34
+
+
+ 1447 015f 12       		.uleb128 0x12
+ 1448 0160 06       		.uleb128 0x6
+ 1449 0161 40       		.uleb128 0x40
+ 1450 0162 18       		.uleb128 0x18
+ 1451 0163 9742     		.uleb128 0x2117
+ 1452 0165 19       		.uleb128 0x19
+ 1453 0166 00       		.byte	0
+ 1454 0167 00       		.byte	0
+ 1455 0168 16       		.uleb128 0x16
+ 1456 0169 2E       		.uleb128 0x2e
+ 1457 016a 00       		.byte	0
+ 1458 016b 3F       		.uleb128 0x3f
+ 1459 016c 19       		.uleb128 0x19
+ 1460 016d 03       		.uleb128 0x3
+ 1461 016e 0E       		.uleb128 0xe
+ 1462 016f 3A       		.uleb128 0x3a
+ 1463 0170 0B       		.uleb128 0xb
+ 1464 0171 3B       		.uleb128 0x3b
+ 1465 0172 05       		.uleb128 0x5
+ 1466 0173 27       		.uleb128 0x27
+ 1467 0174 19       		.uleb128 0x19
+ 1468 0175 49       		.uleb128 0x49
+ 1469 0176 13       		.uleb128 0x13
+ 1470 0177 11       		.uleb128 0x11
+ 1471 0178 01       		.uleb128 0x1
+ 1472 0179 12       		.uleb128 0x12
+ 1473 017a 06       		.uleb128 0x6
+ 1474 017b 40       		.uleb128 0x40
+ 1475 017c 18       		.uleb128 0x18
+ 1476 017d 9742     		.uleb128 0x2117
+ 1477 017f 19       		.uleb128 0x19
+ 1478 0180 00       		.byte	0
+ 1479 0181 00       		.byte	0
+ 1480 0182 17       		.uleb128 0x17
+ 1481 0183 34       		.uleb128 0x34
+ 1482 0184 00       		.byte	0
+ 1483 0185 03       		.uleb128 0x3
+ 1484 0186 0E       		.uleb128 0xe
+ 1485 0187 3A       		.uleb128 0x3a
+ 1486 0188 0B       		.uleb128 0xb
+ 1487 0189 3B       		.uleb128 0x3b
+ 1488 018a 05       		.uleb128 0x5
+ 1489 018b 49       		.uleb128 0x49
+ 1490 018c 13       		.uleb128 0x13
+ 1491 018d 3F       		.uleb128 0x3f
+ 1492 018e 19       		.uleb128 0x19
+ 1493 018f 3C       		.uleb128 0x3c
+ 1494 0190 19       		.uleb128 0x19
+ 1495 0191 00       		.byte	0
+ 1496 0192 00       		.byte	0
+ 1497 0193 18       		.uleb128 0x18
+ 1498 0194 34       		.uleb128 0x34
+ 1499 0195 00       		.byte	0
+ 1500 0196 03       		.uleb128 0x3
+ 1501 0197 08       		.uleb128 0x8
+ 1502 0198 3A       		.uleb128 0x3a
+ 1503 0199 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 35
+
+
+ 1504 019a 3B       		.uleb128 0x3b
+ 1505 019b 0B       		.uleb128 0xb
+ 1506 019c 49       		.uleb128 0x49
+ 1507 019d 13       		.uleb128 0x13
+ 1508 019e 3F       		.uleb128 0x3f
+ 1509 019f 19       		.uleb128 0x19
+ 1510 01a0 02       		.uleb128 0x2
+ 1511 01a1 18       		.uleb128 0x18
+ 1512 01a2 00       		.byte	0
+ 1513 01a3 00       		.byte	0
+ 1514 01a4 19       		.uleb128 0x19
+ 1515 01a5 34       		.uleb128 0x34
+ 1516 01a6 00       		.byte	0
+ 1517 01a7 03       		.uleb128 0x3
+ 1518 01a8 0E       		.uleb128 0xe
+ 1519 01a9 3A       		.uleb128 0x3a
+ 1520 01aa 0B       		.uleb128 0xb
+ 1521 01ab 3B       		.uleb128 0x3b
+ 1522 01ac 0B       		.uleb128 0xb
+ 1523 01ad 49       		.uleb128 0x49
+ 1524 01ae 13       		.uleb128 0x13
+ 1525 01af 3F       		.uleb128 0x3f
+ 1526 01b0 19       		.uleb128 0x19
+ 1527 01b1 3C       		.uleb128 0x3c
+ 1528 01b2 19       		.uleb128 0x19
+ 1529 01b3 00       		.byte	0
+ 1530 01b4 00       		.byte	0
+ 1531 01b5 1A       		.uleb128 0x1a
+ 1532 01b6 34       		.uleb128 0x34
+ 1533 01b7 00       		.byte	0
+ 1534 01b8 03       		.uleb128 0x3
+ 1535 01b9 0E       		.uleb128 0xe
+ 1536 01ba 3A       		.uleb128 0x3a
+ 1537 01bb 0B       		.uleb128 0xb
+ 1538 01bc 3B       		.uleb128 0x3b
+ 1539 01bd 0B       		.uleb128 0xb
+ 1540 01be 49       		.uleb128 0x49
+ 1541 01bf 13       		.uleb128 0x13
+ 1542 01c0 3F       		.uleb128 0x3f
+ 1543 01c1 19       		.uleb128 0x19
+ 1544 01c2 02       		.uleb128 0x2
+ 1545 01c3 18       		.uleb128 0x18
+ 1546 01c4 00       		.byte	0
+ 1547 01c5 00       		.byte	0
+ 1548 01c6 00       		.byte	0
+ 1549              		.section	.debug_aranges,"",%progbits
+ 1550 0000 7C000000 		.4byte	0x7c
+ 1551 0004 0200     		.2byte	0x2
+ 1552 0006 00000000 		.4byte	.Ldebug_info0
+ 1553 000a 04       		.byte	0x4
+ 1554 000b 00       		.byte	0
+ 1555 000c 0000     		.2byte	0
+ 1556 000e 0000     		.2byte	0
+ 1557 0010 00000000 		.4byte	.LFB63
+ 1558 0014 20000000 		.4byte	.LFE63-.LFB63
+ 1559 0018 00000000 		.4byte	.LFB64
+ 1560 001c 24000000 		.4byte	.LFE64-.LFB64
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 36
+
+
+ 1561 0020 00000000 		.4byte	.LFB65
+ 1562 0024 18000000 		.4byte	.LFE65-.LFB65
+ 1563 0028 00000000 		.4byte	.LFB66
+ 1564 002c 6C000000 		.4byte	.LFE66-.LFB66
+ 1565 0030 00000000 		.4byte	.LFB67
+ 1566 0034 24000000 		.4byte	.LFE67-.LFB67
+ 1567 0038 00000000 		.4byte	.LFB68
+ 1568 003c 20000000 		.4byte	.LFE68-.LFB68
+ 1569 0040 00000000 		.4byte	.LFB69
+ 1570 0044 24000000 		.4byte	.LFE69-.LFB69
+ 1571 0048 00000000 		.4byte	.LFB70
+ 1572 004c 20000000 		.4byte	.LFE70-.LFB70
+ 1573 0050 00000000 		.4byte	.LFB71
+ 1574 0054 18000000 		.4byte	.LFE71-.LFB71
+ 1575 0058 00000000 		.4byte	.LFB72
+ 1576 005c 24000000 		.4byte	.LFE72-.LFB72
+ 1577 0060 00000000 		.4byte	.LFB73
+ 1578 0064 18000000 		.4byte	.LFE73-.LFB73
+ 1579 0068 00000000 		.4byte	.LFB74
+ 1580 006c 18000000 		.4byte	.LFE74-.LFB74
+ 1581 0070 00000000 		.4byte	.LFB75
+ 1582 0074 18000000 		.4byte	.LFE75-.LFB75
+ 1583 0078 00000000 		.4byte	0
+ 1584 007c 00000000 		.4byte	0
+ 1585              		.section	.debug_ranges,"",%progbits
+ 1586              	.Ldebug_ranges0:
+ 1587 0000 00000000 		.4byte	.LFB63
+ 1588 0004 20000000 		.4byte	.LFE63
+ 1589 0008 00000000 		.4byte	.LFB64
+ 1590 000c 24000000 		.4byte	.LFE64
+ 1591 0010 00000000 		.4byte	.LFB65
+ 1592 0014 18000000 		.4byte	.LFE65
+ 1593 0018 00000000 		.4byte	.LFB66
+ 1594 001c 6C000000 		.4byte	.LFE66
+ 1595 0020 00000000 		.4byte	.LFB67
+ 1596 0024 24000000 		.4byte	.LFE67
+ 1597 0028 00000000 		.4byte	.LFB68
+ 1598 002c 20000000 		.4byte	.LFE68
+ 1599 0030 00000000 		.4byte	.LFB69
+ 1600 0034 24000000 		.4byte	.LFE69
+ 1601 0038 00000000 		.4byte	.LFB70
+ 1602 003c 20000000 		.4byte	.LFE70
+ 1603 0040 00000000 		.4byte	.LFB71
+ 1604 0044 18000000 		.4byte	.LFE71
+ 1605 0048 00000000 		.4byte	.LFB72
+ 1606 004c 24000000 		.4byte	.LFE72
+ 1607 0050 00000000 		.4byte	.LFB73
+ 1608 0054 18000000 		.4byte	.LFE73
+ 1609 0058 00000000 		.4byte	.LFB74
+ 1610 005c 18000000 		.4byte	.LFE74
+ 1611 0060 00000000 		.4byte	.LFB75
+ 1612 0064 18000000 		.4byte	.LFE75
+ 1613 0068 00000000 		.4byte	0
+ 1614 006c 00000000 		.4byte	0
+ 1615              		.section	.debug_line,"",%progbits
+ 1616              	.Ldebug_line0:
+ 1617 0000 92020000 		.section	.debug_str,"MS",%progbits,1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 37
+
+
+ 1617      02007201 
+ 1617      00000201 
+ 1617      FB0E0D00 
+ 1617      01010101 
+ 1618              	.LASF65:
+ 1619 0000 6973725F 		.ascii	"isr_F2F_edge_GetState\000"
+ 1619      4632465F 
+ 1619      65646765 
+ 1619      5F476574 
+ 1619      53746174 
+ 1620              	.LASF42:
+ 1621 0016 7072696F 		.ascii	"priority\000"
+ 1621      72697479 
+ 1621      00
+ 1622              	.LASF5:
+ 1623 001f 73686F72 		.ascii	"short int\000"
+ 1623      7420696E 
+ 1623      7400
+ 1624              	.LASF10:
+ 1625 0029 73697A65 		.ascii	"sizetype\000"
+ 1625      74797065 
+ 1625      00
+ 1626              	.LASF31:
+ 1627 0032 74696D65 		.ascii	"timer_rx_ctr\000"
+ 1627      725F7278 
+ 1627      5F637472 
+ 1627      00
+ 1628              	.LASF62:
+ 1629 003f 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1629      43313120 
+ 1629      352E342E 
+ 1629      31203230 
+ 1629      31363036 
+ 1630 0072 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 1630      20726576 
+ 1630      6973696F 
+ 1630      6E203233 
+ 1630      37373135 
+ 1631 00a5 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 1631      66756E63 
+ 1631      74696F6E 
+ 1631      2D736563 
+ 1631      74696F6E 
+ 1632              	.LASF59:
+ 1633 00cd 6632665F 		.ascii	"f2f_timeout\000"
+ 1633      74696D65 
+ 1633      6F757400 
+ 1634              	.LASF33:
+ 1635 00d9 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 1635      5F554152 
+ 1635      545F5354 
+ 1635      52554354 
+ 1635      00
+ 1636              	.LASF61:
+ 1637 00ea 6632665F 		.ascii	"f2f_ack_delay_cnt\000"
+ 1637      61636B5F 
+ 1637      64656C61 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 38
+
+
+ 1637      795F636E 
+ 1637      7400
+ 1638              	.LASF45:
+ 1639 00fc 6973725F 		.ascii	"isr_F2F_edge_Enable\000"
+ 1639      4632465F 
+ 1639      65646765 
+ 1639      5F456E61 
+ 1639      626C6500 
+ 1640              	.LASF28:
+ 1641 0110 72785F62 		.ascii	"rx_bits\000"
+ 1641      69747300 
+ 1642              	.LASF41:
+ 1643 0118 6973725F 		.ascii	"isr_F2F_edge_SetPriority\000"
+ 1643      4632465F 
+ 1643      65646765 
+ 1643      5F536574 
+ 1643      5072696F 
+ 1644              	.LASF51:
+ 1645 0131 63757272 		.ascii	"currentAccessType\000"
+ 1645      656E7441 
+ 1645      63636573 
+ 1645      73547970 
+ 1645      6500
+ 1646              	.LASF26:
+ 1647 0143 74785F62 		.ascii	"tx_byte\000"
+ 1647      79746500 
+ 1648              	.LASF37:
+ 1649 014b 6973725F 		.ascii	"isr_F2F_edge_StartEx\000"
+ 1649      4632465F 
+ 1649      65646765 
+ 1649      5F537461 
+ 1649      72744578 
+ 1650              	.LASF43:
+ 1651 0160 6973725F 		.ascii	"isr_F2F_edge_GetVector\000"
+ 1651      4632465F 
+ 1651      65646765 
+ 1651      5F476574 
+ 1651      56656374 
+ 1652              	.LASF53:
+ 1653 0177 74705F6F 		.ascii	"tp_old\000"
+ 1653      6C6400
+ 1654              	.LASF16:
+ 1655 017e 666C6F61 		.ascii	"float\000"
+ 1655      7400
+ 1656              	.LASF57:
+ 1657 0184 63617264 		.ascii	"card_in_buf\000"
+ 1657      5F696E5F 
+ 1657      62756600 
+ 1658              	.LASF1:
+ 1659 0190 6C6F6E67 		.ascii	"long long int\000"
+ 1659      206C6F6E 
+ 1659      6720696E 
+ 1659      7400
+ 1660              	.LASF24:
+ 1661 019e 62697473 		.ascii	"bits\000"
+ 1661      00
+ 1662              	.LASF52:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 39
+
+
+ 1663 01a3 68775F6F 		.ascii	"hw_old\000"
+ 1663      6C6400
+ 1664              	.LASF63:
+ 1665 01aa 47656E65 		.ascii	"Generated_Source\\PSoC5\\isr_F2F_edge.c\000"
+ 1665      72617465 
+ 1665      645F536F 
+ 1665      75726365 
+ 1665      5C50536F 
+ 1666              	.LASF56:
+ 1667 01d0 63617264 		.ascii	"card_ack\000"
+ 1667      5F61636B 
+ 1667      00
+ 1668              	.LASF7:
+ 1669 01d9 6C6F6E67 		.ascii	"long int\000"
+ 1669      20696E74 
+ 1669      00
+ 1670              	.LASF39:
+ 1671 01e2 61646472 		.ascii	"address\000"
+ 1671      65737300 
+ 1672              	.LASF40:
+ 1673 01ea 72616D56 		.ascii	"ramVectorTable\000"
+ 1673      6563746F 
+ 1673      72546162 
+ 1673      6C6500
+ 1674              	.LASF22:
+ 1675 01f9 70617269 		.ascii	"parity\000"
+ 1675      747900
+ 1676              	.LASF64:
+ 1677 0200 443A5C65 		.ascii	"D:\\ext\\psoc_dual\\nanoNxt_ICM3\\ext_pim.cydsn\000"
+ 1677      78745C70 
+ 1677      736F635F 
+ 1677      6475616C 
+ 1677      5C6E616E 
+ 1678              	.LASF36:
+ 1679 022c 6973725F 		.ascii	"isr_F2F_edge_Interrupt\000"
+ 1679      4632465F 
+ 1679      65646765 
+ 1679      5F496E74 
+ 1679      65727275 
+ 1680              	.LASF4:
+ 1681 0243 756E7369 		.ascii	"unsigned char\000"
+ 1681      676E6564 
+ 1681      20636861 
+ 1681      7200
+ 1682              	.LASF47:
+ 1683 0251 6973725F 		.ascii	"isr_F2F_edge_SetPending\000"
+ 1683      4632465F 
+ 1683      65646765 
+ 1683      5F536574 
+ 1683      50656E64 
+ 1684              	.LASF2:
+ 1685 0269 6C6F6E67 		.ascii	"long double\000"
+ 1685      20646F75 
+ 1685      626C6500 
+ 1686              	.LASF21:
+ 1687 0275 62617564 		.ascii	"baud\000"
+ 1687      00
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 40
+
+
+ 1688              	.LASF44:
+ 1689 027a 6973725F 		.ascii	"isr_F2F_edge_GetPriority\000"
+ 1689      4632465F 
+ 1689      65646765 
+ 1689      5F476574 
+ 1689      5072696F 
+ 1690              	.LASF20:
+ 1691 0293 63796973 		.ascii	"cyisraddress\000"
+ 1691      72616464 
+ 1691      72657373 
+ 1691      00
+ 1692              	.LASF34:
+ 1693 02a0 6973725F 		.ascii	"isr_F2F_edge_Start\000"
+ 1693      4632465F 
+ 1693      65646765 
+ 1693      5F537461 
+ 1693      727400
+ 1694              	.LASF3:
+ 1695 02b3 7369676E 		.ascii	"signed char\000"
+ 1695      65642063 
+ 1695      68617200 
+ 1696              	.LASF29:
+ 1697 02bf 666C6167 		.ascii	"flags\000"
+ 1697      7300
+ 1698              	.LASF9:
+ 1699 02c5 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1699      206C6F6E 
+ 1699      6720756E 
+ 1699      7369676E 
+ 1699      65642069 
+ 1700              	.LASF0:
+ 1701 02dc 756E7369 		.ascii	"unsigned int\000"
+ 1701      676E6564 
+ 1701      20696E74 
+ 1701      00
+ 1702              	.LASF23:
+ 1703 02e9 73746F70 		.ascii	"stop_bits\000"
+ 1703      5F626974 
+ 1703      7300
+ 1704              	.LASF54:
+ 1705 02f3 74616D70 		.ascii	"tamperCR_polarity\000"
+ 1705      65724352 
+ 1705      5F706F6C 
+ 1705      61726974 
+ 1705      7900
+ 1706              	.LASF19:
+ 1707 0305 72656733 		.ascii	"reg32\000"
+ 1707      3200
+ 1708              	.LASF48:
+ 1709 030b 6973725F 		.ascii	"isr_F2F_edge_ClearPending\000"
+ 1709      4632465F 
+ 1709      65646765 
+ 1709      5F436C65 
+ 1709      61725065 
+ 1710              	.LASF32:
+ 1711 0325 72785F72 		.ascii	"rx_recv\000"
+ 1711      65637600 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 41
+
+
+ 1712              	.LASF27:
+ 1713 032d 74785F62 		.ascii	"tx_bits\000"
+ 1713      69747300 
+ 1714              	.LASF11:
+ 1715 0335 63686172 		.ascii	"char\000"
+ 1715      00
+ 1716              	.LASF13:
+ 1717 033a 696E7433 		.ascii	"int32_t\000"
+ 1717      325F7400 
+ 1718              	.LASF58:
+ 1719 0342 6632665F 		.ascii	"f2f_pulsewidth\000"
+ 1719      70756C73 
+ 1719      65776964 
+ 1719      746800
+ 1720              	.LASF6:
+ 1721 0351 73686F72 		.ascii	"short unsigned int\000"
+ 1721      7420756E 
+ 1721      7369676E 
+ 1721      65642069 
+ 1721      6E7400
+ 1722              	.LASF14:
+ 1723 0364 75696E74 		.ascii	"uint8\000"
+ 1723      3800
+ 1724              	.LASF38:
+ 1725 036a 6973725F 		.ascii	"isr_F2F_edge_SetVector\000"
+ 1725      4632465F 
+ 1725      65646765 
+ 1725      5F536574 
+ 1725      56656374 
+ 1726              	.LASF25:
+ 1727 0381 72785F62 		.ascii	"rx_byte\000"
+ 1727      79746500 
+ 1728              	.LASF46:
+ 1729 0389 6973725F 		.ascii	"isr_F2F_edge_Disable\000"
+ 1729      4632465F 
+ 1729      65646765 
+ 1729      5F446973 
+ 1729      61626C65 
+ 1730              	.LASF15:
+ 1731 039e 75696E74 		.ascii	"uint32\000"
+ 1731      333200
+ 1732              	.LASF18:
+ 1733 03a5 72656738 		.ascii	"reg8\000"
+ 1733      00
+ 1734              	.LASF8:
+ 1735 03aa 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1735      20756E73 
+ 1735      69676E65 
+ 1735      6420696E 
+ 1735      7400
+ 1736              	.LASF17:
+ 1737 03bc 646F7562 		.ascii	"double\000"
+ 1737      6C6500
+ 1738              	.LASF12:
+ 1739 03c3 5F5F696E 		.ascii	"__int32_t\000"
+ 1739      7433325F 
+ 1739      7400
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc0PQonT.s 			page 42
+
+
+ 1740              	.LASF35:
+ 1741 03cd 6973725F 		.ascii	"isr_F2F_edge_Stop\000"
+ 1741      4632465F 
+ 1741      65646765 
+ 1741      5F53746F 
+ 1741      7000
+ 1742              	.LASF60:
+ 1743 03df 6632665F 		.ascii	"f2f_acknowledge_active\000"
+ 1743      61636B6E 
+ 1743      6F776C65 
+ 1743      6467655F 
+ 1743      61637469 
+ 1744              	.LASF50:
+ 1745 03f6 72756E5F 		.ascii	"run_mode\000"
+ 1745      6D6F6465 
+ 1745      00
+ 1746              	.LASF49:
+ 1747 03ff 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 1747      52784275 
+ 1747      66666572 
+ 1747      00
+ 1748              	.LASF30:
+ 1749 040c 74696D65 		.ascii	"timer_tx_ctr\000"
+ 1749      725F7478 
+ 1749      5F637472 
+ 1749      00
+ 1750              	.LASF55:
+ 1751 0419 74616D70 		.ascii	"tamper_out_polarity\000"
+ 1751      65725F6F 
+ 1751      75745F70 
+ 1751      6F6C6172 
+ 1751      69747900 
+ 1752              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

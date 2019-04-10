@@ -1,0 +1,4563 @@
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"vl53l0x_platform.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.VL53L0X_LockSequenceAccess,"ax",%progbits
+  20              		.align	2
+  21              		.global	VL53L0X_LockSequenceAccess
+  22              		.code	16
+  23              		.thumb_func
+  24              		.type	VL53L0X_LockSequenceAccess, %function
+  25              	VL53L0X_LockSequenceAccess:
+  26              	.LFB35:
+  27              		.file 1 "Api\\platform\\src\\vl53l0x_platform.c"
+   1:Api\platform\src/vl53l0x_platform.c **** /*******************************************************************************
+   2:Api\platform\src/vl53l0x_platform.c **** Copyright © 2015, STMicroelectronics International N.V.
+   3:Api\platform\src/vl53l0x_platform.c **** All rights reserved.
+   4:Api\platform\src/vl53l0x_platform.c **** 
+   5:Api\platform\src/vl53l0x_platform.c **** Redistribution and use in source and binary forms, with or without
+   6:Api\platform\src/vl53l0x_platform.c **** modification, are permitted provided that the following conditions are met:
+   7:Api\platform\src/vl53l0x_platform.c ****     * Redistributions of source code must retain the above copyright
+   8:Api\platform\src/vl53l0x_platform.c ****       notice, this list of conditions and the following disclaimer.
+   9:Api\platform\src/vl53l0x_platform.c ****     * Redistributions in binary form must reproduce the above copyright
+  10:Api\platform\src/vl53l0x_platform.c ****       notice, this list of conditions and the following disclaimer in the
+  11:Api\platform\src/vl53l0x_platform.c ****       documentation and/or other materials provided with the distribution.
+  12:Api\platform\src/vl53l0x_platform.c ****     * Neither the name of STMicroelectronics nor the
+  13:Api\platform\src/vl53l0x_platform.c ****       names of its contributors may be used to endorse or promote products
+  14:Api\platform\src/vl53l0x_platform.c ****       derived from this software without specific prior written permission.
+  15:Api\platform\src/vl53l0x_platform.c **** 
+  16:Api\platform\src/vl53l0x_platform.c **** THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+  17:Api\platform\src/vl53l0x_platform.c **** ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+  18:Api\platform\src/vl53l0x_platform.c **** WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+  19:Api\platform\src/vl53l0x_platform.c **** NON-INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS ARE DISCLAIMED.
+  20:Api\platform\src/vl53l0x_platform.c **** IN NO EVENT SHALL STMICROELECTRONICS INTERNATIONAL N.V. BE LIABLE FOR ANY
+  21:Api\platform\src/vl53l0x_platform.c **** DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+  22:Api\platform\src/vl53l0x_platform.c **** (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  23:Api\platform\src/vl53l0x_platform.c **** LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+  24:Api\platform\src/vl53l0x_platform.c **** ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  25:Api\platform\src/vl53l0x_platform.c **** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+  26:Api\platform\src/vl53l0x_platform.c **** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  27:Api\platform\src/vl53l0x_platform.c **** ********************************************************************************/
+  28:Api\platform\src/vl53l0x_platform.c **** 
+  29:Api\platform\src/vl53l0x_platform.c **** /**
+  30:Api\platform\src/vl53l0x_platform.c ****  * @file VL53L0X_i2c.c
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 2
+
+
+  31:Api\platform\src/vl53l0x_platform.c ****  *
+  32:Api\platform\src/vl53l0x_platform.c ****  * Copyright (C) 2014 ST MicroElectronics
+  33:Api\platform\src/vl53l0x_platform.c ****  *
+  34:Api\platform\src/vl53l0x_platform.c ****  * provide variable word size byte/Word/dword VL6180x register access via i2c
+  35:Api\platform\src/vl53l0x_platform.c ****  *
+  36:Api\platform\src/vl53l0x_platform.c ****  */
+  37:Api\platform\src/vl53l0x_platform.c **** #include "vl53l0x_platform.h"
+  38:Api\platform\src/vl53l0x_platform.c **** #include "vl53l0x_i2c_platform.h"
+  39:Api\platform\src/vl53l0x_platform.c **** #include "vl53l0x_api.h"
+  40:Api\platform\src/vl53l0x_platform.c **** #include <project.h>
+  41:Api\platform\src/vl53l0x_platform.c **** //#include <Windows.h>
+  42:Api\platform\src/vl53l0x_platform.c **** 
+  43:Api\platform\src/vl53l0x_platform.c **** #define LOG_FUNCTION_START(fmt, ... )           _LOG_FUNCTION_START(TRACE_MODULE_PLATFORM, fmt, ##_
+  44:Api\platform\src/vl53l0x_platform.c **** #define LOG_FUNCTION_END(status, ... )          _LOG_FUNCTION_END(TRACE_MODULE_PLATFORM, status, ##
+  45:Api\platform\src/vl53l0x_platform.c **** #define LOG_FUNCTION_END_FMT(status, fmt, ... ) _LOG_FUNCTION_END_FMT(TRACE_MODULE_PLATFORM, status
+  46:Api\platform\src/vl53l0x_platform.c **** 
+  47:Api\platform\src/vl53l0x_platform.c **** /**
+  48:Api\platform\src/vl53l0x_platform.c ****  * @def I2C_BUFFER_CONFIG
+  49:Api\platform\src/vl53l0x_platform.c ****  *
+  50:Api\platform\src/vl53l0x_platform.c ****  * @brief Configure Device register I2C access
+  51:Api\platform\src/vl53l0x_platform.c ****  *
+  52:Api\platform\src/vl53l0x_platform.c ****  * @li 0 : one GLOBAL buffer \n
+  53:Api\platform\src/vl53l0x_platform.c ****  *   Use one global buffer of MAX_I2C_XFER_SIZE byte in data space \n
+  54:Api\platform\src/vl53l0x_platform.c ****  *   This solution is not multi-Device compliant nor multi-thread cpu safe \n
+  55:Api\platform\src/vl53l0x_platform.c ****  *   It can be the best option for small 8/16 bit MCU without stack and limited ram  (STM8s, 80C51 
+  56:Api\platform\src/vl53l0x_platform.c ****  *
+  57:Api\platform\src/vl53l0x_platform.c ****  * @li 1 : ON_STACK/local \n
+  58:Api\platform\src/vl53l0x_platform.c ****  *   Use local variable (on stack) buffer \n
+  59:Api\platform\src/vl53l0x_platform.c ****  *   This solution is multi-thread with use of i2c resource lock or mutex see VL6180x_GetI2CAccess(
+  60:Api\platform\src/vl53l0x_platform.c ****  *
+  61:Api\platform\src/vl53l0x_platform.c ****  * @li 2 : User defined \n
+  62:Api\platform\src/vl53l0x_platform.c ****  *    Per Device potentially dynamic allocated. Requires VL6180x_GetI2cBuffer() to be implemented.
+  63:Api\platform\src/vl53l0x_platform.c ****  * @ingroup Configuration
+  64:Api\platform\src/vl53l0x_platform.c ****  */
+  65:Api\platform\src/vl53l0x_platform.c **** #define I2C_BUFFER_CONFIG 0
+  66:Api\platform\src/vl53l0x_platform.c **** /** Maximum buffer size to be used in i2c */
+  67:Api\platform\src/vl53l0x_platform.c **** #define VL53L0X_MAX_I2C_XFER_SIZE   64 /* Maximum buffer size to be used in i2c */
+  68:Api\platform\src/vl53l0x_platform.c **** 
+  69:Api\platform\src/vl53l0x_platform.c **** #if I2C_BUFFER_CONFIG == 0
+  70:Api\platform\src/vl53l0x_platform.c ****     /* GLOBAL config buffer */
+  71:Api\platform\src/vl53l0x_platform.c ****     uint8_t i2c_global_buffer[VL53L0X_MAX_I2C_XFER_SIZE];
+  72:Api\platform\src/vl53l0x_platform.c **** 
+  73:Api\platform\src/vl53l0x_platform.c ****     #define DECL_I2C_BUFFER
+  74:Api\platform\src/vl53l0x_platform.c ****     #define VL53L0X_GetLocalBuffer(Dev, n_byte)  i2c_global_buffer
+  75:Api\platform\src/vl53l0x_platform.c **** 
+  76:Api\platform\src/vl53l0x_platform.c **** #elif I2C_BUFFER_CONFIG == 1
+  77:Api\platform\src/vl53l0x_platform.c ****     /* ON STACK */
+  78:Api\platform\src/vl53l0x_platform.c ****     #define DECL_I2C_BUFFER  uint8_t LocBuffer[VL53L0X_MAX_I2C_XFER_SIZE];
+  79:Api\platform\src/vl53l0x_platform.c ****     #define VL53L0X_GetLocalBuffer(Dev, n_byte)  LocBuffer
+  80:Api\platform\src/vl53l0x_platform.c **** #elif I2C_BUFFER_CONFIG == 2
+  81:Api\platform\src/vl53l0x_platform.c ****     /* user define buffer type declare DECL_I2C_BUFFER  as access  via VL53L0X_GetLocalBuffer */
+  82:Api\platform\src/vl53l0x_platform.c ****     #define DECL_I2C_BUFFER
+  83:Api\platform\src/vl53l0x_platform.c **** #else
+  84:Api\platform\src/vl53l0x_platform.c **** #error "invalid I2C_BUFFER_CONFIG "
+  85:Api\platform\src/vl53l0x_platform.c **** #endif
+  86:Api\platform\src/vl53l0x_platform.c **** 
+  87:Api\platform\src/vl53l0x_platform.c **** 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 3
+
+
+  88:Api\platform\src/vl53l0x_platform.c **** #define VL53L0X_I2C_USER_VAR         /* none but could be for a flag var to get/pass to mutex inter
+  89:Api\platform\src/vl53l0x_platform.c **** #define VL53L0X_GetI2CAccess(Dev)    /* todo mutex acquire */
+  90:Api\platform\src/vl53l0x_platform.c **** #define VL53L0X_DoneI2CAcces(Dev)    /* todo mutex release */
+  91:Api\platform\src/vl53l0x_platform.c **** 
+  92:Api\platform\src/vl53l0x_platform.c **** 
+  93:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error VL53L0X_LockSequenceAccess(VL53L0X_DEV Dev){
+  28              		.loc 1 93 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+  33              	.LVL0:
+  94:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+  95:Api\platform\src/vl53l0x_platform.c **** 
+  96:Api\platform\src/vl53l0x_platform.c ****     return Status;
+  97:Api\platform\src/vl53l0x_platform.c **** }
+  34              		.loc 1 97 0
+  35 0000 0020     		movs	r0, #0
+  36              	.LVL1:
+  37              		@ sp needed
+  38 0002 7047     		bx	lr
+  39              		.cfi_endproc
+  40              	.LFE35:
+  41              		.size	VL53L0X_LockSequenceAccess, .-VL53L0X_LockSequenceAccess
+  42              		.section	.text.VL53L0X_UnlockSequenceAccess,"ax",%progbits
+  43              		.align	2
+  44              		.global	VL53L0X_UnlockSequenceAccess
+  45              		.code	16
+  46              		.thumb_func
+  47              		.type	VL53L0X_UnlockSequenceAccess, %function
+  48              	VL53L0X_UnlockSequenceAccess:
+  49              	.LFB36:
+  98:Api\platform\src/vl53l0x_platform.c **** 
+  99:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error VL53L0X_UnlockSequenceAccess(VL53L0X_DEV Dev){
+  50              		.loc 1 99 0
+  51              		.cfi_startproc
+  52              		@ args = 0, pretend = 0, frame = 0
+  53              		@ frame_needed = 0, uses_anonymous_args = 0
+  54              		@ link register save eliminated.
+  55              	.LVL2:
+ 100:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+ 101:Api\platform\src/vl53l0x_platform.c **** 
+ 102:Api\platform\src/vl53l0x_platform.c ****     return Status;
+ 103:Api\platform\src/vl53l0x_platform.c **** }
+  56              		.loc 1 103 0
+  57 0000 0020     		movs	r0, #0
+  58              	.LVL3:
+  59              		@ sp needed
+  60 0002 7047     		bx	lr
+  61              		.cfi_endproc
+  62              	.LFE36:
+  63              		.size	VL53L0X_UnlockSequenceAccess, .-VL53L0X_UnlockSequenceAccess
+  64              		.section	.text.VL53L0X_WriteMulti,"ax",%progbits
+  65              		.align	2
+  66              		.global	VL53L0X_WriteMulti
+  67              		.code	16
+  68              		.thumb_func
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 4
+
+
+  69              		.type	VL53L0X_WriteMulti, %function
+  70              	VL53L0X_WriteMulti:
+  71              	.LFB37:
+ 104:Api\platform\src/vl53l0x_platform.c **** 
+ 105:Api\platform\src/vl53l0x_platform.c **** // the ranging_sensor_comms.dll will take care of the page selection
+ 106:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error VL53L0X_WriteMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata, uint32_t count){
+  72              		.loc 1 106 0
+  73              		.cfi_startproc
+  74              		@ args = 0, pretend = 0, frame = 0
+  75              		@ frame_needed = 0, uses_anonymous_args = 0
+  76              	.LVL4:
+  77 0000 70B5     		push	{r4, r5, r6, lr}
+  78              		.cfi_def_cfa_offset 16
+  79              		.cfi_offset 4, -16
+  80              		.cfi_offset 5, -12
+  81              		.cfi_offset 6, -8
+  82              		.cfi_offset 14, -4
+  83              	.LVL5:
+ 107:Api\platform\src/vl53l0x_platform.c **** 
+ 108:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+ 109:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int = 0;
+ 110:Api\platform\src/vl53l0x_platform.c **** 	uint8_t deviceAddress;
+ 111:Api\platform\src/vl53l0x_platform.c **** 
+ 112:Api\platform\src/vl53l0x_platform.c ****     if (count>=VL53L0X_MAX_I2C_XFER_SIZE){
+  84              		.loc 1 112 0
+  85 0002 3F2B     		cmp	r3, #63
+  86 0004 01D8     		bhi	.L6
+ 108:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int = 0;
+  87              		.loc 1 108 0
+  88 0006 0024     		movs	r4, #0
+  89 0008 01E0     		b	.L4
+  90              	.L6:
+ 113:Api\platform\src/vl53l0x_platform.c ****         Status = VL53L0X_ERROR_INVALID_PARAMS;
+  91              		.loc 1 113 0
+  92 000a 0424     		movs	r4, #4
+  93 000c 6442     		rsbs	r4, r4, #0
+  94              	.L4:
+  95              	.LVL6:
+ 114:Api\platform\src/vl53l0x_platform.c ****     }
+ 115:Api\platform\src/vl53l0x_platform.c **** 
+ 116:Api\platform\src/vl53l0x_platform.c **** 	deviceAddress = Dev->I2cDevAddr;
+  96              		.loc 1 116 0
+  97 000e AE25     		movs	r5, #174
+  98 0010 6D00     		lsls	r5, r5, #1
+  99 0012 405D     		ldrb	r0, [r0, r5]
+ 100              	.LVL7:
+ 117:Api\platform\src/vl53l0x_platform.c **** 
+ 118:Api\platform\src/vl53l0x_platform.c **** 	status_int = VL53L0X_write_multi(deviceAddress, index, pdata, count);
+ 101              		.loc 1 118 0
+ 102 0014 FFF7FEFF 		bl	VL53L0X_write_multi
+ 103              	.LVL8:
+ 119:Api\platform\src/vl53l0x_platform.c **** 
+ 120:Api\platform\src/vl53l0x_platform.c **** 	if (status_int != 0)
+ 104              		.loc 1 120 0
+ 105 0018 0028     		cmp	r0, #0
+ 106 001a 01D0     		beq	.L5
+ 121:Api\platform\src/vl53l0x_platform.c **** 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 5
+
+
+ 107              		.loc 1 121 0
+ 108 001c 1424     		movs	r4, #20
+ 109              	.LVL9:
+ 110 001e 6442     		rsbs	r4, r4, #0
+ 111              	.L5:
+ 112              	.LVL10:
+ 122:Api\platform\src/vl53l0x_platform.c **** 
+ 123:Api\platform\src/vl53l0x_platform.c ****     return Status;
+ 124:Api\platform\src/vl53l0x_platform.c **** }
+ 113              		.loc 1 124 0
+ 114 0020 2000     		movs	r0, r4
+ 115              	.LVL11:
+ 116              		@ sp needed
+ 117              	.LVL12:
+ 118 0022 70BD     		pop	{r4, r5, r6, pc}
+ 119              		.cfi_endproc
+ 120              	.LFE37:
+ 121              		.size	VL53L0X_WriteMulti, .-VL53L0X_WriteMulti
+ 122              		.section	.text.VL53L0X_ReadMulti,"ax",%progbits
+ 123              		.align	2
+ 124              		.global	VL53L0X_ReadMulti
+ 125              		.code	16
+ 126              		.thumb_func
+ 127              		.type	VL53L0X_ReadMulti, %function
+ 128              	VL53L0X_ReadMulti:
+ 129              	.LFB38:
+ 125:Api\platform\src/vl53l0x_platform.c **** 
+ 126:Api\platform\src/vl53l0x_platform.c **** // the ranging_sensor_comms.dll will take care of the page selection
+ 127:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error VL53L0X_ReadMulti(VL53L0X_DEV Dev, uint8_t index, uint8_t *pdata, uint32_t count){
+ 130              		.loc 1 127 0
+ 131              		.cfi_startproc
+ 132              		@ args = 0, pretend = 0, frame = 0
+ 133              		@ frame_needed = 0, uses_anonymous_args = 0
+ 134              	.LVL13:
+ 135 0000 70B5     		push	{r4, r5, r6, lr}
+ 136              		.cfi_def_cfa_offset 16
+ 137              		.cfi_offset 4, -16
+ 138              		.cfi_offset 5, -12
+ 139              		.cfi_offset 6, -8
+ 140              		.cfi_offset 14, -4
+ 141              	.LVL14:
+ 128:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_I2C_USER_VAR
+ 129:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+ 130:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int;
+ 131:Api\platform\src/vl53l0x_platform.c **** 	uint8_t deviceAddress;
+ 132:Api\platform\src/vl53l0x_platform.c **** 
+ 133:Api\platform\src/vl53l0x_platform.c ****     if (count>=VL53L0X_MAX_I2C_XFER_SIZE){
+ 142              		.loc 1 133 0
+ 143 0002 3F2B     		cmp	r3, #63
+ 144 0004 01D8     		bhi	.L11
+ 129:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int;
+ 145              		.loc 1 129 0
+ 146 0006 0024     		movs	r4, #0
+ 147 0008 01E0     		b	.L9
+ 148              	.L11:
+ 134:Api\platform\src/vl53l0x_platform.c ****         Status = VL53L0X_ERROR_INVALID_PARAMS;
+ 149              		.loc 1 134 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 6
+
+
+ 150 000a 0424     		movs	r4, #4
+ 151 000c 6442     		rsbs	r4, r4, #0
+ 152              	.L9:
+ 153              	.LVL15:
+ 135:Api\platform\src/vl53l0x_platform.c ****     }
+ 136:Api\platform\src/vl53l0x_platform.c **** 
+ 137:Api\platform\src/vl53l0x_platform.c ****     deviceAddress = Dev->I2cDevAddr;
+ 154              		.loc 1 137 0
+ 155 000e AE25     		movs	r5, #174
+ 156 0010 6D00     		lsls	r5, r5, #1
+ 157 0012 405D     		ldrb	r0, [r0, r5]
+ 158              	.LVL16:
+ 138:Api\platform\src/vl53l0x_platform.c **** 
+ 139:Api\platform\src/vl53l0x_platform.c **** 	status_int = VL53L0X_read_multi(deviceAddress, index, pdata, count);
+ 159              		.loc 1 139 0
+ 160 0014 FFF7FEFF 		bl	VL53L0X_read_multi
+ 161              	.LVL17:
+ 140:Api\platform\src/vl53l0x_platform.c **** 
+ 141:Api\platform\src/vl53l0x_platform.c **** 	if (status_int != 0)
+ 162              		.loc 1 141 0
+ 163 0018 0028     		cmp	r0, #0
+ 164 001a 01D0     		beq	.L10
+ 142:Api\platform\src/vl53l0x_platform.c **** 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
+ 165              		.loc 1 142 0
+ 166 001c 1424     		movs	r4, #20
+ 167              	.LVL18:
+ 168 001e 6442     		rsbs	r4, r4, #0
+ 169              	.L10:
+ 170              	.LVL19:
+ 143:Api\platform\src/vl53l0x_platform.c **** 
+ 144:Api\platform\src/vl53l0x_platform.c ****     return Status;
+ 145:Api\platform\src/vl53l0x_platform.c **** }
+ 171              		.loc 1 145 0
+ 172 0020 2000     		movs	r0, r4
+ 173              	.LVL20:
+ 174              		@ sp needed
+ 175              	.LVL21:
+ 176 0022 70BD     		pop	{r4, r5, r6, pc}
+ 177              		.cfi_endproc
+ 178              	.LFE38:
+ 179              		.size	VL53L0X_ReadMulti, .-VL53L0X_ReadMulti
+ 180              		.section	.text.VL53L0X_WrByte,"ax",%progbits
+ 181              		.align	2
+ 182              		.global	VL53L0X_WrByte
+ 183              		.code	16
+ 184              		.thumb_func
+ 185              		.type	VL53L0X_WrByte, %function
+ 186              	VL53L0X_WrByte:
+ 187              	.LFB39:
+ 146:Api\platform\src/vl53l0x_platform.c **** 
+ 147:Api\platform\src/vl53l0x_platform.c **** 
+ 148:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error VL53L0X_WrByte(VL53L0X_DEV Dev, uint8_t index, uint8_t data){
+ 188              		.loc 1 148 0
+ 189              		.cfi_startproc
+ 190              		@ args = 0, pretend = 0, frame = 0
+ 191              		@ frame_needed = 0, uses_anonymous_args = 0
+ 192              	.LVL22:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 7
+
+
+ 193 0000 10B5     		push	{r4, lr}
+ 194              		.cfi_def_cfa_offset 8
+ 195              		.cfi_offset 4, -8
+ 196              		.cfi_offset 14, -4
+ 197              	.LVL23:
+ 149:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+ 150:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int;
+ 151:Api\platform\src/vl53l0x_platform.c **** 	uint8_t deviceAddress;
+ 152:Api\platform\src/vl53l0x_platform.c **** 
+ 153:Api\platform\src/vl53l0x_platform.c ****     deviceAddress = Dev->I2cDevAddr;
+ 198              		.loc 1 153 0
+ 199 0002 AE23     		movs	r3, #174
+ 200 0004 5B00     		lsls	r3, r3, #1
+ 201 0006 C05C     		ldrb	r0, [r0, r3]
+ 202              	.LVL24:
+ 154:Api\platform\src/vl53l0x_platform.c **** 
+ 155:Api\platform\src/vl53l0x_platform.c **** 	status_int = VL53L0X_write_byte(deviceAddress, index, data);
+ 203              		.loc 1 155 0
+ 204 0008 FFF7FEFF 		bl	VL53L0X_write_byte
+ 205              	.LVL25:
+ 156:Api\platform\src/vl53l0x_platform.c **** 
+ 157:Api\platform\src/vl53l0x_platform.c **** 	if (status_int != 0)
+ 206              		.loc 1 157 0
+ 207 000c 0028     		cmp	r0, #0
+ 208 000e 01D0     		beq	.L14
+ 158:Api\platform\src/vl53l0x_platform.c **** 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
+ 209              		.loc 1 158 0
+ 210 0010 1420     		movs	r0, #20
+ 211              	.LVL26:
+ 212 0012 4042     		rsbs	r0, r0, #0
+ 213              	.L14:
+ 214              	.LVL27:
+ 159:Api\platform\src/vl53l0x_platform.c **** 
+ 160:Api\platform\src/vl53l0x_platform.c ****     return Status;
+ 161:Api\platform\src/vl53l0x_platform.c **** }
+ 215              		.loc 1 161 0
+ 216              		@ sp needed
+ 217 0014 10BD     		pop	{r4, pc}
+ 218              		.cfi_endproc
+ 219              	.LFE39:
+ 220              		.size	VL53L0X_WrByte, .-VL53L0X_WrByte
+ 221 0016 C046     		.section	.text.VL53L0X_WrWord,"ax",%progbits
+ 222              		.align	2
+ 223              		.global	VL53L0X_WrWord
+ 224              		.code	16
+ 225              		.thumb_func
+ 226              		.type	VL53L0X_WrWord, %function
+ 227              	VL53L0X_WrWord:
+ 228              	.LFB40:
+ 162:Api\platform\src/vl53l0x_platform.c **** 
+ 163:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error VL53L0X_WrWord(VL53L0X_DEV Dev, uint8_t index, uint16_t data){
+ 229              		.loc 1 163 0
+ 230              		.cfi_startproc
+ 231              		@ args = 0, pretend = 0, frame = 0
+ 232              		@ frame_needed = 0, uses_anonymous_args = 0
+ 233              	.LVL28:
+ 234 0000 10B5     		push	{r4, lr}
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 8
+
+
+ 235              		.cfi_def_cfa_offset 8
+ 236              		.cfi_offset 4, -8
+ 237              		.cfi_offset 14, -4
+ 238              	.LVL29:
+ 164:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+ 165:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int;
+ 166:Api\platform\src/vl53l0x_platform.c **** 	uint8_t deviceAddress;
+ 167:Api\platform\src/vl53l0x_platform.c **** 
+ 168:Api\platform\src/vl53l0x_platform.c ****     deviceAddress = Dev->I2cDevAddr;
+ 239              		.loc 1 168 0
+ 240 0002 AE23     		movs	r3, #174
+ 241 0004 5B00     		lsls	r3, r3, #1
+ 242 0006 C05C     		ldrb	r0, [r0, r3]
+ 243              	.LVL30:
+ 169:Api\platform\src/vl53l0x_platform.c **** 
+ 170:Api\platform\src/vl53l0x_platform.c **** 	status_int = VL53L0X_write_word(deviceAddress, index, data);
+ 244              		.loc 1 170 0
+ 245 0008 FFF7FEFF 		bl	VL53L0X_write_word
+ 246              	.LVL31:
+ 171:Api\platform\src/vl53l0x_platform.c **** 
+ 172:Api\platform\src/vl53l0x_platform.c **** 	if (status_int != 0)
+ 247              		.loc 1 172 0
+ 248 000c 0028     		cmp	r0, #0
+ 249 000e 01D0     		beq	.L17
+ 173:Api\platform\src/vl53l0x_platform.c **** 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
+ 250              		.loc 1 173 0
+ 251 0010 1420     		movs	r0, #20
+ 252              	.LVL32:
+ 253 0012 4042     		rsbs	r0, r0, #0
+ 254              	.L17:
+ 255              	.LVL33:
+ 174:Api\platform\src/vl53l0x_platform.c **** 
+ 175:Api\platform\src/vl53l0x_platform.c ****     return Status;
+ 176:Api\platform\src/vl53l0x_platform.c **** }
+ 256              		.loc 1 176 0
+ 257              		@ sp needed
+ 258 0014 10BD     		pop	{r4, pc}
+ 259              		.cfi_endproc
+ 260              	.LFE40:
+ 261              		.size	VL53L0X_WrWord, .-VL53L0X_WrWord
+ 262 0016 C046     		.section	.text.VL53L0X_WrDWord,"ax",%progbits
+ 263              		.align	2
+ 264              		.global	VL53L0X_WrDWord
+ 265              		.code	16
+ 266              		.thumb_func
+ 267              		.type	VL53L0X_WrDWord, %function
+ 268              	VL53L0X_WrDWord:
+ 269              	.LFB41:
+ 177:Api\platform\src/vl53l0x_platform.c **** 
+ 178:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error VL53L0X_WrDWord(VL53L0X_DEV Dev, uint8_t index, uint32_t data){
+ 270              		.loc 1 178 0
+ 271              		.cfi_startproc
+ 272              		@ args = 0, pretend = 0, frame = 0
+ 273              		@ frame_needed = 0, uses_anonymous_args = 0
+ 274              	.LVL34:
+ 275 0000 10B5     		push	{r4, lr}
+ 276              		.cfi_def_cfa_offset 8
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 9
+
+
+ 277              		.cfi_offset 4, -8
+ 278              		.cfi_offset 14, -4
+ 279              	.LVL35:
+ 179:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+ 180:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int;
+ 181:Api\platform\src/vl53l0x_platform.c **** 	uint8_t deviceAddress;
+ 182:Api\platform\src/vl53l0x_platform.c **** 
+ 183:Api\platform\src/vl53l0x_platform.c ****     deviceAddress = Dev->I2cDevAddr;
+ 280              		.loc 1 183 0
+ 281 0002 AE23     		movs	r3, #174
+ 282 0004 5B00     		lsls	r3, r3, #1
+ 283 0006 C05C     		ldrb	r0, [r0, r3]
+ 284              	.LVL36:
+ 184:Api\platform\src/vl53l0x_platform.c **** 
+ 185:Api\platform\src/vl53l0x_platform.c **** 	status_int = VL53L0X_write_dword(deviceAddress, index, data);
+ 285              		.loc 1 185 0
+ 286 0008 FFF7FEFF 		bl	VL53L0X_write_dword
+ 287              	.LVL37:
+ 186:Api\platform\src/vl53l0x_platform.c **** 
+ 187:Api\platform\src/vl53l0x_platform.c **** 	if (status_int != 0)
+ 288              		.loc 1 187 0
+ 289 000c 0028     		cmp	r0, #0
+ 290 000e 01D0     		beq	.L20
+ 188:Api\platform\src/vl53l0x_platform.c **** 		Status = VL53L0X_ERROR_CONTROL_INTERFACE;
+ 291              		.loc 1 188 0
+ 292 0010 1420     		movs	r0, #20
+ 293              	.LVL38:
+ 294 0012 4042     		rsbs	r0, r0, #0
+ 295              	.L20:
+ 296              	.LVL39:
+ 189:Api\platform\src/vl53l0x_platform.c **** 
+ 190:Api\platform\src/vl53l0x_platform.c ****     return Status;
+ 191:Api\platform\src/vl53l0x_platform.c **** }
+ 297              		.loc 1 191 0
+ 298              		@ sp needed
+ 299 0014 10BD     		pop	{r4, pc}
+ 300              		.cfi_endproc
+ 301              	.LFE41:
+ 302              		.size	VL53L0X_WrDWord, .-VL53L0X_WrDWord
+ 303 0016 C046     		.section	.text.VL53L0X_UpdateByte,"ax",%progbits
+ 304              		.align	2
+ 305              		.global	VL53L0X_UpdateByte
+ 306              		.code	16
+ 307              		.thumb_func
+ 308              		.type	VL53L0X_UpdateByte, %function
+ 309              	VL53L0X_UpdateByte:
+ 310              	.LFB42:
+ 192:Api\platform\src/vl53l0x_platform.c **** 
+ 193:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error VL53L0X_UpdateByte(VL53L0X_DEV Dev, uint8_t index, uint8_t AndData, uint8_t OrData){
+ 311              		.loc 1 193 0
+ 312              		.cfi_startproc
+ 313              		@ args = 0, pretend = 0, frame = 16
+ 314              		@ frame_needed = 0, uses_anonymous_args = 0
+ 315              	.LVL40:
+ 316 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 317              		.cfi_def_cfa_offset 20
+ 318              		.cfi_offset 4, -20
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 10
+
+
+ 319              		.cfi_offset 5, -16
+ 320              		.cfi_offset 6, -12
+ 321              		.cfi_offset 7, -8
+ 322              		.cfi_offset 14, -4
+ 323 0002 85B0     		sub	sp, sp, #20
+ 324              		.cfi_def_cfa_offset 40
+ 325 0004 0191     		str	r1, [sp, #4]
+ 326 0006 1400     		movs	r4, r2
+ 327 0008 1F00     		movs	r7, r3
+ 328              	.LVL41:
+ 194:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+ 195:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int;
+ 196:Api\platform\src/vl53l0x_platform.c ****     uint8_t deviceAddress;
+ 197:Api\platform\src/vl53l0x_platform.c ****     uint8_t data;
+ 198:Api\platform\src/vl53l0x_platform.c **** 
+ 199:Api\platform\src/vl53l0x_platform.c ****     deviceAddress = Dev->I2cDevAddr;
+ 329              		.loc 1 199 0
+ 330 000a AE23     		movs	r3, #174
+ 331              	.LVL42:
+ 332 000c 5B00     		lsls	r3, r3, #1
+ 333 000e C55C     		ldrb	r5, [r0, r3]
+ 334              	.LVL43:
+ 200:Api\platform\src/vl53l0x_platform.c **** 
+ 201:Api\platform\src/vl53l0x_platform.c ****     status_int = VL53L0X_read_byte(deviceAddress, index, &data);
+ 335              		.loc 1 201 0
+ 336 0010 02AB     		add	r3, sp, #8
+ 337 0012 DA1D     		adds	r2, r3, #7
+ 338              	.LVL44:
+ 339 0014 2800     		movs	r0, r5
+ 340              	.LVL45:
+ 341 0016 FFF7FEFF 		bl	VL53L0X_read_byte
+ 342              	.LVL46:
+ 202:Api\platform\src/vl53l0x_platform.c **** 
+ 203:Api\platform\src/vl53l0x_platform.c ****     if (status_int != 0)
+ 343              		.loc 1 203 0
+ 344 001a 0028     		cmp	r0, #0
+ 345 001c 01D1     		bne	.L25
+ 194:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int;
+ 346              		.loc 1 194 0
+ 347 001e 0026     		movs	r6, #0
+ 348 0020 01E0     		b	.L23
+ 349              	.L25:
+ 204:Api\platform\src/vl53l0x_platform.c ****         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
+ 350              		.loc 1 204 0
+ 351 0022 1426     		movs	r6, #20
+ 352 0024 7642     		rsbs	r6, r6, #0
+ 353              	.L23:
+ 354              	.LVL47:
+ 205:Api\platform\src/vl53l0x_platform.c **** 
+ 206:Api\platform\src/vl53l0x_platform.c ****     if (Status == VL53L0X_ERROR_NONE) {
+ 355              		.loc 1 206 0
+ 356 0026 002E     		cmp	r6, #0
+ 357 0028 0BD1     		bne	.L24
+ 207:Api\platform\src/vl53l0x_platform.c ****         data = (data & AndData) | OrData;
+ 358              		.loc 1 207 0
+ 359 002a 02AB     		add	r3, sp, #8
+ 360 002c DA79     		ldrb	r2, [r3, #7]
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 11
+
+
+ 361 002e 2240     		ands	r2, r4
+ 362 0030 3A43     		orrs	r2, r7
+ 363 0032 DA71     		strb	r2, [r3, #7]
+ 208:Api\platform\src/vl53l0x_platform.c ****         status_int = VL53L0X_write_byte(deviceAddress, index, data);
+ 364              		.loc 1 208 0
+ 365 0034 0199     		ldr	r1, [sp, #4]
+ 366 0036 2800     		movs	r0, r5
+ 367              	.LVL48:
+ 368 0038 FFF7FEFF 		bl	VL53L0X_write_byte
+ 369              	.LVL49:
+ 209:Api\platform\src/vl53l0x_platform.c **** 
+ 210:Api\platform\src/vl53l0x_platform.c ****         if (status_int != 0)
+ 370              		.loc 1 210 0
+ 371 003c 0028     		cmp	r0, #0
+ 372 003e 00D0     		beq	.L24
+ 211:Api\platform\src/vl53l0x_platform.c ****             Status = VL53L0X_ERROR_CONTROL_INTERFACE;
+ 373              		.loc 1 211 0
+ 374 0040 143E     		subs	r6, r6, #20
+ 375              	.LVL50:
+ 376              	.L24:
+ 212:Api\platform\src/vl53l0x_platform.c ****     }
+ 213:Api\platform\src/vl53l0x_platform.c **** 
+ 214:Api\platform\src/vl53l0x_platform.c ****     return Status;
+ 215:Api\platform\src/vl53l0x_platform.c **** }
+ 377              		.loc 1 215 0
+ 378 0042 3000     		movs	r0, r6
+ 379              	.LVL51:
+ 380 0044 05B0     		add	sp, sp, #20
+ 381              		@ sp needed
+ 382              	.LVL52:
+ 383              	.LVL53:
+ 384 0046 F0BD     		pop	{r4, r5, r6, r7, pc}
+ 385              		.cfi_endproc
+ 386              	.LFE42:
+ 387              		.size	VL53L0X_UpdateByte, .-VL53L0X_UpdateByte
+ 388              		.section	.text.VL53L0X_RdByte,"ax",%progbits
+ 389              		.align	2
+ 390              		.global	VL53L0X_RdByte
+ 391              		.code	16
+ 392              		.thumb_func
+ 393              		.type	VL53L0X_RdByte, %function
+ 394              	VL53L0X_RdByte:
+ 395              	.LFB43:
+ 216:Api\platform\src/vl53l0x_platform.c **** 
+ 217:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error VL53L0X_RdByte(VL53L0X_DEV Dev, uint8_t index, uint8_t *data){
+ 396              		.loc 1 217 0
+ 397              		.cfi_startproc
+ 398              		@ args = 0, pretend = 0, frame = 0
+ 399              		@ frame_needed = 0, uses_anonymous_args = 0
+ 400              	.LVL54:
+ 401 0000 10B5     		push	{r4, lr}
+ 402              		.cfi_def_cfa_offset 8
+ 403              		.cfi_offset 4, -8
+ 404              		.cfi_offset 14, -4
+ 405              	.LVL55:
+ 218:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+ 219:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int;
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 12
+
+
+ 220:Api\platform\src/vl53l0x_platform.c ****     uint8_t deviceAddress;
+ 221:Api\platform\src/vl53l0x_platform.c **** 
+ 222:Api\platform\src/vl53l0x_platform.c ****     deviceAddress = Dev->I2cDevAddr;
+ 406              		.loc 1 222 0
+ 407 0002 AE23     		movs	r3, #174
+ 408 0004 5B00     		lsls	r3, r3, #1
+ 409 0006 C05C     		ldrb	r0, [r0, r3]
+ 410              	.LVL56:
+ 223:Api\platform\src/vl53l0x_platform.c **** 
+ 224:Api\platform\src/vl53l0x_platform.c ****     status_int = VL53L0X_read_byte(deviceAddress, index, data);
+ 411              		.loc 1 224 0
+ 412 0008 FFF7FEFF 		bl	VL53L0X_read_byte
+ 413              	.LVL57:
+ 225:Api\platform\src/vl53l0x_platform.c **** 
+ 226:Api\platform\src/vl53l0x_platform.c ****     if (status_int != 0)
+ 414              		.loc 1 226 0
+ 415 000c 0028     		cmp	r0, #0
+ 416 000e 01D0     		beq	.L28
+ 227:Api\platform\src/vl53l0x_platform.c ****         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
+ 417              		.loc 1 227 0
+ 418 0010 1420     		movs	r0, #20
+ 419              	.LVL58:
+ 420 0012 4042     		rsbs	r0, r0, #0
+ 421              	.L28:
+ 422              	.LVL59:
+ 228:Api\platform\src/vl53l0x_platform.c **** 
+ 229:Api\platform\src/vl53l0x_platform.c ****     return Status;
+ 230:Api\platform\src/vl53l0x_platform.c **** }
+ 423              		.loc 1 230 0
+ 424              		@ sp needed
+ 425 0014 10BD     		pop	{r4, pc}
+ 426              		.cfi_endproc
+ 427              	.LFE43:
+ 428              		.size	VL53L0X_RdByte, .-VL53L0X_RdByte
+ 429 0016 C046     		.section	.text.VL53L0X_RdWord,"ax",%progbits
+ 430              		.align	2
+ 431              		.global	VL53L0X_RdWord
+ 432              		.code	16
+ 433              		.thumb_func
+ 434              		.type	VL53L0X_RdWord, %function
+ 435              	VL53L0X_RdWord:
+ 436              	.LFB44:
+ 231:Api\platform\src/vl53l0x_platform.c **** 
+ 232:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error VL53L0X_RdWord(VL53L0X_DEV Dev, uint8_t index, uint16_t *data){
+ 437              		.loc 1 232 0
+ 438              		.cfi_startproc
+ 439              		@ args = 0, pretend = 0, frame = 0
+ 440              		@ frame_needed = 0, uses_anonymous_args = 0
+ 441              	.LVL60:
+ 442 0000 10B5     		push	{r4, lr}
+ 443              		.cfi_def_cfa_offset 8
+ 444              		.cfi_offset 4, -8
+ 445              		.cfi_offset 14, -4
+ 446              	.LVL61:
+ 233:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+ 234:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int;
+ 235:Api\platform\src/vl53l0x_platform.c ****     uint8_t deviceAddress;
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 13
+
+
+ 236:Api\platform\src/vl53l0x_platform.c **** 
+ 237:Api\platform\src/vl53l0x_platform.c ****     deviceAddress = Dev->I2cDevAddr;
+ 447              		.loc 1 237 0
+ 448 0002 AE23     		movs	r3, #174
+ 449 0004 5B00     		lsls	r3, r3, #1
+ 450 0006 C05C     		ldrb	r0, [r0, r3]
+ 451              	.LVL62:
+ 238:Api\platform\src/vl53l0x_platform.c **** 
+ 239:Api\platform\src/vl53l0x_platform.c ****     status_int = VL53L0X_read_word(deviceAddress, index, data);
+ 452              		.loc 1 239 0
+ 453 0008 FFF7FEFF 		bl	VL53L0X_read_word
+ 454              	.LVL63:
+ 240:Api\platform\src/vl53l0x_platform.c **** 
+ 241:Api\platform\src/vl53l0x_platform.c ****     if (status_int != 0)
+ 455              		.loc 1 241 0
+ 456 000c 0028     		cmp	r0, #0
+ 457 000e 01D0     		beq	.L31
+ 242:Api\platform\src/vl53l0x_platform.c ****         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
+ 458              		.loc 1 242 0
+ 459 0010 1420     		movs	r0, #20
+ 460              	.LVL64:
+ 461 0012 4042     		rsbs	r0, r0, #0
+ 462              	.L31:
+ 463              	.LVL65:
+ 243:Api\platform\src/vl53l0x_platform.c **** 
+ 244:Api\platform\src/vl53l0x_platform.c ****     return Status;
+ 245:Api\platform\src/vl53l0x_platform.c **** }
+ 464              		.loc 1 245 0
+ 465              		@ sp needed
+ 466 0014 10BD     		pop	{r4, pc}
+ 467              		.cfi_endproc
+ 468              	.LFE44:
+ 469              		.size	VL53L0X_RdWord, .-VL53L0X_RdWord
+ 470 0016 C046     		.section	.text.VL53L0X_RdDWord,"ax",%progbits
+ 471              		.align	2
+ 472              		.global	VL53L0X_RdDWord
+ 473              		.code	16
+ 474              		.thumb_func
+ 475              		.type	VL53L0X_RdDWord, %function
+ 476              	VL53L0X_RdDWord:
+ 477              	.LFB45:
+ 246:Api\platform\src/vl53l0x_platform.c **** 
+ 247:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error  VL53L0X_RdDWord(VL53L0X_DEV Dev, uint8_t index, uint32_t *data){
+ 478              		.loc 1 247 0
+ 479              		.cfi_startproc
+ 480              		@ args = 0, pretend = 0, frame = 0
+ 481              		@ frame_needed = 0, uses_anonymous_args = 0
+ 482              	.LVL66:
+ 483 0000 10B5     		push	{r4, lr}
+ 484              		.cfi_def_cfa_offset 8
+ 485              		.cfi_offset 4, -8
+ 486              		.cfi_offset 14, -4
+ 487              	.LVL67:
+ 248:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error Status = VL53L0X_ERROR_NONE;
+ 249:Api\platform\src/vl53l0x_platform.c ****     int32_t status_int;
+ 250:Api\platform\src/vl53l0x_platform.c ****     uint8_t deviceAddress;
+ 251:Api\platform\src/vl53l0x_platform.c **** 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 14
+
+
+ 252:Api\platform\src/vl53l0x_platform.c ****     deviceAddress = Dev->I2cDevAddr;
+ 488              		.loc 1 252 0
+ 489 0002 AE23     		movs	r3, #174
+ 490 0004 5B00     		lsls	r3, r3, #1
+ 491 0006 C05C     		ldrb	r0, [r0, r3]
+ 492              	.LVL68:
+ 253:Api\platform\src/vl53l0x_platform.c **** 
+ 254:Api\platform\src/vl53l0x_platform.c ****     status_int = VL53L0X_read_dword(deviceAddress, index, data);
+ 493              		.loc 1 254 0
+ 494 0008 FFF7FEFF 		bl	VL53L0X_read_dword
+ 495              	.LVL69:
+ 255:Api\platform\src/vl53l0x_platform.c **** 
+ 256:Api\platform\src/vl53l0x_platform.c ****     if (status_int != 0)
+ 496              		.loc 1 256 0
+ 497 000c 0028     		cmp	r0, #0
+ 498 000e 01D0     		beq	.L34
+ 257:Api\platform\src/vl53l0x_platform.c ****         Status = VL53L0X_ERROR_CONTROL_INTERFACE;
+ 499              		.loc 1 257 0
+ 500 0010 1420     		movs	r0, #20
+ 501              	.LVL70:
+ 502 0012 4042     		rsbs	r0, r0, #0
+ 503              	.L34:
+ 504              	.LVL71:
+ 258:Api\platform\src/vl53l0x_platform.c **** 
+ 259:Api\platform\src/vl53l0x_platform.c ****     return Status;
+ 260:Api\platform\src/vl53l0x_platform.c **** }
+ 505              		.loc 1 260 0
+ 506              		@ sp needed
+ 507 0014 10BD     		pop	{r4, pc}
+ 508              		.cfi_endproc
+ 509              	.LFE45:
+ 510              		.size	VL53L0X_RdDWord, .-VL53L0X_RdDWord
+ 511 0016 C046     		.section	.text.VL53L0X_PollingDelay,"ax",%progbits
+ 512              		.align	2
+ 513              		.global	VL53L0X_PollingDelay
+ 514              		.code	16
+ 515              		.thumb_func
+ 516              		.type	VL53L0X_PollingDelay, %function
+ 517              	VL53L0X_PollingDelay:
+ 518              	.LFB46:
+ 261:Api\platform\src/vl53l0x_platform.c **** 
+ 262:Api\platform\src/vl53l0x_platform.c **** #define VL53L0X_POLLINGDELAY_LOOPNB  250
+ 263:Api\platform\src/vl53l0x_platform.c **** VL53L0X_Error VL53L0X_PollingDelay(VL53L0X_DEV Dev){
+ 519              		.loc 1 263 0
+ 520              		.cfi_startproc
+ 521              		@ args = 0, pretend = 0, frame = 0
+ 522              		@ frame_needed = 0, uses_anonymous_args = 0
+ 523              	.LVL72:
+ 524 0000 10B5     		push	{r4, lr}
+ 525              		.cfi_def_cfa_offset 8
+ 526              		.cfi_offset 4, -8
+ 527              		.cfi_offset 14, -4
+ 528              	.LVL73:
+ 264:Api\platform\src/vl53l0x_platform.c ****     VL53L0X_Error status = VL53L0X_ERROR_NONE;
+ 265:Api\platform\src/vl53l0x_platform.c ****    // LOG_FUNCTION_START("");
+ 266:Api\platform\src/vl53l0x_platform.c **** 
+ 267:Api\platform\src/vl53l0x_platform.c ****     CyDelayUs(1000);
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 15
+
+
+ 529              		.loc 1 267 0
+ 530 0002 FA20     		movs	r0, #250
+ 531              	.LVL74:
+ 532 0004 8000     		lsls	r0, r0, #2
+ 533 0006 FFF7FEFF 		bl	CyDelayUs
+ 534              	.LVL75:
+ 268:Api\platform\src/vl53l0x_platform.c ****     return status;
+ 269:Api\platform\src/vl53l0x_platform.c **** }
+ 535              		.loc 1 269 0
+ 536 000a 0020     		movs	r0, #0
+ 537              		@ sp needed
+ 538 000c 10BD     		pop	{r4, pc}
+ 539              		.cfi_endproc
+ 540              	.LFE46:
+ 541              		.size	VL53L0X_PollingDelay, .-VL53L0X_PollingDelay
+ 542              		.comm	i2c_global_buffer,64,4
+ 543 000e C046     		.text
+ 544              	.Letext0:
+ 545              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 546              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 547              		.file 4 ".\\Api\\platform\\inc/vl53l0x_types.h"
+ 548              		.file 5 ".\\Api\\core\\inc/vl53l0x_device.h"
+ 549              		.file 6 ".\\Api\\core\\inc/vl53l0x_def.h"
+ 550              		.file 7 ".\\Api\\platform\\inc/vl53l0x_platform.h"
+ 551              		.file 8 ".\\Api\\platform\\inc/vl53l0x_i2c_platform.h"
+ 552              		.file 9 "Generated_Source\\PSoC4/CyLib.h"
+ 553              		.section	.debug_info,"",%progbits
+ 554              	.Ldebug_info0:
+ 555 0000 B30C0000 		.4byte	0xcb3
+ 556 0004 0400     		.2byte	0x4
+ 557 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 558 000a 04       		.byte	0x4
+ 559 000b 01       		.uleb128 0x1
+ 560 000c 64030000 		.4byte	.LASF150
+ 561 0010 0C       		.byte	0xc
+ 562 0011 81050000 		.4byte	.LASF151
+ 563 0015 35070000 		.4byte	.LASF152
+ 564 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 565 001d 00000000 		.4byte	0
+ 566 0021 00000000 		.4byte	.Ldebug_line0
+ 567 0025 02       		.uleb128 0x2
+ 568 0026 96060000 		.4byte	.LASF0
+ 569 002a 02       		.byte	0x2
+ 570 002b 1B       		.byte	0x1b
+ 571 002c 30000000 		.4byte	0x30
+ 572 0030 03       		.uleb128 0x3
+ 573 0031 01       		.byte	0x1
+ 574 0032 06       		.byte	0x6
+ 575 0033 B2090000 		.4byte	.LASF2
+ 576 0037 02       		.uleb128 0x2
+ 577 0038 FF070000 		.4byte	.LASF1
+ 578 003c 02       		.byte	0x2
+ 579 003d 1D       		.byte	0x1d
+ 580 003e 42000000 		.4byte	0x42
+ 581 0042 03       		.uleb128 0x3
+ 582 0043 01       		.byte	0x1
+ 583 0044 08       		.byte	0x8
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 16
+
+
+ 584 0045 E8080000 		.4byte	.LASF3
+ 585 0049 03       		.uleb128 0x3
+ 586 004a 02       		.byte	0x2
+ 587 004b 05       		.byte	0x5
+ 588 004c 5C070000 		.4byte	.LASF4
+ 589 0050 02       		.uleb128 0x2
+ 590 0051 0C030000 		.4byte	.LASF5
+ 591 0055 02       		.byte	0x2
+ 592 0056 2B       		.byte	0x2b
+ 593 0057 5B000000 		.4byte	0x5b
+ 594 005b 03       		.uleb128 0x3
+ 595 005c 02       		.byte	0x2
+ 596 005d 07       		.byte	0x7
+ 597 005e D3090000 		.4byte	.LASF6
+ 598 0062 02       		.uleb128 0x2
+ 599 0063 28010000 		.4byte	.LASF7
+ 600 0067 02       		.byte	0x2
+ 601 0068 3F       		.byte	0x3f
+ 602 0069 6D000000 		.4byte	0x6d
+ 603 006d 03       		.uleb128 0x3
+ 604 006e 04       		.byte	0x4
+ 605 006f 05       		.byte	0x5
+ 606 0070 66070000 		.4byte	.LASF8
+ 607 0074 02       		.uleb128 0x2
+ 608 0075 1C090000 		.4byte	.LASF9
+ 609 0079 02       		.byte	0x2
+ 610 007a 41       		.byte	0x41
+ 611 007b 7F000000 		.4byte	0x7f
+ 612 007f 03       		.uleb128 0x3
+ 613 0080 04       		.byte	0x4
+ 614 0081 07       		.byte	0x7
+ 615 0082 84080000 		.4byte	.LASF10
+ 616 0086 03       		.uleb128 0x3
+ 617 0087 08       		.byte	0x8
+ 618 0088 05       		.byte	0x5
+ 619 0089 EB050000 		.4byte	.LASF11
+ 620 008d 03       		.uleb128 0x3
+ 621 008e 08       		.byte	0x8
+ 622 008f 07       		.byte	0x7
+ 623 0090 CD020000 		.4byte	.LASF12
+ 624 0094 04       		.uleb128 0x4
+ 625 0095 04       		.byte	0x4
+ 626 0096 05       		.byte	0x5
+ 627 0097 696E7400 		.ascii	"int\000"
+ 628 009b 03       		.uleb128 0x3
+ 629 009c 04       		.byte	0x4
+ 630 009d 07       		.byte	0x7
+ 631 009e A2000000 		.4byte	.LASF13
+ 632 00a2 02       		.uleb128 0x2
+ 633 00a3 08020000 		.4byte	.LASF14
+ 634 00a7 03       		.byte	0x3
+ 635 00a8 14       		.byte	0x14
+ 636 00a9 25000000 		.4byte	0x25
+ 637 00ad 02       		.uleb128 0x2
+ 638 00ae 79050000 		.4byte	.LASF15
+ 639 00b2 03       		.byte	0x3
+ 640 00b3 18       		.byte	0x18
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 17
+
+
+ 641 00b4 37000000 		.4byte	0x37
+ 642 00b8 02       		.uleb128 0x2
+ 643 00b9 DE060000 		.4byte	.LASF16
+ 644 00bd 03       		.byte	0x3
+ 645 00be 24       		.byte	0x24
+ 646 00bf 50000000 		.4byte	0x50
+ 647 00c3 02       		.uleb128 0x2
+ 648 00c4 CC080000 		.4byte	.LASF17
+ 649 00c8 03       		.byte	0x3
+ 650 00c9 2C       		.byte	0x2c
+ 651 00ca 62000000 		.4byte	0x62
+ 652 00ce 02       		.uleb128 0x2
+ 653 00cf FF010000 		.4byte	.LASF18
+ 654 00d3 03       		.byte	0x3
+ 655 00d4 30       		.byte	0x30
+ 656 00d5 74000000 		.4byte	0x74
+ 657 00d9 03       		.uleb128 0x3
+ 658 00da 08       		.byte	0x8
+ 659 00db 04       		.byte	0x4
+ 660 00dc D2060000 		.4byte	.LASF19
+ 661 00e0 02       		.uleb128 0x2
+ 662 00e1 CD010000 		.4byte	.LASF20
+ 663 00e5 04       		.byte	0x4
+ 664 00e6 6D       		.byte	0x6d
+ 665 00e7 CE000000 		.4byte	0xce
+ 666 00eb 02       		.uleb128 0x2
+ 667 00ec 7A020000 		.4byte	.LASF21
+ 668 00f0 05       		.byte	0x5
+ 669 00f1 36       		.byte	0x36
+ 670 00f2 AD000000 		.4byte	0xad
+ 671 00f6 02       		.uleb128 0x2
+ 672 00f7 A5050000 		.4byte	.LASF22
+ 673 00fb 05       		.byte	0x5
+ 674 00fc 64       		.byte	0x64
+ 675 00fd AD000000 		.4byte	0xad
+ 676 0101 05       		.uleb128 0x5
+ 677 0102 18010000 		.4byte	0x118
+ 678 0106 11010000 		.4byte	0x111
+ 679 010a 06       		.uleb128 0x6
+ 680 010b 11010000 		.4byte	0x111
+ 681 010f 1F       		.byte	0x1f
+ 682 0110 00       		.byte	0
+ 683 0111 03       		.uleb128 0x3
+ 684 0112 04       		.byte	0x4
+ 685 0113 07       		.byte	0x7
+ 686 0114 69080000 		.4byte	.LASF23
+ 687 0118 03       		.uleb128 0x3
+ 688 0119 01       		.byte	0x1
+ 689 011a 08       		.byte	0x8
+ 690 011b 05050000 		.4byte	.LASF24
+ 691 011f 02       		.uleb128 0x2
+ 692 0120 35080000 		.4byte	.LASF25
+ 693 0124 06       		.byte	0x6
+ 694 0125 83       		.byte	0x83
+ 695 0126 A2000000 		.4byte	0xa2
+ 696 012a 02       		.uleb128 0x2
+ 697 012b F9050000 		.4byte	.LASF26
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 18
+
+
+ 698 012f 06       		.byte	0x6
+ 699 0130 B5       		.byte	0xb5
+ 700 0131 AD000000 		.4byte	0xad
+ 701 0135 02       		.uleb128 0x2
+ 702 0136 BF050000 		.4byte	.LASF27
+ 703 013a 06       		.byte	0x6
+ 704 013b C7       		.byte	0xc7
+ 705 013c AD000000 		.4byte	0xad
+ 706 0140 02       		.uleb128 0x2
+ 707 0141 D7000000 		.4byte	.LASF28
+ 708 0145 06       		.byte	0x6
+ 709 0146 DA       		.byte	0xda
+ 710 0147 AD000000 		.4byte	0xad
+ 711 014b 07       		.uleb128 0x7
+ 712 014c 40       		.byte	0x40
+ 713 014d 06       		.byte	0x6
+ 714 014e EA       		.byte	0xea
+ 715 014f E7010000 		.4byte	0x1e7
+ 716 0153 08       		.uleb128 0x8
+ 717 0154 AA060000 		.4byte	.LASF29
+ 718 0158 06       		.byte	0x6
+ 719 0159 EB       		.byte	0xeb
+ 720 015a 2A010000 		.4byte	0x12a
+ 721 015e 00       		.byte	0
+ 722 015f 08       		.uleb128 0x8
+ 723 0160 40000000 		.4byte	.LASF30
+ 724 0164 06       		.byte	0x6
+ 725 0165 ED       		.byte	0xed
+ 726 0166 35010000 		.4byte	0x135
+ 727 016a 01       		.byte	0x1
+ 728 016b 08       		.uleb128 0x8
+ 729 016c 21050000 		.4byte	.LASF31
+ 730 0170 06       		.byte	0x6
+ 731 0171 F0       		.byte	0xf0
+ 732 0172 CE000000 		.4byte	0xce
+ 733 0176 04       		.byte	0x4
+ 734 0177 08       		.uleb128 0x8
+ 735 0178 29040000 		.4byte	.LASF32
+ 736 017c 06       		.byte	0x6
+ 737 017d F2       		.byte	0xf2
+ 738 017e CE000000 		.4byte	0xce
+ 739 0182 08       		.byte	0x8
+ 740 0183 08       		.uleb128 0x8
+ 741 0184 4E000000 		.4byte	.LASF33
+ 742 0188 06       		.byte	0x6
+ 743 0189 F5       		.byte	0xf5
+ 744 018a AD000000 		.4byte	0xad
+ 745 018e 0C       		.byte	0xc
+ 746 018f 08       		.uleb128 0x8
+ 747 0190 AF000000 		.4byte	.LASF34
+ 748 0194 06       		.byte	0x6
+ 749 0195 F7       		.byte	0xf7
+ 750 0196 B8000000 		.4byte	0xb8
+ 751 019a 0E       		.byte	0xe
+ 752 019b 08       		.uleb128 0x8
+ 753 019c B5060000 		.4byte	.LASF35
+ 754 01a0 06       		.byte	0x6
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 19
+
+
+ 755 01a1 F9       		.byte	0xf9
+ 756 01a2 E0000000 		.4byte	0xe0
+ 757 01a6 10       		.byte	0x10
+ 758 01a7 08       		.uleb128 0x8
+ 759 01a8 97040000 		.4byte	.LASF36
+ 760 01ac 06       		.byte	0x6
+ 761 01ad FC       		.byte	0xfc
+ 762 01ae C3000000 		.4byte	0xc3
+ 763 01b2 14       		.byte	0x14
+ 764 01b3 08       		.uleb128 0x8
+ 765 01b4 F4000000 		.4byte	.LASF37
+ 766 01b8 06       		.byte	0x6
+ 767 01b9 FF       		.byte	0xff
+ 768 01ba E7010000 		.4byte	0x1e7
+ 769 01be 18       		.byte	0x18
+ 770 01bf 09       		.uleb128 0x9
+ 771 01c0 73010000 		.4byte	.LASF38
+ 772 01c4 06       		.byte	0x6
+ 773 01c5 0101     		.2byte	0x101
+ 774 01c7 E7010000 		.4byte	0x1e7
+ 775 01cb 1E       		.byte	0x1e
+ 776 01cc 09       		.uleb128 0x9
+ 777 01cd 76040000 		.4byte	.LASF39
+ 778 01d1 06       		.byte	0x6
+ 779 01d2 0401     		.2byte	0x104
+ 780 01d4 F7010000 		.4byte	0x1f7
+ 781 01d8 24       		.byte	0x24
+ 782 01d9 09       		.uleb128 0x9
+ 783 01da 53010000 		.4byte	.LASF40
+ 784 01de 06       		.byte	0x6
+ 785 01df 0701     		.2byte	0x107
+ 786 01e1 AD000000 		.4byte	0xad
+ 787 01e5 3C       		.byte	0x3c
+ 788 01e6 00       		.byte	0
+ 789 01e7 05       		.uleb128 0x5
+ 790 01e8 AD000000 		.4byte	0xad
+ 791 01ec F7010000 		.4byte	0x1f7
+ 792 01f0 06       		.uleb128 0x6
+ 793 01f1 11010000 		.4byte	0x111
+ 794 01f5 05       		.byte	0x5
+ 795 01f6 00       		.byte	0
+ 796 01f7 05       		.uleb128 0x5
+ 797 01f8 E0000000 		.4byte	0xe0
+ 798 01fc 07020000 		.4byte	0x207
+ 799 0200 06       		.uleb128 0x6
+ 800 0201 11010000 		.4byte	0x111
+ 801 0205 05       		.byte	0x5
+ 802 0206 00       		.byte	0
+ 803 0207 0A       		.uleb128 0xa
+ 804 0208 53020000 		.4byte	.LASF41
+ 805 020c 06       		.byte	0x6
+ 806 020d 0901     		.2byte	0x109
+ 807 020f 4B010000 		.4byte	0x14b
+ 808 0213 0A       		.uleb128 0xa
+ 809 0214 75060000 		.4byte	.LASF42
+ 810 0218 06       		.byte	0x6
+ 811 0219 1101     		.2byte	0x111
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 20
+
+
+ 812 021b AD000000 		.4byte	0xad
+ 813 021f 0B       		.uleb128 0xb
+ 814 0220 08       		.byte	0x8
+ 815 0221 06       		.byte	0x6
+ 816 0222 2701     		.2byte	0x127
+ 817 0224 43020000 		.4byte	0x243
+ 818 0228 09       		.uleb128 0x9
+ 819 0229 E4020000 		.4byte	.LASF43
+ 820 022d 06       		.byte	0x6
+ 821 022e 2801     		.2byte	0x128
+ 822 0230 C3000000 		.4byte	0xc3
+ 823 0234 00       		.byte	0
+ 824 0235 09       		.uleb128 0x9
+ 825 0236 54060000 		.4byte	.LASF44
+ 826 023a 06       		.byte	0x6
+ 827 023b 2A01     		.2byte	0x12a
+ 828 023d C3000000 		.4byte	0xc3
+ 829 0241 04       		.byte	0x4
+ 830 0242 00       		.byte	0
+ 831 0243 0A       		.uleb128 0xa
+ 832 0244 83060000 		.4byte	.LASF45
+ 833 0248 06       		.byte	0x6
+ 834 0249 2C01     		.2byte	0x12c
+ 835 024b 1F020000 		.4byte	0x21f
+ 836 024f 0B       		.uleb128 0xb
+ 837 0250 1C       		.byte	0x1c
+ 838 0251 06       		.byte	0x6
+ 839 0252 3201     		.2byte	0x132
+ 840 0254 DB020000 		.4byte	0x2db
+ 841 0258 09       		.uleb128 0x9
+ 842 0259 760A0000 		.4byte	.LASF46
+ 843 025d 06       		.byte	0x6
+ 844 025e 3301     		.2byte	0x133
+ 845 0260 CE000000 		.4byte	0xce
+ 846 0264 00       		.byte	0
+ 847 0265 09       		.uleb128 0x9
+ 848 0266 F1040000 		.4byte	.LASF47
+ 849 026a 06       		.byte	0x6
+ 850 026b 3401     		.2byte	0x134
+ 851 026d CE000000 		.4byte	0xce
+ 852 0271 04       		.byte	0x4
+ 853 0272 09       		.uleb128 0x9
+ 854 0273 100A0000 		.4byte	.LASF48
+ 855 0277 06       		.byte	0x6
+ 856 0278 3901     		.2byte	0x139
+ 857 027a B8000000 		.4byte	0xb8
+ 858 027e 08       		.byte	0x8
+ 859 027f 09       		.uleb128 0x9
+ 860 0280 85010000 		.4byte	.LASF49
+ 861 0284 06       		.byte	0x6
+ 862 0285 3B01     		.2byte	0x13b
+ 863 0287 B8000000 		.4byte	0xb8
+ 864 028b 0A       		.byte	0xa
+ 865 028c 09       		.uleb128 0x9
+ 866 028d 12000000 		.4byte	.LASF50
+ 867 0291 06       		.byte	0x6
+ 868 0292 4001     		.2byte	0x140
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 21
+
+
+ 869 0294 E0000000 		.4byte	0xe0
+ 870 0298 0C       		.byte	0xc
+ 871 0299 09       		.uleb128 0x9
+ 872 029a 12010000 		.4byte	.LASF51
+ 873 029e 06       		.byte	0x6
+ 874 029f 4401     		.2byte	0x144
+ 875 02a1 E0000000 		.4byte	0xe0
+ 876 02a5 10       		.byte	0x10
+ 877 02a6 09       		.uleb128 0x9
+ 878 02a7 0A040000 		.4byte	.LASF52
+ 879 02ab 06       		.byte	0x6
+ 880 02ac 4901     		.2byte	0x149
+ 881 02ae B8000000 		.4byte	0xb8
+ 882 02b2 14       		.byte	0x14
+ 883 02b3 09       		.uleb128 0x9
+ 884 02b4 F8070000 		.4byte	.LASF53
+ 885 02b8 06       		.byte	0x6
+ 886 02b9 4D01     		.2byte	0x14d
+ 887 02bb AD000000 		.4byte	0xad
+ 888 02bf 16       		.byte	0x16
+ 889 02c0 09       		.uleb128 0x9
+ 890 02c1 460A0000 		.4byte	.LASF54
+ 891 02c5 06       		.byte	0x6
+ 892 02c6 5001     		.2byte	0x150
+ 893 02c8 AD000000 		.4byte	0xad
+ 894 02cc 17       		.byte	0x17
+ 895 02cd 09       		.uleb128 0x9
+ 896 02ce D6050000 		.4byte	.LASF55
+ 897 02d2 06       		.byte	0x6
+ 898 02d3 5301     		.2byte	0x153
+ 899 02d5 AD000000 		.4byte	0xad
+ 900 02d9 18       		.byte	0x18
+ 901 02da 00       		.byte	0
+ 902 02db 0A       		.uleb128 0xa
+ 903 02dc E7060000 		.4byte	.LASF56
+ 904 02e0 06       		.byte	0x6
+ 905 02e1 5701     		.2byte	0x157
+ 906 02e3 4F020000 		.4byte	0x24f
+ 907 02e7 0B       		.uleb128 0xb
+ 908 02e8 68       		.byte	0x68
+ 909 02e9 06       		.byte	0x6
+ 910 02ea 6001     		.2byte	0x160
+ 911 02ec 3F030000 		.4byte	0x33f
+ 912 02f0 09       		.uleb128 0x9
+ 913 02f1 68040000 		.4byte	.LASF57
+ 914 02f5 06       		.byte	0x6
+ 915 02f6 6201     		.2byte	0x162
+ 916 02f8 3F030000 		.4byte	0x33f
+ 917 02fc 00       		.byte	0
+ 918 02fd 09       		.uleb128 0x9
+ 919 02fe 34020000 		.4byte	.LASF58
+ 920 0302 06       		.byte	0x6
+ 921 0303 6401     		.2byte	0x164
+ 922 0305 AD000000 		.4byte	0xad
+ 923 0309 60       		.byte	0x60
+ 924 030a 09       		.uleb128 0x9
+ 925 030b E2050000 		.4byte	.LASF59
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 22
+
+
+ 926 030f 06       		.byte	0x6
+ 927 0310 6601     		.2byte	0x166
+ 928 0312 AD000000 		.4byte	0xad
+ 929 0316 61       		.byte	0x61
+ 930 0317 09       		.uleb128 0x9
+ 931 0318 56050000 		.4byte	.LASF60
+ 932 031c 06       		.byte	0x6
+ 933 031d 6701     		.2byte	0x167
+ 934 031f AD000000 		.4byte	0xad
+ 935 0323 62       		.byte	0x62
+ 936 0324 09       		.uleb128 0x9
+ 937 0325 F6080000 		.4byte	.LASF61
+ 938 0329 06       		.byte	0x6
+ 939 032a 6801     		.2byte	0x168
+ 940 032c AD000000 		.4byte	0xad
+ 941 0330 63       		.byte	0x63
+ 942 0331 09       		.uleb128 0x9
+ 943 0332 06010000 		.4byte	.LASF62
+ 944 0336 06       		.byte	0x6
+ 945 0337 6B01     		.2byte	0x16b
+ 946 0339 EB000000 		.4byte	0xeb
+ 947 033d 64       		.byte	0x64
+ 948 033e 00       		.byte	0
+ 949 033f 05       		.uleb128 0x5
+ 950 0340 CE000000 		.4byte	0xce
+ 951 0344 4F030000 		.4byte	0x34f
+ 952 0348 06       		.uleb128 0x6
+ 953 0349 11010000 		.4byte	0x111
+ 954 034d 17       		.byte	0x17
+ 955 034e 00       		.byte	0
+ 956 034f 0A       		.uleb128 0xa
+ 957 0350 870A0000 		.4byte	.LASF63
+ 958 0354 06       		.byte	0x6
+ 959 0355 6E01     		.2byte	0x16e
+ 960 0357 E7020000 		.4byte	0x2e7
+ 961 035b 0B       		.uleb128 0xb
+ 962 035c 0C       		.byte	0xc
+ 963 035d 06       		.byte	0x6
+ 964 035e 7601     		.2byte	0x176
+ 965 0360 7F030000 		.4byte	0x37f
+ 966 0364 09       		.uleb128 0x9
+ 967 0365 2B030000 		.4byte	.LASF64
+ 968 0369 06       		.byte	0x6
+ 969 036a 7701     		.2byte	0x177
+ 970 036c E7010000 		.4byte	0x1e7
+ 971 0370 00       		.byte	0
+ 972 0371 09       		.uleb128 0x9
+ 973 0372 26080000 		.4byte	.LASF65
+ 974 0376 06       		.byte	0x6
+ 975 0377 7901     		.2byte	0x179
+ 976 0379 E7010000 		.4byte	0x1e7
+ 977 037d 06       		.byte	0x6
+ 978 037e 00       		.byte	0
+ 979 037f 0A       		.uleb128 0xa
+ 980 0380 66050000 		.4byte	.LASF66
+ 981 0384 06       		.byte	0x6
+ 982 0385 7B01     		.2byte	0x17b
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 23
+
+
+ 983 0387 5B030000 		.4byte	0x35b
+ 984 038b 0B       		.uleb128 0xb
+ 985 038c 50       		.byte	0x50
+ 986 038d 06       		.byte	0x6
+ 987 038e 7D01     		.2byte	0x17d
+ 988 0390 99040000 		.4byte	0x499
+ 989 0394 09       		.uleb128 0x9
+ 990 0395 FC020000 		.4byte	.LASF67
+ 991 0399 06       		.byte	0x6
+ 992 039a 7E01     		.2byte	0x17e
+ 993 039c E0000000 		.4byte	0xe0
+ 994 03a0 00       		.byte	0
+ 995 03a1 09       		.uleb128 0x9
+ 996 03a2 5A0A0000 		.4byte	.LASF68
+ 997 03a6 06       		.byte	0x6
+ 998 03a7 8001     		.2byte	0x180
+ 999 03a9 B8000000 		.4byte	0xb8
+ 1000 03ad 04       		.byte	0x4
+ 1001 03ae 09       		.uleb128 0x9
+ 1002 03af 78090000 		.4byte	.LASF69
+ 1003 03b3 06       		.byte	0x6
+ 1004 03b4 8301     		.2byte	0x183
+ 1005 03b6 F6000000 		.4byte	0xf6
+ 1006 03ba 06       		.byte	0x6
+ 1007 03bb 09       		.uleb128 0x9
+ 1008 03bc DD070000 		.4byte	.LASF70
+ 1009 03c0 06       		.byte	0x6
+ 1010 03c1 8601     		.2byte	0x186
+ 1011 03c3 CE000000 		.4byte	0xce
+ 1012 03c7 08       		.byte	0x8
+ 1013 03c8 09       		.uleb128 0x9
+ 1014 03c9 4B090000 		.4byte	.LASF71
+ 1015 03cd 06       		.byte	0x6
+ 1016 03ce 8801     		.2byte	0x188
+ 1017 03d0 AD000000 		.4byte	0xad
+ 1018 03d4 0C       		.byte	0xc
+ 1019 03d5 09       		.uleb128 0x9
+ 1020 03d6 03090000 		.4byte	.LASF72
+ 1021 03da 06       		.byte	0x6
+ 1022 03db 8A01     		.2byte	0x18a
+ 1023 03dd CE000000 		.4byte	0xce
+ 1024 03e1 10       		.byte	0x10
+ 1025 03e2 09       		.uleb128 0x9
+ 1026 03e3 79000000 		.4byte	.LASF73
+ 1027 03e7 06       		.byte	0x6
+ 1028 03e8 8C01     		.2byte	0x18c
+ 1029 03ea AD000000 		.4byte	0xad
+ 1030 03ee 14       		.byte	0x14
+ 1031 03ef 09       		.uleb128 0x9
+ 1032 03f0 2E0A0000 		.4byte	.LASF74
+ 1033 03f4 06       		.byte	0x6
+ 1034 03f5 8F01     		.2byte	0x18f
+ 1035 03f7 B8000000 		.4byte	0xb8
+ 1036 03fb 16       		.byte	0x16
+ 1037 03fc 09       		.uleb128 0x9
+ 1038 03fd C5040000 		.4byte	.LASF75
+ 1039 0401 06       		.byte	0x6
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 24
+
+
+ 1040 0402 9101     		.2byte	0x191
+ 1041 0404 B8000000 		.4byte	0xb8
+ 1042 0408 18       		.byte	0x18
+ 1043 0409 09       		.uleb128 0x9
+ 1044 040a D4080000 		.4byte	.LASF76
+ 1045 040e 06       		.byte	0x6
+ 1046 040f 9401     		.2byte	0x194
+ 1047 0411 B8000000 		.4byte	0xb8
+ 1048 0415 1A       		.byte	0x1a
+ 1049 0416 09       		.uleb128 0x9
+ 1050 0417 0A050000 		.4byte	.LASF77
+ 1051 041b 06       		.byte	0x6
+ 1052 041c 9901     		.2byte	0x199
+ 1053 041e AD000000 		.4byte	0xad
+ 1054 0422 1C       		.byte	0x1c
+ 1055 0423 09       		.uleb128 0x9
+ 1056 0424 5F040000 		.4byte	.LASF78
+ 1057 0428 06       		.byte	0x6
+ 1058 0429 9B01     		.2byte	0x19b
+ 1059 042b AD000000 		.4byte	0xad
+ 1060 042f 1D       		.byte	0x1d
+ 1061 0430 09       		.uleb128 0x9
+ 1062 0431 99010000 		.4byte	.LASF79
+ 1063 0435 06       		.byte	0x6
+ 1064 0436 9C01     		.2byte	0x19c
+ 1065 0438 AD000000 		.4byte	0xad
+ 1066 043c 1E       		.byte	0x1e
+ 1067 043d 09       		.uleb128 0x9
+ 1068 043e EA000000 		.4byte	.LASF80
+ 1069 0442 06       		.byte	0x6
+ 1070 0443 9D01     		.2byte	0x19d
+ 1071 0445 01010000 		.4byte	0x101
+ 1072 0449 1F       		.byte	0x1f
+ 1073 044a 09       		.uleb128 0x9
+ 1074 044b 4C040000 		.4byte	.LASF81
+ 1075 044f 06       		.byte	0x6
+ 1076 0450 9F01     		.2byte	0x19f
+ 1077 0452 AD000000 		.4byte	0xad
+ 1078 0456 3F       		.byte	0x3f
+ 1079 0457 09       		.uleb128 0x9
+ 1080 0458 00000000 		.4byte	.LASF82
+ 1081 045c 06       		.byte	0x6
+ 1082 045d A001     		.2byte	0x1a0
+ 1083 045f AD000000 		.4byte	0xad
+ 1084 0463 40       		.byte	0x40
+ 1085 0464 09       		.uleb128 0x9
+ 1086 0465 0D060000 		.4byte	.LASF83
+ 1087 0469 06       		.byte	0x6
+ 1088 046a A101     		.2byte	0x1a1
+ 1089 046c AD000000 		.4byte	0xad
+ 1090 0470 41       		.byte	0x41
+ 1091 0471 09       		.uleb128 0x9
+ 1092 0472 95070000 		.4byte	.LASF84
+ 1093 0476 06       		.byte	0x6
+ 1094 0477 A201     		.2byte	0x1a2
+ 1095 0479 CE000000 		.4byte	0xce
+ 1096 047d 44       		.byte	0x44
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 25
+
+
+ 1097 047e 09       		.uleb128 0x9
+ 1098 047f 27000000 		.4byte	.LASF85
+ 1099 0483 06       		.byte	0x6
+ 1100 0484 A301     		.2byte	0x1a3
+ 1101 0486 CE000000 		.4byte	0xce
+ 1102 048a 48       		.byte	0x48
+ 1103 048b 09       		.uleb128 0x9
+ 1104 048c AF0A0000 		.4byte	.LASF86
+ 1105 0490 06       		.byte	0x6
+ 1106 0491 A401     		.2byte	0x1a4
+ 1107 0493 E0000000 		.4byte	0xe0
+ 1108 0497 4C       		.byte	0x4c
+ 1109 0498 00       		.byte	0
+ 1110 0499 0A       		.uleb128 0xa
+ 1111 049a DC010000 		.4byte	.LASF87
+ 1112 049e 06       		.byte	0x6
+ 1113 049f A701     		.2byte	0x1a7
+ 1114 04a1 8B030000 		.4byte	0x38b
+ 1115 04a5 0C       		.uleb128 0xc
+ 1116 04a6 5C01     		.2byte	0x15c
+ 1117 04a8 06       		.byte	0x6
+ 1118 04a9 B101     		.2byte	0x1b1
+ 1119 04ab 07060000 		.4byte	0x607
+ 1120 04af 09       		.uleb128 0x9
+ 1121 04b0 E8040000 		.4byte	.LASF88
+ 1122 04b4 06       		.byte	0x6
+ 1123 04b5 B201     		.2byte	0x1b2
+ 1124 04b7 43020000 		.4byte	0x243
+ 1125 04bb 00       		.byte	0
+ 1126 04bc 09       		.uleb128 0x9
+ 1127 04bd A2010000 		.4byte	.LASF89
+ 1128 04c1 06       		.byte	0x6
+ 1129 04c2 B401     		.2byte	0x1b4
+ 1130 04c4 C3000000 		.4byte	0xc3
+ 1131 04c8 08       		.byte	0x8
+ 1132 04c9 09       		.uleb128 0x9
+ 1133 04ca A6020000 		.4byte	.LASF90
+ 1134 04ce 06       		.byte	0x6
+ 1135 04cf B601     		.2byte	0x1b6
+ 1136 04d1 C3000000 		.4byte	0xc3
+ 1137 04d5 0C       		.byte	0xc
+ 1138 04d6 09       		.uleb128 0x9
+ 1139 04d7 72080000 		.4byte	.LASF91
+ 1140 04db 06       		.byte	0x6
+ 1141 04dc B801     		.2byte	0x1b8
+ 1142 04de 07020000 		.4byte	0x207
+ 1143 04e2 10       		.byte	0x10
+ 1144 04e3 09       		.uleb128 0x9
+ 1145 04e4 45050000 		.4byte	.LASF92
+ 1146 04e8 06       		.byte	0x6
+ 1147 04e9 BA01     		.2byte	0x1ba
+ 1148 04eb DB020000 		.4byte	0x2db
+ 1149 04ef 50       		.byte	0x50
+ 1150 04f0 09       		.uleb128 0x9
+ 1151 04f1 BE090000 		.4byte	.LASF93
+ 1152 04f5 06       		.byte	0x6
+ 1153 04f6 BC01     		.2byte	0x1bc
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 26
+
+
+ 1154 04f8 4F030000 		.4byte	0x34f
+ 1155 04fc 6C       		.byte	0x6c
+ 1156 04fd 09       		.uleb128 0x9
+ 1157 04fe 9C080000 		.4byte	.LASF94
+ 1158 0502 06       		.byte	0x6
+ 1159 0503 BE01     		.2byte	0x1be
+ 1160 0505 99040000 		.4byte	0x499
+ 1161 0509 D4       		.byte	0xd4
+ 1162 050a 0D       		.uleb128 0xd
+ 1163 050b 20040000 		.4byte	.LASF95
+ 1164 050f 06       		.byte	0x6
+ 1165 0510 C001     		.2byte	0x1c0
+ 1166 0512 7F030000 		.4byte	0x37f
+ 1167 0516 2401     		.2byte	0x124
+ 1168 0518 0D       		.uleb128 0xd
+ 1169 0519 26070000 		.4byte	.LASF96
+ 1170 051d 06       		.byte	0x6
+ 1171 051e C201     		.2byte	0x1c2
+ 1172 0520 AD000000 		.4byte	0xad
+ 1173 0524 3001     		.2byte	0x130
+ 1174 0526 0D       		.uleb128 0xd
+ 1175 0527 E6090000 		.4byte	.LASF97
+ 1176 052b 06       		.byte	0x6
+ 1177 052c C401     		.2byte	0x1c4
+ 1178 052e AD000000 		.4byte	0xad
+ 1179 0532 3101     		.2byte	0x131
+ 1180 0534 0D       		.uleb128 0xd
+ 1181 0535 6D0A0000 		.4byte	.LASF98
+ 1182 0539 06       		.byte	0x6
+ 1183 053a C601     		.2byte	0x1c6
+ 1184 053c 13020000 		.4byte	0x213
+ 1185 0540 3201     		.2byte	0x132
+ 1186 0542 0D       		.uleb128 0xd
+ 1187 0543 69010000 		.4byte	.LASF99
+ 1188 0547 06       		.byte	0x6
+ 1189 0548 C801     		.2byte	0x1c8
+ 1190 054a 40010000 		.4byte	0x140
+ 1191 054e 3301     		.2byte	0x133
+ 1192 0550 0D       		.uleb128 0xd
+ 1193 0551 2E0A0000 		.4byte	.LASF74
+ 1194 0555 06       		.byte	0x6
+ 1195 0556 CA01     		.2byte	0x1ca
+ 1196 0558 B8000000 		.4byte	0xb8
+ 1197 055c 3401     		.2byte	0x134
+ 1198 055e 0D       		.uleb128 0xd
+ 1199 055f C5040000 		.4byte	.LASF75
+ 1200 0563 06       		.byte	0x6
+ 1201 0564 CC01     		.2byte	0x1cc
+ 1202 0566 B8000000 		.4byte	0xb8
+ 1203 056a 3601     		.2byte	0x136
+ 1204 056c 0D       		.uleb128 0xd
+ 1205 056d D4080000 		.4byte	.LASF76
+ 1206 0571 06       		.byte	0x6
+ 1207 0572 CF01     		.2byte	0x1cf
+ 1208 0574 B8000000 		.4byte	0xb8
+ 1209 0578 3801     		.2byte	0x138
+ 1210 057a 0D       		.uleb128 0xd
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 27
+
+
+ 1211 057b DB040000 		.4byte	.LASF100
+ 1212 057f 06       		.byte	0x6
+ 1213 0580 D201     		.2byte	0x1d2
+ 1214 0582 AD000000 		.4byte	0xad
+ 1215 0586 3A01     		.2byte	0x13a
+ 1216 0588 0D       		.uleb128 0xd
+ 1217 0589 8E020000 		.4byte	.LASF101
+ 1218 058d 06       		.byte	0x6
+ 1219 058e D401     		.2byte	0x1d4
+ 1220 0590 B8000000 		.4byte	0xb8
+ 1221 0594 3C01     		.2byte	0x13c
+ 1222 0596 0D       		.uleb128 0xd
+ 1223 0597 200A0000 		.4byte	.LASF102
+ 1224 059b 06       		.byte	0x6
+ 1225 059c D601     		.2byte	0x1d6
+ 1226 059e E0000000 		.4byte	0xe0
+ 1227 05a2 4001     		.2byte	0x140
+ 1228 05a4 0D       		.uleb128 0xd
+ 1229 05a5 A2070000 		.4byte	.LASF103
+ 1230 05a9 06       		.byte	0x6
+ 1231 05aa D901     		.2byte	0x1d9
+ 1232 05ac E0000000 		.4byte	0xe0
+ 1233 05b0 4401     		.2byte	0x144
+ 1234 05b2 0D       		.uleb128 0xd
+ 1235 05b3 CB070000 		.4byte	.LASF104
+ 1236 05b7 06       		.byte	0x6
+ 1237 05b8 DB01     		.2byte	0x1db
+ 1238 05ba E0000000 		.4byte	0xe0
+ 1239 05be 4801     		.2byte	0x148
+ 1240 05c0 0D       		.uleb128 0xd
+ 1241 05c1 B5080000 		.4byte	.LASF105
+ 1242 05c5 06       		.byte	0x6
+ 1243 05c6 DD01     		.2byte	0x1dd
+ 1244 05c8 07060000 		.4byte	0x607
+ 1245 05cc 4C01     		.2byte	0x14c
+ 1246 05ce 0D       		.uleb128 0xd
+ 1247 05cf 3A030000 		.4byte	.LASF106
+ 1248 05d3 06       		.byte	0x6
+ 1249 05d4 DF01     		.2byte	0x1df
+ 1250 05d6 AD000000 		.4byte	0xad
+ 1251 05da 5001     		.2byte	0x150
+ 1252 05dc 0D       		.uleb128 0xd
+ 1253 05dd F2030000 		.4byte	.LASF107
+ 1254 05e1 06       		.byte	0x6
+ 1255 05e2 E101     		.2byte	0x1e1
+ 1256 05e4 B8000000 		.4byte	0xb8
+ 1257 05e8 5201     		.2byte	0x152
+ 1258 05ea 0D       		.uleb128 0xd
+ 1259 05eb AE040000 		.4byte	.LASF108
+ 1260 05ef 06       		.byte	0x6
+ 1261 05f0 E301     		.2byte	0x1e3
+ 1262 05f2 B8000000 		.4byte	0xb8
+ 1263 05f6 5401     		.2byte	0x154
+ 1264 05f8 0D       		.uleb128 0xd
+ 1265 05f9 2F090000 		.4byte	.LASF109
+ 1266 05fd 06       		.byte	0x6
+ 1267 05fe E501     		.2byte	0x1e5
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 28
+
+
+ 1268 0600 E0000000 		.4byte	0xe0
+ 1269 0604 5801     		.2byte	0x158
+ 1270 0606 00       		.byte	0
+ 1271 0607 0E       		.uleb128 0xe
+ 1272 0608 04       		.byte	0x4
+ 1273 0609 AD000000 		.4byte	0xad
+ 1274 060d 0A       		.uleb128 0xa
+ 1275 060e 66090000 		.4byte	.LASF110
+ 1276 0612 06       		.byte	0x6
+ 1277 0613 E801     		.2byte	0x1e8
+ 1278 0615 A5040000 		.4byte	0x4a5
+ 1279 0619 0F       		.uleb128 0xf
+ 1280 061a 6001     		.2byte	0x160
+ 1281 061c 07       		.byte	0x7
+ 1282 061d 3A       		.byte	0x3a
+ 1283 061e 56060000 		.4byte	0x656
+ 1284 0622 08       		.uleb128 0x8
+ 1285 0623 AA0A0000 		.4byte	.LASF111
+ 1286 0627 07       		.byte	0x7
+ 1287 0628 3B       		.byte	0x3b
+ 1288 0629 0D060000 		.4byte	0x60d
+ 1289 062d 00       		.byte	0
+ 1290 062e 10       		.uleb128 0x10
+ 1291 062f 9F060000 		.4byte	.LASF112
+ 1292 0633 07       		.byte	0x7
+ 1293 0634 3E       		.byte	0x3e
+ 1294 0635 AD000000 		.4byte	0xad
+ 1295 0639 5C01     		.2byte	0x15c
+ 1296 063b 10       		.uleb128 0x10
+ 1297 063c 43080000 		.4byte	.LASF113
+ 1298 0640 07       		.byte	0x7
+ 1299 0641 3F       		.byte	0x3f
+ 1300 0642 AD000000 		.4byte	0xad
+ 1301 0646 5D01     		.2byte	0x15d
+ 1302 0648 10       		.uleb128 0x10
+ 1303 0649 87040000 		.4byte	.LASF114
+ 1304 064d 07       		.byte	0x7
+ 1305 064e 40       		.byte	0x40
+ 1306 064f B8000000 		.4byte	0xb8
+ 1307 0653 5E01     		.2byte	0x15e
+ 1308 0655 00       		.byte	0
+ 1309 0656 02       		.uleb128 0x2
+ 1310 0657 45010000 		.4byte	.LASF115
+ 1311 065b 07       		.byte	0x7
+ 1312 065c 42       		.byte	0x42
+ 1313 065d 19060000 		.4byte	0x619
+ 1314 0661 02       		.uleb128 0x2
+ 1315 0662 34000000 		.4byte	.LASF116
+ 1316 0666 07       		.byte	0x7
+ 1317 0667 49       		.byte	0x49
+ 1318 0668 6C060000 		.4byte	0x66c
+ 1319 066c 0E       		.uleb128 0xe
+ 1320 066d 04       		.byte	0x4
+ 1321 066e 56060000 		.4byte	0x656
+ 1322 0672 03       		.uleb128 0x3
+ 1323 0673 04       		.byte	0x4
+ 1324 0674 04       		.byte	0x4
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 29
+
+
+ 1325 0675 42020000 		.4byte	.LASF117
+ 1326 0679 03       		.uleb128 0x3
+ 1327 067a 08       		.byte	0x8
+ 1328 067b 04       		.byte	0x4
+ 1329 067c 3F0A0000 		.4byte	.LASF118
+ 1330 0680 11       		.uleb128 0x11
+ 1331 0681 4E080000 		.4byte	.LASF119
+ 1332 0685 01       		.byte	0x1
+ 1333 0686 5D       		.byte	0x5d
+ 1334 0687 1F010000 		.4byte	0x11f
+ 1335 068b 00000000 		.4byte	.LFB35
+ 1336 068f 04000000 		.4byte	.LFE35-.LFB35
+ 1337 0693 01       		.uleb128 0x1
+ 1338 0694 9C       		.byte	0x9c
+ 1339 0695 B5060000 		.4byte	0x6b5
+ 1340 0699 12       		.uleb128 0x12
+ 1341 069a 44657600 		.ascii	"Dev\000"
+ 1342 069e 01       		.byte	0x1
+ 1343 069f 5D       		.byte	0x5d
+ 1344 06a0 61060000 		.4byte	0x661
+ 1345 06a4 00000000 		.4byte	.LLST0
+ 1346 06a8 13       		.uleb128 0x13
+ 1347 06a9 D0000000 		.4byte	.LASF121
+ 1348 06ad 01       		.byte	0x1
+ 1349 06ae 5E       		.byte	0x5e
+ 1350 06af 1F010000 		.4byte	0x11f
+ 1351 06b3 00       		.byte	0
+ 1352 06b4 00       		.byte	0
+ 1353 06b5 11       		.uleb128 0x11
+ 1354 06b6 09080000 		.4byte	.LASF120
+ 1355 06ba 01       		.byte	0x1
+ 1356 06bb 63       		.byte	0x63
+ 1357 06bc 1F010000 		.4byte	0x11f
+ 1358 06c0 00000000 		.4byte	.LFB36
+ 1359 06c4 04000000 		.4byte	.LFE36-.LFB36
+ 1360 06c8 01       		.uleb128 0x1
+ 1361 06c9 9C       		.byte	0x9c
+ 1362 06ca EA060000 		.4byte	0x6ea
+ 1363 06ce 12       		.uleb128 0x12
+ 1364 06cf 44657600 		.ascii	"Dev\000"
+ 1365 06d3 01       		.byte	0x1
+ 1366 06d4 63       		.byte	0x63
+ 1367 06d5 61060000 		.4byte	0x661
+ 1368 06d9 21000000 		.4byte	.LLST1
+ 1369 06dd 13       		.uleb128 0x13
+ 1370 06de D0000000 		.4byte	.LASF121
+ 1371 06e2 01       		.byte	0x1
+ 1372 06e3 64       		.byte	0x64
+ 1373 06e4 1F010000 		.4byte	0x11f
+ 1374 06e8 00       		.byte	0
+ 1375 06e9 00       		.byte	0
+ 1376 06ea 11       		.uleb128 0x11
+ 1377 06eb 6F070000 		.4byte	.LASF122
+ 1378 06ef 01       		.byte	0x1
+ 1379 06f0 6A       		.byte	0x6a
+ 1380 06f1 1F010000 		.4byte	0x11f
+ 1381 06f5 00000000 		.4byte	.LFB37
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 30
+
+
+ 1382 06f9 24000000 		.4byte	.LFE37-.LFB37
+ 1383 06fd 01       		.uleb128 0x1
+ 1384 06fe 9C       		.byte	0x9c
+ 1385 06ff 76070000 		.4byte	0x776
+ 1386 0703 12       		.uleb128 0x12
+ 1387 0704 44657600 		.ascii	"Dev\000"
+ 1388 0708 01       		.byte	0x1
+ 1389 0709 6A       		.byte	0x6a
+ 1390 070a 61060000 		.4byte	0x661
+ 1391 070e 42000000 		.4byte	.LLST2
+ 1392 0712 14       		.uleb128 0x14
+ 1393 0713 74020000 		.4byte	.LASF123
+ 1394 0717 01       		.byte	0x1
+ 1395 0718 6A       		.byte	0x6a
+ 1396 0719 AD000000 		.4byte	0xad
+ 1397 071d 63000000 		.4byte	.LLST3
+ 1398 0721 14       		.uleb128 0x14
+ 1399 0722 96080000 		.4byte	.LASF124
+ 1400 0726 01       		.byte	0x1
+ 1401 0727 6A       		.byte	0x6a
+ 1402 0728 07060000 		.4byte	0x607
+ 1403 072c 84000000 		.4byte	.LLST4
+ 1404 0730 14       		.uleb128 0x14
+ 1405 0731 6E020000 		.4byte	.LASF125
+ 1406 0735 01       		.byte	0x1
+ 1407 0736 6A       		.byte	0x6a
+ 1408 0737 CE000000 		.4byte	0xce
+ 1409 073b A5000000 		.4byte	.LLST5
+ 1410 073f 15       		.uleb128 0x15
+ 1411 0740 D0000000 		.4byte	.LASF121
+ 1412 0744 01       		.byte	0x1
+ 1413 0745 6C       		.byte	0x6c
+ 1414 0746 1F010000 		.4byte	0x11f
+ 1415 074a C6000000 		.4byte	.LLST6
+ 1416 074e 15       		.uleb128 0x15
+ 1417 074f 48020000 		.4byte	.LASF126
+ 1418 0753 01       		.byte	0x1
+ 1419 0754 6D       		.byte	0x6d
+ 1420 0755 C3000000 		.4byte	0xc3
+ 1421 0759 F0000000 		.4byte	.LLST7
+ 1422 075d 15       		.uleb128 0x15
+ 1423 075e BF010000 		.4byte	.LASF127
+ 1424 0762 01       		.byte	0x1
+ 1425 0763 6E       		.byte	0x6e
+ 1426 0764 AD000000 		.4byte	0xad
+ 1427 0768 0F010000 		.4byte	.LLST8
+ 1428 076c 16       		.uleb128 0x16
+ 1429 076d 18000000 		.4byte	.LVL8
+ 1430 0771 510C0000 		.4byte	0xc51
+ 1431 0775 00       		.byte	0
+ 1432 0776 11       		.uleb128 0x11
+ 1433 0777 22020000 		.4byte	.LASF128
+ 1434 077b 01       		.byte	0x1
+ 1435 077c 7F       		.byte	0x7f
+ 1436 077d 1F010000 		.4byte	0x11f
+ 1437 0781 00000000 		.4byte	.LFB38
+ 1438 0785 24000000 		.4byte	.LFE38-.LFB38
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 31
+
+
+ 1439 0789 01       		.uleb128 0x1
+ 1440 078a 9C       		.byte	0x9c
+ 1441 078b 02080000 		.4byte	0x802
+ 1442 078f 12       		.uleb128 0x12
+ 1443 0790 44657600 		.ascii	"Dev\000"
+ 1444 0794 01       		.byte	0x1
+ 1445 0795 7F       		.byte	0x7f
+ 1446 0796 61060000 		.4byte	0x661
+ 1447 079a 22010000 		.4byte	.LLST9
+ 1448 079e 14       		.uleb128 0x14
+ 1449 079f 74020000 		.4byte	.LASF123
+ 1450 07a3 01       		.byte	0x1
+ 1451 07a4 7F       		.byte	0x7f
+ 1452 07a5 AD000000 		.4byte	0xad
+ 1453 07a9 43010000 		.4byte	.LLST10
+ 1454 07ad 14       		.uleb128 0x14
+ 1455 07ae 96080000 		.4byte	.LASF124
+ 1456 07b2 01       		.byte	0x1
+ 1457 07b3 7F       		.byte	0x7f
+ 1458 07b4 07060000 		.4byte	0x607
+ 1459 07b8 64010000 		.4byte	.LLST11
+ 1460 07bc 14       		.uleb128 0x14
+ 1461 07bd 6E020000 		.4byte	.LASF125
+ 1462 07c1 01       		.byte	0x1
+ 1463 07c2 7F       		.byte	0x7f
+ 1464 07c3 CE000000 		.4byte	0xce
+ 1465 07c7 85010000 		.4byte	.LLST12
+ 1466 07cb 15       		.uleb128 0x15
+ 1467 07cc D0000000 		.4byte	.LASF121
+ 1468 07d0 01       		.byte	0x1
+ 1469 07d1 81       		.byte	0x81
+ 1470 07d2 1F010000 		.4byte	0x11f
+ 1471 07d6 A6010000 		.4byte	.LLST13
+ 1472 07da 15       		.uleb128 0x15
+ 1473 07db 48020000 		.4byte	.LASF126
+ 1474 07df 01       		.byte	0x1
+ 1475 07e0 82       		.byte	0x82
+ 1476 07e1 C3000000 		.4byte	0xc3
+ 1477 07e5 D0010000 		.4byte	.LLST14
+ 1478 07e9 15       		.uleb128 0x15
+ 1479 07ea BF010000 		.4byte	.LASF127
+ 1480 07ee 01       		.byte	0x1
+ 1481 07ef 83       		.byte	0x83
+ 1482 07f0 AD000000 		.4byte	0xad
+ 1483 07f4 E3010000 		.4byte	.LLST15
+ 1484 07f8 16       		.uleb128 0x16
+ 1485 07f9 18000000 		.4byte	.LVL17
+ 1486 07fd 5C0C0000 		.4byte	0xc5c
+ 1487 0801 00       		.byte	0
+ 1488 0802 11       		.uleb128 0x11
+ 1489 0803 08070000 		.4byte	.LASF129
+ 1490 0807 01       		.byte	0x1
+ 1491 0808 94       		.byte	0x94
+ 1492 0809 1F010000 		.4byte	0x11f
+ 1493 080d 00000000 		.4byte	.LFB39
+ 1494 0811 16000000 		.4byte	.LFE39-.LFB39
+ 1495 0815 01       		.uleb128 0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 32
+
+
+ 1496 0816 9C       		.byte	0x9c
+ 1497 0817 7F080000 		.4byte	0x87f
+ 1498 081b 12       		.uleb128 0x12
+ 1499 081c 44657600 		.ascii	"Dev\000"
+ 1500 0820 01       		.byte	0x1
+ 1501 0821 94       		.byte	0x94
+ 1502 0822 61060000 		.4byte	0x661
+ 1503 0826 F6010000 		.4byte	.LLST16
+ 1504 082a 14       		.uleb128 0x14
+ 1505 082b 74020000 		.4byte	.LASF123
+ 1506 082f 01       		.byte	0x1
+ 1507 0830 94       		.byte	0x94
+ 1508 0831 AD000000 		.4byte	0xad
+ 1509 0835 17020000 		.4byte	.LLST17
+ 1510 0839 14       		.uleb128 0x14
+ 1511 083a 61050000 		.4byte	.LASF130
+ 1512 083e 01       		.byte	0x1
+ 1513 083f 94       		.byte	0x94
+ 1514 0840 AD000000 		.4byte	0xad
+ 1515 0844 38020000 		.4byte	.LLST18
+ 1516 0848 15       		.uleb128 0x15
+ 1517 0849 D0000000 		.4byte	.LASF121
+ 1518 084d 01       		.byte	0x1
+ 1519 084e 95       		.byte	0x95
+ 1520 084f 1F010000 		.4byte	0x11f
+ 1521 0853 59020000 		.4byte	.LLST19
+ 1522 0857 15       		.uleb128 0x15
+ 1523 0858 48020000 		.4byte	.LASF126
+ 1524 085c 01       		.byte	0x1
+ 1525 085d 96       		.byte	0x96
+ 1526 085e C3000000 		.4byte	0xc3
+ 1527 0862 78020000 		.4byte	.LLST20
+ 1528 0866 15       		.uleb128 0x15
+ 1529 0867 BF010000 		.4byte	.LASF127
+ 1530 086b 01       		.byte	0x1
+ 1531 086c 97       		.byte	0x97
+ 1532 086d AD000000 		.4byte	0xad
+ 1533 0871 8B020000 		.4byte	.LLST21
+ 1534 0875 16       		.uleb128 0x16
+ 1535 0876 0C000000 		.4byte	.LVL25
+ 1536 087a 670C0000 		.4byte	0xc67
+ 1537 087e 00       		.byte	0
+ 1538 087f 11       		.uleb128 0x11
+ 1539 0880 17070000 		.4byte	.LASF131
+ 1540 0884 01       		.byte	0x1
+ 1541 0885 A3       		.byte	0xa3
+ 1542 0886 1F010000 		.4byte	0x11f
+ 1543 088a 00000000 		.4byte	.LFB40
+ 1544 088e 16000000 		.4byte	.LFE40-.LFB40
+ 1545 0892 01       		.uleb128 0x1
+ 1546 0893 9C       		.byte	0x9c
+ 1547 0894 FC080000 		.4byte	0x8fc
+ 1548 0898 12       		.uleb128 0x12
+ 1549 0899 44657600 		.ascii	"Dev\000"
+ 1550 089d 01       		.byte	0x1
+ 1551 089e A3       		.byte	0xa3
+ 1552 089f 61060000 		.4byte	0x661
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 33
+
+
+ 1553 08a3 9E020000 		.4byte	.LLST22
+ 1554 08a7 14       		.uleb128 0x14
+ 1555 08a8 74020000 		.4byte	.LASF123
+ 1556 08ac 01       		.byte	0x1
+ 1557 08ad A3       		.byte	0xa3
+ 1558 08ae AD000000 		.4byte	0xad
+ 1559 08b2 BF020000 		.4byte	.LLST23
+ 1560 08b6 14       		.uleb128 0x14
+ 1561 08b7 61050000 		.4byte	.LASF130
+ 1562 08bb 01       		.byte	0x1
+ 1563 08bc A3       		.byte	0xa3
+ 1564 08bd B8000000 		.4byte	0xb8
+ 1565 08c1 E0020000 		.4byte	.LLST24
+ 1566 08c5 15       		.uleb128 0x15
+ 1567 08c6 D0000000 		.4byte	.LASF121
+ 1568 08ca 01       		.byte	0x1
+ 1569 08cb A4       		.byte	0xa4
+ 1570 08cc 1F010000 		.4byte	0x11f
+ 1571 08d0 01030000 		.4byte	.LLST25
+ 1572 08d4 15       		.uleb128 0x15
+ 1573 08d5 48020000 		.4byte	.LASF126
+ 1574 08d9 01       		.byte	0x1
+ 1575 08da A5       		.byte	0xa5
+ 1576 08db C3000000 		.4byte	0xc3
+ 1577 08df 20030000 		.4byte	.LLST26
+ 1578 08e3 15       		.uleb128 0x15
+ 1579 08e4 BF010000 		.4byte	.LASF127
+ 1580 08e8 01       		.byte	0x1
+ 1581 08e9 A6       		.byte	0xa6
+ 1582 08ea AD000000 		.4byte	0xad
+ 1583 08ee 33030000 		.4byte	.LLST27
+ 1584 08f2 16       		.uleb128 0x16
+ 1585 08f3 0C000000 		.4byte	.LVL31
+ 1586 08f7 720C0000 		.4byte	0xc72
+ 1587 08fb 00       		.byte	0
+ 1588 08fc 11       		.uleb128 0x11
+ 1589 08fd 54030000 		.4byte	.LASF132
+ 1590 0901 01       		.byte	0x1
+ 1591 0902 B2       		.byte	0xb2
+ 1592 0903 1F010000 		.4byte	0x11f
+ 1593 0907 00000000 		.4byte	.LFB41
+ 1594 090b 16000000 		.4byte	.LFE41-.LFB41
+ 1595 090f 01       		.uleb128 0x1
+ 1596 0910 9C       		.byte	0x9c
+ 1597 0911 81090000 		.4byte	0x981
+ 1598 0915 12       		.uleb128 0x12
+ 1599 0916 44657600 		.ascii	"Dev\000"
+ 1600 091a 01       		.byte	0x1
+ 1601 091b B2       		.byte	0xb2
+ 1602 091c 61060000 		.4byte	0x661
+ 1603 0920 46030000 		.4byte	.LLST28
+ 1604 0924 14       		.uleb128 0x14
+ 1605 0925 74020000 		.4byte	.LASF123
+ 1606 0929 01       		.byte	0x1
+ 1607 092a B2       		.byte	0xb2
+ 1608 092b AD000000 		.4byte	0xad
+ 1609 092f 67030000 		.4byte	.LLST29
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 34
+
+
+ 1610 0933 14       		.uleb128 0x14
+ 1611 0934 61050000 		.4byte	.LASF130
+ 1612 0938 01       		.byte	0x1
+ 1613 0939 B2       		.byte	0xb2
+ 1614 093a CE000000 		.4byte	0xce
+ 1615 093e 88030000 		.4byte	.LLST30
+ 1616 0942 15       		.uleb128 0x15
+ 1617 0943 D0000000 		.4byte	.LASF121
+ 1618 0947 01       		.byte	0x1
+ 1619 0948 B3       		.byte	0xb3
+ 1620 0949 1F010000 		.4byte	0x11f
+ 1621 094d A9030000 		.4byte	.LLST31
+ 1622 0951 15       		.uleb128 0x15
+ 1623 0952 48020000 		.4byte	.LASF126
+ 1624 0956 01       		.byte	0x1
+ 1625 0957 B4       		.byte	0xb4
+ 1626 0958 C3000000 		.4byte	0xc3
+ 1627 095c C8030000 		.4byte	.LLST32
+ 1628 0960 15       		.uleb128 0x15
+ 1629 0961 BF010000 		.4byte	.LASF127
+ 1630 0965 01       		.byte	0x1
+ 1631 0966 B5       		.byte	0xb5
+ 1632 0967 AD000000 		.4byte	0xad
+ 1633 096b DB030000 		.4byte	.LLST33
+ 1634 096f 17       		.uleb128 0x17
+ 1635 0970 0C000000 		.4byte	.LVL37
+ 1636 0974 7D0C0000 		.4byte	0xc7d
+ 1637 0978 18       		.uleb128 0x18
+ 1638 0979 01       		.uleb128 0x1
+ 1639 097a 52       		.byte	0x52
+ 1640 097b 03       		.uleb128 0x3
+ 1641 097c F3       		.byte	0xf3
+ 1642 097d 01       		.uleb128 0x1
+ 1643 097e 52       		.byte	0x52
+ 1644 097f 00       		.byte	0
+ 1645 0980 00       		.byte	0
+ 1646 0981 11       		.uleb128 0x11
+ 1647 0982 82070000 		.4byte	.LASF133
+ 1648 0986 01       		.byte	0x1
+ 1649 0987 C1       		.byte	0xc1
+ 1650 0988 1F010000 		.4byte	0x11f
+ 1651 098c 00000000 		.4byte	.LFB42
+ 1652 0990 48000000 		.4byte	.LFE42-.LFB42
+ 1653 0994 01       		.uleb128 0x1
+ 1654 0995 9C       		.byte	0x9c
+ 1655 0996 4C0A0000 		.4byte	0xa4c
+ 1656 099a 12       		.uleb128 0x12
+ 1657 099b 44657600 		.ascii	"Dev\000"
+ 1658 099f 01       		.byte	0x1
+ 1659 09a0 C1       		.byte	0xc1
+ 1660 09a1 61060000 		.4byte	0x661
+ 1661 09a5 EE030000 		.4byte	.LLST34
+ 1662 09a9 14       		.uleb128 0x14
+ 1663 09aa 74020000 		.4byte	.LASF123
+ 1664 09ae 01       		.byte	0x1
+ 1665 09af C1       		.byte	0xc1
+ 1666 09b0 AD000000 		.4byte	0xad
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 35
+
+
+ 1667 09b4 0F040000 		.4byte	.LLST35
+ 1668 09b8 14       		.uleb128 0x14
+ 1669 09b9 27090000 		.4byte	.LASF134
+ 1670 09bd 01       		.byte	0x1
+ 1671 09be C1       		.byte	0xc1
+ 1672 09bf AD000000 		.4byte	0xad
+ 1673 09c3 30040000 		.4byte	.LLST36
+ 1674 09c7 14       		.uleb128 0x14
+ 1675 09c8 800A0000 		.4byte	.LASF135
+ 1676 09cc 01       		.byte	0x1
+ 1677 09cd C1       		.byte	0xc1
+ 1678 09ce AD000000 		.4byte	0xad
+ 1679 09d2 51040000 		.4byte	.LLST37
+ 1680 09d6 15       		.uleb128 0x15
+ 1681 09d7 D0000000 		.4byte	.LASF121
+ 1682 09db 01       		.byte	0x1
+ 1683 09dc C2       		.byte	0xc2
+ 1684 09dd 1F010000 		.4byte	0x11f
+ 1685 09e1 72040000 		.4byte	.LLST38
+ 1686 09e5 15       		.uleb128 0x15
+ 1687 09e6 48020000 		.4byte	.LASF126
+ 1688 09ea 01       		.byte	0x1
+ 1689 09eb C3       		.byte	0xc3
+ 1690 09ec C3000000 		.4byte	0xc3
+ 1691 09f0 91040000 		.4byte	.LLST39
+ 1692 09f4 15       		.uleb128 0x15
+ 1693 09f5 BF010000 		.4byte	.LASF127
+ 1694 09f9 01       		.byte	0x1
+ 1695 09fa C4       		.byte	0xc4
+ 1696 09fb AD000000 		.4byte	0xad
+ 1697 09ff AF040000 		.4byte	.LLST40
+ 1698 0a03 19       		.uleb128 0x19
+ 1699 0a04 61050000 		.4byte	.LASF130
+ 1700 0a08 01       		.byte	0x1
+ 1701 0a09 C5       		.byte	0xc5
+ 1702 0a0a AD000000 		.4byte	0xad
+ 1703 0a0e 02       		.uleb128 0x2
+ 1704 0a0f 91       		.byte	0x91
+ 1705 0a10 67       		.sleb128 -25
+ 1706 0a11 1A       		.uleb128 0x1a
+ 1707 0a12 1A000000 		.4byte	.LVL46
+ 1708 0a16 880C0000 		.4byte	0xc88
+ 1709 0a1a 330A0000 		.4byte	0xa33
+ 1710 0a1e 18       		.uleb128 0x18
+ 1711 0a1f 01       		.uleb128 0x1
+ 1712 0a20 50       		.byte	0x50
+ 1713 0a21 02       		.uleb128 0x2
+ 1714 0a22 75       		.byte	0x75
+ 1715 0a23 00       		.sleb128 0
+ 1716 0a24 18       		.uleb128 0x18
+ 1717 0a25 01       		.uleb128 0x1
+ 1718 0a26 51       		.byte	0x51
+ 1719 0a27 04       		.uleb128 0x4
+ 1720 0a28 91       		.byte	0x91
+ 1721 0a29 5C       		.sleb128 -36
+ 1722 0a2a 94       		.byte	0x94
+ 1723 0a2b 01       		.byte	0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 36
+
+
+ 1724 0a2c 18       		.uleb128 0x18
+ 1725 0a2d 01       		.uleb128 0x1
+ 1726 0a2e 52       		.byte	0x52
+ 1727 0a2f 02       		.uleb128 0x2
+ 1728 0a30 91       		.byte	0x91
+ 1729 0a31 67       		.sleb128 -25
+ 1730 0a32 00       		.byte	0
+ 1731 0a33 17       		.uleb128 0x17
+ 1732 0a34 3C000000 		.4byte	.LVL49
+ 1733 0a38 670C0000 		.4byte	0xc67
+ 1734 0a3c 18       		.uleb128 0x18
+ 1735 0a3d 01       		.uleb128 0x1
+ 1736 0a3e 50       		.byte	0x50
+ 1737 0a3f 02       		.uleb128 0x2
+ 1738 0a40 75       		.byte	0x75
+ 1739 0a41 00       		.sleb128 0
+ 1740 0a42 18       		.uleb128 0x18
+ 1741 0a43 01       		.uleb128 0x1
+ 1742 0a44 51       		.byte	0x51
+ 1743 0a45 04       		.uleb128 0x4
+ 1744 0a46 91       		.byte	0x91
+ 1745 0a47 5C       		.sleb128 -36
+ 1746 0a48 94       		.byte	0x94
+ 1747 0a49 01       		.byte	0x1
+ 1748 0a4a 00       		.byte	0
+ 1749 0a4b 00       		.byte	0
+ 1750 0a4c 11       		.uleb128 0x11
+ 1751 0a4d 36060000 		.4byte	.LASF136
+ 1752 0a51 01       		.byte	0x1
+ 1753 0a52 D9       		.byte	0xd9
+ 1754 0a53 1F010000 		.4byte	0x11f
+ 1755 0a57 00000000 		.4byte	.LFB43
+ 1756 0a5b 16000000 		.4byte	.LFE43-.LFB43
+ 1757 0a5f 01       		.uleb128 0x1
+ 1758 0a60 9C       		.byte	0x9c
+ 1759 0a61 D10A0000 		.4byte	0xad1
+ 1760 0a65 12       		.uleb128 0x12
+ 1761 0a66 44657600 		.ascii	"Dev\000"
+ 1762 0a6a 01       		.byte	0x1
+ 1763 0a6b D9       		.byte	0xd9
+ 1764 0a6c 61060000 		.4byte	0x661
+ 1765 0a70 C2040000 		.4byte	.LLST41
+ 1766 0a74 14       		.uleb128 0x14
+ 1767 0a75 74020000 		.4byte	.LASF123
+ 1768 0a79 01       		.byte	0x1
+ 1769 0a7a D9       		.byte	0xd9
+ 1770 0a7b AD000000 		.4byte	0xad
+ 1771 0a7f E3040000 		.4byte	.LLST42
+ 1772 0a83 14       		.uleb128 0x14
+ 1773 0a84 61050000 		.4byte	.LASF130
+ 1774 0a88 01       		.byte	0x1
+ 1775 0a89 D9       		.byte	0xd9
+ 1776 0a8a 07060000 		.4byte	0x607
+ 1777 0a8e 04050000 		.4byte	.LLST43
+ 1778 0a92 15       		.uleb128 0x15
+ 1779 0a93 D0000000 		.4byte	.LASF121
+ 1780 0a97 01       		.byte	0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 37
+
+
+ 1781 0a98 DA       		.byte	0xda
+ 1782 0a99 1F010000 		.4byte	0x11f
+ 1783 0a9d 25050000 		.4byte	.LLST44
+ 1784 0aa1 15       		.uleb128 0x15
+ 1785 0aa2 48020000 		.4byte	.LASF126
+ 1786 0aa6 01       		.byte	0x1
+ 1787 0aa7 DB       		.byte	0xdb
+ 1788 0aa8 C3000000 		.4byte	0xc3
+ 1789 0aac 44050000 		.4byte	.LLST45
+ 1790 0ab0 15       		.uleb128 0x15
+ 1791 0ab1 BF010000 		.4byte	.LASF127
+ 1792 0ab5 01       		.byte	0x1
+ 1793 0ab6 DC       		.byte	0xdc
+ 1794 0ab7 AD000000 		.4byte	0xad
+ 1795 0abb 57050000 		.4byte	.LLST46
+ 1796 0abf 17       		.uleb128 0x17
+ 1797 0ac0 0C000000 		.4byte	.LVL57
+ 1798 0ac4 880C0000 		.4byte	0xc88
+ 1799 0ac8 18       		.uleb128 0x18
+ 1800 0ac9 01       		.uleb128 0x1
+ 1801 0aca 52       		.byte	0x52
+ 1802 0acb 03       		.uleb128 0x3
+ 1803 0acc F3       		.byte	0xf3
+ 1804 0acd 01       		.uleb128 0x1
+ 1805 0ace 52       		.byte	0x52
+ 1806 0acf 00       		.byte	0
+ 1807 0ad0 00       		.byte	0
+ 1808 0ad1 11       		.uleb128 0x11
+ 1809 0ad2 45060000 		.4byte	.LASF137
+ 1810 0ad6 01       		.byte	0x1
+ 1811 0ad7 E8       		.byte	0xe8
+ 1812 0ad8 1F010000 		.4byte	0x11f
+ 1813 0adc 00000000 		.4byte	.LFB44
+ 1814 0ae0 16000000 		.4byte	.LFE44-.LFB44
+ 1815 0ae4 01       		.uleb128 0x1
+ 1816 0ae5 9C       		.byte	0x9c
+ 1817 0ae6 560B0000 		.4byte	0xb56
+ 1818 0aea 12       		.uleb128 0x12
+ 1819 0aeb 44657600 		.ascii	"Dev\000"
+ 1820 0aef 01       		.byte	0x1
+ 1821 0af0 E8       		.byte	0xe8
+ 1822 0af1 61060000 		.4byte	0x661
+ 1823 0af5 6A050000 		.4byte	.LLST47
+ 1824 0af9 14       		.uleb128 0x14
+ 1825 0afa 74020000 		.4byte	.LASF123
+ 1826 0afe 01       		.byte	0x1
+ 1827 0aff E8       		.byte	0xe8
+ 1828 0b00 AD000000 		.4byte	0xad
+ 1829 0b04 8B050000 		.4byte	.LLST48
+ 1830 0b08 14       		.uleb128 0x14
+ 1831 0b09 61050000 		.4byte	.LASF130
+ 1832 0b0d 01       		.byte	0x1
+ 1833 0b0e E8       		.byte	0xe8
+ 1834 0b0f 560B0000 		.4byte	0xb56
+ 1835 0b13 AC050000 		.4byte	.LLST49
+ 1836 0b17 15       		.uleb128 0x15
+ 1837 0b18 D0000000 		.4byte	.LASF121
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 38
+
+
+ 1838 0b1c 01       		.byte	0x1
+ 1839 0b1d E9       		.byte	0xe9
+ 1840 0b1e 1F010000 		.4byte	0x11f
+ 1841 0b22 CD050000 		.4byte	.LLST50
+ 1842 0b26 15       		.uleb128 0x15
+ 1843 0b27 48020000 		.4byte	.LASF126
+ 1844 0b2b 01       		.byte	0x1
+ 1845 0b2c EA       		.byte	0xea
+ 1846 0b2d C3000000 		.4byte	0xc3
+ 1847 0b31 EC050000 		.4byte	.LLST51
+ 1848 0b35 15       		.uleb128 0x15
+ 1849 0b36 BF010000 		.4byte	.LASF127
+ 1850 0b3a 01       		.byte	0x1
+ 1851 0b3b EB       		.byte	0xeb
+ 1852 0b3c AD000000 		.4byte	0xad
+ 1853 0b40 FF050000 		.4byte	.LLST52
+ 1854 0b44 17       		.uleb128 0x17
+ 1855 0b45 0C000000 		.4byte	.LVL63
+ 1856 0b49 930C0000 		.4byte	0xc93
+ 1857 0b4d 18       		.uleb128 0x18
+ 1858 0b4e 01       		.uleb128 0x1
+ 1859 0b4f 52       		.byte	0x52
+ 1860 0b50 03       		.uleb128 0x3
+ 1861 0b51 F3       		.byte	0xf3
+ 1862 0b52 01       		.uleb128 0x1
+ 1863 0b53 52       		.byte	0x52
+ 1864 0b54 00       		.byte	0
+ 1865 0b55 00       		.byte	0
+ 1866 0b56 0E       		.uleb128 0xe
+ 1867 0b57 04       		.byte	0x4
+ 1868 0b58 B8000000 		.4byte	0xb8
+ 1869 0b5c 11       		.uleb128 0x11
+ 1870 0b5d 92000000 		.4byte	.LASF138
+ 1871 0b61 01       		.byte	0x1
+ 1872 0b62 F7       		.byte	0xf7
+ 1873 0b63 1F010000 		.4byte	0x11f
+ 1874 0b67 00000000 		.4byte	.LFB45
+ 1875 0b6b 16000000 		.4byte	.LFE45-.LFB45
+ 1876 0b6f 01       		.uleb128 0x1
+ 1877 0b70 9C       		.byte	0x9c
+ 1878 0b71 E10B0000 		.4byte	0xbe1
+ 1879 0b75 12       		.uleb128 0x12
+ 1880 0b76 44657600 		.ascii	"Dev\000"
+ 1881 0b7a 01       		.byte	0x1
+ 1882 0b7b F7       		.byte	0xf7
+ 1883 0b7c 61060000 		.4byte	0x661
+ 1884 0b80 12060000 		.4byte	.LLST53
+ 1885 0b84 14       		.uleb128 0x14
+ 1886 0b85 74020000 		.4byte	.LASF123
+ 1887 0b89 01       		.byte	0x1
+ 1888 0b8a F7       		.byte	0xf7
+ 1889 0b8b AD000000 		.4byte	0xad
+ 1890 0b8f 33060000 		.4byte	.LLST54
+ 1891 0b93 14       		.uleb128 0x14
+ 1892 0b94 61050000 		.4byte	.LASF130
+ 1893 0b98 01       		.byte	0x1
+ 1894 0b99 F7       		.byte	0xf7
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 39
+
+
+ 1895 0b9a E10B0000 		.4byte	0xbe1
+ 1896 0b9e 54060000 		.4byte	.LLST55
+ 1897 0ba2 15       		.uleb128 0x15
+ 1898 0ba3 D0000000 		.4byte	.LASF121
+ 1899 0ba7 01       		.byte	0x1
+ 1900 0ba8 F8       		.byte	0xf8
+ 1901 0ba9 1F010000 		.4byte	0x11f
+ 1902 0bad 75060000 		.4byte	.LLST56
+ 1903 0bb1 15       		.uleb128 0x15
+ 1904 0bb2 48020000 		.4byte	.LASF126
+ 1905 0bb6 01       		.byte	0x1
+ 1906 0bb7 F9       		.byte	0xf9
+ 1907 0bb8 C3000000 		.4byte	0xc3
+ 1908 0bbc 94060000 		.4byte	.LLST57
+ 1909 0bc0 15       		.uleb128 0x15
+ 1910 0bc1 BF010000 		.4byte	.LASF127
+ 1911 0bc5 01       		.byte	0x1
+ 1912 0bc6 FA       		.byte	0xfa
+ 1913 0bc7 AD000000 		.4byte	0xad
+ 1914 0bcb A7060000 		.4byte	.LLST58
+ 1915 0bcf 17       		.uleb128 0x17
+ 1916 0bd0 0C000000 		.4byte	.LVL69
+ 1917 0bd4 9F0C0000 		.4byte	0xc9f
+ 1918 0bd8 18       		.uleb128 0x18
+ 1919 0bd9 01       		.uleb128 0x1
+ 1920 0bda 52       		.byte	0x52
+ 1921 0bdb 03       		.uleb128 0x3
+ 1922 0bdc F3       		.byte	0xf3
+ 1923 0bdd 01       		.uleb128 0x1
+ 1924 0bde 52       		.byte	0x52
+ 1925 0bdf 00       		.byte	0
+ 1926 0be0 00       		.byte	0
+ 1927 0be1 0E       		.uleb128 0xe
+ 1928 0be2 04       		.byte	0x4
+ 1929 0be3 CE000000 		.4byte	0xce
+ 1930 0be7 1B       		.uleb128 0x1b
+ 1931 0be8 21060000 		.4byte	.LASF139
+ 1932 0bec 01       		.byte	0x1
+ 1933 0bed 0701     		.2byte	0x107
+ 1934 0bef 1F010000 		.4byte	0x11f
+ 1935 0bf3 00000000 		.4byte	.LFB46
+ 1936 0bf7 0E000000 		.4byte	.LFE46-.LFB46
+ 1937 0bfb 01       		.uleb128 0x1
+ 1938 0bfc 9C       		.byte	0x9c
+ 1939 0bfd 300C0000 		.4byte	0xc30
+ 1940 0c01 1C       		.uleb128 0x1c
+ 1941 0c02 44657600 		.ascii	"Dev\000"
+ 1942 0c06 01       		.byte	0x1
+ 1943 0c07 0701     		.2byte	0x107
+ 1944 0c09 61060000 		.4byte	0x661
+ 1945 0c0d BA060000 		.4byte	.LLST59
+ 1946 0c11 1D       		.uleb128 0x1d
+ 1947 0c12 B1070000 		.4byte	.LASF140
+ 1948 0c16 01       		.byte	0x1
+ 1949 0c17 0801     		.2byte	0x108
+ 1950 0c19 1F010000 		.4byte	0x11f
+ 1951 0c1d 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 40
+
+
+ 1952 0c1e 17       		.uleb128 0x17
+ 1953 0c1f 0A000000 		.4byte	.LVL75
+ 1954 0c23 AB0C0000 		.4byte	0xcab
+ 1955 0c27 18       		.uleb128 0x18
+ 1956 0c28 01       		.uleb128 0x1
+ 1957 0c29 50       		.byte	0x50
+ 1958 0c2a 03       		.uleb128 0x3
+ 1959 0c2b 0A       		.byte	0xa
+ 1960 0c2c E803     		.2byte	0x3e8
+ 1961 0c2e 00       		.byte	0
+ 1962 0c2f 00       		.byte	0
+ 1963 0c30 05       		.uleb128 0x5
+ 1964 0c31 AD000000 		.4byte	0xad
+ 1965 0c35 400C0000 		.4byte	0xc40
+ 1966 0c39 06       		.uleb128 0x6
+ 1967 0c3a 11010000 		.4byte	0x111
+ 1968 0c3e 3F       		.byte	0x3f
+ 1969 0c3f 00       		.byte	0
+ 1970 0c40 1E       		.uleb128 0x1e
+ 1971 0c41 63060000 		.4byte	.LASF153
+ 1972 0c45 01       		.byte	0x1
+ 1973 0c46 47       		.byte	0x47
+ 1974 0c47 300C0000 		.4byte	0xc30
+ 1975 0c4b 05       		.uleb128 0x5
+ 1976 0c4c 03       		.byte	0x3
+ 1977 0c4d 00000000 		.4byte	i2c_global_buffer
+ 1978 0c51 1F       		.uleb128 0x1f
+ 1979 0c52 FC090000 		.4byte	.LASF141
+ 1980 0c56 FC090000 		.4byte	.LASF141
+ 1981 0c5a 08       		.byte	0x8
+ 1982 0c5b 79       		.byte	0x79
+ 1983 0c5c 1F       		.uleb128 0x1f
+ 1984 0c5d B8070000 		.4byte	.LASF142
+ 1985 0c61 B8070000 		.4byte	.LASF142
+ 1986 0c65 08       		.byte	0x8
+ 1987 0c66 94       		.byte	0x94
+ 1988 0c67 1F       		.uleb128 0x1f
+ 1989 0c68 32010000 		.4byte	.LASF143
+ 1990 0c6c 32010000 		.4byte	.LASF143
+ 1991 0c70 08       		.byte	0x8
+ 1992 0c71 AE       		.byte	0xae
+ 1993 0c72 1F       		.uleb128 0x1f
+ 1994 0c73 0F020000 		.4byte	.LASF144
+ 1995 0c77 0F020000 		.4byte	.LASF144
+ 1996 0c7b 08       		.byte	0x8
+ 1997 0c7c C9       		.byte	0xc9
+ 1998 0c7d 1F       		.uleb128 0x1f
+ 1999 0c7e 17030000 		.4byte	.LASF145
+ 2000 0c82 17030000 		.4byte	.LASF145
+ 2001 0c86 08       		.byte	0x8
+ 2002 0c87 E4       		.byte	0xe4
+ 2003 0c88 1F       		.uleb128 0x1f
+ 2004 0c89 8E090000 		.4byte	.LASF146
+ 2005 0c8d 8E090000 		.4byte	.LASF146
+ 2006 0c91 08       		.byte	0x8
+ 2007 0c92 FF       		.byte	0xff
+ 2008 0c93 20       		.uleb128 0x20
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 41
+
+
+ 2009 0c94 A0090000 		.4byte	.LASF147
+ 2010 0c98 A0090000 		.4byte	.LASF147
+ 2011 0c9c 08       		.byte	0x8
+ 2012 0c9d 1A01     		.2byte	0x11a
+ 2013 0c9f 20       		.uleb128 0x20
+ 2014 0ca0 66000000 		.4byte	.LASF148
+ 2015 0ca4 66000000 		.4byte	.LASF148
+ 2016 0ca8 08       		.byte	0x8
+ 2017 0ca9 3501     		.2byte	0x135
+ 2018 0cab 1F       		.uleb128 0x1f
+ 2019 0cac 9C020000 		.4byte	.LASF149
+ 2020 0cb0 9C020000 		.4byte	.LASF149
+ 2021 0cb4 09       		.byte	0x9
+ 2022 0cb5 DA       		.byte	0xda
+ 2023 0cb6 00       		.byte	0
+ 2024              		.section	.debug_abbrev,"",%progbits
+ 2025              	.Ldebug_abbrev0:
+ 2026 0000 01       		.uleb128 0x1
+ 2027 0001 11       		.uleb128 0x11
+ 2028 0002 01       		.byte	0x1
+ 2029 0003 25       		.uleb128 0x25
+ 2030 0004 0E       		.uleb128 0xe
+ 2031 0005 13       		.uleb128 0x13
+ 2032 0006 0B       		.uleb128 0xb
+ 2033 0007 03       		.uleb128 0x3
+ 2034 0008 0E       		.uleb128 0xe
+ 2035 0009 1B       		.uleb128 0x1b
+ 2036 000a 0E       		.uleb128 0xe
+ 2037 000b 55       		.uleb128 0x55
+ 2038 000c 17       		.uleb128 0x17
+ 2039 000d 11       		.uleb128 0x11
+ 2040 000e 01       		.uleb128 0x1
+ 2041 000f 10       		.uleb128 0x10
+ 2042 0010 17       		.uleb128 0x17
+ 2043 0011 00       		.byte	0
+ 2044 0012 00       		.byte	0
+ 2045 0013 02       		.uleb128 0x2
+ 2046 0014 16       		.uleb128 0x16
+ 2047 0015 00       		.byte	0
+ 2048 0016 03       		.uleb128 0x3
+ 2049 0017 0E       		.uleb128 0xe
+ 2050 0018 3A       		.uleb128 0x3a
+ 2051 0019 0B       		.uleb128 0xb
+ 2052 001a 3B       		.uleb128 0x3b
+ 2053 001b 0B       		.uleb128 0xb
+ 2054 001c 49       		.uleb128 0x49
+ 2055 001d 13       		.uleb128 0x13
+ 2056 001e 00       		.byte	0
+ 2057 001f 00       		.byte	0
+ 2058 0020 03       		.uleb128 0x3
+ 2059 0021 24       		.uleb128 0x24
+ 2060 0022 00       		.byte	0
+ 2061 0023 0B       		.uleb128 0xb
+ 2062 0024 0B       		.uleb128 0xb
+ 2063 0025 3E       		.uleb128 0x3e
+ 2064 0026 0B       		.uleb128 0xb
+ 2065 0027 03       		.uleb128 0x3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 42
+
+
+ 2066 0028 0E       		.uleb128 0xe
+ 2067 0029 00       		.byte	0
+ 2068 002a 00       		.byte	0
+ 2069 002b 04       		.uleb128 0x4
+ 2070 002c 24       		.uleb128 0x24
+ 2071 002d 00       		.byte	0
+ 2072 002e 0B       		.uleb128 0xb
+ 2073 002f 0B       		.uleb128 0xb
+ 2074 0030 3E       		.uleb128 0x3e
+ 2075 0031 0B       		.uleb128 0xb
+ 2076 0032 03       		.uleb128 0x3
+ 2077 0033 08       		.uleb128 0x8
+ 2078 0034 00       		.byte	0
+ 2079 0035 00       		.byte	0
+ 2080 0036 05       		.uleb128 0x5
+ 2081 0037 01       		.uleb128 0x1
+ 2082 0038 01       		.byte	0x1
+ 2083 0039 49       		.uleb128 0x49
+ 2084 003a 13       		.uleb128 0x13
+ 2085 003b 01       		.uleb128 0x1
+ 2086 003c 13       		.uleb128 0x13
+ 2087 003d 00       		.byte	0
+ 2088 003e 00       		.byte	0
+ 2089 003f 06       		.uleb128 0x6
+ 2090 0040 21       		.uleb128 0x21
+ 2091 0041 00       		.byte	0
+ 2092 0042 49       		.uleb128 0x49
+ 2093 0043 13       		.uleb128 0x13
+ 2094 0044 2F       		.uleb128 0x2f
+ 2095 0045 0B       		.uleb128 0xb
+ 2096 0046 00       		.byte	0
+ 2097 0047 00       		.byte	0
+ 2098 0048 07       		.uleb128 0x7
+ 2099 0049 13       		.uleb128 0x13
+ 2100 004a 01       		.byte	0x1
+ 2101 004b 0B       		.uleb128 0xb
+ 2102 004c 0B       		.uleb128 0xb
+ 2103 004d 3A       		.uleb128 0x3a
+ 2104 004e 0B       		.uleb128 0xb
+ 2105 004f 3B       		.uleb128 0x3b
+ 2106 0050 0B       		.uleb128 0xb
+ 2107 0051 01       		.uleb128 0x1
+ 2108 0052 13       		.uleb128 0x13
+ 2109 0053 00       		.byte	0
+ 2110 0054 00       		.byte	0
+ 2111 0055 08       		.uleb128 0x8
+ 2112 0056 0D       		.uleb128 0xd
+ 2113 0057 00       		.byte	0
+ 2114 0058 03       		.uleb128 0x3
+ 2115 0059 0E       		.uleb128 0xe
+ 2116 005a 3A       		.uleb128 0x3a
+ 2117 005b 0B       		.uleb128 0xb
+ 2118 005c 3B       		.uleb128 0x3b
+ 2119 005d 0B       		.uleb128 0xb
+ 2120 005e 49       		.uleb128 0x49
+ 2121 005f 13       		.uleb128 0x13
+ 2122 0060 38       		.uleb128 0x38
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 43
+
+
+ 2123 0061 0B       		.uleb128 0xb
+ 2124 0062 00       		.byte	0
+ 2125 0063 00       		.byte	0
+ 2126 0064 09       		.uleb128 0x9
+ 2127 0065 0D       		.uleb128 0xd
+ 2128 0066 00       		.byte	0
+ 2129 0067 03       		.uleb128 0x3
+ 2130 0068 0E       		.uleb128 0xe
+ 2131 0069 3A       		.uleb128 0x3a
+ 2132 006a 0B       		.uleb128 0xb
+ 2133 006b 3B       		.uleb128 0x3b
+ 2134 006c 05       		.uleb128 0x5
+ 2135 006d 49       		.uleb128 0x49
+ 2136 006e 13       		.uleb128 0x13
+ 2137 006f 38       		.uleb128 0x38
+ 2138 0070 0B       		.uleb128 0xb
+ 2139 0071 00       		.byte	0
+ 2140 0072 00       		.byte	0
+ 2141 0073 0A       		.uleb128 0xa
+ 2142 0074 16       		.uleb128 0x16
+ 2143 0075 00       		.byte	0
+ 2144 0076 03       		.uleb128 0x3
+ 2145 0077 0E       		.uleb128 0xe
+ 2146 0078 3A       		.uleb128 0x3a
+ 2147 0079 0B       		.uleb128 0xb
+ 2148 007a 3B       		.uleb128 0x3b
+ 2149 007b 05       		.uleb128 0x5
+ 2150 007c 49       		.uleb128 0x49
+ 2151 007d 13       		.uleb128 0x13
+ 2152 007e 00       		.byte	0
+ 2153 007f 00       		.byte	0
+ 2154 0080 0B       		.uleb128 0xb
+ 2155 0081 13       		.uleb128 0x13
+ 2156 0082 01       		.byte	0x1
+ 2157 0083 0B       		.uleb128 0xb
+ 2158 0084 0B       		.uleb128 0xb
+ 2159 0085 3A       		.uleb128 0x3a
+ 2160 0086 0B       		.uleb128 0xb
+ 2161 0087 3B       		.uleb128 0x3b
+ 2162 0088 05       		.uleb128 0x5
+ 2163 0089 01       		.uleb128 0x1
+ 2164 008a 13       		.uleb128 0x13
+ 2165 008b 00       		.byte	0
+ 2166 008c 00       		.byte	0
+ 2167 008d 0C       		.uleb128 0xc
+ 2168 008e 13       		.uleb128 0x13
+ 2169 008f 01       		.byte	0x1
+ 2170 0090 0B       		.uleb128 0xb
+ 2171 0091 05       		.uleb128 0x5
+ 2172 0092 3A       		.uleb128 0x3a
+ 2173 0093 0B       		.uleb128 0xb
+ 2174 0094 3B       		.uleb128 0x3b
+ 2175 0095 05       		.uleb128 0x5
+ 2176 0096 01       		.uleb128 0x1
+ 2177 0097 13       		.uleb128 0x13
+ 2178 0098 00       		.byte	0
+ 2179 0099 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 44
+
+
+ 2180 009a 0D       		.uleb128 0xd
+ 2181 009b 0D       		.uleb128 0xd
+ 2182 009c 00       		.byte	0
+ 2183 009d 03       		.uleb128 0x3
+ 2184 009e 0E       		.uleb128 0xe
+ 2185 009f 3A       		.uleb128 0x3a
+ 2186 00a0 0B       		.uleb128 0xb
+ 2187 00a1 3B       		.uleb128 0x3b
+ 2188 00a2 05       		.uleb128 0x5
+ 2189 00a3 49       		.uleb128 0x49
+ 2190 00a4 13       		.uleb128 0x13
+ 2191 00a5 38       		.uleb128 0x38
+ 2192 00a6 05       		.uleb128 0x5
+ 2193 00a7 00       		.byte	0
+ 2194 00a8 00       		.byte	0
+ 2195 00a9 0E       		.uleb128 0xe
+ 2196 00aa 0F       		.uleb128 0xf
+ 2197 00ab 00       		.byte	0
+ 2198 00ac 0B       		.uleb128 0xb
+ 2199 00ad 0B       		.uleb128 0xb
+ 2200 00ae 49       		.uleb128 0x49
+ 2201 00af 13       		.uleb128 0x13
+ 2202 00b0 00       		.byte	0
+ 2203 00b1 00       		.byte	0
+ 2204 00b2 0F       		.uleb128 0xf
+ 2205 00b3 13       		.uleb128 0x13
+ 2206 00b4 01       		.byte	0x1
+ 2207 00b5 0B       		.uleb128 0xb
+ 2208 00b6 05       		.uleb128 0x5
+ 2209 00b7 3A       		.uleb128 0x3a
+ 2210 00b8 0B       		.uleb128 0xb
+ 2211 00b9 3B       		.uleb128 0x3b
+ 2212 00ba 0B       		.uleb128 0xb
+ 2213 00bb 01       		.uleb128 0x1
+ 2214 00bc 13       		.uleb128 0x13
+ 2215 00bd 00       		.byte	0
+ 2216 00be 00       		.byte	0
+ 2217 00bf 10       		.uleb128 0x10
+ 2218 00c0 0D       		.uleb128 0xd
+ 2219 00c1 00       		.byte	0
+ 2220 00c2 03       		.uleb128 0x3
+ 2221 00c3 0E       		.uleb128 0xe
+ 2222 00c4 3A       		.uleb128 0x3a
+ 2223 00c5 0B       		.uleb128 0xb
+ 2224 00c6 3B       		.uleb128 0x3b
+ 2225 00c7 0B       		.uleb128 0xb
+ 2226 00c8 49       		.uleb128 0x49
+ 2227 00c9 13       		.uleb128 0x13
+ 2228 00ca 38       		.uleb128 0x38
+ 2229 00cb 05       		.uleb128 0x5
+ 2230 00cc 00       		.byte	0
+ 2231 00cd 00       		.byte	0
+ 2232 00ce 11       		.uleb128 0x11
+ 2233 00cf 2E       		.uleb128 0x2e
+ 2234 00d0 01       		.byte	0x1
+ 2235 00d1 3F       		.uleb128 0x3f
+ 2236 00d2 19       		.uleb128 0x19
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 45
+
+
+ 2237 00d3 03       		.uleb128 0x3
+ 2238 00d4 0E       		.uleb128 0xe
+ 2239 00d5 3A       		.uleb128 0x3a
+ 2240 00d6 0B       		.uleb128 0xb
+ 2241 00d7 3B       		.uleb128 0x3b
+ 2242 00d8 0B       		.uleb128 0xb
+ 2243 00d9 27       		.uleb128 0x27
+ 2244 00da 19       		.uleb128 0x19
+ 2245 00db 49       		.uleb128 0x49
+ 2246 00dc 13       		.uleb128 0x13
+ 2247 00dd 11       		.uleb128 0x11
+ 2248 00de 01       		.uleb128 0x1
+ 2249 00df 12       		.uleb128 0x12
+ 2250 00e0 06       		.uleb128 0x6
+ 2251 00e1 40       		.uleb128 0x40
+ 2252 00e2 18       		.uleb128 0x18
+ 2253 00e3 9742     		.uleb128 0x2117
+ 2254 00e5 19       		.uleb128 0x19
+ 2255 00e6 01       		.uleb128 0x1
+ 2256 00e7 13       		.uleb128 0x13
+ 2257 00e8 00       		.byte	0
+ 2258 00e9 00       		.byte	0
+ 2259 00ea 12       		.uleb128 0x12
+ 2260 00eb 05       		.uleb128 0x5
+ 2261 00ec 00       		.byte	0
+ 2262 00ed 03       		.uleb128 0x3
+ 2263 00ee 08       		.uleb128 0x8
+ 2264 00ef 3A       		.uleb128 0x3a
+ 2265 00f0 0B       		.uleb128 0xb
+ 2266 00f1 3B       		.uleb128 0x3b
+ 2267 00f2 0B       		.uleb128 0xb
+ 2268 00f3 49       		.uleb128 0x49
+ 2269 00f4 13       		.uleb128 0x13
+ 2270 00f5 02       		.uleb128 0x2
+ 2271 00f6 17       		.uleb128 0x17
+ 2272 00f7 00       		.byte	0
+ 2273 00f8 00       		.byte	0
+ 2274 00f9 13       		.uleb128 0x13
+ 2275 00fa 34       		.uleb128 0x34
+ 2276 00fb 00       		.byte	0
+ 2277 00fc 03       		.uleb128 0x3
+ 2278 00fd 0E       		.uleb128 0xe
+ 2279 00fe 3A       		.uleb128 0x3a
+ 2280 00ff 0B       		.uleb128 0xb
+ 2281 0100 3B       		.uleb128 0x3b
+ 2282 0101 0B       		.uleb128 0xb
+ 2283 0102 49       		.uleb128 0x49
+ 2284 0103 13       		.uleb128 0x13
+ 2285 0104 1C       		.uleb128 0x1c
+ 2286 0105 0B       		.uleb128 0xb
+ 2287 0106 00       		.byte	0
+ 2288 0107 00       		.byte	0
+ 2289 0108 14       		.uleb128 0x14
+ 2290 0109 05       		.uleb128 0x5
+ 2291 010a 00       		.byte	0
+ 2292 010b 03       		.uleb128 0x3
+ 2293 010c 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 46
+
+
+ 2294 010d 3A       		.uleb128 0x3a
+ 2295 010e 0B       		.uleb128 0xb
+ 2296 010f 3B       		.uleb128 0x3b
+ 2297 0110 0B       		.uleb128 0xb
+ 2298 0111 49       		.uleb128 0x49
+ 2299 0112 13       		.uleb128 0x13
+ 2300 0113 02       		.uleb128 0x2
+ 2301 0114 17       		.uleb128 0x17
+ 2302 0115 00       		.byte	0
+ 2303 0116 00       		.byte	0
+ 2304 0117 15       		.uleb128 0x15
+ 2305 0118 34       		.uleb128 0x34
+ 2306 0119 00       		.byte	0
+ 2307 011a 03       		.uleb128 0x3
+ 2308 011b 0E       		.uleb128 0xe
+ 2309 011c 3A       		.uleb128 0x3a
+ 2310 011d 0B       		.uleb128 0xb
+ 2311 011e 3B       		.uleb128 0x3b
+ 2312 011f 0B       		.uleb128 0xb
+ 2313 0120 49       		.uleb128 0x49
+ 2314 0121 13       		.uleb128 0x13
+ 2315 0122 02       		.uleb128 0x2
+ 2316 0123 17       		.uleb128 0x17
+ 2317 0124 00       		.byte	0
+ 2318 0125 00       		.byte	0
+ 2319 0126 16       		.uleb128 0x16
+ 2320 0127 898201   		.uleb128 0x4109
+ 2321 012a 00       		.byte	0
+ 2322 012b 11       		.uleb128 0x11
+ 2323 012c 01       		.uleb128 0x1
+ 2324 012d 31       		.uleb128 0x31
+ 2325 012e 13       		.uleb128 0x13
+ 2326 012f 00       		.byte	0
+ 2327 0130 00       		.byte	0
+ 2328 0131 17       		.uleb128 0x17
+ 2329 0132 898201   		.uleb128 0x4109
+ 2330 0135 01       		.byte	0x1
+ 2331 0136 11       		.uleb128 0x11
+ 2332 0137 01       		.uleb128 0x1
+ 2333 0138 31       		.uleb128 0x31
+ 2334 0139 13       		.uleb128 0x13
+ 2335 013a 00       		.byte	0
+ 2336 013b 00       		.byte	0
+ 2337 013c 18       		.uleb128 0x18
+ 2338 013d 8A8201   		.uleb128 0x410a
+ 2339 0140 00       		.byte	0
+ 2340 0141 02       		.uleb128 0x2
+ 2341 0142 18       		.uleb128 0x18
+ 2342 0143 9142     		.uleb128 0x2111
+ 2343 0145 18       		.uleb128 0x18
+ 2344 0146 00       		.byte	0
+ 2345 0147 00       		.byte	0
+ 2346 0148 19       		.uleb128 0x19
+ 2347 0149 34       		.uleb128 0x34
+ 2348 014a 00       		.byte	0
+ 2349 014b 03       		.uleb128 0x3
+ 2350 014c 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 47
+
+
+ 2351 014d 3A       		.uleb128 0x3a
+ 2352 014e 0B       		.uleb128 0xb
+ 2353 014f 3B       		.uleb128 0x3b
+ 2354 0150 0B       		.uleb128 0xb
+ 2355 0151 49       		.uleb128 0x49
+ 2356 0152 13       		.uleb128 0x13
+ 2357 0153 02       		.uleb128 0x2
+ 2358 0154 18       		.uleb128 0x18
+ 2359 0155 00       		.byte	0
+ 2360 0156 00       		.byte	0
+ 2361 0157 1A       		.uleb128 0x1a
+ 2362 0158 898201   		.uleb128 0x4109
+ 2363 015b 01       		.byte	0x1
+ 2364 015c 11       		.uleb128 0x11
+ 2365 015d 01       		.uleb128 0x1
+ 2366 015e 31       		.uleb128 0x31
+ 2367 015f 13       		.uleb128 0x13
+ 2368 0160 01       		.uleb128 0x1
+ 2369 0161 13       		.uleb128 0x13
+ 2370 0162 00       		.byte	0
+ 2371 0163 00       		.byte	0
+ 2372 0164 1B       		.uleb128 0x1b
+ 2373 0165 2E       		.uleb128 0x2e
+ 2374 0166 01       		.byte	0x1
+ 2375 0167 3F       		.uleb128 0x3f
+ 2376 0168 19       		.uleb128 0x19
+ 2377 0169 03       		.uleb128 0x3
+ 2378 016a 0E       		.uleb128 0xe
+ 2379 016b 3A       		.uleb128 0x3a
+ 2380 016c 0B       		.uleb128 0xb
+ 2381 016d 3B       		.uleb128 0x3b
+ 2382 016e 05       		.uleb128 0x5
+ 2383 016f 27       		.uleb128 0x27
+ 2384 0170 19       		.uleb128 0x19
+ 2385 0171 49       		.uleb128 0x49
+ 2386 0172 13       		.uleb128 0x13
+ 2387 0173 11       		.uleb128 0x11
+ 2388 0174 01       		.uleb128 0x1
+ 2389 0175 12       		.uleb128 0x12
+ 2390 0176 06       		.uleb128 0x6
+ 2391 0177 40       		.uleb128 0x40
+ 2392 0178 18       		.uleb128 0x18
+ 2393 0179 9742     		.uleb128 0x2117
+ 2394 017b 19       		.uleb128 0x19
+ 2395 017c 01       		.uleb128 0x1
+ 2396 017d 13       		.uleb128 0x13
+ 2397 017e 00       		.byte	0
+ 2398 017f 00       		.byte	0
+ 2399 0180 1C       		.uleb128 0x1c
+ 2400 0181 05       		.uleb128 0x5
+ 2401 0182 00       		.byte	0
+ 2402 0183 03       		.uleb128 0x3
+ 2403 0184 08       		.uleb128 0x8
+ 2404 0185 3A       		.uleb128 0x3a
+ 2405 0186 0B       		.uleb128 0xb
+ 2406 0187 3B       		.uleb128 0x3b
+ 2407 0188 05       		.uleb128 0x5
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 48
+
+
+ 2408 0189 49       		.uleb128 0x49
+ 2409 018a 13       		.uleb128 0x13
+ 2410 018b 02       		.uleb128 0x2
+ 2411 018c 17       		.uleb128 0x17
+ 2412 018d 00       		.byte	0
+ 2413 018e 00       		.byte	0
+ 2414 018f 1D       		.uleb128 0x1d
+ 2415 0190 34       		.uleb128 0x34
+ 2416 0191 00       		.byte	0
+ 2417 0192 03       		.uleb128 0x3
+ 2418 0193 0E       		.uleb128 0xe
+ 2419 0194 3A       		.uleb128 0x3a
+ 2420 0195 0B       		.uleb128 0xb
+ 2421 0196 3B       		.uleb128 0x3b
+ 2422 0197 05       		.uleb128 0x5
+ 2423 0198 49       		.uleb128 0x49
+ 2424 0199 13       		.uleb128 0x13
+ 2425 019a 1C       		.uleb128 0x1c
+ 2426 019b 0B       		.uleb128 0xb
+ 2427 019c 00       		.byte	0
+ 2428 019d 00       		.byte	0
+ 2429 019e 1E       		.uleb128 0x1e
+ 2430 019f 34       		.uleb128 0x34
+ 2431 01a0 00       		.byte	0
+ 2432 01a1 03       		.uleb128 0x3
+ 2433 01a2 0E       		.uleb128 0xe
+ 2434 01a3 3A       		.uleb128 0x3a
+ 2435 01a4 0B       		.uleb128 0xb
+ 2436 01a5 3B       		.uleb128 0x3b
+ 2437 01a6 0B       		.uleb128 0xb
+ 2438 01a7 49       		.uleb128 0x49
+ 2439 01a8 13       		.uleb128 0x13
+ 2440 01a9 3F       		.uleb128 0x3f
+ 2441 01aa 19       		.uleb128 0x19
+ 2442 01ab 02       		.uleb128 0x2
+ 2443 01ac 18       		.uleb128 0x18
+ 2444 01ad 00       		.byte	0
+ 2445 01ae 00       		.byte	0
+ 2446 01af 1F       		.uleb128 0x1f
+ 2447 01b0 2E       		.uleb128 0x2e
+ 2448 01b1 00       		.byte	0
+ 2449 01b2 3F       		.uleb128 0x3f
+ 2450 01b3 19       		.uleb128 0x19
+ 2451 01b4 3C       		.uleb128 0x3c
+ 2452 01b5 19       		.uleb128 0x19
+ 2453 01b6 6E       		.uleb128 0x6e
+ 2454 01b7 0E       		.uleb128 0xe
+ 2455 01b8 03       		.uleb128 0x3
+ 2456 01b9 0E       		.uleb128 0xe
+ 2457 01ba 3A       		.uleb128 0x3a
+ 2458 01bb 0B       		.uleb128 0xb
+ 2459 01bc 3B       		.uleb128 0x3b
+ 2460 01bd 0B       		.uleb128 0xb
+ 2461 01be 00       		.byte	0
+ 2462 01bf 00       		.byte	0
+ 2463 01c0 20       		.uleb128 0x20
+ 2464 01c1 2E       		.uleb128 0x2e
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 49
+
+
+ 2465 01c2 00       		.byte	0
+ 2466 01c3 3F       		.uleb128 0x3f
+ 2467 01c4 19       		.uleb128 0x19
+ 2468 01c5 3C       		.uleb128 0x3c
+ 2469 01c6 19       		.uleb128 0x19
+ 2470 01c7 6E       		.uleb128 0x6e
+ 2471 01c8 0E       		.uleb128 0xe
+ 2472 01c9 03       		.uleb128 0x3
+ 2473 01ca 0E       		.uleb128 0xe
+ 2474 01cb 3A       		.uleb128 0x3a
+ 2475 01cc 0B       		.uleb128 0xb
+ 2476 01cd 3B       		.uleb128 0x3b
+ 2477 01ce 05       		.uleb128 0x5
+ 2478 01cf 00       		.byte	0
+ 2479 01d0 00       		.byte	0
+ 2480 01d1 00       		.byte	0
+ 2481              		.section	.debug_loc,"",%progbits
+ 2482              	.Ldebug_loc0:
+ 2483              	.LLST0:
+ 2484 0000 00000000 		.4byte	.LVL0
+ 2485 0004 02000000 		.4byte	.LVL1
+ 2486 0008 0100     		.2byte	0x1
+ 2487 000a 50       		.byte	0x50
+ 2488 000b 02000000 		.4byte	.LVL1
+ 2489 000f 04000000 		.4byte	.LFE35
+ 2490 0013 0400     		.2byte	0x4
+ 2491 0015 F3       		.byte	0xf3
+ 2492 0016 01       		.uleb128 0x1
+ 2493 0017 50       		.byte	0x50
+ 2494 0018 9F       		.byte	0x9f
+ 2495 0019 00000000 		.4byte	0
+ 2496 001d 00000000 		.4byte	0
+ 2497              	.LLST1:
+ 2498 0021 00000000 		.4byte	.LVL2
+ 2499 0025 02000000 		.4byte	.LVL3
+ 2500 0029 0100     		.2byte	0x1
+ 2501 002b 50       		.byte	0x50
+ 2502 002c 02000000 		.4byte	.LVL3
+ 2503 0030 04000000 		.4byte	.LFE36
+ 2504 0034 0400     		.2byte	0x4
+ 2505 0036 F3       		.byte	0xf3
+ 2506 0037 01       		.uleb128 0x1
+ 2507 0038 50       		.byte	0x50
+ 2508 0039 9F       		.byte	0x9f
+ 2509 003a 00000000 		.4byte	0
+ 2510 003e 00000000 		.4byte	0
+ 2511              	.LLST2:
+ 2512 0042 00000000 		.4byte	.LVL4
+ 2513 0046 14000000 		.4byte	.LVL7
+ 2514 004a 0100     		.2byte	0x1
+ 2515 004c 50       		.byte	0x50
+ 2516 004d 14000000 		.4byte	.LVL7
+ 2517 0051 24000000 		.4byte	.LFE37
+ 2518 0055 0400     		.2byte	0x4
+ 2519 0057 F3       		.byte	0xf3
+ 2520 0058 01       		.uleb128 0x1
+ 2521 0059 50       		.byte	0x50
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 50
+
+
+ 2522 005a 9F       		.byte	0x9f
+ 2523 005b 00000000 		.4byte	0
+ 2524 005f 00000000 		.4byte	0
+ 2525              	.LLST3:
+ 2526 0063 00000000 		.4byte	.LVL4
+ 2527 0067 17000000 		.4byte	.LVL8-1
+ 2528 006b 0100     		.2byte	0x1
+ 2529 006d 51       		.byte	0x51
+ 2530 006e 17000000 		.4byte	.LVL8-1
+ 2531 0072 24000000 		.4byte	.LFE37
+ 2532 0076 0400     		.2byte	0x4
+ 2533 0078 F3       		.byte	0xf3
+ 2534 0079 01       		.uleb128 0x1
+ 2535 007a 51       		.byte	0x51
+ 2536 007b 9F       		.byte	0x9f
+ 2537 007c 00000000 		.4byte	0
+ 2538 0080 00000000 		.4byte	0
+ 2539              	.LLST4:
+ 2540 0084 00000000 		.4byte	.LVL4
+ 2541 0088 17000000 		.4byte	.LVL8-1
+ 2542 008c 0100     		.2byte	0x1
+ 2543 008e 52       		.byte	0x52
+ 2544 008f 17000000 		.4byte	.LVL8-1
+ 2545 0093 24000000 		.4byte	.LFE37
+ 2546 0097 0400     		.2byte	0x4
+ 2547 0099 F3       		.byte	0xf3
+ 2548 009a 01       		.uleb128 0x1
+ 2549 009b 52       		.byte	0x52
+ 2550 009c 9F       		.byte	0x9f
+ 2551 009d 00000000 		.4byte	0
+ 2552 00a1 00000000 		.4byte	0
+ 2553              	.LLST5:
+ 2554 00a5 00000000 		.4byte	.LVL4
+ 2555 00a9 17000000 		.4byte	.LVL8-1
+ 2556 00ad 0100     		.2byte	0x1
+ 2557 00af 53       		.byte	0x53
+ 2558 00b0 17000000 		.4byte	.LVL8-1
+ 2559 00b4 24000000 		.4byte	.LFE37
+ 2560 00b8 0400     		.2byte	0x4
+ 2561 00ba F3       		.byte	0xf3
+ 2562 00bb 01       		.uleb128 0x1
+ 2563 00bc 53       		.byte	0x53
+ 2564 00bd 9F       		.byte	0x9f
+ 2565 00be 00000000 		.4byte	0
+ 2566 00c2 00000000 		.4byte	0
+ 2567              	.LLST6:
+ 2568 00c6 02000000 		.4byte	.LVL5
+ 2569 00ca 0E000000 		.4byte	.LVL6
+ 2570 00ce 0200     		.2byte	0x2
+ 2571 00d0 30       		.byte	0x30
+ 2572 00d1 9F       		.byte	0x9f
+ 2573 00d2 0E000000 		.4byte	.LVL6
+ 2574 00d6 1E000000 		.4byte	.LVL9
+ 2575 00da 0100     		.2byte	0x1
+ 2576 00dc 54       		.byte	0x54
+ 2577 00dd 20000000 		.4byte	.LVL10
+ 2578 00e1 22000000 		.4byte	.LVL12
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 51
+
+
+ 2579 00e5 0100     		.2byte	0x1
+ 2580 00e7 54       		.byte	0x54
+ 2581 00e8 00000000 		.4byte	0
+ 2582 00ec 00000000 		.4byte	0
+ 2583              	.LLST7:
+ 2584 00f0 02000000 		.4byte	.LVL5
+ 2585 00f4 18000000 		.4byte	.LVL8
+ 2586 00f8 0200     		.2byte	0x2
+ 2587 00fa 30       		.byte	0x30
+ 2588 00fb 9F       		.byte	0x9f
+ 2589 00fc 18000000 		.4byte	.LVL8
+ 2590 0100 22000000 		.4byte	.LVL11
+ 2591 0104 0100     		.2byte	0x1
+ 2592 0106 50       		.byte	0x50
+ 2593 0107 00000000 		.4byte	0
+ 2594 010b 00000000 		.4byte	0
+ 2595              	.LLST8:
+ 2596 010f 14000000 		.4byte	.LVL7
+ 2597 0113 17000000 		.4byte	.LVL8-1
+ 2598 0117 0100     		.2byte	0x1
+ 2599 0119 50       		.byte	0x50
+ 2600 011a 00000000 		.4byte	0
+ 2601 011e 00000000 		.4byte	0
+ 2602              	.LLST9:
+ 2603 0122 00000000 		.4byte	.LVL13
+ 2604 0126 14000000 		.4byte	.LVL16
+ 2605 012a 0100     		.2byte	0x1
+ 2606 012c 50       		.byte	0x50
+ 2607 012d 14000000 		.4byte	.LVL16
+ 2608 0131 24000000 		.4byte	.LFE38
+ 2609 0135 0400     		.2byte	0x4
+ 2610 0137 F3       		.byte	0xf3
+ 2611 0138 01       		.uleb128 0x1
+ 2612 0139 50       		.byte	0x50
+ 2613 013a 9F       		.byte	0x9f
+ 2614 013b 00000000 		.4byte	0
+ 2615 013f 00000000 		.4byte	0
+ 2616              	.LLST10:
+ 2617 0143 00000000 		.4byte	.LVL13
+ 2618 0147 17000000 		.4byte	.LVL17-1
+ 2619 014b 0100     		.2byte	0x1
+ 2620 014d 51       		.byte	0x51
+ 2621 014e 17000000 		.4byte	.LVL17-1
+ 2622 0152 24000000 		.4byte	.LFE38
+ 2623 0156 0400     		.2byte	0x4
+ 2624 0158 F3       		.byte	0xf3
+ 2625 0159 01       		.uleb128 0x1
+ 2626 015a 51       		.byte	0x51
+ 2627 015b 9F       		.byte	0x9f
+ 2628 015c 00000000 		.4byte	0
+ 2629 0160 00000000 		.4byte	0
+ 2630              	.LLST11:
+ 2631 0164 00000000 		.4byte	.LVL13
+ 2632 0168 17000000 		.4byte	.LVL17-1
+ 2633 016c 0100     		.2byte	0x1
+ 2634 016e 52       		.byte	0x52
+ 2635 016f 17000000 		.4byte	.LVL17-1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 52
+
+
+ 2636 0173 24000000 		.4byte	.LFE38
+ 2637 0177 0400     		.2byte	0x4
+ 2638 0179 F3       		.byte	0xf3
+ 2639 017a 01       		.uleb128 0x1
+ 2640 017b 52       		.byte	0x52
+ 2641 017c 9F       		.byte	0x9f
+ 2642 017d 00000000 		.4byte	0
+ 2643 0181 00000000 		.4byte	0
+ 2644              	.LLST12:
+ 2645 0185 00000000 		.4byte	.LVL13
+ 2646 0189 17000000 		.4byte	.LVL17-1
+ 2647 018d 0100     		.2byte	0x1
+ 2648 018f 53       		.byte	0x53
+ 2649 0190 17000000 		.4byte	.LVL17-1
+ 2650 0194 24000000 		.4byte	.LFE38
+ 2651 0198 0400     		.2byte	0x4
+ 2652 019a F3       		.byte	0xf3
+ 2653 019b 01       		.uleb128 0x1
+ 2654 019c 53       		.byte	0x53
+ 2655 019d 9F       		.byte	0x9f
+ 2656 019e 00000000 		.4byte	0
+ 2657 01a2 00000000 		.4byte	0
+ 2658              	.LLST13:
+ 2659 01a6 02000000 		.4byte	.LVL14
+ 2660 01aa 0E000000 		.4byte	.LVL15
+ 2661 01ae 0200     		.2byte	0x2
+ 2662 01b0 30       		.byte	0x30
+ 2663 01b1 9F       		.byte	0x9f
+ 2664 01b2 0E000000 		.4byte	.LVL15
+ 2665 01b6 1E000000 		.4byte	.LVL18
+ 2666 01ba 0100     		.2byte	0x1
+ 2667 01bc 54       		.byte	0x54
+ 2668 01bd 20000000 		.4byte	.LVL19
+ 2669 01c1 22000000 		.4byte	.LVL21
+ 2670 01c5 0100     		.2byte	0x1
+ 2671 01c7 54       		.byte	0x54
+ 2672 01c8 00000000 		.4byte	0
+ 2673 01cc 00000000 		.4byte	0
+ 2674              	.LLST14:
+ 2675 01d0 18000000 		.4byte	.LVL17
+ 2676 01d4 22000000 		.4byte	.LVL20
+ 2677 01d8 0100     		.2byte	0x1
+ 2678 01da 50       		.byte	0x50
+ 2679 01db 00000000 		.4byte	0
+ 2680 01df 00000000 		.4byte	0
+ 2681              	.LLST15:
+ 2682 01e3 14000000 		.4byte	.LVL16
+ 2683 01e7 17000000 		.4byte	.LVL17-1
+ 2684 01eb 0100     		.2byte	0x1
+ 2685 01ed 50       		.byte	0x50
+ 2686 01ee 00000000 		.4byte	0
+ 2687 01f2 00000000 		.4byte	0
+ 2688              	.LLST16:
+ 2689 01f6 00000000 		.4byte	.LVL22
+ 2690 01fa 08000000 		.4byte	.LVL24
+ 2691 01fe 0100     		.2byte	0x1
+ 2692 0200 50       		.byte	0x50
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 53
+
+
+ 2693 0201 08000000 		.4byte	.LVL24
+ 2694 0205 16000000 		.4byte	.LFE39
+ 2695 0209 0400     		.2byte	0x4
+ 2696 020b F3       		.byte	0xf3
+ 2697 020c 01       		.uleb128 0x1
+ 2698 020d 50       		.byte	0x50
+ 2699 020e 9F       		.byte	0x9f
+ 2700 020f 00000000 		.4byte	0
+ 2701 0213 00000000 		.4byte	0
+ 2702              	.LLST17:
+ 2703 0217 00000000 		.4byte	.LVL22
+ 2704 021b 0B000000 		.4byte	.LVL25-1
+ 2705 021f 0100     		.2byte	0x1
+ 2706 0221 51       		.byte	0x51
+ 2707 0222 0B000000 		.4byte	.LVL25-1
+ 2708 0226 16000000 		.4byte	.LFE39
+ 2709 022a 0400     		.2byte	0x4
+ 2710 022c F3       		.byte	0xf3
+ 2711 022d 01       		.uleb128 0x1
+ 2712 022e 51       		.byte	0x51
+ 2713 022f 9F       		.byte	0x9f
+ 2714 0230 00000000 		.4byte	0
+ 2715 0234 00000000 		.4byte	0
+ 2716              	.LLST18:
+ 2717 0238 00000000 		.4byte	.LVL22
+ 2718 023c 0B000000 		.4byte	.LVL25-1
+ 2719 0240 0100     		.2byte	0x1
+ 2720 0242 52       		.byte	0x52
+ 2721 0243 0B000000 		.4byte	.LVL25-1
+ 2722 0247 16000000 		.4byte	.LFE39
+ 2723 024b 0400     		.2byte	0x4
+ 2724 024d F3       		.byte	0xf3
+ 2725 024e 01       		.uleb128 0x1
+ 2726 024f 52       		.byte	0x52
+ 2727 0250 9F       		.byte	0x9f
+ 2728 0251 00000000 		.4byte	0
+ 2729 0255 00000000 		.4byte	0
+ 2730              	.LLST19:
+ 2731 0259 02000000 		.4byte	.LVL23
+ 2732 025d 14000000 		.4byte	.LVL27
+ 2733 0261 0200     		.2byte	0x2
+ 2734 0263 30       		.byte	0x30
+ 2735 0264 9F       		.byte	0x9f
+ 2736 0265 14000000 		.4byte	.LVL27
+ 2737 0269 16000000 		.4byte	.LFE39
+ 2738 026d 0100     		.2byte	0x1
+ 2739 026f 50       		.byte	0x50
+ 2740 0270 00000000 		.4byte	0
+ 2741 0274 00000000 		.4byte	0
+ 2742              	.LLST20:
+ 2743 0278 0C000000 		.4byte	.LVL25
+ 2744 027c 12000000 		.4byte	.LVL26
+ 2745 0280 0100     		.2byte	0x1
+ 2746 0282 50       		.byte	0x50
+ 2747 0283 00000000 		.4byte	0
+ 2748 0287 00000000 		.4byte	0
+ 2749              	.LLST21:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 54
+
+
+ 2750 028b 08000000 		.4byte	.LVL24
+ 2751 028f 0B000000 		.4byte	.LVL25-1
+ 2752 0293 0100     		.2byte	0x1
+ 2753 0295 50       		.byte	0x50
+ 2754 0296 00000000 		.4byte	0
+ 2755 029a 00000000 		.4byte	0
+ 2756              	.LLST22:
+ 2757 029e 00000000 		.4byte	.LVL28
+ 2758 02a2 08000000 		.4byte	.LVL30
+ 2759 02a6 0100     		.2byte	0x1
+ 2760 02a8 50       		.byte	0x50
+ 2761 02a9 08000000 		.4byte	.LVL30
+ 2762 02ad 16000000 		.4byte	.LFE40
+ 2763 02b1 0400     		.2byte	0x4
+ 2764 02b3 F3       		.byte	0xf3
+ 2765 02b4 01       		.uleb128 0x1
+ 2766 02b5 50       		.byte	0x50
+ 2767 02b6 9F       		.byte	0x9f
+ 2768 02b7 00000000 		.4byte	0
+ 2769 02bb 00000000 		.4byte	0
+ 2770              	.LLST23:
+ 2771 02bf 00000000 		.4byte	.LVL28
+ 2772 02c3 0B000000 		.4byte	.LVL31-1
+ 2773 02c7 0100     		.2byte	0x1
+ 2774 02c9 51       		.byte	0x51
+ 2775 02ca 0B000000 		.4byte	.LVL31-1
+ 2776 02ce 16000000 		.4byte	.LFE40
+ 2777 02d2 0400     		.2byte	0x4
+ 2778 02d4 F3       		.byte	0xf3
+ 2779 02d5 01       		.uleb128 0x1
+ 2780 02d6 51       		.byte	0x51
+ 2781 02d7 9F       		.byte	0x9f
+ 2782 02d8 00000000 		.4byte	0
+ 2783 02dc 00000000 		.4byte	0
+ 2784              	.LLST24:
+ 2785 02e0 00000000 		.4byte	.LVL28
+ 2786 02e4 0B000000 		.4byte	.LVL31-1
+ 2787 02e8 0100     		.2byte	0x1
+ 2788 02ea 52       		.byte	0x52
+ 2789 02eb 0B000000 		.4byte	.LVL31-1
+ 2790 02ef 16000000 		.4byte	.LFE40
+ 2791 02f3 0400     		.2byte	0x4
+ 2792 02f5 F3       		.byte	0xf3
+ 2793 02f6 01       		.uleb128 0x1
+ 2794 02f7 52       		.byte	0x52
+ 2795 02f8 9F       		.byte	0x9f
+ 2796 02f9 00000000 		.4byte	0
+ 2797 02fd 00000000 		.4byte	0
+ 2798              	.LLST25:
+ 2799 0301 02000000 		.4byte	.LVL29
+ 2800 0305 14000000 		.4byte	.LVL33
+ 2801 0309 0200     		.2byte	0x2
+ 2802 030b 30       		.byte	0x30
+ 2803 030c 9F       		.byte	0x9f
+ 2804 030d 14000000 		.4byte	.LVL33
+ 2805 0311 16000000 		.4byte	.LFE40
+ 2806 0315 0100     		.2byte	0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 55
+
+
+ 2807 0317 50       		.byte	0x50
+ 2808 0318 00000000 		.4byte	0
+ 2809 031c 00000000 		.4byte	0
+ 2810              	.LLST26:
+ 2811 0320 0C000000 		.4byte	.LVL31
+ 2812 0324 12000000 		.4byte	.LVL32
+ 2813 0328 0100     		.2byte	0x1
+ 2814 032a 50       		.byte	0x50
+ 2815 032b 00000000 		.4byte	0
+ 2816 032f 00000000 		.4byte	0
+ 2817              	.LLST27:
+ 2818 0333 08000000 		.4byte	.LVL30
+ 2819 0337 0B000000 		.4byte	.LVL31-1
+ 2820 033b 0100     		.2byte	0x1
+ 2821 033d 50       		.byte	0x50
+ 2822 033e 00000000 		.4byte	0
+ 2823 0342 00000000 		.4byte	0
+ 2824              	.LLST28:
+ 2825 0346 00000000 		.4byte	.LVL34
+ 2826 034a 08000000 		.4byte	.LVL36
+ 2827 034e 0100     		.2byte	0x1
+ 2828 0350 50       		.byte	0x50
+ 2829 0351 08000000 		.4byte	.LVL36
+ 2830 0355 16000000 		.4byte	.LFE41
+ 2831 0359 0400     		.2byte	0x4
+ 2832 035b F3       		.byte	0xf3
+ 2833 035c 01       		.uleb128 0x1
+ 2834 035d 50       		.byte	0x50
+ 2835 035e 9F       		.byte	0x9f
+ 2836 035f 00000000 		.4byte	0
+ 2837 0363 00000000 		.4byte	0
+ 2838              	.LLST29:
+ 2839 0367 00000000 		.4byte	.LVL34
+ 2840 036b 0B000000 		.4byte	.LVL37-1
+ 2841 036f 0100     		.2byte	0x1
+ 2842 0371 51       		.byte	0x51
+ 2843 0372 0B000000 		.4byte	.LVL37-1
+ 2844 0376 16000000 		.4byte	.LFE41
+ 2845 037a 0400     		.2byte	0x4
+ 2846 037c F3       		.byte	0xf3
+ 2847 037d 01       		.uleb128 0x1
+ 2848 037e 51       		.byte	0x51
+ 2849 037f 9F       		.byte	0x9f
+ 2850 0380 00000000 		.4byte	0
+ 2851 0384 00000000 		.4byte	0
+ 2852              	.LLST30:
+ 2853 0388 00000000 		.4byte	.LVL34
+ 2854 038c 0B000000 		.4byte	.LVL37-1
+ 2855 0390 0100     		.2byte	0x1
+ 2856 0392 52       		.byte	0x52
+ 2857 0393 0B000000 		.4byte	.LVL37-1
+ 2858 0397 16000000 		.4byte	.LFE41
+ 2859 039b 0400     		.2byte	0x4
+ 2860 039d F3       		.byte	0xf3
+ 2861 039e 01       		.uleb128 0x1
+ 2862 039f 52       		.byte	0x52
+ 2863 03a0 9F       		.byte	0x9f
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 56
+
+
+ 2864 03a1 00000000 		.4byte	0
+ 2865 03a5 00000000 		.4byte	0
+ 2866              	.LLST31:
+ 2867 03a9 02000000 		.4byte	.LVL35
+ 2868 03ad 14000000 		.4byte	.LVL39
+ 2869 03b1 0200     		.2byte	0x2
+ 2870 03b3 30       		.byte	0x30
+ 2871 03b4 9F       		.byte	0x9f
+ 2872 03b5 14000000 		.4byte	.LVL39
+ 2873 03b9 16000000 		.4byte	.LFE41
+ 2874 03bd 0100     		.2byte	0x1
+ 2875 03bf 50       		.byte	0x50
+ 2876 03c0 00000000 		.4byte	0
+ 2877 03c4 00000000 		.4byte	0
+ 2878              	.LLST32:
+ 2879 03c8 0C000000 		.4byte	.LVL37
+ 2880 03cc 12000000 		.4byte	.LVL38
+ 2881 03d0 0100     		.2byte	0x1
+ 2882 03d2 50       		.byte	0x50
+ 2883 03d3 00000000 		.4byte	0
+ 2884 03d7 00000000 		.4byte	0
+ 2885              	.LLST33:
+ 2886 03db 08000000 		.4byte	.LVL36
+ 2887 03df 0B000000 		.4byte	.LVL37-1
+ 2888 03e3 0100     		.2byte	0x1
+ 2889 03e5 50       		.byte	0x50
+ 2890 03e6 00000000 		.4byte	0
+ 2891 03ea 00000000 		.4byte	0
+ 2892              	.LLST34:
+ 2893 03ee 00000000 		.4byte	.LVL40
+ 2894 03f2 16000000 		.4byte	.LVL45
+ 2895 03f6 0100     		.2byte	0x1
+ 2896 03f8 50       		.byte	0x50
+ 2897 03f9 16000000 		.4byte	.LVL45
+ 2898 03fd 48000000 		.4byte	.LFE42
+ 2899 0401 0400     		.2byte	0x4
+ 2900 0403 F3       		.byte	0xf3
+ 2901 0404 01       		.uleb128 0x1
+ 2902 0405 50       		.byte	0x50
+ 2903 0406 9F       		.byte	0x9f
+ 2904 0407 00000000 		.4byte	0
+ 2905 040b 00000000 		.4byte	0
+ 2906              	.LLST35:
+ 2907 040f 00000000 		.4byte	.LVL40
+ 2908 0413 19000000 		.4byte	.LVL46-1
+ 2909 0417 0100     		.2byte	0x1
+ 2910 0419 51       		.byte	0x51
+ 2911 041a 19000000 		.4byte	.LVL46-1
+ 2912 041e 48000000 		.4byte	.LFE42
+ 2913 0422 0400     		.2byte	0x4
+ 2914 0424 F3       		.byte	0xf3
+ 2915 0425 01       		.uleb128 0x1
+ 2916 0426 51       		.byte	0x51
+ 2917 0427 9F       		.byte	0x9f
+ 2918 0428 00000000 		.4byte	0
+ 2919 042c 00000000 		.4byte	0
+ 2920              	.LLST36:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 57
+
+
+ 2921 0430 00000000 		.4byte	.LVL40
+ 2922 0434 14000000 		.4byte	.LVL44
+ 2923 0438 0100     		.2byte	0x1
+ 2924 043a 52       		.byte	0x52
+ 2925 043b 14000000 		.4byte	.LVL44
+ 2926 043f 48000000 		.4byte	.LFE42
+ 2927 0443 0400     		.2byte	0x4
+ 2928 0445 F3       		.byte	0xf3
+ 2929 0446 01       		.uleb128 0x1
+ 2930 0447 52       		.byte	0x52
+ 2931 0448 9F       		.byte	0x9f
+ 2932 0449 00000000 		.4byte	0
+ 2933 044d 00000000 		.4byte	0
+ 2934              	.LLST37:
+ 2935 0451 00000000 		.4byte	.LVL40
+ 2936 0455 0C000000 		.4byte	.LVL42
+ 2937 0459 0100     		.2byte	0x1
+ 2938 045b 53       		.byte	0x53
+ 2939 045c 0C000000 		.4byte	.LVL42
+ 2940 0460 48000000 		.4byte	.LFE42
+ 2941 0464 0400     		.2byte	0x4
+ 2942 0466 F3       		.byte	0xf3
+ 2943 0467 01       		.uleb128 0x1
+ 2944 0468 53       		.byte	0x53
+ 2945 0469 9F       		.byte	0x9f
+ 2946 046a 00000000 		.4byte	0
+ 2947 046e 00000000 		.4byte	0
+ 2948              	.LLST38:
+ 2949 0472 0A000000 		.4byte	.LVL41
+ 2950 0476 26000000 		.4byte	.LVL47
+ 2951 047a 0200     		.2byte	0x2
+ 2952 047c 30       		.byte	0x30
+ 2953 047d 9F       		.byte	0x9f
+ 2954 047e 26000000 		.4byte	.LVL47
+ 2955 0482 46000000 		.4byte	.LVL53
+ 2956 0486 0100     		.2byte	0x1
+ 2957 0488 56       		.byte	0x56
+ 2958 0489 00000000 		.4byte	0
+ 2959 048d 00000000 		.4byte	0
+ 2960              	.LLST39:
+ 2961 0491 1A000000 		.4byte	.LVL46
+ 2962 0495 38000000 		.4byte	.LVL48
+ 2963 0499 0100     		.2byte	0x1
+ 2964 049b 50       		.byte	0x50
+ 2965 049c 3C000000 		.4byte	.LVL49
+ 2966 04a0 44000000 		.4byte	.LVL51
+ 2967 04a4 0100     		.2byte	0x1
+ 2968 04a6 50       		.byte	0x50
+ 2969 04a7 00000000 		.4byte	0
+ 2970 04ab 00000000 		.4byte	0
+ 2971              	.LLST40:
+ 2972 04af 10000000 		.4byte	.LVL43
+ 2973 04b3 46000000 		.4byte	.LVL52
+ 2974 04b7 0100     		.2byte	0x1
+ 2975 04b9 55       		.byte	0x55
+ 2976 04ba 00000000 		.4byte	0
+ 2977 04be 00000000 		.4byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 58
+
+
+ 2978              	.LLST41:
+ 2979 04c2 00000000 		.4byte	.LVL54
+ 2980 04c6 08000000 		.4byte	.LVL56
+ 2981 04ca 0100     		.2byte	0x1
+ 2982 04cc 50       		.byte	0x50
+ 2983 04cd 08000000 		.4byte	.LVL56
+ 2984 04d1 16000000 		.4byte	.LFE43
+ 2985 04d5 0400     		.2byte	0x4
+ 2986 04d7 F3       		.byte	0xf3
+ 2987 04d8 01       		.uleb128 0x1
+ 2988 04d9 50       		.byte	0x50
+ 2989 04da 9F       		.byte	0x9f
+ 2990 04db 00000000 		.4byte	0
+ 2991 04df 00000000 		.4byte	0
+ 2992              	.LLST42:
+ 2993 04e3 00000000 		.4byte	.LVL54
+ 2994 04e7 0B000000 		.4byte	.LVL57-1
+ 2995 04eb 0100     		.2byte	0x1
+ 2996 04ed 51       		.byte	0x51
+ 2997 04ee 0B000000 		.4byte	.LVL57-1
+ 2998 04f2 16000000 		.4byte	.LFE43
+ 2999 04f6 0400     		.2byte	0x4
+ 3000 04f8 F3       		.byte	0xf3
+ 3001 04f9 01       		.uleb128 0x1
+ 3002 04fa 51       		.byte	0x51
+ 3003 04fb 9F       		.byte	0x9f
+ 3004 04fc 00000000 		.4byte	0
+ 3005 0500 00000000 		.4byte	0
+ 3006              	.LLST43:
+ 3007 0504 00000000 		.4byte	.LVL54
+ 3008 0508 0B000000 		.4byte	.LVL57-1
+ 3009 050c 0100     		.2byte	0x1
+ 3010 050e 52       		.byte	0x52
+ 3011 050f 0B000000 		.4byte	.LVL57-1
+ 3012 0513 16000000 		.4byte	.LFE43
+ 3013 0517 0400     		.2byte	0x4
+ 3014 0519 F3       		.byte	0xf3
+ 3015 051a 01       		.uleb128 0x1
+ 3016 051b 52       		.byte	0x52
+ 3017 051c 9F       		.byte	0x9f
+ 3018 051d 00000000 		.4byte	0
+ 3019 0521 00000000 		.4byte	0
+ 3020              	.LLST44:
+ 3021 0525 02000000 		.4byte	.LVL55
+ 3022 0529 14000000 		.4byte	.LVL59
+ 3023 052d 0200     		.2byte	0x2
+ 3024 052f 30       		.byte	0x30
+ 3025 0530 9F       		.byte	0x9f
+ 3026 0531 14000000 		.4byte	.LVL59
+ 3027 0535 16000000 		.4byte	.LFE43
+ 3028 0539 0100     		.2byte	0x1
+ 3029 053b 50       		.byte	0x50
+ 3030 053c 00000000 		.4byte	0
+ 3031 0540 00000000 		.4byte	0
+ 3032              	.LLST45:
+ 3033 0544 0C000000 		.4byte	.LVL57
+ 3034 0548 12000000 		.4byte	.LVL58
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 59
+
+
+ 3035 054c 0100     		.2byte	0x1
+ 3036 054e 50       		.byte	0x50
+ 3037 054f 00000000 		.4byte	0
+ 3038 0553 00000000 		.4byte	0
+ 3039              	.LLST46:
+ 3040 0557 08000000 		.4byte	.LVL56
+ 3041 055b 0B000000 		.4byte	.LVL57-1
+ 3042 055f 0100     		.2byte	0x1
+ 3043 0561 50       		.byte	0x50
+ 3044 0562 00000000 		.4byte	0
+ 3045 0566 00000000 		.4byte	0
+ 3046              	.LLST47:
+ 3047 056a 00000000 		.4byte	.LVL60
+ 3048 056e 08000000 		.4byte	.LVL62
+ 3049 0572 0100     		.2byte	0x1
+ 3050 0574 50       		.byte	0x50
+ 3051 0575 08000000 		.4byte	.LVL62
+ 3052 0579 16000000 		.4byte	.LFE44
+ 3053 057d 0400     		.2byte	0x4
+ 3054 057f F3       		.byte	0xf3
+ 3055 0580 01       		.uleb128 0x1
+ 3056 0581 50       		.byte	0x50
+ 3057 0582 9F       		.byte	0x9f
+ 3058 0583 00000000 		.4byte	0
+ 3059 0587 00000000 		.4byte	0
+ 3060              	.LLST48:
+ 3061 058b 00000000 		.4byte	.LVL60
+ 3062 058f 0B000000 		.4byte	.LVL63-1
+ 3063 0593 0100     		.2byte	0x1
+ 3064 0595 51       		.byte	0x51
+ 3065 0596 0B000000 		.4byte	.LVL63-1
+ 3066 059a 16000000 		.4byte	.LFE44
+ 3067 059e 0400     		.2byte	0x4
+ 3068 05a0 F3       		.byte	0xf3
+ 3069 05a1 01       		.uleb128 0x1
+ 3070 05a2 51       		.byte	0x51
+ 3071 05a3 9F       		.byte	0x9f
+ 3072 05a4 00000000 		.4byte	0
+ 3073 05a8 00000000 		.4byte	0
+ 3074              	.LLST49:
+ 3075 05ac 00000000 		.4byte	.LVL60
+ 3076 05b0 0B000000 		.4byte	.LVL63-1
+ 3077 05b4 0100     		.2byte	0x1
+ 3078 05b6 52       		.byte	0x52
+ 3079 05b7 0B000000 		.4byte	.LVL63-1
+ 3080 05bb 16000000 		.4byte	.LFE44
+ 3081 05bf 0400     		.2byte	0x4
+ 3082 05c1 F3       		.byte	0xf3
+ 3083 05c2 01       		.uleb128 0x1
+ 3084 05c3 52       		.byte	0x52
+ 3085 05c4 9F       		.byte	0x9f
+ 3086 05c5 00000000 		.4byte	0
+ 3087 05c9 00000000 		.4byte	0
+ 3088              	.LLST50:
+ 3089 05cd 02000000 		.4byte	.LVL61
+ 3090 05d1 14000000 		.4byte	.LVL65
+ 3091 05d5 0200     		.2byte	0x2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 60
+
+
+ 3092 05d7 30       		.byte	0x30
+ 3093 05d8 9F       		.byte	0x9f
+ 3094 05d9 14000000 		.4byte	.LVL65
+ 3095 05dd 16000000 		.4byte	.LFE44
+ 3096 05e1 0100     		.2byte	0x1
+ 3097 05e3 50       		.byte	0x50
+ 3098 05e4 00000000 		.4byte	0
+ 3099 05e8 00000000 		.4byte	0
+ 3100              	.LLST51:
+ 3101 05ec 0C000000 		.4byte	.LVL63
+ 3102 05f0 12000000 		.4byte	.LVL64
+ 3103 05f4 0100     		.2byte	0x1
+ 3104 05f6 50       		.byte	0x50
+ 3105 05f7 00000000 		.4byte	0
+ 3106 05fb 00000000 		.4byte	0
+ 3107              	.LLST52:
+ 3108 05ff 08000000 		.4byte	.LVL62
+ 3109 0603 0B000000 		.4byte	.LVL63-1
+ 3110 0607 0100     		.2byte	0x1
+ 3111 0609 50       		.byte	0x50
+ 3112 060a 00000000 		.4byte	0
+ 3113 060e 00000000 		.4byte	0
+ 3114              	.LLST53:
+ 3115 0612 00000000 		.4byte	.LVL66
+ 3116 0616 08000000 		.4byte	.LVL68
+ 3117 061a 0100     		.2byte	0x1
+ 3118 061c 50       		.byte	0x50
+ 3119 061d 08000000 		.4byte	.LVL68
+ 3120 0621 16000000 		.4byte	.LFE45
+ 3121 0625 0400     		.2byte	0x4
+ 3122 0627 F3       		.byte	0xf3
+ 3123 0628 01       		.uleb128 0x1
+ 3124 0629 50       		.byte	0x50
+ 3125 062a 9F       		.byte	0x9f
+ 3126 062b 00000000 		.4byte	0
+ 3127 062f 00000000 		.4byte	0
+ 3128              	.LLST54:
+ 3129 0633 00000000 		.4byte	.LVL66
+ 3130 0637 0B000000 		.4byte	.LVL69-1
+ 3131 063b 0100     		.2byte	0x1
+ 3132 063d 51       		.byte	0x51
+ 3133 063e 0B000000 		.4byte	.LVL69-1
+ 3134 0642 16000000 		.4byte	.LFE45
+ 3135 0646 0400     		.2byte	0x4
+ 3136 0648 F3       		.byte	0xf3
+ 3137 0649 01       		.uleb128 0x1
+ 3138 064a 51       		.byte	0x51
+ 3139 064b 9F       		.byte	0x9f
+ 3140 064c 00000000 		.4byte	0
+ 3141 0650 00000000 		.4byte	0
+ 3142              	.LLST55:
+ 3143 0654 00000000 		.4byte	.LVL66
+ 3144 0658 0B000000 		.4byte	.LVL69-1
+ 3145 065c 0100     		.2byte	0x1
+ 3146 065e 52       		.byte	0x52
+ 3147 065f 0B000000 		.4byte	.LVL69-1
+ 3148 0663 16000000 		.4byte	.LFE45
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 61
+
+
+ 3149 0667 0400     		.2byte	0x4
+ 3150 0669 F3       		.byte	0xf3
+ 3151 066a 01       		.uleb128 0x1
+ 3152 066b 52       		.byte	0x52
+ 3153 066c 9F       		.byte	0x9f
+ 3154 066d 00000000 		.4byte	0
+ 3155 0671 00000000 		.4byte	0
+ 3156              	.LLST56:
+ 3157 0675 02000000 		.4byte	.LVL67
+ 3158 0679 14000000 		.4byte	.LVL71
+ 3159 067d 0200     		.2byte	0x2
+ 3160 067f 30       		.byte	0x30
+ 3161 0680 9F       		.byte	0x9f
+ 3162 0681 14000000 		.4byte	.LVL71
+ 3163 0685 16000000 		.4byte	.LFE45
+ 3164 0689 0100     		.2byte	0x1
+ 3165 068b 50       		.byte	0x50
+ 3166 068c 00000000 		.4byte	0
+ 3167 0690 00000000 		.4byte	0
+ 3168              	.LLST57:
+ 3169 0694 0C000000 		.4byte	.LVL69
+ 3170 0698 12000000 		.4byte	.LVL70
+ 3171 069c 0100     		.2byte	0x1
+ 3172 069e 50       		.byte	0x50
+ 3173 069f 00000000 		.4byte	0
+ 3174 06a3 00000000 		.4byte	0
+ 3175              	.LLST58:
+ 3176 06a7 08000000 		.4byte	.LVL68
+ 3177 06ab 0B000000 		.4byte	.LVL69-1
+ 3178 06af 0100     		.2byte	0x1
+ 3179 06b1 50       		.byte	0x50
+ 3180 06b2 00000000 		.4byte	0
+ 3181 06b6 00000000 		.4byte	0
+ 3182              	.LLST59:
+ 3183 06ba 00000000 		.4byte	.LVL72
+ 3184 06be 04000000 		.4byte	.LVL74
+ 3185 06c2 0100     		.2byte	0x1
+ 3186 06c4 50       		.byte	0x50
+ 3187 06c5 04000000 		.4byte	.LVL74
+ 3188 06c9 0E000000 		.4byte	.LFE46
+ 3189 06cd 0400     		.2byte	0x4
+ 3190 06cf F3       		.byte	0xf3
+ 3191 06d0 01       		.uleb128 0x1
+ 3192 06d1 50       		.byte	0x50
+ 3193 06d2 9F       		.byte	0x9f
+ 3194 06d3 00000000 		.4byte	0
+ 3195 06d7 00000000 		.4byte	0
+ 3196              		.section	.debug_aranges,"",%progbits
+ 3197 0000 74000000 		.4byte	0x74
+ 3198 0004 0200     		.2byte	0x2
+ 3199 0006 00000000 		.4byte	.Ldebug_info0
+ 3200 000a 04       		.byte	0x4
+ 3201 000b 00       		.byte	0
+ 3202 000c 0000     		.2byte	0
+ 3203 000e 0000     		.2byte	0
+ 3204 0010 00000000 		.4byte	.LFB35
+ 3205 0014 04000000 		.4byte	.LFE35-.LFB35
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 62
+
+
+ 3206 0018 00000000 		.4byte	.LFB36
+ 3207 001c 04000000 		.4byte	.LFE36-.LFB36
+ 3208 0020 00000000 		.4byte	.LFB37
+ 3209 0024 24000000 		.4byte	.LFE37-.LFB37
+ 3210 0028 00000000 		.4byte	.LFB38
+ 3211 002c 24000000 		.4byte	.LFE38-.LFB38
+ 3212 0030 00000000 		.4byte	.LFB39
+ 3213 0034 16000000 		.4byte	.LFE39-.LFB39
+ 3214 0038 00000000 		.4byte	.LFB40
+ 3215 003c 16000000 		.4byte	.LFE40-.LFB40
+ 3216 0040 00000000 		.4byte	.LFB41
+ 3217 0044 16000000 		.4byte	.LFE41-.LFB41
+ 3218 0048 00000000 		.4byte	.LFB42
+ 3219 004c 48000000 		.4byte	.LFE42-.LFB42
+ 3220 0050 00000000 		.4byte	.LFB43
+ 3221 0054 16000000 		.4byte	.LFE43-.LFB43
+ 3222 0058 00000000 		.4byte	.LFB44
+ 3223 005c 16000000 		.4byte	.LFE44-.LFB44
+ 3224 0060 00000000 		.4byte	.LFB45
+ 3225 0064 16000000 		.4byte	.LFE45-.LFB45
+ 3226 0068 00000000 		.4byte	.LFB46
+ 3227 006c 0E000000 		.4byte	.LFE46-.LFB46
+ 3228 0070 00000000 		.4byte	0
+ 3229 0074 00000000 		.4byte	0
+ 3230              		.section	.debug_ranges,"",%progbits
+ 3231              	.Ldebug_ranges0:
+ 3232 0000 00000000 		.4byte	.LFB35
+ 3233 0004 04000000 		.4byte	.LFE35
+ 3234 0008 00000000 		.4byte	.LFB36
+ 3235 000c 04000000 		.4byte	.LFE36
+ 3236 0010 00000000 		.4byte	.LFB37
+ 3237 0014 24000000 		.4byte	.LFE37
+ 3238 0018 00000000 		.4byte	.LFB38
+ 3239 001c 24000000 		.4byte	.LFE38
+ 3240 0020 00000000 		.4byte	.LFB39
+ 3241 0024 16000000 		.4byte	.LFE39
+ 3242 0028 00000000 		.4byte	.LFB40
+ 3243 002c 16000000 		.4byte	.LFE40
+ 3244 0030 00000000 		.4byte	.LFB41
+ 3245 0034 16000000 		.4byte	.LFE41
+ 3246 0038 00000000 		.4byte	.LFB42
+ 3247 003c 48000000 		.4byte	.LFE42
+ 3248 0040 00000000 		.4byte	.LFB43
+ 3249 0044 16000000 		.4byte	.LFE43
+ 3250 0048 00000000 		.4byte	.LFB44
+ 3251 004c 16000000 		.4byte	.LFE44
+ 3252 0050 00000000 		.4byte	.LFB45
+ 3253 0054 16000000 		.4byte	.LFE45
+ 3254 0058 00000000 		.4byte	.LFB46
+ 3255 005c 0E000000 		.4byte	.LFE46
+ 3256 0060 00000000 		.4byte	0
+ 3257 0064 00000000 		.4byte	0
+ 3258              		.section	.debug_line,"",%progbits
+ 3259              	.Ldebug_line0:
+ 3260 0000 EA020000 		.section	.debug_str,"MS",%progbits,1
+ 3260      0200E301 
+ 3260      00000201 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 63
+
+
+ 3260      FB0E0D00 
+ 3260      01010101 
+ 3261              	.LASF82:
+ 3262 0000 52656665 		.ascii	"ReferenceSpadType\000"
+ 3262      72656E63 
+ 3262      65537061 
+ 3262      64547970 
+ 3262      6500
+ 3263              	.LASF50:
+ 3264 0012 5369676E 		.ascii	"SignalRateRtnMegaCps\000"
+ 3264      616C5261 
+ 3264      74655274 
+ 3264      6E4D6567 
+ 3264      61437073 
+ 3265              	.LASF85:
+ 3266 0027 50617274 		.ascii	"PartUIDLower\000"
+ 3266      5549444C 
+ 3266      6F776572 
+ 3266      00
+ 3267              	.LASF116:
+ 3268 0034 564C3533 		.ascii	"VL53L0X_DEV\000"
+ 3268      4C30585F 
+ 3268      44455600 
+ 3269              	.LASF30:
+ 3270 0040 48697374 		.ascii	"HistogramMode\000"
+ 3270      6F677261 
+ 3270      6D4D6F64 
+ 3270      6500
+ 3271              	.LASF33:
+ 3272 004e 5854616C 		.ascii	"XTalkCompensationEnable\000"
+ 3272      6B436F6D 
+ 3272      70656E73 
+ 3272      6174696F 
+ 3272      6E456E61 
+ 3273              	.LASF148:
+ 3274 0066 564C3533 		.ascii	"VL53L0X_read_dword\000"
+ 3274      4C30585F 
+ 3274      72656164 
+ 3274      5F64776F 
+ 3274      726400
+ 3275              	.LASF73:
+ 3276 0079 50726552 		.ascii	"PreRangeVcselPulsePeriod\000"
+ 3276      616E6765 
+ 3276      56637365 
+ 3276      6C50756C 
+ 3276      73655065 
+ 3277              	.LASF138:
+ 3278 0092 564C3533 		.ascii	"VL53L0X_RdDWord\000"
+ 3278      4C30585F 
+ 3278      52644457 
+ 3278      6F726400 
+ 3279              	.LASF13:
+ 3280 00a2 756E7369 		.ascii	"unsigned int\000"
+ 3280      676E6564 
+ 3280      20696E74 
+ 3280      00
+ 3281              	.LASF34:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 64
+
+
+ 3282 00af 5854616C 		.ascii	"XTalkCompensationRangeMilliMeter\000"
+ 3282      6B436F6D 
+ 3282      70656E73 
+ 3282      6174696F 
+ 3282      6E52616E 
+ 3283              	.LASF121:
+ 3284 00d0 53746174 		.ascii	"Status\000"
+ 3284      757300
+ 3285              	.LASF28:
+ 3286 00d7 564C3533 		.ascii	"VL53L0X_PowerModes\000"
+ 3286      4C30585F 
+ 3286      506F7765 
+ 3286      724D6F64 
+ 3286      657300
+ 3287              	.LASF80:
+ 3288 00ea 50726F64 		.ascii	"ProductId\000"
+ 3288      75637449 
+ 3288      6400
+ 3289              	.LASF37:
+ 3290 00f4 4C696D69 		.ascii	"LimitChecksEnable\000"
+ 3290      74436865 
+ 3290      636B7345 
+ 3290      6E61626C 
+ 3290      6500
+ 3291              	.LASF62:
+ 3292 0106 4572726F 		.ascii	"ErrorStatus\000"
+ 3292      72537461 
+ 3292      74757300 
+ 3293              	.LASF51:
+ 3294 0112 416D6269 		.ascii	"AmbientRateRtnMegaCps\000"
+ 3294      656E7452 
+ 3294      61746552 
+ 3294      746E4D65 
+ 3294      67614370 
+ 3295              	.LASF7:
+ 3296 0128 5F5F696E 		.ascii	"__int32_t\000"
+ 3296      7433325F 
+ 3296      7400
+ 3297              	.LASF143:
+ 3298 0132 564C3533 		.ascii	"VL53L0X_write_byte\000"
+ 3298      4C30585F 
+ 3298      77726974 
+ 3298      655F6279 
+ 3298      746500
+ 3299              	.LASF115:
+ 3300 0145 564C3533 		.ascii	"VL53L0X_Dev_t\000"
+ 3300      4C30585F 
+ 3300      4465765F 
+ 3300      7400
+ 3301              	.LASF40:
+ 3302 0153 57726170 		.ascii	"WrapAroundCheckEnable\000"
+ 3302      41726F75 
+ 3302      6E644368 
+ 3302      65636B45 
+ 3302      6E61626C 
+ 3303              	.LASF99:
+ 3304 0169 506F7765 		.ascii	"PowerMode\000"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 65
+
+
+ 3304      724D6F64 
+ 3304      6500
+ 3305              	.LASF38:
+ 3306 0173 4C696D69 		.ascii	"LimitChecksStatus\000"
+ 3306      74436865 
+ 3306      636B7353 
+ 3306      74617475 
+ 3306      7300
+ 3307              	.LASF49:
+ 3308 0185 52616E67 		.ascii	"RangeDMaxMilliMeter\000"
+ 3308      65444D61 
+ 3308      784D696C 
+ 3308      6C694D65 
+ 3308      74657200 
+ 3309              	.LASF79:
+ 3310 0199 52657669 		.ascii	"Revision\000"
+ 3310      73696F6E 
+ 3310      00
+ 3311              	.LASF89:
+ 3312 01a2 50617274 		.ascii	"Part2PartOffsetNVMMicroMeter\000"
+ 3312      32506172 
+ 3312      744F6666 
+ 3312      7365744E 
+ 3312      564D4D69 
+ 3313              	.LASF127:
+ 3314 01bf 64657669 		.ascii	"deviceAddress\000"
+ 3314      63654164 
+ 3314      64726573 
+ 3314      7300
+ 3315              	.LASF20:
+ 3316 01cd 46697850 		.ascii	"FixPoint1616_t\000"
+ 3316      6F696E74 
+ 3316      31363136 
+ 3316      5F7400
+ 3317              	.LASF87:
+ 3318 01dc 564C3533 		.ascii	"VL53L0X_DeviceSpecificParameters_t\000"
+ 3318      4C30585F 
+ 3318      44657669 
+ 3318      63655370 
+ 3318      65636966 
+ 3319              	.LASF18:
+ 3320 01ff 75696E74 		.ascii	"uint32_t\000"
+ 3320      33325F74 
+ 3320      00
+ 3321              	.LASF14:
+ 3322 0208 696E7438 		.ascii	"int8_t\000"
+ 3322      5F7400
+ 3323              	.LASF144:
+ 3324 020f 564C3533 		.ascii	"VL53L0X_write_word\000"
+ 3324      4C30585F 
+ 3324      77726974 
+ 3324      655F776F 
+ 3324      726400
+ 3325              	.LASF128:
+ 3326 0222 564C3533 		.ascii	"VL53L0X_ReadMulti\000"
+ 3326      4C30585F 
+ 3326      52656164 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 66
+
+
+ 3326      4D756C74 
+ 3326      6900
+ 3327              	.LASF58:
+ 3328 0234 48697374 		.ascii	"HistogramType\000"
+ 3328      6F677261 
+ 3328      6D547970 
+ 3328      6500
+ 3329              	.LASF117:
+ 3330 0242 666C6F61 		.ascii	"float\000"
+ 3330      7400
+ 3331              	.LASF126:
+ 3332 0248 73746174 		.ascii	"status_int\000"
+ 3332      75735F69 
+ 3332      6E7400
+ 3333              	.LASF41:
+ 3334 0253 564C3533 		.ascii	"VL53L0X_DeviceParameters_t\000"
+ 3334      4C30585F 
+ 3334      44657669 
+ 3334      63655061 
+ 3334      72616D65 
+ 3335              	.LASF125:
+ 3336 026e 636F756E 		.ascii	"count\000"
+ 3336      7400
+ 3337              	.LASF123:
+ 3338 0274 696E6465 		.ascii	"index\000"
+ 3338      7800
+ 3339              	.LASF21:
+ 3340 027a 564C3533 		.ascii	"VL53L0X_DeviceError\000"
+ 3340      4C30585F 
+ 3340      44657669 
+ 3340      63654572 
+ 3340      726F7200 
+ 3341              	.LASF101:
+ 3342 028e 74617267 		.ascii	"targetRefRate\000"
+ 3342      65745265 
+ 3342      66526174 
+ 3342      6500
+ 3343              	.LASF149:
+ 3344 029c 43794465 		.ascii	"CyDelayUs\000"
+ 3344      6C617955 
+ 3344      7300
+ 3345              	.LASF90:
+ 3346 02a6 50617274 		.ascii	"Part2PartOffsetAdjustmentNVMMicroMeter\000"
+ 3346      32506172 
+ 3346      744F6666 
+ 3346      73657441 
+ 3346      646A7573 
+ 3347              	.LASF12:
+ 3348 02cd 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 3348      206C6F6E 
+ 3348      6720756E 
+ 3348      7369676E 
+ 3348      65642069 
+ 3349              	.LASF43:
+ 3350 02e4 416D6254 		.ascii	"AmbTuningWindowFactor_K\000"
+ 3350      756E696E 
+ 3350      6757696E 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 67
+
+
+ 3350      646F7746 
+ 3350      6163746F 
+ 3351              	.LASF67:
+ 3352 02fc 4F736346 		.ascii	"OscFrequencyMHz\000"
+ 3352      72657175 
+ 3352      656E6379 
+ 3352      4D487A00 
+ 3353              	.LASF5:
+ 3354 030c 5F5F7569 		.ascii	"__uint16_t\000"
+ 3354      6E743136 
+ 3354      5F7400
+ 3355              	.LASF145:
+ 3356 0317 564C3533 		.ascii	"VL53L0X_write_dword\000"
+ 3356      4C30585F 
+ 3356      77726974 
+ 3356      655F6477 
+ 3356      6F726400 
+ 3357              	.LASF64:
+ 3358 032b 52656653 		.ascii	"RefSpadEnables\000"
+ 3358      70616445 
+ 3358      6E61626C 
+ 3358      657300
+ 3359              	.LASF106:
+ 3360 033a 55736549 		.ascii	"UseInternalTuningSettings\000"
+ 3360      6E746572 
+ 3360      6E616C54 
+ 3360      756E696E 
+ 3360      67536574 
+ 3361              	.LASF132:
+ 3362 0354 564C3533 		.ascii	"VL53L0X_WrDWord\000"
+ 3362      4C30585F 
+ 3362      57724457 
+ 3362      6F726400 
+ 3363              	.LASF150:
+ 3364 0364 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 3364      43313120 
+ 3364      352E342E 
+ 3364      31203230 
+ 3364      31363036 
+ 3365 0397 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0 -mthumb -g -O"
+ 3365      20726576 
+ 3365      6973696F 
+ 3365      6E203233 
+ 3365      37373135 
+ 3366 03ca 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 3366      66756E63 
+ 3366      74696F6E 
+ 3366      2D736563 
+ 3366      74696F6E 
+ 3367              	.LASF107:
+ 3368 03f2 4C696E65 		.ascii	"LinearityCorrectiveGain\000"
+ 3368      61726974 
+ 3368      79436F72 
+ 3368      72656374 
+ 3368      69766547 
+ 3369              	.LASF52:
+ 3370 040a 45666665 		.ascii	"EffectiveSpadRtnCount\000"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 68
+
+
+ 3370      63746976 
+ 3370      65537061 
+ 3370      6452746E 
+ 3370      436F756E 
+ 3371              	.LASF95:
+ 3372 0420 53706164 		.ascii	"SpadData\000"
+ 3372      44617461 
+ 3372      00
+ 3373              	.LASF32:
+ 3374 0429 496E7465 		.ascii	"InterMeasurementPeriodMilliSeconds\000"
+ 3374      724D6561 
+ 3374      73757265 
+ 3374      6D656E74 
+ 3374      50657269 
+ 3375              	.LASF81:
+ 3376 044c 52656665 		.ascii	"ReferenceSpadCount\000"
+ 3376      72656E63 
+ 3376      65537061 
+ 3376      64436F75 
+ 3376      6E7400
+ 3377              	.LASF78:
+ 3378 045f 4D6F6475 		.ascii	"ModuleId\000"
+ 3378      6C654964 
+ 3378      00
+ 3379              	.LASF57:
+ 3380 0468 48697374 		.ascii	"HistogramData\000"
+ 3380      6F677261 
+ 3380      6D446174 
+ 3380      6100
+ 3381              	.LASF39:
+ 3382 0476 4C696D69 		.ascii	"LimitChecksValue\000"
+ 3382      74436865 
+ 3382      636B7356 
+ 3382      616C7565 
+ 3382      00
+ 3383              	.LASF114:
+ 3384 0487 636F6D6D 		.ascii	"comms_speed_khz\000"
+ 3384      735F7370 
+ 3384      6565645F 
+ 3384      6B687A00 
+ 3385              	.LASF36:
+ 3386 0497 52616E67 		.ascii	"RangeOffsetMicroMeters\000"
+ 3386      654F6666 
+ 3386      7365744D 
+ 3386      6963726F 
+ 3386      4D657465 
+ 3387              	.LASF108:
+ 3388 04ae 446D6178 		.ascii	"DmaxCalRangeMilliMeter\000"
+ 3388      43616C52 
+ 3388      616E6765 
+ 3388      4D696C6C 
+ 3388      694D6574 
+ 3389              	.LASF75:
+ 3390 04c5 5369676D 		.ascii	"SigmaEstEffPulseWidth\000"
+ 3390      61457374 
+ 3390      45666650 
+ 3390      756C7365 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 69
+
+
+ 3390      57696474 
+ 3391              	.LASF100:
+ 3392 04db 53746F70 		.ascii	"StopVariable\000"
+ 3392      56617269 
+ 3392      61626C65 
+ 3392      00
+ 3393              	.LASF88:
+ 3394 04e8 444D6178 		.ascii	"DMaxData\000"
+ 3394      44617461 
+ 3394      00
+ 3395              	.LASF47:
+ 3396 04f1 4D656173 		.ascii	"MeasurementTimeUsec\000"
+ 3396      7572656D 
+ 3396      656E7454 
+ 3396      696D6555 
+ 3396      73656300 
+ 3397              	.LASF24:
+ 3398 0505 63686172 		.ascii	"char\000"
+ 3398      00
+ 3399              	.LASF77:
+ 3400 050a 52656164 		.ascii	"ReadDataFromDeviceDone\000"
+ 3400      44617461 
+ 3400      46726F6D 
+ 3400      44657669 
+ 3400      6365446F 
+ 3401              	.LASF31:
+ 3402 0521 4D656173 		.ascii	"MeasurementTimingBudgetMicroSeconds\000"
+ 3402      7572656D 
+ 3402      656E7454 
+ 3402      696D696E 
+ 3402      67427564 
+ 3403              	.LASF92:
+ 3404 0545 4C617374 		.ascii	"LastRangeMeasure\000"
+ 3404      52616E67 
+ 3404      654D6561 
+ 3404      73757265 
+ 3404      00
+ 3405              	.LASF60:
+ 3406 0556 42756666 		.ascii	"BufferSize\000"
+ 3406      65725369 
+ 3406      7A6500
+ 3407              	.LASF130:
+ 3408 0561 64617461 		.ascii	"data\000"
+ 3408      00
+ 3409              	.LASF66:
+ 3410 0566 564C3533 		.ascii	"VL53L0X_SpadData_t\000"
+ 3410      4C30585F 
+ 3410      53706164 
+ 3410      44617461 
+ 3410      5F7400
+ 3411              	.LASF15:
+ 3412 0579 75696E74 		.ascii	"uint8_t\000"
+ 3412      385F7400 
+ 3413              	.LASF151:
+ 3414 0581 4170695C 		.ascii	"Api\\platform\\src\\vl53l0x_platform.c\000"
+ 3414      706C6174 
+ 3414      666F726D 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 70
+
+
+ 3414      5C737263 
+ 3414      5C766C35 
+ 3415              	.LASF22:
+ 3416 05a5 564C3533 		.ascii	"VL53L0X_GpioFunctionality\000"
+ 3416      4C30585F 
+ 3416      4770696F 
+ 3416      46756E63 
+ 3416      74696F6E 
+ 3417              	.LASF27:
+ 3418 05bf 564C3533 		.ascii	"VL53L0X_HistogramModes\000"
+ 3418      4C30585F 
+ 3418      48697374 
+ 3418      6F677261 
+ 3418      6D4D6F64 
+ 3419              	.LASF55:
+ 3420 05d6 52616E67 		.ascii	"RangeStatus\000"
+ 3420      65537461 
+ 3420      74757300 
+ 3421              	.LASF59:
+ 3422 05e2 46697273 		.ascii	"FirstBin\000"
+ 3422      7442696E 
+ 3422      00
+ 3423              	.LASF11:
+ 3424 05eb 6C6F6E67 		.ascii	"long long int\000"
+ 3424      206C6F6E 
+ 3424      6720696E 
+ 3424      7400
+ 3425              	.LASF26:
+ 3426 05f9 564C3533 		.ascii	"VL53L0X_DeviceModes\000"
+ 3426      4C30585F 
+ 3426      44657669 
+ 3426      63654D6F 
+ 3426      64657300 
+ 3427              	.LASF83:
+ 3428 060d 52656653 		.ascii	"RefSpadsInitialised\000"
+ 3428      70616473 
+ 3428      496E6974 
+ 3428      69616C69 
+ 3428      73656400 
+ 3429              	.LASF139:
+ 3430 0621 564C3533 		.ascii	"VL53L0X_PollingDelay\000"
+ 3430      4C30585F 
+ 3430      506F6C6C 
+ 3430      696E6744 
+ 3430      656C6179 
+ 3431              	.LASF136:
+ 3432 0636 564C3533 		.ascii	"VL53L0X_RdByte\000"
+ 3432      4C30585F 
+ 3432      52644279 
+ 3432      746500
+ 3433              	.LASF137:
+ 3434 0645 564C3533 		.ascii	"VL53L0X_RdWord\000"
+ 3434      4C30585F 
+ 3434      5264576F 
+ 3434      726400
+ 3435              	.LASF44:
+ 3436 0654 52657453 		.ascii	"RetSignalAt0mm\000"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 71
+
+
+ 3436      69676E61 
+ 3436      6C417430 
+ 3436      6D6D00
+ 3437              	.LASF153:
+ 3438 0663 6932635F 		.ascii	"i2c_global_buffer\000"
+ 3438      676C6F62 
+ 3438      616C5F62 
+ 3438      75666665 
+ 3438      7200
+ 3439              	.LASF42:
+ 3440 0675 564C3533 		.ascii	"VL53L0X_State\000"
+ 3440      4C30585F 
+ 3440      53746174 
+ 3440      6500
+ 3441              	.LASF45:
+ 3442 0683 564C3533 		.ascii	"VL53L0X_DMaxData_t\000"
+ 3442      4C30585F 
+ 3442      444D6178 
+ 3442      44617461 
+ 3442      5F7400
+ 3443              	.LASF0:
+ 3444 0696 5F5F696E 		.ascii	"__int8_t\000"
+ 3444      74385F74 
+ 3444      00
+ 3445              	.LASF112:
+ 3446 069f 49326344 		.ascii	"I2cDevAddr\000"
+ 3446      65764164 
+ 3446      647200
+ 3447              	.LASF29:
+ 3448 06aa 44657669 		.ascii	"DeviceMode\000"
+ 3448      63654D6F 
+ 3448      646500
+ 3449              	.LASF35:
+ 3450 06b5 5854616C 		.ascii	"XTalkCompensationRateMegaCps\000"
+ 3450      6B436F6D 
+ 3450      70656E73 
+ 3450      6174696F 
+ 3450      6E526174 
+ 3451              	.LASF19:
+ 3452 06d2 6C6F6E67 		.ascii	"long double\000"
+ 3452      20646F75 
+ 3452      626C6500 
+ 3453              	.LASF16:
+ 3454 06de 75696E74 		.ascii	"uint16_t\000"
+ 3454      31365F74 
+ 3454      00
+ 3455              	.LASF56:
+ 3456 06e7 564C3533 		.ascii	"VL53L0X_RangingMeasurementData_t\000"
+ 3456      4C30585F 
+ 3456      52616E67 
+ 3456      696E674D 
+ 3456      65617375 
+ 3457              	.LASF129:
+ 3458 0708 564C3533 		.ascii	"VL53L0X_WrByte\000"
+ 3458      4C30585F 
+ 3458      57724279 
+ 3458      746500
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 72
+
+
+ 3459              	.LASF131:
+ 3460 0717 564C3533 		.ascii	"VL53L0X_WrWord\000"
+ 3460      4C30585F 
+ 3460      5772576F 
+ 3460      726400
+ 3461              	.LASF96:
+ 3462 0726 53657175 		.ascii	"SequenceConfig\000"
+ 3462      656E6365 
+ 3462      436F6E66 
+ 3462      696700
+ 3463              	.LASF152:
+ 3464 0735 443A5C65 		.ascii	"D:\\ext\\EXTPSOC\\fixed\\Fixed\\fixed.cydsn\000"
+ 3464      78745C45 
+ 3464      58545053 
+ 3464      4F435C66 
+ 3464      69786564 
+ 3465              	.LASF4:
+ 3466 075c 73686F72 		.ascii	"short int\000"
+ 3466      7420696E 
+ 3466      7400
+ 3467              	.LASF8:
+ 3468 0766 6C6F6E67 		.ascii	"long int\000"
+ 3468      20696E74 
+ 3468      00
+ 3469              	.LASF122:
+ 3470 076f 564C3533 		.ascii	"VL53L0X_WriteMulti\000"
+ 3470      4C30585F 
+ 3470      57726974 
+ 3470      654D756C 
+ 3470      746900
+ 3471              	.LASF133:
+ 3472 0782 564C3533 		.ascii	"VL53L0X_UpdateByte\000"
+ 3472      4C30585F 
+ 3472      55706461 
+ 3472      74654279 
+ 3472      746500
+ 3473              	.LASF84:
+ 3474 0795 50617274 		.ascii	"PartUIDUpper\000"
+ 3474      55494455 
+ 3474      70706572 
+ 3474      00
+ 3475              	.LASF103:
+ 3476 07a2 5369676E 		.ascii	"SignalEstimate\000"
+ 3476      616C4573 
+ 3476      74696D61 
+ 3476      746500
+ 3477              	.LASF140:
+ 3478 07b1 73746174 		.ascii	"status\000"
+ 3478      757300
+ 3479              	.LASF142:
+ 3480 07b8 564C3533 		.ascii	"VL53L0X_read_multi\000"
+ 3480      4C30585F 
+ 3480      72656164 
+ 3480      5F6D756C 
+ 3480      746900
+ 3481              	.LASF104:
+ 3482 07cb 4C617374 		.ascii	"LastSignalRefMcps\000"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 73
+
+
+ 3482      5369676E 
+ 3482      616C5265 
+ 3482      664D6370 
+ 3482      7300
+ 3483              	.LASF70:
+ 3484 07dd 46696E61 		.ascii	"FinalRangeTimeoutMicroSecs\000"
+ 3484      6C52616E 
+ 3484      67655469 
+ 3484      6D656F75 
+ 3484      744D6963 
+ 3485              	.LASF53:
+ 3486 07f8 5A6F6E65 		.ascii	"ZoneId\000"
+ 3486      496400
+ 3487              	.LASF1:
+ 3488 07ff 5F5F7569 		.ascii	"__uint8_t\000"
+ 3488      6E74385F 
+ 3488      7400
+ 3489              	.LASF120:
+ 3490 0809 564C3533 		.ascii	"VL53L0X_UnlockSequenceAccess\000"
+ 3490      4C30585F 
+ 3490      556E6C6F 
+ 3490      636B5365 
+ 3490      7175656E 
+ 3491              	.LASF65:
+ 3492 0826 52656647 		.ascii	"RefGoodSpadMap\000"
+ 3492      6F6F6453 
+ 3492      7061644D 
+ 3492      617000
+ 3493              	.LASF25:
+ 3494 0835 564C3533 		.ascii	"VL53L0X_Error\000"
+ 3494      4C30585F 
+ 3494      4572726F 
+ 3494      7200
+ 3495              	.LASF113:
+ 3496 0843 636F6D6D 		.ascii	"comms_type\000"
+ 3496      735F7479 
+ 3496      706500
+ 3497              	.LASF119:
+ 3498 084e 564C3533 		.ascii	"VL53L0X_LockSequenceAccess\000"
+ 3498      4C30585F 
+ 3498      4C6F636B 
+ 3498      53657175 
+ 3498      656E6365 
+ 3499              	.LASF23:
+ 3500 0869 73697A65 		.ascii	"sizetype\000"
+ 3500      74797065 
+ 3500      00
+ 3501              	.LASF91:
+ 3502 0872 43757272 		.ascii	"CurrentParameters\000"
+ 3502      656E7450 
+ 3502      6172616D 
+ 3502      65746572 
+ 3502      7300
+ 3503              	.LASF10:
+ 3504 0884 6C6F6E67 		.ascii	"long unsigned int\000"
+ 3504      20756E73 
+ 3504      69676E65 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 74
+
+
+ 3504      6420696E 
+ 3504      7400
+ 3505              	.LASF124:
+ 3506 0896 70646174 		.ascii	"pdata\000"
+ 3506      6100
+ 3507              	.LASF94:
+ 3508 089c 44657669 		.ascii	"DeviceSpecificParameters\000"
+ 3508      63655370 
+ 3508      65636966 
+ 3508      69635061 
+ 3508      72616D65 
+ 3509              	.LASF105:
+ 3510 08b5 7054756E 		.ascii	"pTuningSettingsPointer\000"
+ 3510      696E6753 
+ 3510      65747469 
+ 3510      6E677350 
+ 3510      6F696E74 
+ 3511              	.LASF17:
+ 3512 08cc 696E7433 		.ascii	"int32_t\000"
+ 3512      325F7400 
+ 3513              	.LASF76:
+ 3514 08d4 5369676D 		.ascii	"SigmaEstEffAmbWidth\000"
+ 3514      61457374 
+ 3514      45666641 
+ 3514      6D625769 
+ 3514      64746800 
+ 3515              	.LASF3:
+ 3516 08e8 756E7369 		.ascii	"unsigned char\000"
+ 3516      676E6564 
+ 3516      20636861 
+ 3516      7200
+ 3517              	.LASF61:
+ 3518 08f6 4E756D62 		.ascii	"NumberOfBins\000"
+ 3518      65724F66 
+ 3518      42696E73 
+ 3518      00
+ 3519              	.LASF72:
+ 3520 0903 50726552 		.ascii	"PreRangeTimeoutMicroSecs\000"
+ 3520      616E6765 
+ 3520      54696D65 
+ 3520      6F75744D 
+ 3520      6963726F 
+ 3521              	.LASF9:
+ 3522 091c 5F5F7569 		.ascii	"__uint32_t\000"
+ 3522      6E743332 
+ 3522      5F7400
+ 3523              	.LASF134:
+ 3524 0927 416E6444 		.ascii	"AndData\000"
+ 3524      61746100 
+ 3525              	.LASF109:
+ 3526 092f 446D6178 		.ascii	"DmaxCalSignalRateRtnMegaCps\000"
+ 3526      43616C53 
+ 3526      69676E61 
+ 3526      6C526174 
+ 3526      6552746E 
+ 3527              	.LASF71:
+ 3528 094b 46696E61 		.ascii	"FinalRangeVcselPulsePeriod\000"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 75
+
+
+ 3528      6C52616E 
+ 3528      67655663 
+ 3528      73656C50 
+ 3528      756C7365 
+ 3529              	.LASF110:
+ 3530 0966 564C3533 		.ascii	"VL53L0X_DevData_t\000"
+ 3530      4C30585F 
+ 3530      44657644 
+ 3530      6174615F 
+ 3530      7400
+ 3531              	.LASF69:
+ 3532 0978 50696E30 		.ascii	"Pin0GpioFunctionality\000"
+ 3532      4770696F 
+ 3532      46756E63 
+ 3532      74696F6E 
+ 3532      616C6974 
+ 3533              	.LASF146:
+ 3534 098e 564C3533 		.ascii	"VL53L0X_read_byte\000"
+ 3534      4C30585F 
+ 3534      72656164 
+ 3534      5F627974 
+ 3534      6500
+ 3535              	.LASF147:
+ 3536 09a0 564C3533 		.ascii	"VL53L0X_read_word\000"
+ 3536      4C30585F 
+ 3536      72656164 
+ 3536      5F776F72 
+ 3536      6400
+ 3537              	.LASF2:
+ 3538 09b2 7369676E 		.ascii	"signed char\000"
+ 3538      65642063 
+ 3538      68617200 
+ 3539              	.LASF93:
+ 3540 09be 4C617374 		.ascii	"LastHistogramMeasure\000"
+ 3540      48697374 
+ 3540      6F677261 
+ 3540      6D4D6561 
+ 3540      73757265 
+ 3541              	.LASF6:
+ 3542 09d3 73686F72 		.ascii	"short unsigned int\000"
+ 3542      7420756E 
+ 3542      7369676E 
+ 3542      65642069 
+ 3542      6E7400
+ 3543              	.LASF97:
+ 3544 09e6 52616E67 		.ascii	"RangeFractionalEnable\000"
+ 3544      65467261 
+ 3544      6374696F 
+ 3544      6E616C45 
+ 3544      6E61626C 
+ 3545              	.LASF141:
+ 3546 09fc 564C3533 		.ascii	"VL53L0X_write_multi\000"
+ 3546      4C30585F 
+ 3546      77726974 
+ 3546      655F6D75 
+ 3546      6C746900 
+ 3547              	.LASF48:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 76
+
+
+ 3548 0a10 52616E67 		.ascii	"RangeMilliMeter\000"
+ 3548      654D696C 
+ 3548      6C694D65 
+ 3548      74657200 
+ 3549              	.LASF102:
+ 3550 0a20 5369676D 		.ascii	"SigmaEstimate\000"
+ 3550      61457374 
+ 3550      696D6174 
+ 3550      6500
+ 3551              	.LASF74:
+ 3552 0a2e 5369676D 		.ascii	"SigmaEstRefArray\000"
+ 3552      61457374 
+ 3552      52656641 
+ 3552      72726179 
+ 3552      00
+ 3553              	.LASF118:
+ 3554 0a3f 646F7562 		.ascii	"double\000"
+ 3554      6C6500
+ 3555              	.LASF54:
+ 3556 0a46 52616E67 		.ascii	"RangeFractionalPart\000"
+ 3556      65467261 
+ 3556      6374696F 
+ 3556      6E616C50 
+ 3556      61727400 
+ 3557              	.LASF68:
+ 3558 0a5a 4C617374 		.ascii	"LastEncodedTimeout\000"
+ 3558      456E636F 
+ 3558      64656454 
+ 3558      696D656F 
+ 3558      757400
+ 3559              	.LASF98:
+ 3560 0a6d 50616C53 		.ascii	"PalState\000"
+ 3560      74617465 
+ 3560      00
+ 3561              	.LASF46:
+ 3562 0a76 54696D65 		.ascii	"TimeStamp\000"
+ 3562      5374616D 
+ 3562      7000
+ 3563              	.LASF135:
+ 3564 0a80 4F724461 		.ascii	"OrData\000"
+ 3564      746100
+ 3565              	.LASF63:
+ 3566 0a87 564C3533 		.ascii	"VL53L0X_HistogramMeasurementData_t\000"
+ 3566      4C30585F 
+ 3566      48697374 
+ 3566      6F677261 
+ 3566      6D4D6561 
+ 3567              	.LASF111:
+ 3568 0aaa 44617461 		.ascii	"Data\000"
+ 3568      00
+ 3569              	.LASF86:
+ 3570 0aaf 5369676E 		.ascii	"SignalRateMeasFixed400mm\000"
+ 3570      616C5261 
+ 3570      74654D65 
+ 3570      61734669 
+ 3570      78656434 
+ 3571              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccHrml9R.s 			page 77
+
+

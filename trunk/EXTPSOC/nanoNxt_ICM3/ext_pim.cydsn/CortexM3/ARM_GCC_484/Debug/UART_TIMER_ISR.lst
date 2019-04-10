@@ -1,0 +1,2212 @@
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"UART_TIMER_ISR.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	s,40,4
+  19              		.comm	currentAccessType,1,1
+  20              		.comm	old,1,1
+  21              		.comm	TAMPERCR_POLARITY,4,4
+  22              		.comm	card_ack,4,4
+  23              		.comm	card_in_buf,4,4
+  24              		.comm	got_pulse,1,1
+  25              		.comm	f2f_pulsewidth,4,4
+  26              		.comm	timeout_cnt,4,4
+  27              		.comm	activate_f2ftimer,1,1
+  28              		.section	.text.UART_TIMER_ISR_Start,"ax",%progbits
+  29              		.align	2
+  30              		.global	UART_TIMER_ISR_Start
+  31              		.thumb
+  32              		.thumb_func
+  33              		.type	UART_TIMER_ISR_Start, %function
+  34              	UART_TIMER_ISR_Start:
+  35              	.LFB0:
+  36              		.file 1 ".\\Generated_Source\\PSoC5\\UART_TIMER_ISR.c"
+   1:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+   2:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * File Name: UART_TIMER_ISR.c  
+   3:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Version 1.70
+   4:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+   5:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  Description:
+   6:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   API for controlling the state of an interrupt.
+   7:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+   8:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+   9:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  Note:
+  10:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+  11:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+  12:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Copyright 2008-2015, Cypress Semiconductor Corporation.  All rights reserved.
+  13:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * You may use this file only in accordance with the license, terms, conditions, 
+  14:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * disclaimers, and limitations in the end user license agreement accompanying 
+  15:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * the software package with which this file was provided.
+  16:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+  17:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  18:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  19:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #include <cydevice_trm.h>
+  20:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #include <CyLib.h>
+  21:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #include <UART_TIMER_ISR.h>
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 2
+
+
+  22:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  23:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #if !defined(UART_TIMER_ISR__REMOVED) /* Check for removal by optimization */
+  24:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  25:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+  26:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  Place your includes, defines and code here 
+  27:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************/
+  28:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /* `#START UART_TIMER_ISR_intc` */
+  29:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #include "UART_TIMER.h"
+  30:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #include "system.h"   
+  31:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /* `#END` */
+  32:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  33:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #ifndef CYINT_IRQ_BASE
+  34:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #define CYINT_IRQ_BASE      16
+  35:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #endif /* CYINT_IRQ_BASE */
+  36:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #ifndef CYINT_VECT_TABLE
+  37:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #define CYINT_VECT_TABLE    ((cyisraddress **) CYREG_NVIC_VECT_OFFSET)
+  38:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** #endif /* CYINT_VECT_TABLE */
+  39:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  40:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /* Declared in startup, used to set unused interrupts to. */
+  41:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** CY_ISR_PROTO(IntDefaultHandler);
+  42:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  43:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  44:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+  45:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_Start
+  46:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+  47:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+  48:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+  49:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  Set up the interrupt and enable it. This function disables the interrupt, 
+  50:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  sets the default interrupt vector, sets the priority from the value in the
+  51:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  Design Wide Resources Interrupt Editor, then enables the interrupt to the 
+  52:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  interrupt controller.
+  53:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+  54:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:  
+  55:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+  56:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+  57:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+  58:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+  59:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+  60:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+  61:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** void UART_TIMER_ISR_Start(void)
+  62:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+  37              		.loc 1 62 0
+  38              		.cfi_startproc
+  39              		@ args = 0, pretend = 0, frame = 0
+  40              		@ frame_needed = 1, uses_anonymous_args = 0
+  41 0000 80B5     		push	{r7, lr}
+  42              		.cfi_def_cfa_offset 8
+  43              		.cfi_offset 7, -8
+  44              		.cfi_offset 14, -4
+  45 0002 00AF     		add	r7, sp, #0
+  46              		.cfi_def_cfa_register 7
+  63:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* For all we know the interrupt is active. */
+  64:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     UART_TIMER_ISR_Disable();
+  47              		.loc 1 64 0
+  48 0004 FFF7FEFF 		bl	UART_TIMER_ISR_Disable
+  65:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  66:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* Set the ISR to point to the UART_TIMER_ISR Interrupt. */
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 3
+
+
+  67:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     UART_TIMER_ISR_SetVector(&UART_TIMER_ISR_Interrupt);
+  49              		.loc 1 67 0
+  50 0008 0448     		ldr	r0, .L2
+  51 000a FFF7FEFF 		bl	UART_TIMER_ISR_SetVector
+  68:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  69:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* Set the priority. */
+  70:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     UART_TIMER_ISR_SetPriority((uint8)UART_TIMER_ISR_INTC_PRIOR_NUMBER);
+  52              		.loc 1 70 0
+  53 000e 0720     		movs	r0, #7
+  54 0010 FFF7FEFF 		bl	UART_TIMER_ISR_SetPriority
+  71:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  72:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* Enable it. */
+  73:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     UART_TIMER_ISR_Enable();
+  55              		.loc 1 73 0
+  56 0014 FFF7FEFF 		bl	UART_TIMER_ISR_Enable
+  74:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+  57              		.loc 1 74 0
+  58 0018 80BD     		pop	{r7, pc}
+  59              	.L3:
+  60 001a 00BF     		.align	2
+  61              	.L2:
+  62 001c 00000000 		.word	UART_TIMER_ISR_Interrupt
+  63              		.cfi_endproc
+  64              	.LFE0:
+  65              		.size	UART_TIMER_ISR_Start, .-UART_TIMER_ISR_Start
+  66              		.section	.text.UART_TIMER_ISR_StartEx,"ax",%progbits
+  67              		.align	2
+  68              		.global	UART_TIMER_ISR_StartEx
+  69              		.thumb
+  70              		.thumb_func
+  71              		.type	UART_TIMER_ISR_StartEx, %function
+  72              	UART_TIMER_ISR_StartEx:
+  73              	.LFB1:
+  75:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  76:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+  77:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+  78:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_StartEx
+  79:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+  80:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+  81:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+  82:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  Sets up the interrupt and enables it. This function disables the interrupt,
+  83:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  sets the interrupt vector based on the address passed in, sets the priority 
+  84:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  from the value in the Design Wide Resources Interrupt Editor, then enables 
+  85:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  the interrupt to the interrupt controller.
+  86:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  
+  87:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
+  88:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  used to provide consistent definition across compilers:
+  89:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  
+  90:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *  Function definition example:
+  91:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   CY_ISR(MyISR)
+  92:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   {
+  93:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   }
+  94:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Function prototype example:
+  95:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   CY_ISR_PROTO(MyISR);
+  96:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+  97:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:  
+  98:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   address: Address of the ISR to set in the interrupt vector table.
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 4
+
+
+  99:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 100:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 101:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 102:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 103:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 104:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** void UART_TIMER_ISR_StartEx(cyisraddress address)
+ 105:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+  74              		.loc 1 105 0
+  75              		.cfi_startproc
+  76              		@ args = 0, pretend = 0, frame = 8
+  77              		@ frame_needed = 1, uses_anonymous_args = 0
+  78 0000 80B5     		push	{r7, lr}
+  79              		.cfi_def_cfa_offset 8
+  80              		.cfi_offset 7, -8
+  81              		.cfi_offset 14, -4
+  82 0002 82B0     		sub	sp, sp, #8
+  83              		.cfi_def_cfa_offset 16
+  84 0004 00AF     		add	r7, sp, #0
+  85              		.cfi_def_cfa_register 7
+  86 0006 7860     		str	r0, [r7, #4]
+ 106:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* For all we know the interrupt is active. */
+ 107:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     UART_TIMER_ISR_Disable();
+  87              		.loc 1 107 0
+  88 0008 FFF7FEFF 		bl	UART_TIMER_ISR_Disable
+ 108:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 109:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* Set the ISR to point to the UART_TIMER_ISR Interrupt. */
+ 110:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     UART_TIMER_ISR_SetVector(address);
+  89              		.loc 1 110 0
+  90 000c 7868     		ldr	r0, [r7, #4]
+  91 000e FFF7FEFF 		bl	UART_TIMER_ISR_SetVector
+ 111:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 112:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* Set the priority. */
+ 113:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     UART_TIMER_ISR_SetPriority((uint8)UART_TIMER_ISR_INTC_PRIOR_NUMBER);
+  92              		.loc 1 113 0
+  93 0012 0720     		movs	r0, #7
+  94 0014 FFF7FEFF 		bl	UART_TIMER_ISR_SetPriority
+ 114:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 115:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* Enable it. */
+ 116:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     UART_TIMER_ISR_Enable();
+  95              		.loc 1 116 0
+  96 0018 FFF7FEFF 		bl	UART_TIMER_ISR_Enable
+ 117:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+  97              		.loc 1 117 0
+  98 001c 0837     		adds	r7, r7, #8
+  99 001e BD46     		mov	sp, r7
+ 100              		@ sp needed
+ 101 0020 80BD     		pop	{r7, pc}
+ 102              		.cfi_endproc
+ 103              	.LFE1:
+ 104              		.size	UART_TIMER_ISR_StartEx, .-UART_TIMER_ISR_StartEx
+ 105 0022 00BF     		.section	.text.UART_TIMER_ISR_Stop,"ax",%progbits
+ 106              		.align	2
+ 107              		.global	UART_TIMER_ISR_Stop
+ 108              		.thumb
+ 109              		.thumb_func
+ 110              		.type	UART_TIMER_ISR_Stop, %function
+ 111              	UART_TIMER_ISR_Stop:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 5
+
+
+ 112              	.LFB2:
+ 118:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 119:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 120:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+ 121:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_Stop
+ 122:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+ 123:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 124:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+ 125:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Disables and removes the interrupt.
+ 126:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 127:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:  
+ 128:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 129:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 130:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 131:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 132:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 133:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 134:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** void UART_TIMER_ISR_Stop(void)
+ 135:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+ 113              		.loc 1 135 0
+ 114              		.cfi_startproc
+ 115              		@ args = 0, pretend = 0, frame = 0
+ 116              		@ frame_needed = 1, uses_anonymous_args = 0
+ 117 0000 80B5     		push	{r7, lr}
+ 118              		.cfi_def_cfa_offset 8
+ 119              		.cfi_offset 7, -8
+ 120              		.cfi_offset 14, -4
+ 121 0002 00AF     		add	r7, sp, #0
+ 122              		.cfi_def_cfa_register 7
+ 136:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* Disable this interrupt. */
+ 137:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     UART_TIMER_ISR_Disable();
+ 123              		.loc 1 137 0
+ 124 0004 FFF7FEFF 		bl	UART_TIMER_ISR_Disable
+ 138:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 139:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* Set the ISR to point to the passive one. */
+ 140:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     UART_TIMER_ISR_SetVector(&IntDefaultHandler);
+ 125              		.loc 1 140 0
+ 126 0008 0148     		ldr	r0, .L6
+ 127 000a FFF7FEFF 		bl	UART_TIMER_ISR_SetVector
+ 141:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+ 128              		.loc 1 141 0
+ 129 000e 80BD     		pop	{r7, pc}
+ 130              	.L7:
+ 131              		.align	2
+ 132              	.L6:
+ 133 0010 00000000 		.word	IntDefaultHandler
+ 134              		.cfi_endproc
+ 135              	.LFE2:
+ 136              		.size	UART_TIMER_ISR_Stop, .-UART_TIMER_ISR_Stop
+ 137              		.section	.text.UART_TIMER_ISR_Interrupt,"ax",%progbits
+ 138              		.align	2
+ 139              		.global	UART_TIMER_ISR_Interrupt
+ 140              		.thumb
+ 141              		.thumb_func
+ 142              		.type	UART_TIMER_ISR_Interrupt, %function
+ 143              	UART_TIMER_ISR_Interrupt:
+ 144              	.LFB3:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 6
+
+
+ 142:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 143:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 144:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+ 145:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_Interrupt
+ 146:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+ 147:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 148:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+ 149:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   The default Interrupt Service Routine for UART_TIMER_ISR.
+ 150:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 151:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Add custom code between the coments to keep the next version of this file
+ 152:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   from over writting your code.
+ 153:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 154:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:  
+ 155:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 156:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 157:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 158:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 159:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 160:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** CY_ISR(UART_TIMER_ISR_Interrupt)
+ 161:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+ 145              		.loc 1 161 0
+ 146              		.cfi_startproc
+ 147              		@ args = 0, pretend = 0, frame = 0
+ 148              		@ frame_needed = 1, uses_anonymous_args = 0
+ 149 0000 80B5     		push	{r7, lr}
+ 150              		.cfi_def_cfa_offset 8
+ 151              		.cfi_offset 7, -8
+ 152              		.cfi_offset 14, -4
+ 153 0002 00AF     		add	r7, sp, #0
+ 154              		.cfi_def_cfa_register 7
+ 162:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /*  Place your Interrupt code here. */
+ 163:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* `#START UART_TIMER_ISR_Interrupt` */
+ 164:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     SU_Isr(&s);
+ 155              		.loc 1 164 0
+ 156 0004 0248     		ldr	r0, .L9
+ 157 0006 FFF7FEFF 		bl	SU_Isr
+ 165:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     UART_TIMER_ReadStatusRegister();
+ 158              		.loc 1 165 0
+ 159 000a FFF7FEFF 		bl	UART_TIMER_ReadStatusRegister
+ 166:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* `#END` */
+ 167:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+ 160              		.loc 1 167 0
+ 161 000e 80BD     		pop	{r7, pc}
+ 162              	.L10:
+ 163              		.align	2
+ 164              	.L9:
+ 165 0010 00000000 		.word	s
+ 166              		.cfi_endproc
+ 167              	.LFE3:
+ 168              		.size	UART_TIMER_ISR_Interrupt, .-UART_TIMER_ISR_Interrupt
+ 169              		.section	.text.UART_TIMER_ISR_SetVector,"ax",%progbits
+ 170              		.align	2
+ 171              		.global	UART_TIMER_ISR_SetVector
+ 172              		.thumb
+ 173              		.thumb_func
+ 174              		.type	UART_TIMER_ISR_SetVector, %function
+ 175              	UART_TIMER_ISR_SetVector:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 7
+
+
+ 176              	.LFB4:
+ 168:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 169:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 170:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+ 171:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_SetVector
+ 172:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+ 173:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 174:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+ 175:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Change the ISR vector for the Interrupt. Note calling UART_TIMER_ISR_Start
+ 176:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   will override any effect this method would have had. To set the vector 
+ 177:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   before the component has been started use UART_TIMER_ISR_StartEx instead.
+ 178:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * 
+ 179:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
+ 180:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   used to provide consistent definition across compilers:
+ 181:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 182:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Function definition example:
+ 183:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   CY_ISR(MyISR)
+ 184:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   {
+ 185:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   }
+ 186:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 187:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Function prototype example:
+ 188:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *     CY_ISR_PROTO(MyISR);
+ 189:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 190:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:
+ 191:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   address: Address of the ISR to set in the interrupt vector table.
+ 192:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 193:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 194:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 195:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 196:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 197:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** void UART_TIMER_ISR_SetVector(cyisraddress address)
+ 198:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+ 177              		.loc 1 198 0
+ 178              		.cfi_startproc
+ 179              		@ args = 0, pretend = 0, frame = 16
+ 180              		@ frame_needed = 1, uses_anonymous_args = 0
+ 181              		@ link register save eliminated.
+ 182 0000 80B4     		push	{r7}
+ 183              		.cfi_def_cfa_offset 4
+ 184              		.cfi_offset 7, -4
+ 185 0002 85B0     		sub	sp, sp, #20
+ 186              		.cfi_def_cfa_offset 24
+ 187 0004 00AF     		add	r7, sp, #0
+ 188              		.cfi_def_cfa_register 7
+ 189 0006 7860     		str	r0, [r7, #4]
+ 199:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     cyisraddress * ramVectorTable;
+ 200:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 201:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
+ 190              		.loc 1 201 0
+ 191 0008 054B     		ldr	r3, .L12
+ 192 000a 1B68     		ldr	r3, [r3]
+ 193 000c FB60     		str	r3, [r7, #12]
+ 202:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 203:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     ramVectorTable[CYINT_IRQ_BASE + (uint32)UART_TIMER_ISR__INTC_NUMBER] = address;
+ 194              		.loc 1 203 0
+ 195 000e FB68     		ldr	r3, [r7, #12]
+ 196 0010 8C33     		adds	r3, r3, #140
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 8
+
+
+ 197 0012 7A68     		ldr	r2, [r7, #4]
+ 198 0014 1A60     		str	r2, [r3]
+ 204:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+ 199              		.loc 1 204 0
+ 200 0016 1437     		adds	r7, r7, #20
+ 201 0018 BD46     		mov	sp, r7
+ 202              		@ sp needed
+ 203 001a 5DF8047B 		ldr	r7, [sp], #4
+ 204 001e 7047     		bx	lr
+ 205              	.L13:
+ 206              		.align	2
+ 207              	.L12:
+ 208 0020 08ED00E0 		.word	-536810232
+ 209              		.cfi_endproc
+ 210              	.LFE4:
+ 211              		.size	UART_TIMER_ISR_SetVector, .-UART_TIMER_ISR_SetVector
+ 212              		.section	.text.UART_TIMER_ISR_GetVector,"ax",%progbits
+ 213              		.align	2
+ 214              		.global	UART_TIMER_ISR_GetVector
+ 215              		.thumb
+ 216              		.thumb_func
+ 217              		.type	UART_TIMER_ISR_GetVector, %function
+ 218              	UART_TIMER_ISR_GetVector:
+ 219              	.LFB5:
+ 205:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 206:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 207:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+ 208:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_GetVector
+ 209:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+ 210:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 211:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+ 212:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Gets the "address" of the current ISR vector for the Interrupt.
+ 213:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 214:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:
+ 215:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 216:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 217:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 218:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Address of the ISR in the interrupt vector table.
+ 219:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 220:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 221:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** cyisraddress UART_TIMER_ISR_GetVector(void)
+ 222:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+ 220              		.loc 1 222 0
+ 221              		.cfi_startproc
+ 222              		@ args = 0, pretend = 0, frame = 8
+ 223              		@ frame_needed = 1, uses_anonymous_args = 0
+ 224              		@ link register save eliminated.
+ 225 0000 80B4     		push	{r7}
+ 226              		.cfi_def_cfa_offset 4
+ 227              		.cfi_offset 7, -4
+ 228 0002 83B0     		sub	sp, sp, #12
+ 229              		.cfi_def_cfa_offset 16
+ 230 0004 00AF     		add	r7, sp, #0
+ 231              		.cfi_def_cfa_register 7
+ 223:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     cyisraddress * ramVectorTable;
+ 224:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 225:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 9
+
+
+ 232              		.loc 1 225 0
+ 233 0006 064B     		ldr	r3, .L16
+ 234 0008 1B68     		ldr	r3, [r3]
+ 235 000a 7B60     		str	r3, [r7, #4]
+ 226:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 227:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     return ramVectorTable[CYINT_IRQ_BASE + (uint32)UART_TIMER_ISR__INTC_NUMBER];
+ 236              		.loc 1 227 0
+ 237 000c 7B68     		ldr	r3, [r7, #4]
+ 238 000e D3F88C30 		ldr	r3, [r3, #140]
+ 228:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+ 239              		.loc 1 228 0
+ 240 0012 1846     		mov	r0, r3
+ 241 0014 0C37     		adds	r7, r7, #12
+ 242 0016 BD46     		mov	sp, r7
+ 243              		@ sp needed
+ 244 0018 5DF8047B 		ldr	r7, [sp], #4
+ 245 001c 7047     		bx	lr
+ 246              	.L17:
+ 247 001e 00BF     		.align	2
+ 248              	.L16:
+ 249 0020 08ED00E0 		.word	-536810232
+ 250              		.cfi_endproc
+ 251              	.LFE5:
+ 252              		.size	UART_TIMER_ISR_GetVector, .-UART_TIMER_ISR_GetVector
+ 253              		.section	.text.UART_TIMER_ISR_SetPriority,"ax",%progbits
+ 254              		.align	2
+ 255              		.global	UART_TIMER_ISR_SetPriority
+ 256              		.thumb
+ 257              		.thumb_func
+ 258              		.type	UART_TIMER_ISR_SetPriority, %function
+ 259              	UART_TIMER_ISR_SetPriority:
+ 260              	.LFB6:
+ 229:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 230:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 231:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+ 232:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_SetPriority
+ 233:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+ 234:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 235:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+ 236:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Sets the Priority of the Interrupt. 
+ 237:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 238:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Note calling UART_TIMER_ISR_Start or UART_TIMER_ISR_StartEx will 
+ 239:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   override any effect this API would have had. This API should only be called
+ 240:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   after UART_TIMER_ISR_Start or UART_TIMER_ISR_StartEx has been called. 
+ 241:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   To set the initial priority for the component, use the Design-Wide Resources
+ 242:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Interrupt Editor.
+ 243:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 244:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Note This API has no effect on Non-maskable interrupt NMI).
+ 245:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 246:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:
+ 247:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   priority: Priority of the interrupt, 0 being the highest priority
+ 248:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *             PSoC 3 and PSoC 5LP: Priority is from 0 to 7.
+ 249:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *             PSoC 4: Priority is from 0 to 3.
+ 250:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 251:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 252:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 253:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 10
+
+
+ 254:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 255:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** void UART_TIMER_ISR_SetPriority(uint8 priority)
+ 256:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+ 261              		.loc 1 256 0
+ 262              		.cfi_startproc
+ 263              		@ args = 0, pretend = 0, frame = 8
+ 264              		@ frame_needed = 1, uses_anonymous_args = 0
+ 265              		@ link register save eliminated.
+ 266 0000 80B4     		push	{r7}
+ 267              		.cfi_def_cfa_offset 4
+ 268              		.cfi_offset 7, -4
+ 269 0002 83B0     		sub	sp, sp, #12
+ 270              		.cfi_def_cfa_offset 16
+ 271 0004 00AF     		add	r7, sp, #0
+ 272              		.cfi_def_cfa_register 7
+ 273 0006 0346     		mov	r3, r0
+ 274 0008 FB71     		strb	r3, [r7, #7]
+ 257:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     *UART_TIMER_ISR_INTC_PRIOR = priority << 5;
+ 275              		.loc 1 257 0
+ 276 000a 054B     		ldr	r3, .L19
+ 277 000c FA79     		ldrb	r2, [r7, #7]
+ 278 000e 5201     		lsls	r2, r2, #5
+ 279 0010 D2B2     		uxtb	r2, r2
+ 280 0012 1A70     		strb	r2, [r3]
+ 258:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+ 281              		.loc 1 258 0
+ 282 0014 0C37     		adds	r7, r7, #12
+ 283 0016 BD46     		mov	sp, r7
+ 284              		@ sp needed
+ 285 0018 5DF8047B 		ldr	r7, [sp], #4
+ 286 001c 7047     		bx	lr
+ 287              	.L20:
+ 288 001e 00BF     		.align	2
+ 289              	.L19:
+ 290 0020 13E400E0 		.word	-536812525
+ 291              		.cfi_endproc
+ 292              	.LFE6:
+ 293              		.size	UART_TIMER_ISR_SetPriority, .-UART_TIMER_ISR_SetPriority
+ 294              		.section	.text.UART_TIMER_ISR_GetPriority,"ax",%progbits
+ 295              		.align	2
+ 296              		.global	UART_TIMER_ISR_GetPriority
+ 297              		.thumb
+ 298              		.thumb_func
+ 299              		.type	UART_TIMER_ISR_GetPriority, %function
+ 300              	UART_TIMER_ISR_GetPriority:
+ 301              	.LFB7:
+ 259:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 260:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 261:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+ 262:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_GetPriority
+ 263:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+ 264:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 265:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+ 266:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Gets the Priority of the Interrupt.
+ 267:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 268:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:
+ 269:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 11
+
+
+ 270:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 271:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 272:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Priority of the interrupt, 0 being the highest priority
+ 273:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *    PSoC 3 and PSoC 5LP: Priority is from 0 to 7.
+ 274:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *    PSoC 4: Priority is from 0 to 3.
+ 275:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 276:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 277:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** uint8 UART_TIMER_ISR_GetPriority(void)
+ 278:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+ 302              		.loc 1 278 0
+ 303              		.cfi_startproc
+ 304              		@ args = 0, pretend = 0, frame = 8
+ 305              		@ frame_needed = 1, uses_anonymous_args = 0
+ 306              		@ link register save eliminated.
+ 307 0000 80B4     		push	{r7}
+ 308              		.cfi_def_cfa_offset 4
+ 309              		.cfi_offset 7, -4
+ 310 0002 83B0     		sub	sp, sp, #12
+ 311              		.cfi_def_cfa_offset 16
+ 312 0004 00AF     		add	r7, sp, #0
+ 313              		.cfi_def_cfa_register 7
+ 279:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     uint8 priority;
+ 280:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 281:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 282:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     priority = *UART_TIMER_ISR_INTC_PRIOR >> 5;
+ 314              		.loc 1 282 0
+ 315 0006 064B     		ldr	r3, .L23
+ 316 0008 1B78     		ldrb	r3, [r3]
+ 317 000a DBB2     		uxtb	r3, r3
+ 318 000c 5B09     		lsrs	r3, r3, #5
+ 319 000e FB71     		strb	r3, [r7, #7]
+ 283:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 284:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     return priority;
+ 320              		.loc 1 284 0
+ 321 0010 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 285:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+ 322              		.loc 1 285 0
+ 323 0012 1846     		mov	r0, r3
+ 324 0014 0C37     		adds	r7, r7, #12
+ 325 0016 BD46     		mov	sp, r7
+ 326              		@ sp needed
+ 327 0018 5DF8047B 		ldr	r7, [sp], #4
+ 328 001c 7047     		bx	lr
+ 329              	.L24:
+ 330 001e 00BF     		.align	2
+ 331              	.L23:
+ 332 0020 13E400E0 		.word	-536812525
+ 333              		.cfi_endproc
+ 334              	.LFE7:
+ 335              		.size	UART_TIMER_ISR_GetPriority, .-UART_TIMER_ISR_GetPriority
+ 336              		.section	.text.UART_TIMER_ISR_Enable,"ax",%progbits
+ 337              		.align	2
+ 338              		.global	UART_TIMER_ISR_Enable
+ 339              		.thumb
+ 340              		.thumb_func
+ 341              		.type	UART_TIMER_ISR_Enable, %function
+ 342              	UART_TIMER_ISR_Enable:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 12
+
+
+ 343              	.LFB8:
+ 286:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 287:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 288:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+ 289:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_Enable
+ 290:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+ 291:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 292:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+ 293:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Enables the interrupt to the interrupt controller. Do not call this function
+ 294:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   unless ISR_Start() has been called or the functionality of the ISR_Start() 
+ 295:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   function, which sets the vector and the priority, has been called.
+ 296:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 297:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:
+ 298:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 299:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 300:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 301:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 302:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 303:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 304:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** void UART_TIMER_ISR_Enable(void)
+ 305:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+ 344              		.loc 1 305 0
+ 345              		.cfi_startproc
+ 346              		@ args = 0, pretend = 0, frame = 0
+ 347              		@ frame_needed = 1, uses_anonymous_args = 0
+ 348              		@ link register save eliminated.
+ 349 0000 80B4     		push	{r7}
+ 350              		.cfi_def_cfa_offset 4
+ 351              		.cfi_offset 7, -4
+ 352 0002 00AF     		add	r7, sp, #0
+ 353              		.cfi_def_cfa_register 7
+ 306:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* Enable the general interrupt. */
+ 307:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     *UART_TIMER_ISR_INTC_SET_EN = UART_TIMER_ISR__INTC_MASK;
+ 354              		.loc 1 307 0
+ 355 0004 034B     		ldr	r3, .L26
+ 356 0006 4FF40022 		mov	r2, #524288
+ 357 000a 1A60     		str	r2, [r3]
+ 308:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+ 358              		.loc 1 308 0
+ 359 000c BD46     		mov	sp, r7
+ 360              		@ sp needed
+ 361 000e 5DF8047B 		ldr	r7, [sp], #4
+ 362 0012 7047     		bx	lr
+ 363              	.L27:
+ 364              		.align	2
+ 365              	.L26:
+ 366 0014 00E100E0 		.word	-536813312
+ 367              		.cfi_endproc
+ 368              	.LFE8:
+ 369              		.size	UART_TIMER_ISR_Enable, .-UART_TIMER_ISR_Enable
+ 370              		.section	.text.UART_TIMER_ISR_GetState,"ax",%progbits
+ 371              		.align	2
+ 372              		.global	UART_TIMER_ISR_GetState
+ 373              		.thumb
+ 374              		.thumb_func
+ 375              		.type	UART_TIMER_ISR_GetState, %function
+ 376              	UART_TIMER_ISR_GetState:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 13
+
+
+ 377              	.LFB9:
+ 309:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 310:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 311:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+ 312:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_GetState
+ 313:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+ 314:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 315:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+ 316:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Gets the state (enabled, disabled) of the Interrupt.
+ 317:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 318:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:
+ 319:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 320:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 321:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 322:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   1 if enabled, 0 if disabled.
+ 323:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 324:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 325:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** uint8 UART_TIMER_ISR_GetState(void)
+ 326:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+ 378              		.loc 1 326 0
+ 379              		.cfi_startproc
+ 380              		@ args = 0, pretend = 0, frame = 0
+ 381              		@ frame_needed = 1, uses_anonymous_args = 0
+ 382              		@ link register save eliminated.
+ 383 0000 80B4     		push	{r7}
+ 384              		.cfi_def_cfa_offset 4
+ 385              		.cfi_offset 7, -4
+ 386 0002 00AF     		add	r7, sp, #0
+ 387              		.cfi_def_cfa_register 7
+ 327:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* Get the state of the general interrupt. */
+ 328:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     return ((*UART_TIMER_ISR_INTC_SET_EN & (uint32)UART_TIMER_ISR__INTC_MASK) != 0u) ? 1u:0u;
+ 388              		.loc 1 328 0
+ 389 0004 064B     		ldr	r3, .L32
+ 390 0006 1B68     		ldr	r3, [r3]
+ 391 0008 03F40023 		and	r3, r3, #524288
+ 392 000c 002B     		cmp	r3, #0
+ 393 000e 01D0     		beq	.L29
+ 394              		.loc 1 328 0 is_stmt 0 discriminator 1
+ 395 0010 0123     		movs	r3, #1
+ 396 0012 00E0     		b	.L30
+ 397              	.L29:
+ 398              		.loc 1 328 0 discriminator 2
+ 399 0014 0023     		movs	r3, #0
+ 400              	.L30:
+ 329:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+ 401              		.loc 1 329 0 is_stmt 1 discriminator 3
+ 402 0016 1846     		mov	r0, r3
+ 403 0018 BD46     		mov	sp, r7
+ 404              		@ sp needed
+ 405 001a 5DF8047B 		ldr	r7, [sp], #4
+ 406 001e 7047     		bx	lr
+ 407              	.L33:
+ 408              		.align	2
+ 409              	.L32:
+ 410 0020 00E100E0 		.word	-536813312
+ 411              		.cfi_endproc
+ 412              	.LFE9:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 14
+
+
+ 413              		.size	UART_TIMER_ISR_GetState, .-UART_TIMER_ISR_GetState
+ 414              		.section	.text.UART_TIMER_ISR_Disable,"ax",%progbits
+ 415              		.align	2
+ 416              		.global	UART_TIMER_ISR_Disable
+ 417              		.thumb
+ 418              		.thumb_func
+ 419              		.type	UART_TIMER_ISR_Disable, %function
+ 420              	UART_TIMER_ISR_Disable:
+ 421              	.LFB10:
+ 330:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 331:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 332:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+ 333:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_Disable
+ 334:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+ 335:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 336:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+ 337:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Disables the Interrupt in the interrupt controller.
+ 338:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 339:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:
+ 340:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 341:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 342:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 343:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 344:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 345:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 346:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** void UART_TIMER_ISR_Disable(void)
+ 347:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+ 422              		.loc 1 347 0
+ 423              		.cfi_startproc
+ 424              		@ args = 0, pretend = 0, frame = 0
+ 425              		@ frame_needed = 1, uses_anonymous_args = 0
+ 426              		@ link register save eliminated.
+ 427 0000 80B4     		push	{r7}
+ 428              		.cfi_def_cfa_offset 4
+ 429              		.cfi_offset 7, -4
+ 430 0002 00AF     		add	r7, sp, #0
+ 431              		.cfi_def_cfa_register 7
+ 348:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     /* Disable the general interrupt. */
+ 349:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     *UART_TIMER_ISR_INTC_CLR_EN = UART_TIMER_ISR__INTC_MASK;
+ 432              		.loc 1 349 0
+ 433 0004 034B     		ldr	r3, .L35
+ 434 0006 4FF40022 		mov	r2, #524288
+ 435 000a 1A60     		str	r2, [r3]
+ 350:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+ 436              		.loc 1 350 0
+ 437 000c BD46     		mov	sp, r7
+ 438              		@ sp needed
+ 439 000e 5DF8047B 		ldr	r7, [sp], #4
+ 440 0012 7047     		bx	lr
+ 441              	.L36:
+ 442              		.align	2
+ 443              	.L35:
+ 444 0014 80E100E0 		.word	-536813184
+ 445              		.cfi_endproc
+ 446              	.LFE10:
+ 447              		.size	UART_TIMER_ISR_Disable, .-UART_TIMER_ISR_Disable
+ 448              		.section	.text.UART_TIMER_ISR_SetPending,"ax",%progbits
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 15
+
+
+ 449              		.align	2
+ 450              		.global	UART_TIMER_ISR_SetPending
+ 451              		.thumb
+ 452              		.thumb_func
+ 453              		.type	UART_TIMER_ISR_SetPending, %function
+ 454              	UART_TIMER_ISR_SetPending:
+ 455              	.LFB11:
+ 351:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 352:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 353:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+ 354:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_SetPending
+ 355:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+ 356:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 357:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+ 358:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Causes the Interrupt to enter the pending state, a software method of
+ 359:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   generating the interrupt.
+ 360:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 361:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:
+ 362:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 363:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 364:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 365:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 366:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 367:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Side Effects:
+ 368:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   If interrupts are enabled and the interrupt is set up properly, the ISR is
+ 369:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   entered (depending on the priority of this interrupt and other pending 
+ 370:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   interrupts).
+ 371:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 372:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 373:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** void UART_TIMER_ISR_SetPending(void)
+ 374:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+ 456              		.loc 1 374 0
+ 457              		.cfi_startproc
+ 458              		@ args = 0, pretend = 0, frame = 0
+ 459              		@ frame_needed = 1, uses_anonymous_args = 0
+ 460              		@ link register save eliminated.
+ 461 0000 80B4     		push	{r7}
+ 462              		.cfi_def_cfa_offset 4
+ 463              		.cfi_offset 7, -4
+ 464 0002 00AF     		add	r7, sp, #0
+ 465              		.cfi_def_cfa_register 7
+ 375:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     *UART_TIMER_ISR_INTC_SET_PD = UART_TIMER_ISR__INTC_MASK;
+ 466              		.loc 1 375 0
+ 467 0004 034B     		ldr	r3, .L38
+ 468 0006 4FF40022 		mov	r2, #524288
+ 469 000a 1A60     		str	r2, [r3]
+ 376:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+ 470              		.loc 1 376 0
+ 471 000c BD46     		mov	sp, r7
+ 472              		@ sp needed
+ 473 000e 5DF8047B 		ldr	r7, [sp], #4
+ 474 0012 7047     		bx	lr
+ 475              	.L39:
+ 476              		.align	2
+ 477              	.L38:
+ 478 0014 00E200E0 		.word	-536813056
+ 479              		.cfi_endproc
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 16
+
+
+ 480              	.LFE11:
+ 481              		.size	UART_TIMER_ISR_SetPending, .-UART_TIMER_ISR_SetPending
+ 482              		.section	.text.UART_TIMER_ISR_ClearPending,"ax",%progbits
+ 483              		.align	2
+ 484              		.global	UART_TIMER_ISR_ClearPending
+ 485              		.thumb
+ 486              		.thumb_func
+ 487              		.type	UART_TIMER_ISR_ClearPending, %function
+ 488              	UART_TIMER_ISR_ClearPending:
+ 489              	.LFB12:
+ 377:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 378:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** 
+ 379:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** /*******************************************************************************
+ 380:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Function Name: UART_TIMER_ISR_ClearPending
+ 381:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** ********************************************************************************
+ 382:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 383:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Summary:
+ 384:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Clears a pending interrupt in the interrupt controller.
+ 385:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 386:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   Note Some interrupt sources are clear-on-read and require the block 
+ 387:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   interrupt/status register to be read/cleared with the appropriate block API 
+ 388:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   (GPIO, UART, and so on). Otherwise the ISR will continue to remain in 
+ 389:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   pending state even though the interrupt itself is cleared using this API.
+ 390:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 391:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Parameters:
+ 392:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 393:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 394:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** * Return:
+ 395:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *   None
+ 396:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *
+ 397:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** *******************************************************************************/
+ 398:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** void UART_TIMER_ISR_ClearPending(void)
+ 399:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** {
+ 490              		.loc 1 399 0
+ 491              		.cfi_startproc
+ 492              		@ args = 0, pretend = 0, frame = 0
+ 493              		@ frame_needed = 1, uses_anonymous_args = 0
+ 494              		@ link register save eliminated.
+ 495 0000 80B4     		push	{r7}
+ 496              		.cfi_def_cfa_offset 4
+ 497              		.cfi_offset 7, -4
+ 498 0002 00AF     		add	r7, sp, #0
+ 499              		.cfi_def_cfa_register 7
+ 400:.\Generated_Source\PSoC5/UART_TIMER_ISR.c ****     *UART_TIMER_ISR_INTC_CLR_PD = UART_TIMER_ISR__INTC_MASK;
+ 500              		.loc 1 400 0
+ 501 0004 034B     		ldr	r3, .L41
+ 502 0006 4FF40022 		mov	r2, #524288
+ 503 000a 1A60     		str	r2, [r3]
+ 401:.\Generated_Source\PSoC5/UART_TIMER_ISR.c **** }
+ 504              		.loc 1 401 0
+ 505 000c BD46     		mov	sp, r7
+ 506              		@ sp needed
+ 507 000e 5DF8047B 		ldr	r7, [sp], #4
+ 508 0012 7047     		bx	lr
+ 509              	.L42:
+ 510              		.align	2
+ 511              	.L41:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 17
+
+
+ 512 0014 80E200E0 		.word	-536812928
+ 513              		.cfi_endproc
+ 514              	.LFE12:
+ 515              		.size	UART_TIMER_ISR_ClearPending, .-UART_TIMER_ISR_ClearPending
+ 516              		.text
+ 517              	.Letext0:
+ 518              		.file 2 "Generated_Source\\PSoC5/cytypes.h"
+ 519              		.file 3 "./softuart.h"
+ 520              		.file 4 "./system.h"
+ 521              		.section	.debug_info,"",%progbits
+ 522              	.Ldebug_info0:
+ 523 0000 93030000 		.4byte	0x393
+ 524 0004 0400     		.2byte	0x4
+ 525 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 526 000a 04       		.byte	0x4
+ 527 000b 01       		.uleb128 0x1
+ 528 000c 0E000000 		.4byte	.LASF55
+ 529 0010 01       		.byte	0x1
+ 530 0011 28020000 		.4byte	.LASF56
+ 531 0015 76010000 		.4byte	.LASF57
+ 532 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 533 001d 00000000 		.4byte	0
+ 534 0021 00000000 		.4byte	.Ldebug_line0
+ 535 0025 02       		.uleb128 0x2
+ 536 0026 04       		.byte	0x4
+ 537 0027 05       		.byte	0x5
+ 538 0028 696E7400 		.ascii	"int\000"
+ 539 002c 03       		.uleb128 0x3
+ 540 002d 04       		.byte	0x4
+ 541 002e 07       		.byte	0x7
+ 542 002f 1B010000 		.4byte	.LASF0
+ 543 0033 03       		.uleb128 0x3
+ 544 0034 01       		.byte	0x1
+ 545 0035 06       		.byte	0x6
+ 546 0036 BE030000 		.4byte	.LASF1
+ 547 003a 03       		.uleb128 0x3
+ 548 003b 01       		.byte	0x1
+ 549 003c 08       		.byte	0x8
+ 550 003d 63010000 		.4byte	.LASF2
+ 551 0041 03       		.uleb128 0x3
+ 552 0042 02       		.byte	0x2
+ 553 0043 05       		.byte	0x5
+ 554 0044 79030000 		.4byte	.LASF3
+ 555 0048 03       		.uleb128 0x3
+ 556 0049 02       		.byte	0x2
+ 557 004a 07       		.byte	0x7
+ 558 004b CA030000 		.4byte	.LASF4
+ 559 004f 03       		.uleb128 0x3
+ 560 0050 04       		.byte	0x4
+ 561 0051 05       		.byte	0x5
+ 562 0052 89030000 		.4byte	.LASF5
+ 563 0056 03       		.uleb128 0x3
+ 564 0057 04       		.byte	0x4
+ 565 0058 07       		.byte	0x7
+ 566 0059 CF010000 		.4byte	.LASF6
+ 567 005d 03       		.uleb128 0x3
+ 568 005e 08       		.byte	0x8
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 18
+
+
+ 569 005f 05       		.byte	0x5
+ 570 0060 24030000 		.4byte	.LASF7
+ 571 0064 03       		.uleb128 0x3
+ 572 0065 08       		.byte	0x8
+ 573 0066 07       		.byte	0x7
+ 574 0067 AD020000 		.4byte	.LASF8
+ 575 006b 03       		.uleb128 0x3
+ 576 006c 04       		.byte	0x4
+ 577 006d 07       		.byte	0x7
+ 578 006e 1B030000 		.4byte	.LASF9
+ 579 0072 04       		.uleb128 0x4
+ 580 0073 04       		.byte	0x4
+ 581 0074 78000000 		.4byte	0x78
+ 582 0078 05       		.uleb128 0x5
+ 583 0079 03       		.uleb128 0x3
+ 584 007a 01       		.byte	0x1
+ 585 007b 08       		.byte	0x8
+ 586 007c 49030000 		.4byte	.LASF10
+ 587 0080 06       		.uleb128 0x6
+ 588 0081 EB010000 		.4byte	.LASF11
+ 589 0085 02       		.byte	0x2
+ 590 0086 B3       		.byte	0xb3
+ 591 0087 3A000000 		.4byte	0x3a
+ 592 008b 06       		.uleb128 0x6
+ 593 008c 21020000 		.4byte	.LASF12
+ 594 0090 02       		.byte	0x2
+ 595 0091 B4       		.byte	0xb4
+ 596 0092 48000000 		.4byte	0x48
+ 597 0096 06       		.uleb128 0x6
+ 598 0097 72020000 		.4byte	.LASF13
+ 599 009b 02       		.byte	0x2
+ 600 009c B5       		.byte	0xb5
+ 601 009d 56000000 		.4byte	0x56
+ 602 00a1 03       		.uleb128 0x3
+ 603 00a2 04       		.byte	0x4
+ 604 00a3 04       		.byte	0x4
+ 605 00a4 4B010000 		.4byte	.LASF14
+ 606 00a8 03       		.uleb128 0x3
+ 607 00a9 08       		.byte	0x8
+ 608 00aa 04       		.byte	0x4
+ 609 00ab FF010000 		.4byte	.LASF15
+ 610 00af 07       		.uleb128 0x7
+ 611 00b0 71010000 		.4byte	.LASF16
+ 612 00b4 02       		.byte	0x2
+ 613 00b5 5D01     		.2byte	0x15d
+ 614 00b7 BB000000 		.4byte	0xbb
+ 615 00bb 08       		.uleb128 0x8
+ 616 00bc 80000000 		.4byte	0x80
+ 617 00c0 08       		.uleb128 0x8
+ 618 00c1 8B000000 		.4byte	0x8b
+ 619 00c5 07       		.uleb128 0x7
+ 620 00c6 08000000 		.4byte	.LASF17
+ 621 00ca 02       		.byte	0x2
+ 622 00cb 5F01     		.2byte	0x15f
+ 623 00cd D1000000 		.4byte	0xd1
+ 624 00d1 08       		.uleb128 0x8
+ 625 00d2 96000000 		.4byte	0x96
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 19
+
+
+ 626 00d6 07       		.uleb128 0x7
+ 627 00d7 C4020000 		.4byte	.LASF18
+ 628 00db 02       		.byte	0x2
+ 629 00dc 6F01     		.2byte	0x16f
+ 630 00de 72000000 		.4byte	0x72
+ 631 00e2 09       		.uleb128 0x9
+ 632 00e3 28       		.byte	0x28
+ 633 00e4 03       		.byte	0x3
+ 634 00e5 0D       		.byte	0xd
+ 635 00e6 7B010000 		.4byte	0x17b
+ 636 00ea 0A       		.uleb128 0xa
+ 637 00eb F1010000 		.4byte	.LASF19
+ 638 00ef 03       		.byte	0x3
+ 639 00f0 0F       		.byte	0xf
+ 640 00f1 25000000 		.4byte	0x25
+ 641 00f5 00       		.byte	0
+ 642 00f6 0A       		.uleb128 0xa
+ 643 00f7 DD030000 		.4byte	.LASF20
+ 644 00fb 03       		.byte	0x3
+ 645 00fc 10       		.byte	0x10
+ 646 00fd 25000000 		.4byte	0x25
+ 647 0101 04       		.byte	0x4
+ 648 0102 0A       		.uleb128 0xa
+ 649 0103 B7000000 		.4byte	.LASF21
+ 650 0107 03       		.byte	0x3
+ 651 0108 11       		.byte	0x11
+ 652 0109 25000000 		.4byte	0x25
+ 653 010d 08       		.byte	0x8
+ 654 010e 0A       		.uleb128 0xa
+ 655 010f 65030000 		.4byte	.LASF22
+ 656 0113 03       		.byte	0x3
+ 657 0114 12       		.byte	0x12
+ 658 0115 25000000 		.4byte	0x25
+ 659 0119 0C       		.byte	0xc
+ 660 011a 0A       		.uleb128 0xa
+ 661 011b 00000000 		.4byte	.LASF23
+ 662 011f 03       		.byte	0x3
+ 663 0120 13       		.byte	0x13
+ 664 0121 8B000000 		.4byte	0x8b
+ 665 0125 10       		.byte	0x10
+ 666 0126 0A       		.uleb128 0xa
+ 667 0127 28010000 		.4byte	.LASF24
+ 668 012b 03       		.byte	0x3
+ 669 012c 14       		.byte	0x14
+ 670 012d C0000000 		.4byte	0xc0
+ 671 0131 12       		.byte	0x12
+ 672 0132 0A       		.uleb128 0xa
+ 673 0133 5D030000 		.4byte	.LASF25
+ 674 0137 03       		.byte	0x3
+ 675 0138 15       		.byte	0x15
+ 676 0139 C0000000 		.4byte	0xc0
+ 677 013d 14       		.byte	0x14
+ 678 013e 0A       		.uleb128 0xa
+ 679 013f 86020000 		.4byte	.LASF26
+ 680 0143 03       		.byte	0x3
+ 681 0144 16       		.byte	0x16
+ 682 0145 8B000000 		.4byte	0x8b
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 20
+
+
+ 683 0149 16       		.byte	0x16
+ 684 014a 0A       		.uleb128 0xa
+ 685 014b 83030000 		.4byte	.LASF27
+ 686 014f 03       		.byte	0x3
+ 687 0150 17       		.byte	0x17
+ 688 0151 7B010000 		.4byte	0x17b
+ 689 0155 18       		.byte	0x18
+ 690 0156 0A       		.uleb128 0xa
+ 691 0157 79020000 		.4byte	.LASF28
+ 692 015b 03       		.byte	0x3
+ 693 015c 18       		.byte	0x18
+ 694 015d 7B010000 		.4byte	0x17b
+ 695 0161 1C       		.byte	0x1c
+ 696 0162 0A       		.uleb128 0xa
+ 697 0163 E4030000 		.4byte	.LASF29
+ 698 0167 03       		.byte	0x3
+ 699 0168 19       		.byte	0x19
+ 700 0169 7B010000 		.4byte	0x17b
+ 701 016d 20       		.byte	0x20
+ 702 016e 0A       		.uleb128 0xa
+ 703 016f D1020000 		.4byte	.LASF30
+ 704 0173 03       		.byte	0x3
+ 705 0174 1A       		.byte	0x1a
+ 706 0175 7B010000 		.4byte	0x17b
+ 707 0179 24       		.byte	0x24
+ 708 017a 00       		.byte	0
+ 709 017b 08       		.uleb128 0x8
+ 710 017c 25000000 		.4byte	0x25
+ 711 0180 06       		.uleb128 0x6
+ 712 0181 A6000000 		.4byte	.LASF31
+ 713 0185 03       		.byte	0x3
+ 714 0186 1B       		.byte	0x1b
+ 715 0187 E2000000 		.4byte	0xe2
+ 716 018b 0B       		.uleb128 0xb
+ 717 018c 06030000 		.4byte	.LASF32
+ 718 0190 01       		.byte	0x1
+ 719 0191 3D       		.byte	0x3d
+ 720 0192 00000000 		.4byte	.LFB0
+ 721 0196 20000000 		.4byte	.LFE0-.LFB0
+ 722 019a 01       		.uleb128 0x1
+ 723 019b 9C       		.byte	0x9c
+ 724 019c 0C       		.uleb128 0xc
+ 725 019d 8E020000 		.4byte	.LASF35
+ 726 01a1 01       		.byte	0x1
+ 727 01a2 68       		.byte	0x68
+ 728 01a3 00000000 		.4byte	.LFB1
+ 729 01a7 22000000 		.4byte	.LFE1-.LFB1
+ 730 01ab 01       		.uleb128 0x1
+ 731 01ac 9C       		.byte	0x9c
+ 732 01ad C0010000 		.4byte	0x1c0
+ 733 01b1 0D       		.uleb128 0xd
+ 734 01b2 A5020000 		.4byte	.LASF37
+ 735 01b6 01       		.byte	0x1
+ 736 01b7 68       		.byte	0x68
+ 737 01b8 D6000000 		.4byte	0xd6
+ 738 01bc 02       		.uleb128 0x2
+ 739 01bd 91       		.byte	0x91
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 21
+
+
+ 740 01be 74       		.sleb128 -12
+ 741 01bf 00       		.byte	0
+ 742 01c0 0B       		.uleb128 0xb
+ 743 01c1 5E020000 		.4byte	.LASF33
+ 744 01c5 01       		.byte	0x1
+ 745 01c6 86       		.byte	0x86
+ 746 01c7 00000000 		.4byte	.LFB2
+ 747 01cb 14000000 		.4byte	.LFE2-.LFB2
+ 748 01cf 01       		.uleb128 0x1
+ 749 01d0 9C       		.byte	0x9c
+ 750 01d1 0B       		.uleb128 0xb
+ 751 01d2 02010000 		.4byte	.LASF34
+ 752 01d6 01       		.byte	0x1
+ 753 01d7 A0       		.byte	0xa0
+ 754 01d8 00000000 		.4byte	.LFB3
+ 755 01dc 14000000 		.4byte	.LFE3-.LFB3
+ 756 01e0 01       		.uleb128 0x1
+ 757 01e1 9C       		.byte	0x9c
+ 758 01e2 0E       		.uleb128 0xe
+ 759 01e3 F1030000 		.4byte	.LASF36
+ 760 01e7 01       		.byte	0x1
+ 761 01e8 C5       		.byte	0xc5
+ 762 01e9 00000000 		.4byte	.LFB4
+ 763 01ed 24000000 		.4byte	.LFE4-.LFB4
+ 764 01f1 01       		.uleb128 0x1
+ 765 01f2 9C       		.byte	0x9c
+ 766 01f3 14020000 		.4byte	0x214
+ 767 01f7 0D       		.uleb128 0xd
+ 768 01f8 A5020000 		.4byte	.LASF37
+ 769 01fc 01       		.byte	0x1
+ 770 01fd C5       		.byte	0xc5
+ 771 01fe D6000000 		.4byte	0xd6
+ 772 0202 02       		.uleb128 0x2
+ 773 0203 91       		.byte	0x91
+ 774 0204 6C       		.sleb128 -20
+ 775 0205 0F       		.uleb128 0xf
+ 776 0206 4E030000 		.4byte	.LASF38
+ 777 020a 01       		.byte	0x1
+ 778 020b C7       		.byte	0xc7
+ 779 020c 14020000 		.4byte	0x214
+ 780 0210 02       		.uleb128 0x2
+ 781 0211 91       		.byte	0x91
+ 782 0212 74       		.sleb128 -12
+ 783 0213 00       		.byte	0
+ 784 0214 04       		.uleb128 0x4
+ 785 0215 04       		.byte	0x4
+ 786 0216 D6000000 		.4byte	0xd6
+ 787 021a 10       		.uleb128 0x10
+ 788 021b E9000000 		.4byte	.LASF41
+ 789 021f 01       		.byte	0x1
+ 790 0220 DD       		.byte	0xdd
+ 791 0221 D6000000 		.4byte	0xd6
+ 792 0225 00000000 		.4byte	.LFB5
+ 793 0229 24000000 		.4byte	.LFE5-.LFB5
+ 794 022d 01       		.uleb128 0x1
+ 795 022e 9C       		.byte	0x9c
+ 796 022f 42020000 		.4byte	0x242
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 22
+
+
+ 797 0233 0F       		.uleb128 0xf
+ 798 0234 4E030000 		.4byte	.LASF38
+ 799 0238 01       		.byte	0x1
+ 800 0239 DF       		.byte	0xdf
+ 801 023a 14020000 		.4byte	0x214
+ 802 023e 02       		.uleb128 0x2
+ 803 023f 91       		.byte	0x91
+ 804 0240 74       		.sleb128 -12
+ 805 0241 00       		.byte	0
+ 806 0242 0E       		.uleb128 0xe
+ 807 0243 06020000 		.4byte	.LASF39
+ 808 0247 01       		.byte	0x1
+ 809 0248 FF       		.byte	0xff
+ 810 0249 00000000 		.4byte	.LFB6
+ 811 024d 24000000 		.4byte	.LFE6-.LFB6
+ 812 0251 01       		.uleb128 0x1
+ 813 0252 9C       		.byte	0x9c
+ 814 0253 66020000 		.4byte	0x266
+ 815 0257 0D       		.uleb128 0xd
+ 816 0258 F6010000 		.4byte	.LASF40
+ 817 025c 01       		.byte	0x1
+ 818 025d FF       		.byte	0xff
+ 819 025e 80000000 		.4byte	0x80
+ 820 0262 02       		.uleb128 0x2
+ 821 0263 91       		.byte	0x91
+ 822 0264 77       		.sleb128 -9
+ 823 0265 00       		.byte	0
+ 824 0266 11       		.uleb128 0x11
+ 825 0267 30010000 		.4byte	.LASF42
+ 826 026b 01       		.byte	0x1
+ 827 026c 1501     		.2byte	0x115
+ 828 026e 80000000 		.4byte	0x80
+ 829 0272 00000000 		.4byte	.LFB7
+ 830 0276 24000000 		.4byte	.LFE7-.LFB7
+ 831 027a 01       		.uleb128 0x1
+ 832 027b 9C       		.byte	0x9c
+ 833 027c 90020000 		.4byte	0x290
+ 834 0280 12       		.uleb128 0x12
+ 835 0281 F6010000 		.4byte	.LASF40
+ 836 0285 01       		.byte	0x1
+ 837 0286 1701     		.2byte	0x117
+ 838 0288 80000000 		.4byte	0x80
+ 839 028c 02       		.uleb128 0x2
+ 840 028d 91       		.byte	0x91
+ 841 028e 77       		.sleb128 -9
+ 842 028f 00       		.byte	0
+ 843 0290 13       		.uleb128 0x13
+ 844 0291 C1000000 		.4byte	.LASF43
+ 845 0295 01       		.byte	0x1
+ 846 0296 3001     		.2byte	0x130
+ 847 0298 00000000 		.4byte	.LFB8
+ 848 029c 18000000 		.4byte	.LFE8-.LFB8
+ 849 02a0 01       		.uleb128 0x1
+ 850 02a1 9C       		.byte	0x9c
+ 851 02a2 14       		.uleb128 0x14
+ 852 02a3 E5020000 		.4byte	.LASF58
+ 853 02a7 01       		.byte	0x1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 23
+
+
+ 854 02a8 4501     		.2byte	0x145
+ 855 02aa 80000000 		.4byte	0x80
+ 856 02ae 00000000 		.4byte	.LFB9
+ 857 02b2 24000000 		.4byte	.LFE9-.LFB9
+ 858 02b6 01       		.uleb128 0x1
+ 859 02b7 9C       		.byte	0x9c
+ 860 02b8 13       		.uleb128 0x13
+ 861 02b9 32030000 		.4byte	.LASF44
+ 862 02bd 01       		.byte	0x1
+ 863 02be 5A01     		.2byte	0x15a
+ 864 02c0 00000000 		.4byte	.LFB10
+ 865 02c4 18000000 		.4byte	.LFE10-.LFB10
+ 866 02c8 01       		.uleb128 0x1
+ 867 02c9 9C       		.byte	0x9c
+ 868 02ca 13       		.uleb128 0x13
+ 869 02cb A4030000 		.4byte	.LASF45
+ 870 02cf 01       		.byte	0x1
+ 871 02d0 7501     		.2byte	0x175
+ 872 02d2 00000000 		.4byte	.LFB11
+ 873 02d6 18000000 		.4byte	.LFE11-.LFB11
+ 874 02da 01       		.uleb128 0x1
+ 875 02db 9C       		.byte	0x9c
+ 876 02dc 13       		.uleb128 0x13
+ 877 02dd 8A000000 		.4byte	.LASF46
+ 878 02e1 01       		.byte	0x1
+ 879 02e2 8E01     		.2byte	0x18e
+ 880 02e4 00000000 		.4byte	.LFB12
+ 881 02e8 18000000 		.4byte	.LFE12-.LFB12
+ 882 02ec 01       		.uleb128 0x1
+ 883 02ed 9C       		.byte	0x9c
+ 884 02ee 15       		.uleb128 0x15
+ 885 02ef 7300     		.ascii	"s\000"
+ 886 02f1 04       		.byte	0x4
+ 887 02f2 30       		.byte	0x30
+ 888 02f3 80010000 		.4byte	0x180
+ 889 02f7 05       		.uleb128 0x5
+ 890 02f8 03       		.byte	0x3
+ 891 02f9 00000000 		.4byte	s
+ 892 02fd 16       		.uleb128 0x16
+ 893 02fe 92030000 		.4byte	.LASF47
+ 894 0302 04       		.byte	0x4
+ 895 0303 33       		.byte	0x33
+ 896 0304 79000000 		.4byte	0x79
+ 897 0308 05       		.uleb128 0x5
+ 898 0309 03       		.byte	0x3
+ 899 030a 00000000 		.4byte	currentAccessType
+ 900 030e 15       		.uleb128 0x15
+ 901 030f 6F6C6400 		.ascii	"old\000"
+ 902 0313 04       		.byte	0x4
+ 903 0314 34       		.byte	0x34
+ 904 0315 79000000 		.4byte	0x79
+ 905 0319 05       		.uleb128 0x5
+ 906 031a 03       		.byte	0x3
+ 907 031b 00000000 		.4byte	old
+ 908 031f 16       		.uleb128 0x16
+ 909 0320 51010000 		.4byte	.LASF48
+ 910 0324 04       		.byte	0x4
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 24
+
+
+ 911 0325 35       		.byte	0x35
+ 912 0326 25000000 		.4byte	0x25
+ 913 032a 05       		.uleb128 0x5
+ 914 032b 03       		.byte	0x3
+ 915 032c 00000000 		.4byte	TAMPERCR_POLARITY
+ 916 0330 16       		.uleb128 0x16
+ 917 0331 FD020000 		.4byte	.LASF49
+ 918 0335 04       		.byte	0x4
+ 919 0336 38       		.byte	0x38
+ 920 0337 25000000 		.4byte	0x25
+ 921 033b 05       		.uleb128 0x5
+ 922 033c 03       		.byte	0x3
+ 923 033d 00000000 		.4byte	card_ack
+ 924 0341 16       		.uleb128 0x16
+ 925 0342 D9020000 		.4byte	.LASF50
+ 926 0346 04       		.byte	0x4
+ 927 0347 39       		.byte	0x39
+ 928 0348 25000000 		.4byte	0x25
+ 929 034c 05       		.uleb128 0x5
+ 930 034d 03       		.byte	0x3
+ 931 034e 00000000 		.4byte	card_in_buf
+ 932 0352 16       		.uleb128 0x16
+ 933 0353 E1010000 		.4byte	.LASF51
+ 934 0357 04       		.byte	0x4
+ 935 0358 3C       		.byte	0x3c
+ 936 0359 79000000 		.4byte	0x79
+ 937 035d 05       		.uleb128 0x5
+ 938 035e 03       		.byte	0x3
+ 939 035f 00000000 		.4byte	got_pulse
+ 940 0363 16       		.uleb128 0x16
+ 941 0364 6A030000 		.4byte	.LASF52
+ 942 0368 04       		.byte	0x4
+ 943 0369 3D       		.byte	0x3d
+ 944 036a 25000000 		.4byte	0x25
+ 945 036e 05       		.uleb128 0x5
+ 946 036f 03       		.byte	0x3
+ 947 0370 00000000 		.4byte	f2f_pulsewidth
+ 948 0374 16       		.uleb128 0x16
+ 949 0375 52020000 		.4byte	.LASF53
+ 950 0379 04       		.byte	0x4
+ 951 037a 3E       		.byte	0x3e
+ 952 037b 25000000 		.4byte	0x25
+ 953 037f 05       		.uleb128 0x5
+ 954 0380 03       		.byte	0x3
+ 955 0381 00000000 		.4byte	timeout_cnt
+ 956 0385 16       		.uleb128 0x16
+ 957 0386 D7000000 		.4byte	.LASF54
+ 958 038a 04       		.byte	0x4
+ 959 038b 3F       		.byte	0x3f
+ 960 038c 79000000 		.4byte	0x79
+ 961 0390 05       		.uleb128 0x5
+ 962 0391 03       		.byte	0x3
+ 963 0392 00000000 		.4byte	activate_f2ftimer
+ 964 0396 00       		.byte	0
+ 965              		.section	.debug_abbrev,"",%progbits
+ 966              	.Ldebug_abbrev0:
+ 967 0000 01       		.uleb128 0x1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 25
+
+
+ 968 0001 11       		.uleb128 0x11
+ 969 0002 01       		.byte	0x1
+ 970 0003 25       		.uleb128 0x25
+ 971 0004 0E       		.uleb128 0xe
+ 972 0005 13       		.uleb128 0x13
+ 973 0006 0B       		.uleb128 0xb
+ 974 0007 03       		.uleb128 0x3
+ 975 0008 0E       		.uleb128 0xe
+ 976 0009 1B       		.uleb128 0x1b
+ 977 000a 0E       		.uleb128 0xe
+ 978 000b 55       		.uleb128 0x55
+ 979 000c 17       		.uleb128 0x17
+ 980 000d 11       		.uleb128 0x11
+ 981 000e 01       		.uleb128 0x1
+ 982 000f 10       		.uleb128 0x10
+ 983 0010 17       		.uleb128 0x17
+ 984 0011 00       		.byte	0
+ 985 0012 00       		.byte	0
+ 986 0013 02       		.uleb128 0x2
+ 987 0014 24       		.uleb128 0x24
+ 988 0015 00       		.byte	0
+ 989 0016 0B       		.uleb128 0xb
+ 990 0017 0B       		.uleb128 0xb
+ 991 0018 3E       		.uleb128 0x3e
+ 992 0019 0B       		.uleb128 0xb
+ 993 001a 03       		.uleb128 0x3
+ 994 001b 08       		.uleb128 0x8
+ 995 001c 00       		.byte	0
+ 996 001d 00       		.byte	0
+ 997 001e 03       		.uleb128 0x3
+ 998 001f 24       		.uleb128 0x24
+ 999 0020 00       		.byte	0
+ 1000 0021 0B       		.uleb128 0xb
+ 1001 0022 0B       		.uleb128 0xb
+ 1002 0023 3E       		.uleb128 0x3e
+ 1003 0024 0B       		.uleb128 0xb
+ 1004 0025 03       		.uleb128 0x3
+ 1005 0026 0E       		.uleb128 0xe
+ 1006 0027 00       		.byte	0
+ 1007 0028 00       		.byte	0
+ 1008 0029 04       		.uleb128 0x4
+ 1009 002a 0F       		.uleb128 0xf
+ 1010 002b 00       		.byte	0
+ 1011 002c 0B       		.uleb128 0xb
+ 1012 002d 0B       		.uleb128 0xb
+ 1013 002e 49       		.uleb128 0x49
+ 1014 002f 13       		.uleb128 0x13
+ 1015 0030 00       		.byte	0
+ 1016 0031 00       		.byte	0
+ 1017 0032 05       		.uleb128 0x5
+ 1018 0033 15       		.uleb128 0x15
+ 1019 0034 00       		.byte	0
+ 1020 0035 27       		.uleb128 0x27
+ 1021 0036 19       		.uleb128 0x19
+ 1022 0037 00       		.byte	0
+ 1023 0038 00       		.byte	0
+ 1024 0039 06       		.uleb128 0x6
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 26
+
+
+ 1025 003a 16       		.uleb128 0x16
+ 1026 003b 00       		.byte	0
+ 1027 003c 03       		.uleb128 0x3
+ 1028 003d 0E       		.uleb128 0xe
+ 1029 003e 3A       		.uleb128 0x3a
+ 1030 003f 0B       		.uleb128 0xb
+ 1031 0040 3B       		.uleb128 0x3b
+ 1032 0041 0B       		.uleb128 0xb
+ 1033 0042 49       		.uleb128 0x49
+ 1034 0043 13       		.uleb128 0x13
+ 1035 0044 00       		.byte	0
+ 1036 0045 00       		.byte	0
+ 1037 0046 07       		.uleb128 0x7
+ 1038 0047 16       		.uleb128 0x16
+ 1039 0048 00       		.byte	0
+ 1040 0049 03       		.uleb128 0x3
+ 1041 004a 0E       		.uleb128 0xe
+ 1042 004b 3A       		.uleb128 0x3a
+ 1043 004c 0B       		.uleb128 0xb
+ 1044 004d 3B       		.uleb128 0x3b
+ 1045 004e 05       		.uleb128 0x5
+ 1046 004f 49       		.uleb128 0x49
+ 1047 0050 13       		.uleb128 0x13
+ 1048 0051 00       		.byte	0
+ 1049 0052 00       		.byte	0
+ 1050 0053 08       		.uleb128 0x8
+ 1051 0054 35       		.uleb128 0x35
+ 1052 0055 00       		.byte	0
+ 1053 0056 49       		.uleb128 0x49
+ 1054 0057 13       		.uleb128 0x13
+ 1055 0058 00       		.byte	0
+ 1056 0059 00       		.byte	0
+ 1057 005a 09       		.uleb128 0x9
+ 1058 005b 13       		.uleb128 0x13
+ 1059 005c 01       		.byte	0x1
+ 1060 005d 0B       		.uleb128 0xb
+ 1061 005e 0B       		.uleb128 0xb
+ 1062 005f 3A       		.uleb128 0x3a
+ 1063 0060 0B       		.uleb128 0xb
+ 1064 0061 3B       		.uleb128 0x3b
+ 1065 0062 0B       		.uleb128 0xb
+ 1066 0063 01       		.uleb128 0x1
+ 1067 0064 13       		.uleb128 0x13
+ 1068 0065 00       		.byte	0
+ 1069 0066 00       		.byte	0
+ 1070 0067 0A       		.uleb128 0xa
+ 1071 0068 0D       		.uleb128 0xd
+ 1072 0069 00       		.byte	0
+ 1073 006a 03       		.uleb128 0x3
+ 1074 006b 0E       		.uleb128 0xe
+ 1075 006c 3A       		.uleb128 0x3a
+ 1076 006d 0B       		.uleb128 0xb
+ 1077 006e 3B       		.uleb128 0x3b
+ 1078 006f 0B       		.uleb128 0xb
+ 1079 0070 49       		.uleb128 0x49
+ 1080 0071 13       		.uleb128 0x13
+ 1081 0072 38       		.uleb128 0x38
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 27
+
+
+ 1082 0073 0B       		.uleb128 0xb
+ 1083 0074 00       		.byte	0
+ 1084 0075 00       		.byte	0
+ 1085 0076 0B       		.uleb128 0xb
+ 1086 0077 2E       		.uleb128 0x2e
+ 1087 0078 00       		.byte	0
+ 1088 0079 3F       		.uleb128 0x3f
+ 1089 007a 19       		.uleb128 0x19
+ 1090 007b 03       		.uleb128 0x3
+ 1091 007c 0E       		.uleb128 0xe
+ 1092 007d 3A       		.uleb128 0x3a
+ 1093 007e 0B       		.uleb128 0xb
+ 1094 007f 3B       		.uleb128 0x3b
+ 1095 0080 0B       		.uleb128 0xb
+ 1096 0081 27       		.uleb128 0x27
+ 1097 0082 19       		.uleb128 0x19
+ 1098 0083 11       		.uleb128 0x11
+ 1099 0084 01       		.uleb128 0x1
+ 1100 0085 12       		.uleb128 0x12
+ 1101 0086 06       		.uleb128 0x6
+ 1102 0087 40       		.uleb128 0x40
+ 1103 0088 18       		.uleb128 0x18
+ 1104 0089 9642     		.uleb128 0x2116
+ 1105 008b 19       		.uleb128 0x19
+ 1106 008c 00       		.byte	0
+ 1107 008d 00       		.byte	0
+ 1108 008e 0C       		.uleb128 0xc
+ 1109 008f 2E       		.uleb128 0x2e
+ 1110 0090 01       		.byte	0x1
+ 1111 0091 3F       		.uleb128 0x3f
+ 1112 0092 19       		.uleb128 0x19
+ 1113 0093 03       		.uleb128 0x3
+ 1114 0094 0E       		.uleb128 0xe
+ 1115 0095 3A       		.uleb128 0x3a
+ 1116 0096 0B       		.uleb128 0xb
+ 1117 0097 3B       		.uleb128 0x3b
+ 1118 0098 0B       		.uleb128 0xb
+ 1119 0099 27       		.uleb128 0x27
+ 1120 009a 19       		.uleb128 0x19
+ 1121 009b 11       		.uleb128 0x11
+ 1122 009c 01       		.uleb128 0x1
+ 1123 009d 12       		.uleb128 0x12
+ 1124 009e 06       		.uleb128 0x6
+ 1125 009f 40       		.uleb128 0x40
+ 1126 00a0 18       		.uleb128 0x18
+ 1127 00a1 9642     		.uleb128 0x2116
+ 1128 00a3 19       		.uleb128 0x19
+ 1129 00a4 01       		.uleb128 0x1
+ 1130 00a5 13       		.uleb128 0x13
+ 1131 00a6 00       		.byte	0
+ 1132 00a7 00       		.byte	0
+ 1133 00a8 0D       		.uleb128 0xd
+ 1134 00a9 05       		.uleb128 0x5
+ 1135 00aa 00       		.byte	0
+ 1136 00ab 03       		.uleb128 0x3
+ 1137 00ac 0E       		.uleb128 0xe
+ 1138 00ad 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 28
+
+
+ 1139 00ae 0B       		.uleb128 0xb
+ 1140 00af 3B       		.uleb128 0x3b
+ 1141 00b0 0B       		.uleb128 0xb
+ 1142 00b1 49       		.uleb128 0x49
+ 1143 00b2 13       		.uleb128 0x13
+ 1144 00b3 02       		.uleb128 0x2
+ 1145 00b4 18       		.uleb128 0x18
+ 1146 00b5 00       		.byte	0
+ 1147 00b6 00       		.byte	0
+ 1148 00b7 0E       		.uleb128 0xe
+ 1149 00b8 2E       		.uleb128 0x2e
+ 1150 00b9 01       		.byte	0x1
+ 1151 00ba 3F       		.uleb128 0x3f
+ 1152 00bb 19       		.uleb128 0x19
+ 1153 00bc 03       		.uleb128 0x3
+ 1154 00bd 0E       		.uleb128 0xe
+ 1155 00be 3A       		.uleb128 0x3a
+ 1156 00bf 0B       		.uleb128 0xb
+ 1157 00c0 3B       		.uleb128 0x3b
+ 1158 00c1 0B       		.uleb128 0xb
+ 1159 00c2 27       		.uleb128 0x27
+ 1160 00c3 19       		.uleb128 0x19
+ 1161 00c4 11       		.uleb128 0x11
+ 1162 00c5 01       		.uleb128 0x1
+ 1163 00c6 12       		.uleb128 0x12
+ 1164 00c7 06       		.uleb128 0x6
+ 1165 00c8 40       		.uleb128 0x40
+ 1166 00c9 18       		.uleb128 0x18
+ 1167 00ca 9742     		.uleb128 0x2117
+ 1168 00cc 19       		.uleb128 0x19
+ 1169 00cd 01       		.uleb128 0x1
+ 1170 00ce 13       		.uleb128 0x13
+ 1171 00cf 00       		.byte	0
+ 1172 00d0 00       		.byte	0
+ 1173 00d1 0F       		.uleb128 0xf
+ 1174 00d2 34       		.uleb128 0x34
+ 1175 00d3 00       		.byte	0
+ 1176 00d4 03       		.uleb128 0x3
+ 1177 00d5 0E       		.uleb128 0xe
+ 1178 00d6 3A       		.uleb128 0x3a
+ 1179 00d7 0B       		.uleb128 0xb
+ 1180 00d8 3B       		.uleb128 0x3b
+ 1181 00d9 0B       		.uleb128 0xb
+ 1182 00da 49       		.uleb128 0x49
+ 1183 00db 13       		.uleb128 0x13
+ 1184 00dc 02       		.uleb128 0x2
+ 1185 00dd 18       		.uleb128 0x18
+ 1186 00de 00       		.byte	0
+ 1187 00df 00       		.byte	0
+ 1188 00e0 10       		.uleb128 0x10
+ 1189 00e1 2E       		.uleb128 0x2e
+ 1190 00e2 01       		.byte	0x1
+ 1191 00e3 3F       		.uleb128 0x3f
+ 1192 00e4 19       		.uleb128 0x19
+ 1193 00e5 03       		.uleb128 0x3
+ 1194 00e6 0E       		.uleb128 0xe
+ 1195 00e7 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 29
+
+
+ 1196 00e8 0B       		.uleb128 0xb
+ 1197 00e9 3B       		.uleb128 0x3b
+ 1198 00ea 0B       		.uleb128 0xb
+ 1199 00eb 27       		.uleb128 0x27
+ 1200 00ec 19       		.uleb128 0x19
+ 1201 00ed 49       		.uleb128 0x49
+ 1202 00ee 13       		.uleb128 0x13
+ 1203 00ef 11       		.uleb128 0x11
+ 1204 00f0 01       		.uleb128 0x1
+ 1205 00f1 12       		.uleb128 0x12
+ 1206 00f2 06       		.uleb128 0x6
+ 1207 00f3 40       		.uleb128 0x40
+ 1208 00f4 18       		.uleb128 0x18
+ 1209 00f5 9742     		.uleb128 0x2117
+ 1210 00f7 19       		.uleb128 0x19
+ 1211 00f8 01       		.uleb128 0x1
+ 1212 00f9 13       		.uleb128 0x13
+ 1213 00fa 00       		.byte	0
+ 1214 00fb 00       		.byte	0
+ 1215 00fc 11       		.uleb128 0x11
+ 1216 00fd 2E       		.uleb128 0x2e
+ 1217 00fe 01       		.byte	0x1
+ 1218 00ff 3F       		.uleb128 0x3f
+ 1219 0100 19       		.uleb128 0x19
+ 1220 0101 03       		.uleb128 0x3
+ 1221 0102 0E       		.uleb128 0xe
+ 1222 0103 3A       		.uleb128 0x3a
+ 1223 0104 0B       		.uleb128 0xb
+ 1224 0105 3B       		.uleb128 0x3b
+ 1225 0106 05       		.uleb128 0x5
+ 1226 0107 27       		.uleb128 0x27
+ 1227 0108 19       		.uleb128 0x19
+ 1228 0109 49       		.uleb128 0x49
+ 1229 010a 13       		.uleb128 0x13
+ 1230 010b 11       		.uleb128 0x11
+ 1231 010c 01       		.uleb128 0x1
+ 1232 010d 12       		.uleb128 0x12
+ 1233 010e 06       		.uleb128 0x6
+ 1234 010f 40       		.uleb128 0x40
+ 1235 0110 18       		.uleb128 0x18
+ 1236 0111 9742     		.uleb128 0x2117
+ 1237 0113 19       		.uleb128 0x19
+ 1238 0114 01       		.uleb128 0x1
+ 1239 0115 13       		.uleb128 0x13
+ 1240 0116 00       		.byte	0
+ 1241 0117 00       		.byte	0
+ 1242 0118 12       		.uleb128 0x12
+ 1243 0119 34       		.uleb128 0x34
+ 1244 011a 00       		.byte	0
+ 1245 011b 03       		.uleb128 0x3
+ 1246 011c 0E       		.uleb128 0xe
+ 1247 011d 3A       		.uleb128 0x3a
+ 1248 011e 0B       		.uleb128 0xb
+ 1249 011f 3B       		.uleb128 0x3b
+ 1250 0120 05       		.uleb128 0x5
+ 1251 0121 49       		.uleb128 0x49
+ 1252 0122 13       		.uleb128 0x13
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 30
+
+
+ 1253 0123 02       		.uleb128 0x2
+ 1254 0124 18       		.uleb128 0x18
+ 1255 0125 00       		.byte	0
+ 1256 0126 00       		.byte	0
+ 1257 0127 13       		.uleb128 0x13
+ 1258 0128 2E       		.uleb128 0x2e
+ 1259 0129 00       		.byte	0
+ 1260 012a 3F       		.uleb128 0x3f
+ 1261 012b 19       		.uleb128 0x19
+ 1262 012c 03       		.uleb128 0x3
+ 1263 012d 0E       		.uleb128 0xe
+ 1264 012e 3A       		.uleb128 0x3a
+ 1265 012f 0B       		.uleb128 0xb
+ 1266 0130 3B       		.uleb128 0x3b
+ 1267 0131 05       		.uleb128 0x5
+ 1268 0132 27       		.uleb128 0x27
+ 1269 0133 19       		.uleb128 0x19
+ 1270 0134 11       		.uleb128 0x11
+ 1271 0135 01       		.uleb128 0x1
+ 1272 0136 12       		.uleb128 0x12
+ 1273 0137 06       		.uleb128 0x6
+ 1274 0138 40       		.uleb128 0x40
+ 1275 0139 18       		.uleb128 0x18
+ 1276 013a 9742     		.uleb128 0x2117
+ 1277 013c 19       		.uleb128 0x19
+ 1278 013d 00       		.byte	0
+ 1279 013e 00       		.byte	0
+ 1280 013f 14       		.uleb128 0x14
+ 1281 0140 2E       		.uleb128 0x2e
+ 1282 0141 00       		.byte	0
+ 1283 0142 3F       		.uleb128 0x3f
+ 1284 0143 19       		.uleb128 0x19
+ 1285 0144 03       		.uleb128 0x3
+ 1286 0145 0E       		.uleb128 0xe
+ 1287 0146 3A       		.uleb128 0x3a
+ 1288 0147 0B       		.uleb128 0xb
+ 1289 0148 3B       		.uleb128 0x3b
+ 1290 0149 05       		.uleb128 0x5
+ 1291 014a 27       		.uleb128 0x27
+ 1292 014b 19       		.uleb128 0x19
+ 1293 014c 49       		.uleb128 0x49
+ 1294 014d 13       		.uleb128 0x13
+ 1295 014e 11       		.uleb128 0x11
+ 1296 014f 01       		.uleb128 0x1
+ 1297 0150 12       		.uleb128 0x12
+ 1298 0151 06       		.uleb128 0x6
+ 1299 0152 40       		.uleb128 0x40
+ 1300 0153 18       		.uleb128 0x18
+ 1301 0154 9742     		.uleb128 0x2117
+ 1302 0156 19       		.uleb128 0x19
+ 1303 0157 00       		.byte	0
+ 1304 0158 00       		.byte	0
+ 1305 0159 15       		.uleb128 0x15
+ 1306 015a 34       		.uleb128 0x34
+ 1307 015b 00       		.byte	0
+ 1308 015c 03       		.uleb128 0x3
+ 1309 015d 08       		.uleb128 0x8
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 31
+
+
+ 1310 015e 3A       		.uleb128 0x3a
+ 1311 015f 0B       		.uleb128 0xb
+ 1312 0160 3B       		.uleb128 0x3b
+ 1313 0161 0B       		.uleb128 0xb
+ 1314 0162 49       		.uleb128 0x49
+ 1315 0163 13       		.uleb128 0x13
+ 1316 0164 3F       		.uleb128 0x3f
+ 1317 0165 19       		.uleb128 0x19
+ 1318 0166 02       		.uleb128 0x2
+ 1319 0167 18       		.uleb128 0x18
+ 1320 0168 00       		.byte	0
+ 1321 0169 00       		.byte	0
+ 1322 016a 16       		.uleb128 0x16
+ 1323 016b 34       		.uleb128 0x34
+ 1324 016c 00       		.byte	0
+ 1325 016d 03       		.uleb128 0x3
+ 1326 016e 0E       		.uleb128 0xe
+ 1327 016f 3A       		.uleb128 0x3a
+ 1328 0170 0B       		.uleb128 0xb
+ 1329 0171 3B       		.uleb128 0x3b
+ 1330 0172 0B       		.uleb128 0xb
+ 1331 0173 49       		.uleb128 0x49
+ 1332 0174 13       		.uleb128 0x13
+ 1333 0175 3F       		.uleb128 0x3f
+ 1334 0176 19       		.uleb128 0x19
+ 1335 0177 02       		.uleb128 0x2
+ 1336 0178 18       		.uleb128 0x18
+ 1337 0179 00       		.byte	0
+ 1338 017a 00       		.byte	0
+ 1339 017b 00       		.byte	0
+ 1340              		.section	.debug_aranges,"",%progbits
+ 1341 0000 7C000000 		.4byte	0x7c
+ 1342 0004 0200     		.2byte	0x2
+ 1343 0006 00000000 		.4byte	.Ldebug_info0
+ 1344 000a 04       		.byte	0x4
+ 1345 000b 00       		.byte	0
+ 1346 000c 0000     		.2byte	0
+ 1347 000e 0000     		.2byte	0
+ 1348 0010 00000000 		.4byte	.LFB0
+ 1349 0014 20000000 		.4byte	.LFE0-.LFB0
+ 1350 0018 00000000 		.4byte	.LFB1
+ 1351 001c 22000000 		.4byte	.LFE1-.LFB1
+ 1352 0020 00000000 		.4byte	.LFB2
+ 1353 0024 14000000 		.4byte	.LFE2-.LFB2
+ 1354 0028 00000000 		.4byte	.LFB3
+ 1355 002c 14000000 		.4byte	.LFE3-.LFB3
+ 1356 0030 00000000 		.4byte	.LFB4
+ 1357 0034 24000000 		.4byte	.LFE4-.LFB4
+ 1358 0038 00000000 		.4byte	.LFB5
+ 1359 003c 24000000 		.4byte	.LFE5-.LFB5
+ 1360 0040 00000000 		.4byte	.LFB6
+ 1361 0044 24000000 		.4byte	.LFE6-.LFB6
+ 1362 0048 00000000 		.4byte	.LFB7
+ 1363 004c 24000000 		.4byte	.LFE7-.LFB7
+ 1364 0050 00000000 		.4byte	.LFB8
+ 1365 0054 18000000 		.4byte	.LFE8-.LFB8
+ 1366 0058 00000000 		.4byte	.LFB9
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 32
+
+
+ 1367 005c 24000000 		.4byte	.LFE9-.LFB9
+ 1368 0060 00000000 		.4byte	.LFB10
+ 1369 0064 18000000 		.4byte	.LFE10-.LFB10
+ 1370 0068 00000000 		.4byte	.LFB11
+ 1371 006c 18000000 		.4byte	.LFE11-.LFB11
+ 1372 0070 00000000 		.4byte	.LFB12
+ 1373 0074 18000000 		.4byte	.LFE12-.LFB12
+ 1374 0078 00000000 		.4byte	0
+ 1375 007c 00000000 		.4byte	0
+ 1376              		.section	.debug_ranges,"",%progbits
+ 1377              	.Ldebug_ranges0:
+ 1378 0000 00000000 		.4byte	.LFB0
+ 1379 0004 20000000 		.4byte	.LFE0
+ 1380 0008 00000000 		.4byte	.LFB1
+ 1381 000c 22000000 		.4byte	.LFE1
+ 1382 0010 00000000 		.4byte	.LFB2
+ 1383 0014 14000000 		.4byte	.LFE2
+ 1384 0018 00000000 		.4byte	.LFB3
+ 1385 001c 14000000 		.4byte	.LFE3
+ 1386 0020 00000000 		.4byte	.LFB4
+ 1387 0024 24000000 		.4byte	.LFE4
+ 1388 0028 00000000 		.4byte	.LFB5
+ 1389 002c 24000000 		.4byte	.LFE5
+ 1390 0030 00000000 		.4byte	.LFB6
+ 1391 0034 24000000 		.4byte	.LFE6
+ 1392 0038 00000000 		.4byte	.LFB7
+ 1393 003c 24000000 		.4byte	.LFE7
+ 1394 0040 00000000 		.4byte	.LFB8
+ 1395 0044 18000000 		.4byte	.LFE8
+ 1396 0048 00000000 		.4byte	.LFB9
+ 1397 004c 24000000 		.4byte	.LFE9
+ 1398 0050 00000000 		.4byte	.LFB10
+ 1399 0054 18000000 		.4byte	.LFE10
+ 1400 0058 00000000 		.4byte	.LFB11
+ 1401 005c 18000000 		.4byte	.LFE11
+ 1402 0060 00000000 		.4byte	.LFB12
+ 1403 0064 18000000 		.4byte	.LFE12
+ 1404 0068 00000000 		.4byte	0
+ 1405 006c 00000000 		.4byte	0
+ 1406              		.section	.debug_line,"",%progbits
+ 1407              	.Ldebug_line0:
+ 1408 0000 8C010000 		.section	.debug_str,"MS",%progbits,1
+ 1408      02008200 
+ 1408      00000201 
+ 1408      FB0E0D00 
+ 1408      01010101 
+ 1409              	.LASF23:
+ 1410 0000 72785F62 		.ascii	"rx_byte\000"
+ 1410      79746500 
+ 1411              	.LASF17:
+ 1412 0008 72656733 		.ascii	"reg32\000"
+ 1412      3200
+ 1413              	.LASF55:
+ 1414 000e 474E5520 		.ascii	"GNU C 4.8.4 20140526 (release) [ARM/embedded-4_8-br"
+ 1414      4320342E 
+ 1414      382E3420 
+ 1414      32303134 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 33
+
+
+ 1414      30353236 
+ 1415 0041 616E6368 		.ascii	"anch revision 211358] -mcpu=cortex-m3 -mthumb -g -O"
+ 1415      20726576 
+ 1415      6973696F 
+ 1415      6E203231 
+ 1415      31333538 
+ 1416 0074 30202D66 		.ascii	"0 -ffunction-sections\000"
+ 1416      66756E63 
+ 1416      74696F6E 
+ 1416      2D736563 
+ 1416      74696F6E 
+ 1417              	.LASF46:
+ 1418 008a 55415254 		.ascii	"UART_TIMER_ISR_ClearPending\000"
+ 1418      5F54494D 
+ 1418      45525F49 
+ 1418      53525F43 
+ 1418      6C656172 
+ 1419              	.LASF31:
+ 1420 00a6 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 1420      5F554152 
+ 1420      545F5354 
+ 1420      52554354 
+ 1420      00
+ 1421              	.LASF21:
+ 1422 00b7 73746F70 		.ascii	"stop_bits\000"
+ 1422      5F626974 
+ 1422      7300
+ 1423              	.LASF43:
+ 1424 00c1 55415254 		.ascii	"UART_TIMER_ISR_Enable\000"
+ 1424      5F54494D 
+ 1424      45525F49 
+ 1424      53525F45 
+ 1424      6E61626C 
+ 1425              	.LASF54:
+ 1426 00d7 61637469 		.ascii	"activate_f2ftimer\000"
+ 1426      76617465 
+ 1426      5F663266 
+ 1426      74696D65 
+ 1426      7200
+ 1427              	.LASF41:
+ 1428 00e9 55415254 		.ascii	"UART_TIMER_ISR_GetVector\000"
+ 1428      5F54494D 
+ 1428      45525F49 
+ 1428      53525F47 
+ 1428      65745665 
+ 1429              	.LASF34:
+ 1430 0102 55415254 		.ascii	"UART_TIMER_ISR_Interrupt\000"
+ 1430      5F54494D 
+ 1430      45525F49 
+ 1430      53525F49 
+ 1430      6E746572 
+ 1431              	.LASF0:
+ 1432 011b 756E7369 		.ascii	"unsigned int\000"
+ 1432      676E6564 
+ 1432      20696E74 
+ 1432      00
+ 1433              	.LASF24:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 34
+
+
+ 1434 0128 74785F62 		.ascii	"tx_byte\000"
+ 1434      79746500 
+ 1435              	.LASF42:
+ 1436 0130 55415254 		.ascii	"UART_TIMER_ISR_GetPriority\000"
+ 1436      5F54494D 
+ 1436      45525F49 
+ 1436      53525F47 
+ 1436      65745072 
+ 1437              	.LASF14:
+ 1438 014b 666C6F61 		.ascii	"float\000"
+ 1438      7400
+ 1439              	.LASF48:
+ 1440 0151 54414D50 		.ascii	"TAMPERCR_POLARITY\000"
+ 1440      45524352 
+ 1440      5F504F4C 
+ 1440      41524954 
+ 1440      5900
+ 1441              	.LASF2:
+ 1442 0163 756E7369 		.ascii	"unsigned char\000"
+ 1442      676E6564 
+ 1442      20636861 
+ 1442      7200
+ 1443              	.LASF16:
+ 1444 0171 72656738 		.ascii	"reg8\000"
+ 1444      00
+ 1445              	.LASF57:
+ 1446 0176 433A5C55 		.ascii	"C:\\Users\\Yiquing\\Documents\\works\\NanoNXT\\osdp"
+ 1446      73657273 
+ 1446      5C596971 
+ 1446      75696E67 
+ 1446      5C446F63 
+ 1447 01a3 20746573 		.ascii	" testing\\YQ\\nanoNxt_ICM3\\nanoNxt_ICM3.cydsn\000"
+ 1447      74696E67 
+ 1447      5C59515C 
+ 1447      6E616E6F 
+ 1447      4E78745F 
+ 1448              	.LASF6:
+ 1449 01cf 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1449      20756E73 
+ 1449      69676E65 
+ 1449      6420696E 
+ 1449      7400
+ 1450              	.LASF51:
+ 1451 01e1 676F745F 		.ascii	"got_pulse\000"
+ 1451      70756C73 
+ 1451      6500
+ 1452              	.LASF11:
+ 1453 01eb 75696E74 		.ascii	"uint8\000"
+ 1453      3800
+ 1454              	.LASF19:
+ 1455 01f1 62617564 		.ascii	"baud\000"
+ 1455      00
+ 1456              	.LASF40:
+ 1457 01f6 7072696F 		.ascii	"priority\000"
+ 1457      72697479 
+ 1457      00
+ 1458              	.LASF15:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 35
+
+
+ 1459 01ff 646F7562 		.ascii	"double\000"
+ 1459      6C6500
+ 1460              	.LASF39:
+ 1461 0206 55415254 		.ascii	"UART_TIMER_ISR_SetPriority\000"
+ 1461      5F54494D 
+ 1461      45525F49 
+ 1461      53525F53 
+ 1461      65745072 
+ 1462              	.LASF12:
+ 1463 0221 75696E74 		.ascii	"uint16\000"
+ 1463      313600
+ 1464              	.LASF56:
+ 1465 0228 2E5C4765 		.ascii	".\\Generated_Source\\PSoC5\\UART_TIMER_ISR.c\000"
+ 1465      6E657261 
+ 1465      7465645F 
+ 1465      536F7572 
+ 1465      63655C50 
+ 1466              	.LASF53:
+ 1467 0252 74696D65 		.ascii	"timeout_cnt\000"
+ 1467      6F75745F 
+ 1467      636E7400 
+ 1468              	.LASF33:
+ 1469 025e 55415254 		.ascii	"UART_TIMER_ISR_Stop\000"
+ 1469      5F54494D 
+ 1469      45525F49 
+ 1469      53525F53 
+ 1469      746F7000 
+ 1470              	.LASF13:
+ 1471 0272 75696E74 		.ascii	"uint32\000"
+ 1471      333200
+ 1472              	.LASF28:
+ 1473 0279 74696D65 		.ascii	"timer_tx_ctr\000"
+ 1473      725F7478 
+ 1473      5F637472 
+ 1473      00
+ 1474              	.LASF26:
+ 1475 0286 72785F62 		.ascii	"rx_bits\000"
+ 1475      69747300 
+ 1476              	.LASF35:
+ 1477 028e 55415254 		.ascii	"UART_TIMER_ISR_StartEx\000"
+ 1477      5F54494D 
+ 1477      45525F49 
+ 1477      53525F53 
+ 1477      74617274 
+ 1478              	.LASF37:
+ 1479 02a5 61646472 		.ascii	"address\000"
+ 1479      65737300 
+ 1480              	.LASF8:
+ 1481 02ad 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1481      206C6F6E 
+ 1481      6720756E 
+ 1481      7369676E 
+ 1481      65642069 
+ 1482              	.LASF18:
+ 1483 02c4 63796973 		.ascii	"cyisraddress\000"
+ 1483      72616464 
+ 1483      72657373 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 36
+
+
+ 1483      00
+ 1484              	.LASF30:
+ 1485 02d1 72785F72 		.ascii	"rx_recv\000"
+ 1485      65637600 
+ 1486              	.LASF50:
+ 1487 02d9 63617264 		.ascii	"card_in_buf\000"
+ 1487      5F696E5F 
+ 1487      62756600 
+ 1488              	.LASF58:
+ 1489 02e5 55415254 		.ascii	"UART_TIMER_ISR_GetState\000"
+ 1489      5F54494D 
+ 1489      45525F49 
+ 1489      53525F47 
+ 1489      65745374 
+ 1490              	.LASF49:
+ 1491 02fd 63617264 		.ascii	"card_ack\000"
+ 1491      5F61636B 
+ 1491      00
+ 1492              	.LASF32:
+ 1493 0306 55415254 		.ascii	"UART_TIMER_ISR_Start\000"
+ 1493      5F54494D 
+ 1493      45525F49 
+ 1493      53525F53 
+ 1493      74617274 
+ 1494              	.LASF9:
+ 1495 031b 73697A65 		.ascii	"sizetype\000"
+ 1495      74797065 
+ 1495      00
+ 1496              	.LASF7:
+ 1497 0324 6C6F6E67 		.ascii	"long long int\000"
+ 1497      206C6F6E 
+ 1497      6720696E 
+ 1497      7400
+ 1498              	.LASF44:
+ 1499 0332 55415254 		.ascii	"UART_TIMER_ISR_Disable\000"
+ 1499      5F54494D 
+ 1499      45525F49 
+ 1499      53525F44 
+ 1499      69736162 
+ 1500              	.LASF10:
+ 1501 0349 63686172 		.ascii	"char\000"
+ 1501      00
+ 1502              	.LASF38:
+ 1503 034e 72616D56 		.ascii	"ramVectorTable\000"
+ 1503      6563746F 
+ 1503      72546162 
+ 1503      6C6500
+ 1504              	.LASF25:
+ 1505 035d 74785F62 		.ascii	"tx_bits\000"
+ 1505      69747300 
+ 1506              	.LASF22:
+ 1507 0365 62697473 		.ascii	"bits\000"
+ 1507      00
+ 1508              	.LASF52:
+ 1509 036a 6632665F 		.ascii	"f2f_pulsewidth\000"
+ 1509      70756C73 
+ 1509      65776964 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccVpU9Sg.s 			page 37
+
+
+ 1509      746800
+ 1510              	.LASF3:
+ 1511 0379 73686F72 		.ascii	"short int\000"
+ 1511      7420696E 
+ 1511      7400
+ 1512              	.LASF27:
+ 1513 0383 666C6167 		.ascii	"flags\000"
+ 1513      7300
+ 1514              	.LASF5:
+ 1515 0389 6C6F6E67 		.ascii	"long int\000"
+ 1515      20696E74 
+ 1515      00
+ 1516              	.LASF47:
+ 1517 0392 63757272 		.ascii	"currentAccessType\000"
+ 1517      656E7441 
+ 1517      63636573 
+ 1517      73547970 
+ 1517      6500
+ 1518              	.LASF45:
+ 1519 03a4 55415254 		.ascii	"UART_TIMER_ISR_SetPending\000"
+ 1519      5F54494D 
+ 1519      45525F49 
+ 1519      53525F53 
+ 1519      65745065 
+ 1520              	.LASF1:
+ 1521 03be 7369676E 		.ascii	"signed char\000"
+ 1521      65642063 
+ 1521      68617200 
+ 1522              	.LASF4:
+ 1523 03ca 73686F72 		.ascii	"short unsigned int\000"
+ 1523      7420756E 
+ 1523      7369676E 
+ 1523      65642069 
+ 1523      6E7400
+ 1524              	.LASF20:
+ 1525 03dd 70617269 		.ascii	"parity\000"
+ 1525      747900
+ 1526              	.LASF29:
+ 1527 03e4 74696D65 		.ascii	"timer_rx_ctr\000"
+ 1527      725F7278 
+ 1527      5F637472 
+ 1527      00
+ 1528              	.LASF36:
+ 1529 03f1 55415254 		.ascii	"UART_TIMER_ISR_SetVector\000"
+ 1529      5F54494D 
+ 1529      45525F49 
+ 1529      53525F53 
+ 1529      65745665 
+ 1530              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.8.4 20140526 (release) [ARM/embedded-4_8-br

@@ -1,0 +1,3739 @@
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"i2cuart.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	s,40,4
+  19              		.comm	currentAccessType,1,1
+  20              		.comm	old,1,1
+  21              		.comm	TAMPERCR_POLARITY,4,4
+  22              		.comm	card_ack,4,4
+  23              		.comm	card_in_buf,4,4
+  24              		.comm	got_pulse,1,1
+  25              		.comm	f2f_pulsewidth,4,4
+  26              		.comm	timeout_cnt,4,4
+  27              		.comm	activate_f2ftimer,1,1
+  28              		.section	.text.SendPAC,"ax",%progbits
+  29              		.align	2
+  30              		.global	SendPAC
+  31              		.thumb
+  32              		.thumb_func
+  33              		.type	SendPAC, %function
+  34              	SendPAC:
+  35              	.LFB63:
+  36              		.file 1 ".\\i2cuart.c"
+   1:.\i2cuart.c   **** /* =======================================
+   2:.\i2cuart.c   ****  *
+   3:.\i2cuart.c   ****  * Copyright YOUR COMPANY, THE YEAR
+   4:.\i2cuart.c   ****  * All Rights Reserved
+   5:.\i2cuart.c   ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:.\i2cuart.c   ****  *
+   7:.\i2cuart.c   ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:.\i2cuart.c   ****  * WHICH IS THE PROPERTY OF your company.
+   9:.\i2cuart.c   ****  *
+  10:.\i2cuart.c   ****  * ========================================
+  11:.\i2cuart.c   **** */
+  12:.\i2cuart.c   **** 
+  13:.\i2cuart.c   **** /* [] END OF FILE */
+  14:.\i2cuart.c   **** 
+  15:.\i2cuart.c   **** #include <project.h>
+  16:.\i2cuart.c   **** #include "system.h"
+  17:.\i2cuart.c   **** #include "LED_0.h"
+  18:.\i2cuart.c   **** #include "LED_1.h"
+  19:.\i2cuart.c   **** #include "LED_2.h"
+  20:.\i2cuart.c   **** #include "i2cuart.h"
+  21:.\i2cuart.c   **** 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 2
+
+
+  22:.\i2cuart.c   **** 
+  23:.\i2cuart.c   **** 
+  24:.\i2cuart.c   **** void SendPAC()
+  25:.\i2cuart.c   **** {
+  37              		.loc 1 25 0
+  38              		.cfi_startproc
+  39              		@ args = 0, pretend = 0, frame = 8
+  40              		@ frame_needed = 1, uses_anonymous_args = 0
+  41 0000 80B5     		push	{r7, lr}
+  42              		.cfi_def_cfa_offset 8
+  43              		.cfi_offset 7, -8
+  44              		.cfi_offset 14, -4
+  45 0002 82B0     		sub	sp, sp, #8
+  46              		.cfi_def_cfa_offset 16
+  47 0004 00AF     		add	r7, sp, #0
+  48              		.cfi_def_cfa_register 7
+  26:.\i2cuart.c   ****     int i,j;
+  27:.\i2cuart.c   ****     LED_GRN_Write(0);
+  49              		.loc 1 27 0
+  50 0006 0020     		movs	r0, #0
+  51 0008 FFF7FEFF 		bl	LED_GRN_Write
+  28:.\i2cuart.c   ****     LED_YEL_Write(0);
+  52              		.loc 1 28 0
+  53 000c 0020     		movs	r0, #0
+  54 000e FFF7FEFF 		bl	LED_YEL_Write
+  29:.\i2cuart.c   ****   
+  30:.\i2cuart.c   ****     for( i = 0; i < 20; i++)
+  55              		.loc 1 30 0
+  56 0012 0023     		movs	r3, #0
+  57 0014 7B60     		str	r3, [r7, #4]
+  58 0016 12E0     		b	.L2
+  59              	.L5:
+  31:.\i2cuart.c   ****     {
+  32:.\i2cuart.c   ****         for( j= 0; j < 12 ; j++)
+  60              		.loc 1 32 0
+  61 0018 0023     		movs	r3, #0
+  62 001a 3B60     		str	r3, [r7]
+  63 001c 09E0     		b	.L3
+  64              	.L4:
+  33:.\i2cuart.c   ****          UART_1_PutChar(MyI2C_Regs.buffer[j]);
+  65              		.loc 1 33 0 discriminator 2
+  66 001e 0E4A     		ldr	r2, .L6
+  67 0020 3B68     		ldr	r3, [r7]
+  68 0022 1344     		add	r3, r3, r2
+  69 0024 9B79     		ldrb	r3, [r3, #6]	@ zero_extendqisi2
+  70 0026 1846     		mov	r0, r3
+  71 0028 FFF7FEFF 		bl	UART_1_PutChar
+  32:.\i2cuart.c   ****         for( j= 0; j < 12 ; j++)
+  72              		.loc 1 32 0 discriminator 2
+  73 002c 3B68     		ldr	r3, [r7]
+  74 002e 0133     		adds	r3, r3, #1
+  75 0030 3B60     		str	r3, [r7]
+  76              	.L3:
+  32:.\i2cuart.c   ****         for( j= 0; j < 12 ; j++)
+  77              		.loc 1 32 0 is_stmt 0 discriminator 1
+  78 0032 3B68     		ldr	r3, [r7]
+  79 0034 0B2B     		cmp	r3, #11
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 3
+
+
+  80 0036 F2DD     		ble	.L4
+  30:.\i2cuart.c   ****     for( i = 0; i < 20; i++)
+  81              		.loc 1 30 0 is_stmt 1
+  82 0038 7B68     		ldr	r3, [r7, #4]
+  83 003a 0133     		adds	r3, r3, #1
+  84 003c 7B60     		str	r3, [r7, #4]
+  85              	.L2:
+  30:.\i2cuart.c   ****     for( i = 0; i < 20; i++)
+  86              		.loc 1 30 0 is_stmt 0 discriminator 1
+  87 003e 7B68     		ldr	r3, [r7, #4]
+  88 0040 132B     		cmp	r3, #19
+  89 0042 E9DD     		ble	.L5
+  34:.\i2cuart.c   ****     }
+  35:.\i2cuart.c   **** 
+  36:.\i2cuart.c   ****     LED_GRN_Write(1);
+  90              		.loc 1 36 0 is_stmt 1
+  91 0044 0120     		movs	r0, #1
+  92 0046 FFF7FEFF 		bl	LED_GRN_Write
+  37:.\i2cuart.c   ****     LED_YEL_Write(1);
+  93              		.loc 1 37 0
+  94 004a 0120     		movs	r0, #1
+  95 004c FFF7FEFF 		bl	LED_YEL_Write
+  38:.\i2cuart.c   **** }
+  96              		.loc 1 38 0
+  97 0050 0837     		adds	r7, r7, #8
+  98 0052 BD46     		mov	sp, r7
+  99              		@ sp needed
+ 100 0054 80BD     		pop	{r7, pc}
+ 101              	.L7:
+ 102 0056 00BF     		.align	2
+ 103              	.L6:
+ 104 0058 00000000 		.word	MyI2C_Regs
+ 105              		.cfi_endproc
+ 106              	.LFE63:
+ 107              		.size	SendPAC, .-SendPAC
+ 108              		.section	.text.ReadPAC,"ax",%progbits
+ 109              		.align	2
+ 110              		.global	ReadPAC
+ 111              		.thumb
+ 112              		.thumb_func
+ 113              		.type	ReadPAC, %function
+ 114              	ReadPAC:
+ 115              	.LFB64:
+  39:.\i2cuart.c   **** 
+  40:.\i2cuart.c   **** int ReadPAC()
+  41:.\i2cuart.c   **** {
+ 116              		.loc 1 41 0
+ 117              		.cfi_startproc
+ 118              		@ args = 0, pretend = 0, frame = 8
+ 119              		@ frame_needed = 1, uses_anonymous_args = 0
+ 120 0000 80B5     		push	{r7, lr}
+ 121              		.cfi_def_cfa_offset 8
+ 122              		.cfi_offset 7, -8
+ 123              		.cfi_offset 14, -4
+ 124 0002 82B0     		sub	sp, sp, #8
+ 125              		.cfi_def_cfa_offset 16
+ 126 0004 00AF     		add	r7, sp, #0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 4
+
+
+ 127              		.cfi_def_cfa_register 7
+  42:.\i2cuart.c   ****     int byteCount =0;
+ 128              		.loc 1 42 0
+ 129 0006 0023     		movs	r3, #0
+ 130 0008 7B60     		str	r3, [r7, #4]
+  43:.\i2cuart.c   ****     char tmp;
+  44:.\i2cuart.c   ****     char ret = 0;
+ 131              		.loc 1 44 0
+ 132 000a 0023     		movs	r3, #0
+ 133 000c FB70     		strb	r3, [r7, #3]
+  45:.\i2cuart.c   ****    
+  46:.\i2cuart.c   **** 
+  47:.\i2cuart.c   ****     if(UART_1_ReadRxStatus() ==   UART_1_RX_STS_FIFO_NOTEMPTY)
+ 134              		.loc 1 47 0
+ 135 000e FFF7FEFF 		bl	UART_1_ReadRxStatus
+ 136 0012 0346     		mov	r3, r0
+ 137 0014 202B     		cmp	r3, #32
+ 138 0016 34D1     		bne	.L9
+  48:.\i2cuart.c   ****     {
+  49:.\i2cuart.c   ****         while(byteCount < 12)
+ 139              		.loc 1 49 0
+ 140 0018 1FE0     		b	.L10
+ 141              	.L12:
+  50:.\i2cuart.c   ****         {
+  51:.\i2cuart.c   ****             
+  52:.\i2cuart.c   ****             if(UART_1_ReadRxStatus() ==   UART_1_RX_STS_FIFO_NOTEMPTY)
+ 142              		.loc 1 52 0
+ 143 001a FFF7FEFF 		bl	UART_1_ReadRxStatus
+ 144 001e 0346     		mov	r3, r0
+ 145 0020 202B     		cmp	r3, #32
+ 146 0022 1AD1     		bne	.L10
+  53:.\i2cuart.c   ****             {
+  54:.\i2cuart.c   ****                 tmp = UART_1_GetChar();
+ 147              		.loc 1 54 0
+ 148 0024 FFF7FEFF 		bl	UART_1_GetChar
+ 149 0028 0346     		mov	r3, r0
+ 150 002a BB70     		strb	r3, [r7, #2]
+  55:.\i2cuart.c   ****                 if(tmp == 0x02)
+ 151              		.loc 1 55 0
+ 152 002c BB78     		ldrb	r3, [r7, #2]	@ zero_extendqisi2
+ 153 002e 022B     		cmp	r3, #2
+ 154 0030 08D1     		bne	.L11
+  56:.\i2cuart.c   ****                 {
+  57:.\i2cuart.c   ****                     MyI2C_Regs.buffer[byteCount] = tmp;
+ 155              		.loc 1 57 0
+ 156 0032 164A     		ldr	r2, .L14
+ 157 0034 7B68     		ldr	r3, [r7, #4]
+ 158 0036 1344     		add	r3, r3, r2
+ 159 0038 BA78     		ldrb	r2, [r7, #2]
+ 160 003a 9A71     		strb	r2, [r3, #6]
+  58:.\i2cuart.c   ****                     byteCount++;
+ 161              		.loc 1 58 0
+ 162 003c 7B68     		ldr	r3, [r7, #4]
+ 163 003e 0133     		adds	r3, r3, #1
+ 164 0040 7B60     		str	r3, [r7, #4]
+ 165 0042 0AE0     		b	.L10
+ 166              	.L11:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 5
+
+
+  59:.\i2cuart.c   ****                 }
+  60:.\i2cuart.c   ****                 else if(byteCount > 0)
+ 167              		.loc 1 60 0
+ 168 0044 7B68     		ldr	r3, [r7, #4]
+ 169 0046 002B     		cmp	r3, #0
+ 170 0048 07DD     		ble	.L10
+  61:.\i2cuart.c   ****                 {
+  62:.\i2cuart.c   ****                   MyI2C_Regs.buffer[byteCount] = tmp;
+ 171              		.loc 1 62 0
+ 172 004a 104A     		ldr	r2, .L14
+ 173 004c 7B68     		ldr	r3, [r7, #4]
+ 174 004e 1344     		add	r3, r3, r2
+ 175 0050 BA78     		ldrb	r2, [r7, #2]
+ 176 0052 9A71     		strb	r2, [r3, #6]
+  63:.\i2cuart.c   ****                   byteCount++;
+ 177              		.loc 1 63 0
+ 178 0054 7B68     		ldr	r3, [r7, #4]
+ 179 0056 0133     		adds	r3, r3, #1
+ 180 0058 7B60     		str	r3, [r7, #4]
+ 181              	.L10:
+  49:.\i2cuart.c   ****         while(byteCount < 12)
+ 182              		.loc 1 49 0 discriminator 1
+ 183 005a 7B68     		ldr	r3, [r7, #4]
+ 184 005c 0B2B     		cmp	r3, #11
+ 185 005e DCDD     		ble	.L12
+  64:.\i2cuart.c   ****                 }
+  65:.\i2cuart.c   ****             }
+  66:.\i2cuart.c   ****             
+  67:.\i2cuart.c   ****         }
+  68:.\i2cuart.c   ****         UART_1_ClearRxBuffer();
+ 186              		.loc 1 68 0
+ 187 0060 FFF7FEFF 		bl	UART_1_ClearRxBuffer
+  69:.\i2cuart.c   ****         MyI2C_Regs.cmd = 0;
+ 188              		.loc 1 69 0
+ 189 0064 094B     		ldr	r3, .L14
+ 190 0066 0022     		movs	r2, #0
+ 191 0068 9A70     		strb	r2, [r3, #2]
+  70:.\i2cuart.c   ****         card_in_buf = 1;
+ 192              		.loc 1 70 0
+ 193 006a 094B     		ldr	r3, .L14+4
+ 194 006c 0122     		movs	r2, #1
+ 195 006e 1A60     		str	r2, [r3]
+  71:.\i2cuart.c   ****         MyI2C_Regs.status |= STAT_CHANGE | STAT_CARD_IN;
+ 196              		.loc 1 71 0
+ 197 0070 064B     		ldr	r3, .L14
+ 198 0072 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 199 0074 43F00303 		orr	r3, r3, #3
+ 200 0078 DAB2     		uxtb	r2, r3
+ 201 007a 044B     		ldr	r3, .L14
+ 202 007c 1A70     		strb	r2, [r3]
+  72:.\i2cuart.c   ****         ret = 1;
+ 203              		.loc 1 72 0
+ 204 007e 0123     		movs	r3, #1
+ 205 0080 FB70     		strb	r3, [r7, #3]
+ 206              	.L9:
+  73:.\i2cuart.c   ****    
+  74:.\i2cuart.c   ****     }
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 6
+
+
+  75:.\i2cuart.c   ****     
+  76:.\i2cuart.c   ****     return ret;
+ 207              		.loc 1 76 0
+ 208 0082 FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+  77:.\i2cuart.c   **** }
+ 209              		.loc 1 77 0
+ 210 0084 1846     		mov	r0, r3
+ 211 0086 0837     		adds	r7, r7, #8
+ 212 0088 BD46     		mov	sp, r7
+ 213              		@ sp needed
+ 214 008a 80BD     		pop	{r7, pc}
+ 215              	.L15:
+ 216              		.align	2
+ 217              	.L14:
+ 218 008c 00000000 		.word	MyI2C_Regs
+ 219 0090 00000000 		.word	card_in_buf
+ 220              		.cfi_endproc
+ 221              	.LFE64:
+ 222              		.size	ReadPAC, .-ReadPAC
+ 223              		.section	.text.SetupUART,"ax",%progbits
+ 224              		.align	2
+ 225              		.global	SetupUART
+ 226              		.thumb
+ 227              		.thumb_func
+ 228              		.type	SetupUART, %function
+ 229              	SetupUART:
+ 230              	.LFB65:
+  78:.\i2cuart.c   **** 
+  79:.\i2cuart.c   **** void SetupUART(char accessType)
+  80:.\i2cuart.c   **** {
+ 231              		.loc 1 80 0
+ 232              		.cfi_startproc
+ 233              		@ args = 0, pretend = 0, frame = 8
+ 234              		@ frame_needed = 1, uses_anonymous_args = 0
+ 235 0000 80B5     		push	{r7, lr}
+ 236              		.cfi_def_cfa_offset 8
+ 237              		.cfi_offset 7, -8
+ 238              		.cfi_offset 14, -4
+ 239 0002 82B0     		sub	sp, sp, #8
+ 240              		.cfi_def_cfa_offset 16
+ 241 0004 00AF     		add	r7, sp, #0
+ 242              		.cfi_def_cfa_register 7
+ 243 0006 0346     		mov	r3, r0
+ 244 0008 FB71     		strb	r3, [r7, #7]
+  81:.\i2cuart.c   **** 
+  82:.\i2cuart.c   ****     
+  83:.\i2cuart.c   ****     if(currentAccessType != accessType)
+ 245              		.loc 1 83 0
+ 246 000a 0C4B     		ldr	r3, .L21
+ 247 000c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 248 000e FA79     		ldrb	r2, [r7, #7]	@ zero_extendqisi2
+ 249 0010 9A42     		cmp	r2, r3
+ 250 0012 10D0     		beq	.L16
+  84:.\i2cuart.c   ****     {
+  85:.\i2cuart.c   ****         switch(accessType)
+ 251              		.loc 1 85 0
+ 252 0014 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 7
+
+
+ 253 0016 0C2B     		cmp	r3, #12
+ 254 0018 02D0     		beq	.L19
+ 255 001a 1A2B     		cmp	r3, #26
+ 256 001c 04D0     		beq	.L20
+ 257 001e 07E0     		b	.L18
+ 258              	.L19:
+  86:.\i2cuart.c   ****         {
+  87:.\i2cuart.c   ****             case PAC:
+  88:.\i2cuart.c   ****                OptSelect_Write(0);
+ 259              		.loc 1 88 0
+ 260 0020 0020     		movs	r0, #0
+ 261 0022 FFF7FEFF 		bl	OptSelect_Write
+  89:.\i2cuart.c   ****                 break;
+ 262              		.loc 1 89 0
+ 263 0026 03E0     		b	.L18
+ 264              	.L20:
+  90:.\i2cuart.c   ****             case HID:
+  91:.\i2cuart.c   ****                OptSelect_Write(1);
+ 265              		.loc 1 91 0
+ 266 0028 0120     		movs	r0, #1
+ 267 002a FFF7FEFF 		bl	OptSelect_Write
+  92:.\i2cuart.c   ****                 break;
+ 268              		.loc 1 92 0
+ 269 002e 00BF     		nop
+ 270              	.L18:
+  93:.\i2cuart.c   ****                 
+  94:.\i2cuart.c   ****         }
+  95:.\i2cuart.c   ****         currentAccessType = accessType;
+ 271              		.loc 1 95 0
+ 272 0030 024B     		ldr	r3, .L21
+ 273 0032 FA79     		ldrb	r2, [r7, #7]
+ 274 0034 1A70     		strb	r2, [r3]
+ 275              	.L16:
+  96:.\i2cuart.c   ****     }
+  97:.\i2cuart.c   ****     
+  98:.\i2cuart.c   **** }
+ 276              		.loc 1 98 0
+ 277 0036 0837     		adds	r7, r7, #8
+ 278 0038 BD46     		mov	sp, r7
+ 279              		@ sp needed
+ 280 003a 80BD     		pop	{r7, pc}
+ 281              	.L22:
+ 282              		.align	2
+ 283              	.L21:
+ 284 003c 00000000 		.word	currentAccessType
+ 285              		.cfi_endproc
+ 286              	.LFE65:
+ 287              		.size	SetupUART, .-SetupUART
+ 288              		.section	.text.ClearOsdpBuffer,"ax",%progbits
+ 289              		.align	2
+ 290              		.global	ClearOsdpBuffer
+ 291              		.thumb
+ 292              		.thumb_func
+ 293              		.type	ClearOsdpBuffer, %function
+ 294              	ClearOsdpBuffer:
+ 295              	.LFB66:
+  99:.\i2cuart.c   **** 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 8
+
+
+ 100:.\i2cuart.c   **** void ClearOsdpBuffer()
+ 101:.\i2cuart.c   **** {
+ 296              		.loc 1 101 0
+ 297              		.cfi_startproc
+ 298              		@ args = 0, pretend = 0, frame = 8
+ 299              		@ frame_needed = 1, uses_anonymous_args = 0
+ 300 0000 80B5     		push	{r7, lr}
+ 301              		.cfi_def_cfa_offset 8
+ 302              		.cfi_offset 7, -8
+ 303              		.cfi_offset 14, -4
+ 304 0002 82B0     		sub	sp, sp, #8
+ 305              		.cfi_def_cfa_offset 16
+ 306 0004 00AF     		add	r7, sp, #0
+ 307              		.cfi_def_cfa_register 7
+ 102:.\i2cuart.c   ****     int i;
+ 103:.\i2cuart.c   ****         UART_ACS_ClearRxBuffer();
+ 308              		.loc 1 103 0
+ 309 0006 FFF7FEFF 		bl	UART_ACS_ClearRxBuffer
+ 104:.\i2cuart.c   ****         for ( i=0; i<OSDP_BUFFER_LENGTH; i++){
+ 310              		.loc 1 104 0
+ 311 000a 0023     		movs	r3, #0
+ 312 000c 7B60     		str	r3, [r7, #4]
+ 313 000e 08E0     		b	.L24
+ 314              	.L25:
+ 105:.\i2cuart.c   ****             MyI2C_Regs.osdp_buffer[i]=0;
+ 315              		.loc 1 105 0 discriminator 2
+ 316 0010 094A     		ldr	r2, .L26
+ 317 0012 7B68     		ldr	r3, [r7, #4]
+ 318 0014 1344     		add	r3, r3, r2
+ 319 0016 4833     		adds	r3, r3, #72
+ 320 0018 0022     		movs	r2, #0
+ 321 001a 5A71     		strb	r2, [r3, #5]
+ 104:.\i2cuart.c   ****         for ( i=0; i<OSDP_BUFFER_LENGTH; i++){
+ 322              		.loc 1 104 0 discriminator 2
+ 323 001c 7B68     		ldr	r3, [r7, #4]
+ 324 001e 0133     		adds	r3, r3, #1
+ 325 0020 7B60     		str	r3, [r7, #4]
+ 326              	.L24:
+ 104:.\i2cuart.c   ****         for ( i=0; i<OSDP_BUFFER_LENGTH; i++){
+ 327              		.loc 1 104 0 is_stmt 0 discriminator 1
+ 328 0022 7B68     		ldr	r3, [r7, #4]
+ 329 0024 7F2B     		cmp	r3, #127
+ 330 0026 F3DD     		ble	.L25
+ 106:.\i2cuart.c   ****         }
+ 107:.\i2cuart.c   ****         MyI2C_Regs.osdp_data_length = 0;
+ 331              		.loc 1 107 0 is_stmt 1
+ 332 0028 034B     		ldr	r3, .L26
+ 333 002a 0022     		movs	r2, #0
+ 334 002c 83F84B20 		strb	r2, [r3, #75]
+ 108:.\i2cuart.c   **** }
+ 335              		.loc 1 108 0
+ 336 0030 0837     		adds	r7, r7, #8
+ 337 0032 BD46     		mov	sp, r7
+ 338              		@ sp needed
+ 339 0034 80BD     		pop	{r7, pc}
+ 340              	.L27:
+ 341 0036 00BF     		.align	2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 9
+
+
+ 342              	.L26:
+ 343 0038 00000000 		.word	MyI2C_Regs
+ 344              		.cfi_endproc
+ 345              	.LFE66:
+ 346              		.size	ClearOsdpBuffer, .-ClearOsdpBuffer
+ 347              		.section	.text.SendOSDP,"ax",%progbits
+ 348              		.align	2
+ 349              		.global	SendOSDP
+ 350              		.thumb
+ 351              		.thumb_func
+ 352              		.type	SendOSDP, %function
+ 353              	SendOSDP:
+ 354              	.LFB67:
+ 109:.\i2cuart.c   **** 
+ 110:.\i2cuart.c   **** void SendOSDP()
+ 111:.\i2cuart.c   **** {
+ 355              		.loc 1 111 0
+ 356              		.cfi_startproc
+ 357              		@ args = 0, pretend = 0, frame = 0
+ 358              		@ frame_needed = 1, uses_anonymous_args = 0
+ 359 0000 80B5     		push	{r7, lr}
+ 360              		.cfi_def_cfa_offset 8
+ 361              		.cfi_offset 7, -8
+ 362              		.cfi_offset 14, -4
+ 363 0002 00AF     		add	r7, sp, #0
+ 364              		.cfi_def_cfa_register 7
+ 112:.\i2cuart.c   ****     
+ 113:.\i2cuart.c   ****     Mode_Sel_ACS_Write(1); //set io chip to 485
+ 365              		.loc 1 113 0
+ 366 0004 0120     		movs	r0, #1
+ 367 0006 FFF7FEFF 		bl	Mode_Sel_ACS_Write
+ 114:.\i2cuart.c   ****     TX_EN_Write(1);
+ 368              		.loc 1 114 0
+ 369 000a 0120     		movs	r0, #1
+ 370 000c FFF7FEFF 		bl	TX_EN_Write
+ 115:.\i2cuart.c   ****     UART_ACS_LoadTxConfig();
+ 371              		.loc 1 115 0
+ 372 0010 FFF7FEFF 		bl	UART_ACS_LoadTxConfig
+ 116:.\i2cuart.c   ****     CyDelay(1); //Driver Output Enable Time, do not reduce. 
+ 373              		.loc 1 116 0
+ 374 0014 0120     		movs	r0, #1
+ 375 0016 FFF7FEFF 		bl	CyDelay
+ 117:.\i2cuart.c   ****     if(MyI2C_Regs.osdp_reader_buffer[0] == 0x53){
+ 376              		.loc 1 117 0
+ 377 001a 114B     		ldr	r3, .L30
+ 378 001c 93F8D030 		ldrb	r3, [r3, #208]	@ zero_extendqisi2
+ 379 0020 532B     		cmp	r3, #83
+ 380 0022 09D1     		bne	.L29
+ 118:.\i2cuart.c   ****         UART_ACS_PutArray(MyI2C_Regs.osdp_buffer,MyI2C_Regs.osdp_data_length); 
+ 381              		.loc 1 118 0
+ 382 0024 0E4B     		ldr	r3, .L30
+ 383 0026 93F84B30 		ldrb	r3, [r3, #75]	@ zero_extendqisi2
+ 384 002a 0E48     		ldr	r0, .L30+4
+ 385 002c 1946     		mov	r1, r3
+ 386 002e FFF7FEFF 		bl	UART_ACS_PutArray
+ 119:.\i2cuart.c   ****         CyDelay(5); //minmum 4m
+ 387              		.loc 1 119 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 10
+
+
+ 388 0032 0520     		movs	r0, #5
+ 389 0034 FFF7FEFF 		bl	CyDelay
+ 390              	.L29:
+ 120:.\i2cuart.c   ****     }
+ 121:.\i2cuart.c   **** 
+ 122:.\i2cuart.c   ****     MyI2C_Regs.osdp_status |= OSDP_DATA_SENT;
+ 391              		.loc 1 122 0
+ 392 0038 094B     		ldr	r3, .L30
+ 393 003a 93F84A30 		ldrb	r3, [r3, #74]	@ zero_extendqisi2
+ 394 003e 43F00103 		orr	r3, r3, #1
+ 395 0042 DAB2     		uxtb	r2, r3
+ 396 0044 064B     		ldr	r3, .L30
+ 397 0046 83F84A20 		strb	r2, [r3, #74]
+ 123:.\i2cuart.c   ****     UART_ACS_LoadRxConfig();
+ 398              		.loc 1 123 0
+ 399 004a FFF7FEFF 		bl	UART_ACS_LoadRxConfig
+ 124:.\i2cuart.c   ****     ClearOsdpBuffer();
+ 400              		.loc 1 124 0
+ 401 004e FFF7FEFF 		bl	ClearOsdpBuffer
+ 125:.\i2cuart.c   ****     TX_EN_Write(0);
+ 402              		.loc 1 125 0
+ 403 0052 0020     		movs	r0, #0
+ 404 0054 FFF7FEFF 		bl	TX_EN_Write
+ 126:.\i2cuart.c   ****     CyDelay(5); // 5ms
+ 405              		.loc 1 126 0
+ 406 0058 0520     		movs	r0, #5
+ 407 005a FFF7FEFF 		bl	CyDelay
+ 127:.\i2cuart.c   **** 
+ 128:.\i2cuart.c   **** }
+ 408              		.loc 1 128 0
+ 409 005e 80BD     		pop	{r7, pc}
+ 410              	.L31:
+ 411              		.align	2
+ 412              	.L30:
+ 413 0060 00000000 		.word	MyI2C_Regs
+ 414 0064 4D000000 		.word	MyI2C_Regs+77
+ 415              		.cfi_endproc
+ 416              	.LFE67:
+ 417              		.size	SendOSDP, .-SendOSDP
+ 418              		.comm	osdp_msg_header,4,4
+ 419              		.comm	osdp_reader_msg_header,4,4
+ 420              		.section	.text.ReadOSDP,"ax",%progbits
+ 421              		.align	2
+ 422              		.global	ReadOSDP
+ 423              		.thumb
+ 424              		.thumb_func
+ 425              		.type	ReadOSDP, %function
+ 426              	ReadOSDP:
+ 427              	.LFB68:
+ 129:.\i2cuart.c   **** 
+ 130:.\i2cuart.c   **** struct OSDP_MSG_HEADER {
+ 131:.\i2cuart.c   ****     unsigned char addr;
+ 132:.\i2cuart.c   ****     union{
+ 133:.\i2cuart.c   ****         short len;
+ 134:.\i2cuart.c   ****         unsigned char length[2];
+ 135:.\i2cuart.c   ****     }u;
+ 136:.\i2cuart.c   **** } osdp_msg_header,osdp_reader_msg_header;
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 11
+
+
+ 137:.\i2cuart.c   **** 
+ 138:.\i2cuart.c   **** void ReadOSDP()
+ 139:.\i2cuart.c   **** {
+ 428              		.loc 1 139 0
+ 429              		.cfi_startproc
+ 430              		@ args = 0, pretend = 0, frame = 16
+ 431              		@ frame_needed = 1, uses_anonymous_args = 0
+ 432 0000 80B5     		push	{r7, lr}
+ 433              		.cfi_def_cfa_offset 8
+ 434              		.cfi_offset 7, -8
+ 435              		.cfi_offset 14, -4
+ 436 0002 84B0     		sub	sp, sp, #16
+ 437              		.cfi_def_cfa_offset 24
+ 438 0004 00AF     		add	r7, sp, #0
+ 439              		.cfi_def_cfa_register 7
+ 140:.\i2cuart.c   ****     int byteCount =0;
+ 440              		.loc 1 140 0
+ 441 0006 0023     		movs	r3, #0
+ 442 0008 FB60     		str	r3, [r7, #12]
+ 141:.\i2cuart.c   ****     unsigned char tmp = 0;
+ 443              		.loc 1 141 0
+ 444 000a 0023     		movs	r3, #0
+ 445 000c FB70     		strb	r3, [r7, #3]
+ 142:.\i2cuart.c   ****     char msg_started = 0;
+ 446              		.loc 1 142 0
+ 447 000e 0023     		movs	r3, #0
+ 448 0010 FB72     		strb	r3, [r7, #11]
+ 143:.\i2cuart.c   ****     int i;
+ 144:.\i2cuart.c   ****     
+ 145:.\i2cuart.c   ****     Mode_Sel_ACS_Write(1); //set the chip to RS485 mode
+ 449              		.loc 1 145 0
+ 450 0012 0120     		movs	r0, #1
+ 451 0014 FFF7FEFF 		bl	Mode_Sel_ACS_Write
+ 146:.\i2cuart.c   ****     if (UART_ACS_GetRxBufferSize()>= 7)
+ 452              		.loc 1 146 0
+ 453 0018 FFF7FEFF 		bl	UART_ACS_GetRxBufferSize
+ 454 001c 0346     		mov	r3, r0
+ 455 001e 062B     		cmp	r3, #6
+ 456 0020 40F28A80 		bls	.L32
+ 147:.\i2cuart.c   ****     {
+ 148:.\i2cuart.c   ****         for(i=0;i<7;i++) {
+ 457              		.loc 1 148 0
+ 458 0024 0023     		movs	r3, #0
+ 459 0026 7B60     		str	r3, [r7, #4]
+ 460 0028 0CE0     		b	.L34
+ 461              	.L37:
+ 149:.\i2cuart.c   ****             tmp = UART_ACS_GetChar();
+ 462              		.loc 1 149 0
+ 463 002a FFF7FEFF 		bl	UART_ACS_GetChar
+ 464 002e 0346     		mov	r3, r0
+ 465 0030 FB70     		strb	r3, [r7, #3]
+ 150:.\i2cuart.c   ****             if (tmp == 0x53) {
+ 466              		.loc 1 150 0
+ 467 0032 FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 468 0034 532B     		cmp	r3, #83
+ 469 0036 02D1     		bne	.L35
+ 151:.\i2cuart.c   ****                 msg_started = 1;
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 12
+
+
+ 470              		.loc 1 151 0
+ 471 0038 0123     		movs	r3, #1
+ 472 003a FB72     		strb	r3, [r7, #11]
+ 152:.\i2cuart.c   ****                 break;
+ 473              		.loc 1 152 0
+ 474 003c 05E0     		b	.L36
+ 475              	.L35:
+ 148:.\i2cuart.c   ****         for(i=0;i<7;i++) {
+ 476              		.loc 1 148 0
+ 477 003e 7B68     		ldr	r3, [r7, #4]
+ 478 0040 0133     		adds	r3, r3, #1
+ 479 0042 7B60     		str	r3, [r7, #4]
+ 480              	.L34:
+ 148:.\i2cuart.c   ****         for(i=0;i<7;i++) {
+ 481              		.loc 1 148 0 is_stmt 0 discriminator 1
+ 482 0044 7B68     		ldr	r3, [r7, #4]
+ 483 0046 062B     		cmp	r3, #6
+ 484 0048 EFDD     		ble	.L37
+ 485              	.L36:
+ 153:.\i2cuart.c   ****             }
+ 154:.\i2cuart.c   ****         } 
+ 155:.\i2cuart.c   ****         
+ 156:.\i2cuart.c   ****         if (msg_started){
+ 486              		.loc 1 156 0 is_stmt 1
+ 487 004a FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 488 004c 002B     		cmp	r3, #0
+ 489 004e 1AD0     		beq	.L38
+ 157:.\i2cuart.c   ****             tmp = UART_ACS_GetChar();
+ 490              		.loc 1 157 0
+ 491 0050 FFF7FEFF 		bl	UART_ACS_GetChar
+ 492 0054 0346     		mov	r3, r0
+ 493 0056 FB70     		strb	r3, [r7, #3]
+ 158:.\i2cuart.c   ****             osdp_msg_header.addr = tmp;
+ 494              		.loc 1 158 0
+ 495 0058 394B     		ldr	r3, .L45
+ 496 005a FA78     		ldrb	r2, [r7, #3]
+ 497 005c 1A70     		strb	r2, [r3]
+ 159:.\i2cuart.c   ****             
+ 160:.\i2cuart.c   ****             tmp = UART_ACS_GetChar();
+ 498              		.loc 1 160 0
+ 499 005e FFF7FEFF 		bl	UART_ACS_GetChar
+ 500 0062 0346     		mov	r3, r0
+ 501 0064 FB70     		strb	r3, [r7, #3]
+ 161:.\i2cuart.c   ****             osdp_msg_header.u.length[0] = tmp;
+ 502              		.loc 1 161 0
+ 503 0066 364B     		ldr	r3, .L45
+ 504 0068 FA78     		ldrb	r2, [r7, #3]
+ 505 006a 9A70     		strb	r2, [r3, #2]
+ 162:.\i2cuart.c   ****             
+ 163:.\i2cuart.c   ****             tmp = UART_ACS_GetChar();
+ 506              		.loc 1 163 0
+ 507 006c FFF7FEFF 		bl	UART_ACS_GetChar
+ 508 0070 0346     		mov	r3, r0
+ 509 0072 FB70     		strb	r3, [r7, #3]
+ 164:.\i2cuart.c   ****             osdp_msg_header.u.length[1] = tmp;
+ 510              		.loc 1 164 0
+ 511 0074 324B     		ldr	r3, .L45
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 13
+
+
+ 512 0076 FA78     		ldrb	r2, [r7, #3]
+ 513 0078 DA70     		strb	r2, [r3, #3]
+ 165:.\i2cuart.c   ****         } 
+ 166:.\i2cuart.c   ****         else
+ 167:.\i2cuart.c   ****         {
+ 168:.\i2cuart.c   ****             //the message is not started yet
+ 169:.\i2cuart.c   ****             return;
+ 170:.\i2cuart.c   ****         }
+ 171:.\i2cuart.c   ****         
+ 172:.\i2cuart.c   ****         if (osdp_msg_header.u.len <7) return; //discard bad message, too short.
+ 514              		.loc 1 172 0
+ 515 007a 314B     		ldr	r3, .L45
+ 516 007c 5B88     		ldrh	r3, [r3, #2]
+ 517 007e 1BB2     		sxth	r3, r3
+ 518 0080 062B     		cmp	r3, #6
+ 519 0082 02DC     		bgt	.L40
+ 520 0084 00E0     		b	.L44
+ 521              	.L38:
+ 169:.\i2cuart.c   ****             return;
+ 522              		.loc 1 169 0
+ 523 0086 57E0     		b	.L32
+ 524              	.L44:
+ 525              		.loc 1 172 0 discriminator 1
+ 526 0088 56E0     		b	.L32
+ 527              	.L40:
+ 173:.\i2cuart.c   ****         
+ 174:.\i2cuart.c   ****         
+ 175:.\i2cuart.c   ****         byteCount = 0;
+ 528              		.loc 1 175 0
+ 529 008a 0023     		movs	r3, #0
+ 530 008c FB60     		str	r3, [r7, #12]
+ 176:.\i2cuart.c   ****         MyI2C_Regs.osdp_buffer[byteCount] = 0x53;
+ 531              		.loc 1 176 0
+ 532 008e 2D4A     		ldr	r2, .L45+4
+ 533 0090 FB68     		ldr	r3, [r7, #12]
+ 534 0092 1344     		add	r3, r3, r2
+ 535 0094 4833     		adds	r3, r3, #72
+ 536 0096 5322     		movs	r2, #83
+ 537 0098 5A71     		strb	r2, [r3, #5]
+ 177:.\i2cuart.c   ****         byteCount++;
+ 538              		.loc 1 177 0
+ 539 009a FB68     		ldr	r3, [r7, #12]
+ 540 009c 0133     		adds	r3, r3, #1
+ 541 009e FB60     		str	r3, [r7, #12]
+ 178:.\i2cuart.c   ****         MyI2C_Regs.osdp_buffer[byteCount] = osdp_msg_header.addr;
+ 542              		.loc 1 178 0
+ 543 00a0 274B     		ldr	r3, .L45
+ 544 00a2 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 545 00a4 2749     		ldr	r1, .L45+4
+ 546 00a6 FB68     		ldr	r3, [r7, #12]
+ 547 00a8 0B44     		add	r3, r3, r1
+ 548 00aa 4833     		adds	r3, r3, #72
+ 549 00ac 5A71     		strb	r2, [r3, #5]
+ 179:.\i2cuart.c   ****         byteCount++;
+ 550              		.loc 1 179 0
+ 551 00ae FB68     		ldr	r3, [r7, #12]
+ 552 00b0 0133     		adds	r3, r3, #1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 14
+
+
+ 553 00b2 FB60     		str	r3, [r7, #12]
+ 180:.\i2cuart.c   ****         MyI2C_Regs.osdp_buffer[byteCount] = osdp_msg_header.u.length[0];
+ 554              		.loc 1 180 0
+ 555 00b4 224B     		ldr	r3, .L45
+ 556 00b6 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 557 00b8 2249     		ldr	r1, .L45+4
+ 558 00ba FB68     		ldr	r3, [r7, #12]
+ 559 00bc 0B44     		add	r3, r3, r1
+ 560 00be 4833     		adds	r3, r3, #72
+ 561 00c0 5A71     		strb	r2, [r3, #5]
+ 181:.\i2cuart.c   ****         byteCount++;
+ 562              		.loc 1 181 0
+ 563 00c2 FB68     		ldr	r3, [r7, #12]
+ 564 00c4 0133     		adds	r3, r3, #1
+ 565 00c6 FB60     		str	r3, [r7, #12]
+ 182:.\i2cuart.c   ****         MyI2C_Regs.osdp_buffer[byteCount] = osdp_msg_header.u.length[1];
+ 566              		.loc 1 182 0
+ 567 00c8 1D4B     		ldr	r3, .L45
+ 568 00ca DA78     		ldrb	r2, [r3, #3]	@ zero_extendqisi2
+ 569 00cc 1D49     		ldr	r1, .L45+4
+ 570 00ce FB68     		ldr	r3, [r7, #12]
+ 571 00d0 0B44     		add	r3, r3, r1
+ 572 00d2 4833     		adds	r3, r3, #72
+ 573 00d4 5A71     		strb	r2, [r3, #5]
+ 183:.\i2cuart.c   ****         byteCount++;
+ 574              		.loc 1 183 0
+ 575 00d6 FB68     		ldr	r3, [r7, #12]
+ 576 00d8 0133     		adds	r3, r3, #1
+ 577 00da FB60     		str	r3, [r7, #12]
+ 184:.\i2cuart.c   ****         
+ 185:.\i2cuart.c   ****         if(osdp_msg_header.u.len > OSDP_BUFFER_LENGTH){
+ 578              		.loc 1 185 0
+ 579 00dc 184B     		ldr	r3, .L45
+ 580 00de 5B88     		ldrh	r3, [r3, #2]
+ 581 00e0 1BB2     		sxth	r3, r3
+ 582 00e2 802B     		cmp	r3, #128
+ 583 00e4 05DD     		ble	.L41
+ 186:.\i2cuart.c   ****             //error, the message is too long
+ 187:.\i2cuart.c   ****             ClearOsdpBuffer();
+ 584              		.loc 1 187 0
+ 585 00e6 FFF7FEFF 		bl	ClearOsdpBuffer
+ 188:.\i2cuart.c   ****             osdp_msg_header.u.len = 0;
+ 586              		.loc 1 188 0
+ 587 00ea 154B     		ldr	r3, .L45
+ 588 00ec 0022     		movs	r2, #0
+ 589 00ee 5A80     		strh	r2, [r3, #2]	@ movhi
+ 189:.\i2cuart.c   ****             return;
+ 590              		.loc 1 189 0
+ 591 00f0 22E0     		b	.L32
+ 592              	.L41:
+ 190:.\i2cuart.c   ****         }
+ 191:.\i2cuart.c   ****         
+ 192:.\i2cuart.c   ****         for (; byteCount<osdp_msg_header.u.len;){  //may need timeout here
+ 593              		.loc 1 192 0
+ 594 00f2 11E0     		b	.L42
+ 595              	.L43:
+ 193:.\i2cuart.c   ****             if (UART_ACS_GetRxBufferSize()>0){
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 15
+
+
+ 596              		.loc 1 193 0
+ 597 00f4 FFF7FEFF 		bl	UART_ACS_GetRxBufferSize
+ 598 00f8 0346     		mov	r3, r0
+ 599 00fa 002B     		cmp	r3, #0
+ 600 00fc 0CD0     		beq	.L42
+ 194:.\i2cuart.c   ****                 tmp = UART_ACS_GetChar();
+ 601              		.loc 1 194 0
+ 602 00fe FFF7FEFF 		bl	UART_ACS_GetChar
+ 603 0102 0346     		mov	r3, r0
+ 604 0104 FB70     		strb	r3, [r7, #3]
+ 195:.\i2cuart.c   ****                 MyI2C_Regs.osdp_buffer[byteCount] = tmp;
+ 605              		.loc 1 195 0
+ 606 0106 0F4A     		ldr	r2, .L45+4
+ 607 0108 FB68     		ldr	r3, [r7, #12]
+ 608 010a 1344     		add	r3, r3, r2
+ 609 010c 4833     		adds	r3, r3, #72
+ 610 010e FA78     		ldrb	r2, [r7, #3]
+ 611 0110 5A71     		strb	r2, [r3, #5]
+ 196:.\i2cuart.c   ****                 byteCount++;
+ 612              		.loc 1 196 0
+ 613 0112 FB68     		ldr	r3, [r7, #12]
+ 614 0114 0133     		adds	r3, r3, #1
+ 615 0116 FB60     		str	r3, [r7, #12]
+ 616              	.L42:
+ 192:.\i2cuart.c   ****         for (; byteCount<osdp_msg_header.u.len;){  //may need timeout here
+ 617              		.loc 1 192 0 discriminator 1
+ 618 0118 094B     		ldr	r3, .L45
+ 619 011a 5B88     		ldrh	r3, [r3, #2]
+ 620 011c 1AB2     		sxth	r2, r3
+ 621 011e FB68     		ldr	r3, [r7, #12]
+ 622 0120 9A42     		cmp	r2, r3
+ 623 0122 E7DC     		bgt	.L43
+ 197:.\i2cuart.c   ****             }
+ 198:.\i2cuart.c   ****         }
+ 199:.\i2cuart.c   **** 
+ 200:.\i2cuart.c   ****         MyI2C_Regs.osdp_data_length = osdp_msg_header.u.len;
+ 624              		.loc 1 200 0
+ 625 0124 064B     		ldr	r3, .L45
+ 626 0126 5B88     		ldrh	r3, [r3, #2]
+ 627 0128 DAB2     		uxtb	r2, r3
+ 628 012a 064B     		ldr	r3, .L45+4
+ 629 012c 83F84B20 		strb	r2, [r3, #75]
+ 201:.\i2cuart.c   ****         MyI2C_Regs.osdp_status = OSDP_DATA_IN_READY;
+ 630              		.loc 1 201 0
+ 631 0130 044B     		ldr	r3, .L45+4
+ 632 0132 0222     		movs	r2, #2
+ 633 0134 83F84A20 		strb	r2, [r3, #74]
+ 634              	.L32:
+ 202:.\i2cuart.c   ****     }
+ 203:.\i2cuart.c   **** }
+ 635              		.loc 1 203 0
+ 636 0138 1037     		adds	r7, r7, #16
+ 637 013a BD46     		mov	sp, r7
+ 638              		@ sp needed
+ 639 013c 80BD     		pop	{r7, pc}
+ 640              	.L46:
+ 641 013e 00BF     		.align	2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 16
+
+
+ 642              	.L45:
+ 643 0140 00000000 		.word	osdp_msg_header
+ 644 0144 00000000 		.word	MyI2C_Regs
+ 645              		.cfi_endproc
+ 646              	.LFE68:
+ 647              		.size	ReadOSDP, .-ReadOSDP
+ 648              		.section	.text.SetOSDPRate,"ax",%progbits
+ 649              		.align	2
+ 650              		.global	SetOSDPRate
+ 651              		.thumb
+ 652              		.thumb_func
+ 653              		.type	SetOSDPRate, %function
+ 654              	SetOSDPRate:
+ 655              	.LFB69:
+ 204:.\i2cuart.c   **** 
+ 205:.\i2cuart.c   **** void SetOSDPRate(){
+ 656              		.loc 1 205 0
+ 657              		.cfi_startproc
+ 658              		@ args = 0, pretend = 0, frame = 8
+ 659              		@ frame_needed = 1, uses_anonymous_args = 0
+ 660 0000 80B5     		push	{r7, lr}
+ 661              		.cfi_def_cfa_offset 8
+ 662              		.cfi_offset 7, -8
+ 663              		.cfi_offset 14, -4
+ 664 0002 82B0     		sub	sp, sp, #8
+ 665              		.cfi_def_cfa_offset 16
+ 666 0004 00AF     		add	r7, sp, #0
+ 667              		.cfi_def_cfa_register 7
+ 206:.\i2cuart.c   ****     char rate;
+ 207:.\i2cuart.c   ****     
+ 208:.\i2cuart.c   ****     UART_ACS_Start();
+ 668              		.loc 1 208 0
+ 669 0006 FFF7FEFF 		bl	UART_ACS_Start
+ 209:.\i2cuart.c   **** 
+ 210:.\i2cuart.c   ****     rate = MyI2C_Regs.osdp_rate;
+ 670              		.loc 1 210 0
+ 671 000a 164B     		ldr	r3, .L54
+ 672 000c 93F84C30 		ldrb	r3, [r3, #76]
+ 673 0010 FB71     		strb	r3, [r7, #7]
+ 211:.\i2cuart.c   ****     switch(rate){
+ 674              		.loc 1 211 0
+ 675 0012 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 676 0014 013B     		subs	r3, r3, #1
+ 677 0016 032B     		cmp	r3, #3
+ 678 0018 20D8     		bhi	.L47
+ 679 001a 01A2     		adr	r2, .L50
+ 680 001c 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 681              		.p2align 2
+ 682              	.L50:
+ 683 0020 31000000 		.word	.L49+1
+ 684 0024 3D000000 		.word	.L51+1
+ 685 0028 49000000 		.word	.L52+1
+ 686 002c 53000000 		.word	.L53+1
+ 687              		.p2align 1
+ 688              	.L49:
+ 212:.\i2cuart.c   ****         case OSDP_9600:
+ 213:.\i2cuart.c   ****             Clock_5_SetDividerValue(625); //  48000000/625=9600
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 17
+
+
+ 689              		.loc 1 213 0
+ 690 0030 4FF41C70 		mov	r0, #624
+ 691 0034 0121     		movs	r1, #1
+ 692 0036 FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 214:.\i2cuart.c   ****             break;
+ 693              		.loc 1 214 0
+ 694 003a 0FE0     		b	.L47
+ 695              	.L51:
+ 215:.\i2cuart.c   ****         case OSDP_19200:
+ 216:.\i2cuart.c   ****             Clock_5_SetDividerValue(312);
+ 696              		.loc 1 216 0
+ 697 003c 40F23710 		movw	r0, #311
+ 698 0040 0121     		movs	r1, #1
+ 699 0042 FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 217:.\i2cuart.c   ****             break;
+ 700              		.loc 1 217 0
+ 701 0046 09E0     		b	.L47
+ 702              	.L52:
+ 218:.\i2cuart.c   ****         case OSDP_38400:
+ 219:.\i2cuart.c   ****             Clock_5_SetDividerValue(156);
+ 703              		.loc 1 219 0
+ 704 0048 9B20     		movs	r0, #155
+ 705 004a 0121     		movs	r1, #1
+ 706 004c FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 220:.\i2cuart.c   ****             break;
+ 707              		.loc 1 220 0
+ 708 0050 04E0     		b	.L47
+ 709              	.L53:
+ 221:.\i2cuart.c   ****         case OSDP_115200:
+ 222:.\i2cuart.c   ****             Clock_5_SetDividerValue(52);
+ 710              		.loc 1 222 0
+ 711 0052 3320     		movs	r0, #51
+ 712 0054 0121     		movs	r1, #1
+ 713 0056 FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 223:.\i2cuart.c   ****             break;
+ 714              		.loc 1 223 0
+ 715 005a 00BF     		nop
+ 716              	.L47:
+ 224:.\i2cuart.c   ****         default:;    
+ 225:.\i2cuart.c   ****     }
+ 226:.\i2cuart.c   ****     
+ 227:.\i2cuart.c   **** }
+ 717              		.loc 1 227 0
+ 718 005c 0837     		adds	r7, r7, #8
+ 719 005e BD46     		mov	sp, r7
+ 720              		@ sp needed
+ 721 0060 80BD     		pop	{r7, pc}
+ 722              	.L55:
+ 723 0062 00BF     		.align	2
+ 724              	.L54:
+ 725 0064 00000000 		.word	MyI2C_Regs
+ 726              		.cfi_endproc
+ 727              	.LFE69:
+ 728              		.size	SetOSDPRate, .-SetOSDPRate
+ 729              		.comm	keepALive,48,4
+ 730              		.comm	keepALiveLength,1,1
+ 731              		.comm	OSDPReaderTask,1,1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 18
+
+
+ 732              		.comm	InterruptCnt,1,1
+ 733              		.section	.text.KeepAliveInterruptHandler,"ax",%progbits
+ 734              		.align	2
+ 735              		.global	KeepAliveInterruptHandler
+ 736              		.thumb
+ 737              		.thumb_func
+ 738              		.type	KeepAliveInterruptHandler, %function
+ 739              	KeepAliveInterruptHandler:
+ 740              	.LFB70:
+ 228:.\i2cuart.c   **** 
+ 229:.\i2cuart.c   **** ////////////////OSDP READER//////////////////
+ 230:.\i2cuart.c   **** 
+ 231:.\i2cuart.c   **** unsigned char keepALive[OSDP_READER_BUFFER_LENGTH];
+ 232:.\i2cuart.c   **** unsigned char keepALiveLength;
+ 233:.\i2cuart.c   **** unsigned char OSDPReaderTask;
+ 234:.\i2cuart.c   **** 
+ 235:.\i2cuart.c   **** uint8 InterruptCnt;
+ 236:.\i2cuart.c   **** 
+ 237:.\i2cuart.c   **** //keep alive timer interrupt for OSDP reader dual authentication
+ 238:.\i2cuart.c   **** CY_ISR(KeepAliveInterruptHandler)
+ 239:.\i2cuart.c   **** {
+ 741              		.loc 1 239 0
+ 742              		.cfi_startproc
+ 743              		@ args = 0, pretend = 0, frame = 0
+ 744              		@ frame_needed = 1, uses_anonymous_args = 0
+ 745              		@ link register save eliminated.
+ 746 0000 80B4     		push	{r7}
+ 747              		.cfi_def_cfa_offset 4
+ 748              		.cfi_offset 7, -4
+ 749 0002 00AF     		add	r7, sp, #0
+ 750              		.cfi_def_cfa_register 7
+ 240:.\i2cuart.c   **** 	/* Read Status register in order to clear the sticky Terminal Count (TC) bit 
+ 241:.\i2cuart.c   **** 	 * in the status register.
+ 242:.\i2cuart.c   **** 	 */
+ 243:.\i2cuart.c   ****    	OSDPReaderTimer_STATUS;
+ 751              		.loc 1 243 0
+ 752 0004 064B     		ldr	r3, .L57
+ 753 0006 1B78     		ldrb	r3, [r3]
+ 244:.\i2cuart.c   ****     OSDPReaderTask |= (0x1 << OSDP_SEND_READER);  //send the command to the card reader
+ 754              		.loc 1 244 0
+ 755 0008 064B     		ldr	r3, .L57+4
+ 756 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 757 000c 43F00403 		orr	r3, r3, #4
+ 758 0010 DAB2     		uxtb	r2, r3
+ 759 0012 044B     		ldr	r3, .L57+4
+ 760 0014 1A70     		strb	r2, [r3]
+ 245:.\i2cuart.c   **** }
+ 761              		.loc 1 245 0
+ 762 0016 BD46     		mov	sp, r7
+ 763              		@ sp needed
+ 764 0018 5DF8047B 		ldr	r7, [sp], #4
+ 765 001c 7047     		bx	lr
+ 766              	.L58:
+ 767 001e 00BF     		.align	2
+ 768              	.L57:
+ 769 0020 64650040 		.word	1073767780
+ 770 0024 00000000 		.word	OSDPReaderTask
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 19
+
+
+ 771              		.cfi_endproc
+ 772              	.LFE70:
+ 773              		.size	KeepAliveInterruptHandler, .-KeepAliveInterruptHandler
+ 774              		.section	.text.ClearOsdpReaderBuffer,"ax",%progbits
+ 775              		.align	2
+ 776              		.global	ClearOsdpReaderBuffer
+ 777              		.thumb
+ 778              		.thumb_func
+ 779              		.type	ClearOsdpReaderBuffer, %function
+ 780              	ClearOsdpReaderBuffer:
+ 781              	.LFB71:
+ 246:.\i2cuart.c   **** 
+ 247:.\i2cuart.c   **** void ClearOsdpReaderBuffer()
+ 248:.\i2cuart.c   **** {
+ 782              		.loc 1 248 0
+ 783              		.cfi_startproc
+ 784              		@ args = 0, pretend = 0, frame = 8
+ 785              		@ frame_needed = 1, uses_anonymous_args = 0
+ 786 0000 80B5     		push	{r7, lr}
+ 787              		.cfi_def_cfa_offset 8
+ 788              		.cfi_offset 7, -8
+ 789              		.cfi_offset 14, -4
+ 790 0002 82B0     		sub	sp, sp, #8
+ 791              		.cfi_def_cfa_offset 16
+ 792 0004 00AF     		add	r7, sp, #0
+ 793              		.cfi_def_cfa_register 7
+ 249:.\i2cuart.c   ****     int i;
+ 250:.\i2cuart.c   ****         UART_READER_ClearRxBuffer();
+ 794              		.loc 1 250 0
+ 795 0006 FFF7FEFF 		bl	UART_READER_ClearRxBuffer
+ 251:.\i2cuart.c   ****         for ( i=0; i<OSDP_READER_BUFFER_LENGTH; i++){
+ 796              		.loc 1 251 0
+ 797 000a 0023     		movs	r3, #0
+ 798 000c 7B60     		str	r3, [r7, #4]
+ 799 000e 08E0     		b	.L60
+ 800              	.L61:
+ 252:.\i2cuart.c   ****             MyI2C_Regs.osdp_reader_buffer[i]=0;
+ 801              		.loc 1 252 0 discriminator 2
+ 802 0010 094A     		ldr	r2, .L62
+ 803 0012 7B68     		ldr	r3, [r7, #4]
+ 804 0014 1344     		add	r3, r3, r2
+ 805 0016 D033     		adds	r3, r3, #208
+ 806 0018 0022     		movs	r2, #0
+ 807 001a 1A70     		strb	r2, [r3]
+ 251:.\i2cuart.c   ****         for ( i=0; i<OSDP_READER_BUFFER_LENGTH; i++){
+ 808              		.loc 1 251 0 discriminator 2
+ 809 001c 7B68     		ldr	r3, [r7, #4]
+ 810 001e 0133     		adds	r3, r3, #1
+ 811 0020 7B60     		str	r3, [r7, #4]
+ 812              	.L60:
+ 251:.\i2cuart.c   ****         for ( i=0; i<OSDP_READER_BUFFER_LENGTH; i++){
+ 813              		.loc 1 251 0 is_stmt 0 discriminator 1
+ 814 0022 7B68     		ldr	r3, [r7, #4]
+ 815 0024 2F2B     		cmp	r3, #47
+ 816 0026 F3DD     		ble	.L61
+ 253:.\i2cuart.c   ****         }
+ 254:.\i2cuart.c   ****         MyI2C_Regs.osdp_reader_data_length = 0;
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 20
+
+
+ 817              		.loc 1 254 0 is_stmt 1
+ 818 0028 034B     		ldr	r3, .L62
+ 819 002a 0022     		movs	r2, #0
+ 820 002c 83F8CE20 		strb	r2, [r3, #206]
+ 255:.\i2cuart.c   **** }
+ 821              		.loc 1 255 0
+ 822 0030 0837     		adds	r7, r7, #8
+ 823 0032 BD46     		mov	sp, r7
+ 824              		@ sp needed
+ 825 0034 80BD     		pop	{r7, pc}
+ 826              	.L63:
+ 827 0036 00BF     		.align	2
+ 828              	.L62:
+ 829 0038 00000000 		.word	MyI2C_Regs
+ 830              		.cfi_endproc
+ 831              	.LFE71:
+ 832              		.size	ClearOsdpReaderBuffer, .-ClearOsdpReaderBuffer
+ 833              		.section	.text.SendOSDPReader,"ax",%progbits
+ 834              		.align	2
+ 835              		.global	SendOSDPReader
+ 836              		.thumb
+ 837              		.thumb_func
+ 838              		.type	SendOSDPReader, %function
+ 839              	SendOSDPReader:
+ 840              	.LFB72:
+ 256:.\i2cuart.c   **** 
+ 257:.\i2cuart.c   **** void SendOSDPReader()
+ 258:.\i2cuart.c   **** {
+ 841              		.loc 1 258 0
+ 842              		.cfi_startproc
+ 843              		@ args = 0, pretend = 0, frame = 0
+ 844              		@ frame_needed = 1, uses_anonymous_args = 0
+ 845 0000 80B5     		push	{r7, lr}
+ 846              		.cfi_def_cfa_offset 8
+ 847              		.cfi_offset 7, -8
+ 848              		.cfi_offset 14, -4
+ 849 0002 00AF     		add	r7, sp, #0
+ 850              		.cfi_def_cfa_register 7
+ 259:.\i2cuart.c   ****     
+ 260:.\i2cuart.c   ****     Mode_Sel_CR_Write(1); //set the SP335e chip to RS485
+ 851              		.loc 1 260 0
+ 852 0004 0120     		movs	r0, #1
+ 853 0006 FFF7FEFF 		bl	Mode_Sel_CR_Write
+ 261:.\i2cuart.c   ****     CR_DE_Write(1);
+ 854              		.loc 1 261 0
+ 855 000a 0120     		movs	r0, #1
+ 856 000c FFF7FEFF 		bl	CR_DE_Write
+ 262:.\i2cuart.c   ****     UART_READER_LoadTxConfig();
+ 857              		.loc 1 262 0
+ 858 0010 FFF7FEFF 		bl	UART_READER_LoadTxConfig
+ 263:.\i2cuart.c   ****     CyDelay(1); //Driver Output Enable Time, do not reduce. 
+ 859              		.loc 1 263 0
+ 860 0014 0120     		movs	r0, #1
+ 861 0016 FFF7FEFF 		bl	CyDelay
+ 264:.\i2cuart.c   ****     if(keepALive[0] == 0x53){
+ 862              		.loc 1 264 0
+ 863 001a 094B     		ldr	r3, .L66
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 21
+
+
+ 864 001c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 865 001e 532B     		cmp	r3, #83
+ 866 0020 08D1     		bne	.L65
+ 265:.\i2cuart.c   ****         UART_READER_PutArray(keepALive,keepALiveLength); 
+ 867              		.loc 1 265 0
+ 868 0022 084B     		ldr	r3, .L66+4
+ 869 0024 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 870 0026 0648     		ldr	r0, .L66
+ 871 0028 1946     		mov	r1, r3
+ 872 002a FFF7FEFF 		bl	UART_READER_PutArray
+ 266:.\i2cuart.c   ****         CyDelay(5); //minmum 4ms
+ 873              		.loc 1 266 0
+ 874 002e 0520     		movs	r0, #5
+ 875 0030 FFF7FEFF 		bl	CyDelay
+ 876              	.L65:
+ 267:.\i2cuart.c   ****     }
+ 268:.\i2cuart.c   **** 
+ 269:.\i2cuart.c   **** //    MyI2C_Regs.osdp_status |= OSDP_READER_DATA_SENT;
+ 270:.\i2cuart.c   ****     UART_READER_LoadRxConfig();  //set to receiving mode
+ 877              		.loc 1 270 0
+ 878 0034 FFF7FEFF 		bl	UART_READER_LoadRxConfig
+ 271:.\i2cuart.c   ****     CR_DE_Write(0);
+ 879              		.loc 1 271 0
+ 880 0038 0020     		movs	r0, #0
+ 881 003a FFF7FEFF 		bl	CR_DE_Write
+ 272:.\i2cuart.c   **** 
+ 273:.\i2cuart.c   **** }
+ 882              		.loc 1 273 0
+ 883 003e 80BD     		pop	{r7, pc}
+ 884              	.L67:
+ 885              		.align	2
+ 886              	.L66:
+ 887 0040 00000000 		.word	keepALive
+ 888 0044 00000000 		.word	keepALiveLength
+ 889              		.cfi_endproc
+ 890              	.LFE72:
+ 891              		.size	SendOSDPReader, .-SendOSDPReader
+ 892              		.section	.text.ReadOSDPReader,"ax",%progbits
+ 893              		.align	2
+ 894              		.global	ReadOSDPReader
+ 895              		.thumb
+ 896              		.thumb_func
+ 897              		.type	ReadOSDPReader, %function
+ 898              	ReadOSDPReader:
+ 899              	.LFB73:
+ 274:.\i2cuart.c   **** 
+ 275:.\i2cuart.c   **** void ReadOSDPReader()
+ 276:.\i2cuart.c   **** {
+ 900              		.loc 1 276 0
+ 901              		.cfi_startproc
+ 902              		@ args = 0, pretend = 0, frame = 16
+ 903              		@ frame_needed = 1, uses_anonymous_args = 0
+ 904 0000 80B5     		push	{r7, lr}
+ 905              		.cfi_def_cfa_offset 8
+ 906              		.cfi_offset 7, -8
+ 907              		.cfi_offset 14, -4
+ 908 0002 84B0     		sub	sp, sp, #16
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 22
+
+
+ 909              		.cfi_def_cfa_offset 24
+ 910 0004 00AF     		add	r7, sp, #0
+ 911              		.cfi_def_cfa_register 7
+ 277:.\i2cuart.c   ****     int byteCount =0;
+ 912              		.loc 1 277 0
+ 913 0006 0023     		movs	r3, #0
+ 914 0008 FB60     		str	r3, [r7, #12]
+ 278:.\i2cuart.c   ****     unsigned char tmp = 0;
+ 915              		.loc 1 278 0
+ 916 000a 0023     		movs	r3, #0
+ 917 000c FB70     		strb	r3, [r7, #3]
+ 279:.\i2cuart.c   ****     char msg_started = 0;
+ 918              		.loc 1 279 0
+ 919 000e 0023     		movs	r3, #0
+ 920 0010 FB72     		strb	r3, [r7, #11]
+ 280:.\i2cuart.c   ****     int i;
+ 281:.\i2cuart.c   ****     
+ 282:.\i2cuart.c   ****     Mode_Sel_CR_Write(1); //set the chip to RS485 mode
+ 921              		.loc 1 282 0
+ 922 0012 0120     		movs	r0, #1
+ 923 0014 FFF7FEFF 		bl	Mode_Sel_CR_Write
+ 283:.\i2cuart.c   **** 
+ 284:.\i2cuart.c   ****     if (UART_READER_GetRxBufferSize()>= 5)
+ 924              		.loc 1 284 0
+ 925 0018 FFF7FEFF 		bl	UART_READER_GetRxBufferSize
+ 926 001c 0346     		mov	r3, r0
+ 927 001e 042B     		cmp	r3, #4
+ 928 0020 40F29380 		bls	.L68
+ 285:.\i2cuart.c   ****     {
+ 286:.\i2cuart.c   ****         for(i=0;i<5;i++) {
+ 929              		.loc 1 286 0
+ 930 0024 0023     		movs	r3, #0
+ 931 0026 7B60     		str	r3, [r7, #4]
+ 932 0028 0CE0     		b	.L70
+ 933              	.L73:
+ 287:.\i2cuart.c   ****             tmp = UART_READER_GetChar();
+ 934              		.loc 1 287 0
+ 935 002a FFF7FEFF 		bl	UART_READER_GetChar
+ 936 002e 0346     		mov	r3, r0
+ 937 0030 FB70     		strb	r3, [r7, #3]
+ 288:.\i2cuart.c   ****             if (tmp == 0x53) {
+ 938              		.loc 1 288 0
+ 939 0032 FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 940 0034 532B     		cmp	r3, #83
+ 941 0036 02D1     		bne	.L71
+ 289:.\i2cuart.c   ****                 msg_started = 1;
+ 942              		.loc 1 289 0
+ 943 0038 0123     		movs	r3, #1
+ 944 003a FB72     		strb	r3, [r7, #11]
+ 290:.\i2cuart.c   ****                 break;
+ 945              		.loc 1 290 0
+ 946 003c 05E0     		b	.L72
+ 947              	.L71:
+ 286:.\i2cuart.c   ****         for(i=0;i<5;i++) {
+ 948              		.loc 1 286 0
+ 949 003e 7B68     		ldr	r3, [r7, #4]
+ 950 0040 0133     		adds	r3, r3, #1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 23
+
+
+ 951 0042 7B60     		str	r3, [r7, #4]
+ 952              	.L70:
+ 286:.\i2cuart.c   ****         for(i=0;i<5;i++) {
+ 953              		.loc 1 286 0 is_stmt 0 discriminator 1
+ 954 0044 7B68     		ldr	r3, [r7, #4]
+ 955 0046 042B     		cmp	r3, #4
+ 956 0048 EFDD     		ble	.L73
+ 957              	.L72:
+ 291:.\i2cuart.c   ****             }
+ 292:.\i2cuart.c   ****         } 
+ 293:.\i2cuart.c   ****         
+ 294:.\i2cuart.c   ****         if (msg_started){
+ 958              		.loc 1 294 0 is_stmt 1
+ 959 004a FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 960 004c 002B     		cmp	r3, #0
+ 961 004e 1AD0     		beq	.L74
+ 295:.\i2cuart.c   ****             tmp = UART_READER_GetChar();
+ 962              		.loc 1 295 0
+ 963 0050 FFF7FEFF 		bl	UART_READER_GetChar
+ 964 0054 0346     		mov	r3, r0
+ 965 0056 FB70     		strb	r3, [r7, #3]
+ 296:.\i2cuart.c   ****             osdp_reader_msg_header.addr = tmp;
+ 966              		.loc 1 296 0
+ 967 0058 3D4B     		ldr	r3, .L81
+ 968 005a FA78     		ldrb	r2, [r7, #3]
+ 969 005c 1A70     		strb	r2, [r3]
+ 297:.\i2cuart.c   ****             
+ 298:.\i2cuart.c   ****             tmp = UART_READER_GetChar();
+ 970              		.loc 1 298 0
+ 971 005e FFF7FEFF 		bl	UART_READER_GetChar
+ 972 0062 0346     		mov	r3, r0
+ 973 0064 FB70     		strb	r3, [r7, #3]
+ 299:.\i2cuart.c   ****             osdp_reader_msg_header.u.length[0] = tmp;
+ 974              		.loc 1 299 0
+ 975 0066 3A4B     		ldr	r3, .L81
+ 976 0068 FA78     		ldrb	r2, [r7, #3]
+ 977 006a 9A70     		strb	r2, [r3, #2]
+ 300:.\i2cuart.c   ****             
+ 301:.\i2cuart.c   ****             tmp = UART_READER_GetChar();
+ 978              		.loc 1 301 0
+ 979 006c FFF7FEFF 		bl	UART_READER_GetChar
+ 980 0070 0346     		mov	r3, r0
+ 981 0072 FB70     		strb	r3, [r7, #3]
+ 302:.\i2cuart.c   ****             osdp_reader_msg_header.u.length[1] = tmp;
+ 982              		.loc 1 302 0
+ 983 0074 364B     		ldr	r3, .L81
+ 984 0076 FA78     		ldrb	r2, [r7, #3]
+ 985 0078 DA70     		strb	r2, [r3, #3]
+ 303:.\i2cuart.c   ****         } 
+ 304:.\i2cuart.c   ****         else
+ 305:.\i2cuart.c   ****         {
+ 306:.\i2cuart.c   ****             //the message is not started yet
+ 307:.\i2cuart.c   ****             return;
+ 308:.\i2cuart.c   ****         }
+ 309:.\i2cuart.c   ****         
+ 310:.\i2cuart.c   ****         if (osdp_reader_msg_header.u.len <5) return; //discard bad message, too short.
+ 986              		.loc 1 310 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 24
+
+
+ 987 007a 354B     		ldr	r3, .L81
+ 988 007c 5B88     		ldrh	r3, [r3, #2]
+ 989 007e 1BB2     		sxth	r3, r3
+ 990 0080 042B     		cmp	r3, #4
+ 991 0082 02DC     		bgt	.L76
+ 992 0084 00E0     		b	.L80
+ 993              	.L74:
+ 307:.\i2cuart.c   ****             return;
+ 994              		.loc 1 307 0
+ 995 0086 60E0     		b	.L68
+ 996              	.L80:
+ 997              		.loc 1 310 0 discriminator 1
+ 998 0088 5FE0     		b	.L68
+ 999              	.L76:
+ 311:.\i2cuart.c   ****         
+ 312:.\i2cuart.c   ****         byteCount = 0;
+ 1000              		.loc 1 312 0
+ 1001 008a 0023     		movs	r3, #0
+ 1002 008c FB60     		str	r3, [r7, #12]
+ 313:.\i2cuart.c   ****         MyI2C_Regs.osdp_reader_buffer[byteCount] = 0x53;
+ 1003              		.loc 1 313 0
+ 1004 008e 314A     		ldr	r2, .L81+4
+ 1005 0090 FB68     		ldr	r3, [r7, #12]
+ 1006 0092 1344     		add	r3, r3, r2
+ 1007 0094 D033     		adds	r3, r3, #208
+ 1008 0096 5322     		movs	r2, #83
+ 1009 0098 1A70     		strb	r2, [r3]
+ 314:.\i2cuart.c   ****         byteCount++;
+ 1010              		.loc 1 314 0
+ 1011 009a FB68     		ldr	r3, [r7, #12]
+ 1012 009c 0133     		adds	r3, r3, #1
+ 1013 009e FB60     		str	r3, [r7, #12]
+ 315:.\i2cuart.c   ****         MyI2C_Regs.osdp_reader_buffer[byteCount] = osdp_reader_msg_header.addr;
+ 1014              		.loc 1 315 0
+ 1015 00a0 2B4B     		ldr	r3, .L81
+ 1016 00a2 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1017 00a4 2B49     		ldr	r1, .L81+4
+ 1018 00a6 FB68     		ldr	r3, [r7, #12]
+ 1019 00a8 0B44     		add	r3, r3, r1
+ 1020 00aa D033     		adds	r3, r3, #208
+ 1021 00ac 1A70     		strb	r2, [r3]
+ 316:.\i2cuart.c   ****         byteCount++;
+ 1022              		.loc 1 316 0
+ 1023 00ae FB68     		ldr	r3, [r7, #12]
+ 1024 00b0 0133     		adds	r3, r3, #1
+ 1025 00b2 FB60     		str	r3, [r7, #12]
+ 317:.\i2cuart.c   ****         MyI2C_Regs.osdp_reader_buffer[byteCount] = osdp_reader_msg_header.u.length[0];
+ 1026              		.loc 1 317 0
+ 1027 00b4 264B     		ldr	r3, .L81
+ 1028 00b6 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 1029 00b8 2649     		ldr	r1, .L81+4
+ 1030 00ba FB68     		ldr	r3, [r7, #12]
+ 1031 00bc 0B44     		add	r3, r3, r1
+ 1032 00be D033     		adds	r3, r3, #208
+ 1033 00c0 1A70     		strb	r2, [r3]
+ 318:.\i2cuart.c   ****         byteCount++;
+ 1034              		.loc 1 318 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 25
+
+
+ 1035 00c2 FB68     		ldr	r3, [r7, #12]
+ 1036 00c4 0133     		adds	r3, r3, #1
+ 1037 00c6 FB60     		str	r3, [r7, #12]
+ 319:.\i2cuart.c   ****         MyI2C_Regs.osdp_reader_buffer[byteCount] = osdp_reader_msg_header.u.length[1];
+ 1038              		.loc 1 319 0
+ 1039 00c8 214B     		ldr	r3, .L81
+ 1040 00ca DA78     		ldrb	r2, [r3, #3]	@ zero_extendqisi2
+ 1041 00cc 2149     		ldr	r1, .L81+4
+ 1042 00ce FB68     		ldr	r3, [r7, #12]
+ 1043 00d0 0B44     		add	r3, r3, r1
+ 1044 00d2 D033     		adds	r3, r3, #208
+ 1045 00d4 1A70     		strb	r2, [r3]
+ 320:.\i2cuart.c   ****         byteCount++;
+ 1046              		.loc 1 320 0
+ 1047 00d6 FB68     		ldr	r3, [r7, #12]
+ 1048 00d8 0133     		adds	r3, r3, #1
+ 1049 00da FB60     		str	r3, [r7, #12]
+ 321:.\i2cuart.c   ****         
+ 322:.\i2cuart.c   ****         if(osdp_reader_msg_header.u.len > OSDP_READER_BUFFER_LENGTH){
+ 1050              		.loc 1 322 0
+ 1051 00dc 1C4B     		ldr	r3, .L81
+ 1052 00de 5B88     		ldrh	r3, [r3, #2]
+ 1053 00e0 1BB2     		sxth	r3, r3
+ 1054 00e2 302B     		cmp	r3, #48
+ 1055 00e4 03DD     		ble	.L77
+ 323:.\i2cuart.c   ****             //error, the message is too long
+ 324:.\i2cuart.c   ****             osdp_reader_msg_header.u.len = OSDP_READER_BUFFER_LENGTH;
+ 1056              		.loc 1 324 0
+ 1057 00e6 1A4B     		ldr	r3, .L81
+ 1058 00e8 3022     		movs	r2, #48
+ 1059 00ea 5A80     		strh	r2, [r3, #2]	@ movhi
+ 325:.\i2cuart.c   ****             return;
+ 1060              		.loc 1 325 0
+ 1061 00ec 2DE0     		b	.L68
+ 1062              	.L77:
+ 326:.\i2cuart.c   ****         }
+ 327:.\i2cuart.c   ****         
+ 328:.\i2cuart.c   ****         for (; byteCount<osdp_reader_msg_header.u.len;){  //may need timeout here
+ 1063              		.loc 1 328 0
+ 1064 00ee 11E0     		b	.L78
+ 1065              	.L79:
+ 329:.\i2cuart.c   ****             if (UART_READER_GetRxBufferSize()>0){
+ 1066              		.loc 1 329 0
+ 1067 00f0 FFF7FEFF 		bl	UART_READER_GetRxBufferSize
+ 1068 00f4 0346     		mov	r3, r0
+ 1069 00f6 002B     		cmp	r3, #0
+ 1070 00f8 0CD0     		beq	.L78
+ 330:.\i2cuart.c   ****                 tmp = UART_READER_GetChar();
+ 1071              		.loc 1 330 0
+ 1072 00fa FFF7FEFF 		bl	UART_READER_GetChar
+ 1073 00fe 0346     		mov	r3, r0
+ 1074 0100 FB70     		strb	r3, [r7, #3]
+ 331:.\i2cuart.c   ****                 MyI2C_Regs.osdp_reader_buffer[byteCount] = tmp;
+ 1075              		.loc 1 331 0
+ 1076 0102 144A     		ldr	r2, .L81+4
+ 1077 0104 FB68     		ldr	r3, [r7, #12]
+ 1078 0106 1344     		add	r3, r3, r2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 26
+
+
+ 1079 0108 D033     		adds	r3, r3, #208
+ 1080 010a FA78     		ldrb	r2, [r7, #3]
+ 1081 010c 1A70     		strb	r2, [r3]
+ 332:.\i2cuart.c   ****                 byteCount++;
+ 1082              		.loc 1 332 0
+ 1083 010e FB68     		ldr	r3, [r7, #12]
+ 1084 0110 0133     		adds	r3, r3, #1
+ 1085 0112 FB60     		str	r3, [r7, #12]
+ 1086              	.L78:
+ 328:.\i2cuart.c   ****         for (; byteCount<osdp_reader_msg_header.u.len;){  //may need timeout here
+ 1087              		.loc 1 328 0 discriminator 1
+ 1088 0114 0E4B     		ldr	r3, .L81
+ 1089 0116 5B88     		ldrh	r3, [r3, #2]
+ 1090 0118 1AB2     		sxth	r2, r3
+ 1091 011a FB68     		ldr	r3, [r7, #12]
+ 1092 011c 9A42     		cmp	r2, r3
+ 1093 011e E7DC     		bgt	.L79
+ 333:.\i2cuart.c   ****             }
+ 334:.\i2cuart.c   ****         }
+ 335:.\i2cuart.c   **** 
+ 336:.\i2cuart.c   ****         MyI2C_Regs.osdp_reader_data_length = osdp_reader_msg_header.u.len;
+ 1094              		.loc 1 336 0
+ 1095 0120 0B4B     		ldr	r3, .L81
+ 1096 0122 5B88     		ldrh	r3, [r3, #2]
+ 1097 0124 DAB2     		uxtb	r2, r3
+ 1098 0126 0B4B     		ldr	r3, .L81+4
+ 1099 0128 83F8CE20 		strb	r2, [r3, #206]
+ 337:.\i2cuart.c   ****         MyI2C_Regs.osdp_status |= OSDP_READER_DATA_IN_READY;
+ 1100              		.loc 1 337 0
+ 1101 012c 094B     		ldr	r3, .L81+4
+ 1102 012e 93F84A30 		ldrb	r3, [r3, #74]	@ zero_extendqisi2
+ 1103 0132 43F02003 		orr	r3, r3, #32
+ 1104 0136 DAB2     		uxtb	r2, r3
+ 1105 0138 064B     		ldr	r3, .L81+4
+ 1106 013a 83F84A20 		strb	r2, [r3, #74]
+ 338:.\i2cuart.c   ****         MyI2C_Regs.osdp_reader_cmd = OSDP_READ;  //clear completed command
+ 1107              		.loc 1 338 0
+ 1108 013e 054B     		ldr	r3, .L81+4
+ 1109 0140 0222     		movs	r2, #2
+ 1110 0142 83F8CD20 		strb	r2, [r3, #205]
+ 339:.\i2cuart.c   ****         OSDPReaderTimer_Start();
+ 1111              		.loc 1 339 0
+ 1112 0146 FFF7FEFF 		bl	OSDPReaderTimer_Start
+ 1113              	.L68:
+ 340:.\i2cuart.c   ****     }
+ 341:.\i2cuart.c   **** }
+ 1114              		.loc 1 341 0
+ 1115 014a 1037     		adds	r7, r7, #16
+ 1116 014c BD46     		mov	sp, r7
+ 1117              		@ sp needed
+ 1118 014e 80BD     		pop	{r7, pc}
+ 1119              	.L82:
+ 1120              		.align	2
+ 1121              	.L81:
+ 1122 0150 00000000 		.word	osdp_reader_msg_header
+ 1123 0154 00000000 		.word	MyI2C_Regs
+ 1124              		.cfi_endproc
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 27
+
+
+ 1125              	.LFE73:
+ 1126              		.size	ReadOSDPReader, .-ReadOSDPReader
+ 1127              		.section	.text.SetOSDPReaderSpeed,"ax",%progbits
+ 1128              		.align	2
+ 1129              		.global	SetOSDPReaderSpeed
+ 1130              		.thumb
+ 1131              		.thumb_func
+ 1132              		.type	SetOSDPReaderSpeed, %function
+ 1133              	SetOSDPReaderSpeed:
+ 1134              	.LFB74:
+ 342:.\i2cuart.c   **** 
+ 343:.\i2cuart.c   **** void SetOSDPReaderSpeed(){
+ 1135              		.loc 1 343 0
+ 1136              		.cfi_startproc
+ 1137              		@ args = 0, pretend = 0, frame = 8
+ 1138              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1139 0000 80B5     		push	{r7, lr}
+ 1140              		.cfi_def_cfa_offset 8
+ 1141              		.cfi_offset 7, -8
+ 1142              		.cfi_offset 14, -4
+ 1143 0002 82B0     		sub	sp, sp, #8
+ 1144              		.cfi_def_cfa_offset 16
+ 1145 0004 00AF     		add	r7, sp, #0
+ 1146              		.cfi_def_cfa_register 7
+ 344:.\i2cuart.c   ****     char rate;
+ 345:.\i2cuart.c   **** 
+ 346:.\i2cuart.c   ****     rate = MyI2C_Regs.osdp_reader_rate;
+ 1147              		.loc 1 346 0
+ 1148 0006 164B     		ldr	r3, .L90
+ 1149 0008 93F8CF30 		ldrb	r3, [r3, #207]
+ 1150 000c FB71     		strb	r3, [r7, #7]
+ 347:.\i2cuart.c   ****     switch(rate){
+ 1151              		.loc 1 347 0
+ 1152 000e FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1153 0010 013B     		subs	r3, r3, #1
+ 1154 0012 032B     		cmp	r3, #3
+ 1155 0014 20D8     		bhi	.L83
+ 1156 0016 01A2     		adr	r2, .L86
+ 1157 0018 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 1158              		.p2align 2
+ 1159              	.L86:
+ 1160 001c 2D000000 		.word	.L85+1
+ 1161 0020 39000000 		.word	.L87+1
+ 1162 0024 45000000 		.word	.L88+1
+ 1163 0028 4F000000 		.word	.L89+1
+ 1164              		.p2align 1
+ 1165              	.L85:
+ 348:.\i2cuart.c   ****         case OSDP_9600:
+ 349:.\i2cuart.c   ****             Clock_6_SetDividerValue(625); //  48000000/625=9600
+ 1166              		.loc 1 349 0
+ 1167 002c 4FF41C70 		mov	r0, #624
+ 1168 0030 0121     		movs	r1, #1
+ 1169 0032 FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 350:.\i2cuart.c   ****             break;
+ 1170              		.loc 1 350 0
+ 1171 0036 0FE0     		b	.L83
+ 1172              	.L87:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 28
+
+
+ 351:.\i2cuart.c   ****         case OSDP_19200:
+ 352:.\i2cuart.c   ****             Clock_6_SetDividerValue(312);
+ 1173              		.loc 1 352 0
+ 1174 0038 40F23710 		movw	r0, #311
+ 1175 003c 0121     		movs	r1, #1
+ 1176 003e FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 353:.\i2cuart.c   ****             break;
+ 1177              		.loc 1 353 0
+ 1178 0042 09E0     		b	.L83
+ 1179              	.L88:
+ 354:.\i2cuart.c   ****         case OSDP_38400:
+ 355:.\i2cuart.c   ****             Clock_6_SetDividerValue(156);
+ 1180              		.loc 1 355 0
+ 1181 0044 9B20     		movs	r0, #155
+ 1182 0046 0121     		movs	r1, #1
+ 1183 0048 FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 356:.\i2cuart.c   ****             break;
+ 1184              		.loc 1 356 0
+ 1185 004c 04E0     		b	.L83
+ 1186              	.L89:
+ 357:.\i2cuart.c   ****         case OSDP_115200:
+ 358:.\i2cuart.c   ****             Clock_6_SetDividerValue(52);
+ 1187              		.loc 1 358 0
+ 1188 004e 3320     		movs	r0, #51
+ 1189 0050 0121     		movs	r1, #1
+ 1190 0052 FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 359:.\i2cuart.c   ****             break;
+ 1191              		.loc 1 359 0
+ 1192 0056 00BF     		nop
+ 1193              	.L83:
+ 360:.\i2cuart.c   ****         default:;    
+ 361:.\i2cuart.c   ****     }
+ 362:.\i2cuart.c   **** }
+ 1194              		.loc 1 362 0
+ 1195 0058 0837     		adds	r7, r7, #8
+ 1196 005a BD46     		mov	sp, r7
+ 1197              		@ sp needed
+ 1198 005c 80BD     		pop	{r7, pc}
+ 1199              	.L91:
+ 1200 005e 00BF     		.align	2
+ 1201              	.L90:
+ 1202 0060 00000000 		.word	MyI2C_Regs
+ 1203              		.cfi_endproc
+ 1204              	.LFE74:
+ 1205              		.size	SetOSDPReaderSpeed, .-SetOSDPReaderSpeed
+ 1206              		.section	.text.SetOSDPKeepALive,"ax",%progbits
+ 1207              		.align	2
+ 1208              		.global	SetOSDPKeepALive
+ 1209              		.thumb
+ 1210              		.thumb_func
+ 1211              		.type	SetOSDPKeepALive, %function
+ 1212              	SetOSDPKeepALive:
+ 1213              	.LFB75:
+ 363:.\i2cuart.c   **** 
+ 364:.\i2cuart.c   **** 
+ 365:.\i2cuart.c   **** void SetOSDPKeepALive(){
+ 1214              		.loc 1 365 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 29
+
+
+ 1215              		.cfi_startproc
+ 1216              		@ args = 0, pretend = 0, frame = 8
+ 1217              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1218              		@ link register save eliminated.
+ 1219 0000 80B4     		push	{r7}
+ 1220              		.cfi_def_cfa_offset 4
+ 1221              		.cfi_offset 7, -4
+ 1222 0002 83B0     		sub	sp, sp, #12
+ 1223              		.cfi_def_cfa_offset 16
+ 1224 0004 00AF     		add	r7, sp, #0
+ 1225              		.cfi_def_cfa_register 7
+ 366:.\i2cuart.c   ****     int i;
+ 367:.\i2cuart.c   ****     unsigned char msg_size;
+ 368:.\i2cuart.c   ****     
+ 369:.\i2cuart.c   ****     msg_size=  MyI2C_Regs.osdp_reader_data_length;
+ 1226              		.loc 1 369 0
+ 1227 0006 184B     		ldr	r3, .L98
+ 1228 0008 93F8CE30 		ldrb	r3, [r3, #206]
+ 1229 000c FB70     		strb	r3, [r7, #3]
+ 370:.\i2cuart.c   ****     
+ 371:.\i2cuart.c   ****     if (msg_size <= OSDP_READER_BUFFER_LENGTH){
+ 1230              		.loc 1 371 0
+ 1231 000e FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 1232 0010 302B     		cmp	r3, #48
+ 1233 0012 20D8     		bhi	.L93
+ 372:.\i2cuart.c   ****         for ( i=0; i<msg_size; i++){
+ 1234              		.loc 1 372 0
+ 1235 0014 0023     		movs	r3, #0
+ 1236 0016 7B60     		str	r3, [r7, #4]
+ 1237 0018 0BE0     		b	.L94
+ 1238              	.L95:
+ 373:.\i2cuart.c   ****             keepALive[i]=MyI2C_Regs.osdp_reader_buffer[i];
+ 1239              		.loc 1 373 0 discriminator 2
+ 1240 001a 134A     		ldr	r2, .L98
+ 1241 001c 7B68     		ldr	r3, [r7, #4]
+ 1242 001e 1344     		add	r3, r3, r2
+ 1243 0020 D033     		adds	r3, r3, #208
+ 1244 0022 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1245 0024 1149     		ldr	r1, .L98+4
+ 1246 0026 7B68     		ldr	r3, [r7, #4]
+ 1247 0028 0B44     		add	r3, r3, r1
+ 1248 002a 1A70     		strb	r2, [r3]
+ 372:.\i2cuart.c   ****         for ( i=0; i<msg_size; i++){
+ 1249              		.loc 1 372 0 discriminator 2
+ 1250 002c 7B68     		ldr	r3, [r7, #4]
+ 1251 002e 0133     		adds	r3, r3, #1
+ 1252 0030 7B60     		str	r3, [r7, #4]
+ 1253              	.L94:
+ 372:.\i2cuart.c   ****         for ( i=0; i<msg_size; i++){
+ 1254              		.loc 1 372 0 is_stmt 0 discriminator 1
+ 1255 0032 FA78     		ldrb	r2, [r7, #3]	@ zero_extendqisi2
+ 1256 0034 7B68     		ldr	r3, [r7, #4]
+ 1257 0036 9A42     		cmp	r2, r3
+ 1258 0038 EFDC     		bgt	.L95
+ 374:.\i2cuart.c   ****         }
+ 375:.\i2cuart.c   ****         for ( i=msg_size; i< OSDP_READER_BUFFER_LENGTH; i++){
+ 1259              		.loc 1 375 0 is_stmt 1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 30
+
+
+ 1260 003a FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 1261 003c 7B60     		str	r3, [r7, #4]
+ 1262 003e 07E0     		b	.L96
+ 1263              	.L97:
+ 376:.\i2cuart.c   ****             keepALive[i] = 0;
+ 1264              		.loc 1 376 0 discriminator 2
+ 1265 0040 0A4A     		ldr	r2, .L98+4
+ 1266 0042 7B68     		ldr	r3, [r7, #4]
+ 1267 0044 1344     		add	r3, r3, r2
+ 1268 0046 0022     		movs	r2, #0
+ 1269 0048 1A70     		strb	r2, [r3]
+ 375:.\i2cuart.c   ****         for ( i=msg_size; i< OSDP_READER_BUFFER_LENGTH; i++){
+ 1270              		.loc 1 375 0 discriminator 2
+ 1271 004a 7B68     		ldr	r3, [r7, #4]
+ 1272 004c 0133     		adds	r3, r3, #1
+ 1273 004e 7B60     		str	r3, [r7, #4]
+ 1274              	.L96:
+ 375:.\i2cuart.c   ****         for ( i=msg_size; i< OSDP_READER_BUFFER_LENGTH; i++){
+ 1275              		.loc 1 375 0 is_stmt 0 discriminator 1
+ 1276 0050 7B68     		ldr	r3, [r7, #4]
+ 1277 0052 2F2B     		cmp	r3, #47
+ 1278 0054 F4DD     		ble	.L97
+ 1279              	.L93:
+ 377:.\i2cuart.c   ****         }
+ 378:.\i2cuart.c   ****     }
+ 379:.\i2cuart.c   ****     keepALiveLength = msg_size;
+ 1280              		.loc 1 379 0 is_stmt 1
+ 1281 0056 064B     		ldr	r3, .L98+8
+ 1282 0058 FA78     		ldrb	r2, [r7, #3]
+ 1283 005a 1A70     		strb	r2, [r3]
+ 380:.\i2cuart.c   **** }
+ 1284              		.loc 1 380 0
+ 1285 005c 0C37     		adds	r7, r7, #12
+ 1286 005e BD46     		mov	sp, r7
+ 1287              		@ sp needed
+ 1288 0060 5DF8047B 		ldr	r7, [sp], #4
+ 1289 0064 7047     		bx	lr
+ 1290              	.L99:
+ 1291 0066 00BF     		.align	2
+ 1292              	.L98:
+ 1293 0068 00000000 		.word	MyI2C_Regs
+ 1294 006c 00000000 		.word	keepALive
+ 1295 0070 00000000 		.word	keepALiveLength
+ 1296              		.cfi_endproc
+ 1297              	.LFE75:
+ 1298              		.size	SetOSDPKeepALive, .-SetOSDPKeepALive
+ 1299              		.text
+ 1300              	.Letext0:
+ 1301              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 1302              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 1303              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 1304              		.file 5 ".\\softuart.h"
+ 1305              		.file 6 ".\\system.h"
+ 1306              		.file 7 "Generated_Source\\PSoC5/core_cm3.h"
+ 1307              		.section	.debug_info,"",%progbits
+ 1308              	.Ldebug_info0:
+ 1309 0000 6C060000 		.4byte	0x66c
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 31
+
+
+ 1310 0004 0400     		.2byte	0x4
+ 1311 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 1312 000a 04       		.byte	0x4
+ 1313 000b 01       		.uleb128 0x1
+ 1314 000c C0020000 		.4byte	.LASF86
+ 1315 0010 01       		.byte	0x1
+ 1316 0011 49010000 		.4byte	.LASF87
+ 1317 0015 49040000 		.4byte	.LASF88
+ 1318 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 1319 001d 00000000 		.4byte	0
+ 1320 0021 00000000 		.4byte	.Ldebug_line0
+ 1321 0025 02       		.uleb128 0x2
+ 1322 0026 01       		.byte	0x1
+ 1323 0027 06       		.byte	0x6
+ 1324 0028 37010000 		.4byte	.LASF0
+ 1325 002c 02       		.uleb128 0x2
+ 1326 002d 01       		.byte	0x1
+ 1327 002e 08       		.byte	0x8
+ 1328 002f F6010000 		.4byte	.LASF1
+ 1329 0033 02       		.uleb128 0x2
+ 1330 0034 02       		.byte	0x2
+ 1331 0035 05       		.byte	0x5
+ 1332 0036 DB000000 		.4byte	.LASF2
+ 1333 003a 02       		.uleb128 0x2
+ 1334 003b 02       		.byte	0x2
+ 1335 003c 07       		.byte	0x7
+ 1336 003d A2030000 		.4byte	.LASF3
+ 1337 0041 03       		.uleb128 0x3
+ 1338 0042 11040000 		.4byte	.LASF9
+ 1339 0046 02       		.byte	0x2
+ 1340 0047 37       		.byte	0x37
+ 1341 0048 4C000000 		.4byte	0x4c
+ 1342 004c 02       		.uleb128 0x2
+ 1343 004d 04       		.byte	0x4
+ 1344 004e 05       		.byte	0x5
+ 1345 004f 6E030000 		.4byte	.LASF4
+ 1346 0053 02       		.uleb128 0x2
+ 1347 0054 04       		.byte	0x4
+ 1348 0055 07       		.byte	0x7
+ 1349 0056 9F020000 		.4byte	.LASF5
+ 1350 005a 02       		.uleb128 0x2
+ 1351 005b 08       		.byte	0x8
+ 1352 005c 05       		.byte	0x5
+ 1353 005d B1000000 		.4byte	.LASF6
+ 1354 0061 02       		.uleb128 0x2
+ 1355 0062 08       		.byte	0x8
+ 1356 0063 07       		.byte	0x7
+ 1357 0064 71020000 		.4byte	.LASF7
+ 1358 0068 04       		.uleb128 0x4
+ 1359 0069 04       		.byte	0x4
+ 1360 006a 05       		.byte	0x5
+ 1361 006b 696E7400 		.ascii	"int\000"
+ 1362 006f 02       		.uleb128 0x2
+ 1363 0070 04       		.byte	0x4
+ 1364 0071 07       		.byte	0x7
+ 1365 0072 88020000 		.4byte	.LASF8
+ 1366 0076 03       		.uleb128 0x3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 32
+
+
+ 1367 0077 8B030000 		.4byte	.LASF10
+ 1368 007b 03       		.byte	0x3
+ 1369 007c 41       		.byte	0x41
+ 1370 007d 41000000 		.4byte	0x41
+ 1371 0081 03       		.uleb128 0x3
+ 1372 0082 1A010000 		.4byte	.LASF11
+ 1373 0086 04       		.byte	0x4
+ 1374 0087 B3       		.byte	0xb3
+ 1375 0088 2C000000 		.4byte	0x2c
+ 1376 008c 03       		.uleb128 0x3
+ 1377 008d 01010000 		.4byte	.LASF12
+ 1378 0091 04       		.byte	0x4
+ 1379 0092 B4       		.byte	0xb4
+ 1380 0093 3A000000 		.4byte	0x3a
+ 1381 0097 02       		.uleb128 0x2
+ 1382 0098 04       		.byte	0x4
+ 1383 0099 04       		.byte	0x4
+ 1384 009a 43010000 		.4byte	.LASF13
+ 1385 009e 02       		.uleb128 0x2
+ 1386 009f 08       		.byte	0x8
+ 1387 00a0 04       		.byte	0x4
+ 1388 00a1 AB040000 		.4byte	.LASF14
+ 1389 00a5 02       		.uleb128 0x2
+ 1390 00a6 01       		.byte	0x1
+ 1391 00a7 08       		.byte	0x8
+ 1392 00a8 53030000 		.4byte	.LASF15
+ 1393 00ac 05       		.uleb128 0x5
+ 1394 00ad D4030000 		.4byte	.LASF16
+ 1395 00b1 04       		.byte	0x4
+ 1396 00b2 5D01     		.2byte	0x15d
+ 1397 00b4 B8000000 		.4byte	0xb8
+ 1398 00b8 06       		.uleb128 0x6
+ 1399 00b9 81000000 		.4byte	0x81
+ 1400 00bd 06       		.uleb128 0x6
+ 1401 00be 8C000000 		.4byte	0x8c
+ 1402 00c2 02       		.uleb128 0x2
+ 1403 00c3 04       		.byte	0x4
+ 1404 00c4 07       		.byte	0x7
+ 1405 00c5 A7010000 		.4byte	.LASF17
+ 1406 00c9 07       		.uleb128 0x7
+ 1407 00ca 28       		.byte	0x28
+ 1408 00cb 05       		.byte	0x5
+ 1409 00cc 0D       		.byte	0xd
+ 1410 00cd 62010000 		.4byte	0x162
+ 1411 00d1 08       		.uleb128 0x8
+ 1412 00d2 15020000 		.4byte	.LASF18
+ 1413 00d6 05       		.byte	0x5
+ 1414 00d7 0F       		.byte	0xf
+ 1415 00d8 68000000 		.4byte	0x68
+ 1416 00dc 00       		.byte	0
+ 1417 00dd 08       		.uleb128 0x8
+ 1418 00de CB010000 		.4byte	.LASF19
+ 1419 00e2 05       		.byte	0x5
+ 1420 00e3 10       		.byte	0x10
+ 1421 00e4 68000000 		.4byte	0x68
+ 1422 00e8 04       		.byte	0x4
+ 1423 00e9 08       		.uleb128 0x8
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 33
+
+
+ 1424 00ea 95020000 		.4byte	.LASF20
+ 1425 00ee 05       		.byte	0x5
+ 1426 00ef 11       		.byte	0x11
+ 1427 00f0 68000000 		.4byte	0x68
+ 1428 00f4 08       		.byte	0x8
+ 1429 00f5 08       		.uleb128 0x8
+ 1430 00f6 71010000 		.4byte	.LASF21
+ 1431 00fa 05       		.byte	0x5
+ 1432 00fb 12       		.byte	0x12
+ 1433 00fc 68000000 		.4byte	0x68
+ 1434 0100 0C       		.byte	0xc
+ 1435 0101 08       		.uleb128 0x8
+ 1436 0102 C5030000 		.4byte	.LASF22
+ 1437 0106 05       		.byte	0x5
+ 1438 0107 13       		.byte	0x13
+ 1439 0108 8C000000 		.4byte	0x8c
+ 1440 010c 10       		.byte	0x10
+ 1441 010d 08       		.uleb128 0x8
+ 1442 010e C3010000 		.4byte	.LASF23
+ 1443 0112 05       		.byte	0x5
+ 1444 0113 14       		.byte	0x14
+ 1445 0114 BD000000 		.4byte	0xbd
+ 1446 0118 12       		.byte	0x12
+ 1447 0119 08       		.uleb128 0x8
+ 1448 011a 44030000 		.4byte	.LASF24
+ 1449 011e 05       		.byte	0x5
+ 1450 011f 15       		.byte	0x15
+ 1451 0120 BD000000 		.4byte	0xbd
+ 1452 0124 14       		.byte	0x14
+ 1453 0125 08       		.uleb128 0x8
+ 1454 0126 F9000000 		.4byte	.LASF25
+ 1455 012a 05       		.byte	0x5
+ 1456 012b 16       		.byte	0x16
+ 1457 012c 8C000000 		.4byte	0x8c
+ 1458 0130 16       		.byte	0x16
+ 1459 0131 08       		.uleb128 0x8
+ 1460 0132 6B020000 		.4byte	.LASF26
+ 1461 0136 05       		.byte	0x5
+ 1462 0137 17       		.byte	0x17
+ 1463 0138 62010000 		.4byte	0x162
+ 1464 013c 18       		.byte	0x18
+ 1465 013d 08       		.uleb128 0x8
+ 1466 013e E2040000 		.4byte	.LASF27
+ 1467 0142 05       		.byte	0x5
+ 1468 0143 18       		.byte	0x18
+ 1469 0144 62010000 		.4byte	0x162
+ 1470 0148 1C       		.byte	0x1c
+ 1471 0149 08       		.uleb128 0x8
+ 1472 014a B0010000 		.4byte	.LASF28
+ 1473 014e 05       		.byte	0x5
+ 1474 014f 19       		.byte	0x19
+ 1475 0150 62010000 		.4byte	0x162
+ 1476 0154 20       		.byte	0x20
+ 1477 0155 08       		.uleb128 0x8
+ 1478 0156 3C030000 		.4byte	.LASF29
+ 1479 015a 05       		.byte	0x5
+ 1480 015b 1A       		.byte	0x1a
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 34
+
+
+ 1481 015c 62010000 		.4byte	0x162
+ 1482 0160 24       		.byte	0x24
+ 1483 0161 00       		.byte	0
+ 1484 0162 06       		.uleb128 0x6
+ 1485 0163 68000000 		.4byte	0x68
+ 1486 0167 03       		.uleb128 0x3
+ 1487 0168 BF000000 		.4byte	.LASF30
+ 1488 016c 05       		.byte	0x5
+ 1489 016d 1B       		.byte	0x1b
+ 1490 016e C9000000 		.4byte	0xc9
+ 1491 0172 09       		.uleb128 0x9
+ 1492 0173 F5030000 		.4byte	.LASF50
+ 1493 0177 0001     		.2byte	0x100
+ 1494 0179 06       		.byte	0x6
+ 1495 017a 18       		.byte	0x18
+ 1496 017b 70020000 		.4byte	0x270
+ 1497 017f 08       		.uleb128 0x8
+ 1498 0180 4C030000 		.4byte	.LASF31
+ 1499 0184 06       		.byte	0x6
+ 1500 0185 19       		.byte	0x19
+ 1501 0186 A5000000 		.4byte	0xa5
+ 1502 018a 00       		.byte	0
+ 1503 018b 08       		.uleb128 0x8
+ 1504 018c D9030000 		.4byte	.LASF32
+ 1505 0190 06       		.byte	0x6
+ 1506 0191 1A       		.byte	0x1a
+ 1507 0192 A5000000 		.4byte	0xa5
+ 1508 0196 01       		.byte	0x1
+ 1509 0197 0A       		.uleb128 0xa
+ 1510 0198 636D6400 		.ascii	"cmd\000"
+ 1511 019c 06       		.byte	0x6
+ 1512 019d 1B       		.byte	0x1b
+ 1513 019e A5000000 		.4byte	0xa5
+ 1514 01a2 02       		.byte	0x2
+ 1515 01a3 08       		.uleb128 0x8
+ 1516 01a4 99000000 		.4byte	.LASF33
+ 1517 01a8 06       		.byte	0x6
+ 1518 01a9 1C       		.byte	0x1c
+ 1519 01aa 2C000000 		.4byte	0x2c
+ 1520 01ae 03       		.byte	0x3
+ 1521 01af 08       		.uleb128 0x8
+ 1522 01b0 55010000 		.4byte	.LASF34
+ 1523 01b4 06       		.byte	0x6
+ 1524 01b5 1D       		.byte	0x1d
+ 1525 01b6 A5000000 		.4byte	0xa5
+ 1526 01ba 04       		.byte	0x4
+ 1527 01bb 08       		.uleb128 0x8
+ 1528 01bc 80030000 		.4byte	.LASF35
+ 1529 01c0 06       		.byte	0x6
+ 1530 01c1 1E       		.byte	0x1e
+ 1531 01c2 A5000000 		.4byte	0xa5
+ 1532 01c6 05       		.byte	0x5
+ 1533 01c7 08       		.uleb128 0x8
+ 1534 01c8 CD030000 		.4byte	.LASF36
+ 1535 01cc 06       		.byte	0x6
+ 1536 01cd 1F       		.byte	0x1f
+ 1537 01ce 70020000 		.4byte	0x270
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 35
+
+
+ 1538 01d2 06       		.byte	0x6
+ 1539 01d3 08       		.uleb128 0x8
+ 1540 01d4 BD010000 		.4byte	.LASF37
+ 1541 01d8 06       		.byte	0x6
+ 1542 01d9 20       		.byte	0x20
+ 1543 01da 80020000 		.4byte	0x280
+ 1544 01de 1A       		.byte	0x1a
+ 1545 01df 08       		.uleb128 0x8
+ 1546 01e0 8B000000 		.4byte	.LASF38
+ 1547 01e4 06       		.byte	0x6
+ 1548 01e5 21       		.byte	0x21
+ 1549 01e6 A5000000 		.4byte	0xa5
+ 1550 01ea 42       		.byte	0x42
+ 1551 01eb 08       		.uleb128 0x8
+ 1552 01ec 3E040000 		.4byte	.LASF39
+ 1553 01f0 06       		.byte	0x6
+ 1554 01f1 22       		.byte	0x22
+ 1555 01f2 90020000 		.4byte	0x290
+ 1556 01f6 43       		.byte	0x43
+ 1557 01f7 08       		.uleb128 0x8
+ 1558 01f8 BF040000 		.4byte	.LASF40
+ 1559 01fc 06       		.byte	0x6
+ 1560 01fd 23       		.byte	0x23
+ 1561 01fe 90020000 		.4byte	0x290
+ 1562 0202 46       		.byte	0x46
+ 1563 0203 08       		.uleb128 0x8
+ 1564 0204 D9040000 		.4byte	.LASF41
+ 1565 0208 06       		.byte	0x6
+ 1566 0209 24       		.byte	0x24
+ 1567 020a 2C000000 		.4byte	0x2c
+ 1568 020e 49       		.byte	0x49
+ 1569 020f 08       		.uleb128 0x8
+ 1570 0210 1B000000 		.4byte	.LASF42
+ 1571 0214 06       		.byte	0x6
+ 1572 0215 25       		.byte	0x25
+ 1573 0216 2C000000 		.4byte	0x2c
+ 1574 021a 4A       		.byte	0x4a
+ 1575 021b 08       		.uleb128 0x8
+ 1576 021c 1A020000 		.4byte	.LASF43
+ 1577 0220 06       		.byte	0x6
+ 1578 0221 26       		.byte	0x26
+ 1579 0222 2C000000 		.4byte	0x2c
+ 1580 0226 4B       		.byte	0x4b
+ 1581 0227 08       		.uleb128 0x8
+ 1582 0228 71000000 		.4byte	.LASF44
+ 1583 022c 06       		.byte	0x6
+ 1584 022d 27       		.byte	0x27
+ 1585 022e 2C000000 		.4byte	0x2c
+ 1586 0232 4C       		.byte	0x4c
+ 1587 0233 08       		.uleb128 0x8
+ 1588 0234 A5000000 		.4byte	.LASF45
+ 1589 0238 06       		.byte	0x6
+ 1590 0239 28       		.byte	0x28
+ 1591 023a A0020000 		.4byte	0x2a0
+ 1592 023e 4D       		.byte	0x4d
+ 1593 023f 08       		.uleb128 0x8
+ 1594 0240 7B000000 		.4byte	.LASF46
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 36
+
+
+ 1595 0244 06       		.byte	0x6
+ 1596 0245 29       		.byte	0x29
+ 1597 0246 2C000000 		.4byte	0x2c
+ 1598 024a CD       		.byte	0xcd
+ 1599 024b 08       		.uleb128 0x8
+ 1600 024c 76010000 		.4byte	.LASF47
+ 1601 0250 06       		.byte	0x6
+ 1602 0251 2A       		.byte	0x2a
+ 1603 0252 2C000000 		.4byte	0x2c
+ 1604 0256 CE       		.byte	0xce
+ 1605 0257 08       		.uleb128 0x8
+ 1606 0258 D2010000 		.4byte	.LASF48
+ 1607 025c 06       		.byte	0x6
+ 1608 025d 2B       		.byte	0x2b
+ 1609 025e 2C000000 		.4byte	0x2c
+ 1610 0262 CF       		.byte	0xcf
+ 1611 0263 08       		.uleb128 0x8
+ 1612 0264 E3010000 		.4byte	.LASF49
+ 1613 0268 06       		.byte	0x6
+ 1614 0269 2C       		.byte	0x2c
+ 1615 026a B0020000 		.4byte	0x2b0
+ 1616 026e D0       		.byte	0xd0
+ 1617 026f 00       		.byte	0
+ 1618 0270 0B       		.uleb128 0xb
+ 1619 0271 2C000000 		.4byte	0x2c
+ 1620 0275 80020000 		.4byte	0x280
+ 1621 0279 0C       		.uleb128 0xc
+ 1622 027a C2000000 		.4byte	0xc2
+ 1623 027e 13       		.byte	0x13
+ 1624 027f 00       		.byte	0
+ 1625 0280 0B       		.uleb128 0xb
+ 1626 0281 A5000000 		.4byte	0xa5
+ 1627 0285 90020000 		.4byte	0x290
+ 1628 0289 0C       		.uleb128 0xc
+ 1629 028a C2000000 		.4byte	0xc2
+ 1630 028e 27       		.byte	0x27
+ 1631 028f 00       		.byte	0
+ 1632 0290 0B       		.uleb128 0xb
+ 1633 0291 A5000000 		.4byte	0xa5
+ 1634 0295 A0020000 		.4byte	0x2a0
+ 1635 0299 0C       		.uleb128 0xc
+ 1636 029a C2000000 		.4byte	0xc2
+ 1637 029e 02       		.byte	0x2
+ 1638 029f 00       		.byte	0
+ 1639 02a0 0B       		.uleb128 0xb
+ 1640 02a1 2C000000 		.4byte	0x2c
+ 1641 02a5 B0020000 		.4byte	0x2b0
+ 1642 02a9 0C       		.uleb128 0xc
+ 1643 02aa C2000000 		.4byte	0xc2
+ 1644 02ae 7F       		.byte	0x7f
+ 1645 02af 00       		.byte	0
+ 1646 02b0 0B       		.uleb128 0xb
+ 1647 02b1 2C000000 		.4byte	0x2c
+ 1648 02b5 C0020000 		.4byte	0x2c0
+ 1649 02b9 0C       		.uleb128 0xc
+ 1650 02ba C2000000 		.4byte	0xc2
+ 1651 02be 2F       		.byte	0x2f
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 37
+
+
+ 1652 02bf 00       		.byte	0
+ 1653 02c0 03       		.uleb128 0x3
+ 1654 02c1 F5030000 		.4byte	.LASF50
+ 1655 02c5 06       		.byte	0x6
+ 1656 02c6 2D       		.byte	0x2d
+ 1657 02c7 72010000 		.4byte	0x172
+ 1658 02cb 0D       		.uleb128 0xd
+ 1659 02cc 02       		.byte	0x2
+ 1660 02cd 01       		.byte	0x1
+ 1661 02ce 84       		.byte	0x84
+ 1662 02cf EA020000 		.4byte	0x2ea
+ 1663 02d3 0E       		.uleb128 0xe
+ 1664 02d4 6C656E00 		.ascii	"len\000"
+ 1665 02d8 01       		.byte	0x1
+ 1666 02d9 85       		.byte	0x85
+ 1667 02da 33000000 		.4byte	0x33
+ 1668 02de 0F       		.uleb128 0xf
+ 1669 02df 0E020000 		.4byte	.LASF51
+ 1670 02e3 01       		.byte	0x1
+ 1671 02e4 86       		.byte	0x86
+ 1672 02e5 EA020000 		.4byte	0x2ea
+ 1673 02e9 00       		.byte	0
+ 1674 02ea 0B       		.uleb128 0xb
+ 1675 02eb 2C000000 		.4byte	0x2c
+ 1676 02ef FA020000 		.4byte	0x2fa
+ 1677 02f3 0C       		.uleb128 0xc
+ 1678 02f4 C2000000 		.4byte	0xc2
+ 1679 02f8 01       		.byte	0x1
+ 1680 02f9 00       		.byte	0
+ 1681 02fa 10       		.uleb128 0x10
+ 1682 02fb 61010000 		.4byte	.LASF52
+ 1683 02ff 04       		.byte	0x4
+ 1684 0300 01       		.byte	0x1
+ 1685 0301 82       		.byte	0x82
+ 1686 0302 1D030000 		.4byte	0x31d
+ 1687 0306 08       		.uleb128 0x8
+ 1688 0307 0A000000 		.4byte	.LASF53
+ 1689 030b 01       		.byte	0x1
+ 1690 030c 83       		.byte	0x83
+ 1691 030d 2C000000 		.4byte	0x2c
+ 1692 0311 00       		.byte	0
+ 1693 0312 0A       		.uleb128 0xa
+ 1694 0313 7500     		.ascii	"u\000"
+ 1695 0315 01       		.byte	0x1
+ 1696 0316 87       		.byte	0x87
+ 1697 0317 CB020000 		.4byte	0x2cb
+ 1698 031b 02       		.byte	0x2
+ 1699 031c 00       		.byte	0
+ 1700 031d 11       		.uleb128 0x11
+ 1701 031e F1000000 		.4byte	.LASF89
+ 1702 0322 01       		.byte	0x1
+ 1703 0323 18       		.byte	0x18
+ 1704 0324 00000000 		.4byte	.LFB63
+ 1705 0328 5C000000 		.4byte	.LFE63-.LFB63
+ 1706 032c 01       		.uleb128 0x1
+ 1707 032d 9C       		.byte	0x9c
+ 1708 032e 4B030000 		.4byte	0x34b
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 38
+
+
+ 1709 0332 12       		.uleb128 0x12
+ 1710 0333 6900     		.ascii	"i\000"
+ 1711 0335 01       		.byte	0x1
+ 1712 0336 1A       		.byte	0x1a
+ 1713 0337 68000000 		.4byte	0x68
+ 1714 033b 02       		.uleb128 0x2
+ 1715 033c 91       		.byte	0x91
+ 1716 033d 74       		.sleb128 -12
+ 1717 033e 12       		.uleb128 0x12
+ 1718 033f 6A00     		.ascii	"j\000"
+ 1719 0341 01       		.byte	0x1
+ 1720 0342 1A       		.byte	0x1a
+ 1721 0343 68000000 		.4byte	0x68
+ 1722 0347 02       		.uleb128 0x2
+ 1723 0348 91       		.byte	0x91
+ 1724 0349 70       		.sleb128 -16
+ 1725 034a 00       		.byte	0
+ 1726 034b 13       		.uleb128 0x13
+ 1727 034c 58000000 		.4byte	.LASF55
+ 1728 0350 01       		.byte	0x1
+ 1729 0351 28       		.byte	0x28
+ 1730 0352 68000000 		.4byte	0x68
+ 1731 0356 00000000 		.4byte	.LFB64
+ 1732 035a 94000000 		.4byte	.LFE64-.LFB64
+ 1733 035e 01       		.uleb128 0x1
+ 1734 035f 9C       		.byte	0x9c
+ 1735 0360 8F030000 		.4byte	0x38f
+ 1736 0364 14       		.uleb128 0x14
+ 1737 0365 61020000 		.4byte	.LASF54
+ 1738 0369 01       		.byte	0x1
+ 1739 036a 2A       		.byte	0x2a
+ 1740 036b 68000000 		.4byte	0x68
+ 1741 036f 02       		.uleb128 0x2
+ 1742 0370 91       		.byte	0x91
+ 1743 0371 74       		.sleb128 -12
+ 1744 0372 12       		.uleb128 0x12
+ 1745 0373 746D7000 		.ascii	"tmp\000"
+ 1746 0377 01       		.byte	0x1
+ 1747 0378 2B       		.byte	0x2b
+ 1748 0379 A5000000 		.4byte	0xa5
+ 1749 037d 02       		.uleb128 0x2
+ 1750 037e 91       		.byte	0x91
+ 1751 037f 72       		.sleb128 -14
+ 1752 0380 12       		.uleb128 0x12
+ 1753 0381 72657400 		.ascii	"ret\000"
+ 1754 0385 01       		.byte	0x1
+ 1755 0386 2C       		.byte	0x2c
+ 1756 0387 A5000000 		.4byte	0xa5
+ 1757 038b 02       		.uleb128 0x2
+ 1758 038c 91       		.byte	0x91
+ 1759 038d 73       		.sleb128 -13
+ 1760 038e 00       		.byte	0
+ 1761 038f 15       		.uleb128 0x15
+ 1762 0390 00000000 		.4byte	.LASF56
+ 1763 0394 01       		.byte	0x1
+ 1764 0395 4F       		.byte	0x4f
+ 1765 0396 00000000 		.4byte	.LFB65
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 39
+
+
+ 1766 039a 40000000 		.4byte	.LFE65-.LFB65
+ 1767 039e 01       		.uleb128 0x1
+ 1768 039f 9C       		.byte	0x9c
+ 1769 03a0 B3030000 		.4byte	0x3b3
+ 1770 03a4 16       		.uleb128 0x16
+ 1771 03a5 D0000000 		.4byte	.LASF90
+ 1772 03a9 01       		.byte	0x1
+ 1773 03aa 4F       		.byte	0x4f
+ 1774 03ab A5000000 		.4byte	0xa5
+ 1775 03af 02       		.uleb128 0x2
+ 1776 03b0 91       		.byte	0x91
+ 1777 03b1 77       		.sleb128 -9
+ 1778 03b2 00       		.byte	0
+ 1779 03b3 15       		.uleb128 0x15
+ 1780 03b4 44020000 		.4byte	.LASF57
+ 1781 03b8 01       		.byte	0x1
+ 1782 03b9 64       		.byte	0x64
+ 1783 03ba 00000000 		.4byte	.LFB66
+ 1784 03be 3C000000 		.4byte	.LFE66-.LFB66
+ 1785 03c2 01       		.uleb128 0x1
+ 1786 03c3 9C       		.byte	0x9c
+ 1787 03c4 D5030000 		.4byte	0x3d5
+ 1788 03c8 12       		.uleb128 0x12
+ 1789 03c9 6900     		.ascii	"i\000"
+ 1790 03cb 01       		.byte	0x1
+ 1791 03cc 66       		.byte	0x66
+ 1792 03cd 68000000 		.4byte	0x68
+ 1793 03d1 02       		.uleb128 0x2
+ 1794 03d2 91       		.byte	0x91
+ 1795 03d3 74       		.sleb128 -12
+ 1796 03d4 00       		.byte	0
+ 1797 03d5 17       		.uleb128 0x17
+ 1798 03d6 77030000 		.4byte	.LASF62
+ 1799 03da 01       		.byte	0x1
+ 1800 03db 6E       		.byte	0x6e
+ 1801 03dc 00000000 		.4byte	.LFB67
+ 1802 03e0 68000000 		.4byte	.LFE67-.LFB67
+ 1803 03e4 01       		.uleb128 0x1
+ 1804 03e5 9C       		.byte	0x9c
+ 1805 03e6 15       		.uleb128 0x15
+ 1806 03e7 A2040000 		.4byte	.LASF58
+ 1807 03eb 01       		.byte	0x1
+ 1808 03ec 8A       		.byte	0x8a
+ 1809 03ed 00000000 		.4byte	.LFB68
+ 1810 03f1 48010000 		.4byte	.LFE68-.LFB68
+ 1811 03f5 01       		.uleb128 0x1
+ 1812 03f6 9C       		.byte	0x9c
+ 1813 03f7 32040000 		.4byte	0x432
+ 1814 03fb 14       		.uleb128 0x14
+ 1815 03fc 61020000 		.4byte	.LASF54
+ 1816 0400 01       		.byte	0x1
+ 1817 0401 8C       		.byte	0x8c
+ 1818 0402 68000000 		.4byte	0x68
+ 1819 0406 02       		.uleb128 0x2
+ 1820 0407 91       		.byte	0x91
+ 1821 0408 74       		.sleb128 -12
+ 1822 0409 12       		.uleb128 0x12
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 40
+
+
+ 1823 040a 746D7000 		.ascii	"tmp\000"
+ 1824 040e 01       		.byte	0x1
+ 1825 040f 8D       		.byte	0x8d
+ 1826 0410 2C000000 		.4byte	0x2c
+ 1827 0414 02       		.uleb128 0x2
+ 1828 0415 91       		.byte	0x91
+ 1829 0416 6B       		.sleb128 -21
+ 1830 0417 14       		.uleb128 0x14
+ 1831 0418 0F000000 		.4byte	.LASF59
+ 1832 041c 01       		.byte	0x1
+ 1833 041d 8E       		.byte	0x8e
+ 1834 041e A5000000 		.4byte	0xa5
+ 1835 0422 02       		.uleb128 0x2
+ 1836 0423 91       		.byte	0x91
+ 1837 0424 73       		.sleb128 -13
+ 1838 0425 12       		.uleb128 0x12
+ 1839 0426 6900     		.ascii	"i\000"
+ 1840 0428 01       		.byte	0x1
+ 1841 0429 8F       		.byte	0x8f
+ 1842 042a 68000000 		.4byte	0x68
+ 1843 042e 02       		.uleb128 0x2
+ 1844 042f 91       		.byte	0x91
+ 1845 0430 6C       		.sleb128 -20
+ 1846 0431 00       		.byte	0
+ 1847 0432 15       		.uleb128 0x15
+ 1848 0433 2B010000 		.4byte	.LASF60
+ 1849 0437 01       		.byte	0x1
+ 1850 0438 CD       		.byte	0xcd
+ 1851 0439 00000000 		.4byte	.LFB69
+ 1852 043d 68000000 		.4byte	.LFE69-.LFB69
+ 1853 0441 01       		.uleb128 0x1
+ 1854 0442 9C       		.byte	0x9c
+ 1855 0443 56040000 		.4byte	0x456
+ 1856 0447 14       		.uleb128 0x14
+ 1857 0448 39040000 		.4byte	.LASF61
+ 1858 044c 01       		.byte	0x1
+ 1859 044d CE       		.byte	0xce
+ 1860 044e A5000000 		.4byte	0xa5
+ 1861 0452 02       		.uleb128 0x2
+ 1862 0453 91       		.byte	0x91
+ 1863 0454 77       		.sleb128 -9
+ 1864 0455 00       		.byte	0
+ 1865 0456 18       		.uleb128 0x18
+ 1866 0457 27000000 		.4byte	.LASF63
+ 1867 045b 01       		.byte	0x1
+ 1868 045c EE       		.byte	0xee
+ 1869 045d 00000000 		.4byte	.LFB70
+ 1870 0461 28000000 		.4byte	.LFE70-.LFB70
+ 1871 0465 01       		.uleb128 0x1
+ 1872 0466 9C       		.byte	0x9c
+ 1873 0467 15       		.uleb128 0x15
+ 1874 0468 58030000 		.4byte	.LASF64
+ 1875 046c 01       		.byte	0x1
+ 1876 046d F7       		.byte	0xf7
+ 1877 046e 00000000 		.4byte	.LFB71
+ 1878 0472 3C000000 		.4byte	.LFE71-.LFB71
+ 1879 0476 01       		.uleb128 0x1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 41
+
+
+ 1880 0477 9C       		.byte	0x9c
+ 1881 0478 89040000 		.4byte	0x489
+ 1882 047c 12       		.uleb128 0x12
+ 1883 047d 6900     		.ascii	"i\000"
+ 1884 047f 01       		.byte	0x1
+ 1885 0480 F9       		.byte	0xf9
+ 1886 0481 68000000 		.4byte	0x68
+ 1887 0485 02       		.uleb128 0x2
+ 1888 0486 91       		.byte	0x91
+ 1889 0487 74       		.sleb128 -12
+ 1890 0488 00       		.byte	0
+ 1891 0489 19       		.uleb128 0x19
+ 1892 048a 2B020000 		.4byte	.LASF65
+ 1893 048e 01       		.byte	0x1
+ 1894 048f 0101     		.2byte	0x101
+ 1895 0491 00000000 		.4byte	.LFB72
+ 1896 0495 48000000 		.4byte	.LFE72-.LFB72
+ 1897 0499 01       		.uleb128 0x1
+ 1898 049a 9C       		.byte	0x9c
+ 1899 049b 1A       		.uleb128 0x1a
+ 1900 049c B1020000 		.4byte	.LASF66
+ 1901 04a0 01       		.byte	0x1
+ 1902 04a1 1301     		.2byte	0x113
+ 1903 04a3 00000000 		.4byte	.LFB73
+ 1904 04a7 58010000 		.4byte	.LFE73-.LFB73
+ 1905 04ab 01       		.uleb128 0x1
+ 1906 04ac 9C       		.byte	0x9c
+ 1907 04ad EC040000 		.4byte	0x4ec
+ 1908 04b1 1B       		.uleb128 0x1b
+ 1909 04b2 61020000 		.4byte	.LASF54
+ 1910 04b6 01       		.byte	0x1
+ 1911 04b7 1501     		.2byte	0x115
+ 1912 04b9 68000000 		.4byte	0x68
+ 1913 04bd 02       		.uleb128 0x2
+ 1914 04be 91       		.byte	0x91
+ 1915 04bf 74       		.sleb128 -12
+ 1916 04c0 1C       		.uleb128 0x1c
+ 1917 04c1 746D7000 		.ascii	"tmp\000"
+ 1918 04c5 01       		.byte	0x1
+ 1919 04c6 1601     		.2byte	0x116
+ 1920 04c8 2C000000 		.4byte	0x2c
+ 1921 04cc 02       		.uleb128 0x2
+ 1922 04cd 91       		.byte	0x91
+ 1923 04ce 6B       		.sleb128 -21
+ 1924 04cf 1B       		.uleb128 0x1b
+ 1925 04d0 0F000000 		.4byte	.LASF59
+ 1926 04d4 01       		.byte	0x1
+ 1927 04d5 1701     		.2byte	0x117
+ 1928 04d7 A5000000 		.4byte	0xa5
+ 1929 04db 02       		.uleb128 0x2
+ 1930 04dc 91       		.byte	0x91
+ 1931 04dd 73       		.sleb128 -13
+ 1932 04de 1C       		.uleb128 0x1c
+ 1933 04df 6900     		.ascii	"i\000"
+ 1934 04e1 01       		.byte	0x1
+ 1935 04e2 1801     		.2byte	0x118
+ 1936 04e4 68000000 		.4byte	0x68
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 42
+
+
+ 1937 04e8 02       		.uleb128 0x2
+ 1938 04e9 91       		.byte	0x91
+ 1939 04ea 6C       		.sleb128 -20
+ 1940 04eb 00       		.byte	0
+ 1941 04ec 1A       		.uleb128 0x1a
+ 1942 04ed FE030000 		.4byte	.LASF67
+ 1943 04f1 01       		.byte	0x1
+ 1944 04f2 5701     		.2byte	0x157
+ 1945 04f4 00000000 		.4byte	.LFB74
+ 1946 04f8 64000000 		.4byte	.LFE74-.LFB74
+ 1947 04fc 01       		.uleb128 0x1
+ 1948 04fd 9C       		.byte	0x9c
+ 1949 04fe 12050000 		.4byte	0x512
+ 1950 0502 1B       		.uleb128 0x1b
+ 1951 0503 39040000 		.4byte	.LASF61
+ 1952 0507 01       		.byte	0x1
+ 1953 0508 5801     		.2byte	0x158
+ 1954 050a A5000000 		.4byte	0xa5
+ 1955 050e 02       		.uleb128 0x2
+ 1956 050f 91       		.byte	0x91
+ 1957 0510 77       		.sleb128 -9
+ 1958 0511 00       		.byte	0
+ 1959 0512 1D       		.uleb128 0x1d
+ 1960 0513 60000000 		.4byte	.LASF68
+ 1961 0517 01       		.byte	0x1
+ 1962 0518 6D01     		.2byte	0x16d
+ 1963 051a 00000000 		.4byte	.LFB75
+ 1964 051e 74000000 		.4byte	.LFE75-.LFB75
+ 1965 0522 01       		.uleb128 0x1
+ 1966 0523 9C       		.byte	0x9c
+ 1967 0524 45050000 		.4byte	0x545
+ 1968 0528 1C       		.uleb128 0x1c
+ 1969 0529 6900     		.ascii	"i\000"
+ 1970 052b 01       		.byte	0x1
+ 1971 052c 6E01     		.2byte	0x16e
+ 1972 052e 68000000 		.4byte	0x68
+ 1973 0532 02       		.uleb128 0x2
+ 1974 0533 91       		.byte	0x91
+ 1975 0534 74       		.sleb128 -12
+ 1976 0535 1B       		.uleb128 0x1b
+ 1977 0536 EF040000 		.4byte	.LASF69
+ 1978 053a 01       		.byte	0x1
+ 1979 053b 6F01     		.2byte	0x16f
+ 1980 053d 2C000000 		.4byte	0x2c
+ 1981 0541 02       		.uleb128 0x2
+ 1982 0542 91       		.byte	0x91
+ 1983 0543 73       		.sleb128 -13
+ 1984 0544 00       		.byte	0
+ 1985 0545 1E       		.uleb128 0x1e
+ 1986 0546 B2040000 		.4byte	.LASF70
+ 1987 054a 07       		.byte	0x7
+ 1988 054b 2A06     		.2byte	0x62a
+ 1989 054d 51050000 		.4byte	0x551
+ 1990 0551 06       		.uleb128 0x6
+ 1991 0552 76000000 		.4byte	0x76
+ 1992 0556 1F       		.uleb128 0x1f
+ 1993 0557 20010000 		.4byte	.LASF71
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 43
+
+
+ 1994 055b 06       		.byte	0x6
+ 1995 055c 2F       		.byte	0x2f
+ 1996 055d C0020000 		.4byte	0x2c0
+ 1997 0561 20       		.uleb128 0x20
+ 1998 0562 7300     		.ascii	"s\000"
+ 1999 0564 06       		.byte	0x6
+ 2000 0565 30       		.byte	0x30
+ 2001 0566 67010000 		.4byte	0x167
+ 2002 056a 05       		.uleb128 0x5
+ 2003 056b 03       		.byte	0x3
+ 2004 056c 00000000 		.4byte	s
+ 2005 0570 21       		.uleb128 0x21
+ 2006 0571 08010000 		.4byte	.LASF72
+ 2007 0575 06       		.byte	0x6
+ 2008 0576 33       		.byte	0x33
+ 2009 0577 A5000000 		.4byte	0xa5
+ 2010 057b 05       		.uleb128 0x5
+ 2011 057c 03       		.byte	0x3
+ 2012 057d 00000000 		.4byte	currentAccessType
+ 2013 0581 20       		.uleb128 0x20
+ 2014 0582 6F6C6400 		.ascii	"old\000"
+ 2015 0586 06       		.byte	0x6
+ 2016 0587 34       		.byte	0x34
+ 2017 0588 A5000000 		.4byte	0xa5
+ 2018 058c 05       		.uleb128 0x5
+ 2019 058d 03       		.byte	0x3
+ 2020 058e 00000000 		.4byte	old
+ 2021 0592 21       		.uleb128 0x21
+ 2022 0593 E3030000 		.4byte	.LASF73
+ 2023 0597 06       		.byte	0x6
+ 2024 0598 35       		.byte	0x35
+ 2025 0599 68000000 		.4byte	0x68
+ 2026 059d 05       		.uleb128 0x5
+ 2027 059e 03       		.byte	0x3
+ 2028 059f 00000000 		.4byte	TAMPERCR_POLARITY
+ 2029 05a3 21       		.uleb128 0x21
+ 2030 05a4 8E010000 		.4byte	.LASF74
+ 2031 05a8 06       		.byte	0x6
+ 2032 05a9 38       		.byte	0x38
+ 2033 05aa 68000000 		.4byte	0x68
+ 2034 05ae 05       		.uleb128 0x5
+ 2035 05af 03       		.byte	0x3
+ 2036 05b0 00000000 		.4byte	card_ack
+ 2037 05b4 21       		.uleb128 0x21
+ 2038 05b5 E5000000 		.4byte	.LASF75
+ 2039 05b9 06       		.byte	0x6
+ 2040 05ba 39       		.byte	0x39
+ 2041 05bb 68000000 		.4byte	0x68
+ 2042 05bf 05       		.uleb128 0x5
+ 2043 05c0 03       		.byte	0x3
+ 2044 05c1 00000000 		.4byte	card_in_buf
+ 2045 05c5 21       		.uleb128 0x21
+ 2046 05c6 04020000 		.4byte	.LASF76
+ 2047 05ca 06       		.byte	0x6
+ 2048 05cb 3C       		.byte	0x3c
+ 2049 05cc A5000000 		.4byte	0xa5
+ 2050 05d0 05       		.uleb128 0x5
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 44
+
+
+ 2051 05d1 03       		.byte	0x3
+ 2052 05d2 00000000 		.4byte	got_pulse
+ 2053 05d6 21       		.uleb128 0x21
+ 2054 05d7 93030000 		.4byte	.LASF77
+ 2055 05db 06       		.byte	0x6
+ 2056 05dc 3D       		.byte	0x3d
+ 2057 05dd 68000000 		.4byte	0x68
+ 2058 05e1 05       		.uleb128 0x5
+ 2059 05e2 03       		.byte	0x3
+ 2060 05e3 00000000 		.4byte	f2f_pulsewidth
+ 2061 05e7 21       		.uleb128 0x21
+ 2062 05e8 1B040000 		.4byte	.LASF78
+ 2063 05ec 06       		.byte	0x6
+ 2064 05ed 3E       		.byte	0x3e
+ 2065 05ee 68000000 		.4byte	0x68
+ 2066 05f2 05       		.uleb128 0x5
+ 2067 05f3 03       		.byte	0x3
+ 2068 05f4 00000000 		.4byte	timeout_cnt
+ 2069 05f8 21       		.uleb128 0x21
+ 2070 05f9 27040000 		.4byte	.LASF79
+ 2071 05fd 06       		.byte	0x6
+ 2072 05fe 3F       		.byte	0x3f
+ 2073 05ff A5000000 		.4byte	0xa5
+ 2074 0603 05       		.uleb128 0x5
+ 2075 0604 03       		.byte	0x3
+ 2076 0605 00000000 		.4byte	activate_f2ftimer
+ 2077 0609 21       		.uleb128 0x21
+ 2078 060a CA040000 		.4byte	.LASF80
+ 2079 060e 01       		.byte	0x1
+ 2080 060f E9       		.byte	0xe9
+ 2081 0610 2C000000 		.4byte	0x2c
+ 2082 0614 05       		.uleb128 0x5
+ 2083 0615 03       		.byte	0x3
+ 2084 0616 00000000 		.4byte	OSDPReaderTask
+ 2085 061a 21       		.uleb128 0x21
+ 2086 061b B5030000 		.4byte	.LASF81
+ 2087 061f 01       		.byte	0x1
+ 2088 0620 88       		.byte	0x88
+ 2089 0621 FA020000 		.4byte	0x2fa
+ 2090 0625 05       		.uleb128 0x5
+ 2091 0626 03       		.byte	0x3
+ 2092 0627 00000000 		.4byte	osdp_msg_header
+ 2093 062b 21       		.uleb128 0x21
+ 2094 062c 41000000 		.4byte	.LASF82
+ 2095 0630 01       		.byte	0x1
+ 2096 0631 88       		.byte	0x88
+ 2097 0632 FA020000 		.4byte	0x2fa
+ 2098 0636 05       		.uleb128 0x5
+ 2099 0637 03       		.byte	0x3
+ 2100 0638 00000000 		.4byte	osdp_reader_msg_header
+ 2101 063c 21       		.uleb128 0x21
+ 2102 063d 3A020000 		.4byte	.LASF83
+ 2103 0641 01       		.byte	0x1
+ 2104 0642 E7       		.byte	0xe7
+ 2105 0643 B0020000 		.4byte	0x2b0
+ 2106 0647 05       		.uleb128 0x5
+ 2107 0648 03       		.byte	0x3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 45
+
+
+ 2108 0649 00000000 		.4byte	keepALive
+ 2109 064d 21       		.uleb128 0x21
+ 2110 064e 97010000 		.4byte	.LASF84
+ 2111 0652 01       		.byte	0x1
+ 2112 0653 E8       		.byte	0xe8
+ 2113 0654 2C000000 		.4byte	0x2c
+ 2114 0658 05       		.uleb128 0x5
+ 2115 0659 03       		.byte	0x3
+ 2116 065a 00000000 		.4byte	keepALiveLength
+ 2117 065e 21       		.uleb128 0x21
+ 2118 065f 54020000 		.4byte	.LASF85
+ 2119 0663 01       		.byte	0x1
+ 2120 0664 EB       		.byte	0xeb
+ 2121 0665 81000000 		.4byte	0x81
+ 2122 0669 05       		.uleb128 0x5
+ 2123 066a 03       		.byte	0x3
+ 2124 066b 00000000 		.4byte	InterruptCnt
+ 2125 066f 00       		.byte	0
+ 2126              		.section	.debug_abbrev,"",%progbits
+ 2127              	.Ldebug_abbrev0:
+ 2128 0000 01       		.uleb128 0x1
+ 2129 0001 11       		.uleb128 0x11
+ 2130 0002 01       		.byte	0x1
+ 2131 0003 25       		.uleb128 0x25
+ 2132 0004 0E       		.uleb128 0xe
+ 2133 0005 13       		.uleb128 0x13
+ 2134 0006 0B       		.uleb128 0xb
+ 2135 0007 03       		.uleb128 0x3
+ 2136 0008 0E       		.uleb128 0xe
+ 2137 0009 1B       		.uleb128 0x1b
+ 2138 000a 0E       		.uleb128 0xe
+ 2139 000b 55       		.uleb128 0x55
+ 2140 000c 17       		.uleb128 0x17
+ 2141 000d 11       		.uleb128 0x11
+ 2142 000e 01       		.uleb128 0x1
+ 2143 000f 10       		.uleb128 0x10
+ 2144 0010 17       		.uleb128 0x17
+ 2145 0011 00       		.byte	0
+ 2146 0012 00       		.byte	0
+ 2147 0013 02       		.uleb128 0x2
+ 2148 0014 24       		.uleb128 0x24
+ 2149 0015 00       		.byte	0
+ 2150 0016 0B       		.uleb128 0xb
+ 2151 0017 0B       		.uleb128 0xb
+ 2152 0018 3E       		.uleb128 0x3e
+ 2153 0019 0B       		.uleb128 0xb
+ 2154 001a 03       		.uleb128 0x3
+ 2155 001b 0E       		.uleb128 0xe
+ 2156 001c 00       		.byte	0
+ 2157 001d 00       		.byte	0
+ 2158 001e 03       		.uleb128 0x3
+ 2159 001f 16       		.uleb128 0x16
+ 2160 0020 00       		.byte	0
+ 2161 0021 03       		.uleb128 0x3
+ 2162 0022 0E       		.uleb128 0xe
+ 2163 0023 3A       		.uleb128 0x3a
+ 2164 0024 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 46
+
+
+ 2165 0025 3B       		.uleb128 0x3b
+ 2166 0026 0B       		.uleb128 0xb
+ 2167 0027 49       		.uleb128 0x49
+ 2168 0028 13       		.uleb128 0x13
+ 2169 0029 00       		.byte	0
+ 2170 002a 00       		.byte	0
+ 2171 002b 04       		.uleb128 0x4
+ 2172 002c 24       		.uleb128 0x24
+ 2173 002d 00       		.byte	0
+ 2174 002e 0B       		.uleb128 0xb
+ 2175 002f 0B       		.uleb128 0xb
+ 2176 0030 3E       		.uleb128 0x3e
+ 2177 0031 0B       		.uleb128 0xb
+ 2178 0032 03       		.uleb128 0x3
+ 2179 0033 08       		.uleb128 0x8
+ 2180 0034 00       		.byte	0
+ 2181 0035 00       		.byte	0
+ 2182 0036 05       		.uleb128 0x5
+ 2183 0037 16       		.uleb128 0x16
+ 2184 0038 00       		.byte	0
+ 2185 0039 03       		.uleb128 0x3
+ 2186 003a 0E       		.uleb128 0xe
+ 2187 003b 3A       		.uleb128 0x3a
+ 2188 003c 0B       		.uleb128 0xb
+ 2189 003d 3B       		.uleb128 0x3b
+ 2190 003e 05       		.uleb128 0x5
+ 2191 003f 49       		.uleb128 0x49
+ 2192 0040 13       		.uleb128 0x13
+ 2193 0041 00       		.byte	0
+ 2194 0042 00       		.byte	0
+ 2195 0043 06       		.uleb128 0x6
+ 2196 0044 35       		.uleb128 0x35
+ 2197 0045 00       		.byte	0
+ 2198 0046 49       		.uleb128 0x49
+ 2199 0047 13       		.uleb128 0x13
+ 2200 0048 00       		.byte	0
+ 2201 0049 00       		.byte	0
+ 2202 004a 07       		.uleb128 0x7
+ 2203 004b 13       		.uleb128 0x13
+ 2204 004c 01       		.byte	0x1
+ 2205 004d 0B       		.uleb128 0xb
+ 2206 004e 0B       		.uleb128 0xb
+ 2207 004f 3A       		.uleb128 0x3a
+ 2208 0050 0B       		.uleb128 0xb
+ 2209 0051 3B       		.uleb128 0x3b
+ 2210 0052 0B       		.uleb128 0xb
+ 2211 0053 01       		.uleb128 0x1
+ 2212 0054 13       		.uleb128 0x13
+ 2213 0055 00       		.byte	0
+ 2214 0056 00       		.byte	0
+ 2215 0057 08       		.uleb128 0x8
+ 2216 0058 0D       		.uleb128 0xd
+ 2217 0059 00       		.byte	0
+ 2218 005a 03       		.uleb128 0x3
+ 2219 005b 0E       		.uleb128 0xe
+ 2220 005c 3A       		.uleb128 0x3a
+ 2221 005d 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 47
+
+
+ 2222 005e 3B       		.uleb128 0x3b
+ 2223 005f 0B       		.uleb128 0xb
+ 2224 0060 49       		.uleb128 0x49
+ 2225 0061 13       		.uleb128 0x13
+ 2226 0062 38       		.uleb128 0x38
+ 2227 0063 0B       		.uleb128 0xb
+ 2228 0064 00       		.byte	0
+ 2229 0065 00       		.byte	0
+ 2230 0066 09       		.uleb128 0x9
+ 2231 0067 13       		.uleb128 0x13
+ 2232 0068 01       		.byte	0x1
+ 2233 0069 03       		.uleb128 0x3
+ 2234 006a 0E       		.uleb128 0xe
+ 2235 006b 0B       		.uleb128 0xb
+ 2236 006c 05       		.uleb128 0x5
+ 2237 006d 3A       		.uleb128 0x3a
+ 2238 006e 0B       		.uleb128 0xb
+ 2239 006f 3B       		.uleb128 0x3b
+ 2240 0070 0B       		.uleb128 0xb
+ 2241 0071 01       		.uleb128 0x1
+ 2242 0072 13       		.uleb128 0x13
+ 2243 0073 00       		.byte	0
+ 2244 0074 00       		.byte	0
+ 2245 0075 0A       		.uleb128 0xa
+ 2246 0076 0D       		.uleb128 0xd
+ 2247 0077 00       		.byte	0
+ 2248 0078 03       		.uleb128 0x3
+ 2249 0079 08       		.uleb128 0x8
+ 2250 007a 3A       		.uleb128 0x3a
+ 2251 007b 0B       		.uleb128 0xb
+ 2252 007c 3B       		.uleb128 0x3b
+ 2253 007d 0B       		.uleb128 0xb
+ 2254 007e 49       		.uleb128 0x49
+ 2255 007f 13       		.uleb128 0x13
+ 2256 0080 38       		.uleb128 0x38
+ 2257 0081 0B       		.uleb128 0xb
+ 2258 0082 00       		.byte	0
+ 2259 0083 00       		.byte	0
+ 2260 0084 0B       		.uleb128 0xb
+ 2261 0085 01       		.uleb128 0x1
+ 2262 0086 01       		.byte	0x1
+ 2263 0087 49       		.uleb128 0x49
+ 2264 0088 13       		.uleb128 0x13
+ 2265 0089 01       		.uleb128 0x1
+ 2266 008a 13       		.uleb128 0x13
+ 2267 008b 00       		.byte	0
+ 2268 008c 00       		.byte	0
+ 2269 008d 0C       		.uleb128 0xc
+ 2270 008e 21       		.uleb128 0x21
+ 2271 008f 00       		.byte	0
+ 2272 0090 49       		.uleb128 0x49
+ 2273 0091 13       		.uleb128 0x13
+ 2274 0092 2F       		.uleb128 0x2f
+ 2275 0093 0B       		.uleb128 0xb
+ 2276 0094 00       		.byte	0
+ 2277 0095 00       		.byte	0
+ 2278 0096 0D       		.uleb128 0xd
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 48
+
+
+ 2279 0097 17       		.uleb128 0x17
+ 2280 0098 01       		.byte	0x1
+ 2281 0099 0B       		.uleb128 0xb
+ 2282 009a 0B       		.uleb128 0xb
+ 2283 009b 3A       		.uleb128 0x3a
+ 2284 009c 0B       		.uleb128 0xb
+ 2285 009d 3B       		.uleb128 0x3b
+ 2286 009e 0B       		.uleb128 0xb
+ 2287 009f 01       		.uleb128 0x1
+ 2288 00a0 13       		.uleb128 0x13
+ 2289 00a1 00       		.byte	0
+ 2290 00a2 00       		.byte	0
+ 2291 00a3 0E       		.uleb128 0xe
+ 2292 00a4 0D       		.uleb128 0xd
+ 2293 00a5 00       		.byte	0
+ 2294 00a6 03       		.uleb128 0x3
+ 2295 00a7 08       		.uleb128 0x8
+ 2296 00a8 3A       		.uleb128 0x3a
+ 2297 00a9 0B       		.uleb128 0xb
+ 2298 00aa 3B       		.uleb128 0x3b
+ 2299 00ab 0B       		.uleb128 0xb
+ 2300 00ac 49       		.uleb128 0x49
+ 2301 00ad 13       		.uleb128 0x13
+ 2302 00ae 00       		.byte	0
+ 2303 00af 00       		.byte	0
+ 2304 00b0 0F       		.uleb128 0xf
+ 2305 00b1 0D       		.uleb128 0xd
+ 2306 00b2 00       		.byte	0
+ 2307 00b3 03       		.uleb128 0x3
+ 2308 00b4 0E       		.uleb128 0xe
+ 2309 00b5 3A       		.uleb128 0x3a
+ 2310 00b6 0B       		.uleb128 0xb
+ 2311 00b7 3B       		.uleb128 0x3b
+ 2312 00b8 0B       		.uleb128 0xb
+ 2313 00b9 49       		.uleb128 0x49
+ 2314 00ba 13       		.uleb128 0x13
+ 2315 00bb 00       		.byte	0
+ 2316 00bc 00       		.byte	0
+ 2317 00bd 10       		.uleb128 0x10
+ 2318 00be 13       		.uleb128 0x13
+ 2319 00bf 01       		.byte	0x1
+ 2320 00c0 03       		.uleb128 0x3
+ 2321 00c1 0E       		.uleb128 0xe
+ 2322 00c2 0B       		.uleb128 0xb
+ 2323 00c3 0B       		.uleb128 0xb
+ 2324 00c4 3A       		.uleb128 0x3a
+ 2325 00c5 0B       		.uleb128 0xb
+ 2326 00c6 3B       		.uleb128 0x3b
+ 2327 00c7 0B       		.uleb128 0xb
+ 2328 00c8 01       		.uleb128 0x1
+ 2329 00c9 13       		.uleb128 0x13
+ 2330 00ca 00       		.byte	0
+ 2331 00cb 00       		.byte	0
+ 2332 00cc 11       		.uleb128 0x11
+ 2333 00cd 2E       		.uleb128 0x2e
+ 2334 00ce 01       		.byte	0x1
+ 2335 00cf 3F       		.uleb128 0x3f
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 49
+
+
+ 2336 00d0 19       		.uleb128 0x19
+ 2337 00d1 03       		.uleb128 0x3
+ 2338 00d2 0E       		.uleb128 0xe
+ 2339 00d3 3A       		.uleb128 0x3a
+ 2340 00d4 0B       		.uleb128 0xb
+ 2341 00d5 3B       		.uleb128 0x3b
+ 2342 00d6 0B       		.uleb128 0xb
+ 2343 00d7 11       		.uleb128 0x11
+ 2344 00d8 01       		.uleb128 0x1
+ 2345 00d9 12       		.uleb128 0x12
+ 2346 00da 06       		.uleb128 0x6
+ 2347 00db 40       		.uleb128 0x40
+ 2348 00dc 18       		.uleb128 0x18
+ 2349 00dd 9642     		.uleb128 0x2116
+ 2350 00df 19       		.uleb128 0x19
+ 2351 00e0 01       		.uleb128 0x1
+ 2352 00e1 13       		.uleb128 0x13
+ 2353 00e2 00       		.byte	0
+ 2354 00e3 00       		.byte	0
+ 2355 00e4 12       		.uleb128 0x12
+ 2356 00e5 34       		.uleb128 0x34
+ 2357 00e6 00       		.byte	0
+ 2358 00e7 03       		.uleb128 0x3
+ 2359 00e8 08       		.uleb128 0x8
+ 2360 00e9 3A       		.uleb128 0x3a
+ 2361 00ea 0B       		.uleb128 0xb
+ 2362 00eb 3B       		.uleb128 0x3b
+ 2363 00ec 0B       		.uleb128 0xb
+ 2364 00ed 49       		.uleb128 0x49
+ 2365 00ee 13       		.uleb128 0x13
+ 2366 00ef 02       		.uleb128 0x2
+ 2367 00f0 18       		.uleb128 0x18
+ 2368 00f1 00       		.byte	0
+ 2369 00f2 00       		.byte	0
+ 2370 00f3 13       		.uleb128 0x13
+ 2371 00f4 2E       		.uleb128 0x2e
+ 2372 00f5 01       		.byte	0x1
+ 2373 00f6 3F       		.uleb128 0x3f
+ 2374 00f7 19       		.uleb128 0x19
+ 2375 00f8 03       		.uleb128 0x3
+ 2376 00f9 0E       		.uleb128 0xe
+ 2377 00fa 3A       		.uleb128 0x3a
+ 2378 00fb 0B       		.uleb128 0xb
+ 2379 00fc 3B       		.uleb128 0x3b
+ 2380 00fd 0B       		.uleb128 0xb
+ 2381 00fe 49       		.uleb128 0x49
+ 2382 00ff 13       		.uleb128 0x13
+ 2383 0100 11       		.uleb128 0x11
+ 2384 0101 01       		.uleb128 0x1
+ 2385 0102 12       		.uleb128 0x12
+ 2386 0103 06       		.uleb128 0x6
+ 2387 0104 40       		.uleb128 0x40
+ 2388 0105 18       		.uleb128 0x18
+ 2389 0106 9642     		.uleb128 0x2116
+ 2390 0108 19       		.uleb128 0x19
+ 2391 0109 01       		.uleb128 0x1
+ 2392 010a 13       		.uleb128 0x13
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 50
+
+
+ 2393 010b 00       		.byte	0
+ 2394 010c 00       		.byte	0
+ 2395 010d 14       		.uleb128 0x14
+ 2396 010e 34       		.uleb128 0x34
+ 2397 010f 00       		.byte	0
+ 2398 0110 03       		.uleb128 0x3
+ 2399 0111 0E       		.uleb128 0xe
+ 2400 0112 3A       		.uleb128 0x3a
+ 2401 0113 0B       		.uleb128 0xb
+ 2402 0114 3B       		.uleb128 0x3b
+ 2403 0115 0B       		.uleb128 0xb
+ 2404 0116 49       		.uleb128 0x49
+ 2405 0117 13       		.uleb128 0x13
+ 2406 0118 02       		.uleb128 0x2
+ 2407 0119 18       		.uleb128 0x18
+ 2408 011a 00       		.byte	0
+ 2409 011b 00       		.byte	0
+ 2410 011c 15       		.uleb128 0x15
+ 2411 011d 2E       		.uleb128 0x2e
+ 2412 011e 01       		.byte	0x1
+ 2413 011f 3F       		.uleb128 0x3f
+ 2414 0120 19       		.uleb128 0x19
+ 2415 0121 03       		.uleb128 0x3
+ 2416 0122 0E       		.uleb128 0xe
+ 2417 0123 3A       		.uleb128 0x3a
+ 2418 0124 0B       		.uleb128 0xb
+ 2419 0125 3B       		.uleb128 0x3b
+ 2420 0126 0B       		.uleb128 0xb
+ 2421 0127 27       		.uleb128 0x27
+ 2422 0128 19       		.uleb128 0x19
+ 2423 0129 11       		.uleb128 0x11
+ 2424 012a 01       		.uleb128 0x1
+ 2425 012b 12       		.uleb128 0x12
+ 2426 012c 06       		.uleb128 0x6
+ 2427 012d 40       		.uleb128 0x40
+ 2428 012e 18       		.uleb128 0x18
+ 2429 012f 9642     		.uleb128 0x2116
+ 2430 0131 19       		.uleb128 0x19
+ 2431 0132 01       		.uleb128 0x1
+ 2432 0133 13       		.uleb128 0x13
+ 2433 0134 00       		.byte	0
+ 2434 0135 00       		.byte	0
+ 2435 0136 16       		.uleb128 0x16
+ 2436 0137 05       		.uleb128 0x5
+ 2437 0138 00       		.byte	0
+ 2438 0139 03       		.uleb128 0x3
+ 2439 013a 0E       		.uleb128 0xe
+ 2440 013b 3A       		.uleb128 0x3a
+ 2441 013c 0B       		.uleb128 0xb
+ 2442 013d 3B       		.uleb128 0x3b
+ 2443 013e 0B       		.uleb128 0xb
+ 2444 013f 49       		.uleb128 0x49
+ 2445 0140 13       		.uleb128 0x13
+ 2446 0141 02       		.uleb128 0x2
+ 2447 0142 18       		.uleb128 0x18
+ 2448 0143 00       		.byte	0
+ 2449 0144 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 51
+
+
+ 2450 0145 17       		.uleb128 0x17
+ 2451 0146 2E       		.uleb128 0x2e
+ 2452 0147 00       		.byte	0
+ 2453 0148 3F       		.uleb128 0x3f
+ 2454 0149 19       		.uleb128 0x19
+ 2455 014a 03       		.uleb128 0x3
+ 2456 014b 0E       		.uleb128 0xe
+ 2457 014c 3A       		.uleb128 0x3a
+ 2458 014d 0B       		.uleb128 0xb
+ 2459 014e 3B       		.uleb128 0x3b
+ 2460 014f 0B       		.uleb128 0xb
+ 2461 0150 27       		.uleb128 0x27
+ 2462 0151 19       		.uleb128 0x19
+ 2463 0152 11       		.uleb128 0x11
+ 2464 0153 01       		.uleb128 0x1
+ 2465 0154 12       		.uleb128 0x12
+ 2466 0155 06       		.uleb128 0x6
+ 2467 0156 40       		.uleb128 0x40
+ 2468 0157 18       		.uleb128 0x18
+ 2469 0158 9642     		.uleb128 0x2116
+ 2470 015a 19       		.uleb128 0x19
+ 2471 015b 00       		.byte	0
+ 2472 015c 00       		.byte	0
+ 2473 015d 18       		.uleb128 0x18
+ 2474 015e 2E       		.uleb128 0x2e
+ 2475 015f 00       		.byte	0
+ 2476 0160 3F       		.uleb128 0x3f
+ 2477 0161 19       		.uleb128 0x19
+ 2478 0162 03       		.uleb128 0x3
+ 2479 0163 0E       		.uleb128 0xe
+ 2480 0164 3A       		.uleb128 0x3a
+ 2481 0165 0B       		.uleb128 0xb
+ 2482 0166 3B       		.uleb128 0x3b
+ 2483 0167 0B       		.uleb128 0xb
+ 2484 0168 27       		.uleb128 0x27
+ 2485 0169 19       		.uleb128 0x19
+ 2486 016a 11       		.uleb128 0x11
+ 2487 016b 01       		.uleb128 0x1
+ 2488 016c 12       		.uleb128 0x12
+ 2489 016d 06       		.uleb128 0x6
+ 2490 016e 40       		.uleb128 0x40
+ 2491 016f 18       		.uleb128 0x18
+ 2492 0170 9742     		.uleb128 0x2117
+ 2493 0172 19       		.uleb128 0x19
+ 2494 0173 00       		.byte	0
+ 2495 0174 00       		.byte	0
+ 2496 0175 19       		.uleb128 0x19
+ 2497 0176 2E       		.uleb128 0x2e
+ 2498 0177 00       		.byte	0
+ 2499 0178 3F       		.uleb128 0x3f
+ 2500 0179 19       		.uleb128 0x19
+ 2501 017a 03       		.uleb128 0x3
+ 2502 017b 0E       		.uleb128 0xe
+ 2503 017c 3A       		.uleb128 0x3a
+ 2504 017d 0B       		.uleb128 0xb
+ 2505 017e 3B       		.uleb128 0x3b
+ 2506 017f 05       		.uleb128 0x5
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 52
+
+
+ 2507 0180 27       		.uleb128 0x27
+ 2508 0181 19       		.uleb128 0x19
+ 2509 0182 11       		.uleb128 0x11
+ 2510 0183 01       		.uleb128 0x1
+ 2511 0184 12       		.uleb128 0x12
+ 2512 0185 06       		.uleb128 0x6
+ 2513 0186 40       		.uleb128 0x40
+ 2514 0187 18       		.uleb128 0x18
+ 2515 0188 9642     		.uleb128 0x2116
+ 2516 018a 19       		.uleb128 0x19
+ 2517 018b 00       		.byte	0
+ 2518 018c 00       		.byte	0
+ 2519 018d 1A       		.uleb128 0x1a
+ 2520 018e 2E       		.uleb128 0x2e
+ 2521 018f 01       		.byte	0x1
+ 2522 0190 3F       		.uleb128 0x3f
+ 2523 0191 19       		.uleb128 0x19
+ 2524 0192 03       		.uleb128 0x3
+ 2525 0193 0E       		.uleb128 0xe
+ 2526 0194 3A       		.uleb128 0x3a
+ 2527 0195 0B       		.uleb128 0xb
+ 2528 0196 3B       		.uleb128 0x3b
+ 2529 0197 05       		.uleb128 0x5
+ 2530 0198 27       		.uleb128 0x27
+ 2531 0199 19       		.uleb128 0x19
+ 2532 019a 11       		.uleb128 0x11
+ 2533 019b 01       		.uleb128 0x1
+ 2534 019c 12       		.uleb128 0x12
+ 2535 019d 06       		.uleb128 0x6
+ 2536 019e 40       		.uleb128 0x40
+ 2537 019f 18       		.uleb128 0x18
+ 2538 01a0 9642     		.uleb128 0x2116
+ 2539 01a2 19       		.uleb128 0x19
+ 2540 01a3 01       		.uleb128 0x1
+ 2541 01a4 13       		.uleb128 0x13
+ 2542 01a5 00       		.byte	0
+ 2543 01a6 00       		.byte	0
+ 2544 01a7 1B       		.uleb128 0x1b
+ 2545 01a8 34       		.uleb128 0x34
+ 2546 01a9 00       		.byte	0
+ 2547 01aa 03       		.uleb128 0x3
+ 2548 01ab 0E       		.uleb128 0xe
+ 2549 01ac 3A       		.uleb128 0x3a
+ 2550 01ad 0B       		.uleb128 0xb
+ 2551 01ae 3B       		.uleb128 0x3b
+ 2552 01af 05       		.uleb128 0x5
+ 2553 01b0 49       		.uleb128 0x49
+ 2554 01b1 13       		.uleb128 0x13
+ 2555 01b2 02       		.uleb128 0x2
+ 2556 01b3 18       		.uleb128 0x18
+ 2557 01b4 00       		.byte	0
+ 2558 01b5 00       		.byte	0
+ 2559 01b6 1C       		.uleb128 0x1c
+ 2560 01b7 34       		.uleb128 0x34
+ 2561 01b8 00       		.byte	0
+ 2562 01b9 03       		.uleb128 0x3
+ 2563 01ba 08       		.uleb128 0x8
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 53
+
+
+ 2564 01bb 3A       		.uleb128 0x3a
+ 2565 01bc 0B       		.uleb128 0xb
+ 2566 01bd 3B       		.uleb128 0x3b
+ 2567 01be 05       		.uleb128 0x5
+ 2568 01bf 49       		.uleb128 0x49
+ 2569 01c0 13       		.uleb128 0x13
+ 2570 01c1 02       		.uleb128 0x2
+ 2571 01c2 18       		.uleb128 0x18
+ 2572 01c3 00       		.byte	0
+ 2573 01c4 00       		.byte	0
+ 2574 01c5 1D       		.uleb128 0x1d
+ 2575 01c6 2E       		.uleb128 0x2e
+ 2576 01c7 01       		.byte	0x1
+ 2577 01c8 3F       		.uleb128 0x3f
+ 2578 01c9 19       		.uleb128 0x19
+ 2579 01ca 03       		.uleb128 0x3
+ 2580 01cb 0E       		.uleb128 0xe
+ 2581 01cc 3A       		.uleb128 0x3a
+ 2582 01cd 0B       		.uleb128 0xb
+ 2583 01ce 3B       		.uleb128 0x3b
+ 2584 01cf 05       		.uleb128 0x5
+ 2585 01d0 27       		.uleb128 0x27
+ 2586 01d1 19       		.uleb128 0x19
+ 2587 01d2 11       		.uleb128 0x11
+ 2588 01d3 01       		.uleb128 0x1
+ 2589 01d4 12       		.uleb128 0x12
+ 2590 01d5 06       		.uleb128 0x6
+ 2591 01d6 40       		.uleb128 0x40
+ 2592 01d7 18       		.uleb128 0x18
+ 2593 01d8 9742     		.uleb128 0x2117
+ 2594 01da 19       		.uleb128 0x19
+ 2595 01db 01       		.uleb128 0x1
+ 2596 01dc 13       		.uleb128 0x13
+ 2597 01dd 00       		.byte	0
+ 2598 01de 00       		.byte	0
+ 2599 01df 1E       		.uleb128 0x1e
+ 2600 01e0 34       		.uleb128 0x34
+ 2601 01e1 00       		.byte	0
+ 2602 01e2 03       		.uleb128 0x3
+ 2603 01e3 0E       		.uleb128 0xe
+ 2604 01e4 3A       		.uleb128 0x3a
+ 2605 01e5 0B       		.uleb128 0xb
+ 2606 01e6 3B       		.uleb128 0x3b
+ 2607 01e7 05       		.uleb128 0x5
+ 2608 01e8 49       		.uleb128 0x49
+ 2609 01e9 13       		.uleb128 0x13
+ 2610 01ea 3F       		.uleb128 0x3f
+ 2611 01eb 19       		.uleb128 0x19
+ 2612 01ec 3C       		.uleb128 0x3c
+ 2613 01ed 19       		.uleb128 0x19
+ 2614 01ee 00       		.byte	0
+ 2615 01ef 00       		.byte	0
+ 2616 01f0 1F       		.uleb128 0x1f
+ 2617 01f1 34       		.uleb128 0x34
+ 2618 01f2 00       		.byte	0
+ 2619 01f3 03       		.uleb128 0x3
+ 2620 01f4 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 54
+
+
+ 2621 01f5 3A       		.uleb128 0x3a
+ 2622 01f6 0B       		.uleb128 0xb
+ 2623 01f7 3B       		.uleb128 0x3b
+ 2624 01f8 0B       		.uleb128 0xb
+ 2625 01f9 49       		.uleb128 0x49
+ 2626 01fa 13       		.uleb128 0x13
+ 2627 01fb 3F       		.uleb128 0x3f
+ 2628 01fc 19       		.uleb128 0x19
+ 2629 01fd 3C       		.uleb128 0x3c
+ 2630 01fe 19       		.uleb128 0x19
+ 2631 01ff 00       		.byte	0
+ 2632 0200 00       		.byte	0
+ 2633 0201 20       		.uleb128 0x20
+ 2634 0202 34       		.uleb128 0x34
+ 2635 0203 00       		.byte	0
+ 2636 0204 03       		.uleb128 0x3
+ 2637 0205 08       		.uleb128 0x8
+ 2638 0206 3A       		.uleb128 0x3a
+ 2639 0207 0B       		.uleb128 0xb
+ 2640 0208 3B       		.uleb128 0x3b
+ 2641 0209 0B       		.uleb128 0xb
+ 2642 020a 49       		.uleb128 0x49
+ 2643 020b 13       		.uleb128 0x13
+ 2644 020c 3F       		.uleb128 0x3f
+ 2645 020d 19       		.uleb128 0x19
+ 2646 020e 02       		.uleb128 0x2
+ 2647 020f 18       		.uleb128 0x18
+ 2648 0210 00       		.byte	0
+ 2649 0211 00       		.byte	0
+ 2650 0212 21       		.uleb128 0x21
+ 2651 0213 34       		.uleb128 0x34
+ 2652 0214 00       		.byte	0
+ 2653 0215 03       		.uleb128 0x3
+ 2654 0216 0E       		.uleb128 0xe
+ 2655 0217 3A       		.uleb128 0x3a
+ 2656 0218 0B       		.uleb128 0xb
+ 2657 0219 3B       		.uleb128 0x3b
+ 2658 021a 0B       		.uleb128 0xb
+ 2659 021b 49       		.uleb128 0x49
+ 2660 021c 13       		.uleb128 0x13
+ 2661 021d 3F       		.uleb128 0x3f
+ 2662 021e 19       		.uleb128 0x19
+ 2663 021f 02       		.uleb128 0x2
+ 2664 0220 18       		.uleb128 0x18
+ 2665 0221 00       		.byte	0
+ 2666 0222 00       		.byte	0
+ 2667 0223 00       		.byte	0
+ 2668              		.section	.debug_aranges,"",%progbits
+ 2669 0000 7C000000 		.4byte	0x7c
+ 2670 0004 0200     		.2byte	0x2
+ 2671 0006 00000000 		.4byte	.Ldebug_info0
+ 2672 000a 04       		.byte	0x4
+ 2673 000b 00       		.byte	0
+ 2674 000c 0000     		.2byte	0
+ 2675 000e 0000     		.2byte	0
+ 2676 0010 00000000 		.4byte	.LFB63
+ 2677 0014 5C000000 		.4byte	.LFE63-.LFB63
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 55
+
+
+ 2678 0018 00000000 		.4byte	.LFB64
+ 2679 001c 94000000 		.4byte	.LFE64-.LFB64
+ 2680 0020 00000000 		.4byte	.LFB65
+ 2681 0024 40000000 		.4byte	.LFE65-.LFB65
+ 2682 0028 00000000 		.4byte	.LFB66
+ 2683 002c 3C000000 		.4byte	.LFE66-.LFB66
+ 2684 0030 00000000 		.4byte	.LFB67
+ 2685 0034 68000000 		.4byte	.LFE67-.LFB67
+ 2686 0038 00000000 		.4byte	.LFB68
+ 2687 003c 48010000 		.4byte	.LFE68-.LFB68
+ 2688 0040 00000000 		.4byte	.LFB69
+ 2689 0044 68000000 		.4byte	.LFE69-.LFB69
+ 2690 0048 00000000 		.4byte	.LFB70
+ 2691 004c 28000000 		.4byte	.LFE70-.LFB70
+ 2692 0050 00000000 		.4byte	.LFB71
+ 2693 0054 3C000000 		.4byte	.LFE71-.LFB71
+ 2694 0058 00000000 		.4byte	.LFB72
+ 2695 005c 48000000 		.4byte	.LFE72-.LFB72
+ 2696 0060 00000000 		.4byte	.LFB73
+ 2697 0064 58010000 		.4byte	.LFE73-.LFB73
+ 2698 0068 00000000 		.4byte	.LFB74
+ 2699 006c 64000000 		.4byte	.LFE74-.LFB74
+ 2700 0070 00000000 		.4byte	.LFB75
+ 2701 0074 74000000 		.4byte	.LFE75-.LFB75
+ 2702 0078 00000000 		.4byte	0
+ 2703 007c 00000000 		.4byte	0
+ 2704              		.section	.debug_ranges,"",%progbits
+ 2705              	.Ldebug_ranges0:
+ 2706 0000 00000000 		.4byte	.LFB63
+ 2707 0004 5C000000 		.4byte	.LFE63
+ 2708 0008 00000000 		.4byte	.LFB64
+ 2709 000c 94000000 		.4byte	.LFE64
+ 2710 0010 00000000 		.4byte	.LFB65
+ 2711 0014 40000000 		.4byte	.LFE65
+ 2712 0018 00000000 		.4byte	.LFB66
+ 2713 001c 3C000000 		.4byte	.LFE66
+ 2714 0020 00000000 		.4byte	.LFB67
+ 2715 0024 68000000 		.4byte	.LFE67
+ 2716 0028 00000000 		.4byte	.LFB68
+ 2717 002c 48010000 		.4byte	.LFE68
+ 2718 0030 00000000 		.4byte	.LFB69
+ 2719 0034 68000000 		.4byte	.LFE69
+ 2720 0038 00000000 		.4byte	.LFB70
+ 2721 003c 28000000 		.4byte	.LFE70
+ 2722 0040 00000000 		.4byte	.LFB71
+ 2723 0044 3C000000 		.4byte	.LFE71
+ 2724 0048 00000000 		.4byte	.LFB72
+ 2725 004c 48000000 		.4byte	.LFE72
+ 2726 0050 00000000 		.4byte	.LFB73
+ 2727 0054 58010000 		.4byte	.LFE73
+ 2728 0058 00000000 		.4byte	.LFB74
+ 2729 005c 64000000 		.4byte	.LFE74
+ 2730 0060 00000000 		.4byte	.LFB75
+ 2731 0064 74000000 		.4byte	.LFE75
+ 2732 0068 00000000 		.4byte	0
+ 2733 006c 00000000 		.4byte	0
+ 2734              		.section	.debug_line,"",%progbits
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 56
+
+
+ 2735              	.Ldebug_line0:
+ 2736 0000 7A030000 		.section	.debug_str,"MS",%progbits,1
+ 2736      02006A01 
+ 2736      00000201 
+ 2736      FB0E0D00 
+ 2736      01010101 
+ 2737              	.LASF56:
+ 2738 0000 53657475 		.ascii	"SetupUART\000"
+ 2738      70554152 
+ 2738      5400
+ 2739              	.LASF53:
+ 2740 000a 61646472 		.ascii	"addr\000"
+ 2740      00
+ 2741              	.LASF59:
+ 2742 000f 6D73675F 		.ascii	"msg_started\000"
+ 2742      73746172 
+ 2742      74656400 
+ 2743              	.LASF42:
+ 2744 001b 6F736470 		.ascii	"osdp_status\000"
+ 2744      5F737461 
+ 2744      74757300 
+ 2745              	.LASF63:
+ 2746 0027 4B656570 		.ascii	"KeepAliveInterruptHandler\000"
+ 2746      416C6976 
+ 2746      65496E74 
+ 2746      65727275 
+ 2746      70744861 
+ 2747              	.LASF82:
+ 2748 0041 6F736470 		.ascii	"osdp_reader_msg_header\000"
+ 2748      5F726561 
+ 2748      6465725F 
+ 2748      6D73675F 
+ 2748      68656164 
+ 2749              	.LASF55:
+ 2750 0058 52656164 		.ascii	"ReadPAC\000"
+ 2750      50414300 
+ 2751              	.LASF68:
+ 2752 0060 5365744F 		.ascii	"SetOSDPKeepALive\000"
+ 2752      5344504B 
+ 2752      65657041 
+ 2752      4C697665 
+ 2752      00
+ 2753              	.LASF44:
+ 2754 0071 6F736470 		.ascii	"osdp_rate\000"
+ 2754      5F726174 
+ 2754      6500
+ 2755              	.LASF46:
+ 2756 007b 6F736470 		.ascii	"osdp_reader_cmd\000"
+ 2756      5F726561 
+ 2756      6465725F 
+ 2756      636D6400 
+ 2757              	.LASF38:
+ 2758 008b 66616374 		.ascii	"factory_reset\000"
+ 2758      6F72795F 
+ 2758      72657365 
+ 2758      7400
+ 2759              	.LASF33:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 57
+
+
+ 2760 0099 64617461 		.ascii	"data_length\000"
+ 2760      5F6C656E 
+ 2760      67746800 
+ 2761              	.LASF45:
+ 2762 00a5 6F736470 		.ascii	"osdp_buffer\000"
+ 2762      5F627566 
+ 2762      66657200 
+ 2763              	.LASF6:
+ 2764 00b1 6C6F6E67 		.ascii	"long long int\000"
+ 2764      206C6F6E 
+ 2764      6720696E 
+ 2764      7400
+ 2765              	.LASF30:
+ 2766 00bf 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 2766      5F554152 
+ 2766      545F5354 
+ 2766      52554354 
+ 2766      00
+ 2767              	.LASF90:
+ 2768 00d0 61636365 		.ascii	"accessType\000"
+ 2768      73735479 
+ 2768      706500
+ 2769              	.LASF2:
+ 2770 00db 73686F72 		.ascii	"short int\000"
+ 2770      7420696E 
+ 2770      7400
+ 2771              	.LASF75:
+ 2772 00e5 63617264 		.ascii	"card_in_buf\000"
+ 2772      5F696E5F 
+ 2772      62756600 
+ 2773              	.LASF89:
+ 2774 00f1 53656E64 		.ascii	"SendPAC\000"
+ 2774      50414300 
+ 2775              	.LASF25:
+ 2776 00f9 72785F62 		.ascii	"rx_bits\000"
+ 2776      69747300 
+ 2777              	.LASF12:
+ 2778 0101 75696E74 		.ascii	"uint16\000"
+ 2778      313600
+ 2779              	.LASF72:
+ 2780 0108 63757272 		.ascii	"currentAccessType\000"
+ 2780      656E7441 
+ 2780      63636573 
+ 2780      73547970 
+ 2780      6500
+ 2781              	.LASF11:
+ 2782 011a 75696E74 		.ascii	"uint8\000"
+ 2782      3800
+ 2783              	.LASF71:
+ 2784 0120 4D794932 		.ascii	"MyI2C_Regs\000"
+ 2784      435F5265 
+ 2784      677300
+ 2785              	.LASF60:
+ 2786 012b 5365744F 		.ascii	"SetOSDPRate\000"
+ 2786      53445052 
+ 2786      61746500 
+ 2787              	.LASF0:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 58
+
+
+ 2788 0137 7369676E 		.ascii	"signed char\000"
+ 2788      65642063 
+ 2788      68617200 
+ 2789              	.LASF13:
+ 2790 0143 666C6F61 		.ascii	"float\000"
+ 2790      7400
+ 2791              	.LASF87:
+ 2792 0149 2E5C6932 		.ascii	".\\i2cuart.c\000"
+ 2792      63756172 
+ 2792      742E6300 
+ 2793              	.LASF34:
+ 2794 0155 6163735F 		.ascii	"acs_outputs\000"
+ 2794      6F757470 
+ 2794      75747300 
+ 2795              	.LASF52:
+ 2796 0161 4F534450 		.ascii	"OSDP_MSG_HEADER\000"
+ 2796      5F4D5347 
+ 2796      5F484541 
+ 2796      44455200 
+ 2797              	.LASF21:
+ 2798 0171 62697473 		.ascii	"bits\000"
+ 2798      00
+ 2799              	.LASF47:
+ 2800 0176 6F736470 		.ascii	"osdp_reader_data_length\000"
+ 2800      5F726561 
+ 2800      6465725F 
+ 2800      64617461 
+ 2800      5F6C656E 
+ 2801              	.LASF74:
+ 2802 018e 63617264 		.ascii	"card_ack\000"
+ 2802      5F61636B 
+ 2802      00
+ 2803              	.LASF84:
+ 2804 0197 6B656570 		.ascii	"keepALiveLength\000"
+ 2804      414C6976 
+ 2804      654C656E 
+ 2804      67746800 
+ 2805              	.LASF17:
+ 2806 01a7 73697A65 		.ascii	"sizetype\000"
+ 2806      74797065 
+ 2806      00
+ 2807              	.LASF28:
+ 2808 01b0 74696D65 		.ascii	"timer_rx_ctr\000"
+ 2808      725F7278 
+ 2808      5F637472 
+ 2808      00
+ 2809              	.LASF37:
+ 2810 01bd 64756D6D 		.ascii	"dummy\000"
+ 2810      7900
+ 2811              	.LASF23:
+ 2812 01c3 74785F62 		.ascii	"tx_byte\000"
+ 2812      79746500 
+ 2813              	.LASF19:
+ 2814 01cb 70617269 		.ascii	"parity\000"
+ 2814      747900
+ 2815              	.LASF48:
+ 2816 01d2 6F736470 		.ascii	"osdp_reader_rate\000"
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 59
+
+
+ 2816      5F726561 
+ 2816      6465725F 
+ 2816      72617465 
+ 2816      00
+ 2817              	.LASF49:
+ 2818 01e3 6F736470 		.ascii	"osdp_reader_buffer\000"
+ 2818      5F726561 
+ 2818      6465725F 
+ 2818      62756666 
+ 2818      657200
+ 2819              	.LASF1:
+ 2820 01f6 756E7369 		.ascii	"unsigned char\000"
+ 2820      676E6564 
+ 2820      20636861 
+ 2820      7200
+ 2821              	.LASF76:
+ 2822 0204 676F745F 		.ascii	"got_pulse\000"
+ 2822      70756C73 
+ 2822      6500
+ 2823              	.LASF51:
+ 2824 020e 6C656E67 		.ascii	"length\000"
+ 2824      746800
+ 2825              	.LASF18:
+ 2826 0215 62617564 		.ascii	"baud\000"
+ 2826      00
+ 2827              	.LASF43:
+ 2828 021a 6F736470 		.ascii	"osdp_data_length\000"
+ 2828      5F646174 
+ 2828      615F6C65 
+ 2828      6E677468 
+ 2828      00
+ 2829              	.LASF65:
+ 2830 022b 53656E64 		.ascii	"SendOSDPReader\000"
+ 2830      4F534450 
+ 2830      52656164 
+ 2830      657200
+ 2831              	.LASF83:
+ 2832 023a 6B656570 		.ascii	"keepALive\000"
+ 2832      414C6976 
+ 2832      6500
+ 2833              	.LASF57:
+ 2834 0244 436C6561 		.ascii	"ClearOsdpBuffer\000"
+ 2834      724F7364 
+ 2834      70427566 
+ 2834      66657200 
+ 2835              	.LASF85:
+ 2836 0254 496E7465 		.ascii	"InterruptCnt\000"
+ 2836      72727570 
+ 2836      74436E74 
+ 2836      00
+ 2837              	.LASF54:
+ 2838 0261 62797465 		.ascii	"byteCount\000"
+ 2838      436F756E 
+ 2838      7400
+ 2839              	.LASF26:
+ 2840 026b 666C6167 		.ascii	"flags\000"
+ 2840      7300
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 60
+
+
+ 2841              	.LASF7:
+ 2842 0271 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 2842      206C6F6E 
+ 2842      6720756E 
+ 2842      7369676E 
+ 2842      65642069 
+ 2843              	.LASF8:
+ 2844 0288 756E7369 		.ascii	"unsigned int\000"
+ 2844      676E6564 
+ 2844      20696E74 
+ 2844      00
+ 2845              	.LASF20:
+ 2846 0295 73746F70 		.ascii	"stop_bits\000"
+ 2846      5F626974 
+ 2846      7300
+ 2847              	.LASF5:
+ 2848 029f 6C6F6E67 		.ascii	"long unsigned int\000"
+ 2848      20756E73 
+ 2848      69676E65 
+ 2848      6420696E 
+ 2848      7400
+ 2849              	.LASF66:
+ 2850 02b1 52656164 		.ascii	"ReadOSDPReader\000"
+ 2850      4F534450 
+ 2850      52656164 
+ 2850      657200
+ 2851              	.LASF86:
+ 2852 02c0 474E5520 		.ascii	"GNU C 4.8.4 20140526 (release) [ARM/embedded-4_8-br"
+ 2852      4320342E 
+ 2852      382E3420 
+ 2852      32303134 
+ 2852      30353236 
+ 2853 02f3 616E6368 		.ascii	"anch revision 211358] -mcpu=cortex-m3 -mthumb -g -O"
+ 2853      20726576 
+ 2853      6973696F 
+ 2853      6E203231 
+ 2853      31333538 
+ 2854 0326 30202D66 		.ascii	"0 -ffunction-sections\000"
+ 2854      66756E63 
+ 2854      74696F6E 
+ 2854      2D736563 
+ 2854      74696F6E 
+ 2855              	.LASF29:
+ 2856 033c 72785F72 		.ascii	"rx_recv\000"
+ 2856      65637600 
+ 2857              	.LASF24:
+ 2858 0344 74785F62 		.ascii	"tx_bits\000"
+ 2858      69747300 
+ 2859              	.LASF31:
+ 2860 034c 73746174 		.ascii	"status\000"
+ 2860      757300
+ 2861              	.LASF15:
+ 2862 0353 63686172 		.ascii	"char\000"
+ 2862      00
+ 2863              	.LASF64:
+ 2864 0358 436C6561 		.ascii	"ClearOsdpReaderBuffer\000"
+ 2864      724F7364 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 61
+
+
+ 2864      70526561 
+ 2864      64657242 
+ 2864      75666665 
+ 2865              	.LASF4:
+ 2866 036e 6C6F6E67 		.ascii	"long int\000"
+ 2866      20696E74 
+ 2866      00
+ 2867              	.LASF62:
+ 2868 0377 53656E64 		.ascii	"SendOSDP\000"
+ 2868      4F534450 
+ 2868      00
+ 2869              	.LASF35:
+ 2870 0380 6163735F 		.ascii	"acs_inputs\000"
+ 2870      696E7075 
+ 2870      747300
+ 2871              	.LASF10:
+ 2872 038b 696E7433 		.ascii	"int32_t\000"
+ 2872      325F7400 
+ 2873              	.LASF77:
+ 2874 0393 6632665F 		.ascii	"f2f_pulsewidth\000"
+ 2874      70756C73 
+ 2874      65776964 
+ 2874      746800
+ 2875              	.LASF3:
+ 2876 03a2 73686F72 		.ascii	"short unsigned int\000"
+ 2876      7420756E 
+ 2876      7369676E 
+ 2876      65642069 
+ 2876      6E7400
+ 2877              	.LASF81:
+ 2878 03b5 6F736470 		.ascii	"osdp_msg_header\000"
+ 2878      5F6D7367 
+ 2878      5F686561 
+ 2878      64657200 
+ 2879              	.LASF22:
+ 2880 03c5 72785F62 		.ascii	"rx_byte\000"
+ 2880      79746500 
+ 2881              	.LASF36:
+ 2882 03cd 62756666 		.ascii	"buffer\000"
+ 2882      657200
+ 2883              	.LASF16:
+ 2884 03d4 72656738 		.ascii	"reg8\000"
+ 2884      00
+ 2885              	.LASF32:
+ 2886 03d9 73746174 		.ascii	"status_in\000"
+ 2886      75735F69 
+ 2886      6E00
+ 2887              	.LASF73:
+ 2888 03e3 54414D50 		.ascii	"TAMPERCR_POLARITY\000"
+ 2888      45524352 
+ 2888      5F504F4C 
+ 2888      41524954 
+ 2888      5900
+ 2889              	.LASF50:
+ 2890 03f5 4932435F 		.ascii	"I2C_Regs\000"
+ 2890      52656773 
+ 2890      00
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 62
+
+
+ 2891              	.LASF67:
+ 2892 03fe 5365744F 		.ascii	"SetOSDPReaderSpeed\000"
+ 2892      53445052 
+ 2892      65616465 
+ 2892      72537065 
+ 2892      656400
+ 2893              	.LASF9:
+ 2894 0411 5F5F696E 		.ascii	"__int32_t\000"
+ 2894      7433325F 
+ 2894      7400
+ 2895              	.LASF78:
+ 2896 041b 74696D65 		.ascii	"timeout_cnt\000"
+ 2896      6F75745F 
+ 2896      636E7400 
+ 2897              	.LASF79:
+ 2898 0427 61637469 		.ascii	"activate_f2ftimer\000"
+ 2898      76617465 
+ 2898      5F663266 
+ 2898      74696D65 
+ 2898      7200
+ 2899              	.LASF61:
+ 2900 0439 72617465 		.ascii	"rate\000"
+ 2900      00
+ 2901              	.LASF39:
+ 2902 043e 73775F76 		.ascii	"sw_version\000"
+ 2902      65727369 
+ 2902      6F6E00
+ 2903              	.LASF88:
+ 2904 0449 433A5C55 		.ascii	"C:\\Users\\Yiquing\\Documents\\works\\NanoNXT\\osdp"
+ 2904      73657273 
+ 2904      5C596971 
+ 2904      75696E67 
+ 2904      5C446F63 
+ 2905 0476 20746573 		.ascii	" testing\\YQ\\nanoNxt_ICM3\\nanoNxt_ICM3.cydsn\000"
+ 2905      74696E67 
+ 2905      5C59515C 
+ 2905      6E616E6F 
+ 2905      4E78745F 
+ 2906              	.LASF58:
+ 2907 04a2 52656164 		.ascii	"ReadOSDP\000"
+ 2907      4F534450 
+ 2907      00
+ 2908              	.LASF14:
+ 2909 04ab 646F7562 		.ascii	"double\000"
+ 2909      6C6500
+ 2910              	.LASF70:
+ 2911 04b2 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 2911      52784275 
+ 2911      66666572 
+ 2911      00
+ 2912              	.LASF40:
+ 2913 04bf 68775F76 		.ascii	"hw_version\000"
+ 2913      65727369 
+ 2913      6F6E00
+ 2914              	.LASF80:
+ 2915 04ca 4F534450 		.ascii	"OSDPReaderTask\000"
+ 2915      52656164 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccuSelAP.s 			page 63
+
+
+ 2915      65725461 
+ 2915      736B00
+ 2916              	.LASF41:
+ 2917 04d9 6F736470 		.ascii	"osdp_cmd\000"
+ 2917      5F636D64 
+ 2917      00
+ 2918              	.LASF27:
+ 2919 04e2 74696D65 		.ascii	"timer_tx_ctr\000"
+ 2919      725F7478 
+ 2919      5F637472 
+ 2919      00
+ 2920              	.LASF69:
+ 2921 04ef 6D73675F 		.ascii	"msg_size\000"
+ 2921      73697A65 
+ 2921      00
+ 2922              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.8.4 20140526 (release) [ARM/embedded-4_8-br

@@ -1,0 +1,5134 @@
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"osdp.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	s,40,4
+  20              		.comm	currentAccessType,1,1
+  21              		.comm	hw_old,1,1
+  22              		.comm	tp_old,1,1
+  23              		.comm	tamperCR_polarity,4,4
+  24              		.comm	tamper_out_polarity,4,4
+  25              		.comm	card_ack,4,4
+  26              		.comm	card_in_buf,4,4
+  27              		.comm	osdp_timeout,4,4
+  28              		.comm	panelReadBuf,130,4
+  29              		.comm	panelSendBuf,130,4
+  30              		.comm	osdp_msg_header,8,4
+  31              		.comm	osdp_reader_msg_header,8,4
+  32              		.section	.text.initOSDP,"ax",%progbits
+  33              		.align	2
+  34              		.global	initOSDP
+  35              		.thumb
+  36              		.thumb_func
+  37              		.type	initOSDP, %function
+  38              	initOSDP:
+  39              	.LFB63:
+  40              		.file 1 "osdp.c"
+   1:osdp.c        **** /* ========================================
+   2:osdp.c        ****  *
+   3:osdp.c        ****  * Copyright YOUR COMPANY, THE YEAR
+   4:osdp.c        ****  * All Rights Reserved
+   5:osdp.c        ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:osdp.c        ****  *
+   7:osdp.c        ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:osdp.c        ****  * WHICH IS THE PROPERTY OF your company.
+   9:osdp.c        ****  *
+  10:osdp.c        ****  * ========================================
+  11:osdp.c        **** */
+  12:osdp.c        **** #include "osdp.h"
+  13:osdp.c        **** 
+  14:osdp.c        **** ////////////////OSDP PANEL//////////////////
+  15:osdp.c        **** 
+  16:osdp.c        **** PanelBuf panelReadBuf, panelSendBuf;
+  17:osdp.c        **** 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 2
+
+
+  18:osdp.c        **** struct OSDP_MSG_HEADER osdp_msg_header,osdp_reader_msg_header;
+  19:osdp.c        **** 
+  20:osdp.c        **** void initOSDP(){
+  41              		.loc 1 20 0
+  42              		.cfi_startproc
+  43              		@ args = 0, pretend = 0, frame = 0
+  44              		@ frame_needed = 1, uses_anonymous_args = 0
+  45 0000 80B5     		push	{r7, lr}
+  46              		.cfi_def_cfa_offset 8
+  47              		.cfi_offset 7, -8
+  48              		.cfi_offset 14, -4
+  49 0002 00AF     		add	r7, sp, #0
+  50              		.cfi_def_cfa_register 7
+  21:osdp.c        ****     SetPanelSpeed(MyI2C_Regs.osdp_rate);
+  51              		.loc 1 21 0
+  52 0004 0E4B     		ldr	r3, .L2
+  53 0006 93F86030 		ldrb	r3, [r3, #96]	@ zero_extendqisi2
+  54 000a 1846     		mov	r0, r3
+  55 000c FFF7FEFF 		bl	SetPanelSpeed
+  22:osdp.c        ****     UART_ACS_Start();
+  56              		.loc 1 22 0
+  57 0010 FFF7FEFF 		bl	UART_ACS_Start
+  23:osdp.c        ****     ClearOsdpBuffer();
+  58              		.loc 1 23 0
+  59 0014 FFF7FEFF 		bl	ClearOsdpBuffer
+  24:osdp.c        ****     
+  25:osdp.c        ****     Clock_6_Enable();
+  60              		.loc 1 25 0
+  61 0018 FFF7FEFF 		bl	Clock_6_Start
+  26:osdp.c        ****     Clock_6_SetDividerValue(CLKDV_9600); //set the baud rate to default 9600
+  62              		.loc 1 26 0
+  63 001c 0121     		movs	r1, #1
+  64 001e 4FF41C70 		mov	r0, #624
+  65 0022 FFF7FEFF 		bl	Clock_6_SetDividerRegister
+  27:osdp.c        ****     UART_READER_Start();
+  66              		.loc 1 27 0
+  67 0026 FFF7FEFF 		bl	UART_READER_Start
+  28:osdp.c        ****     ClearOsdpReaderBuffer();
+  68              		.loc 1 28 0
+  69 002a FFF7FEFF 		bl	ClearOsdpReaderBuffer
+  29:osdp.c        ****     
+  30:osdp.c        ****     isr_keepalive_StartEx(KeepAliveInterruptHandler);
+  70              		.loc 1 30 0
+  71 002e 0548     		ldr	r0, .L2+4
+  72 0030 FFF7FEFF 		bl	isr_keepalive_StartEx
+  31:osdp.c        ****     OSDPReaderTimer_Start();
+  73              		.loc 1 31 0
+  74 0034 FFF7FEFF 		bl	OSDPReaderTimer_Start
+  32:osdp.c        ****     initOSDPReaderUART();
+  75              		.loc 1 32 0
+  76 0038 FFF7FEFF 		bl	initOSDPReaderUART
+  33:osdp.c        **** }
+  77              		.loc 1 33 0
+  78 003c 00BF     		nop
+  79 003e 80BD     		pop	{r7, pc}
+  80              	.L3:
+  81              		.align	2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 3
+
+
+  82              	.L2:
+  83 0040 00000000 		.word	MyI2C_Regs
+  84 0044 00000000 		.word	KeepAliveInterruptHandler
+  85              		.cfi_endproc
+  86              	.LFE63:
+  87              		.size	initOSDP, .-initOSDP
+  88              		.section	.text.copyPanelBufI2C,"ax",%progbits
+  89              		.align	2
+  90              		.global	copyPanelBufI2C
+  91              		.thumb
+  92              		.thumb_func
+  93              		.type	copyPanelBufI2C, %function
+  94              	copyPanelBufI2C:
+  95              	.LFB64:
+  34:osdp.c        **** 
+  35:osdp.c        **** void copyPanelBufI2C(PanelBuf *p)
+  36:osdp.c        **** {
+  96              		.loc 1 36 0
+  97              		.cfi_startproc
+  98              		@ args = 0, pretend = 0, frame = 16
+  99              		@ frame_needed = 1, uses_anonymous_args = 0
+ 100 0000 80B5     		push	{r7, lr}
+ 101              		.cfi_def_cfa_offset 8
+ 102              		.cfi_offset 7, -8
+ 103              		.cfi_offset 14, -4
+ 104 0002 84B0     		sub	sp, sp, #16
+ 105              		.cfi_def_cfa_offset 24
+ 106 0004 00AF     		add	r7, sp, #0
+ 107              		.cfi_def_cfa_register 7
+ 108 0006 7860     		str	r0, [r7, #4]
+  37:osdp.c        ****     int i;
+  38:osdp.c        ****     MyI2C_Regs.osdp_data_length = p->len;
+ 109              		.loc 1 38 0
+ 110 0008 7B68     		ldr	r3, [r7, #4]
+ 111 000a 93F88020 		ldrb	r2, [r3, #128]	@ zero_extendqisi2
+ 112 000e 154B     		ldr	r3, .L8
+ 113 0010 83F85F20 		strb	r2, [r3, #95]
+  39:osdp.c        ****     if (p->len >  OSDP_PANEL_BUFFER_LENGTH) p->len = OSDP_PANEL_BUFFER_LENGTH;
+ 114              		.loc 1 39 0
+ 115 0014 7B68     		ldr	r3, [r7, #4]
+ 116 0016 93F88030 		ldrb	r3, [r3, #128]	@ zero_extendqisi2
+ 117 001a 802B     		cmp	r3, #128
+ 118 001c 03D9     		bls	.L5
+ 119              		.loc 1 39 0 is_stmt 0 discriminator 1
+ 120 001e 7B68     		ldr	r3, [r7, #4]
+ 121 0020 8022     		movs	r2, #128
+ 122 0022 83F88020 		strb	r2, [r3, #128]
+ 123              	.L5:
+  40:osdp.c        ****     for (i=0; i < p->len; i++)
+ 124              		.loc 1 40 0 is_stmt 1
+ 125 0026 0023     		movs	r3, #0
+ 126 0028 FB60     		str	r3, [r7, #12]
+ 127 002a 0FE0     		b	.L6
+ 128              	.L7:
+  41:osdp.c        ****     {
+  42:osdp.c        ****         MyI2C_Regs.osdp_buffer[i] = p->buf[i];
+ 129              		.loc 1 42 0 discriminator 3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 4
+
+
+ 130 002c 7A68     		ldr	r2, [r7, #4]
+ 131 002e FB68     		ldr	r3, [r7, #12]
+ 132 0030 1344     		add	r3, r3, r2
+ 133 0032 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 134 0034 0B4A     		ldr	r2, .L8
+ 135 0036 FB68     		ldr	r3, [r7, #12]
+ 136 0038 1344     		add	r3, r3, r2
+ 137 003a 6133     		adds	r3, r3, #97
+ 138 003c 0A46     		mov	r2, r1
+ 139 003e 1A70     		strb	r2, [r3]
+  43:osdp.c        ****         CyDelayUs(1u);
+ 140              		.loc 1 43 0 discriminator 3
+ 141 0040 0120     		movs	r0, #1
+ 142 0042 FFF7FEFF 		bl	CyDelayUs
+  40:osdp.c        ****     for (i=0; i < p->len; i++)
+ 143              		.loc 1 40 0 discriminator 3
+ 144 0046 FB68     		ldr	r3, [r7, #12]
+ 145 0048 0133     		adds	r3, r3, #1
+ 146 004a FB60     		str	r3, [r7, #12]
+ 147              	.L6:
+  40:osdp.c        ****     for (i=0; i < p->len; i++)
+ 148              		.loc 1 40 0 is_stmt 0 discriminator 1
+ 149 004c 7B68     		ldr	r3, [r7, #4]
+ 150 004e 93F88030 		ldrb	r3, [r3, #128]	@ zero_extendqisi2
+ 151 0052 1A46     		mov	r2, r3
+ 152 0054 FB68     		ldr	r3, [r7, #12]
+ 153 0056 9A42     		cmp	r2, r3
+ 154 0058 E8DC     		bgt	.L7
+  44:osdp.c        ****     }
+  45:osdp.c        **** }
+ 155              		.loc 1 45 0 is_stmt 1
+ 156 005a 00BF     		nop
+ 157 005c 1037     		adds	r7, r7, #16
+ 158              		.cfi_def_cfa_offset 8
+ 159 005e BD46     		mov	sp, r7
+ 160              		.cfi_def_cfa_register 13
+ 161              		@ sp needed
+ 162 0060 80BD     		pop	{r7, pc}
+ 163              	.L9:
+ 164 0062 00BF     		.align	2
+ 165              	.L8:
+ 166 0064 00000000 		.word	MyI2C_Regs
+ 167              		.cfi_endproc
+ 168              	.LFE64:
+ 169              		.size	copyPanelBufI2C, .-copyPanelBufI2C
+ 170              		.section	.text.CopyI2cPanelBuffer,"ax",%progbits
+ 171              		.align	2
+ 172              		.global	CopyI2cPanelBuffer
+ 173              		.thumb
+ 174              		.thumb_func
+ 175              		.type	CopyI2cPanelBuffer, %function
+ 176              	CopyI2cPanelBuffer:
+ 177              	.LFB65:
+  46:osdp.c        **** 
+  47:osdp.c        **** void CopyI2cPanelBuffer()
+  48:osdp.c        **** {
+ 178              		.loc 1 48 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 5
+
+
+ 179              		.cfi_startproc
+ 180              		@ args = 0, pretend = 0, frame = 8
+ 181              		@ frame_needed = 1, uses_anonymous_args = 0
+ 182 0000 80B5     		push	{r7, lr}
+ 183              		.cfi_def_cfa_offset 8
+ 184              		.cfi_offset 7, -8
+ 185              		.cfi_offset 14, -4
+ 186 0002 82B0     		sub	sp, sp, #8
+ 187              		.cfi_def_cfa_offset 16
+ 188 0004 00AF     		add	r7, sp, #0
+ 189              		.cfi_def_cfa_register 7
+  49:osdp.c        ****     int i;
+  50:osdp.c        ****     panelSendBuf.len = MyI2C_Regs.osdp_data_length;
+ 190              		.loc 1 50 0
+ 191 0006 1E4B     		ldr	r3, .L14
+ 192 0008 93F85F20 		ldrb	r2, [r3, #95]	@ zero_extendqisi2
+ 193 000c 1D4B     		ldr	r3, .L14+4
+ 194 000e 83F88020 		strb	r2, [r3, #128]
+  51:osdp.c        ****     if (panelSendBuf.len >  OSDP_PANEL_BUFFER_LENGTH) panelSendBuf.len = OSDP_PANEL_BUFFER_LENGTH;
+ 195              		.loc 1 51 0
+ 196 0012 1C4B     		ldr	r3, .L14+4
+ 197 0014 93F88030 		ldrb	r3, [r3, #128]	@ zero_extendqisi2
+ 198 0018 802B     		cmp	r3, #128
+ 199 001a 03D9     		bls	.L11
+ 200              		.loc 1 51 0 is_stmt 0 discriminator 1
+ 201 001c 194B     		ldr	r3, .L14+4
+ 202 001e 8022     		movs	r2, #128
+ 203 0020 83F88020 		strb	r2, [r3, #128]
+ 204              	.L11:
+  52:osdp.c        ****     for (i=0; i < panelSendBuf.len; i++){
+ 205              		.loc 1 52 0 is_stmt 1
+ 206 0024 0023     		movs	r3, #0
+ 207 0026 7B60     		str	r3, [r7, #4]
+ 208 0028 0CE0     		b	.L12
+ 209              	.L13:
+  53:osdp.c        ****         panelSendBuf.buf[i] = MyI2C_Regs.osdp_buffer[i];
+ 210              		.loc 1 53 0 discriminator 3
+ 211 002a 154A     		ldr	r2, .L14
+ 212 002c 7B68     		ldr	r3, [r7, #4]
+ 213 002e 1344     		add	r3, r3, r2
+ 214 0030 6133     		adds	r3, r3, #97
+ 215 0032 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 216 0034 134A     		ldr	r2, .L14+4
+ 217 0036 7B68     		ldr	r3, [r7, #4]
+ 218 0038 1344     		add	r3, r3, r2
+ 219 003a 0A46     		mov	r2, r1
+ 220 003c 1A70     		strb	r2, [r3]
+  52:osdp.c        ****     for (i=0; i < panelSendBuf.len; i++){
+ 221              		.loc 1 52 0 discriminator 3
+ 222 003e 7B68     		ldr	r3, [r7, #4]
+ 223 0040 0133     		adds	r3, r3, #1
+ 224 0042 7B60     		str	r3, [r7, #4]
+ 225              	.L12:
+  52:osdp.c        ****     for (i=0; i < panelSendBuf.len; i++){
+ 226              		.loc 1 52 0 is_stmt 0 discriminator 1
+ 227 0044 0F4B     		ldr	r3, .L14+4
+ 228 0046 93F88030 		ldrb	r3, [r3, #128]	@ zero_extendqisi2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 6
+
+
+ 229 004a 1A46     		mov	r2, r3
+ 230 004c 7B68     		ldr	r3, [r7, #4]
+ 231 004e 9A42     		cmp	r2, r3
+ 232 0050 EBDC     		bgt	.L13
+  54:osdp.c        ****     }
+  55:osdp.c        ****     panelSendBuf.pending = 1;  //ready to send
+ 233              		.loc 1 55 0 is_stmt 1
+ 234 0052 0C4B     		ldr	r3, .L14+4
+ 235 0054 0122     		movs	r2, #1
+ 236 0056 83F88120 		strb	r2, [r3, #129]
+  56:osdp.c        ****     SendOSDP();
+ 237              		.loc 1 56 0
+ 238 005a FFF7FEFF 		bl	SendOSDP
+  57:osdp.c        ****     panelSendBuf.pending = 0; //send out command
+ 239              		.loc 1 57 0
+ 240 005e 094B     		ldr	r3, .L14+4
+ 241 0060 0022     		movs	r2, #0
+ 242 0062 83F88120 		strb	r2, [r3, #129]
+  58:osdp.c        ****     MyI2C_Regs.buffer1[1] ++; 
+ 243              		.loc 1 58 0
+ 244 0066 064B     		ldr	r3, .L14
+ 245 0068 93F84A30 		ldrb	r3, [r3, #74]	@ zero_extendqisi2
+ 246 006c 0133     		adds	r3, r3, #1
+ 247 006e DAB2     		uxtb	r2, r3
+ 248 0070 034B     		ldr	r3, .L14
+ 249 0072 83F84A20 		strb	r2, [r3, #74]
+  59:osdp.c        **** }
+ 250              		.loc 1 59 0
+ 251 0076 00BF     		nop
+ 252 0078 0837     		adds	r7, r7, #8
+ 253              		.cfi_def_cfa_offset 8
+ 254 007a BD46     		mov	sp, r7
+ 255              		.cfi_def_cfa_register 13
+ 256              		@ sp needed
+ 257 007c 80BD     		pop	{r7, pc}
+ 258              	.L15:
+ 259 007e 00BF     		.align	2
+ 260              	.L14:
+ 261 0080 00000000 		.word	MyI2C_Regs
+ 262 0084 00000000 		.word	panelSendBuf
+ 263              		.cfi_endproc
+ 264              	.LFE65:
+ 265              		.size	CopyI2cPanelBuffer, .-CopyI2cPanelBuffer
+ 266              		.section	.text.ClearOsdpBuffer,"ax",%progbits
+ 267              		.align	2
+ 268              		.global	ClearOsdpBuffer
+ 269              		.thumb
+ 270              		.thumb_func
+ 271              		.type	ClearOsdpBuffer, %function
+ 272              	ClearOsdpBuffer:
+ 273              	.LFB66:
+  60:osdp.c        **** 
+  61:osdp.c        **** void ClearOsdpBuffer()
+  62:osdp.c        **** {
+ 274              		.loc 1 62 0
+ 275              		.cfi_startproc
+ 276              		@ args = 0, pretend = 0, frame = 8
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 7
+
+
+ 277              		@ frame_needed = 1, uses_anonymous_args = 0
+ 278 0000 80B5     		push	{r7, lr}
+ 279              		.cfi_def_cfa_offset 8
+ 280              		.cfi_offset 7, -8
+ 281              		.cfi_offset 14, -4
+ 282 0002 82B0     		sub	sp, sp, #8
+ 283              		.cfi_def_cfa_offset 16
+ 284 0004 00AF     		add	r7, sp, #0
+ 285              		.cfi_def_cfa_register 7
+  63:osdp.c        ****     int i;
+  64:osdp.c        ****     UART_ACS_ClearRxBuffer();
+ 286              		.loc 1 64 0
+ 287 0006 FFF7FEFF 		bl	UART_ACS_ClearRxBuffer
+  65:osdp.c        ****     for ( i=0; i<OSDP_PANEL_BUFFER_LENGTH; i++)
+ 288              		.loc 1 65 0
+ 289 000a 0023     		movs	r3, #0
+ 290 000c 7B60     		str	r3, [r7, #4]
+ 291 000e 0BE0     		b	.L17
+ 292              	.L18:
+  66:osdp.c        ****     {
+  67:osdp.c        ****         MyI2C_Regs.osdp_buffer[i]=0;
+ 293              		.loc 1 67 0 discriminator 3
+ 294 0010 0B4A     		ldr	r2, .L19
+ 295 0012 7B68     		ldr	r3, [r7, #4]
+ 296 0014 1344     		add	r3, r3, r2
+ 297 0016 6133     		adds	r3, r3, #97
+ 298 0018 0022     		movs	r2, #0
+ 299 001a 1A70     		strb	r2, [r3]
+  68:osdp.c        ****         CyDelayUs(1u);
+ 300              		.loc 1 68 0 discriminator 3
+ 301 001c 0120     		movs	r0, #1
+ 302 001e FFF7FEFF 		bl	CyDelayUs
+  65:osdp.c        ****     for ( i=0; i<OSDP_PANEL_BUFFER_LENGTH; i++)
+ 303              		.loc 1 65 0 discriminator 3
+ 304 0022 7B68     		ldr	r3, [r7, #4]
+ 305 0024 0133     		adds	r3, r3, #1
+ 306 0026 7B60     		str	r3, [r7, #4]
+ 307              	.L17:
+  65:osdp.c        ****     for ( i=0; i<OSDP_PANEL_BUFFER_LENGTH; i++)
+ 308              		.loc 1 65 0 is_stmt 0 discriminator 1
+ 309 0028 7B68     		ldr	r3, [r7, #4]
+ 310 002a 7F2B     		cmp	r3, #127
+ 311 002c F0DD     		ble	.L18
+  69:osdp.c        ****     }
+  70:osdp.c        ****     MyI2C_Regs.osdp_data_length = 0;
+ 312              		.loc 1 70 0 is_stmt 1
+ 313 002e 044B     		ldr	r3, .L19
+ 314 0030 0022     		movs	r2, #0
+ 315 0032 83F85F20 		strb	r2, [r3, #95]
+  71:osdp.c        **** }
+ 316              		.loc 1 71 0
+ 317 0036 00BF     		nop
+ 318 0038 0837     		adds	r7, r7, #8
+ 319              		.cfi_def_cfa_offset 8
+ 320 003a BD46     		mov	sp, r7
+ 321              		.cfi_def_cfa_register 13
+ 322              		@ sp needed
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 8
+
+
+ 323 003c 80BD     		pop	{r7, pc}
+ 324              	.L20:
+ 325 003e 00BF     		.align	2
+ 326              	.L19:
+ 327 0040 00000000 		.word	MyI2C_Regs
+ 328              		.cfi_endproc
+ 329              	.LFE66:
+ 330              		.size	ClearOsdpBuffer, .-ClearOsdpBuffer
+ 331              		.section	.text.SendOSDP,"ax",%progbits
+ 332              		.align	2
+ 333              		.global	SendOSDP
+ 334              		.thumb
+ 335              		.thumb_func
+ 336              		.type	SendOSDP, %function
+ 337              	SendOSDP:
+ 338              	.LFB67:
+  72:osdp.c        **** /*
+  73:osdp.c        **** unsigned char calcChecksum(unsigned char * msg, int len)
+  74:osdp.c        **** {
+  75:osdp.c        ****     unsigned char i, ret;
+  76:osdp.c        ****     unsigned char sum = 0;
+  77:osdp.c        ****     for(i = 0; i < len; i++)
+  78:osdp.c        ****     {
+  79:osdp.c        ****         sum += msg[i];
+  80:osdp.c        ****     }
+  81:osdp.c        ****     ret = (unsigned char)((0x100 - sum) & 0xFF);
+  82:osdp.c        ****     return ret;
+  83:osdp.c        **** }
+  84:osdp.c        **** */
+  85:osdp.c        **** void SendOSDP()
+  86:osdp.c        **** {
+ 339              		.loc 1 86 0
+ 340              		.cfi_startproc
+ 341              		@ args = 0, pretend = 0, frame = 136
+ 342              		@ frame_needed = 1, uses_anonymous_args = 0
+ 343 0000 80B5     		push	{r7, lr}
+ 344              		.cfi_def_cfa_offset 8
+ 345              		.cfi_offset 7, -8
+ 346              		.cfi_offset 14, -4
+ 347 0002 A2B0     		sub	sp, sp, #136
+ 348              		.cfi_def_cfa_offset 144
+ 349 0004 00AF     		add	r7, sp, #0
+ 350              		.cfi_def_cfa_register 7
+  87:osdp.c        **** 
+  88:osdp.c        **** //    MyI2C_Regs.buffer1[13]++;
+  89:osdp.c        ****     Mode_Sel_ACS_Write(1); //set io chip to 485
+ 351              		.loc 1 89 0
+ 352 0006 0120     		movs	r0, #1
+ 353 0008 FFF7FEFF 		bl	Mode_Sel_ACS_Write
+  90:osdp.c        ****     TX_EN_Write(1);
+ 354              		.loc 1 90 0
+ 355 000c 0120     		movs	r0, #1
+ 356 000e FFF7FEFF 		bl	TX_EN_Write
+  91:osdp.c        ****     UART_ACS_LoadTxConfig();
+ 357              		.loc 1 91 0
+ 358 0012 FFF7FEFF 		bl	UART_ACS_LoadTxConfig
+  92:osdp.c        ****     CyDelay(10); //Driver Output Enable Time, do not reduce.
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 9
+
+
+ 359              		.loc 1 92 0
+ 360 0016 0A20     		movs	r0, #10
+ 361 0018 FFF7FEFF 		bl	CyDelay
+  93:osdp.c        ****     
+  94:osdp.c        ****     //panelBuf panelSendBuf;
+  95:osdp.c        ****     PanelBuf temp;
+  96:osdp.c        ****     temp.buf[0] = 0x00;
+ 362              		.loc 1 96 0
+ 363 001c 0023     		movs	r3, #0
+ 364 001e 3B71     		strb	r3, [r7, #4]
+  97:osdp.c        ****     temp.buf[1] = 0x00;
+ 365              		.loc 1 97 0
+ 366 0020 0023     		movs	r3, #0
+ 367 0022 7B71     		strb	r3, [r7, #5]
+  98:osdp.c        ****     temp.len = 2;
+ 368              		.loc 1 98 0
+ 369 0024 0223     		movs	r3, #2
+ 370 0026 87F88430 		strb	r3, [r7, #132]
+  99:osdp.c        ****     UART_ACS_PutArray(temp.buf,temp.len);
+ 371              		.loc 1 99 0
+ 372 002a 97F88420 		ldrb	r2, [r7, #132]	@ zero_extendqisi2
+ 373 002e 3B1D     		adds	r3, r7, #4
+ 374 0030 1146     		mov	r1, r2
+ 375 0032 1846     		mov	r0, r3
+ 376 0034 FFF7FEFF 		bl	UART_ACS_PutArray
+ 100:osdp.c        ****     if(panelSendBuf.buf[0] == 0x53){
+ 377              		.loc 1 100 0
+ 378 0038 124B     		ldr	r3, .L23
+ 379 003a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 380 003c 532B     		cmp	r3, #83
+ 381 003e 0AD1     		bne	.L22
+ 101:osdp.c        ****         UART_ACS_PutArray(panelSendBuf.buf,panelSendBuf.len);
+ 382              		.loc 1 101 0
+ 383 0040 104B     		ldr	r3, .L23
+ 384 0042 93F88030 		ldrb	r3, [r3, #128]	@ zero_extendqisi2
+ 385 0046 1946     		mov	r1, r3
+ 386 0048 0E48     		ldr	r0, .L23
+ 387 004a FFF7FEFF 		bl	UART_ACS_PutArray
+ 102:osdp.c        ****        // UART_ACS_PutArray(temp.buf,temp.len);
+ 103:osdp.c        ****         UART_ACS_PutCRLF(temp.buf[0]); 
+ 388              		.loc 1 103 0
+ 389 004e 3B79     		ldrb	r3, [r7, #4]	@ zero_extendqisi2
+ 390 0050 1846     		mov	r0, r3
+ 391 0052 FFF7FEFF 		bl	UART_ACS_PutCRLF
+ 392              	.L22:
+ 104:osdp.c        **** //        CyDelay(5); //minmum 4m
+ 105:osdp.c        ****     }
+ 106:osdp.c        ****     //while(UART_ACS_GetTxBufferSize() != 0);
+ 107:osdp.c        ****     
+ 108:osdp.c        ****     CyDelay(50);
+ 393              		.loc 1 108 0
+ 394 0056 3220     		movs	r0, #50
+ 395 0058 FFF7FEFF 		bl	CyDelay
+ 109:osdp.c        **** 
+ 110:osdp.c        ****     TX_EN_Write(0);
+ 396              		.loc 1 110 0
+ 397 005c 0020     		movs	r0, #0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 10
+
+
+ 398 005e FFF7FEFF 		bl	TX_EN_Write
+ 111:osdp.c        ****     Mode_Sel_ACS_Write(1); //set the chip to RS485 mode
+ 399              		.loc 1 111 0
+ 400 0062 0120     		movs	r0, #1
+ 401 0064 FFF7FEFF 		bl	Mode_Sel_ACS_Write
+ 112:osdp.c        ****     UART_ACS_LoadRxConfig();    
+ 402              		.loc 1 112 0
+ 403 0068 FFF7FEFF 		bl	UART_ACS_LoadRxConfig
+ 113:osdp.c        ****     CyDelay(10);
+ 404              		.loc 1 113 0
+ 405 006c 0A20     		movs	r0, #10
+ 406 006e FFF7FEFF 		bl	CyDelay
+ 114:osdp.c        ****     MyI2C_Regs.osdp_cmd = OSDP_READ; //send only once
+ 407              		.loc 1 114 0
+ 408 0072 054B     		ldr	r3, .L23+4
+ 409 0074 0322     		movs	r2, #3
+ 410 0076 83F85D20 		strb	r2, [r3, #93]
+ 115:osdp.c        **** 
+ 116:osdp.c        ****     //should be in the send message function   MyI2C_Regs.osdp_status |= OSDP_PANEL_DATA_SENT;
+ 117:osdp.c        **** }
+ 411              		.loc 1 117 0
+ 412 007a 00BF     		nop
+ 413 007c 8837     		adds	r7, r7, #136
+ 414              		.cfi_def_cfa_offset 8
+ 415 007e BD46     		mov	sp, r7
+ 416              		.cfi_def_cfa_register 13
+ 417              		@ sp needed
+ 418 0080 80BD     		pop	{r7, pc}
+ 419              	.L24:
+ 420 0082 00BF     		.align	2
+ 421              	.L23:
+ 422 0084 00000000 		.word	panelSendBuf
+ 423 0088 00000000 		.word	MyI2C_Regs
+ 424              		.cfi_endproc
+ 425              	.LFE67:
+ 426              		.size	SendOSDP, .-SendOSDP
+ 427              		.section	.text.ReadOSDP,"ax",%progbits
+ 428              		.align	2
+ 429              		.global	ReadOSDP
+ 430              		.thumb
+ 431              		.thumb_func
+ 432              		.type	ReadOSDP, %function
+ 433              	ReadOSDP:
+ 434              	.LFB68:
+ 118:osdp.c        **** 
+ 119:osdp.c        **** /*
+ 120:osdp.c        **** void sendOSDPAck(struct OSDP_MSG_HEADER msg){
+ 121:osdp.c        ****     
+ 122:osdp.c        ****     panelSendBuf.buf[0] = 0x53;
+ 123:osdp.c        ****     panelSendBuf.buf[1] = msg.addr | 0x80;
+ 124:osdp.c        ****     panelSendBuf.buf[2] = 7;
+ 125:osdp.c        ****     panelSendBuf.buf[3] = 0;
+ 126:osdp.c        ****     panelSendBuf.buf[4] = msg.ctrl;
+ 127:osdp.c        ****     panelSendBuf.buf[5] = 0x40;
+ 128:osdp.c        ****     panelSendBuf.buf[6] = calcChecksum(panelSendBuf.buf, 6);
+ 129:osdp.c        ****     panelSendBuf.len = msg.u.len;
+ 130:osdp.c        ****     SendOSDP();
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 11
+
+
+ 131:osdp.c        **** }
+ 132:osdp.c        **** 
+ 133:osdp.c        **** void sendOSDPNak(struct OSDP_MSG_HEADER msg){
+ 134:osdp.c        ****     
+ 135:osdp.c        ****     panelSendBuf.buf[0] = 0x53;
+ 136:osdp.c        ****     panelSendBuf.buf[1] = msg.addr | 0x80;
+ 137:osdp.c        ****     panelSendBuf.buf[2] = 8;
+ 138:osdp.c        ****     panelSendBuf.buf[3] = 0;
+ 139:osdp.c        ****     panelSendBuf.buf[4] = msg.ctrl;
+ 140:osdp.c        ****     panelSendBuf.buf[5] = 0x41;
+ 141:osdp.c        ****     panelSendBuf.buf[6] = 0x01;
+ 142:osdp.c        ****     panelSendBuf.buf[7] = calcChecksum(panelSendBuf.buf, 7);
+ 143:osdp.c        ****     panelSendBuf.len = 8;
+ 144:osdp.c        ****     SendOSDP();
+ 145:osdp.c        **** }
+ 146:osdp.c        **** */
+ 147:osdp.c        **** 
+ 148:osdp.c        **** void ReadOSDP()
+ 149:osdp.c        **** {
+ 435              		.loc 1 149 0
+ 436              		.cfi_startproc
+ 437              		@ args = 0, pretend = 0, frame = 8
+ 438              		@ frame_needed = 1, uses_anonymous_args = 0
+ 439 0000 80B5     		push	{r7, lr}
+ 440              		.cfi_def_cfa_offset 8
+ 441              		.cfi_offset 7, -8
+ 442              		.cfi_offset 14, -4
+ 443 0002 82B0     		sub	sp, sp, #8
+ 444              		.cfi_def_cfa_offset 16
+ 445 0004 00AF     		add	r7, sp, #0
+ 446              		.cfi_def_cfa_register 7
+ 150:osdp.c        ****      UART_ACS_LoadRxConfig();
+ 447              		.loc 1 150 0
+ 448 0006 FFF7FEFF 		bl	UART_ACS_LoadRxConfig
+ 151:osdp.c        ****     if(UART_ACS_GetRxBufferSize() == 0){
+ 449              		.loc 1 151 0
+ 450 000a FFF7FEFF 		bl	UART_ACS_GetRxBufferSize
+ 451 000e 0346     		mov	r3, r0
+ 452 0010 002B     		cmp	r3, #0
+ 453 0012 00F04C81 		beq	.L42
+ 152:osdp.c        **** //        MyI2C_Regs.buffer1[7] = 0;        
+ 153:osdp.c        ****         return;
+ 154:osdp.c        ****     }
+ 155:osdp.c        ****     MyI2C_Regs.buffer1[2]++;
+ 454              		.loc 1 155 0
+ 455 0016 AD4B     		ldr	r3, .L48
+ 456 0018 93F84B30 		ldrb	r3, [r3, #75]	@ zero_extendqisi2
+ 457 001c 0133     		adds	r3, r3, #1
+ 458 001e DAB2     		uxtb	r2, r3
+ 459 0020 AA4B     		ldr	r3, .L48
+ 460 0022 83F84B20 		strb	r2, [r3, #75]
+ 156:osdp.c        ****     int byteCount =0;
+ 461              		.loc 1 156 0
+ 462 0026 0023     		movs	r3, #0
+ 463 0028 7B60     		str	r3, [r7, #4]
+ 157:osdp.c        ****     unsigned char tmp = 0;
+ 464              		.loc 1 157 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 12
+
+
+ 465 002a 0023     		movs	r3, #0
+ 466 002c FB70     		strb	r3, [r7, #3]
+ 158:osdp.c        ****     char msg_started = 0;
+ 467              		.loc 1 158 0
+ 468 002e 0023     		movs	r3, #0
+ 469 0030 BB70     		strb	r3, [r7, #2]
+ 159:osdp.c        ****     int i;
+ 160:osdp.c        ****     Timeout_Timer_Isr_Disable();
+ 470              		.loc 1 160 0
+ 471 0032 FFF7FEFF 		bl	Timeout_Timer_Isr_Disable
+ 161:osdp.c        ****     osdp_timeout = 0;
+ 472              		.loc 1 161 0
+ 473 0036 A64B     		ldr	r3, .L48+4
+ 474 0038 0022     		movs	r2, #0
+ 475 003a 1A60     		str	r2, [r3]
+ 162:osdp.c        ****     Timeout_Timer_Isr_Enable();
+ 476              		.loc 1 162 0
+ 477 003c FFF7FEFF 		bl	Timeout_Timer_Isr_Enable
+ 163:osdp.c        ****     if (UART_ACS_GetRxBufferSize()>= 7)
+ 478              		.loc 1 163 0
+ 479 0040 FFF7FEFF 		bl	UART_ACS_GetRxBufferSize
+ 480 0044 0346     		mov	r3, r0
+ 481 0046 062B     		cmp	r3, #6
+ 482 0048 40F23C81 		bls	.L25
+ 164:osdp.c        ****     {
+ 165:osdp.c        ****         MyI2C_Regs.buffer1[3]++;
+ 483              		.loc 1 165 0
+ 484 004c 9F4B     		ldr	r3, .L48
+ 485 004e 93F84C30 		ldrb	r3, [r3, #76]	@ zero_extendqisi2
+ 486 0052 0133     		adds	r3, r3, #1
+ 487 0054 DAB2     		uxtb	r2, r3
+ 488 0056 9D4B     		ldr	r3, .L48
+ 489 0058 83F84C20 		strb	r2, [r3, #76]
+ 166:osdp.c        **** /*        for(i=0;i<7;i++) {
+ 167:osdp.c        ****             tmp = UART_ACS_GetChar();
+ 168:osdp.c        ****                 MyI2C_Regs.buffer1[8] = tmp;
+ 169:osdp.c        ****             if (tmp == 0x53) {
+ 170:osdp.c        ****                 msg_started = 1;
+ 171:osdp.c        ****                 break;
+ 172:osdp.c        ****             }
+ 173:osdp.c        ****         } 
+ 174:osdp.c        **** */
+ 175:osdp.c        ****  /*           tmp = UART_ACS_GetRxBufferSize();
+ 176:osdp.c        ****             for(i = 0; i<tmp; i++){
+ 177:osdp.c        ****                 MyI2C_Regs.buffer[i] = UART_ACS_GetChar();
+ 178:osdp.c        ****             }
+ 179:osdp.c        ****    */         
+ 180:osdp.c        ****             tmp = UART_ACS_GetChar();
+ 490              		.loc 1 180 0
+ 491 005c FFF7FEFF 		bl	UART_ACS_GetChar
+ 492 0060 0346     		mov	r3, r0
+ 493 0062 FB70     		strb	r3, [r7, #3]
+ 181:osdp.c        ****             
+ 182:osdp.c        ****             while(tmp!=0x53){
+ 494              		.loc 1 182 0
+ 495 0064 0DE0     		b	.L28
+ 496              	.L30:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 13
+
+
+ 183:osdp.c        ****                 MyI2C_Regs.buffer1[8] = tmp;
+ 497              		.loc 1 183 0
+ 498 0066 994A     		ldr	r2, .L48
+ 499 0068 FB78     		ldrb	r3, [r7, #3]
+ 500 006a 82F85130 		strb	r3, [r2, #81]
+ 184:osdp.c        ****                 if(UART_ACS_GetRxBufferSize()==0) return;
+ 501              		.loc 1 184 0
+ 502 006e FFF7FEFF 		bl	UART_ACS_GetRxBufferSize
+ 503 0072 0346     		mov	r3, r0
+ 504 0074 002B     		cmp	r3, #0
+ 505 0076 00F01C81 		beq	.L43
+ 185:osdp.c        ****                 tmp = UART_ACS_GetChar();
+ 506              		.loc 1 185 0
+ 507 007a FFF7FEFF 		bl	UART_ACS_GetChar
+ 508 007e 0346     		mov	r3, r0
+ 509 0080 FB70     		strb	r3, [r7, #3]
+ 510              	.L28:
+ 182:osdp.c        ****                 MyI2C_Regs.buffer1[8] = tmp;
+ 511              		.loc 1 182 0
+ 512 0082 FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 513 0084 532B     		cmp	r3, #83
+ 514 0086 EED1     		bne	.L30
+ 186:osdp.c        ****                 
+ 187:osdp.c        ****             }
+ 188:osdp.c        ****             MyI2C_Regs.buffer1[7] ++;
+ 515              		.loc 1 188 0
+ 516 0088 904B     		ldr	r3, .L48
+ 517 008a 93F85030 		ldrb	r3, [r3, #80]	@ zero_extendqisi2
+ 518 008e 0133     		adds	r3, r3, #1
+ 519 0090 DAB2     		uxtb	r2, r3
+ 520 0092 8E4B     		ldr	r3, .L48
+ 521 0094 83F85020 		strb	r2, [r3, #80]
+ 189:osdp.c        ****             
+ 190:osdp.c        **** 
+ 191:osdp.c        ****                 msg_started = 1;
+ 522              		.loc 1 191 0
+ 523 0098 0123     		movs	r3, #1
+ 524 009a BB70     		strb	r3, [r7, #2]
+ 192:osdp.c        **** 
+ 193:osdp.c        ****             while(UART_ACS_GetRxBufferSize()<=4){
+ 525              		.loc 1 193 0
+ 526 009c 06E0     		b	.L31
+ 527              	.L32:
+ 194:osdp.c        **** 
+ 195:osdp.c        ****                 if(osdp_timeout > 10000) return;
+ 528              		.loc 1 195 0
+ 529 009e 8C4B     		ldr	r3, .L48+4
+ 530 00a0 1B68     		ldr	r3, [r3]
+ 531 00a2 42F21072 		movw	r2, #10000
+ 532 00a6 9342     		cmp	r3, r2
+ 533 00a8 00F30581 		bgt	.L44
+ 534              	.L31:
+ 193:osdp.c        **** 
+ 535              		.loc 1 193 0
+ 536 00ac FFF7FEFF 		bl	UART_ACS_GetRxBufferSize
+ 537 00b0 0346     		mov	r3, r0
+ 538 00b2 042B     		cmp	r3, #4
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 14
+
+
+ 539 00b4 F3D9     		bls	.L32
+ 196:osdp.c        ****             }
+ 197:osdp.c        ****      
+ 198:osdp.c        ****         if (msg_started){
+ 540              		.loc 1 198 0
+ 541 00b6 BB78     		ldrb	r3, [r7, #2]	@ zero_extendqisi2
+ 542 00b8 002B     		cmp	r3, #0
+ 543 00ba 00F0FE80 		beq	.L45
+ 199:osdp.c        ****             tmp = UART_ACS_GetChar();  //ADDR
+ 544              		.loc 1 199 0
+ 545 00be FFF7FEFF 		bl	UART_ACS_GetChar
+ 546 00c2 0346     		mov	r3, r0
+ 547 00c4 FB70     		strb	r3, [r7, #3]
+ 200:osdp.c        ****                             
+ 201:osdp.c        ****             osdp_msg_header.addr = tmp;
+ 548              		.loc 1 201 0
+ 549 00c6 834A     		ldr	r2, .L48+8
+ 550 00c8 FB78     		ldrb	r3, [r7, #3]
+ 551 00ca 1370     		strb	r3, [r2]
+ 202:osdp.c        ****             //ik if(tmp != 0) return;
+ 203:osdp.c        ****             
+ 204:osdp.c        ****             tmp = UART_ACS_GetChar();
+ 552              		.loc 1 204 0
+ 553 00cc FFF7FEFF 		bl	UART_ACS_GetChar
+ 554 00d0 0346     		mov	r3, r0
+ 555 00d2 FB70     		strb	r3, [r7, #3]
+ 205:osdp.c        ****             osdp_msg_header.u.length[0] = tmp;
+ 556              		.loc 1 205 0
+ 557 00d4 7F4A     		ldr	r2, .L48+8
+ 558 00d6 FB78     		ldrb	r3, [r7, #3]
+ 559 00d8 9370     		strb	r3, [r2, #2]
+ 206:osdp.c        ****             
+ 207:osdp.c        ****             tmp = UART_ACS_GetChar();
+ 560              		.loc 1 207 0
+ 561 00da FFF7FEFF 		bl	UART_ACS_GetChar
+ 562 00de 0346     		mov	r3, r0
+ 563 00e0 FB70     		strb	r3, [r7, #3]
+ 208:osdp.c        ****             osdp_msg_header.u.length[1] = tmp;
+ 564              		.loc 1 208 0
+ 565 00e2 7C4A     		ldr	r2, .L48+8
+ 566 00e4 FB78     		ldrb	r3, [r7, #3]
+ 567 00e6 D370     		strb	r3, [r2, #3]
+ 209:osdp.c        ****             
+ 210:osdp.c        ****             tmp = UART_ACS_GetChar();
+ 568              		.loc 1 210 0
+ 569 00e8 FFF7FEFF 		bl	UART_ACS_GetChar
+ 570 00ec 0346     		mov	r3, r0
+ 571 00ee FB70     		strb	r3, [r7, #3]
+ 211:osdp.c        ****             osdp_msg_header.ctrl = tmp;
+ 572              		.loc 1 211 0
+ 573 00f0 784A     		ldr	r2, .L48+8
+ 574 00f2 FB78     		ldrb	r3, [r7, #3]
+ 575 00f4 1371     		strb	r3, [r2, #4]
+ 212:osdp.c        ****             osdp_msg_header.seq = tmp & 0x03;
+ 576              		.loc 1 212 0
+ 577 00f6 FB78     		ldrb	r3, [r7, #3]
+ 578 00f8 03F00303 		and	r3, r3, #3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 15
+
+
+ 579 00fc DAB2     		uxtb	r2, r3
+ 580 00fe 754B     		ldr	r3, .L48+8
+ 581 0100 5A71     		strb	r2, [r3, #5]
+ 213:osdp.c        ****             
+ 214:osdp.c        **** //            tmp = UART_ACS_GetChar();
+ 215:osdp.c        **** //            osdp_msg_header.cmnd = tmp;
+ 216:osdp.c        ****           MyI2C_Regs.buffer1[5]++;  
+ 582              		.loc 1 216 0
+ 583 0102 724B     		ldr	r3, .L48
+ 584 0104 93F84E30 		ldrb	r3, [r3, #78]	@ zero_extendqisi2
+ 585 0108 0133     		adds	r3, r3, #1
+ 586 010a DAB2     		uxtb	r2, r3
+ 587 010c 6F4B     		ldr	r3, .L48
+ 588 010e 83F84E20 		strb	r2, [r3, #78]
+ 217:osdp.c        ****         } 
+ 218:osdp.c        ****         else
+ 219:osdp.c        ****         {
+ 220:osdp.c        ****             //the message is not started yet
+ 221:osdp.c        ****             return;
+ 222:osdp.c        ****         }
+ 223:osdp.c        ****         
+ 224:osdp.c        ****         if (osdp_msg_header.u.len <7) return; //discard bad message, too short.
+ 589              		.loc 1 224 0
+ 590 0112 704B     		ldr	r3, .L48+8
+ 591 0114 B3F90230 		ldrsh	r3, [r3, #2]
+ 592 0118 062B     		cmp	r3, #6
+ 593 011a 40F3D080 		ble	.L46
+ 225:osdp.c        ****         
+ 226:osdp.c        ****         byteCount = 0;
+ 594              		.loc 1 226 0
+ 595 011e 0023     		movs	r3, #0
+ 596 0120 7B60     		str	r3, [r7, #4]
+ 227:osdp.c        ****         panelReadBuf.buf[byteCount] = 0x53;
+ 597              		.loc 1 227 0
+ 598 0122 6D4A     		ldr	r2, .L48+12
+ 599 0124 7B68     		ldr	r3, [r7, #4]
+ 600 0126 1344     		add	r3, r3, r2
+ 601 0128 5322     		movs	r2, #83
+ 602 012a 1A70     		strb	r2, [r3]
+ 228:osdp.c        ****         MyI2C_Regs.buffer[byteCount] = panelReadBuf.buf[byteCount];
+ 603              		.loc 1 228 0
+ 604 012c 6A4A     		ldr	r2, .L48+12
+ 605 012e 7B68     		ldr	r3, [r7, #4]
+ 606 0130 1344     		add	r3, r3, r2
+ 607 0132 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 608 0134 654A     		ldr	r2, .L48
+ 609 0136 7B68     		ldr	r3, [r7, #4]
+ 610 0138 1344     		add	r3, r3, r2
+ 611 013a 03F5B273 		add	r3, r3, #356
+ 612 013e 0A46     		mov	r2, r1
+ 613 0140 1A70     		strb	r2, [r3]
+ 229:osdp.c        ****         byteCount++;
+ 614              		.loc 1 229 0
+ 615 0142 7B68     		ldr	r3, [r7, #4]
+ 616 0144 0133     		adds	r3, r3, #1
+ 617 0146 7B60     		str	r3, [r7, #4]
+ 230:osdp.c        ****         panelReadBuf.buf[byteCount] = osdp_msg_header.addr;
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 16
+
+
+ 618              		.loc 1 230 0
+ 619 0148 624B     		ldr	r3, .L48+8
+ 620 014a 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 621 014c 624A     		ldr	r2, .L48+12
+ 622 014e 7B68     		ldr	r3, [r7, #4]
+ 623 0150 1344     		add	r3, r3, r2
+ 624 0152 0A46     		mov	r2, r1
+ 625 0154 1A70     		strb	r2, [r3]
+ 231:osdp.c        ****         MyI2C_Regs.buffer[byteCount] = panelReadBuf.buf[byteCount];
+ 626              		.loc 1 231 0
+ 627 0156 604A     		ldr	r2, .L48+12
+ 628 0158 7B68     		ldr	r3, [r7, #4]
+ 629 015a 1344     		add	r3, r3, r2
+ 630 015c 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 631 015e 5B4A     		ldr	r2, .L48
+ 632 0160 7B68     		ldr	r3, [r7, #4]
+ 633 0162 1344     		add	r3, r3, r2
+ 634 0164 03F5B273 		add	r3, r3, #356
+ 635 0168 0A46     		mov	r2, r1
+ 636 016a 1A70     		strb	r2, [r3]
+ 232:osdp.c        ****         byteCount++;
+ 637              		.loc 1 232 0
+ 638 016c 7B68     		ldr	r3, [r7, #4]
+ 639 016e 0133     		adds	r3, r3, #1
+ 640 0170 7B60     		str	r3, [r7, #4]
+ 233:osdp.c        ****         panelReadBuf.buf[byteCount] = osdp_msg_header.u.length[0];
+ 641              		.loc 1 233 0
+ 642 0172 584B     		ldr	r3, .L48+8
+ 643 0174 9978     		ldrb	r1, [r3, #2]	@ zero_extendqisi2
+ 644 0176 584A     		ldr	r2, .L48+12
+ 645 0178 7B68     		ldr	r3, [r7, #4]
+ 646 017a 1344     		add	r3, r3, r2
+ 647 017c 0A46     		mov	r2, r1
+ 648 017e 1A70     		strb	r2, [r3]
+ 234:osdp.c        ****         MyI2C_Regs.buffer[byteCount] = panelReadBuf.buf[byteCount];
+ 649              		.loc 1 234 0
+ 650 0180 554A     		ldr	r2, .L48+12
+ 651 0182 7B68     		ldr	r3, [r7, #4]
+ 652 0184 1344     		add	r3, r3, r2
+ 653 0186 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 654 0188 504A     		ldr	r2, .L48
+ 655 018a 7B68     		ldr	r3, [r7, #4]
+ 656 018c 1344     		add	r3, r3, r2
+ 657 018e 03F5B273 		add	r3, r3, #356
+ 658 0192 0A46     		mov	r2, r1
+ 659 0194 1A70     		strb	r2, [r3]
+ 235:osdp.c        ****         byteCount++;
+ 660              		.loc 1 235 0
+ 661 0196 7B68     		ldr	r3, [r7, #4]
+ 662 0198 0133     		adds	r3, r3, #1
+ 663 019a 7B60     		str	r3, [r7, #4]
+ 236:osdp.c        ****         panelReadBuf.buf[byteCount] = osdp_msg_header.u.length[1];
+ 664              		.loc 1 236 0
+ 665 019c 4D4B     		ldr	r3, .L48+8
+ 666 019e D978     		ldrb	r1, [r3, #3]	@ zero_extendqisi2
+ 667 01a0 4D4A     		ldr	r2, .L48+12
+ 668 01a2 7B68     		ldr	r3, [r7, #4]
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 17
+
+
+ 669 01a4 1344     		add	r3, r3, r2
+ 670 01a6 0A46     		mov	r2, r1
+ 671 01a8 1A70     		strb	r2, [r3]
+ 237:osdp.c        ****         MyI2C_Regs.buffer[byteCount] = panelReadBuf.buf[byteCount];
+ 672              		.loc 1 237 0
+ 673 01aa 4B4A     		ldr	r2, .L48+12
+ 674 01ac 7B68     		ldr	r3, [r7, #4]
+ 675 01ae 1344     		add	r3, r3, r2
+ 676 01b0 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 677 01b2 464A     		ldr	r2, .L48
+ 678 01b4 7B68     		ldr	r3, [r7, #4]
+ 679 01b6 1344     		add	r3, r3, r2
+ 680 01b8 03F5B273 		add	r3, r3, #356
+ 681 01bc 0A46     		mov	r2, r1
+ 682 01be 1A70     		strb	r2, [r3]
+ 238:osdp.c        ****         byteCount++;
+ 683              		.loc 1 238 0
+ 684 01c0 7B68     		ldr	r3, [r7, #4]
+ 685 01c2 0133     		adds	r3, r3, #1
+ 686 01c4 7B60     		str	r3, [r7, #4]
+ 239:osdp.c        ****         panelReadBuf.buf[byteCount] = osdp_msg_header.ctrl;
+ 687              		.loc 1 239 0
+ 688 01c6 434B     		ldr	r3, .L48+8
+ 689 01c8 1979     		ldrb	r1, [r3, #4]	@ zero_extendqisi2
+ 690 01ca 434A     		ldr	r2, .L48+12
+ 691 01cc 7B68     		ldr	r3, [r7, #4]
+ 692 01ce 1344     		add	r3, r3, r2
+ 693 01d0 0A46     		mov	r2, r1
+ 694 01d2 1A70     		strb	r2, [r3]
+ 240:osdp.c        ****         MyI2C_Regs.buffer[byteCount] = panelReadBuf.buf[byteCount];
+ 695              		.loc 1 240 0
+ 696 01d4 404A     		ldr	r2, .L48+12
+ 697 01d6 7B68     		ldr	r3, [r7, #4]
+ 698 01d8 1344     		add	r3, r3, r2
+ 699 01da 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 700 01dc 3B4A     		ldr	r2, .L48
+ 701 01de 7B68     		ldr	r3, [r7, #4]
+ 702 01e0 1344     		add	r3, r3, r2
+ 703 01e2 03F5B273 		add	r3, r3, #356
+ 704 01e6 0A46     		mov	r2, r1
+ 705 01e8 1A70     		strb	r2, [r3]
+ 241:osdp.c        ****         byteCount++;
+ 706              		.loc 1 241 0
+ 707 01ea 7B68     		ldr	r3, [r7, #4]
+ 708 01ec 0133     		adds	r3, r3, #1
+ 709 01ee 7B60     		str	r3, [r7, #4]
+ 242:osdp.c        **** //        panelReadBuf.buf[byteCount] = osdp_msg_header.cmnd;
+ 243:osdp.c        **** //        byteCount++;
+ 244:osdp.c        ****         if(osdp_msg_header.u.len > OSDP_PANEL_BUFFER_LENGTH){
+ 710              		.loc 1 244 0
+ 711 01f0 384B     		ldr	r3, .L48+8
+ 712 01f2 B3F90230 		ldrsh	r3, [r3, #2]
+ 713 01f6 802B     		cmp	r3, #128
+ 714 01f8 05DD     		ble	.L36
+ 245:osdp.c        ****             //error, the message is too long
+ 246:osdp.c        ****             ClearOsdpBuffer();
+ 715              		.loc 1 246 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 18
+
+
+ 716 01fa FFF7FEFF 		bl	ClearOsdpBuffer
+ 247:osdp.c        ****             osdp_msg_header.u.len = 0;
+ 717              		.loc 1 247 0
+ 718 01fe 354B     		ldr	r3, .L48+8
+ 719 0200 0022     		movs	r2, #0
+ 720 0202 5A80     		strh	r2, [r3, #2]	@ movhi
+ 248:osdp.c        ****             return;
+ 721              		.loc 1 248 0
+ 722 0204 5EE0     		b	.L25
+ 723              	.L36:
+ 249:osdp.c        ****         } else {
+ 250:osdp.c        ****             panelReadBuf.len = osdp_msg_header.u.len;
+ 724              		.loc 1 250 0
+ 725 0206 334B     		ldr	r3, .L48+8
+ 726 0208 B3F90230 		ldrsh	r3, [r3, #2]
+ 727 020c DAB2     		uxtb	r2, r3
+ 728 020e 324B     		ldr	r3, .L48+12
+ 729 0210 83F88020 		strb	r2, [r3, #128]
+ 251:osdp.c        ****         }
+ 252:osdp.c        ****         
+ 253:osdp.c        ****         for (; byteCount < osdp_msg_header.u.len;){  //may need timeout here
+ 730              		.loc 1 253 0
+ 731 0214 2CE0     		b	.L37
+ 732              	.L41:
+ 254:osdp.c        ****             if (UART_ACS_GetRxBufferSize()>0){
+ 733              		.loc 1 254 0
+ 734 0216 FFF7FEFF 		bl	UART_ACS_GetRxBufferSize
+ 735 021a 0346     		mov	r3, r0
+ 736 021c 002B     		cmp	r3, #0
+ 737 021e 21D0     		beq	.L38
+ 255:osdp.c        ****                 tmp = UART_ACS_GetChar();
+ 738              		.loc 1 255 0
+ 739 0220 FFF7FEFF 		bl	UART_ACS_GetChar
+ 740 0224 0346     		mov	r3, r0
+ 741 0226 FB70     		strb	r3, [r7, #3]
+ 256:osdp.c        ****                 panelReadBuf.buf[byteCount] = tmp;
+ 742              		.loc 1 256 0
+ 743 0228 2B4A     		ldr	r2, .L48+12
+ 744 022a 7B68     		ldr	r3, [r7, #4]
+ 745 022c 1344     		add	r3, r3, r2
+ 746 022e FA78     		ldrb	r2, [r7, #3]
+ 747 0230 1A70     		strb	r2, [r3]
+ 257:osdp.c        ****         MyI2C_Regs.buffer[byteCount] = panelReadBuf.buf[byteCount];                
+ 748              		.loc 1 257 0
+ 749 0232 294A     		ldr	r2, .L48+12
+ 750 0234 7B68     		ldr	r3, [r7, #4]
+ 751 0236 1344     		add	r3, r3, r2
+ 752 0238 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 753 023a 244A     		ldr	r2, .L48
+ 754 023c 7B68     		ldr	r3, [r7, #4]
+ 755 023e 1344     		add	r3, r3, r2
+ 756 0240 03F5B273 		add	r3, r3, #356
+ 757 0244 0A46     		mov	r2, r1
+ 758 0246 1A70     		strb	r2, [r3]
+ 258:osdp.c        ****                 if (byteCount == (osdp_msg_header.u.len - 1))
+ 759              		.loc 1 258 0
+ 760 0248 224B     		ldr	r3, .L48+8
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 19
+
+
+ 761 024a B3F90230 		ldrsh	r3, [r3, #2]
+ 762 024e 5A1E     		subs	r2, r3, #1
+ 763 0250 7B68     		ldr	r3, [r7, #4]
+ 764 0252 9A42     		cmp	r2, r3
+ 765 0254 03D1     		bne	.L39
+ 259:osdp.c        ****                 {
+ 260:osdp.c        ****                     //last byte
+ 261:osdp.c        ****                     osdp_msg_header.checksum = tmp;
+ 766              		.loc 1 261 0
+ 767 0256 1F4A     		ldr	r2, .L48+8
+ 768 0258 FB78     		ldrb	r3, [r7, #3]
+ 769 025a 9371     		strb	r3, [r2, #6]
+ 262:osdp.c        ****                     break;
+ 770              		.loc 1 262 0
+ 771 025c 0FE0     		b	.L40
+ 772              	.L39:
+ 263:osdp.c        ****                 }
+ 264:osdp.c        ****                 byteCount++;
+ 773              		.loc 1 264 0
+ 774 025e 7B68     		ldr	r3, [r7, #4]
+ 775 0260 0133     		adds	r3, r3, #1
+ 776 0262 7B60     		str	r3, [r7, #4]
+ 777              	.L38:
+ 265:osdp.c        ****             }
+ 266:osdp.c        ****             if(osdp_timeout > 20000) return;
+ 778              		.loc 1 266 0
+ 779 0264 1A4B     		ldr	r3, .L48+4
+ 780 0266 1B68     		ldr	r3, [r3]
+ 781 0268 44F62062 		movw	r2, #20000
+ 782 026c 9342     		cmp	r3, r2
+ 783 026e 28DC     		bgt	.L47
+ 784              	.L37:
+ 253:osdp.c        ****             if (UART_ACS_GetRxBufferSize()>0){
+ 785              		.loc 1 253 0
+ 786 0270 184B     		ldr	r3, .L48+8
+ 787 0272 B3F90230 		ldrsh	r3, [r3, #2]
+ 788 0276 1A46     		mov	r2, r3
+ 789 0278 7B68     		ldr	r3, [r7, #4]
+ 790 027a 9A42     		cmp	r2, r3
+ 791 027c CBDC     		bgt	.L41
+ 792              	.L40:
+ 267:osdp.c        ****         }
+ 268:osdp.c        ****         //last byte
+ 269:osdp.c        **** /*      
+ 270:osdp.c        ****         if (osdp_msg_header.ctrl & 0x04 == 0){  //0==CKSUM, 4==CRC
+ 271:osdp.c        ****             tmp = calcChecksum(panelReadBuf.buf,osdp_msg_header.u.len-1);
+ 272:osdp.c        ****             if (tmp != osdp_msg_header.checksum)
+ 273:osdp.c        ****             {
+ 274:osdp.c        ****                 sendOSDPNak(osdp_msg_header); //no delay, send it back in <3ms
+ 275:osdp.c        ****                 return; //error!
+ 276:osdp.c        ****             }
+ 277:osdp.c        ****         }
+ 278:osdp.c        **** */        
+ 279:osdp.c        ****         copyPanelBufI2C(&panelReadBuf);         //send to firmware
+ 793              		.loc 1 279 0
+ 794 027e 1648     		ldr	r0, .L48+12
+ 795 0280 FFF7FEFF 		bl	copyPanelBufI2C
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 20
+
+
+ 280:osdp.c        ****         CyDelay(20);
+ 796              		.loc 1 280 0
+ 797 0284 1420     		movs	r0, #20
+ 798 0286 FFF7FEFF 		bl	CyDelay
+ 281:osdp.c        ****         MyI2C_Regs.osdp_status |= OSDP_PANEL_DATA_IN_READY;
+ 799              		.loc 1 281 0
+ 800 028a 104B     		ldr	r3, .L48
+ 801 028c 93F85E30 		ldrb	r3, [r3, #94]	@ zero_extendqisi2
+ 802 0290 43F00203 		orr	r3, r3, #2
+ 803 0294 DAB2     		uxtb	r2, r3
+ 804 0296 0D4B     		ldr	r3, .L48
+ 805 0298 83F85E20 		strb	r2, [r3, #94]
+ 282:osdp.c        ****             MyI2C_Regs.buffer1[6] ++; 
+ 806              		.loc 1 282 0
+ 807 029c 0B4B     		ldr	r3, .L48
+ 808 029e 93F84F30 		ldrb	r3, [r3, #79]	@ zero_extendqisi2
+ 809 02a2 0133     		adds	r3, r3, #1
+ 810 02a4 DAB2     		uxtb	r2, r3
+ 811 02a6 094B     		ldr	r3, .L48
+ 812 02a8 83F84F20 		strb	r2, [r3, #79]
+ 813 02ac 0AE0     		b	.L25
+ 814              	.L42:
+ 153:osdp.c        ****     }
+ 815              		.loc 1 153 0
+ 816 02ae 00BF     		nop
+ 817 02b0 08E0     		b	.L25
+ 818              	.L43:
+ 184:osdp.c        ****                 tmp = UART_ACS_GetChar();
+ 819              		.loc 1 184 0
+ 820 02b2 00BF     		nop
+ 821 02b4 06E0     		b	.L25
+ 822              	.L44:
+ 195:osdp.c        ****             }
+ 823              		.loc 1 195 0
+ 824 02b6 00BF     		nop
+ 825 02b8 04E0     		b	.L25
+ 826              	.L45:
+ 221:osdp.c        ****         }
+ 827              		.loc 1 221 0
+ 828 02ba 00BF     		nop
+ 829 02bc 02E0     		b	.L25
+ 830              	.L46:
+ 224:osdp.c        ****         
+ 831              		.loc 1 224 0
+ 832 02be 00BF     		nop
+ 833 02c0 00E0     		b	.L25
+ 834              	.L47:
+ 266:osdp.c        ****         }
+ 835              		.loc 1 266 0
+ 836 02c2 00BF     		nop
+ 837              	.L25:
+ 283:osdp.c        ****     }
+ 284:osdp.c        **** }
+ 838              		.loc 1 284 0
+ 839 02c4 0837     		adds	r7, r7, #8
+ 840              		.cfi_def_cfa_offset 8
+ 841 02c6 BD46     		mov	sp, r7
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 21
+
+
+ 842              		.cfi_def_cfa_register 13
+ 843              		@ sp needed
+ 844 02c8 80BD     		pop	{r7, pc}
+ 845              	.L49:
+ 846 02ca 00BF     		.align	2
+ 847              	.L48:
+ 848 02cc 00000000 		.word	MyI2C_Regs
+ 849 02d0 00000000 		.word	osdp_timeout
+ 850 02d4 00000000 		.word	osdp_msg_header
+ 851 02d8 00000000 		.word	panelReadBuf
+ 852              		.cfi_endproc
+ 853              	.LFE68:
+ 854              		.size	ReadOSDP, .-ReadOSDP
+ 855              		.section	.text.SetPanelSpeed,"ax",%progbits
+ 856              		.align	2
+ 857              		.global	SetPanelSpeed
+ 858              		.thumb
+ 859              		.thumb_func
+ 860              		.type	SetPanelSpeed, %function
+ 861              	SetPanelSpeed:
+ 862              	.LFB69:
+ 285:osdp.c        **** 
+ 286:osdp.c        **** void SetPanelSpeed(char rate){
+ 863              		.loc 1 286 0
+ 864              		.cfi_startproc
+ 865              		@ args = 0, pretend = 0, frame = 8
+ 866              		@ frame_needed = 1, uses_anonymous_args = 0
+ 867 0000 80B5     		push	{r7, lr}
+ 868              		.cfi_def_cfa_offset 8
+ 869              		.cfi_offset 7, -8
+ 870              		.cfi_offset 14, -4
+ 871 0002 82B0     		sub	sp, sp, #8
+ 872              		.cfi_def_cfa_offset 16
+ 873 0004 00AF     		add	r7, sp, #0
+ 874              		.cfi_def_cfa_register 7
+ 875 0006 0346     		mov	r3, r0
+ 876 0008 FB71     		strb	r3, [r7, #7]
+ 287:osdp.c        ****     switch(rate){
+ 877              		.loc 1 287 0
+ 878 000a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 879 000c 013B     		subs	r3, r3, #1
+ 880 000e 062B     		cmp	r3, #6
+ 881 0010 35D8     		bhi	.L51
+ 882 0012 01A2     		adr	r2, .L53
+ 883 0014 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 884              		.p2align 2
+ 885              	.L53:
+ 886 0018 35000000 		.word	.L52+1
+ 887 001c 41000000 		.word	.L54+1
+ 888 0020 4D000000 		.word	.L55+1
+ 889 0024 57000000 		.word	.L56+1
+ 890 0028 61000000 		.word	.L57+1
+ 891 002c 6B000000 		.word	.L58+1
+ 892 0030 75000000 		.word	.L59+1
+ 893              		.p2align 1
+ 894              	.L52:
+ 288:osdp.c        ****         case BAUD_9600:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 22
+
+
+ 289:osdp.c        ****             Clock_5_SetDividerValue(CLKDV_9600 + 1); //  48000000/625=9600
+ 895              		.loc 1 289 0
+ 896 0034 0121     		movs	r1, #1
+ 897 0036 40F27120 		movw	r0, #625
+ 898 003a FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 290:osdp.c        ****             break;
+ 899              		.loc 1 290 0
+ 900 003e 24E0     		b	.L60
+ 901              	.L54:
+ 291:osdp.c        ****         case BAUD_19200:
+ 292:osdp.c        ****             Clock_5_SetDividerValue(CLKDV_19200 + 1);
+ 902              		.loc 1 292 0
+ 903 0040 0121     		movs	r1, #1
+ 904 0042 4FF49C70 		mov	r0, #312
+ 905 0046 FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 293:osdp.c        ****             break;
+ 906              		.loc 1 293 0
+ 907 004a 1EE0     		b	.L60
+ 908              	.L55:
+ 294:osdp.c        ****         case BAUD_38400:
+ 295:osdp.c        ****             Clock_5_SetDividerValue(CLKDV_38400 + 1);
+ 909              		.loc 1 295 0
+ 910 004c 0121     		movs	r1, #1
+ 911 004e 9C20     		movs	r0, #156
+ 912 0050 FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 296:osdp.c        ****             break;
+ 913              		.loc 1 296 0
+ 914 0054 19E0     		b	.L60
+ 915              	.L56:
+ 297:osdp.c        ****         case BAUD_115200:
+ 298:osdp.c        ****             Clock_5_SetDividerValue(CLKDV_115200 + 1);
+ 916              		.loc 1 298 0
+ 917 0056 0121     		movs	r1, #1
+ 918 0058 3420     		movs	r0, #52
+ 919 005a FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 299:osdp.c        ****             break;
+ 920              		.loc 1 299 0
+ 921 005e 14E0     		b	.L60
+ 922              	.L57:
+ 300:osdp.c        ****         case BAUD_230400:
+ 301:osdp.c        ****             Clock_5_SetDividerValue(CLKDV_230400);
+ 923              		.loc 1 301 0
+ 924 0060 0121     		movs	r1, #1
+ 925 0062 1920     		movs	r0, #25
+ 926 0064 FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 302:osdp.c        ****             break;
+ 927              		.loc 1 302 0
+ 928 0068 0FE0     		b	.L60
+ 929              	.L58:
+ 303:osdp.c        ****         case BAUD_460800:
+ 304:osdp.c        ****             Clock_5_SetDividerValue(CLKDV_460800);
+ 930              		.loc 1 304 0
+ 931 006a 0121     		movs	r1, #1
+ 932 006c 0C20     		movs	r0, #12
+ 933 006e FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 305:osdp.c        ****             break;
+ 934              		.loc 1 305 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 23
+
+
+ 935 0072 0AE0     		b	.L60
+ 936              	.L59:
+ 306:osdp.c        ****         case BAUD_921600:
+ 307:osdp.c        ****             Clock_5_SetDividerValue(CLKDV_921600);
+ 937              		.loc 1 307 0
+ 938 0074 0121     		movs	r1, #1
+ 939 0076 0520     		movs	r0, #5
+ 940 0078 FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 308:osdp.c        ****             break;
+ 941              		.loc 1 308 0
+ 942 007c 05E0     		b	.L60
+ 943              	.L51:
+ 309:osdp.c        ****         default:
+ 310:osdp.c        ****             Clock_5_SetDividerValue(CLKDV_9600); //  48000000/625=9600
+ 944              		.loc 1 310 0
+ 945 007e 0121     		movs	r1, #1
+ 946 0080 4FF41C70 		mov	r0, #624
+ 947 0084 FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 311:osdp.c        ****             break;    
+ 948              		.loc 1 311 0
+ 949 0088 00BF     		nop
+ 950              	.L60:
+ 312:osdp.c        ****     }
+ 313:osdp.c        ****     Clock_5_Enable();
+ 951              		.loc 1 313 0
+ 952 008a FFF7FEFF 		bl	Clock_5_Start
+ 314:osdp.c        **** }
+ 953              		.loc 1 314 0
+ 954 008e 00BF     		nop
+ 955 0090 0837     		adds	r7, r7, #8
+ 956              		.cfi_def_cfa_offset 8
+ 957 0092 BD46     		mov	sp, r7
+ 958              		.cfi_def_cfa_register 13
+ 959              		@ sp needed
+ 960 0094 80BD     		pop	{r7, pc}
+ 961              		.cfi_endproc
+ 962              	.LFE69:
+ 963              		.size	SetPanelSpeed, .-SetPanelSpeed
+ 964              		.comm	readerSendBuffer,129,4
+ 965              		.comm	readerReadBuffer,129,4
+ 966              		.comm	OSDPReaderTask,1,1
+ 967              		.comm	osdp_reader_msg_started,1,1
+ 968              		.comm	osdp_reader_msg_ready,1,1
+ 969              		.comm	ori,4,4
+ 970 0096 00BF     		.section	.text.initOSDPReaderUART,"ax",%progbits
+ 971              		.align	2
+ 972              		.global	initOSDPReaderUART
+ 973              		.thumb
+ 974              		.thumb_func
+ 975              		.type	initOSDPReaderUART, %function
+ 976              	initOSDPReaderUART:
+ 977              	.LFB70:
+ 315:osdp.c        **** 
+ 316:osdp.c        **** ////////////////OSDP READER//////////////////
+ 317:osdp.c        **** ReaderBuf readerSendBuffer, readerReadBuffer;
+ 318:osdp.c        **** unsigned char OSDPReaderTask;
+ 319:osdp.c        **** unsigned char osdp_reader_msg_started;
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 24
+
+
+ 320:osdp.c        **** unsigned char osdp_reader_msg_ready;
+ 321:osdp.c        **** int ori;
+ 322:osdp.c        **** 
+ 323:osdp.c        **** void initOSDPReaderUART()
+ 324:osdp.c        **** {
+ 978              		.loc 1 324 0
+ 979              		.cfi_startproc
+ 980              		@ args = 0, pretend = 0, frame = 0
+ 981              		@ frame_needed = 1, uses_anonymous_args = 0
+ 982 0000 80B5     		push	{r7, lr}
+ 983              		.cfi_def_cfa_offset 8
+ 984              		.cfi_offset 7, -8
+ 985              		.cfi_offset 14, -4
+ 986 0002 00AF     		add	r7, sp, #0
+ 987              		.cfi_def_cfa_register 7
+ 325:osdp.c        ****     isr_READER_rx_SetVector(OSDPReaderRxInt);
+ 988              		.loc 1 325 0
+ 989 0004 0E48     		ldr	r0, .L62
+ 990 0006 FFF7FEFF 		bl	isr_READER_rx_SetVector
+ 326:osdp.c        ****     isr_READER_rx_StartEx(OSDPReaderRxInt);
+ 991              		.loc 1 326 0
+ 992 000a 0D48     		ldr	r0, .L62
+ 993 000c FFF7FEFF 		bl	isr_READER_rx_StartEx
+ 327:osdp.c        ****     SetReaderSpeed(BAUD_9600);
+ 994              		.loc 1 327 0
+ 995 0010 0120     		movs	r0, #1
+ 996 0012 FFF7FEFF 		bl	SetReaderSpeed
+ 328:osdp.c        ****     UART_READER_Start();
+ 997              		.loc 1 328 0
+ 998 0016 FFF7FEFF 		bl	UART_READER_Start
+ 329:osdp.c        ****     UART_READER_LoadRxConfig();  //set to receiving mode
+ 999              		.loc 1 329 0
+ 1000 001a FFF7FEFF 		bl	UART_READER_LoadRxConfig
+ 330:osdp.c        ****     CR_DE_Write(0);
+ 1001              		.loc 1 330 0
+ 1002 001e 0020     		movs	r0, #0
+ 1003 0020 FFF7FEFF 		bl	CR_DE_Write
+ 331:osdp.c        ****     Mode_Sel_CR_Write(1); //set the chip to RS485 mode
+ 1004              		.loc 1 331 0
+ 1005 0024 0120     		movs	r0, #1
+ 1006 0026 FFF7FEFF 		bl	Mode_Sel_CR_Write
+ 332:osdp.c        ****     osdp_reader_msg_ready = 0;
+ 1007              		.loc 1 332 0
+ 1008 002a 064B     		ldr	r3, .L62+4
+ 1009 002c 0022     		movs	r2, #0
+ 1010 002e 1A70     		strb	r2, [r3]
+ 333:osdp.c        ****     osdp_reader_msg_started = 0;
+ 1011              		.loc 1 333 0
+ 1012 0030 054B     		ldr	r3, .L62+8
+ 1013 0032 0022     		movs	r2, #0
+ 1014 0034 1A70     		strb	r2, [r3]
+ 334:osdp.c        ****     ori = 0;
+ 1015              		.loc 1 334 0
+ 1016 0036 054B     		ldr	r3, .L62+12
+ 1017 0038 0022     		movs	r2, #0
+ 1018 003a 1A60     		str	r2, [r3]
+ 335:osdp.c        **** }
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 25
+
+
+ 1019              		.loc 1 335 0
+ 1020 003c 00BF     		nop
+ 1021 003e 80BD     		pop	{r7, pc}
+ 1022              	.L63:
+ 1023              		.align	2
+ 1024              	.L62:
+ 1025 0040 00000000 		.word	OSDPReaderRxInt
+ 1026 0044 00000000 		.word	osdp_reader_msg_ready
+ 1027 0048 00000000 		.word	osdp_reader_msg_started
+ 1028 004c 00000000 		.word	ori
+ 1029              		.cfi_endproc
+ 1030              	.LFE70:
+ 1031              		.size	initOSDPReaderUART, .-initOSDPReaderUART
+ 1032              		.section	.text.OSDPReaderRxInt,"ax",%progbits
+ 1033              		.align	2
+ 1034              		.global	OSDPReaderRxInt
+ 1035              		.thumb
+ 1036              		.thumb_func
+ 1037              		.type	OSDPReaderRxInt, %function
+ 1038              	OSDPReaderRxInt:
+ 1039              	.LFB71:
+ 336:osdp.c        **** 
+ 337:osdp.c        **** 
+ 338:osdp.c        **** CY_ISR(OSDPReaderRxInt) //interrupt on Rx byte received
+ 339:osdp.c        **** {   
+ 1040              		.loc 1 339 0
+ 1041              		.cfi_startproc
+ 1042              		@ args = 0, pretend = 0, frame = 8
+ 1043              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1044 0000 80B5     		push	{r7, lr}
+ 1045              		.cfi_def_cfa_offset 8
+ 1046              		.cfi_offset 7, -8
+ 1047              		.cfi_offset 14, -4
+ 1048 0002 82B0     		sub	sp, sp, #8
+ 1049              		.cfi_def_cfa_offset 16
+ 1050 0004 00AF     		add	r7, sp, #0
+ 1051              		.cfi_def_cfa_register 7
+ 340:osdp.c        ****     unsigned char uch;
+ 341:osdp.c        ****     //move all available characters from Rx queue to RxBuffer
+ 342:osdp.c        ****     while(UART_READER_ReadRxStatus() & UART_READER_RX_STS_FIFO_NOTEMPTY)
+ 1052              		.loc 1 342 0
+ 1053 0006 75E0     		b	.L65
+ 1054              	.L75:
+ 343:osdp.c        **** 	{
+ 344:osdp.c        ****         uch = UART_READER_ReadRxData(); //get serial port
+ 1055              		.loc 1 344 0
+ 1056 0008 FFF7FEFF 		bl	UART_READER_ReadRxData
+ 1057 000c 0346     		mov	r3, r0
+ 1058 000e FB71     		strb	r3, [r7, #7]
+ 345:osdp.c        ****         if (ori < OSDP_READER_BUFFER_LENGTH && osdp_reader_msg_started == 1)
+ 1059              		.loc 1 345 0
+ 1060 0010 3E4B     		ldr	r3, .L76
+ 1061 0012 1B68     		ldr	r3, [r3]
+ 1062 0014 7F2B     		cmp	r3, #127
+ 1063 0016 0EDC     		bgt	.L66
+ 1064              		.loc 1 345 0 is_stmt 0 discriminator 1
+ 1065 0018 3D4B     		ldr	r3, .L76+4
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 26
+
+
+ 1066 001a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1067 001c 012B     		cmp	r3, #1
+ 1068 001e 0AD1     		bne	.L66
+ 346:osdp.c        ****         {
+ 347:osdp.c        ****             readerReadBuffer.buf[ori] = uch; //put into the buffer
+ 1069              		.loc 1 347 0 is_stmt 1
+ 1070 0020 3A4B     		ldr	r3, .L76
+ 1071 0022 1B68     		ldr	r3, [r3]
+ 1072 0024 3B49     		ldr	r1, .L76+8
+ 1073 0026 FA79     		ldrb	r2, [r7, #7]
+ 1074 0028 CA54     		strb	r2, [r1, r3]
+ 348:osdp.c        ****             ori++;
+ 1075              		.loc 1 348 0
+ 1076 002a 384B     		ldr	r3, .L76
+ 1077 002c 1B68     		ldr	r3, [r3]
+ 1078 002e 0133     		adds	r3, r3, #1
+ 1079 0030 364A     		ldr	r2, .L76
+ 1080 0032 1360     		str	r3, [r2]
+ 1081 0034 02E0     		b	.L67
+ 1082              	.L66:
+ 349:osdp.c        ****         }
+ 350:osdp.c        ****         else
+ 351:osdp.c        ****         {
+ 352:osdp.c        ****             ori = 0;
+ 1083              		.loc 1 352 0
+ 1084 0036 354B     		ldr	r3, .L76
+ 1085 0038 0022     		movs	r2, #0
+ 1086 003a 1A60     		str	r2, [r3]
+ 1087              	.L67:
+ 353:osdp.c        ****         }
+ 354:osdp.c        ****         
+ 355:osdp.c        ****         if (ori == 0 && uch == 0x53) {
+ 1088              		.loc 1 355 0
+ 1089 003c 334B     		ldr	r3, .L76
+ 1090 003e 1B68     		ldr	r3, [r3]
+ 1091 0040 002B     		cmp	r3, #0
+ 1092 0042 0ED1     		bne	.L68
+ 1093              		.loc 1 355 0 is_stmt 0 discriminator 1
+ 1094 0044 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1095 0046 532B     		cmp	r3, #83
+ 1096 0048 0BD1     		bne	.L68
+ 356:osdp.c        ****             osdp_reader_msg_started = 1;
+ 1097              		.loc 1 356 0 is_stmt 1
+ 1098 004a 314B     		ldr	r3, .L76+4
+ 1099 004c 0122     		movs	r2, #1
+ 1100 004e 1A70     		strb	r2, [r3]
+ 357:osdp.c        ****             readerReadBuffer.buf[ori] = 0x53; //put into the buffer
+ 1101              		.loc 1 357 0
+ 1102 0050 2E4B     		ldr	r3, .L76
+ 1103 0052 1B68     		ldr	r3, [r3]
+ 1104 0054 2F4A     		ldr	r2, .L76+8
+ 1105 0056 5321     		movs	r1, #83
+ 1106 0058 D154     		strb	r1, [r2, r3]
+ 358:osdp.c        ****             ori = 1;
+ 1107              		.loc 1 358 0
+ 1108 005a 2C4B     		ldr	r3, .L76
+ 1109 005c 0122     		movs	r2, #1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 27
+
+
+ 1110 005e 1A60     		str	r2, [r3]
+ 1111 0060 48E0     		b	.L65
+ 1112              	.L68:
+ 359:osdp.c        ****         }
+ 360:osdp.c        ****         else if (osdp_reader_msg_started == 1)
+ 1113              		.loc 1 360 0
+ 1114 0062 2B4B     		ldr	r3, .L76+4
+ 1115 0064 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1116 0066 012B     		cmp	r3, #1
+ 1117 0068 44D1     		bne	.L65
+ 361:osdp.c        ****         {
+ 362:osdp.c        ****             if (ori == 2)
+ 1118              		.loc 1 362 0
+ 1119 006a 284B     		ldr	r3, .L76
+ 1120 006c 1B68     		ldr	r3, [r3]
+ 1121 006e 022B     		cmp	r3, #2
+ 1122 0070 03D1     		bne	.L69
+ 363:osdp.c        ****             {
+ 364:osdp.c        ****                 osdp_reader_msg_header.addr = uch;
+ 1123              		.loc 1 364 0
+ 1124 0072 294A     		ldr	r2, .L76+12
+ 1125 0074 FB79     		ldrb	r3, [r7, #7]
+ 1126 0076 1370     		strb	r3, [r2]
+ 1127 0078 3CE0     		b	.L65
+ 1128              	.L69:
+ 365:osdp.c        ****             }
+ 366:osdp.c        ****             else if (ori == 3)
+ 1129              		.loc 1 366 0
+ 1130 007a 244B     		ldr	r3, .L76
+ 1131 007c 1B68     		ldr	r3, [r3]
+ 1132 007e 032B     		cmp	r3, #3
+ 1133 0080 03D1     		bne	.L70
+ 367:osdp.c        ****             {
+ 368:osdp.c        ****                 osdp_reader_msg_header.u.length[0] = uch;
+ 1134              		.loc 1 368 0
+ 1135 0082 254A     		ldr	r2, .L76+12
+ 1136 0084 FB79     		ldrb	r3, [r7, #7]
+ 1137 0086 9370     		strb	r3, [r2, #2]
+ 1138 0088 34E0     		b	.L65
+ 1139              	.L70:
+ 369:osdp.c        ****             }
+ 370:osdp.c        ****             else if (ori == 4)
+ 1140              		.loc 1 370 0
+ 1141 008a 204B     		ldr	r3, .L76
+ 1142 008c 1B68     		ldr	r3, [r3]
+ 1143 008e 042B     		cmp	r3, #4
+ 1144 0090 1ED1     		bne	.L71
+ 371:osdp.c        ****             {
+ 372:osdp.c        ****                 osdp_reader_msg_header.u.length[1] = uch;
+ 1145              		.loc 1 372 0
+ 1146 0092 214A     		ldr	r2, .L76+12
+ 1147 0094 FB79     		ldrb	r3, [r7, #7]
+ 1148 0096 D370     		strb	r3, [r2, #3]
+ 373:osdp.c        ****                 if (osdp_reader_msg_header.u.len <5 ||
+ 1149              		.loc 1 373 0
+ 1150 0098 1F4B     		ldr	r3, .L76+12
+ 1151 009a B3F90230 		ldrsh	r3, [r3, #2]
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 28
+
+
+ 1152 009e 042B     		cmp	r3, #4
+ 1153 00a0 04DD     		ble	.L72
+ 374:osdp.c        ****                     osdp_reader_msg_header.u.len > OSDP_READER_BUFFER_LENGTH){
+ 1154              		.loc 1 374 0 discriminator 1
+ 1155 00a2 1D4B     		ldr	r3, .L76+12
+ 1156 00a4 B3F90230 		ldrsh	r3, [r3, #2]
+ 373:osdp.c        ****                 if (osdp_reader_msg_header.u.len <5 ||
+ 1157              		.loc 1 373 0 discriminator 1
+ 1158 00a8 802B     		cmp	r3, #128
+ 1159 00aa 09DD     		ble	.L73
+ 1160              	.L72:
+ 375:osdp.c        ****                     //error, the message is too long, reset buffer
+ 376:osdp.c        ****                     osdp_reader_msg_header.u.len = 0;
+ 1161              		.loc 1 376 0
+ 1162 00ac 1A4B     		ldr	r3, .L76+12
+ 1163 00ae 0022     		movs	r2, #0
+ 1164 00b0 5A80     		strh	r2, [r3, #2]	@ movhi
+ 377:osdp.c        ****                     ori = 0;
+ 1165              		.loc 1 377 0
+ 1166 00b2 164B     		ldr	r3, .L76
+ 1167 00b4 0022     		movs	r2, #0
+ 1168 00b6 1A60     		str	r2, [r3]
+ 378:osdp.c        ****                     osdp_reader_msg_started = 0;
+ 1169              		.loc 1 378 0
+ 1170 00b8 154B     		ldr	r3, .L76+4
+ 1171 00ba 0022     		movs	r2, #0
+ 1172 00bc 1A70     		strb	r2, [r3]
+ 1173 00be 19E0     		b	.L65
+ 1174              	.L73:
+ 379:osdp.c        ****                 }
+ 380:osdp.c        ****                 else
+ 381:osdp.c        ****                 {
+ 382:osdp.c        ****                     readerReadBuffer.len = osdp_reader_msg_header.u.len;
+ 1175              		.loc 1 382 0
+ 1176 00c0 154B     		ldr	r3, .L76+12
+ 1177 00c2 B3F90230 		ldrsh	r3, [r3, #2]
+ 1178 00c6 DAB2     		uxtb	r2, r3
+ 1179 00c8 124B     		ldr	r3, .L76+8
+ 1180 00ca 83F88020 		strb	r2, [r3, #128]
+ 1181 00ce 11E0     		b	.L65
+ 1182              	.L71:
+ 383:osdp.c        ****                 }
+ 384:osdp.c        ****             }
+ 385:osdp.c        ****             else if (ori > 4)
+ 1183              		.loc 1 385 0
+ 1184 00d0 0E4B     		ldr	r3, .L76
+ 1185 00d2 1B68     		ldr	r3, [r3]
+ 1186 00d4 042B     		cmp	r3, #4
+ 1187 00d6 0DDD     		ble	.L65
+ 386:osdp.c        ****             {
+ 387:osdp.c        ****                 if (ori>=osdp_reader_msg_header.u.len)  //ori is +1 larger than len
+ 1188              		.loc 1 387 0
+ 1189 00d8 0F4B     		ldr	r3, .L76+12
+ 1190 00da B3F90230 		ldrsh	r3, [r3, #2]
+ 1191 00de 1A46     		mov	r2, r3
+ 1192 00e0 0A4B     		ldr	r3, .L76
+ 1193 00e2 1B68     		ldr	r3, [r3]
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 29
+
+
+ 1194 00e4 9A42     		cmp	r2, r3
+ 1195 00e6 05DC     		bgt	.L65
+ 388:osdp.c        ****                 {
+ 389:osdp.c        ****                     //buffer full
+ 390:osdp.c        ****                     osdp_reader_msg_ready = 1;
+ 1196              		.loc 1 390 0
+ 1197 00e8 0C4B     		ldr	r3, .L76+16
+ 1198 00ea 0122     		movs	r2, #1
+ 1199 00ec 1A70     		strb	r2, [r3]
+ 391:osdp.c        ****                     osdp_reader_msg_started = 0;
+ 1200              		.loc 1 391 0
+ 1201 00ee 084B     		ldr	r3, .L76+4
+ 1202 00f0 0022     		movs	r2, #0
+ 1203 00f2 1A70     		strb	r2, [r3]
+ 1204              	.L65:
+ 342:osdp.c        **** 	{
+ 1205              		.loc 1 342 0
+ 1206 00f4 FFF7FEFF 		bl	UART_READER_ReadRxStatus
+ 1207 00f8 0346     		mov	r3, r0
+ 1208 00fa 03F02003 		and	r3, r3, #32
+ 1209 00fe 002B     		cmp	r3, #0
+ 1210 0100 82D1     		bne	.L75
+ 392:osdp.c        ****                 }
+ 393:osdp.c        ****             }
+ 394:osdp.c        ****         }
+ 395:osdp.c        **** 	}   
+ 396:osdp.c        **** }
+ 1211              		.loc 1 396 0
+ 1212 0102 00BF     		nop
+ 1213 0104 0837     		adds	r7, r7, #8
+ 1214              		.cfi_def_cfa_offset 8
+ 1215 0106 BD46     		mov	sp, r7
+ 1216              		.cfi_def_cfa_register 13
+ 1217              		@ sp needed
+ 1218 0108 80BD     		pop	{r7, pc}
+ 1219              	.L77:
+ 1220 010a 00BF     		.align	2
+ 1221              	.L76:
+ 1222 010c 00000000 		.word	ori
+ 1223 0110 00000000 		.word	osdp_reader_msg_started
+ 1224 0114 00000000 		.word	readerReadBuffer
+ 1225 0118 00000000 		.word	osdp_reader_msg_header
+ 1226 011c 00000000 		.word	osdp_reader_msg_ready
+ 1227              		.cfi_endproc
+ 1228              	.LFE71:
+ 1229              		.size	OSDPReaderRxInt, .-OSDPReaderRxInt
+ 1230              		.section	.text.copyReaderBufI2C,"ax",%progbits
+ 1231              		.align	2
+ 1232              		.global	copyReaderBufI2C
+ 1233              		.thumb
+ 1234              		.thumb_func
+ 1235              		.type	copyReaderBufI2C, %function
+ 1236              	copyReaderBufI2C:
+ 1237              	.LFB72:
+ 397:osdp.c        **** 
+ 398:osdp.c        **** 
+ 399:osdp.c        **** void copyReaderBufI2C(ReaderBuf *p)
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 30
+
+
+ 400:osdp.c        **** {
+ 1238              		.loc 1 400 0
+ 1239              		.cfi_startproc
+ 1240              		@ args = 0, pretend = 0, frame = 16
+ 1241              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1242 0000 80B5     		push	{r7, lr}
+ 1243              		.cfi_def_cfa_offset 8
+ 1244              		.cfi_offset 7, -8
+ 1245              		.cfi_offset 14, -4
+ 1246 0002 84B0     		sub	sp, sp, #16
+ 1247              		.cfi_def_cfa_offset 24
+ 1248 0004 00AF     		add	r7, sp, #0
+ 1249              		.cfi_def_cfa_register 7
+ 1250 0006 7860     		str	r0, [r7, #4]
+ 401:osdp.c        ****     int i;
+ 402:osdp.c        ****     MyI2C_Regs.osdp_reader_data_length = p->len;
+ 1251              		.loc 1 402 0
+ 1252 0008 7B68     		ldr	r3, [r7, #4]
+ 1253 000a 93F88020 		ldrb	r2, [r3, #128]	@ zero_extendqisi2
+ 1254 000e 154B     		ldr	r3, .L81
+ 1255 0010 83F8E220 		strb	r2, [r3, #226]
+ 403:osdp.c        ****     for (i=0; i < p->len; i++)
+ 1256              		.loc 1 403 0
+ 1257 0014 0023     		movs	r3, #0
+ 1258 0016 FB60     		str	r3, [r7, #12]
+ 1259 0018 0FE0     		b	.L79
+ 1260              	.L80:
+ 404:osdp.c        ****     {
+ 405:osdp.c        ****         MyI2C_Regs.osdp_reader_buffer[i] = p->buf[i];
+ 1261              		.loc 1 405 0 discriminator 3
+ 1262 001a 7A68     		ldr	r2, [r7, #4]
+ 1263 001c FB68     		ldr	r3, [r7, #12]
+ 1264 001e 1344     		add	r3, r3, r2
+ 1265 0020 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 1266 0022 104A     		ldr	r2, .L81
+ 1267 0024 FB68     		ldr	r3, [r7, #12]
+ 1268 0026 1344     		add	r3, r3, r2
+ 1269 0028 E433     		adds	r3, r3, #228
+ 1270 002a 0A46     		mov	r2, r1
+ 1271 002c 1A70     		strb	r2, [r3]
+ 406:osdp.c        ****         CyDelayUs(2u);   //=2 do not reduce
+ 1272              		.loc 1 406 0 discriminator 3
+ 1273 002e 0220     		movs	r0, #2
+ 1274 0030 FFF7FEFF 		bl	CyDelayUs
+ 403:osdp.c        ****     for (i=0; i < p->len; i++)
+ 1275              		.loc 1 403 0 discriminator 3
+ 1276 0034 FB68     		ldr	r3, [r7, #12]
+ 1277 0036 0133     		adds	r3, r3, #1
+ 1278 0038 FB60     		str	r3, [r7, #12]
+ 1279              	.L79:
+ 403:osdp.c        ****     for (i=0; i < p->len; i++)
+ 1280              		.loc 1 403 0 is_stmt 0 discriminator 1
+ 1281 003a 7B68     		ldr	r3, [r7, #4]
+ 1282 003c 93F88030 		ldrb	r3, [r3, #128]	@ zero_extendqisi2
+ 1283 0040 1A46     		mov	r2, r3
+ 1284 0042 FB68     		ldr	r3, [r7, #12]
+ 1285 0044 9A42     		cmp	r2, r3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 31
+
+
+ 1286 0046 E8DC     		bgt	.L80
+ 407:osdp.c        ****     }
+ 408:osdp.c        ****     MyI2C_Regs.osdp_status |= OSDP_READER_DATA_IN_READY;
+ 1287              		.loc 1 408 0 is_stmt 1
+ 1288 0048 064B     		ldr	r3, .L81
+ 1289 004a 93F85E30 		ldrb	r3, [r3, #94]	@ zero_extendqisi2
+ 1290 004e 43F02003 		orr	r3, r3, #32
+ 1291 0052 DAB2     		uxtb	r2, r3
+ 1292 0054 034B     		ldr	r3, .L81
+ 1293 0056 83F85E20 		strb	r2, [r3, #94]
+ 409:osdp.c        **** //    MyI2C_Regs.osdp_reader_cmd = OSDP_READ;  //clear completed command
+ 410:osdp.c        **** //    OSDPReaderTimer_Start();
+ 411:osdp.c        **** }
+ 1294              		.loc 1 411 0
+ 1295 005a 00BF     		nop
+ 1296 005c 1037     		adds	r7, r7, #16
+ 1297              		.cfi_def_cfa_offset 8
+ 1298 005e BD46     		mov	sp, r7
+ 1299              		.cfi_def_cfa_register 13
+ 1300              		@ sp needed
+ 1301 0060 80BD     		pop	{r7, pc}
+ 1302              	.L82:
+ 1303 0062 00BF     		.align	2
+ 1304              	.L81:
+ 1305 0064 00000000 		.word	MyI2C_Regs
+ 1306              		.cfi_endproc
+ 1307              	.LFE72:
+ 1308              		.size	copyReaderBufI2C, .-copyReaderBufI2C
+ 1309              		.section	.text.KeepAliveInterruptHandler,"ax",%progbits
+ 1310              		.align	2
+ 1311              		.global	KeepAliveInterruptHandler
+ 1312              		.thumb
+ 1313              		.thumb_func
+ 1314              		.type	KeepAliveInterruptHandler, %function
+ 1315              	KeepAliveInterruptHandler:
+ 1316              	.LFB73:
+ 412:osdp.c        **** //uint8 InterruptCnt;
+ 413:osdp.c        **** 
+ 414:osdp.c        **** //keep alive timer interrupt for OSDP reader dual authentication
+ 415:osdp.c        **** CY_ISR(KeepAliveInterruptHandler)
+ 416:osdp.c        **** {
+ 1317              		.loc 1 416 0
+ 1318              		.cfi_startproc
+ 1319              		@ args = 0, pretend = 0, frame = 0
+ 1320              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1321              		@ link register save eliminated.
+ 1322 0000 80B4     		push	{r7}
+ 1323              		.cfi_def_cfa_offset 4
+ 1324              		.cfi_offset 7, -4
+ 1325 0002 00AF     		add	r7, sp, #0
+ 1326              		.cfi_def_cfa_register 7
+ 417:osdp.c        **** 	/* Read Status register in order to clear the sticky Terminal Count (TC) bit 
+ 418:osdp.c        **** 	 * in the status register.
+ 419:osdp.c        **** 	 */
+ 420:osdp.c        ****    	OSDPReaderTimer_STATUS;
+ 1327              		.loc 1 420 0
+ 1328 0004 024B     		ldr	r3, .L84
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 32
+
+
+ 1329 0006 1B78     		ldrb	r3, [r3]
+ 421:osdp.c        **** //    OSDPReaderTask |= (0x1 << OSDP_SEND_READER);  //send the command to the card reader
+ 422:osdp.c        **** }
+ 1330              		.loc 1 422 0
+ 1331 0008 00BF     		nop
+ 1332 000a BD46     		mov	sp, r7
+ 1333              		.cfi_def_cfa_register 13
+ 1334              		@ sp needed
+ 1335 000c 80BC     		pop	{r7}
+ 1336              		.cfi_restore 7
+ 1337              		.cfi_def_cfa_offset 0
+ 1338 000e 7047     		bx	lr
+ 1339              	.L85:
+ 1340              		.align	2
+ 1341              	.L84:
+ 1342 0010 6F640040 		.word	1073767535
+ 1343              		.cfi_endproc
+ 1344              	.LFE73:
+ 1345              		.size	KeepAliveInterruptHandler, .-KeepAliveInterruptHandler
+ 1346              		.section	.text.ClearOsdpReaderBuffer,"ax",%progbits
+ 1347              		.align	2
+ 1348              		.global	ClearOsdpReaderBuffer
+ 1349              		.thumb
+ 1350              		.thumb_func
+ 1351              		.type	ClearOsdpReaderBuffer, %function
+ 1352              	ClearOsdpReaderBuffer:
+ 1353              	.LFB74:
+ 423:osdp.c        **** 
+ 424:osdp.c        **** void ClearOsdpReaderBuffer()
+ 425:osdp.c        **** {
+ 1354              		.loc 1 425 0
+ 1355              		.cfi_startproc
+ 1356              		@ args = 0, pretend = 0, frame = 8
+ 1357              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1358 0000 80B5     		push	{r7, lr}
+ 1359              		.cfi_def_cfa_offset 8
+ 1360              		.cfi_offset 7, -8
+ 1361              		.cfi_offset 14, -4
+ 1362 0002 82B0     		sub	sp, sp, #8
+ 1363              		.cfi_def_cfa_offset 16
+ 1364 0004 00AF     		add	r7, sp, #0
+ 1365              		.cfi_def_cfa_register 7
+ 426:osdp.c        ****     int i;
+ 427:osdp.c        ****     UART_READER_ClearRxBuffer();
+ 1366              		.loc 1 427 0
+ 1367 0006 FFF7FEFF 		bl	UART_READER_ClearRxBuffer
+ 428:osdp.c        ****     MyI2C_Regs.osdp_reader_data_length = 0;
+ 1368              		.loc 1 428 0
+ 1369 000a 114B     		ldr	r3, .L89
+ 1370 000c 0022     		movs	r2, #0
+ 1371 000e 83F8E220 		strb	r2, [r3, #226]
+ 429:osdp.c        ****     MyI2C_Regs.osdp_status &= ~OSDP_READER_DATA_IN_READY;
+ 1372              		.loc 1 429 0
+ 1373 0012 0F4B     		ldr	r3, .L89
+ 1374 0014 93F85E30 		ldrb	r3, [r3, #94]	@ zero_extendqisi2
+ 1375 0018 23F02003 		bic	r3, r3, #32
+ 1376 001c DAB2     		uxtb	r2, r3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 33
+
+
+ 1377 001e 0C4B     		ldr	r3, .L89
+ 1378 0020 83F85E20 		strb	r2, [r3, #94]
+ 430:osdp.c        ****     for ( i=0; i<OSDP_READER_BUFFER_LENGTH; i++)
+ 1379              		.loc 1 430 0
+ 1380 0024 0023     		movs	r3, #0
+ 1381 0026 7B60     		str	r3, [r7, #4]
+ 1382 0028 0BE0     		b	.L87
+ 1383              	.L88:
+ 431:osdp.c        ****     {
+ 432:osdp.c        ****         MyI2C_Regs.osdp_reader_buffer[i]=0;
+ 1384              		.loc 1 432 0 discriminator 3
+ 1385 002a 094A     		ldr	r2, .L89
+ 1386 002c 7B68     		ldr	r3, [r7, #4]
+ 1387 002e 1344     		add	r3, r3, r2
+ 1388 0030 E433     		adds	r3, r3, #228
+ 1389 0032 0022     		movs	r2, #0
+ 1390 0034 1A70     		strb	r2, [r3]
+ 433:osdp.c        ****         CyDelayUs(1u);
+ 1391              		.loc 1 433 0 discriminator 3
+ 1392 0036 0120     		movs	r0, #1
+ 1393 0038 FFF7FEFF 		bl	CyDelayUs
+ 430:osdp.c        ****     for ( i=0; i<OSDP_READER_BUFFER_LENGTH; i++)
+ 1394              		.loc 1 430 0 discriminator 3
+ 1395 003c 7B68     		ldr	r3, [r7, #4]
+ 1396 003e 0133     		adds	r3, r3, #1
+ 1397 0040 7B60     		str	r3, [r7, #4]
+ 1398              	.L87:
+ 430:osdp.c        ****     for ( i=0; i<OSDP_READER_BUFFER_LENGTH; i++)
+ 1399              		.loc 1 430 0 is_stmt 0 discriminator 1
+ 1400 0042 7B68     		ldr	r3, [r7, #4]
+ 1401 0044 7F2B     		cmp	r3, #127
+ 1402 0046 F0DD     		ble	.L88
+ 434:osdp.c        ****     }
+ 435:osdp.c        **** }
+ 1403              		.loc 1 435 0 is_stmt 1
+ 1404 0048 00BF     		nop
+ 1405 004a 0837     		adds	r7, r7, #8
+ 1406              		.cfi_def_cfa_offset 8
+ 1407 004c BD46     		mov	sp, r7
+ 1408              		.cfi_def_cfa_register 13
+ 1409              		@ sp needed
+ 1410 004e 80BD     		pop	{r7, pc}
+ 1411              	.L90:
+ 1412              		.align	2
+ 1413              	.L89:
+ 1414 0050 00000000 		.word	MyI2C_Regs
+ 1415              		.cfi_endproc
+ 1416              	.LFE74:
+ 1417              		.size	ClearOsdpReaderBuffer, .-ClearOsdpReaderBuffer
+ 1418              		.section	.text.SendOSDPReader,"ax",%progbits
+ 1419              		.align	2
+ 1420              		.global	SendOSDPReader
+ 1421              		.thumb
+ 1422              		.thumb_func
+ 1423              		.type	SendOSDPReader, %function
+ 1424              	SendOSDPReader:
+ 1425              	.LFB75:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 34
+
+
+ 436:osdp.c        **** 
+ 437:osdp.c        **** void SendOSDPReader()
+ 438:osdp.c        **** {
+ 1426              		.loc 1 438 0
+ 1427              		.cfi_startproc
+ 1428              		@ args = 0, pretend = 0, frame = 0
+ 1429              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1430 0000 80B5     		push	{r7, lr}
+ 1431              		.cfi_def_cfa_offset 8
+ 1432              		.cfi_offset 7, -8
+ 1433              		.cfi_offset 14, -4
+ 1434 0002 00AF     		add	r7, sp, #0
+ 1435              		.cfi_def_cfa_register 7
+ 439:osdp.c        ****     Mode_Sel_CR_Write(1); //set the SP335e chip to RS485
+ 1436              		.loc 1 439 0
+ 1437 0004 0120     		movs	r0, #1
+ 1438 0006 FFF7FEFF 		bl	Mode_Sel_CR_Write
+ 440:osdp.c        ****     CR_DE_Write(1);
+ 1439              		.loc 1 440 0
+ 1440 000a 0120     		movs	r0, #1
+ 1441 000c FFF7FEFF 		bl	CR_DE_Write
+ 441:osdp.c        ****     UART_READER_LoadTxConfig();
+ 1442              		.loc 1 441 0
+ 1443 0010 FFF7FEFF 		bl	UART_READER_LoadTxConfig
+ 442:osdp.c        ****     MyI2C_Regs.osdp_reader_cmd = OSDP_READ;
+ 1444              		.loc 1 442 0
+ 1445 0014 134B     		ldr	r3, .L93
+ 1446 0016 0322     		movs	r2, #3
+ 1447 0018 83F8E120 		strb	r2, [r3, #225]
+ 443:osdp.c        ****     CyDelay(3); //Driver Output Enable Time=3,do not reduce. 
+ 1448              		.loc 1 443 0
+ 1449 001c 0320     		movs	r0, #3
+ 1450 001e FFF7FEFF 		bl	CyDelay
+ 444:osdp.c        ****     if(readerSendBuffer.buf[0] == 0x53)
+ 1451              		.loc 1 444 0
+ 1452 0022 114B     		ldr	r3, .L93+4
+ 1453 0024 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1454 0026 532B     		cmp	r3, #83
+ 1455 0028 09D1     		bne	.L92
+ 445:osdp.c        ****     {
+ 446:osdp.c        ****         UART_READER_PutArray(readerSendBuffer.buf,readerSendBuffer.len); 
+ 1456              		.loc 1 446 0
+ 1457 002a 0F4B     		ldr	r3, .L93+4
+ 1458 002c 93F88030 		ldrb	r3, [r3, #128]	@ zero_extendqisi2
+ 1459 0030 1946     		mov	r1, r3
+ 1460 0032 0D48     		ldr	r0, .L93+4
+ 1461 0034 FFF7FEFF 		bl	UART_READER_PutArray
+ 447:osdp.c        ****         CyDelay(5); //minmum 4ms
+ 1462              		.loc 1 447 0
+ 1463 0038 0520     		movs	r0, #5
+ 1464 003a FFF7FEFF 		bl	CyDelay
+ 1465              	.L92:
+ 448:osdp.c        ****     }
+ 449:osdp.c        ****     osdp_reader_msg_ready = 0;   //clear receiving buffer
+ 1466              		.loc 1 449 0
+ 1467 003e 0B4B     		ldr	r3, .L93+8
+ 1468 0040 0022     		movs	r2, #0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 35
+
+
+ 1469 0042 1A70     		strb	r2, [r3]
+ 450:osdp.c        ****     osdp_reader_msg_started = 0;
+ 1470              		.loc 1 450 0
+ 1471 0044 0A4B     		ldr	r3, .L93+12
+ 1472 0046 0022     		movs	r2, #0
+ 1473 0048 1A70     		strb	r2, [r3]
+ 451:osdp.c        ****     ori = 0;
+ 1474              		.loc 1 451 0
+ 1475 004a 0A4B     		ldr	r3, .L93+16
+ 1476 004c 0022     		movs	r2, #0
+ 1477 004e 1A60     		str	r2, [r3]
+ 452:osdp.c        ****     UART_READER_LoadRxConfig();  //set to receiving mode
+ 1478              		.loc 1 452 0
+ 1479 0050 FFF7FEFF 		bl	UART_READER_LoadRxConfig
+ 453:osdp.c        ****     CR_DE_Write(0);
+ 1480              		.loc 1 453 0
+ 1481 0054 0020     		movs	r0, #0
+ 1482 0056 FFF7FEFF 		bl	CR_DE_Write
+ 454:osdp.c        ****     Mode_Sel_CR_Write(1); //set the chip to RS485 mode
+ 1483              		.loc 1 454 0
+ 1484 005a 0120     		movs	r0, #1
+ 1485 005c FFF7FEFF 		bl	Mode_Sel_CR_Write
+ 455:osdp.c        **** }
+ 1486              		.loc 1 455 0
+ 1487 0060 00BF     		nop
+ 1488 0062 80BD     		pop	{r7, pc}
+ 1489              	.L94:
+ 1490              		.align	2
+ 1491              	.L93:
+ 1492 0064 00000000 		.word	MyI2C_Regs
+ 1493 0068 00000000 		.word	readerSendBuffer
+ 1494 006c 00000000 		.word	osdp_reader_msg_ready
+ 1495 0070 00000000 		.word	osdp_reader_msg_started
+ 1496 0074 00000000 		.word	ori
+ 1497              		.cfi_endproc
+ 1498              	.LFE75:
+ 1499              		.size	SendOSDPReader, .-SendOSDPReader
+ 1500              		.section	.text.ReadOSDPReader,"ax",%progbits
+ 1501              		.align	2
+ 1502              		.global	ReadOSDPReader
+ 1503              		.thumb
+ 1504              		.thumb_func
+ 1505              		.type	ReadOSDPReader, %function
+ 1506              	ReadOSDPReader:
+ 1507              	.LFB76:
+ 456:osdp.c        **** 
+ 457:osdp.c        **** void ReadOSDPReader()
+ 458:osdp.c        **** {
+ 1508              		.loc 1 458 0
+ 1509              		.cfi_startproc
+ 1510              		@ args = 0, pretend = 0, frame = 0
+ 1511              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1512 0000 80B5     		push	{r7, lr}
+ 1513              		.cfi_def_cfa_offset 8
+ 1514              		.cfi_offset 7, -8
+ 1515              		.cfi_offset 14, -4
+ 1516 0002 00AF     		add	r7, sp, #0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 36
+
+
+ 1517              		.cfi_def_cfa_register 7
+ 459:osdp.c        ****     if (osdp_reader_msg_ready == 1)
+ 1518              		.loc 1 459 0
+ 1519 0004 094B     		ldr	r3, .L100
+ 1520 0006 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1521 0008 012B     		cmp	r3, #1
+ 1522 000a 0DD1     		bne	.L99
+ 460:osdp.c        ****     {
+ 461:osdp.c        ****         if (run_mode == MODE_OSDP + BASE_PASS)
+ 1523              		.loc 1 461 0
+ 1524 000c 084B     		ldr	r3, .L100+4
+ 1525 000e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1526 0010 662B     		cmp	r3, #102
+ 1527 0012 03D1     		bne	.L97
+ 462:osdp.c        ****         {
+ 463:osdp.c        ****             Pass_OSDP(&readerReadBuffer); //send to panel
+ 1528              		.loc 1 463 0
+ 1529 0014 0748     		ldr	r0, .L100+8
+ 1530 0016 FFF7FEFF 		bl	Pass_OSDP
+ 1531 001a 02E0     		b	.L98
+ 1532              	.L97:
+ 464:osdp.c        ****         }
+ 465:osdp.c        ****         else
+ 466:osdp.c        ****         {
+ 467:osdp.c        ****             copyReaderBufI2C(&readerReadBuffer);  //send to firmware
+ 1533              		.loc 1 467 0
+ 1534 001c 0548     		ldr	r0, .L100+8
+ 1535 001e FFF7FEFF 		bl	copyReaderBufI2C
+ 1536              	.L98:
+ 468:osdp.c        ****         }
+ 469:osdp.c        ****         osdp_reader_msg_ready = 0;
+ 1537              		.loc 1 469 0
+ 1538 0022 024B     		ldr	r3, .L100
+ 1539 0024 0022     		movs	r2, #0
+ 1540 0026 1A70     		strb	r2, [r3]
+ 1541              	.L99:
+ 470:osdp.c        ****     }
+ 471:osdp.c        **** }
+ 1542              		.loc 1 471 0
+ 1543 0028 00BF     		nop
+ 1544 002a 80BD     		pop	{r7, pc}
+ 1545              	.L101:
+ 1546              		.align	2
+ 1547              	.L100:
+ 1548 002c 00000000 		.word	osdp_reader_msg_ready
+ 1549 0030 00000000 		.word	run_mode
+ 1550 0034 00000000 		.word	readerReadBuffer
+ 1551              		.cfi_endproc
+ 1552              	.LFE76:
+ 1553              		.size	ReadOSDPReader, .-ReadOSDPReader
+ 1554              		.section	.text.SetReaderSpeed,"ax",%progbits
+ 1555              		.align	2
+ 1556              		.global	SetReaderSpeed
+ 1557              		.thumb
+ 1558              		.thumb_func
+ 1559              		.type	SetReaderSpeed, %function
+ 1560              	SetReaderSpeed:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 37
+
+
+ 1561              	.LFB77:
+ 472:osdp.c        **** 
+ 473:osdp.c        **** 
+ 474:osdp.c        **** void SetReaderSpeed(char rate){
+ 1562              		.loc 1 474 0
+ 1563              		.cfi_startproc
+ 1564              		@ args = 0, pretend = 0, frame = 8
+ 1565              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1566 0000 80B5     		push	{r7, lr}
+ 1567              		.cfi_def_cfa_offset 8
+ 1568              		.cfi_offset 7, -8
+ 1569              		.cfi_offset 14, -4
+ 1570 0002 82B0     		sub	sp, sp, #8
+ 1571              		.cfi_def_cfa_offset 16
+ 1572 0004 00AF     		add	r7, sp, #0
+ 1573              		.cfi_def_cfa_register 7
+ 1574 0006 0346     		mov	r3, r0
+ 1575 0008 FB71     		strb	r3, [r7, #7]
+ 475:osdp.c        ****     switch(rate){
+ 1576              		.loc 1 475 0
+ 1577 000a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1578 000c 013B     		subs	r3, r3, #1
+ 1579 000e 062B     		cmp	r3, #6
+ 1580 0010 35D8     		bhi	.L103
+ 1581 0012 01A2     		adr	r2, .L105
+ 1582 0014 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 1583              		.p2align 2
+ 1584              	.L105:
+ 1585 0018 35000000 		.word	.L104+1
+ 1586 001c 41000000 		.word	.L106+1
+ 1587 0020 4D000000 		.word	.L107+1
+ 1588 0024 57000000 		.word	.L108+1
+ 1589 0028 61000000 		.word	.L109+1
+ 1590 002c 6B000000 		.word	.L110+1
+ 1591 0030 75000000 		.word	.L111+1
+ 1592              		.p2align 1
+ 1593              	.L104:
+ 476:osdp.c        ****         case BAUD_9600:
+ 477:osdp.c        ****             Clock_6_SetDividerValue(CLKDV_9600); //  48000000/625=9600
+ 1594              		.loc 1 477 0
+ 1595 0034 0121     		movs	r1, #1
+ 1596 0036 4FF41C70 		mov	r0, #624
+ 1597 003a FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 478:osdp.c        ****             break;
+ 1598              		.loc 1 478 0
+ 1599 003e 1EE0     		b	.L103
+ 1600              	.L106:
+ 479:osdp.c        ****         case BAUD_19200:
+ 480:osdp.c        ****             Clock_6_SetDividerValue(CLKDV_19200);
+ 1601              		.loc 1 480 0
+ 1602 0040 0121     		movs	r1, #1
+ 1603 0042 40F23710 		movw	r0, #311
+ 1604 0046 FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 481:osdp.c        ****             break;
+ 1605              		.loc 1 481 0
+ 1606 004a 18E0     		b	.L103
+ 1607              	.L107:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 38
+
+
+ 482:osdp.c        ****         case BAUD_38400:
+ 483:osdp.c        ****             Clock_6_SetDividerValue(CLKDV_38400);
+ 1608              		.loc 1 483 0
+ 1609 004c 0121     		movs	r1, #1
+ 1610 004e 9B20     		movs	r0, #155
+ 1611 0050 FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 484:osdp.c        ****             break;
+ 1612              		.loc 1 484 0
+ 1613 0054 13E0     		b	.L103
+ 1614              	.L108:
+ 485:osdp.c        ****         case BAUD_115200:
+ 486:osdp.c        ****             Clock_6_SetDividerValue(CLKDV_115200);
+ 1615              		.loc 1 486 0
+ 1616 0056 0121     		movs	r1, #1
+ 1617 0058 3320     		movs	r0, #51
+ 1618 005a FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 487:osdp.c        ****             break;
+ 1619              		.loc 1 487 0
+ 1620 005e 0EE0     		b	.L103
+ 1621              	.L109:
+ 488:osdp.c        ****         case BAUD_230400:
+ 489:osdp.c        ****             Clock_6_SetDividerValue(CLKDV_230400);
+ 1622              		.loc 1 489 0
+ 1623 0060 0121     		movs	r1, #1
+ 1624 0062 1920     		movs	r0, #25
+ 1625 0064 FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 490:osdp.c        ****             break;
+ 1626              		.loc 1 490 0
+ 1627 0068 09E0     		b	.L103
+ 1628              	.L110:
+ 491:osdp.c        ****         case BAUD_460800:
+ 492:osdp.c        ****             Clock_6_SetDividerValue(CLKDV_460800);
+ 1629              		.loc 1 492 0
+ 1630 006a 0121     		movs	r1, #1
+ 1631 006c 0C20     		movs	r0, #12
+ 1632 006e FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 493:osdp.c        ****             break;
+ 1633              		.loc 1 493 0
+ 1634 0072 04E0     		b	.L103
+ 1635              	.L111:
+ 494:osdp.c        ****         case BAUD_921600:
+ 495:osdp.c        ****             Clock_6_SetDividerValue(CLKDV_921600);
+ 1636              		.loc 1 495 0
+ 1637 0074 0121     		movs	r1, #1
+ 1638 0076 0520     		movs	r0, #5
+ 1639 0078 FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 496:osdp.c        ****             break;
+ 1640              		.loc 1 496 0
+ 1641 007c 00BF     		nop
+ 1642              	.L103:
+ 497:osdp.c        ****         default:;    
+ 498:osdp.c        ****     }
+ 499:osdp.c        ****     Clock_6_Enable();
+ 1643              		.loc 1 499 0
+ 1644 007e FFF7FEFF 		bl	Clock_6_Start
+ 500:osdp.c        **** }
+ 1645              		.loc 1 500 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 39
+
+
+ 1646 0082 00BF     		nop
+ 1647 0084 0837     		adds	r7, r7, #8
+ 1648              		.cfi_def_cfa_offset 8
+ 1649 0086 BD46     		mov	sp, r7
+ 1650              		.cfi_def_cfa_register 13
+ 1651              		@ sp needed
+ 1652 0088 80BD     		pop	{r7, pc}
+ 1653              		.cfi_endproc
+ 1654              	.LFE77:
+ 1655              		.size	SetReaderSpeed, .-SetReaderSpeed
+ 1656 008a 00BF     		.section	.text.CopyI2cReaderBuffer,"ax",%progbits
+ 1657              		.align	2
+ 1658              		.global	CopyI2cReaderBuffer
+ 1659              		.thumb
+ 1660              		.thumb_func
+ 1661              		.type	CopyI2cReaderBuffer, %function
+ 1662              	CopyI2cReaderBuffer:
+ 1663              	.LFB78:
+ 501:osdp.c        **** 
+ 502:osdp.c        **** 
+ 503:osdp.c        **** void CopyI2cReaderBuffer(){
+ 1664              		.loc 1 503 0
+ 1665              		.cfi_startproc
+ 1666              		@ args = 0, pretend = 0, frame = 8
+ 1667              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1668 0000 80B5     		push	{r7, lr}
+ 1669              		.cfi_def_cfa_offset 8
+ 1670              		.cfi_offset 7, -8
+ 1671              		.cfi_offset 14, -4
+ 1672 0002 82B0     		sub	sp, sp, #8
+ 1673              		.cfi_def_cfa_offset 16
+ 1674 0004 00AF     		add	r7, sp, #0
+ 1675              		.cfi_def_cfa_register 7
+ 504:osdp.c        ****     int i;
+ 505:osdp.c        ****     unsigned char msg_size;
+ 506:osdp.c        ****     
+ 507:osdp.c        ****     msg_size=  MyI2C_Regs.osdp_reader_data_length;
+ 1676              		.loc 1 507 0
+ 1677 0006 1F4B     		ldr	r3, .L120
+ 1678 0008 93F8E230 		ldrb	r3, [r3, #226]
+ 1679 000c FB70     		strb	r3, [r7, #3]
+ 508:osdp.c        ****     
+ 509:osdp.c        ****     //fill up a temp buffer
+ 510:osdp.c        ****     if (msg_size <= OSDP_READER_BUFFER_LENGTH){
+ 1680              		.loc 1 510 0
+ 1681 000e FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 1682 0010 802B     		cmp	r3, #128
+ 1683 0012 25D8     		bhi	.L113
+ 511:osdp.c        ****         for ( i=0; i<msg_size; i++){
+ 1684              		.loc 1 511 0
+ 1685 0014 0023     		movs	r3, #0
+ 1686 0016 7B60     		str	r3, [r7, #4]
+ 1687 0018 0CE0     		b	.L114
+ 1688              	.L115:
+ 512:osdp.c        ****             readerSendBuffer.buf[i]=MyI2C_Regs.osdp_reader_buffer[i];
+ 1689              		.loc 1 512 0 discriminator 3
+ 1690 001a 1A4A     		ldr	r2, .L120
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 40
+
+
+ 1691 001c 7B68     		ldr	r3, [r7, #4]
+ 1692 001e 1344     		add	r3, r3, r2
+ 1693 0020 E433     		adds	r3, r3, #228
+ 1694 0022 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 1695 0024 184A     		ldr	r2, .L120+4
+ 1696 0026 7B68     		ldr	r3, [r7, #4]
+ 1697 0028 1344     		add	r3, r3, r2
+ 1698 002a 0A46     		mov	r2, r1
+ 1699 002c 1A70     		strb	r2, [r3]
+ 511:osdp.c        ****         for ( i=0; i<msg_size; i++){
+ 1700              		.loc 1 511 0 discriminator 3
+ 1701 002e 7B68     		ldr	r3, [r7, #4]
+ 1702 0030 0133     		adds	r3, r3, #1
+ 1703 0032 7B60     		str	r3, [r7, #4]
+ 1704              	.L114:
+ 511:osdp.c        ****         for ( i=0; i<msg_size; i++){
+ 1705              		.loc 1 511 0 is_stmt 0 discriminator 1
+ 1706 0034 FA78     		ldrb	r2, [r7, #3]	@ zero_extendqisi2
+ 1707 0036 7B68     		ldr	r3, [r7, #4]
+ 1708 0038 9A42     		cmp	r2, r3
+ 1709 003a EEDC     		bgt	.L115
+ 513:osdp.c        ****         }
+ 514:osdp.c        ****         for ( i=msg_size; i< OSDP_READER_BUFFER_LENGTH; i++){
+ 1710              		.loc 1 514 0 is_stmt 1
+ 1711 003c FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 1712 003e 7B60     		str	r3, [r7, #4]
+ 1713 0040 07E0     		b	.L116
+ 1714              	.L117:
+ 515:osdp.c        ****             readerSendBuffer.buf[i] = 0;
+ 1715              		.loc 1 515 0 discriminator 3
+ 1716 0042 114A     		ldr	r2, .L120+4
+ 1717 0044 7B68     		ldr	r3, [r7, #4]
+ 1718 0046 1344     		add	r3, r3, r2
+ 1719 0048 0022     		movs	r2, #0
+ 1720 004a 1A70     		strb	r2, [r3]
+ 514:osdp.c        ****             readerSendBuffer.buf[i] = 0;
+ 1721              		.loc 1 514 0 discriminator 3
+ 1722 004c 7B68     		ldr	r3, [r7, #4]
+ 1723 004e 0133     		adds	r3, r3, #1
+ 1724 0050 7B60     		str	r3, [r7, #4]
+ 1725              	.L116:
+ 514:osdp.c        ****             readerSendBuffer.buf[i] = 0;
+ 1726              		.loc 1 514 0 is_stmt 0 discriminator 1
+ 1727 0052 7B68     		ldr	r3, [r7, #4]
+ 1728 0054 7F2B     		cmp	r3, #127
+ 1729 0056 F4DD     		ble	.L117
+ 516:osdp.c        ****         }
+ 517:osdp.c        ****         readerSendBuffer.len = msg_size;
+ 1730              		.loc 1 517 0 is_stmt 1
+ 1731 0058 0B4A     		ldr	r2, .L120+4
+ 1732 005a FB78     		ldrb	r3, [r7, #3]
+ 1733 005c 82F88030 		strb	r3, [r2, #128]
+ 1734              	.L113:
+ 518:osdp.c        ****     }
+ 519:osdp.c        ****     // Send Reader
+ 520:osdp.c        ****     if ( readerSendBuffer.len > 0){
+ 1735              		.loc 1 520 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 41
+
+
+ 1736 0060 094B     		ldr	r3, .L120+4
+ 1737 0062 93F88030 		ldrb	r3, [r3, #128]	@ zero_extendqisi2
+ 1738 0066 002B     		cmp	r3, #0
+ 1739 0068 07D0     		beq	.L119
+ 521:osdp.c        ****         LED_GRN_Write(ON);
+ 1740              		.loc 1 521 0
+ 1741 006a 0020     		movs	r0, #0
+ 1742 006c FFF7FEFF 		bl	LED_GRN_Write
+ 522:osdp.c        ****         SendOSDPReader();
+ 1743              		.loc 1 522 0
+ 1744 0070 FFF7FEFF 		bl	SendOSDPReader
+ 523:osdp.c        ****         LED_GRN_Write(OFF);
+ 1745              		.loc 1 523 0
+ 1746 0074 0120     		movs	r0, #1
+ 1747 0076 FFF7FEFF 		bl	LED_GRN_Write
+ 1748              	.L119:
+ 524:osdp.c        ****     }
+ 525:osdp.c        **** }
+ 1749              		.loc 1 525 0
+ 1750 007a 00BF     		nop
+ 1751 007c 0837     		adds	r7, r7, #8
+ 1752              		.cfi_def_cfa_offset 8
+ 1753 007e BD46     		mov	sp, r7
+ 1754              		.cfi_def_cfa_register 13
+ 1755              		@ sp needed
+ 1756 0080 80BD     		pop	{r7, pc}
+ 1757              	.L121:
+ 1758 0082 00BF     		.align	2
+ 1759              	.L120:
+ 1760 0084 00000000 		.word	MyI2C_Regs
+ 1761 0088 00000000 		.word	readerSendBuffer
+ 1762              		.cfi_endproc
+ 1763              	.LFE78:
+ 1764              		.size	CopyI2cReaderBuffer, .-CopyI2cReaderBuffer
+ 1765              		.section	.text.HandleOSDP,"ax",%progbits
+ 1766              		.align	2
+ 1767              		.global	HandleOSDP
+ 1768              		.thumb
+ 1769              		.thumb_func
+ 1770              		.type	HandleOSDP, %function
+ 1771              	HandleOSDP:
+ 1772              	.LFB79:
+ 526:osdp.c        **** 
+ 527:osdp.c        **** 
+ 528:osdp.c        **** /****************************************
+ 529:osdp.c        ****    Method to handle OSDP commands
+ 530:osdp.c        ****    coming from device
+ 531:osdp.c        **** 
+ 532:osdp.c        **** *****************************************/
+ 533:osdp.c        **** void HandleOSDP()
+ 534:osdp.c        **** {
+ 1773              		.loc 1 534 0
+ 1774              		.cfi_startproc
+ 1775              		@ args = 0, pretend = 0, frame = 8
+ 1776              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1777 0000 80B5     		push	{r7, lr}
+ 1778              		.cfi_def_cfa_offset 8
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 42
+
+
+ 1779              		.cfi_offset 7, -8
+ 1780              		.cfi_offset 14, -4
+ 1781 0002 82B0     		sub	sp, sp, #8
+ 1782              		.cfi_def_cfa_offset 16
+ 1783 0004 00AF     		add	r7, sp, #0
+ 1784              		.cfi_def_cfa_register 7
+ 535:osdp.c        ****     int temp = 0;
+ 1785              		.loc 1 535 0
+ 1786 0006 0023     		movs	r3, #0
+ 1787 0008 7B60     		str	r3, [r7, #4]
+ 536:osdp.c        **** //            if (MyI2C_Regs.osdp_cmd == OSDP_RATE) SetPanelSpeed(MyI2C_Regs.osdp_rate);
+ 537:osdp.c        ****             temp = Clock_5_GetDividerRegister();
+ 1788              		.loc 1 537 0
+ 1789 000a FFF7FEFF 		bl	Clock_5_GetDividerRegister
+ 1790 000e 0346     		mov	r3, r0
+ 1791 0010 7B60     		str	r3, [r7, #4]
+ 538:osdp.c        ****             MyI2C_Regs.buffer1[14] = temp & 0xff;  
+ 1792              		.loc 1 538 0
+ 1793 0012 7B68     		ldr	r3, [r7, #4]
+ 1794 0014 DAB2     		uxtb	r2, r3
+ 1795 0016 3F4B     		ldr	r3, .L141
+ 1796 0018 83F85720 		strb	r2, [r3, #87]
+ 539:osdp.c        ****             MyI2C_Regs.buffer1[13] = (temp >> 8) & 0xff;  
+ 1797              		.loc 1 539 0
+ 1798 001c 7B68     		ldr	r3, [r7, #4]
+ 1799 001e 1B12     		asrs	r3, r3, #8
+ 1800 0020 DAB2     		uxtb	r2, r3
+ 1801 0022 3C4B     		ldr	r3, .L141
+ 1802 0024 83F85620 		strb	r2, [r3, #86]
+ 540:osdp.c        **** 
+ 541:osdp.c        ****     //Now, Handle the Reader Messages
+ 542:osdp.c        ****     if (MyI2C_Regs.osdp_reader_cmd != 0){
+ 1803              		.loc 1 542 0
+ 1804 0028 3A4B     		ldr	r3, .L141
+ 1805 002a 93F8E130 		ldrb	r3, [r3, #225]	@ zero_extendqisi2
+ 1806 002e 002B     		cmp	r3, #0
+ 1807 0030 2ED0     		beq	.L123
+ 543:osdp.c        ****     	switch (MyI2C_Regs.osdp_reader_cmd)
+ 1808              		.loc 1 543 0
+ 1809 0032 384B     		ldr	r3, .L141
+ 1810 0034 93F8E130 		ldrb	r3, [r3, #225]	@ zero_extendqisi2
+ 1811 0038 042B     		cmp	r3, #4
+ 1812 003a 1BD8     		bhi	.L124
+ 1813 003c 01A2     		adr	r2, .L126
+ 1814 003e 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 1815 0042 00BF     		.p2align 2
+ 1816              	.L126:
+ 1817 0044 75000000 		.word	.L124+1
+ 1818 0048 75000000 		.word	.L124+1
+ 1819 004c 59000000 		.word	.L127+1
+ 1820 0050 75000000 		.word	.L124+1
+ 1821 0054 5F000000 		.word	.L129+1
+ 1822              		.p2align 1
+ 1823              	.L127:
+ 544:osdp.c        ****         {
+ 545:osdp.c        ****             case OSDP_NONE:
+ 546:osdp.c        ****             case OSDP_BUSY:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 43
+
+
+ 547:osdp.c        ****                 break;
+ 548:osdp.c        ****             case OSDP_SEND:
+ 549:osdp.c        ****                 CopyI2cReaderBuffer();
+ 1824              		.loc 1 549 0
+ 1825 0058 FFF7FEFF 		bl	CopyI2cReaderBuffer
+ 550:osdp.c        ****                 break;
+ 1826              		.loc 1 550 0
+ 1827 005c 0AE0     		b	.L124
+ 1828              	.L129:
+ 551:osdp.c        ****             case OSDP_READ:
+ 552:osdp.c        ****                 break;
+ 553:osdp.c        ****             case OSDP_RATE:
+ 554:osdp.c        ****                 SetReaderSpeed(MyI2C_Regs.osdp_reader_rate);
+ 1829              		.loc 1 554 0
+ 1830 005e 2D4B     		ldr	r3, .L141
+ 1831 0060 93F8E330 		ldrb	r3, [r3, #227]	@ zero_extendqisi2
+ 1832 0064 1846     		mov	r0, r3
+ 1833 0066 FFF7FEFF 		bl	SetReaderSpeed
+ 555:osdp.c        ****                 MyI2C_Regs.osdp_reader_cmd = OSDP_READ;
+ 1834              		.loc 1 555 0
+ 1835 006a 2A4B     		ldr	r3, .L141
+ 1836 006c 0322     		movs	r2, #3
+ 1837 006e 83F8E120 		strb	r2, [r3, #225]
+ 556:osdp.c        ****                 break;
+ 1838              		.loc 1 556 0
+ 1839 0072 00BF     		nop
+ 1840              	.L124:
+ 557:osdp.c        ****             default:;
+ 558:osdp.c        ****         }
+ 559:osdp.c        ****         if ((MyI2C_Regs.osdp_status & OSDP_READER_DATA_IN_READY) == 0 
+ 1841              		.loc 1 559 0
+ 1842 0074 274B     		ldr	r3, .L141
+ 1843 0076 93F85E30 		ldrb	r3, [r3, #94]	@ zero_extendqisi2
+ 1844 007a 03F02003 		and	r3, r3, #32
+ 1845 007e 002B     		cmp	r3, #0
+ 1846 0080 06D1     		bne	.L123
+ 560:osdp.c        ****             && MyI2C_Regs.osdp_reader_cmd != OSDP_SEND){
+ 1847              		.loc 1 560 0
+ 1848 0082 244B     		ldr	r3, .L141
+ 1849 0084 93F8E130 		ldrb	r3, [r3, #225]	@ zero_extendqisi2
+ 1850 0088 022B     		cmp	r3, #2
+ 1851 008a 01D0     		beq	.L123
+ 561:osdp.c        ****             ReadOSDPReader();
+ 1852              		.loc 1 561 0
+ 1853 008c FFF7FEFF 		bl	ReadOSDPReader
+ 1854              	.L123:
+ 562:osdp.c        ****         }
+ 563:osdp.c        ****     }
+ 564:osdp.c        ****    
+ 565:osdp.c        ****     //Panel Messages
+ 566:osdp.c        ****     if (MyI2C_Regs.osdp_cmd){
+ 1855              		.loc 1 566 0
+ 1856 0090 204B     		ldr	r3, .L141
+ 1857 0092 93F85D30 		ldrb	r3, [r3, #93]	@ zero_extendqisi2
+ 1858 0096 002B     		cmp	r3, #0
+ 1859 0098 38D0     		beq	.L139
+ 567:osdp.c        ****     	switch (MyI2C_Regs.osdp_cmd)
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 44
+
+
+ 1860              		.loc 1 567 0
+ 1861 009a 1E4B     		ldr	r3, .L141
+ 1862 009c 93F85D30 		ldrb	r3, [r3, #93]	@ zero_extendqisi2
+ 1863 00a0 042B     		cmp	r3, #4
+ 1864 00a2 23D8     		bhi	.L140
+ 1865 00a4 01A2     		adr	r2, .L133
+ 1866 00a6 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 1867 00aa 00BF     		.p2align 2
+ 1868              	.L133:
+ 1869 00ac ED000000 		.word	.L140+1
+ 1870 00b0 ED000000 		.word	.L140+1
+ 1871 00b4 C1000000 		.word	.L134+1
+ 1872 00b8 ED000000 		.word	.L140+1
+ 1873 00bc D7000000 		.word	.L136+1
+ 1874              		.p2align 1
+ 1875              	.L134:
+ 568:osdp.c        ****         {
+ 569:osdp.c        ****             case OSDP_NONE:
+ 570:osdp.c        ****             case OSDP_BUSY:
+ 571:osdp.c        ****                 break;
+ 572:osdp.c        ****             case OSDP_SEND:
+ 573:osdp.c        ****                 MyI2C_Regs.buffer1[11] ++;
+ 1876              		.loc 1 573 0
+ 1877 00c0 144B     		ldr	r3, .L141
+ 1878 00c2 93F85430 		ldrb	r3, [r3, #84]	@ zero_extendqisi2
+ 1879 00c6 0133     		adds	r3, r3, #1
+ 1880 00c8 DAB2     		uxtb	r2, r3
+ 1881 00ca 124B     		ldr	r3, .L141
+ 1882 00cc 83F85420 		strb	r2, [r3, #84]
+ 574:osdp.c        ****                 CopyI2cPanelBuffer();  //fill up buffer for send to panel
+ 1883              		.loc 1 574 0
+ 1884 00d0 FFF7FEFF 		bl	CopyI2cPanelBuffer
+ 575:osdp.c        ****                 break;
+ 1885              		.loc 1 575 0
+ 1886 00d4 0BE0     		b	.L137
+ 1887              	.L136:
+ 576:osdp.c        ****             case OSDP_READ:
+ 577:osdp.c        ****                 break;
+ 578:osdp.c        ****             case OSDP_RATE:
+ 579:osdp.c        ****                 SetPanelSpeed(MyI2C_Regs.osdp_rate);
+ 1888              		.loc 1 579 0
+ 1889 00d6 0F4B     		ldr	r3, .L141
+ 1890 00d8 93F86030 		ldrb	r3, [r3, #96]	@ zero_extendqisi2
+ 1891 00dc 1846     		mov	r0, r3
+ 1892 00de FFF7FEFF 		bl	SetPanelSpeed
+ 580:osdp.c        ****                 MyI2C_Regs.osdp_cmd = OSDP_READ;
+ 1893              		.loc 1 580 0
+ 1894 00e2 0C4B     		ldr	r3, .L141
+ 1895 00e4 0322     		movs	r2, #3
+ 1896 00e6 83F85D20 		strb	r2, [r3, #93]
+ 581:osdp.c        ****                 break;
+ 1897              		.loc 1 581 0
+ 1898 00ea 00E0     		b	.L137
+ 1899              	.L140:
+ 582:osdp.c        ****             default:
+ 583:osdp.c        ****                 break;
+ 1900              		.loc 1 583 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 45
+
+
+ 1901 00ec 00BF     		nop
+ 1902              	.L137:
+ 584:osdp.c        ****         }
+ 585:osdp.c        ****            if ((MyI2C_Regs.osdp_status & OSDP_PANEL_DATA_IN_READY) == 0 
+ 1903              		.loc 1 585 0
+ 1904 00ee 094B     		ldr	r3, .L141
+ 1905 00f0 93F85E30 		ldrb	r3, [r3, #94]	@ zero_extendqisi2
+ 1906 00f4 03F00203 		and	r3, r3, #2
+ 1907 00f8 002B     		cmp	r3, #0
+ 1908 00fa 07D1     		bne	.L139
+ 586:osdp.c        ****             && MyI2C_Regs.osdp_cmd != OSDP_SEND){
+ 1909              		.loc 1 586 0
+ 1910 00fc 054B     		ldr	r3, .L141
+ 1911 00fe 93F85D30 		ldrb	r3, [r3, #93]	@ zero_extendqisi2
+ 1912 0102 022B     		cmp	r3, #2
+ 1913 0104 02D0     		beq	.L139
+ 587:osdp.c        ****                 ReadOSDP();
+ 1914              		.loc 1 587 0
+ 1915 0106 FFF7FEFF 		bl	ReadOSDP
+ 588:osdp.c        ****             } 
+ 589:osdp.c        **** 
+ 590:osdp.c        ****     }
+ 591:osdp.c        ****     return;
+ 1916              		.loc 1 591 0
+ 1917 010a 00BF     		nop
+ 1918              	.L139:
+ 1919 010c 00BF     		nop
+ 592:osdp.c        ****     // check if anything comes in
+ 593:osdp.c        **** 
+ 594:osdp.c        ****         
+ 595:osdp.c        **** //    if ((MyI2C_Regs.osdp_status & OSDP_PANEL_DATA_IN_READY) == 0 
+ 596:osdp.c        **** //        && 
+ 597:osdp.c        ****         while(1)
+ 598:osdp.c        ****         {
+ 599:osdp.c        ****             if(MyI2C_Regs.osdp_cmd != OSDP_SEND)
+ 600:osdp.c        ****             {
+ 601:osdp.c        ****                 ReadOSDP();
+ 602:osdp.c        ****                  void HandleUSB();
+ 603:osdp.c        ****                     HandleUSB();
+ 604:osdp.c        ****             }
+ 605:osdp.c        ****             else CopyI2cPanelBuffer();
+ 606:osdp.c        ****             if(MyI2C_Regs.cmd == CMD_BOOTLOAD) break;
+ 607:osdp.c        ****         }
+ 608:osdp.c        **** }
+ 1920              		.loc 1 608 0
+ 1921 010e 0837     		adds	r7, r7, #8
+ 1922              		.cfi_def_cfa_offset 8
+ 1923 0110 BD46     		mov	sp, r7
+ 1924              		.cfi_def_cfa_register 13
+ 1925              		@ sp needed
+ 1926 0112 80BD     		pop	{r7, pc}
+ 1927              	.L142:
+ 1928              		.align	2
+ 1929              	.L141:
+ 1930 0114 00000000 		.word	MyI2C_Regs
+ 1931              		.cfi_endproc
+ 1932              	.LFE79:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 46
+
+
+ 1933              		.size	HandleOSDP, .-HandleOSDP
+ 1934              		.section	.text.Pass_OSDP,"ax",%progbits
+ 1935              		.align	2
+ 1936              		.global	Pass_OSDP
+ 1937              		.thumb
+ 1938              		.thumb_func
+ 1939              		.type	Pass_OSDP, %function
+ 1940              	Pass_OSDP:
+ 1941              	.LFB80:
+ 609:osdp.c        **** 
+ 610:osdp.c        **** void Pass_OSDP(ReaderBuf *p)
+ 611:osdp.c        **** {
+ 1942              		.loc 1 611 0
+ 1943              		.cfi_startproc
+ 1944              		@ args = 0, pretend = 0, frame = 16
+ 1945              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1946 0000 80B5     		push	{r7, lr}
+ 1947              		.cfi_def_cfa_offset 8
+ 1948              		.cfi_offset 7, -8
+ 1949              		.cfi_offset 14, -4
+ 1950 0002 84B0     		sub	sp, sp, #16
+ 1951              		.cfi_def_cfa_offset 24
+ 1952 0004 00AF     		add	r7, sp, #0
+ 1953              		.cfi_def_cfa_register 7
+ 1954 0006 7860     		str	r0, [r7, #4]
+ 612:osdp.c        ****     int i;
+ 613:osdp.c        ****     panelSendBuf.len = p->len;
+ 1955              		.loc 1 613 0
+ 1956 0008 7B68     		ldr	r3, [r7, #4]
+ 1957 000a 93F88020 		ldrb	r2, [r3, #128]	@ zero_extendqisi2
+ 1958 000e 184B     		ldr	r3, .L147
+ 1959 0010 83F88020 		strb	r2, [r3, #128]
+ 614:osdp.c        ****     if (panelSendBuf.len >  OSDP_PANEL_BUFFER_LENGTH) panelSendBuf.len = OSDP_PANEL_BUFFER_LENGTH;
+ 1960              		.loc 1 614 0
+ 1961 0014 164B     		ldr	r3, .L147
+ 1962 0016 93F88030 		ldrb	r3, [r3, #128]	@ zero_extendqisi2
+ 1963 001a 802B     		cmp	r3, #128
+ 1964 001c 03D9     		bls	.L144
+ 1965              		.loc 1 614 0 is_stmt 0 discriminator 1
+ 1966 001e 144B     		ldr	r3, .L147
+ 1967 0020 8022     		movs	r2, #128
+ 1968 0022 83F88020 		strb	r2, [r3, #128]
+ 1969              	.L144:
+ 615:osdp.c        ****     for (i=0; i < panelSendBuf.len; i++){
+ 1970              		.loc 1 615 0 is_stmt 1
+ 1971 0026 0023     		movs	r3, #0
+ 1972 0028 FB60     		str	r3, [r7, #12]
+ 1973 002a 0BE0     		b	.L145
+ 1974              	.L146:
+ 616:osdp.c        ****         panelSendBuf.buf[i] = p->buf[i];
+ 1975              		.loc 1 616 0 discriminator 3
+ 1976 002c 7A68     		ldr	r2, [r7, #4]
+ 1977 002e FB68     		ldr	r3, [r7, #12]
+ 1978 0030 1344     		add	r3, r3, r2
+ 1979 0032 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 1980 0034 0E4A     		ldr	r2, .L147
+ 1981 0036 FB68     		ldr	r3, [r7, #12]
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 47
+
+
+ 1982 0038 1344     		add	r3, r3, r2
+ 1983 003a 0A46     		mov	r2, r1
+ 1984 003c 1A70     		strb	r2, [r3]
+ 615:osdp.c        ****     for (i=0; i < panelSendBuf.len; i++){
+ 1985              		.loc 1 615 0 discriminator 3
+ 1986 003e FB68     		ldr	r3, [r7, #12]
+ 1987 0040 0133     		adds	r3, r3, #1
+ 1988 0042 FB60     		str	r3, [r7, #12]
+ 1989              	.L145:
+ 615:osdp.c        ****     for (i=0; i < panelSendBuf.len; i++){
+ 1990              		.loc 1 615 0 is_stmt 0 discriminator 1
+ 1991 0044 0A4B     		ldr	r3, .L147
+ 1992 0046 93F88030 		ldrb	r3, [r3, #128]	@ zero_extendqisi2
+ 1993 004a 1A46     		mov	r2, r3
+ 1994 004c FB68     		ldr	r3, [r7, #12]
+ 1995 004e 9A42     		cmp	r2, r3
+ 1996 0050 ECDC     		bgt	.L146
+ 617:osdp.c        ****     }
+ 618:osdp.c        ****     panelSendBuf.pending = 1;  //ready to send
+ 1997              		.loc 1 618 0 is_stmt 1
+ 1998 0052 074B     		ldr	r3, .L147
+ 1999 0054 0122     		movs	r2, #1
+ 2000 0056 83F88120 		strb	r2, [r3, #129]
+ 619:osdp.c        ****     SendOSDP();
+ 2001              		.loc 1 619 0
+ 2002 005a FFF7FEFF 		bl	SendOSDP
+ 620:osdp.c        ****     panelSendBuf.pending = 0; //send out command
+ 2003              		.loc 1 620 0
+ 2004 005e 044B     		ldr	r3, .L147
+ 2005 0060 0022     		movs	r2, #0
+ 2006 0062 83F88120 		strb	r2, [r3, #129]
+ 621:osdp.c        **** }
+ 2007              		.loc 1 621 0
+ 2008 0066 00BF     		nop
+ 2009 0068 1037     		adds	r7, r7, #16
+ 2010              		.cfi_def_cfa_offset 8
+ 2011 006a BD46     		mov	sp, r7
+ 2012              		.cfi_def_cfa_register 13
+ 2013              		@ sp needed
+ 2014 006c 80BD     		pop	{r7, pc}
+ 2015              	.L148:
+ 2016 006e 00BF     		.align	2
+ 2017              	.L147:
+ 2018 0070 00000000 		.word	panelSendBuf
+ 2019              		.cfi_endproc
+ 2020              	.LFE80:
+ 2021              		.size	Pass_OSDP, .-Pass_OSDP
+ 2022              		.text
+ 2023              	.Letext0:
+ 2024              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 2025              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 2026              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 2027              		.file 5 "softuart.h"
+ 2028              		.file 6 "system.h"
+ 2029              		.file 7 "osdp.h"
+ 2030              		.file 8 "Generated_Source\\PSoC5/core_cm3.h"
+ 2031              		.section	.debug_info,"",%progbits
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 48
+
+
+ 2032              	.Ldebug_info0:
+ 2033 0000 05080000 		.4byte	0x805
+ 2034 0004 0400     		.2byte	0x4
+ 2035 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 2036 000a 04       		.byte	0x4
+ 2037 000b 01       		.uleb128 0x1
+ 2038 000c B6000000 		.4byte	.LASF108
+ 2039 0010 0C       		.byte	0xc
+ 2040 0011 00000000 		.4byte	.LASF109
+ 2041 0015 C6020000 		.4byte	.LASF110
+ 2042 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 2043 001d 00000000 		.4byte	0
+ 2044 0021 00000000 		.4byte	.Ldebug_line0
+ 2045 0025 02       		.uleb128 0x2
+ 2046 0026 01       		.byte	0x1
+ 2047 0027 06       		.byte	0x6
+ 2048 0028 DF010000 		.4byte	.LASF0
+ 2049 002c 02       		.uleb128 0x2
+ 2050 002d 01       		.byte	0x1
+ 2051 002e 08       		.byte	0x8
+ 2052 002f 75020000 		.4byte	.LASF1
+ 2053 0033 02       		.uleb128 0x2
+ 2054 0034 02       		.byte	0x2
+ 2055 0035 05       		.byte	0x5
+ 2056 0036 79010000 		.4byte	.LASF2
+ 2057 003a 02       		.uleb128 0x2
+ 2058 003b 02       		.byte	0x2
+ 2059 003c 07       		.byte	0x7
+ 2060 003d 26050000 		.4byte	.LASF3
+ 2061 0041 03       		.uleb128 0x3
+ 2062 0042 08050000 		.4byte	.LASF9
+ 2063 0046 02       		.byte	0x2
+ 2064 0047 3F       		.byte	0x3f
+ 2065 0048 4C000000 		.4byte	0x4c
+ 2066 004c 02       		.uleb128 0x2
+ 2067 004d 04       		.byte	0x4
+ 2068 004e 05       		.byte	0x5
+ 2069 004f 67020000 		.4byte	.LASF4
+ 2070 0053 02       		.uleb128 0x2
+ 2071 0054 04       		.byte	0x4
+ 2072 0055 07       		.byte	0x7
+ 2073 0056 E1030000 		.4byte	.LASF5
+ 2074 005a 02       		.uleb128 0x2
+ 2075 005b 08       		.byte	0x8
+ 2076 005c 05       		.byte	0x5
+ 2077 005d 50010000 		.4byte	.LASF6
+ 2078 0061 02       		.uleb128 0x2
+ 2079 0062 08       		.byte	0x8
+ 2080 0063 07       		.byte	0x7
+ 2081 0064 96030000 		.4byte	.LASF7
+ 2082 0068 04       		.uleb128 0x4
+ 2083 0069 04       		.byte	0x4
+ 2084 006a 05       		.byte	0x5
+ 2085 006b 696E7400 		.ascii	"int\000"
+ 2086 006f 02       		.uleb128 0x2
+ 2087 0070 04       		.byte	0x4
+ 2088 0071 07       		.byte	0x7
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 49
+
+
+ 2089 0072 CA030000 		.4byte	.LASF8
+ 2090 0076 03       		.uleb128 0x3
+ 2091 0077 83020000 		.4byte	.LASF10
+ 2092 007b 03       		.byte	0x3
+ 2093 007c 2C       		.byte	0x2c
+ 2094 007d 41000000 		.4byte	0x41
+ 2095 0081 05       		.uleb128 0x5
+ 2096 0082 A7010000 		.4byte	.LASF11
+ 2097 0086 04       		.byte	0x4
+ 2098 0087 9201     		.2byte	0x192
+ 2099 0089 2C000000 		.4byte	0x2c
+ 2100 008d 02       		.uleb128 0x2
+ 2101 008e 04       		.byte	0x4
+ 2102 008f 04       		.byte	0x4
+ 2103 0090 F9010000 		.4byte	.LASF12
+ 2104 0094 02       		.uleb128 0x2
+ 2105 0095 08       		.byte	0x8
+ 2106 0096 04       		.byte	0x4
+ 2107 0097 28000000 		.4byte	.LASF13
+ 2108 009b 02       		.uleb128 0x2
+ 2109 009c 01       		.byte	0x1
+ 2110 009d 08       		.byte	0x8
+ 2111 009e 43040000 		.4byte	.LASF14
+ 2112 00a2 05       		.uleb128 0x5
+ 2113 00a3 DE040000 		.4byte	.LASF15
+ 2114 00a7 04       		.byte	0x4
+ 2115 00a8 3C02     		.2byte	0x23c
+ 2116 00aa AE000000 		.4byte	0xae
+ 2117 00ae 06       		.uleb128 0x6
+ 2118 00af 81000000 		.4byte	0x81
+ 2119 00b3 02       		.uleb128 0x2
+ 2120 00b4 08       		.byte	0x8
+ 2121 00b5 04       		.byte	0x4
+ 2122 00b6 1F030000 		.4byte	.LASF16
+ 2123 00ba 02       		.uleb128 0x2
+ 2124 00bb 04       		.byte	0x4
+ 2125 00bc 07       		.byte	0x7
+ 2126 00bd 7D000000 		.4byte	.LASF17
+ 2127 00c1 07       		.uleb128 0x7
+ 2128 00c2 28       		.byte	0x28
+ 2129 00c3 05       		.byte	0x5
+ 2130 00c4 0D       		.byte	0xd
+ 2131 00c5 5A010000 		.4byte	0x15a
+ 2132 00c9 08       		.uleb128 0x8
+ 2133 00ca 2B030000 		.4byte	.LASF18
+ 2134 00ce 05       		.byte	0x5
+ 2135 00cf 0F       		.byte	0xf
+ 2136 00d0 68000000 		.4byte	0x68
+ 2137 00d4 00       		.byte	0
+ 2138 00d5 08       		.uleb128 0x8
+ 2139 00d6 98020000 		.4byte	.LASF19
+ 2140 00da 05       		.byte	0x5
+ 2141 00db 10       		.byte	0x10
+ 2142 00dc 68000000 		.4byte	0x68
+ 2143 00e0 04       		.byte	0x4
+ 2144 00e1 08       		.uleb128 0x8
+ 2145 00e2 D7030000 		.4byte	.LASF20
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 50
+
+
+ 2146 00e6 05       		.byte	0x5
+ 2147 00e7 11       		.byte	0x11
+ 2148 00e8 68000000 		.4byte	0x68
+ 2149 00ec 08       		.byte	0x8
+ 2150 00ed 08       		.uleb128 0x8
+ 2151 00ee 3A020000 		.4byte	.LASF21
+ 2152 00f2 05       		.byte	0x5
+ 2153 00f3 12       		.byte	0x12
+ 2154 00f4 68000000 		.4byte	0x68
+ 2155 00f8 0C       		.byte	0xc
+ 2156 00f9 08       		.uleb128 0x8
+ 2157 00fa B5040000 		.4byte	.LASF22
+ 2158 00fe 05       		.byte	0x5
+ 2159 00ff 13       		.byte	0x13
+ 2160 0100 3A000000 		.4byte	0x3a
+ 2161 0104 10       		.byte	0x10
+ 2162 0105 08       		.uleb128 0x8
+ 2163 0106 59000000 		.4byte	.LASF23
+ 2164 010a 05       		.byte	0x5
+ 2165 010b 14       		.byte	0x14
+ 2166 010c 5A010000 		.4byte	0x15a
+ 2167 0110 12       		.byte	0x12
+ 2168 0111 08       		.uleb128 0x8
+ 2169 0112 21040000 		.4byte	.LASF24
+ 2170 0116 05       		.byte	0x5
+ 2171 0117 15       		.byte	0x15
+ 2172 0118 5A010000 		.4byte	0x15a
+ 2173 011c 14       		.byte	0x14
+ 2174 011d 08       		.uleb128 0x8
+ 2175 011e 8B010000 		.4byte	.LASF25
+ 2176 0122 05       		.byte	0x5
+ 2177 0123 16       		.byte	0x16
+ 2178 0124 3A000000 		.4byte	0x3a
+ 2179 0128 16       		.byte	0x16
+ 2180 0129 08       		.uleb128 0x8
+ 2181 012a 90030000 		.4byte	.LASF26
+ 2182 012e 05       		.byte	0x5
+ 2183 012f 17       		.byte	0x17
+ 2184 0130 5F010000 		.4byte	0x15f
+ 2185 0134 18       		.byte	0x18
+ 2186 0135 08       		.uleb128 0x8
+ 2187 0136 C5050000 		.4byte	.LASF27
+ 2188 013a 05       		.byte	0x5
+ 2189 013b 18       		.byte	0x18
+ 2190 013c 5F010000 		.4byte	0x15f
+ 2191 0140 1C       		.byte	0x1c
+ 2192 0141 08       		.uleb128 0x8
+ 2193 0142 D2010000 		.4byte	.LASF28
+ 2194 0146 05       		.byte	0x5
+ 2195 0147 19       		.byte	0x19
+ 2196 0148 5F010000 		.4byte	0x15f
+ 2197 014c 20       		.byte	0x20
+ 2198 014d 08       		.uleb128 0x8
+ 2199 014e 19040000 		.4byte	.LASF29
+ 2200 0152 05       		.byte	0x5
+ 2201 0153 1A       		.byte	0x1a
+ 2202 0154 5F010000 		.4byte	0x15f
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 51
+
+
+ 2203 0158 24       		.byte	0x24
+ 2204 0159 00       		.byte	0
+ 2205 015a 06       		.uleb128 0x6
+ 2206 015b 3A000000 		.4byte	0x3a
+ 2207 015f 06       		.uleb128 0x6
+ 2208 0160 68000000 		.4byte	0x68
+ 2209 0164 03       		.uleb128 0x3
+ 2210 0165 0E030000 		.4byte	.LASF30
+ 2211 0169 05       		.byte	0x5
+ 2212 016a 1B       		.byte	0x1b
+ 2213 016b C1000000 		.4byte	0xc1
+ 2214 016f 09       		.uleb128 0x9
+ 2215 0170 B8010000 		.4byte	.LASF57
+ 2216 0174 DC01     		.2byte	0x1dc
+ 2217 0176 06       		.byte	0x6
+ 2218 0177 1E       		.byte	0x1e
+ 2219 0178 CF020000 		.4byte	0x2cf
+ 2220 017c 08       		.uleb128 0x8
+ 2221 017d 39050000 		.4byte	.LASF31
+ 2222 0181 06       		.byte	0x6
+ 2223 0182 1F       		.byte	0x1f
+ 2224 0183 9B000000 		.4byte	0x9b
+ 2225 0187 00       		.byte	0
+ 2226 0188 08       		.uleb128 0x8
+ 2227 0189 E3040000 		.4byte	.LASF32
+ 2228 018d 06       		.byte	0x6
+ 2229 018e 20       		.byte	0x20
+ 2230 018f 9B000000 		.4byte	0x9b
+ 2231 0193 01       		.byte	0x1
+ 2232 0194 0A       		.uleb128 0xa
+ 2233 0195 636D6400 		.ascii	"cmd\000"
+ 2234 0199 06       		.byte	0x6
+ 2235 019a 21       		.byte	0x21
+ 2236 019b 9B000000 		.4byte	0x9b
+ 2237 019f 02       		.byte	0x2
+ 2238 01a0 08       		.uleb128 0x8
+ 2239 01a1 5E010000 		.4byte	.LASF33
+ 2240 01a5 06       		.byte	0x6
+ 2241 01a6 22       		.byte	0x22
+ 2242 01a7 2C000000 		.4byte	0x2c
+ 2243 01ab 03       		.byte	0x3
+ 2244 01ac 08       		.uleb128 0x8
+ 2245 01ad 1E020000 		.4byte	.LASF34
+ 2246 01b1 06       		.byte	0x6
+ 2247 01b2 23       		.byte	0x23
+ 2248 01b3 9B000000 		.4byte	0x9b
+ 2249 01b7 04       		.byte	0x4
+ 2250 01b8 08       		.uleb128 0x8
+ 2251 01b9 67040000 		.4byte	.LASF35
+ 2252 01bd 06       		.byte	0x6
+ 2253 01be 24       		.byte	0x24
+ 2254 01bf 9B000000 		.4byte	0x9b
+ 2255 01c3 05       		.byte	0x5
+ 2256 01c4 08       		.uleb128 0x8
+ 2257 01c5 9C000000 		.4byte	.LASF36
+ 2258 01c9 06       		.byte	0x6
+ 2259 01ca 25       		.byte	0x25
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 52
+
+
+ 2260 01cb 9B000000 		.4byte	0x9b
+ 2261 01cf 06       		.byte	0x6
+ 2262 01d0 08       		.uleb128 0x8
+ 2263 01d1 AA000000 		.4byte	.LASF37
+ 2264 01d5 06       		.byte	0x6
+ 2265 01d6 26       		.byte	0x26
+ 2266 01d7 CF020000 		.4byte	0x2cf
+ 2267 01db 07       		.byte	0x7
+ 2268 01dc 08       		.uleb128 0x8
+ 2269 01dd 3A020000 		.4byte	.LASF21
+ 2270 01e1 06       		.byte	0x6
+ 2271 01e2 27       		.byte	0x27
+ 2272 01e3 2C000000 		.4byte	0x2c
+ 2273 01e7 09       		.byte	0x9
+ 2274 01e8 08       		.uleb128 0x8
+ 2275 01e9 BC020000 		.4byte	.LASF38
+ 2276 01ed 06       		.byte	0x6
+ 2277 01ee 28       		.byte	0x28
+ 2278 01ef 2C000000 		.4byte	0x2c
+ 2279 01f3 0A       		.byte	0xa
+ 2280 01f4 08       		.uleb128 0x8
+ 2281 01f5 9C010000 		.4byte	.LASF39
+ 2282 01f9 06       		.byte	0x6
+ 2283 01fa 29       		.byte	0x29
+ 2284 01fb 2C000000 		.4byte	0x2c
+ 2285 01ff 0B       		.byte	0xb
+ 2286 0200 08       		.uleb128 0x8
+ 2287 0201 9F020000 		.4byte	.LASF40
+ 2288 0205 06       		.byte	0x6
+ 2289 0206 2A       		.byte	0x2a
+ 2290 0207 2C000000 		.4byte	0x2c
+ 2291 020b 0C       		.byte	0xc
+ 2292 020c 08       		.uleb128 0x8
+ 2293 020d 90000000 		.4byte	.LASF41
+ 2294 0211 06       		.byte	0x6
+ 2295 0212 2B       		.byte	0x2b
+ 2296 0213 2C000000 		.4byte	0x2c
+ 2297 0217 0D       		.byte	0xd
+ 2298 0218 08       		.uleb128 0x8
+ 2299 0219 F2040000 		.4byte	.LASF42
+ 2300 021d 06       		.byte	0x6
+ 2301 021e 2C       		.byte	0x2c
+ 2302 021f DF020000 		.4byte	0x2df
+ 2303 0223 0E       		.byte	0xe
+ 2304 0224 08       		.uleb128 0x8
+ 2305 0225 49050000 		.4byte	.LASF43
+ 2306 0229 06       		.byte	0x6
+ 2307 022a 2D       		.byte	0x2d
+ 2308 022b EF020000 		.4byte	0x2ef
+ 2309 022f 43       		.byte	0x43
+ 2310 0230 08       		.uleb128 0x8
+ 2311 0231 8A050000 		.4byte	.LASF44
+ 2312 0235 06       		.byte	0x6
+ 2313 0236 2E       		.byte	0x2e
+ 2314 0237 EF020000 		.4byte	0x2ef
+ 2315 023b 46       		.byte	0x46
+ 2316 023c 08       		.uleb128 0x8
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 53
+
+
+ 2317 023d 00050000 		.4byte	.LASF45
+ 2318 0241 06       		.byte	0x6
+ 2319 0242 2F       		.byte	0x2f
+ 2320 0243 FF020000 		.4byte	0x2ff
+ 2321 0247 49       		.byte	0x49
+ 2322 0248 08       		.uleb128 0x8
+ 2323 0249 BC050000 		.4byte	.LASF46
+ 2324 024d 06       		.byte	0x6
+ 2325 024e 30       		.byte	0x30
+ 2326 024f 2C000000 		.4byte	0x2c
+ 2327 0253 5D       		.byte	0x5d
+ 2328 0254 08       		.uleb128 0x8
+ 2329 0255 1C000000 		.4byte	.LASF47
+ 2330 0259 06       		.byte	0x6
+ 2331 025a 31       		.byte	0x31
+ 2332 025b 2C000000 		.4byte	0x2c
+ 2333 025f 5E       		.byte	0x5e
+ 2334 0260 08       		.uleb128 0x8
+ 2335 0261 40030000 		.4byte	.LASF48
+ 2336 0265 06       		.byte	0x6
+ 2337 0266 32       		.byte	0x32
+ 2338 0267 2C000000 		.4byte	0x2c
+ 2339 026b 5F       		.byte	0x5f
+ 2340 026c 08       		.uleb128 0x8
+ 2341 026d 86000000 		.4byte	.LASF49
+ 2342 0271 06       		.byte	0x6
+ 2343 0272 33       		.byte	0x33
+ 2344 0273 2C000000 		.4byte	0x2c
+ 2345 0277 60       		.byte	0x60
+ 2346 0278 08       		.uleb128 0x8
+ 2347 0279 44010000 		.4byte	.LASF50
+ 2348 027d 06       		.byte	0x6
+ 2349 027e 34       		.byte	0x34
+ 2350 027f 0F030000 		.4byte	0x30f
+ 2351 0283 61       		.byte	0x61
+ 2352 0284 08       		.uleb128 0x8
+ 2353 0285 2F000000 		.4byte	.LASF51
+ 2354 0289 06       		.byte	0x6
+ 2355 028a 35       		.byte	0x35
+ 2356 028b 2C000000 		.4byte	0x2c
+ 2357 028f E1       		.byte	0xe1
+ 2358 0290 08       		.uleb128 0x8
+ 2359 0291 3F020000 		.4byte	.LASF52
+ 2360 0295 06       		.byte	0x6
+ 2361 0296 36       		.byte	0x36
+ 2362 0297 2C000000 		.4byte	0x2c
+ 2363 029b E2       		.byte	0xe2
+ 2364 029c 08       		.uleb128 0x8
+ 2365 029d AB020000 		.4byte	.LASF53
+ 2366 02a1 06       		.byte	0x6
+ 2367 02a2 37       		.byte	0x37
+ 2368 02a3 2C000000 		.4byte	0x2c
+ 2369 02a7 E3       		.byte	0xe3
+ 2370 02a8 08       		.uleb128 0x8
+ 2371 02a9 F2020000 		.4byte	.LASF54
+ 2372 02ad 06       		.byte	0x6
+ 2373 02ae 38       		.byte	0x38
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 54
+
+
+ 2374 02af 0F030000 		.4byte	0x30f
+ 2375 02b3 E4       		.byte	0xe4
+ 2376 02b4 0B       		.uleb128 0xb
+ 2377 02b5 C8040000 		.4byte	.LASF55
+ 2378 02b9 06       		.byte	0x6
+ 2379 02ba 39       		.byte	0x39
+ 2380 02bb 1F030000 		.4byte	0x31f
+ 2381 02bf 6401     		.2byte	0x164
+ 2382 02c1 0B       		.uleb128 0xb
+ 2383 02c2 F9040000 		.4byte	.LASF56
+ 2384 02c6 06       		.byte	0x6
+ 2385 02c7 3A       		.byte	0x3a
+ 2386 02c8 FF020000 		.4byte	0x2ff
+ 2387 02cc C801     		.2byte	0x1c8
+ 2388 02ce 00       		.byte	0
+ 2389 02cf 0C       		.uleb128 0xc
+ 2390 02d0 2C000000 		.4byte	0x2c
+ 2391 02d4 DF020000 		.4byte	0x2df
+ 2392 02d8 0D       		.uleb128 0xd
+ 2393 02d9 BA000000 		.4byte	0xba
+ 2394 02dd 01       		.byte	0x1
+ 2395 02de 00       		.byte	0
+ 2396 02df 0C       		.uleb128 0xc
+ 2397 02e0 2C000000 		.4byte	0x2c
+ 2398 02e4 EF020000 		.4byte	0x2ef
+ 2399 02e8 0D       		.uleb128 0xd
+ 2400 02e9 BA000000 		.4byte	0xba
+ 2401 02ed 34       		.byte	0x34
+ 2402 02ee 00       		.byte	0
+ 2403 02ef 0C       		.uleb128 0xc
+ 2404 02f0 9B000000 		.4byte	0x9b
+ 2405 02f4 FF020000 		.4byte	0x2ff
+ 2406 02f8 0D       		.uleb128 0xd
+ 2407 02f9 BA000000 		.4byte	0xba
+ 2408 02fd 02       		.byte	0x2
+ 2409 02fe 00       		.byte	0
+ 2410 02ff 0C       		.uleb128 0xc
+ 2411 0300 2C000000 		.4byte	0x2c
+ 2412 0304 0F030000 		.4byte	0x30f
+ 2413 0308 0D       		.uleb128 0xd
+ 2414 0309 BA000000 		.4byte	0xba
+ 2415 030d 13       		.byte	0x13
+ 2416 030e 00       		.byte	0
+ 2417 030f 0C       		.uleb128 0xc
+ 2418 0310 2C000000 		.4byte	0x2c
+ 2419 0314 1F030000 		.4byte	0x31f
+ 2420 0318 0D       		.uleb128 0xd
+ 2421 0319 BA000000 		.4byte	0xba
+ 2422 031d 7F       		.byte	0x7f
+ 2423 031e 00       		.byte	0
+ 2424 031f 0C       		.uleb128 0xc
+ 2425 0320 2C000000 		.4byte	0x2c
+ 2426 0324 2F030000 		.4byte	0x32f
+ 2427 0328 0D       		.uleb128 0xd
+ 2428 0329 BA000000 		.4byte	0xba
+ 2429 032d 63       		.byte	0x63
+ 2430 032e 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 55
+
+
+ 2431 032f 03       		.uleb128 0x3
+ 2432 0330 B8010000 		.4byte	.LASF57
+ 2433 0334 06       		.byte	0x6
+ 2434 0335 3B       		.byte	0x3b
+ 2435 0336 6F010000 		.4byte	0x16f
+ 2436 033a 0E       		.uleb128 0xe
+ 2437 033b 02       		.byte	0x2
+ 2438 033c 07       		.byte	0x7
+ 2439 033d 12       		.byte	0x12
+ 2440 033e 59030000 		.4byte	0x359
+ 2441 0342 0F       		.uleb128 0xf
+ 2442 0343 6C656E00 		.ascii	"len\000"
+ 2443 0347 07       		.byte	0x7
+ 2444 0348 13       		.byte	0x13
+ 2445 0349 33000000 		.4byte	0x33
+ 2446 034d 10       		.uleb128 0x10
+ 2447 034e EB010000 		.4byte	.LASF58
+ 2448 0352 07       		.byte	0x7
+ 2449 0353 14       		.byte	0x14
+ 2450 0354 CF020000 		.4byte	0x2cf
+ 2451 0358 00       		.byte	0
+ 2452 0359 11       		.uleb128 0x11
+ 2453 035a 2A020000 		.4byte	.LASF59
+ 2454 035e 08       		.byte	0x8
+ 2455 035f 07       		.byte	0x7
+ 2456 0360 10       		.byte	0x10
+ 2457 0361 A0030000 		.4byte	0x3a0
+ 2458 0365 08       		.uleb128 0x8
+ 2459 0366 70020000 		.4byte	.LASF60
+ 2460 036a 07       		.byte	0x7
+ 2461 036b 11       		.byte	0x11
+ 2462 036c 2C000000 		.4byte	0x2c
+ 2463 0370 00       		.byte	0
+ 2464 0371 0A       		.uleb128 0xa
+ 2465 0372 7500     		.ascii	"u\000"
+ 2466 0374 07       		.byte	0x7
+ 2467 0375 15       		.byte	0x15
+ 2468 0376 3A030000 		.4byte	0x33a
+ 2469 037a 02       		.byte	0x2
+ 2470 037b 08       		.uleb128 0x8
+ 2471 037c ED040000 		.4byte	.LASF61
+ 2472 0380 07       		.byte	0x7
+ 2473 0381 16       		.byte	0x16
+ 2474 0382 2C000000 		.4byte	0x2c
+ 2475 0386 04       		.byte	0x4
+ 2476 0387 0A       		.uleb128 0xa
+ 2477 0388 73657100 		.ascii	"seq\000"
+ 2478 038c 07       		.byte	0x7
+ 2479 038d 17       		.byte	0x17
+ 2480 038e 2C000000 		.4byte	0x2c
+ 2481 0392 05       		.byte	0x5
+ 2482 0393 08       		.uleb128 0x8
+ 2483 0394 93010000 		.4byte	.LASF62
+ 2484 0398 07       		.byte	0x7
+ 2485 0399 18       		.byte	0x18
+ 2486 039a 2C000000 		.4byte	0x2c
+ 2487 039e 06       		.byte	0x6
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 56
+
+
+ 2488 039f 00       		.byte	0
+ 2489 03a0 07       		.uleb128 0x7
+ 2490 03a1 82       		.byte	0x82
+ 2491 03a2 07       		.byte	0x7
+ 2492 03a3 1B       		.byte	0x1b
+ 2493 03a4 CD030000 		.4byte	0x3cd
+ 2494 03a8 0A       		.uleb128 0xa
+ 2495 03a9 62756600 		.ascii	"buf\000"
+ 2496 03ad 07       		.byte	0x7
+ 2497 03ae 1C       		.byte	0x1c
+ 2498 03af 0F030000 		.4byte	0x30f
+ 2499 03b3 00       		.byte	0
+ 2500 03b4 0A       		.uleb128 0xa
+ 2501 03b5 6C656E00 		.ascii	"len\000"
+ 2502 03b9 07       		.byte	0x7
+ 2503 03ba 1D       		.byte	0x1d
+ 2504 03bb 2C000000 		.4byte	0x2c
+ 2505 03bf 80       		.byte	0x80
+ 2506 03c0 08       		.uleb128 0x8
+ 2507 03c1 83010000 		.4byte	.LASF63
+ 2508 03c5 07       		.byte	0x7
+ 2509 03c6 1E       		.byte	0x1e
+ 2510 03c7 2C000000 		.4byte	0x2c
+ 2511 03cb 81       		.byte	0x81
+ 2512 03cc 00       		.byte	0
+ 2513 03cd 03       		.uleb128 0x3
+ 2514 03ce 05030000 		.4byte	.LASF64
+ 2515 03d2 07       		.byte	0x7
+ 2516 03d3 1F       		.byte	0x1f
+ 2517 03d4 A0030000 		.4byte	0x3a0
+ 2518 03d8 07       		.uleb128 0x7
+ 2519 03d9 81       		.byte	0x81
+ 2520 03da 07       		.byte	0x7
+ 2521 03db 21       		.byte	0x21
+ 2522 03dc F9030000 		.4byte	0x3f9
+ 2523 03e0 0A       		.uleb128 0xa
+ 2524 03e1 62756600 		.ascii	"buf\000"
+ 2525 03e5 07       		.byte	0x7
+ 2526 03e6 22       		.byte	0x22
+ 2527 03e7 0F030000 		.4byte	0x30f
+ 2528 03eb 00       		.byte	0
+ 2529 03ec 0A       		.uleb128 0xa
+ 2530 03ed 6C656E00 		.ascii	"len\000"
+ 2531 03f1 07       		.byte	0x7
+ 2532 03f2 23       		.byte	0x23
+ 2533 03f3 2C000000 		.4byte	0x2c
+ 2534 03f7 80       		.byte	0x80
+ 2535 03f8 00       		.byte	0
+ 2536 03f9 03       		.uleb128 0x3
+ 2537 03fa 9B040000 		.4byte	.LASF65
+ 2538 03fe 07       		.byte	0x7
+ 2539 03ff 24       		.byte	0x24
+ 2540 0400 D8030000 		.4byte	0x3d8
+ 2541 0404 12       		.uleb128 0x12
+ 2542 0405 07000000 		.4byte	.LASF75
+ 2543 0409 01       		.byte	0x1
+ 2544 040a 14       		.byte	0x14
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 57
+
+
+ 2545 040b 00000000 		.4byte	.LFB63
+ 2546 040f 48000000 		.4byte	.LFE63-.LFB63
+ 2547 0413 01       		.uleb128 0x1
+ 2548 0414 9C       		.byte	0x9c
+ 2549 0415 13       		.uleb128 0x13
+ 2550 0416 BA030000 		.4byte	.LASF66
+ 2551 041a 01       		.byte	0x1
+ 2552 041b 23       		.byte	0x23
+ 2553 041c 00000000 		.4byte	.LFB64
+ 2554 0420 68000000 		.4byte	.LFE64-.LFB64
+ 2555 0424 01       		.uleb128 0x1
+ 2556 0425 9C       		.byte	0x9c
+ 2557 0426 43040000 		.4byte	0x443
+ 2558 042a 14       		.uleb128 0x14
+ 2559 042b 7000     		.ascii	"p\000"
+ 2560 042d 01       		.byte	0x1
+ 2561 042e 23       		.byte	0x23
+ 2562 042f 43040000 		.4byte	0x443
+ 2563 0433 02       		.uleb128 0x2
+ 2564 0434 91       		.byte	0x91
+ 2565 0435 6C       		.sleb128 -20
+ 2566 0436 15       		.uleb128 0x15
+ 2567 0437 6900     		.ascii	"i\000"
+ 2568 0439 01       		.byte	0x1
+ 2569 043a 25       		.byte	0x25
+ 2570 043b 68000000 		.4byte	0x68
+ 2571 043f 02       		.uleb128 0x2
+ 2572 0440 91       		.byte	0x91
+ 2573 0441 74       		.sleb128 -12
+ 2574 0442 00       		.byte	0
+ 2575 0443 16       		.uleb128 0x16
+ 2576 0444 04       		.byte	0x4
+ 2577 0445 CD030000 		.4byte	0x3cd
+ 2578 0449 17       		.uleb128 0x17
+ 2579 044a 51030000 		.4byte	.LASF111
+ 2580 044e 01       		.byte	0x1
+ 2581 044f 2F       		.byte	0x2f
+ 2582 0450 00000000 		.4byte	.LFB65
+ 2583 0454 88000000 		.4byte	.LFE65-.LFB65
+ 2584 0458 01       		.uleb128 0x1
+ 2585 0459 9C       		.byte	0x9c
+ 2586 045a 6B040000 		.4byte	0x46b
+ 2587 045e 15       		.uleb128 0x15
+ 2588 045f 6900     		.ascii	"i\000"
+ 2589 0461 01       		.byte	0x1
+ 2590 0462 31       		.byte	0x31
+ 2591 0463 68000000 		.4byte	0x68
+ 2592 0467 02       		.uleb128 0x2
+ 2593 0468 91       		.byte	0x91
+ 2594 0469 74       		.sleb128 -12
+ 2595 046a 00       		.byte	0
+ 2596 046b 13       		.uleb128 0x13
+ 2597 046c 64030000 		.4byte	.LASF67
+ 2598 0470 01       		.byte	0x1
+ 2599 0471 3D       		.byte	0x3d
+ 2600 0472 00000000 		.4byte	.LFB66
+ 2601 0476 44000000 		.4byte	.LFE66-.LFB66
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 58
+
+
+ 2602 047a 01       		.uleb128 0x1
+ 2603 047b 9C       		.byte	0x9c
+ 2604 047c 8D040000 		.4byte	0x48d
+ 2605 0480 15       		.uleb128 0x15
+ 2606 0481 6900     		.ascii	"i\000"
+ 2607 0483 01       		.byte	0x1
+ 2608 0484 3F       		.byte	0x3f
+ 2609 0485 68000000 		.4byte	0x68
+ 2610 0489 02       		.uleb128 0x2
+ 2611 048a 91       		.byte	0x91
+ 2612 048b 74       		.sleb128 -12
+ 2613 048c 00       		.byte	0
+ 2614 048d 13       		.uleb128 0x13
+ 2615 048e 5E040000 		.4byte	.LASF68
+ 2616 0492 01       		.byte	0x1
+ 2617 0493 55       		.byte	0x55
+ 2618 0494 00000000 		.4byte	.LFB67
+ 2619 0498 8C000000 		.4byte	.LFE67-.LFB67
+ 2620 049c 01       		.uleb128 0x1
+ 2621 049d 9C       		.byte	0x9c
+ 2622 049e B2040000 		.4byte	0x4b2
+ 2623 04a2 18       		.uleb128 0x18
+ 2624 04a3 61000000 		.4byte	.LASF69
+ 2625 04a7 01       		.byte	0x1
+ 2626 04a8 5F       		.byte	0x5f
+ 2627 04a9 CD030000 		.4byte	0x3cd
+ 2628 04ad 03       		.uleb128 0x3
+ 2629 04ae 91       		.byte	0x91
+ 2630 04af F47E     		.sleb128 -140
+ 2631 04b1 00       		.byte	0
+ 2632 04b2 13       		.uleb128 0x13
+ 2633 04b3 72040000 		.4byte	.LASF70
+ 2634 04b7 01       		.byte	0x1
+ 2635 04b8 94       		.byte	0x94
+ 2636 04b9 00000000 		.4byte	.LFB68
+ 2637 04bd DC020000 		.4byte	.LFE68-.LFB68
+ 2638 04c1 01       		.uleb128 0x1
+ 2639 04c2 9C       		.byte	0x9c
+ 2640 04c3 FB040000 		.4byte	0x4fb
+ 2641 04c7 18       		.uleb128 0x18
+ 2642 04c8 86030000 		.4byte	.LASF71
+ 2643 04cc 01       		.byte	0x1
+ 2644 04cd 9C       		.byte	0x9c
+ 2645 04ce 68000000 		.4byte	0x68
+ 2646 04d2 02       		.uleb128 0x2
+ 2647 04d3 91       		.byte	0x91
+ 2648 04d4 74       		.sleb128 -12
+ 2649 04d5 15       		.uleb128 0x15
+ 2650 04d6 746D7000 		.ascii	"tmp\000"
+ 2651 04da 01       		.byte	0x1
+ 2652 04db 9D       		.byte	0x9d
+ 2653 04dc 2C000000 		.4byte	0x2c
+ 2654 04e0 02       		.uleb128 0x2
+ 2655 04e1 91       		.byte	0x91
+ 2656 04e2 73       		.sleb128 -13
+ 2657 04e3 18       		.uleb128 0x18
+ 2658 04e4 10000000 		.4byte	.LASF72
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 59
+
+
+ 2659 04e8 01       		.byte	0x1
+ 2660 04e9 9E       		.byte	0x9e
+ 2661 04ea 9B000000 		.4byte	0x9b
+ 2662 04ee 02       		.uleb128 0x2
+ 2663 04ef 91       		.byte	0x91
+ 2664 04f0 72       		.sleb128 -14
+ 2665 04f1 19       		.uleb128 0x19
+ 2666 04f2 6900     		.ascii	"i\000"
+ 2667 04f4 01       		.byte	0x1
+ 2668 04f5 9F       		.byte	0x9f
+ 2669 04f6 68000000 		.4byte	0x68
+ 2670 04fa 00       		.byte	0
+ 2671 04fb 1A       		.uleb128 0x1a
+ 2672 04fc 8D040000 		.4byte	.LASF73
+ 2673 0500 01       		.byte	0x1
+ 2674 0501 1E01     		.2byte	0x11e
+ 2675 0503 00000000 		.4byte	.LFB69
+ 2676 0507 96000000 		.4byte	.LFE69-.LFB69
+ 2677 050b 01       		.uleb128 0x1
+ 2678 050c 9C       		.byte	0x9c
+ 2679 050d 21050000 		.4byte	0x521
+ 2680 0511 1B       		.uleb128 0x1b
+ 2681 0512 44050000 		.4byte	.LASF74
+ 2682 0516 01       		.byte	0x1
+ 2683 0517 1E01     		.2byte	0x11e
+ 2684 0519 9B000000 		.4byte	0x9b
+ 2685 051d 02       		.uleb128 0x2
+ 2686 051e 91       		.byte	0x91
+ 2687 051f 77       		.sleb128 -9
+ 2688 0520 00       		.byte	0
+ 2689 0521 1C       		.uleb128 0x1c
+ 2690 0522 0B020000 		.4byte	.LASF76
+ 2691 0526 01       		.byte	0x1
+ 2692 0527 4301     		.2byte	0x143
+ 2693 0529 00000000 		.4byte	.LFB70
+ 2694 052d 50000000 		.4byte	.LFE70-.LFB70
+ 2695 0531 01       		.uleb128 0x1
+ 2696 0532 9C       		.byte	0x9c
+ 2697 0533 1A       		.uleb128 0x1a
+ 2698 0534 30030000 		.4byte	.LASF77
+ 2699 0538 01       		.byte	0x1
+ 2700 0539 5201     		.2byte	0x152
+ 2701 053b 00000000 		.4byte	.LFB71
+ 2702 053f 20010000 		.4byte	.LFE71-.LFB71
+ 2703 0543 01       		.uleb128 0x1
+ 2704 0544 9C       		.byte	0x9c
+ 2705 0545 59050000 		.4byte	0x559
+ 2706 0549 1D       		.uleb128 0x1d
+ 2707 054a 75636800 		.ascii	"uch\000"
+ 2708 054e 01       		.byte	0x1
+ 2709 054f 5401     		.2byte	0x154
+ 2710 0551 2C000000 		.4byte	0x2c
+ 2711 0555 02       		.uleb128 0x2
+ 2712 0556 91       		.byte	0x91
+ 2713 0557 77       		.sleb128 -9
+ 2714 0558 00       		.byte	0
+ 2715 0559 1A       		.uleb128 0x1a
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 60
+
+
+ 2716 055a 32040000 		.4byte	.LASF78
+ 2717 055e 01       		.byte	0x1
+ 2718 055f 8F01     		.2byte	0x18f
+ 2719 0561 00000000 		.4byte	.LFB72
+ 2720 0565 68000000 		.4byte	.LFE72-.LFB72
+ 2721 0569 01       		.uleb128 0x1
+ 2722 056a 9C       		.byte	0x9c
+ 2723 056b 8A050000 		.4byte	0x58a
+ 2724 056f 1E       		.uleb128 0x1e
+ 2725 0570 7000     		.ascii	"p\000"
+ 2726 0572 01       		.byte	0x1
+ 2727 0573 8F01     		.2byte	0x18f
+ 2728 0575 8A050000 		.4byte	0x58a
+ 2729 0579 02       		.uleb128 0x2
+ 2730 057a 91       		.byte	0x91
+ 2731 057b 6C       		.sleb128 -20
+ 2732 057c 1D       		.uleb128 0x1d
+ 2733 057d 6900     		.ascii	"i\000"
+ 2734 057f 01       		.byte	0x1
+ 2735 0580 9101     		.2byte	0x191
+ 2736 0582 68000000 		.4byte	0x68
+ 2737 0586 02       		.uleb128 0x2
+ 2738 0587 91       		.byte	0x91
+ 2739 0588 74       		.sleb128 -12
+ 2740 0589 00       		.byte	0
+ 2741 058a 16       		.uleb128 0x16
+ 2742 058b 04       		.byte	0x4
+ 2743 058c F9030000 		.4byte	0x3f9
+ 2744 0590 1F       		.uleb128 0x1f
+ 2745 0591 3F000000 		.4byte	.LASF79
+ 2746 0595 01       		.byte	0x1
+ 2747 0596 9F01     		.2byte	0x19f
+ 2748 0598 00000000 		.4byte	.LFB73
+ 2749 059c 14000000 		.4byte	.LFE73-.LFB73
+ 2750 05a0 01       		.uleb128 0x1
+ 2751 05a1 9C       		.byte	0x9c
+ 2752 05a2 1A       		.uleb128 0x1a
+ 2753 05a3 48040000 		.4byte	.LASF80
+ 2754 05a7 01       		.byte	0x1
+ 2755 05a8 A801     		.2byte	0x1a8
+ 2756 05aa 00000000 		.4byte	.LFB74
+ 2757 05ae 54000000 		.4byte	.LFE74-.LFB74
+ 2758 05b2 01       		.uleb128 0x1
+ 2759 05b3 9C       		.byte	0x9c
+ 2760 05b4 C6050000 		.4byte	0x5c6
+ 2761 05b8 1D       		.uleb128 0x1d
+ 2762 05b9 6900     		.ascii	"i\000"
+ 2763 05bb 01       		.byte	0x1
+ 2764 05bc AA01     		.2byte	0x1aa
+ 2765 05be 68000000 		.4byte	0x68
+ 2766 05c2 02       		.uleb128 0x2
+ 2767 05c3 91       		.byte	0x91
+ 2768 05c4 74       		.sleb128 -12
+ 2769 05c5 00       		.byte	0
+ 2770 05c6 1C       		.uleb128 0x1c
+ 2771 05c7 54050000 		.4byte	.LASF81
+ 2772 05cb 01       		.byte	0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 61
+
+
+ 2773 05cc B501     		.2byte	0x1b5
+ 2774 05ce 00000000 		.4byte	.LFB75
+ 2775 05d2 78000000 		.4byte	.LFE75-.LFB75
+ 2776 05d6 01       		.uleb128 0x1
+ 2777 05d7 9C       		.byte	0x9c
+ 2778 05d8 1C       		.uleb128 0x1c
+ 2779 05d9 F3030000 		.4byte	.LASF82
+ 2780 05dd 01       		.byte	0x1
+ 2781 05de C901     		.2byte	0x1c9
+ 2782 05e0 00000000 		.4byte	.LFB76
+ 2783 05e4 38000000 		.4byte	.LFE76-.LFB76
+ 2784 05e8 01       		.uleb128 0x1
+ 2785 05e9 9C       		.byte	0x9c
+ 2786 05ea 1A       		.uleb128 0x1a
+ 2787 05eb CF040000 		.4byte	.LASF83
+ 2788 05ef 01       		.byte	0x1
+ 2789 05f0 DA01     		.2byte	0x1da
+ 2790 05f2 00000000 		.4byte	.LFB77
+ 2791 05f6 8A000000 		.4byte	.LFE77-.LFB77
+ 2792 05fa 01       		.uleb128 0x1
+ 2793 05fb 9C       		.byte	0x9c
+ 2794 05fc 10060000 		.4byte	0x610
+ 2795 0600 1B       		.uleb128 0x1b
+ 2796 0601 44050000 		.4byte	.LASF74
+ 2797 0605 01       		.byte	0x1
+ 2798 0606 DA01     		.2byte	0x1da
+ 2799 0608 9B000000 		.4byte	0x9b
+ 2800 060c 02       		.uleb128 0x2
+ 2801 060d 91       		.byte	0x91
+ 2802 060e 77       		.sleb128 -9
+ 2803 060f 00       		.byte	0
+ 2804 0610 1A       		.uleb128 0x1a
+ 2805 0611 12050000 		.4byte	.LASF84
+ 2806 0615 01       		.byte	0x1
+ 2807 0616 F701     		.2byte	0x1f7
+ 2808 0618 00000000 		.4byte	.LFB78
+ 2809 061c 8C000000 		.4byte	.LFE78-.LFB78
+ 2810 0620 01       		.uleb128 0x1
+ 2811 0621 9C       		.byte	0x9c
+ 2812 0622 43060000 		.4byte	0x643
+ 2813 0626 1D       		.uleb128 0x1d
+ 2814 0627 6900     		.ascii	"i\000"
+ 2815 0629 01       		.byte	0x1
+ 2816 062a F801     		.2byte	0x1f8
+ 2817 062c 68000000 		.4byte	0x68
+ 2818 0630 02       		.uleb128 0x2
+ 2819 0631 91       		.byte	0x91
+ 2820 0632 74       		.sleb128 -12
+ 2821 0633 20       		.uleb128 0x20
+ 2822 0634 29040000 		.4byte	.LASF85
+ 2823 0638 01       		.byte	0x1
+ 2824 0639 F901     		.2byte	0x1f9
+ 2825 063b 2C000000 		.4byte	0x2c
+ 2826 063f 02       		.uleb128 0x2
+ 2827 0640 91       		.byte	0x91
+ 2828 0641 73       		.sleb128 -13
+ 2829 0642 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 62
+
+
+ 2830 0643 1A       		.uleb128 0x1a
+ 2831 0644 BD040000 		.4byte	.LASF86
+ 2832 0648 01       		.byte	0x1
+ 2833 0649 1502     		.2byte	0x215
+ 2834 064b 00000000 		.4byte	.LFB79
+ 2835 064f 18010000 		.4byte	.LFE79-.LFB79
+ 2836 0653 01       		.uleb128 0x1
+ 2837 0654 9C       		.byte	0x9c
+ 2838 0655 69060000 		.4byte	0x669
+ 2839 0659 20       		.uleb128 0x20
+ 2840 065a 61000000 		.4byte	.LASF69
+ 2841 065e 01       		.byte	0x1
+ 2842 065f 1702     		.2byte	0x217
+ 2843 0661 68000000 		.4byte	0x68
+ 2844 0665 02       		.uleb128 0x2
+ 2845 0666 91       		.byte	0x91
+ 2846 0667 74       		.sleb128 -12
+ 2847 0668 00       		.byte	0
+ 2848 0669 1A       		.uleb128 0x1a
+ 2849 066a 0F040000 		.4byte	.LASF87
+ 2850 066e 01       		.byte	0x1
+ 2851 066f 6202     		.2byte	0x262
+ 2852 0671 00000000 		.4byte	.LFB80
+ 2853 0675 74000000 		.4byte	.LFE80-.LFB80
+ 2854 0679 01       		.uleb128 0x1
+ 2855 067a 9C       		.byte	0x9c
+ 2856 067b 9A060000 		.4byte	0x69a
+ 2857 067f 1E       		.uleb128 0x1e
+ 2858 0680 7000     		.ascii	"p\000"
+ 2859 0682 01       		.byte	0x1
+ 2860 0683 6202     		.2byte	0x262
+ 2861 0685 8A050000 		.4byte	0x58a
+ 2862 0689 02       		.uleb128 0x2
+ 2863 068a 91       		.byte	0x91
+ 2864 068b 6C       		.sleb128 -20
+ 2865 068c 1D       		.uleb128 0x1d
+ 2866 068d 6900     		.ascii	"i\000"
+ 2867 068f 01       		.byte	0x1
+ 2868 0690 6402     		.2byte	0x264
+ 2869 0692 68000000 		.4byte	0x68
+ 2870 0696 02       		.uleb128 0x2
+ 2871 0697 91       		.byte	0x91
+ 2872 0698 74       		.sleb128 -12
+ 2873 0699 00       		.byte	0
+ 2874 069a 21       		.uleb128 0x21
+ 2875 069b 7D050000 		.4byte	.LASF88
+ 2876 069f 08       		.byte	0x8
+ 2877 06a0 1207     		.2byte	0x712
+ 2878 06a2 A6060000 		.4byte	0x6a6
+ 2879 06a6 06       		.uleb128 0x6
+ 2880 06a7 76000000 		.4byte	0x76
+ 2881 06ab 22       		.uleb128 0x22
+ 2882 06ac AD010000 		.4byte	.LASF89
+ 2883 06b0 06       		.byte	0x6
+ 2884 06b1 3D       		.byte	0x3d
+ 2885 06b2 2F030000 		.4byte	0x32f
+ 2886 06b6 23       		.uleb128 0x23
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 63
+
+
+ 2887 06b7 7300     		.ascii	"s\000"
+ 2888 06b9 06       		.byte	0x6
+ 2889 06ba 3E       		.byte	0x3e
+ 2890 06bb 64010000 		.4byte	0x164
+ 2891 06bf 05       		.uleb128 0x5
+ 2892 06c0 03       		.byte	0x3
+ 2893 06c1 00000000 		.4byte	s
+ 2894 06c5 22       		.uleb128 0x22
+ 2895 06c6 63050000 		.4byte	.LASF90
+ 2896 06ca 06       		.byte	0x6
+ 2897 06cb 3F       		.byte	0x3f
+ 2898 06cc 2C000000 		.4byte	0x2c
+ 2899 06d0 24       		.uleb128 0x24
+ 2900 06d1 7B040000 		.4byte	.LASF91
+ 2901 06d5 06       		.byte	0x6
+ 2902 06d6 47       		.byte	0x47
+ 2903 06d7 9B000000 		.4byte	0x9b
+ 2904 06db 05       		.uleb128 0x5
+ 2905 06dc 03       		.byte	0x3
+ 2906 06dd 00000000 		.4byte	currentAccessType
+ 2907 06e1 24       		.uleb128 0x24
+ 2908 06e2 57020000 		.4byte	.LASF92
+ 2909 06e6 06       		.byte	0x6
+ 2910 06e7 48       		.byte	0x48
+ 2911 06e8 9B000000 		.4byte	0x9b
+ 2912 06ec 05       		.uleb128 0x5
+ 2913 06ed 03       		.byte	0x3
+ 2914 06ee 00000000 		.4byte	hw_old
+ 2915 06f2 24       		.uleb128 0x24
+ 2916 06f3 F2010000 		.4byte	.LASF93
+ 2917 06f7 06       		.byte	0x6
+ 2918 06f8 49       		.byte	0x49
+ 2919 06f9 9B000000 		.4byte	0x9b
+ 2920 06fd 05       		.uleb128 0x5
+ 2921 06fe 03       		.byte	0x3
+ 2922 06ff 00000000 		.4byte	tp_old
+ 2923 0703 24       		.uleb128 0x24
+ 2924 0704 74030000 		.4byte	.LASF94
+ 2925 0708 06       		.byte	0x6
+ 2926 0709 4A       		.byte	0x4a
+ 2927 070a 68000000 		.4byte	0x68
+ 2928 070e 05       		.uleb128 0x5
+ 2929 070f 03       		.byte	0x3
+ 2930 0710 00000000 		.4byte	tamperCR_polarity
+ 2931 0714 24       		.uleb128 0x24
+ 2932 0715 D2050000 		.4byte	.LASF95
+ 2933 0719 06       		.byte	0x6
+ 2934 071a 4B       		.byte	0x4b
+ 2935 071b 68000000 		.4byte	0x68
+ 2936 071f 05       		.uleb128 0x5
+ 2937 0720 03       		.byte	0x3
+ 2938 0721 00000000 		.4byte	tamper_out_polarity
+ 2939 0725 24       		.uleb128 0x24
+ 2940 0726 5E020000 		.4byte	.LASF96
+ 2941 072a 06       		.byte	0x6
+ 2942 072b 4E       		.byte	0x4e
+ 2943 072c 68000000 		.4byte	0x68
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 64
+
+
+ 2944 0730 05       		.uleb128 0x5
+ 2945 0731 03       		.byte	0x3
+ 2946 0732 00000000 		.4byte	card_ack
+ 2947 0736 24       		.uleb128 0x24
+ 2948 0737 FF010000 		.4byte	.LASF97
+ 2949 073b 06       		.byte	0x6
+ 2950 073c 4F       		.byte	0x4f
+ 2951 073d 68000000 		.4byte	0x68
+ 2952 0741 05       		.uleb128 0x5
+ 2953 0742 03       		.byte	0x3
+ 2954 0743 00000000 		.4byte	card_in_buf
+ 2955 0747 24       		.uleb128 0x24
+ 2956 0748 AD030000 		.4byte	.LASF98
+ 2957 074c 07       		.byte	0x7
+ 2958 074d 38       		.byte	0x38
+ 2959 074e 68000000 		.4byte	0x68
+ 2960 0752 05       		.uleb128 0x5
+ 2961 0753 03       		.byte	0x3
+ 2962 0754 00000000 		.4byte	osdp_timeout
+ 2963 0758 25       		.uleb128 0x25
+ 2964 0759 AD050000 		.4byte	.LASF99
+ 2965 075d 01       		.byte	0x1
+ 2966 075e 3E01     		.2byte	0x13e
+ 2967 0760 2C000000 		.4byte	0x2c
+ 2968 0764 05       		.uleb128 0x5
+ 2969 0765 03       		.byte	0x3
+ 2970 0766 00000000 		.4byte	OSDPReaderTask
+ 2971 076a 24       		.uleb128 0x24
+ 2972 076b 8B020000 		.4byte	.LASF100
+ 2973 076f 01       		.byte	0x1
+ 2974 0770 10       		.byte	0x10
+ 2975 0771 CD030000 		.4byte	0x3cd
+ 2976 0775 05       		.uleb128 0x5
+ 2977 0776 03       		.byte	0x3
+ 2978 0777 00000000 		.4byte	panelReadBuf
+ 2979 077b 24       		.uleb128 0x24
+ 2980 077c 02040000 		.4byte	.LASF101
+ 2981 0780 01       		.byte	0x1
+ 2982 0781 10       		.byte	0x10
+ 2983 0782 CD030000 		.4byte	0x3cd
+ 2984 0786 05       		.uleb128 0x5
+ 2985 0787 03       		.byte	0x3
+ 2986 0788 00000000 		.4byte	panelSendBuf
+ 2987 078c 24       		.uleb128 0x24
+ 2988 078d A5040000 		.4byte	.LASF102
+ 2989 0791 01       		.byte	0x1
+ 2990 0792 12       		.byte	0x12
+ 2991 0793 59030000 		.4byte	0x359
+ 2992 0797 05       		.uleb128 0x5
+ 2993 0798 03       		.byte	0x3
+ 2994 0799 00000000 		.4byte	osdp_msg_header
+ 2995 079d 24       		.uleb128 0x24
+ 2996 079e 66000000 		.4byte	.LASF103
+ 2997 07a2 01       		.byte	0x1
+ 2998 07a3 12       		.byte	0x12
+ 2999 07a4 59030000 		.4byte	0x359
+ 3000 07a8 05       		.uleb128 0x5
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 65
+
+
+ 3001 07a9 03       		.byte	0x3
+ 3002 07aa 00000000 		.4byte	osdp_reader_msg_header
+ 3003 07ae 25       		.uleb128 0x25
+ 3004 07af C1010000 		.4byte	.LASF104
+ 3005 07b3 01       		.byte	0x1
+ 3006 07b4 3D01     		.2byte	0x13d
+ 3007 07b6 F9030000 		.4byte	0x3f9
+ 3008 07ba 05       		.uleb128 0x5
+ 3009 07bb 03       		.byte	0x3
+ 3010 07bc 00000000 		.4byte	readerSendBuffer
+ 3011 07c0 25       		.uleb128 0x25
+ 3012 07c1 6C050000 		.4byte	.LASF105
+ 3013 07c5 01       		.byte	0x1
+ 3014 07c6 3D01     		.2byte	0x13d
+ 3015 07c8 F9030000 		.4byte	0x3f9
+ 3016 07cc 05       		.uleb128 0x5
+ 3017 07cd 03       		.byte	0x3
+ 3018 07ce 00000000 		.4byte	readerReadBuffer
+ 3019 07d2 25       		.uleb128 0x25
+ 3020 07d3 95050000 		.4byte	.LASF106
+ 3021 07d7 01       		.byte	0x1
+ 3022 07d8 3F01     		.2byte	0x13f
+ 3023 07da 2C000000 		.4byte	0x2c
+ 3024 07de 05       		.uleb128 0x5
+ 3025 07df 03       		.byte	0x3
+ 3026 07e0 00000000 		.4byte	osdp_reader_msg_started
+ 3027 07e4 25       		.uleb128 0x25
+ 3028 07e5 63010000 		.4byte	.LASF107
+ 3029 07e9 01       		.byte	0x1
+ 3030 07ea 4001     		.2byte	0x140
+ 3031 07ec 2C000000 		.4byte	0x2c
+ 3032 07f0 05       		.uleb128 0x5
+ 3033 07f1 03       		.byte	0x3
+ 3034 07f2 00000000 		.4byte	osdp_reader_msg_ready
+ 3035 07f6 26       		.uleb128 0x26
+ 3036 07f7 6F726900 		.ascii	"ori\000"
+ 3037 07fb 01       		.byte	0x1
+ 3038 07fc 4101     		.2byte	0x141
+ 3039 07fe 68000000 		.4byte	0x68
+ 3040 0802 05       		.uleb128 0x5
+ 3041 0803 03       		.byte	0x3
+ 3042 0804 00000000 		.4byte	ori
+ 3043 0808 00       		.byte	0
+ 3044              		.section	.debug_abbrev,"",%progbits
+ 3045              	.Ldebug_abbrev0:
+ 3046 0000 01       		.uleb128 0x1
+ 3047 0001 11       		.uleb128 0x11
+ 3048 0002 01       		.byte	0x1
+ 3049 0003 25       		.uleb128 0x25
+ 3050 0004 0E       		.uleb128 0xe
+ 3051 0005 13       		.uleb128 0x13
+ 3052 0006 0B       		.uleb128 0xb
+ 3053 0007 03       		.uleb128 0x3
+ 3054 0008 0E       		.uleb128 0xe
+ 3055 0009 1B       		.uleb128 0x1b
+ 3056 000a 0E       		.uleb128 0xe
+ 3057 000b 55       		.uleb128 0x55
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 66
+
+
+ 3058 000c 17       		.uleb128 0x17
+ 3059 000d 11       		.uleb128 0x11
+ 3060 000e 01       		.uleb128 0x1
+ 3061 000f 10       		.uleb128 0x10
+ 3062 0010 17       		.uleb128 0x17
+ 3063 0011 00       		.byte	0
+ 3064 0012 00       		.byte	0
+ 3065 0013 02       		.uleb128 0x2
+ 3066 0014 24       		.uleb128 0x24
+ 3067 0015 00       		.byte	0
+ 3068 0016 0B       		.uleb128 0xb
+ 3069 0017 0B       		.uleb128 0xb
+ 3070 0018 3E       		.uleb128 0x3e
+ 3071 0019 0B       		.uleb128 0xb
+ 3072 001a 03       		.uleb128 0x3
+ 3073 001b 0E       		.uleb128 0xe
+ 3074 001c 00       		.byte	0
+ 3075 001d 00       		.byte	0
+ 3076 001e 03       		.uleb128 0x3
+ 3077 001f 16       		.uleb128 0x16
+ 3078 0020 00       		.byte	0
+ 3079 0021 03       		.uleb128 0x3
+ 3080 0022 0E       		.uleb128 0xe
+ 3081 0023 3A       		.uleb128 0x3a
+ 3082 0024 0B       		.uleb128 0xb
+ 3083 0025 3B       		.uleb128 0x3b
+ 3084 0026 0B       		.uleb128 0xb
+ 3085 0027 49       		.uleb128 0x49
+ 3086 0028 13       		.uleb128 0x13
+ 3087 0029 00       		.byte	0
+ 3088 002a 00       		.byte	0
+ 3089 002b 04       		.uleb128 0x4
+ 3090 002c 24       		.uleb128 0x24
+ 3091 002d 00       		.byte	0
+ 3092 002e 0B       		.uleb128 0xb
+ 3093 002f 0B       		.uleb128 0xb
+ 3094 0030 3E       		.uleb128 0x3e
+ 3095 0031 0B       		.uleb128 0xb
+ 3096 0032 03       		.uleb128 0x3
+ 3097 0033 08       		.uleb128 0x8
+ 3098 0034 00       		.byte	0
+ 3099 0035 00       		.byte	0
+ 3100 0036 05       		.uleb128 0x5
+ 3101 0037 16       		.uleb128 0x16
+ 3102 0038 00       		.byte	0
+ 3103 0039 03       		.uleb128 0x3
+ 3104 003a 0E       		.uleb128 0xe
+ 3105 003b 3A       		.uleb128 0x3a
+ 3106 003c 0B       		.uleb128 0xb
+ 3107 003d 3B       		.uleb128 0x3b
+ 3108 003e 05       		.uleb128 0x5
+ 3109 003f 49       		.uleb128 0x49
+ 3110 0040 13       		.uleb128 0x13
+ 3111 0041 00       		.byte	0
+ 3112 0042 00       		.byte	0
+ 3113 0043 06       		.uleb128 0x6
+ 3114 0044 35       		.uleb128 0x35
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 67
+
+
+ 3115 0045 00       		.byte	0
+ 3116 0046 49       		.uleb128 0x49
+ 3117 0047 13       		.uleb128 0x13
+ 3118 0048 00       		.byte	0
+ 3119 0049 00       		.byte	0
+ 3120 004a 07       		.uleb128 0x7
+ 3121 004b 13       		.uleb128 0x13
+ 3122 004c 01       		.byte	0x1
+ 3123 004d 0B       		.uleb128 0xb
+ 3124 004e 0B       		.uleb128 0xb
+ 3125 004f 3A       		.uleb128 0x3a
+ 3126 0050 0B       		.uleb128 0xb
+ 3127 0051 3B       		.uleb128 0x3b
+ 3128 0052 0B       		.uleb128 0xb
+ 3129 0053 01       		.uleb128 0x1
+ 3130 0054 13       		.uleb128 0x13
+ 3131 0055 00       		.byte	0
+ 3132 0056 00       		.byte	0
+ 3133 0057 08       		.uleb128 0x8
+ 3134 0058 0D       		.uleb128 0xd
+ 3135 0059 00       		.byte	0
+ 3136 005a 03       		.uleb128 0x3
+ 3137 005b 0E       		.uleb128 0xe
+ 3138 005c 3A       		.uleb128 0x3a
+ 3139 005d 0B       		.uleb128 0xb
+ 3140 005e 3B       		.uleb128 0x3b
+ 3141 005f 0B       		.uleb128 0xb
+ 3142 0060 49       		.uleb128 0x49
+ 3143 0061 13       		.uleb128 0x13
+ 3144 0062 38       		.uleb128 0x38
+ 3145 0063 0B       		.uleb128 0xb
+ 3146 0064 00       		.byte	0
+ 3147 0065 00       		.byte	0
+ 3148 0066 09       		.uleb128 0x9
+ 3149 0067 13       		.uleb128 0x13
+ 3150 0068 01       		.byte	0x1
+ 3151 0069 03       		.uleb128 0x3
+ 3152 006a 0E       		.uleb128 0xe
+ 3153 006b 0B       		.uleb128 0xb
+ 3154 006c 05       		.uleb128 0x5
+ 3155 006d 3A       		.uleb128 0x3a
+ 3156 006e 0B       		.uleb128 0xb
+ 3157 006f 3B       		.uleb128 0x3b
+ 3158 0070 0B       		.uleb128 0xb
+ 3159 0071 01       		.uleb128 0x1
+ 3160 0072 13       		.uleb128 0x13
+ 3161 0073 00       		.byte	0
+ 3162 0074 00       		.byte	0
+ 3163 0075 0A       		.uleb128 0xa
+ 3164 0076 0D       		.uleb128 0xd
+ 3165 0077 00       		.byte	0
+ 3166 0078 03       		.uleb128 0x3
+ 3167 0079 08       		.uleb128 0x8
+ 3168 007a 3A       		.uleb128 0x3a
+ 3169 007b 0B       		.uleb128 0xb
+ 3170 007c 3B       		.uleb128 0x3b
+ 3171 007d 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 68
+
+
+ 3172 007e 49       		.uleb128 0x49
+ 3173 007f 13       		.uleb128 0x13
+ 3174 0080 38       		.uleb128 0x38
+ 3175 0081 0B       		.uleb128 0xb
+ 3176 0082 00       		.byte	0
+ 3177 0083 00       		.byte	0
+ 3178 0084 0B       		.uleb128 0xb
+ 3179 0085 0D       		.uleb128 0xd
+ 3180 0086 00       		.byte	0
+ 3181 0087 03       		.uleb128 0x3
+ 3182 0088 0E       		.uleb128 0xe
+ 3183 0089 3A       		.uleb128 0x3a
+ 3184 008a 0B       		.uleb128 0xb
+ 3185 008b 3B       		.uleb128 0x3b
+ 3186 008c 0B       		.uleb128 0xb
+ 3187 008d 49       		.uleb128 0x49
+ 3188 008e 13       		.uleb128 0x13
+ 3189 008f 38       		.uleb128 0x38
+ 3190 0090 05       		.uleb128 0x5
+ 3191 0091 00       		.byte	0
+ 3192 0092 00       		.byte	0
+ 3193 0093 0C       		.uleb128 0xc
+ 3194 0094 01       		.uleb128 0x1
+ 3195 0095 01       		.byte	0x1
+ 3196 0096 49       		.uleb128 0x49
+ 3197 0097 13       		.uleb128 0x13
+ 3198 0098 01       		.uleb128 0x1
+ 3199 0099 13       		.uleb128 0x13
+ 3200 009a 00       		.byte	0
+ 3201 009b 00       		.byte	0
+ 3202 009c 0D       		.uleb128 0xd
+ 3203 009d 21       		.uleb128 0x21
+ 3204 009e 00       		.byte	0
+ 3205 009f 49       		.uleb128 0x49
+ 3206 00a0 13       		.uleb128 0x13
+ 3207 00a1 2F       		.uleb128 0x2f
+ 3208 00a2 0B       		.uleb128 0xb
+ 3209 00a3 00       		.byte	0
+ 3210 00a4 00       		.byte	0
+ 3211 00a5 0E       		.uleb128 0xe
+ 3212 00a6 17       		.uleb128 0x17
+ 3213 00a7 01       		.byte	0x1
+ 3214 00a8 0B       		.uleb128 0xb
+ 3215 00a9 0B       		.uleb128 0xb
+ 3216 00aa 3A       		.uleb128 0x3a
+ 3217 00ab 0B       		.uleb128 0xb
+ 3218 00ac 3B       		.uleb128 0x3b
+ 3219 00ad 0B       		.uleb128 0xb
+ 3220 00ae 01       		.uleb128 0x1
+ 3221 00af 13       		.uleb128 0x13
+ 3222 00b0 00       		.byte	0
+ 3223 00b1 00       		.byte	0
+ 3224 00b2 0F       		.uleb128 0xf
+ 3225 00b3 0D       		.uleb128 0xd
+ 3226 00b4 00       		.byte	0
+ 3227 00b5 03       		.uleb128 0x3
+ 3228 00b6 08       		.uleb128 0x8
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 69
+
+
+ 3229 00b7 3A       		.uleb128 0x3a
+ 3230 00b8 0B       		.uleb128 0xb
+ 3231 00b9 3B       		.uleb128 0x3b
+ 3232 00ba 0B       		.uleb128 0xb
+ 3233 00bb 49       		.uleb128 0x49
+ 3234 00bc 13       		.uleb128 0x13
+ 3235 00bd 00       		.byte	0
+ 3236 00be 00       		.byte	0
+ 3237 00bf 10       		.uleb128 0x10
+ 3238 00c0 0D       		.uleb128 0xd
+ 3239 00c1 00       		.byte	0
+ 3240 00c2 03       		.uleb128 0x3
+ 3241 00c3 0E       		.uleb128 0xe
+ 3242 00c4 3A       		.uleb128 0x3a
+ 3243 00c5 0B       		.uleb128 0xb
+ 3244 00c6 3B       		.uleb128 0x3b
+ 3245 00c7 0B       		.uleb128 0xb
+ 3246 00c8 49       		.uleb128 0x49
+ 3247 00c9 13       		.uleb128 0x13
+ 3248 00ca 00       		.byte	0
+ 3249 00cb 00       		.byte	0
+ 3250 00cc 11       		.uleb128 0x11
+ 3251 00cd 13       		.uleb128 0x13
+ 3252 00ce 01       		.byte	0x1
+ 3253 00cf 03       		.uleb128 0x3
+ 3254 00d0 0E       		.uleb128 0xe
+ 3255 00d1 0B       		.uleb128 0xb
+ 3256 00d2 0B       		.uleb128 0xb
+ 3257 00d3 3A       		.uleb128 0x3a
+ 3258 00d4 0B       		.uleb128 0xb
+ 3259 00d5 3B       		.uleb128 0x3b
+ 3260 00d6 0B       		.uleb128 0xb
+ 3261 00d7 01       		.uleb128 0x1
+ 3262 00d8 13       		.uleb128 0x13
+ 3263 00d9 00       		.byte	0
+ 3264 00da 00       		.byte	0
+ 3265 00db 12       		.uleb128 0x12
+ 3266 00dc 2E       		.uleb128 0x2e
+ 3267 00dd 00       		.byte	0
+ 3268 00de 3F       		.uleb128 0x3f
+ 3269 00df 19       		.uleb128 0x19
+ 3270 00e0 03       		.uleb128 0x3
+ 3271 00e1 0E       		.uleb128 0xe
+ 3272 00e2 3A       		.uleb128 0x3a
+ 3273 00e3 0B       		.uleb128 0xb
+ 3274 00e4 3B       		.uleb128 0x3b
+ 3275 00e5 0B       		.uleb128 0xb
+ 3276 00e6 27       		.uleb128 0x27
+ 3277 00e7 19       		.uleb128 0x19
+ 3278 00e8 11       		.uleb128 0x11
+ 3279 00e9 01       		.uleb128 0x1
+ 3280 00ea 12       		.uleb128 0x12
+ 3281 00eb 06       		.uleb128 0x6
+ 3282 00ec 40       		.uleb128 0x40
+ 3283 00ed 18       		.uleb128 0x18
+ 3284 00ee 9642     		.uleb128 0x2116
+ 3285 00f0 19       		.uleb128 0x19
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 70
+
+
+ 3286 00f1 00       		.byte	0
+ 3287 00f2 00       		.byte	0
+ 3288 00f3 13       		.uleb128 0x13
+ 3289 00f4 2E       		.uleb128 0x2e
+ 3290 00f5 01       		.byte	0x1
+ 3291 00f6 3F       		.uleb128 0x3f
+ 3292 00f7 19       		.uleb128 0x19
+ 3293 00f8 03       		.uleb128 0x3
+ 3294 00f9 0E       		.uleb128 0xe
+ 3295 00fa 3A       		.uleb128 0x3a
+ 3296 00fb 0B       		.uleb128 0xb
+ 3297 00fc 3B       		.uleb128 0x3b
+ 3298 00fd 0B       		.uleb128 0xb
+ 3299 00fe 27       		.uleb128 0x27
+ 3300 00ff 19       		.uleb128 0x19
+ 3301 0100 11       		.uleb128 0x11
+ 3302 0101 01       		.uleb128 0x1
+ 3303 0102 12       		.uleb128 0x12
+ 3304 0103 06       		.uleb128 0x6
+ 3305 0104 40       		.uleb128 0x40
+ 3306 0105 18       		.uleb128 0x18
+ 3307 0106 9642     		.uleb128 0x2116
+ 3308 0108 19       		.uleb128 0x19
+ 3309 0109 01       		.uleb128 0x1
+ 3310 010a 13       		.uleb128 0x13
+ 3311 010b 00       		.byte	0
+ 3312 010c 00       		.byte	0
+ 3313 010d 14       		.uleb128 0x14
+ 3314 010e 05       		.uleb128 0x5
+ 3315 010f 00       		.byte	0
+ 3316 0110 03       		.uleb128 0x3
+ 3317 0111 08       		.uleb128 0x8
+ 3318 0112 3A       		.uleb128 0x3a
+ 3319 0113 0B       		.uleb128 0xb
+ 3320 0114 3B       		.uleb128 0x3b
+ 3321 0115 0B       		.uleb128 0xb
+ 3322 0116 49       		.uleb128 0x49
+ 3323 0117 13       		.uleb128 0x13
+ 3324 0118 02       		.uleb128 0x2
+ 3325 0119 18       		.uleb128 0x18
+ 3326 011a 00       		.byte	0
+ 3327 011b 00       		.byte	0
+ 3328 011c 15       		.uleb128 0x15
+ 3329 011d 34       		.uleb128 0x34
+ 3330 011e 00       		.byte	0
+ 3331 011f 03       		.uleb128 0x3
+ 3332 0120 08       		.uleb128 0x8
+ 3333 0121 3A       		.uleb128 0x3a
+ 3334 0122 0B       		.uleb128 0xb
+ 3335 0123 3B       		.uleb128 0x3b
+ 3336 0124 0B       		.uleb128 0xb
+ 3337 0125 49       		.uleb128 0x49
+ 3338 0126 13       		.uleb128 0x13
+ 3339 0127 02       		.uleb128 0x2
+ 3340 0128 18       		.uleb128 0x18
+ 3341 0129 00       		.byte	0
+ 3342 012a 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 71
+
+
+ 3343 012b 16       		.uleb128 0x16
+ 3344 012c 0F       		.uleb128 0xf
+ 3345 012d 00       		.byte	0
+ 3346 012e 0B       		.uleb128 0xb
+ 3347 012f 0B       		.uleb128 0xb
+ 3348 0130 49       		.uleb128 0x49
+ 3349 0131 13       		.uleb128 0x13
+ 3350 0132 00       		.byte	0
+ 3351 0133 00       		.byte	0
+ 3352 0134 17       		.uleb128 0x17
+ 3353 0135 2E       		.uleb128 0x2e
+ 3354 0136 01       		.byte	0x1
+ 3355 0137 3F       		.uleb128 0x3f
+ 3356 0138 19       		.uleb128 0x19
+ 3357 0139 03       		.uleb128 0x3
+ 3358 013a 0E       		.uleb128 0xe
+ 3359 013b 3A       		.uleb128 0x3a
+ 3360 013c 0B       		.uleb128 0xb
+ 3361 013d 3B       		.uleb128 0x3b
+ 3362 013e 0B       		.uleb128 0xb
+ 3363 013f 11       		.uleb128 0x11
+ 3364 0140 01       		.uleb128 0x1
+ 3365 0141 12       		.uleb128 0x12
+ 3366 0142 06       		.uleb128 0x6
+ 3367 0143 40       		.uleb128 0x40
+ 3368 0144 18       		.uleb128 0x18
+ 3369 0145 9642     		.uleb128 0x2116
+ 3370 0147 19       		.uleb128 0x19
+ 3371 0148 01       		.uleb128 0x1
+ 3372 0149 13       		.uleb128 0x13
+ 3373 014a 00       		.byte	0
+ 3374 014b 00       		.byte	0
+ 3375 014c 18       		.uleb128 0x18
+ 3376 014d 34       		.uleb128 0x34
+ 3377 014e 00       		.byte	0
+ 3378 014f 03       		.uleb128 0x3
+ 3379 0150 0E       		.uleb128 0xe
+ 3380 0151 3A       		.uleb128 0x3a
+ 3381 0152 0B       		.uleb128 0xb
+ 3382 0153 3B       		.uleb128 0x3b
+ 3383 0154 0B       		.uleb128 0xb
+ 3384 0155 49       		.uleb128 0x49
+ 3385 0156 13       		.uleb128 0x13
+ 3386 0157 02       		.uleb128 0x2
+ 3387 0158 18       		.uleb128 0x18
+ 3388 0159 00       		.byte	0
+ 3389 015a 00       		.byte	0
+ 3390 015b 19       		.uleb128 0x19
+ 3391 015c 34       		.uleb128 0x34
+ 3392 015d 00       		.byte	0
+ 3393 015e 03       		.uleb128 0x3
+ 3394 015f 08       		.uleb128 0x8
+ 3395 0160 3A       		.uleb128 0x3a
+ 3396 0161 0B       		.uleb128 0xb
+ 3397 0162 3B       		.uleb128 0x3b
+ 3398 0163 0B       		.uleb128 0xb
+ 3399 0164 49       		.uleb128 0x49
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 72
+
+
+ 3400 0165 13       		.uleb128 0x13
+ 3401 0166 00       		.byte	0
+ 3402 0167 00       		.byte	0
+ 3403 0168 1A       		.uleb128 0x1a
+ 3404 0169 2E       		.uleb128 0x2e
+ 3405 016a 01       		.byte	0x1
+ 3406 016b 3F       		.uleb128 0x3f
+ 3407 016c 19       		.uleb128 0x19
+ 3408 016d 03       		.uleb128 0x3
+ 3409 016e 0E       		.uleb128 0xe
+ 3410 016f 3A       		.uleb128 0x3a
+ 3411 0170 0B       		.uleb128 0xb
+ 3412 0171 3B       		.uleb128 0x3b
+ 3413 0172 05       		.uleb128 0x5
+ 3414 0173 27       		.uleb128 0x27
+ 3415 0174 19       		.uleb128 0x19
+ 3416 0175 11       		.uleb128 0x11
+ 3417 0176 01       		.uleb128 0x1
+ 3418 0177 12       		.uleb128 0x12
+ 3419 0178 06       		.uleb128 0x6
+ 3420 0179 40       		.uleb128 0x40
+ 3421 017a 18       		.uleb128 0x18
+ 3422 017b 9642     		.uleb128 0x2116
+ 3423 017d 19       		.uleb128 0x19
+ 3424 017e 01       		.uleb128 0x1
+ 3425 017f 13       		.uleb128 0x13
+ 3426 0180 00       		.byte	0
+ 3427 0181 00       		.byte	0
+ 3428 0182 1B       		.uleb128 0x1b
+ 3429 0183 05       		.uleb128 0x5
+ 3430 0184 00       		.byte	0
+ 3431 0185 03       		.uleb128 0x3
+ 3432 0186 0E       		.uleb128 0xe
+ 3433 0187 3A       		.uleb128 0x3a
+ 3434 0188 0B       		.uleb128 0xb
+ 3435 0189 3B       		.uleb128 0x3b
+ 3436 018a 05       		.uleb128 0x5
+ 3437 018b 49       		.uleb128 0x49
+ 3438 018c 13       		.uleb128 0x13
+ 3439 018d 02       		.uleb128 0x2
+ 3440 018e 18       		.uleb128 0x18
+ 3441 018f 00       		.byte	0
+ 3442 0190 00       		.byte	0
+ 3443 0191 1C       		.uleb128 0x1c
+ 3444 0192 2E       		.uleb128 0x2e
+ 3445 0193 00       		.byte	0
+ 3446 0194 3F       		.uleb128 0x3f
+ 3447 0195 19       		.uleb128 0x19
+ 3448 0196 03       		.uleb128 0x3
+ 3449 0197 0E       		.uleb128 0xe
+ 3450 0198 3A       		.uleb128 0x3a
+ 3451 0199 0B       		.uleb128 0xb
+ 3452 019a 3B       		.uleb128 0x3b
+ 3453 019b 05       		.uleb128 0x5
+ 3454 019c 27       		.uleb128 0x27
+ 3455 019d 19       		.uleb128 0x19
+ 3456 019e 11       		.uleb128 0x11
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 73
+
+
+ 3457 019f 01       		.uleb128 0x1
+ 3458 01a0 12       		.uleb128 0x12
+ 3459 01a1 06       		.uleb128 0x6
+ 3460 01a2 40       		.uleb128 0x40
+ 3461 01a3 18       		.uleb128 0x18
+ 3462 01a4 9642     		.uleb128 0x2116
+ 3463 01a6 19       		.uleb128 0x19
+ 3464 01a7 00       		.byte	0
+ 3465 01a8 00       		.byte	0
+ 3466 01a9 1D       		.uleb128 0x1d
+ 3467 01aa 34       		.uleb128 0x34
+ 3468 01ab 00       		.byte	0
+ 3469 01ac 03       		.uleb128 0x3
+ 3470 01ad 08       		.uleb128 0x8
+ 3471 01ae 3A       		.uleb128 0x3a
+ 3472 01af 0B       		.uleb128 0xb
+ 3473 01b0 3B       		.uleb128 0x3b
+ 3474 01b1 05       		.uleb128 0x5
+ 3475 01b2 49       		.uleb128 0x49
+ 3476 01b3 13       		.uleb128 0x13
+ 3477 01b4 02       		.uleb128 0x2
+ 3478 01b5 18       		.uleb128 0x18
+ 3479 01b6 00       		.byte	0
+ 3480 01b7 00       		.byte	0
+ 3481 01b8 1E       		.uleb128 0x1e
+ 3482 01b9 05       		.uleb128 0x5
+ 3483 01ba 00       		.byte	0
+ 3484 01bb 03       		.uleb128 0x3
+ 3485 01bc 08       		.uleb128 0x8
+ 3486 01bd 3A       		.uleb128 0x3a
+ 3487 01be 0B       		.uleb128 0xb
+ 3488 01bf 3B       		.uleb128 0x3b
+ 3489 01c0 05       		.uleb128 0x5
+ 3490 01c1 49       		.uleb128 0x49
+ 3491 01c2 13       		.uleb128 0x13
+ 3492 01c3 02       		.uleb128 0x2
+ 3493 01c4 18       		.uleb128 0x18
+ 3494 01c5 00       		.byte	0
+ 3495 01c6 00       		.byte	0
+ 3496 01c7 1F       		.uleb128 0x1f
+ 3497 01c8 2E       		.uleb128 0x2e
+ 3498 01c9 00       		.byte	0
+ 3499 01ca 3F       		.uleb128 0x3f
+ 3500 01cb 19       		.uleb128 0x19
+ 3501 01cc 03       		.uleb128 0x3
+ 3502 01cd 0E       		.uleb128 0xe
+ 3503 01ce 3A       		.uleb128 0x3a
+ 3504 01cf 0B       		.uleb128 0xb
+ 3505 01d0 3B       		.uleb128 0x3b
+ 3506 01d1 05       		.uleb128 0x5
+ 3507 01d2 27       		.uleb128 0x27
+ 3508 01d3 19       		.uleb128 0x19
+ 3509 01d4 11       		.uleb128 0x11
+ 3510 01d5 01       		.uleb128 0x1
+ 3511 01d6 12       		.uleb128 0x12
+ 3512 01d7 06       		.uleb128 0x6
+ 3513 01d8 40       		.uleb128 0x40
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 74
+
+
+ 3514 01d9 18       		.uleb128 0x18
+ 3515 01da 9742     		.uleb128 0x2117
+ 3516 01dc 19       		.uleb128 0x19
+ 3517 01dd 00       		.byte	0
+ 3518 01de 00       		.byte	0
+ 3519 01df 20       		.uleb128 0x20
+ 3520 01e0 34       		.uleb128 0x34
+ 3521 01e1 00       		.byte	0
+ 3522 01e2 03       		.uleb128 0x3
+ 3523 01e3 0E       		.uleb128 0xe
+ 3524 01e4 3A       		.uleb128 0x3a
+ 3525 01e5 0B       		.uleb128 0xb
+ 3526 01e6 3B       		.uleb128 0x3b
+ 3527 01e7 05       		.uleb128 0x5
+ 3528 01e8 49       		.uleb128 0x49
+ 3529 01e9 13       		.uleb128 0x13
+ 3530 01ea 02       		.uleb128 0x2
+ 3531 01eb 18       		.uleb128 0x18
+ 3532 01ec 00       		.byte	0
+ 3533 01ed 00       		.byte	0
+ 3534 01ee 21       		.uleb128 0x21
+ 3535 01ef 34       		.uleb128 0x34
+ 3536 01f0 00       		.byte	0
+ 3537 01f1 03       		.uleb128 0x3
+ 3538 01f2 0E       		.uleb128 0xe
+ 3539 01f3 3A       		.uleb128 0x3a
+ 3540 01f4 0B       		.uleb128 0xb
+ 3541 01f5 3B       		.uleb128 0x3b
+ 3542 01f6 05       		.uleb128 0x5
+ 3543 01f7 49       		.uleb128 0x49
+ 3544 01f8 13       		.uleb128 0x13
+ 3545 01f9 3F       		.uleb128 0x3f
+ 3546 01fa 19       		.uleb128 0x19
+ 3547 01fb 3C       		.uleb128 0x3c
+ 3548 01fc 19       		.uleb128 0x19
+ 3549 01fd 00       		.byte	0
+ 3550 01fe 00       		.byte	0
+ 3551 01ff 22       		.uleb128 0x22
+ 3552 0200 34       		.uleb128 0x34
+ 3553 0201 00       		.byte	0
+ 3554 0202 03       		.uleb128 0x3
+ 3555 0203 0E       		.uleb128 0xe
+ 3556 0204 3A       		.uleb128 0x3a
+ 3557 0205 0B       		.uleb128 0xb
+ 3558 0206 3B       		.uleb128 0x3b
+ 3559 0207 0B       		.uleb128 0xb
+ 3560 0208 49       		.uleb128 0x49
+ 3561 0209 13       		.uleb128 0x13
+ 3562 020a 3F       		.uleb128 0x3f
+ 3563 020b 19       		.uleb128 0x19
+ 3564 020c 3C       		.uleb128 0x3c
+ 3565 020d 19       		.uleb128 0x19
+ 3566 020e 00       		.byte	0
+ 3567 020f 00       		.byte	0
+ 3568 0210 23       		.uleb128 0x23
+ 3569 0211 34       		.uleb128 0x34
+ 3570 0212 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 75
+
+
+ 3571 0213 03       		.uleb128 0x3
+ 3572 0214 08       		.uleb128 0x8
+ 3573 0215 3A       		.uleb128 0x3a
+ 3574 0216 0B       		.uleb128 0xb
+ 3575 0217 3B       		.uleb128 0x3b
+ 3576 0218 0B       		.uleb128 0xb
+ 3577 0219 49       		.uleb128 0x49
+ 3578 021a 13       		.uleb128 0x13
+ 3579 021b 3F       		.uleb128 0x3f
+ 3580 021c 19       		.uleb128 0x19
+ 3581 021d 02       		.uleb128 0x2
+ 3582 021e 18       		.uleb128 0x18
+ 3583 021f 00       		.byte	0
+ 3584 0220 00       		.byte	0
+ 3585 0221 24       		.uleb128 0x24
+ 3586 0222 34       		.uleb128 0x34
+ 3587 0223 00       		.byte	0
+ 3588 0224 03       		.uleb128 0x3
+ 3589 0225 0E       		.uleb128 0xe
+ 3590 0226 3A       		.uleb128 0x3a
+ 3591 0227 0B       		.uleb128 0xb
+ 3592 0228 3B       		.uleb128 0x3b
+ 3593 0229 0B       		.uleb128 0xb
+ 3594 022a 49       		.uleb128 0x49
+ 3595 022b 13       		.uleb128 0x13
+ 3596 022c 3F       		.uleb128 0x3f
+ 3597 022d 19       		.uleb128 0x19
+ 3598 022e 02       		.uleb128 0x2
+ 3599 022f 18       		.uleb128 0x18
+ 3600 0230 00       		.byte	0
+ 3601 0231 00       		.byte	0
+ 3602 0232 25       		.uleb128 0x25
+ 3603 0233 34       		.uleb128 0x34
+ 3604 0234 00       		.byte	0
+ 3605 0235 03       		.uleb128 0x3
+ 3606 0236 0E       		.uleb128 0xe
+ 3607 0237 3A       		.uleb128 0x3a
+ 3608 0238 0B       		.uleb128 0xb
+ 3609 0239 3B       		.uleb128 0x3b
+ 3610 023a 05       		.uleb128 0x5
+ 3611 023b 49       		.uleb128 0x49
+ 3612 023c 13       		.uleb128 0x13
+ 3613 023d 3F       		.uleb128 0x3f
+ 3614 023e 19       		.uleb128 0x19
+ 3615 023f 02       		.uleb128 0x2
+ 3616 0240 18       		.uleb128 0x18
+ 3617 0241 00       		.byte	0
+ 3618 0242 00       		.byte	0
+ 3619 0243 26       		.uleb128 0x26
+ 3620 0244 34       		.uleb128 0x34
+ 3621 0245 00       		.byte	0
+ 3622 0246 03       		.uleb128 0x3
+ 3623 0247 08       		.uleb128 0x8
+ 3624 0248 3A       		.uleb128 0x3a
+ 3625 0249 0B       		.uleb128 0xb
+ 3626 024a 3B       		.uleb128 0x3b
+ 3627 024b 05       		.uleb128 0x5
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 76
+
+
+ 3628 024c 49       		.uleb128 0x49
+ 3629 024d 13       		.uleb128 0x13
+ 3630 024e 3F       		.uleb128 0x3f
+ 3631 024f 19       		.uleb128 0x19
+ 3632 0250 02       		.uleb128 0x2
+ 3633 0251 18       		.uleb128 0x18
+ 3634 0252 00       		.byte	0
+ 3635 0253 00       		.byte	0
+ 3636 0254 00       		.byte	0
+ 3637              		.section	.debug_aranges,"",%progbits
+ 3638 0000 A4000000 		.4byte	0xa4
+ 3639 0004 0200     		.2byte	0x2
+ 3640 0006 00000000 		.4byte	.Ldebug_info0
+ 3641 000a 04       		.byte	0x4
+ 3642 000b 00       		.byte	0
+ 3643 000c 0000     		.2byte	0
+ 3644 000e 0000     		.2byte	0
+ 3645 0010 00000000 		.4byte	.LFB63
+ 3646 0014 48000000 		.4byte	.LFE63-.LFB63
+ 3647 0018 00000000 		.4byte	.LFB64
+ 3648 001c 68000000 		.4byte	.LFE64-.LFB64
+ 3649 0020 00000000 		.4byte	.LFB65
+ 3650 0024 88000000 		.4byte	.LFE65-.LFB65
+ 3651 0028 00000000 		.4byte	.LFB66
+ 3652 002c 44000000 		.4byte	.LFE66-.LFB66
+ 3653 0030 00000000 		.4byte	.LFB67
+ 3654 0034 8C000000 		.4byte	.LFE67-.LFB67
+ 3655 0038 00000000 		.4byte	.LFB68
+ 3656 003c DC020000 		.4byte	.LFE68-.LFB68
+ 3657 0040 00000000 		.4byte	.LFB69
+ 3658 0044 96000000 		.4byte	.LFE69-.LFB69
+ 3659 0048 00000000 		.4byte	.LFB70
+ 3660 004c 50000000 		.4byte	.LFE70-.LFB70
+ 3661 0050 00000000 		.4byte	.LFB71
+ 3662 0054 20010000 		.4byte	.LFE71-.LFB71
+ 3663 0058 00000000 		.4byte	.LFB72
+ 3664 005c 68000000 		.4byte	.LFE72-.LFB72
+ 3665 0060 00000000 		.4byte	.LFB73
+ 3666 0064 14000000 		.4byte	.LFE73-.LFB73
+ 3667 0068 00000000 		.4byte	.LFB74
+ 3668 006c 54000000 		.4byte	.LFE74-.LFB74
+ 3669 0070 00000000 		.4byte	.LFB75
+ 3670 0074 78000000 		.4byte	.LFE75-.LFB75
+ 3671 0078 00000000 		.4byte	.LFB76
+ 3672 007c 38000000 		.4byte	.LFE76-.LFB76
+ 3673 0080 00000000 		.4byte	.LFB77
+ 3674 0084 8A000000 		.4byte	.LFE77-.LFB77
+ 3675 0088 00000000 		.4byte	.LFB78
+ 3676 008c 8C000000 		.4byte	.LFE78-.LFB78
+ 3677 0090 00000000 		.4byte	.LFB79
+ 3678 0094 18010000 		.4byte	.LFE79-.LFB79
+ 3679 0098 00000000 		.4byte	.LFB80
+ 3680 009c 74000000 		.4byte	.LFE80-.LFB80
+ 3681 00a0 00000000 		.4byte	0
+ 3682 00a4 00000000 		.4byte	0
+ 3683              		.section	.debug_ranges,"",%progbits
+ 3684              	.Ldebug_ranges0:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 77
+
+
+ 3685 0000 00000000 		.4byte	.LFB63
+ 3686 0004 48000000 		.4byte	.LFE63
+ 3687 0008 00000000 		.4byte	.LFB64
+ 3688 000c 68000000 		.4byte	.LFE64
+ 3689 0010 00000000 		.4byte	.LFB65
+ 3690 0014 88000000 		.4byte	.LFE65
+ 3691 0018 00000000 		.4byte	.LFB66
+ 3692 001c 44000000 		.4byte	.LFE66
+ 3693 0020 00000000 		.4byte	.LFB67
+ 3694 0024 8C000000 		.4byte	.LFE67
+ 3695 0028 00000000 		.4byte	.LFB68
+ 3696 002c DC020000 		.4byte	.LFE68
+ 3697 0030 00000000 		.4byte	.LFB69
+ 3698 0034 96000000 		.4byte	.LFE69
+ 3699 0038 00000000 		.4byte	.LFB70
+ 3700 003c 50000000 		.4byte	.LFE70
+ 3701 0040 00000000 		.4byte	.LFB71
+ 3702 0044 20010000 		.4byte	.LFE71
+ 3703 0048 00000000 		.4byte	.LFB72
+ 3704 004c 68000000 		.4byte	.LFE72
+ 3705 0050 00000000 		.4byte	.LFB73
+ 3706 0054 14000000 		.4byte	.LFE73
+ 3707 0058 00000000 		.4byte	.LFB74
+ 3708 005c 54000000 		.4byte	.LFE74
+ 3709 0060 00000000 		.4byte	.LFB75
+ 3710 0064 78000000 		.4byte	.LFE75
+ 3711 0068 00000000 		.4byte	.LFB76
+ 3712 006c 38000000 		.4byte	.LFE76
+ 3713 0070 00000000 		.4byte	.LFB77
+ 3714 0074 8A000000 		.4byte	.LFE77
+ 3715 0078 00000000 		.4byte	.LFB78
+ 3716 007c 8C000000 		.4byte	.LFE78
+ 3717 0080 00000000 		.4byte	.LFB79
+ 3718 0084 18010000 		.4byte	.LFE79
+ 3719 0088 00000000 		.4byte	.LFB80
+ 3720 008c 74000000 		.4byte	.LFE80
+ 3721 0090 00000000 		.4byte	0
+ 3722 0094 00000000 		.4byte	0
+ 3723              		.section	.debug_line,"",%progbits
+ 3724              	.Ldebug_line0:
+ 3725 0000 8A040000 		.section	.debug_str,"MS",%progbits,1
+ 3725      02007001 
+ 3725      00000201 
+ 3725      FB0E0D00 
+ 3725      01010101 
+ 3726              	.LASF109:
+ 3727 0000 6F736470 		.ascii	"osdp.c\000"
+ 3727      2E6300
+ 3728              	.LASF75:
+ 3729 0007 696E6974 		.ascii	"initOSDP\000"
+ 3729      4F534450 
+ 3729      00
+ 3730              	.LASF72:
+ 3731 0010 6D73675F 		.ascii	"msg_started\000"
+ 3731      73746172 
+ 3731      74656400 
+ 3732              	.LASF47:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 78
+
+
+ 3733 001c 6F736470 		.ascii	"osdp_status\000"
+ 3733      5F737461 
+ 3733      74757300 
+ 3734              	.LASF13:
+ 3735 0028 646F7562 		.ascii	"double\000"
+ 3735      6C6500
+ 3736              	.LASF51:
+ 3737 002f 6F736470 		.ascii	"osdp_reader_cmd\000"
+ 3737      5F726561 
+ 3737      6465725F 
+ 3737      636D6400 
+ 3738              	.LASF79:
+ 3739 003f 4B656570 		.ascii	"KeepAliveInterruptHandler\000"
+ 3739      416C6976 
+ 3739      65496E74 
+ 3739      65727275 
+ 3739      70744861 
+ 3740              	.LASF23:
+ 3741 0059 74785F62 		.ascii	"tx_byte\000"
+ 3741      79746500 
+ 3742              	.LASF69:
+ 3743 0061 74656D70 		.ascii	"temp\000"
+ 3743      00
+ 3744              	.LASF103:
+ 3745 0066 6F736470 		.ascii	"osdp_reader_msg_header\000"
+ 3745      5F726561 
+ 3745      6465725F 
+ 3745      6D73675F 
+ 3745      68656164 
+ 3746              	.LASF17:
+ 3747 007d 73697A65 		.ascii	"sizetype\000"
+ 3747      74797065 
+ 3747      00
+ 3748              	.LASF49:
+ 3749 0086 6F736470 		.ascii	"osdp_rate\000"
+ 3749      5F726174 
+ 3749      6500
+ 3750              	.LASF41:
+ 3751 0090 73656E64 		.ascii	"send_mobile\000"
+ 3751      5F6D6F62 
+ 3751      696C6500 
+ 3752              	.LASF36:
+ 3753 009c 66616374 		.ascii	"factory_reset\000"
+ 3753      6F72795F 
+ 3753      72657365 
+ 3753      7400
+ 3754              	.LASF37:
+ 3755 00aa 64617461 		.ascii	"data_length\000"
+ 3755      5F6C656E 
+ 3755      67746800 
+ 3756              	.LASF108:
+ 3757 00b6 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 3757      43313120 
+ 3757      352E342E 
+ 3757      31203230 
+ 3757      31363036 
+ 3758 00e9 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 79
+
+
+ 3758      20726576 
+ 3758      6973696F 
+ 3758      6E203233 
+ 3758      37373135 
+ 3759 011c 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 3759      66756E63 
+ 3759      74696F6E 
+ 3759      2D736563 
+ 3759      74696F6E 
+ 3760              	.LASF50:
+ 3761 0144 6F736470 		.ascii	"osdp_buffer\000"
+ 3761      5F627566 
+ 3761      66657200 
+ 3762              	.LASF6:
+ 3763 0150 6C6F6E67 		.ascii	"long long int\000"
+ 3763      206C6F6E 
+ 3763      6720696E 
+ 3763      7400
+ 3764              	.LASF33:
+ 3765 015e 6D6F6465 		.ascii	"mode\000"
+ 3765      00
+ 3766              	.LASF107:
+ 3767 0163 6F736470 		.ascii	"osdp_reader_msg_ready\000"
+ 3767      5F726561 
+ 3767      6465725F 
+ 3767      6D73675F 
+ 3767      72656164 
+ 3768              	.LASF2:
+ 3769 0179 73686F72 		.ascii	"short int\000"
+ 3769      7420696E 
+ 3769      7400
+ 3770              	.LASF63:
+ 3771 0183 70656E64 		.ascii	"pending\000"
+ 3771      696E6700 
+ 3772              	.LASF25:
+ 3773 018b 72785F62 		.ascii	"rx_bits\000"
+ 3773      69747300 
+ 3774              	.LASF62:
+ 3775 0193 63686563 		.ascii	"checksum\000"
+ 3775      6B73756D 
+ 3775      00
+ 3776              	.LASF39:
+ 3777 019c 70757368 		.ascii	"pushbtn_in\000"
+ 3777      62746E5F 
+ 3777      696E00
+ 3778              	.LASF11:
+ 3779 01a7 75696E74 		.ascii	"uint8\000"
+ 3779      3800
+ 3780              	.LASF89:
+ 3781 01ad 4D794932 		.ascii	"MyI2C_Regs\000"
+ 3781      435F5265 
+ 3781      677300
+ 3782              	.LASF57:
+ 3783 01b8 4932435F 		.ascii	"I2C_Regs\000"
+ 3783      52656773 
+ 3783      00
+ 3784              	.LASF104:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 80
+
+
+ 3785 01c1 72656164 		.ascii	"readerSendBuffer\000"
+ 3785      65725365 
+ 3785      6E644275 
+ 3785      66666572 
+ 3785      00
+ 3786              	.LASF28:
+ 3787 01d2 74696D65 		.ascii	"timer_rx_ctr\000"
+ 3787      725F7278 
+ 3787      5F637472 
+ 3787      00
+ 3788              	.LASF0:
+ 3789 01df 7369676E 		.ascii	"signed char\000"
+ 3789      65642063 
+ 3789      68617200 
+ 3790              	.LASF58:
+ 3791 01eb 6C656E67 		.ascii	"length\000"
+ 3791      746800
+ 3792              	.LASF93:
+ 3793 01f2 74705F6F 		.ascii	"tp_old\000"
+ 3793      6C6400
+ 3794              	.LASF12:
+ 3795 01f9 666C6F61 		.ascii	"float\000"
+ 3795      7400
+ 3796              	.LASF97:
+ 3797 01ff 63617264 		.ascii	"card_in_buf\000"
+ 3797      5F696E5F 
+ 3797      62756600 
+ 3798              	.LASF76:
+ 3799 020b 696E6974 		.ascii	"initOSDPReaderUART\000"
+ 3799      4F534450 
+ 3799      52656164 
+ 3799      65725541 
+ 3799      525400
+ 3800              	.LASF34:
+ 3801 021e 6163735F 		.ascii	"acs_outputs\000"
+ 3801      6F757470 
+ 3801      75747300 
+ 3802              	.LASF59:
+ 3803 022a 4F534450 		.ascii	"OSDP_MSG_HEADER\000"
+ 3803      5F4D5347 
+ 3803      5F484541 
+ 3803      44455200 
+ 3804              	.LASF21:
+ 3805 023a 62697473 		.ascii	"bits\000"
+ 3805      00
+ 3806              	.LASF52:
+ 3807 023f 6F736470 		.ascii	"osdp_reader_data_length\000"
+ 3807      5F726561 
+ 3807      6465725F 
+ 3807      64617461 
+ 3807      5F6C656E 
+ 3808              	.LASF92:
+ 3809 0257 68775F6F 		.ascii	"hw_old\000"
+ 3809      6C6400
+ 3810              	.LASF96:
+ 3811 025e 63617264 		.ascii	"card_ack\000"
+ 3811      5F61636B 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 81
+
+
+ 3811      00
+ 3812              	.LASF4:
+ 3813 0267 6C6F6E67 		.ascii	"long int\000"
+ 3813      20696E74 
+ 3813      00
+ 3814              	.LASF60:
+ 3815 0270 61646472 		.ascii	"addr\000"
+ 3815      00
+ 3816              	.LASF1:
+ 3817 0275 756E7369 		.ascii	"unsigned char\000"
+ 3817      676E6564 
+ 3817      20636861 
+ 3817      7200
+ 3818              	.LASF10:
+ 3819 0283 696E7433 		.ascii	"int32_t\000"
+ 3819      325F7400 
+ 3820              	.LASF100:
+ 3821 028b 70616E65 		.ascii	"panelReadBuf\000"
+ 3821      6C526561 
+ 3821      64427566 
+ 3821      00
+ 3822              	.LASF19:
+ 3823 0298 70617269 		.ascii	"parity\000"
+ 3823      747900
+ 3824              	.LASF40:
+ 3825 029f 6D6F6269 		.ascii	"mobile_mode\000"
+ 3825      6C655F6D 
+ 3825      6F646500 
+ 3826              	.LASF53:
+ 3827 02ab 6F736470 		.ascii	"osdp_reader_rate\000"
+ 3827      5F726561 
+ 3827      6465725F 
+ 3827      72617465 
+ 3827      00
+ 3828              	.LASF38:
+ 3829 02bc 74616D70 		.ascii	"tamper_in\000"
+ 3829      65725F69 
+ 3829      6E00
+ 3830              	.LASF110:
+ 3831 02c6 443A5C65 		.ascii	"D:\\ext\\psoc_dual\\nanoNxt_ICM3\\ext_pim.cydsn\000"
+ 3831      78745C70 
+ 3831      736F635F 
+ 3831      6475616C 
+ 3831      5C6E616E 
+ 3832              	.LASF54:
+ 3833 02f2 6F736470 		.ascii	"osdp_reader_buffer\000"
+ 3833      5F726561 
+ 3833      6465725F 
+ 3833      62756666 
+ 3833      657200
+ 3834              	.LASF64:
+ 3835 0305 50616E65 		.ascii	"PanelBuf\000"
+ 3835      6C427566 
+ 3835      00
+ 3836              	.LASF30:
+ 3837 030e 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 3837      5F554152 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 82
+
+
+ 3837      545F5354 
+ 3837      52554354 
+ 3837      00
+ 3838              	.LASF16:
+ 3839 031f 6C6F6E67 		.ascii	"long double\000"
+ 3839      20646F75 
+ 3839      626C6500 
+ 3840              	.LASF18:
+ 3841 032b 62617564 		.ascii	"baud\000"
+ 3841      00
+ 3842              	.LASF77:
+ 3843 0330 4F534450 		.ascii	"OSDPReaderRxInt\000"
+ 3843      52656164 
+ 3843      65725278 
+ 3843      496E7400 
+ 3844              	.LASF48:
+ 3845 0340 6F736470 		.ascii	"osdp_data_length\000"
+ 3845      5F646174 
+ 3845      615F6C65 
+ 3845      6E677468 
+ 3845      00
+ 3846              	.LASF111:
+ 3847 0351 436F7079 		.ascii	"CopyI2cPanelBuffer\000"
+ 3847      49326350 
+ 3847      616E656C 
+ 3847      42756666 
+ 3847      657200
+ 3848              	.LASF67:
+ 3849 0364 436C6561 		.ascii	"ClearOsdpBuffer\000"
+ 3849      724F7364 
+ 3849      70427566 
+ 3849      66657200 
+ 3850              	.LASF94:
+ 3851 0374 74616D70 		.ascii	"tamperCR_polarity\000"
+ 3851      65724352 
+ 3851      5F706F6C 
+ 3851      61726974 
+ 3851      7900
+ 3852              	.LASF71:
+ 3853 0386 62797465 		.ascii	"byteCount\000"
+ 3853      436F756E 
+ 3853      7400
+ 3854              	.LASF26:
+ 3855 0390 666C6167 		.ascii	"flags\000"
+ 3855      7300
+ 3856              	.LASF7:
+ 3857 0396 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 3857      206C6F6E 
+ 3857      6720756E 
+ 3857      7369676E 
+ 3857      65642069 
+ 3858              	.LASF98:
+ 3859 03ad 6F736470 		.ascii	"osdp_timeout\000"
+ 3859      5F74696D 
+ 3859      656F7574 
+ 3859      00
+ 3860              	.LASF66:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 83
+
+
+ 3861 03ba 636F7079 		.ascii	"copyPanelBufI2C\000"
+ 3861      50616E65 
+ 3861      6C427566 
+ 3861      49324300 
+ 3862              	.LASF8:
+ 3863 03ca 756E7369 		.ascii	"unsigned int\000"
+ 3863      676E6564 
+ 3863      20696E74 
+ 3863      00
+ 3864              	.LASF20:
+ 3865 03d7 73746F70 		.ascii	"stop_bits\000"
+ 3865      5F626974 
+ 3865      7300
+ 3866              	.LASF5:
+ 3867 03e1 6C6F6E67 		.ascii	"long unsigned int\000"
+ 3867      20756E73 
+ 3867      69676E65 
+ 3867      6420696E 
+ 3867      7400
+ 3868              	.LASF82:
+ 3869 03f3 52656164 		.ascii	"ReadOSDPReader\000"
+ 3869      4F534450 
+ 3869      52656164 
+ 3869      657200
+ 3870              	.LASF101:
+ 3871 0402 70616E65 		.ascii	"panelSendBuf\000"
+ 3871      6C53656E 
+ 3871      64427566 
+ 3871      00
+ 3872              	.LASF87:
+ 3873 040f 50617373 		.ascii	"Pass_OSDP\000"
+ 3873      5F4F5344 
+ 3873      5000
+ 3874              	.LASF29:
+ 3875 0419 72785F72 		.ascii	"rx_recv\000"
+ 3875      65637600 
+ 3876              	.LASF24:
+ 3877 0421 74785F62 		.ascii	"tx_bits\000"
+ 3877      69747300 
+ 3878              	.LASF85:
+ 3879 0429 6D73675F 		.ascii	"msg_size\000"
+ 3879      73697A65 
+ 3879      00
+ 3880              	.LASF78:
+ 3881 0432 636F7079 		.ascii	"copyReaderBufI2C\000"
+ 3881      52656164 
+ 3881      65724275 
+ 3881      66493243 
+ 3881      00
+ 3882              	.LASF14:
+ 3883 0443 63686172 		.ascii	"char\000"
+ 3883      00
+ 3884              	.LASF80:
+ 3885 0448 436C6561 		.ascii	"ClearOsdpReaderBuffer\000"
+ 3885      724F7364 
+ 3885      70526561 
+ 3885      64657242 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 84
+
+
+ 3885      75666665 
+ 3886              	.LASF68:
+ 3887 045e 53656E64 		.ascii	"SendOSDP\000"
+ 3887      4F534450 
+ 3887      00
+ 3888              	.LASF35:
+ 3889 0467 6163735F 		.ascii	"acs_inputs\000"
+ 3889      696E7075 
+ 3889      747300
+ 3890              	.LASF70:
+ 3891 0472 52656164 		.ascii	"ReadOSDP\000"
+ 3891      4F534450 
+ 3891      00
+ 3892              	.LASF91:
+ 3893 047b 63757272 		.ascii	"currentAccessType\000"
+ 3893      656E7441 
+ 3893      63636573 
+ 3893      73547970 
+ 3893      6500
+ 3894              	.LASF73:
+ 3895 048d 53657450 		.ascii	"SetPanelSpeed\000"
+ 3895      616E656C 
+ 3895      53706565 
+ 3895      6400
+ 3896              	.LASF65:
+ 3897 049b 52656164 		.ascii	"ReaderBuf\000"
+ 3897      65724275 
+ 3897      6600
+ 3898              	.LASF102:
+ 3899 04a5 6F736470 		.ascii	"osdp_msg_header\000"
+ 3899      5F6D7367 
+ 3899      5F686561 
+ 3899      64657200 
+ 3900              	.LASF22:
+ 3901 04b5 72785F62 		.ascii	"rx_byte\000"
+ 3901      79746500 
+ 3902              	.LASF86:
+ 3903 04bd 48616E64 		.ascii	"HandleOSDP\000"
+ 3903      6C654F53 
+ 3903      445000
+ 3904              	.LASF55:
+ 3905 04c8 62756666 		.ascii	"buffer\000"
+ 3905      657200
+ 3906              	.LASF83:
+ 3907 04cf 53657452 		.ascii	"SetReaderSpeed\000"
+ 3907      65616465 
+ 3907      72537065 
+ 3907      656400
+ 3908              	.LASF15:
+ 3909 04de 72656738 		.ascii	"reg8\000"
+ 3909      00
+ 3910              	.LASF32:
+ 3911 04e3 73746174 		.ascii	"status_in\000"
+ 3911      75735F69 
+ 3911      6E00
+ 3912              	.LASF61:
+ 3913 04ed 6374726C 		.ascii	"ctrl\000"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 85
+
+
+ 3913      00
+ 3914              	.LASF42:
+ 3915 04f2 64756D6D 		.ascii	"dummy0\000"
+ 3915      793000
+ 3916              	.LASF56:
+ 3917 04f9 64756D6D 		.ascii	"dummy1\000"
+ 3917      793100
+ 3918              	.LASF45:
+ 3919 0500 62756666 		.ascii	"buffer1\000"
+ 3919      65723100 
+ 3920              	.LASF9:
+ 3921 0508 5F5F696E 		.ascii	"__int32_t\000"
+ 3921      7433325F 
+ 3921      7400
+ 3922              	.LASF84:
+ 3923 0512 436F7079 		.ascii	"CopyI2cReaderBuffer\000"
+ 3923      49326352 
+ 3923      65616465 
+ 3923      72427566 
+ 3923      66657200 
+ 3924              	.LASF3:
+ 3925 0526 73686F72 		.ascii	"short unsigned int\000"
+ 3925      7420756E 
+ 3925      7369676E 
+ 3925      65642069 
+ 3925      6E7400
+ 3926              	.LASF31:
+ 3927 0539 73746174 		.ascii	"status_out\000"
+ 3927      75735F6F 
+ 3927      757400
+ 3928              	.LASF74:
+ 3929 0544 72617465 		.ascii	"rate\000"
+ 3929      00
+ 3930              	.LASF43:
+ 3931 0549 73775F76 		.ascii	"sw_version\000"
+ 3931      65727369 
+ 3931      6F6E00
+ 3932              	.LASF81:
+ 3933 0554 53656E64 		.ascii	"SendOSDPReader\000"
+ 3933      4F534450 
+ 3933      52656164 
+ 3933      657200
+ 3934              	.LASF90:
+ 3935 0563 72756E5F 		.ascii	"run_mode\000"
+ 3935      6D6F6465 
+ 3935      00
+ 3936              	.LASF105:
+ 3937 056c 72656164 		.ascii	"readerReadBuffer\000"
+ 3937      65725265 
+ 3937      61644275 
+ 3937      66666572 
+ 3937      00
+ 3938              	.LASF88:
+ 3939 057d 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 3939      52784275 
+ 3939      66666572 
+ 3939      00
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccv5KC4G.s 			page 86
+
+
+ 3940              	.LASF44:
+ 3941 058a 68775F76 		.ascii	"hw_version\000"
+ 3941      65727369 
+ 3941      6F6E00
+ 3942              	.LASF106:
+ 3943 0595 6F736470 		.ascii	"osdp_reader_msg_started\000"
+ 3943      5F726561 
+ 3943      6465725F 
+ 3943      6D73675F 
+ 3943      73746172 
+ 3944              	.LASF99:
+ 3945 05ad 4F534450 		.ascii	"OSDPReaderTask\000"
+ 3945      52656164 
+ 3945      65725461 
+ 3945      736B00
+ 3946              	.LASF46:
+ 3947 05bc 6F736470 		.ascii	"osdp_cmd\000"
+ 3947      5F636D64 
+ 3947      00
+ 3948              	.LASF27:
+ 3949 05c5 74696D65 		.ascii	"timer_tx_ctr\000"
+ 3949      725F7478 
+ 3949      5F637472 
+ 3949      00
+ 3950              	.LASF95:
+ 3951 05d2 74616D70 		.ascii	"tamper_out_polarity\000"
+ 3951      65725F6F 
+ 3951      75745F70 
+ 3951      6F6C6172 
+ 3951      69747900 
+ 3952              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

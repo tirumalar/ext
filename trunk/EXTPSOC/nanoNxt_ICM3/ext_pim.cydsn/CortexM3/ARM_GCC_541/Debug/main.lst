@@ -1,0 +1,2063 @@
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	s,40,4
+  20              		.comm	currentAccessType,1,1
+  21              		.comm	hw_old,1,1
+  22              		.comm	tp_old,1,1
+  23              		.comm	tamperCR_polarity,4,4
+  24              		.comm	tamper_out_polarity,4,4
+  25              		.comm	card_ack,4,4
+  26              		.comm	card_in_buf,4,4
+  27              		.comm	osdp_timeout,4,4
+  28              		.comm	bu,16,4
+  29              		.global	z
+  30              		.bss
+  31              		.align	2
+  32              		.type	z, %object
+  33              		.size	z, 4
+  34              	z:
+  35 0000 00000000 		.space	4
+  36              		.comm	TOC_port_init,1,1
+  37              		.section	.text.SetVersion,"ax",%progbits
+  38              		.align	2
+  39              		.global	SetVersion
+  40              		.thumb
+  41              		.thumb_func
+  42              		.type	SetVersion, %function
+  43              	SetVersion:
+  44              	.LFB63:
+  45              		.file 1 "main.c"
+   1:main.c        **** /* ========================================
+   2:main.c        ****  *
+   3:main.c        ****  * NanoNXT Breakout Board
+   4:main.c        ****  * Copyright Eyelock.Inc, 2014, 2015
+   5:main.c        ****  * All Rights Reserved
+   6:main.c        ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   7:main.c        ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:main.c        ****  * 
+   9:main.c        ****  * Version History:
+  10:main.c        ****  * ================
+  11:main.c        ****  * 3.0.0 : Ported Nano Breakout board functionality without HID/F2F.
+  12:main.c        ****  * 3.0.1 : Relay output moved from regular output mode to auxillary output mode
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 2
+
+
+  13:main.c        ****  * 3.0.2 : F2F functionality Added.
+  14:main.c        ****  * 3.0.3 : HID functionality added using SW UART for 26 bit weigand & SW UART tested on PAC comapti
+  15:main.c        ****  * 3.0.4 : Tamper In is directly routed to Tamper out
+  16:main.c        ****  * 3.0.5 : Software Reset button functionality added
+  17:main.c        ****  * 3.0.6 : HID functionality modified to support all types of weigand bit formats. 
+  18:main.c        ****  * 3.0.7 : Bootloader functionality added.
+  19:main.c        ****  * 3.0.8 : Reed Tamper Inverted for Beta.
+  20:main.c        ****  * 3.0.9 : Ported code for ICM 3(PSOC 5).
+  21:main.c        ****  * 3.1.0 : Bootloader functionality added to ICM3.
+  22:main.c        ****  * 3.1.1 : GRI 1-13-15: Tamper signals repaired. Tamper moved to main code block.  Tamper polarity 
+  23:main.c        ****  * 3.1.2 : GRI 1-28-15: Tamper moved to HandleInputs.  I2C bus clock was corrected to be 100kHz to 
+  24:main.c        ****  * 3.1.3 : GRI 1-30-15: Removed all "ClearBuffer()" instances.
+  25:main.c        ****  * 3.1.4 : GRI 2-02-15: Added ACK bit for card reads to prevent hanging after card read. PSoC will 
+  26:main.c        ****  * 3.1.5 : GRI 2-04-15: Extensive revision to input signal handler to add noise immunity/debounce (
+  27:main.c        ****  * 3.1.6 : Added F2F card reader functionality
+  28:main.c        ****  * 3.1.7 : Debouncer added to WD0 && Functionality added to detect pulsewidth in F2F
+  29:main.c        ****  * 3.1.8 : Added F2F conditionality to turn on timers
+  30:main.c        ****  * 3.1.9 : Fixed the bootloader bug for PSOC creator 3.1  Use the debug NxtICM3_bootloader for refe
+  31:main.c        ****  * 3.1.10 : Make F2F pulse timing adaptive to the input signal
+  32:main.c        ****  * 3.1.15 : OSDP Dual Authentication
+  33:main.c        ****  * 3.1.16 : support F2F variable length messages
+  34:main.c        ****  * 3.2.0 : Fix F2F to accommodate prompt signal ATH-870
+  35:main.c        ****  * 3.2.1 : support Tamper Out Polarity Settings in the Web
+  36:main.c        ****  * 3.2.2 : reverse the tamper output polarity
+  37:main.c        ****  * 3.2.3 : 16 bits I2C
+  38:main.c        ****  * 3.2.4 : branched from 3.2.2, fixed pulse width narrowed by tamper interrupt problem
+  39:main.c        ****  * 3.2.5 : help firmware set the card in status again in one second if no ack comming.
+  40:main.c        ****  * 3.3.2 : same as 3.2.5 for GA release
+  41:main.c        ****  * 3.4.3 : add TOC template on card
+  42:main.c        ****  * 3.4.4 : add Pass Through mode
+  43:main.c        ****  * 3.4.5 : Increased the timeout delay on PAC for Pass Through Mode.
+  44:main.c        ****  * 3.4.6 : Add PAC for TOC Mode.
+  45:main.c        ****  * 3.4.7 : Add RS485 sending function for the BLE Mode and the Iris Timeout interface commands.
+  46:main.c        ****  * 3.4.8 : Fixed OSDP compiling issue, use osdp.h function prototype.
+  47:main.c        ****  * 3.4.9 : Fixed ATH-1171 - Pass through (Iris or Card mode) does not 
+  48:main.c        ****             authenticate two consecutive cards problem
+  49:main.c        ****  * 5.0.2 : Add 200 bits Wiegand
+  50:main.c        ****  * 5.0.4 : Simplified OSDP, fixed reader message misalignment problem
+  51:main.c        ****  * ========================================
+  52:main.c        **** */
+  53:main.c        **** #include <project.h>
+  54:main.c        **** #include "system.h"
+  55:main.c        **** #include "commandhandler.h"
+  56:main.c        **** #include "hwinit.h"
+  57:main.c        **** #include "osdp.h"
+  58:main.c        **** #include "inout.h"
+  59:main.c        **** #include "wiegand.h"
+  60:main.c        **** #include "f2f.h"
+  61:main.c        **** #include "power.h"
+  62:main.c        **** #include "inout.h"
+  63:main.c        **** #include "i2cuart.h"
+  64:main.c        **** #include "osdp.h"
+  65:main.c        **** #include "toc.h"
+  66:main.c        **** 
+  67:main.c        **** unsigned char bu[16];
+  68:main.c        **** int z=0;
+  69:main.c        **** char TOC_port_init;
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 3
+
+
+  70:main.c        **** 
+  71:main.c        **** 
+  72:main.c        **** /***********************************
+  73:main.c        ****     Sets the breakout board version.
+  74:main.c        **** *************************************/
+  75:main.c        **** void SetVersion()
+  76:main.c        **** {
+  46              		.loc 1 76 0
+  47              		.cfi_startproc
+  48              		@ args = 0, pretend = 0, frame = 0
+  49              		@ frame_needed = 1, uses_anonymous_args = 0
+  50              		@ link register save eliminated.
+  51 0000 80B4     		push	{r7}
+  52              		.cfi_def_cfa_offset 4
+  53              		.cfi_offset 7, -4
+  54 0002 00AF     		add	r7, sp, #0
+  55              		.cfi_def_cfa_register 7
+  77:main.c        ****     MyI2C_Regs.hw_version[0] = 0x71;
+  56              		.loc 1 77 0
+  57 0004 0D4B     		ldr	r3, .L2
+  58 0006 7122     		movs	r2, #113
+  59 0008 83F84620 		strb	r2, [r3, #70]
+  78:main.c        ****     MyI2C_Regs.hw_version[1] = 0x42;
+  60              		.loc 1 78 0
+  61 000c 0B4B     		ldr	r3, .L2
+  62 000e 4222     		movs	r2, #66
+  63 0010 83F84720 		strb	r2, [r3, #71]
+  79:main.c        ****     MyI2C_Regs.hw_version[2] = 0x0A;
+  64              		.loc 1 79 0
+  65 0014 094B     		ldr	r3, .L2
+  66 0016 0A22     		movs	r2, #10
+  67 0018 83F84820 		strb	r2, [r3, #72]
+  80:main.c        ****     
+  81:main.c        ****     MyI2C_Regs.sw_version[0] = 6;
+  68              		.loc 1 81 0
+  69 001c 074B     		ldr	r3, .L2
+  70 001e 0622     		movs	r2, #6
+  71 0020 83F84320 		strb	r2, [r3, #67]
+  82:main.c        ****     MyI2C_Regs.sw_version[1] = 0;
+  72              		.loc 1 82 0
+  73 0024 054B     		ldr	r3, .L2
+  74 0026 0022     		movs	r2, #0
+  75 0028 83F84420 		strb	r2, [r3, #68]
+  83:main.c        ****     MyI2C_Regs.sw_version[2] = 2;
+  76              		.loc 1 83 0
+  77 002c 034B     		ldr	r3, .L2
+  78 002e 0222     		movs	r2, #2
+  79 0030 83F84520 		strb	r2, [r3, #69]
+  84:main.c        **** }
+  80              		.loc 1 84 0
+  81 0034 00BF     		nop
+  82 0036 BD46     		mov	sp, r7
+  83              		.cfi_def_cfa_register 13
+  84              		@ sp needed
+  85 0038 80BC     		pop	{r7}
+  86              		.cfi_restore 7
+  87              		.cfi_def_cfa_offset 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 4
+
+
+  88 003a 7047     		bx	lr
+  89              	.L3:
+  90              		.align	2
+  91              	.L2:
+  92 003c 00000000 		.word	MyI2C_Regs
+  93              		.cfi_endproc
+  94              	.LFE63:
+  95              		.size	SetVersion, .-SetVersion
+  96              		.section	.text.main,"ax",%progbits
+  97              		.align	2
+  98              		.global	main
+  99              		.thumb
+ 100              		.thumb_func
+ 101              		.type	main, %function
+ 102              	main:
+ 103              	.LFB64:
+  85:main.c        **** 
+  86:main.c        **** 
+  87:main.c        **** 
+  88:main.c        **** int main()
+  89:main.c        **** {
+ 104              		.loc 1 89 0
+ 105              		.cfi_startproc
+ 106              		@ args = 0, pretend = 0, frame = 8
+ 107              		@ frame_needed = 1, uses_anonymous_args = 0
+ 108 0000 80B5     		push	{r7, lr}
+ 109              		.cfi_def_cfa_offset 8
+ 110              		.cfi_offset 7, -8
+ 111              		.cfi_offset 14, -4
+ 112 0002 82B0     		sub	sp, sp, #8
+ 113              		.cfi_def_cfa_offset 16
+ 114 0004 00AF     		add	r7, sp, #0
+ 115              		.cfi_def_cfa_register 7
+  90:main.c        ****     int ack_time_cnt; // counter for acknowledge timeout
+  91:main.c        ****     int tmp;
+  92:main.c        ****     
+  93:main.c        ****     POE_RST_Write(1);
+ 116              		.loc 1 93 0
+ 117 0006 0120     		movs	r0, #1
+ 118 0008 FFF7FEFF 		bl	POE_RST_Write
+  94:main.c        ****     POE_OIM_SDn_Write(0);
+ 119              		.loc 1 94 0
+ 120 000c 0020     		movs	r0, #0
+ 121 000e FFF7FEFF 		bl	POE_OIM_SDn_Write
+  95:main.c        ****     CyGlobalIntEnable;  /* Uncomment this line to enable global interrupts. */
+ 122              		.loc 1 95 0
+ 123              		.syntax unified
+ 124              	@ 95 "main.c" 1
+ 125 0012 62B6     		CPSIE   i
+ 126              	@ 0 "" 2
+  96:main.c        ****     ST_LED_0_Write(1);
+ 127              		.loc 1 96 0
+ 128              		.thumb
+ 129              		.syntax unified
+ 130 0014 0120     		movs	r0, #1
+ 131 0016 FFF7FEFF 		bl	ST_LED_0_Write
+  97:main.c        ****     ST_LED_1_Write(1);
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 5
+
+
+ 132              		.loc 1 97 0
+ 133 001a 0120     		movs	r0, #1
+ 134 001c FFF7FEFF 		bl	ST_LED_1_Write
+  98:main.c        ****     ST_LED_2_Write(1);
+ 135              		.loc 1 98 0
+ 136 0020 0120     		movs	r0, #1
+ 137 0022 FFF7FEFF 		bl	ST_LED_2_Write
+  99:main.c        ****     SF2F_Write(1);
+ 138              		.loc 1 99 0
+ 139 0026 0120     		movs	r0, #1
+ 140 0028 FFF7FEFF 		bl	SF2F_Write
+ 100:main.c        ****     I2C_Master_Start();
+ 141              		.loc 1 100 0
+ 142 002c FFF7FEFF 		bl	I2C_Master_Start
+ 101:main.c        ****     isr_WD_SYNC_Start();
+ 143              		.loc 1 101 0
+ 144 0030 FFF7FEFF 		bl	isr_WD_SYNC_Start
+ 102:main.c        ****     rtc_write_reg(0x25, 0x02);
+ 145              		.loc 1 102 0
+ 146 0034 0221     		movs	r1, #2
+ 147 0036 2520     		movs	r0, #37
+ 148 0038 FFF7FEFF 		bl	rtc_write_reg
+ 103:main.c        ****     rtc_write_reg(0x28, 0x00);
+ 149              		.loc 1 103 0
+ 150 003c 0021     		movs	r1, #0
+ 151 003e 2820     		movs	r0, #40
+ 152 0040 FFF7FEFF 		bl	rtc_write_reg
+ 104:main.c        ****     ST_LED_1_Write(0);
+ 153              		.loc 1 104 0
+ 154 0044 0020     		movs	r0, #0
+ 155 0046 FFF7FEFF 		bl	ST_LED_1_Write
+ 105:main.c        ****     rtc_read(0, MyI2C_Regs.buffer, 8);
+ 156              		.loc 1 105 0
+ 157 004a 0822     		movs	r2, #8
+ 158 004c 5A49     		ldr	r1, .L9
+ 159 004e 0020     		movs	r0, #0
+ 160 0050 FFF7FEFF 		bl	rtc_read
+ 106:main.c        ****     ST_LED_1_Write(1);
+ 161              		.loc 1 106 0
+ 162 0054 0120     		movs	r0, #1
+ 163 0056 FFF7FEFF 		bl	ST_LED_1_Write
+ 107:main.c        ****     rtc_read(0,bu,8);
+ 164              		.loc 1 107 0
+ 165 005a 0822     		movs	r2, #8
+ 166 005c 5749     		ldr	r1, .L9+4
+ 167 005e 0020     		movs	r0, #0
+ 168 0060 FFF7FEFF 		bl	rtc_read
+ 108:main.c        ****     SleepTimer_Start();
+ 169              		.loc 1 108 0
+ 170 0064 FFF7FEFF 		bl	SleepTimer_Start
+ 109:main.c        ****     isr_Sleep_Start();
+ 171              		.loc 1 109 0
+ 172 0068 FFF7FEFF 		bl	isr_Sleep_Start
+ 110:main.c        ****     ST_LED_1_Write(0);
+ 173              		.loc 1 110 0
+ 174 006c 0020     		movs	r0, #0
+ 175 006e FFF7FEFF 		bl	ST_LED_1_Write
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 6
+
+
+ 111:main.c        ****     CyDelay(500);
+ 176              		.loc 1 111 0
+ 177 0072 4FF4FA70 		mov	r0, #500
+ 178 0076 FFF7FEFF 		bl	CyDelay
+ 112:main.c        ****     ST_LED_1_Write(1);
+ 179              		.loc 1 112 0
+ 180 007a 0120     		movs	r0, #1
+ 181 007c FFF7FEFF 		bl	ST_LED_1_Write
+ 113:main.c        ****     ST_LED_2_Write(0);
+ 182              		.loc 1 113 0
+ 183 0080 0020     		movs	r0, #0
+ 184 0082 FFF7FEFF 		bl	ST_LED_2_Write
+ 114:main.c        ****     CyDelay(500);
+ 185              		.loc 1 114 0
+ 186 0086 4FF4FA70 		mov	r0, #500
+ 187 008a FFF7FEFF 		bl	CyDelay
+ 115:main.c        ****     ST_LED_2_Write(1);
+ 188              		.loc 1 115 0
+ 189 008e 0120     		movs	r0, #1
+ 190 0090 FFF7FEFF 		bl	ST_LED_2_Write
+ 116:main.c        ****     ST_LED_0_Write(0);
+ 191              		.loc 1 116 0
+ 192 0094 0020     		movs	r0, #0
+ 193 0096 FFF7FEFF 		bl	ST_LED_0_Write
+ 117:main.c        ****     CyDelay(500);
+ 194              		.loc 1 117 0
+ 195 009a 4FF4FA70 		mov	r0, #500
+ 196 009e FFF7FEFF 		bl	CyDelay
+ 118:main.c        ****     ST_LED_0_Write(1);
+ 197              		.loc 1 118 0
+ 198 00a2 0120     		movs	r0, #1
+ 199 00a4 FFF7FEFF 		bl	ST_LED_0_Write
+ 119:main.c        ****     ST_LED_2_Write(0);
+ 200              		.loc 1 119 0
+ 201 00a8 0020     		movs	r0, #0
+ 202 00aa FFF7FEFF 		bl	ST_LED_2_Write
+ 120:main.c        ****     ST_LED_1_Write(0);
+ 203              		.loc 1 120 0
+ 204 00ae 0020     		movs	r0, #0
+ 205 00b0 FFF7FEFF 		bl	ST_LED_1_Write
+ 121:main.c        ****     USBUART_Start(0, USBUART_5V_OPERATION);
+ 206              		.loc 1 121 0
+ 207 00b4 0121     		movs	r1, #1
+ 208 00b6 0020     		movs	r0, #0
+ 209 00b8 FFF7FEFF 		bl	USBUART_Start
+ 122:main.c        ****     EEPROM_Start();
+ 210              		.loc 1 122 0
+ 211 00bc FFF7FEFF 		bl	EEPROM_Start
+ 123:main.c        ****     CySetTemp();
+ 212              		.loc 1 123 0
+ 213 00c0 FFF7FEFF 		bl	CySetTemp
+ 124:main.c        ****     if (EEPROM_ReadByte(0)==0x55)
+ 214              		.loc 1 124 0
+ 215 00c4 0020     		movs	r0, #0
+ 216 00c6 FFF7FEFF 		bl	EEPROM_ReadByte
+ 217 00ca 0346     		mov	r3, r0
+ 218 00cc 552B     		cmp	r3, #85
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 7
+
+
+ 219 00ce 05D1     		bne	.L5
+ 125:main.c        ****     {
+ 126:main.c        ****         EEPROM_EraseSector(0);
+ 220              		.loc 1 126 0
+ 221 00d0 0020     		movs	r0, #0
+ 222 00d2 FFF7FEFF 		bl	EEPROM_EraseSector
+ 127:main.c        ****         ST_LED_2_Write(1);
+ 223              		.loc 1 127 0
+ 224 00d6 0120     		movs	r0, #1
+ 225 00d8 FFF7FEFF 		bl	ST_LED_2_Write
+ 226              	.L5:
+ 128:main.c        ****     }
+ 129:main.c        ****     POE_OIM_En(1);
+ 227              		.loc 1 129 0
+ 228 00dc 0120     		movs	r0, #1
+ 229 00de FFF7FEFF 		bl	POE_OIM_En
+ 130:main.c        **** //    /* Intializing the Timers and interrupts */
+ 131:main.c        **** 
+ 132:main.c        ****     UART_TIMER_Start();
+ 230              		.loc 1 132 0
+ 231 00e2 FFF7FEFF 		bl	UART_TIMER_Start
+ 133:main.c        **** 	UART_TIMER_ISR_StartEx(UART_TIMER_ISR_Interrupt);
+ 232              		.loc 1 133 0
+ 233 00e6 3648     		ldr	r0, .L9+8
+ 234 00e8 FFF7FEFF 		bl	UART_TIMER_ISR_StartEx
+ 134:main.c        ****     Tamper_Timer_Start();
+ 235              		.loc 1 134 0
+ 236 00ec FFF7FEFF 		bl	Tamper_Timer_Start
+ 135:main.c        ****     Tamper_Timer_ISR_StartEx(Tamper_Timer_ISR_Interrupt);
+ 237              		.loc 1 135 0
+ 238 00f0 3448     		ldr	r0, .L9+12
+ 239 00f2 FFF7FEFF 		bl	Tamper_Timer_ISR_StartEx
+ 136:main.c        ****     Timeout_Timer_Start();
+ 240              		.loc 1 136 0
+ 241 00f6 FFF7FEFF 		bl	Timeout_Timer_Start
+ 137:main.c        ****     Timeout_Timer_Isr_StartEx(Timeout_Timer_Isr_Interrupt);
+ 242              		.loc 1 137 0
+ 243 00fa 3348     		ldr	r0, .L9+16
+ 244 00fc FFF7FEFF 		bl	Timeout_Timer_Isr_StartEx
+ 138:main.c        **** 
+ 139:main.c        ****     /*Wiegand*/
+ 140:main.c        ****     Pulse_50us_Init();
+ 245              		.loc 1 140 0
+ 246 0100 FFF7FEFF 		bl	Pulse_50us_Init
+ 141:main.c        ****     isr_50us_StartEx(Pin_50us_Reset);
+ 247              		.loc 1 141 0
+ 248 0104 3148     		ldr	r0, .L9+20
+ 249 0106 FFF7FEFF 		bl	isr_50us_StartEx
+ 142:main.c        **** 
+ 143:main.c        ****     /*F2F*/
+ 144:main.c        ****     isr_F2F_edge_StartEx(isr_F2F_edge_Interrupt);
+ 250              		.loc 1 144 0
+ 251 010a 3148     		ldr	r0, .L9+24
+ 252 010c FFF7FEFF 		bl	isr_F2F_edge_StartEx
+ 145:main.c        ****     
+ 146:main.c        **** 	
+ 147:main.c        ****     /* Starting UART for PAC & HID */
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 8
+
+
+ 148:main.c        ****     UART_1_Start();
+ 253              		.loc 1 148 0
+ 254 0110 FFF7FEFF 		bl	UART_1_Start
+ 149:main.c        ****     SU_Start(&s,1,PARITY_EVEN,1);
+ 255              		.loc 1 149 0
+ 256 0114 0123     		movs	r3, #1
+ 257 0116 0222     		movs	r2, #2
+ 258 0118 0121     		movs	r1, #1
+ 259 011a 2E48     		ldr	r0, .L9+28
+ 260 011c FFF7FEFF 		bl	SU_Start
+ 150:main.c        ****     
+ 151:main.c        ****     /* Turning off both LEDS */
+ 152:main.c        ****     LED_GRN_Write(OFF); // LED for signaling Output
+ 261              		.loc 1 152 0
+ 262 0120 0120     		movs	r0, #1
+ 263 0122 FFF7FEFF 		bl	LED_GRN_Write
+ 153:main.c        ****     LED_YEL_Write(OFF); // LED for signaling Input
+ 264              		.loc 1 153 0
+ 265 0126 0120     		movs	r0, #1
+ 266 0128 FFF7FEFF 		bl	LED_YEL_Write
+ 154:main.c        ****     LED_RED_Write(OFF); // turn off tamper LED
+ 267              		.loc 1 154 0
+ 268 012c 0120     		movs	r0, #1
+ 269 012e FFF7FEFF 		bl	LED_RED_Write
+ 155:main.c        ****     
+ 156:main.c        ****     /* Intializing the I2C Reg value */
+ 157:main.c        ****     MyI2C_Regs.factory_reset = 0;
+ 270              		.loc 1 157 0
+ 271 0132 294B     		ldr	r3, .L9+32
+ 272 0134 0022     		movs	r2, #0
+ 273 0136 9A71     		strb	r2, [r3, #6]
+ 158:main.c        ****     SetHardwareVals(TAMPERCR_POL);  // TAMPER_POL defaulted to 1 (normal config with active tamper 
+ 274              		.loc 1 158 0
+ 275 0138 0820     		movs	r0, #8
+ 276 013a FFF7FEFF 		bl	SetHardwareVals
+ 159:main.c        ****     
+ 160:main.c        ****     SetVersion();
+ 277              		.loc 1 160 0
+ 278 013e FFF7FEFF 		bl	SetVersion
+ 161:main.c        ****     
+ 162:main.c        ****     // initialize card reader tamper polarity bit:  1=normal
+ 163:main.c        ****     // This is only for TEST and must be set by webconfig/motherboard.
+ 164:main.c        ****     // tamperCR_polarity = 1;
+ 165:main.c        ****     hw_old = 0;
+ 279              		.loc 1 165 0
+ 280 0142 264B     		ldr	r3, .L9+36
+ 281 0144 0022     		movs	r2, #0
+ 282 0146 1A70     		strb	r2, [r3]
+ 166:main.c        ****     tp_old = 0;
+ 283              		.loc 1 166 0
+ 284 0148 254B     		ldr	r3, .L9+40
+ 285 014a 0022     		movs	r2, #0
+ 286 014c 1A70     		strb	r2, [r3]
+ 167:main.c        ****     TOC_port_init = 0;
+ 287              		.loc 1 167 0
+ 288 014e 254B     		ldr	r3, .L9+44
+ 289 0150 0022     		movs	r2, #0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 9
+
+
+ 290 0152 1A70     		strb	r2, [r3]
+ 168:main.c        ****     card_ack = 0;
+ 291              		.loc 1 168 0
+ 292 0154 244B     		ldr	r3, .L9+48
+ 293 0156 0022     		movs	r2, #0
+ 294 0158 1A60     		str	r2, [r3]
+ 169:main.c        ****     
+ 170:main.c        ****     initOSDP();
+ 295              		.loc 1 170 0
+ 296 015a FFF7FEFF 		bl	initOSDP
+ 171:main.c        ****     
+ 172:main.c        ****     /* push button */
+ 173:main.c        ****     buttonPressed=0;
+ 297              		.loc 1 173 0
+ 298 015e 234B     		ldr	r3, .L9+52
+ 299 0160 0022     		movs	r2, #0
+ 300 0162 1A70     		strb	r2, [r3]
+ 174:main.c        ****     buttonReleased=0;
+ 301              		.loc 1 174 0
+ 302 0164 224B     		ldr	r3, .L9+56
+ 303 0166 0022     		movs	r2, #0
+ 304 0168 1A70     		strb	r2, [r3]
+ 175:main.c        ****     buttonDuration=0;
+ 305              		.loc 1 175 0
+ 306 016a 224B     		ldr	r3, .L9+60
+ 307 016c 0022     		movs	r2, #0
+ 308 016e 1A60     		str	r2, [r3]
+ 176:main.c        ****     isr_SW_Rst_Start(); 
+ 309              		.loc 1 176 0
+ 310 0170 FFF7FEFF 		bl	isr_SW_Rst_Start
+ 177:main.c        ****       //ik  TX_EN_Write(1);
+ 178:main.c        **** 
+ 179:main.c        ****     UART_ACS_LoadRxConfig();
+ 311              		.loc 1 179 0
+ 312 0174 FFF7FEFF 		bl	UART_ACS_LoadRxConfig
+ 180:main.c        ****     //while(1)
+ 181:main.c        ****     //      UART_ACS_PutArray("test test",strlen("test test")); 
+ 182:main.c        ****     if (UART_ACS_GetRxBufferSize()> 0)
+ 313              		.loc 1 182 0
+ 314 0178 FFF7FEFF 		bl	UART_ACS_GetRxBufferSize
+ 315 017c 0346     		mov	r3, r0
+ 316 017e 002B     		cmp	r3, #0
+ 317 0180 03D0     		beq	.L6
+ 183:main.c        ****     {
+ 184:main.c        ****         tmp = UART_ACS_GetChar();
+ 318              		.loc 1 184 0
+ 319 0182 FFF7FEFF 		bl	UART_ACS_GetChar
+ 320 0186 0346     		mov	r3, r0
+ 321 0188 7B60     		str	r3, [r7, #4]
+ 322              	.L6:
+ 185:main.c        ****     }
+ 186:main.c        ****     POE_OIM_En(1);
+ 323              		.loc 1 186 0
+ 324 018a 0120     		movs	r0, #1
+ 325 018c FFF7FEFF 		bl	POE_OIM_En
+ 326              	.L8:
+ 327              	.LBB2:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 10
+
+
+ 187:main.c        ****     while(1)
+ 188:main.c        ****     {
+ 189:main.c        ****         static int st_div=0;
+ 190:main.c        ****         HandleUSB();
+ 328              		.loc 1 190 0
+ 329 0190 FFF7FEFF 		bl	HandleUSB
+ 191:main.c        ****         HandleCommand();
+ 330              		.loc 1 191 0
+ 331 0194 FFF7FEFF 		bl	HandleCommand
+ 192:main.c        ****         if ((MyI2C_Regs.status_out==0 ) && isWiegandDataReady)
+ 332              		.loc 1 192 0
+ 333 0198 0F4B     		ldr	r3, .L9+32
+ 334 019a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 335 019c 002B     		cmp	r3, #0
+ 336 019e F7D1     		bne	.L8
+ 337              		.loc 1 192 0 is_stmt 0 discriminator 1
+ 338 01a0 154B     		ldr	r3, .L9+64
+ 339 01a2 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 340 01a4 002B     		cmp	r3, #0
+ 341 01a6 F3D0     		beq	.L8
+ 193:main.c        ****             MyI2C_Regs.status_out |= STAT_CHANGE | STAT_CARD_IN;
+ 342              		.loc 1 193 0 is_stmt 1
+ 343 01a8 0B4B     		ldr	r3, .L9+32
+ 344 01aa 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 345 01ac 43F00303 		orr	r3, r3, #3
+ 346 01b0 DAB2     		uxtb	r2, r3
+ 347 01b2 094B     		ldr	r3, .L9+32
+ 348 01b4 1A70     		strb	r2, [r3]
+ 349              	.LBE2:
+ 194:main.c        ****         continue;
+ 195:main.c        ****         if (0)
+ 196:main.c        ****         {
+ 197:main.c        **** 
+ 198:main.c        ****             EEPROM_EraseSector(0);
+ 199:main.c        ****             EEPROM_WriteByte(0x55,0);
+ 200:main.c        ****             CySoftwareReset();
+ 201:main.c        ****         }
+ 202:main.c        ****         if (card_in_buf == 1)  // card read requires ack from motherboard
+ 203:main.c        ****         {
+ 204:main.c        ****             ack_time_cnt = 0;
+ 205:main.c        ****             while (card_ack == 0)   // waiting for card read acknowledge here
+ 206:main.c        ****             {
+ 207:main.c        ****                   HandleUSB();
+ 208:main.c        ****                 CyDelay(10);    //
+ 209:main.c        ****                 ack_time_cnt++;  // increment time counter every 10ms while waiting for ack
+ 210:main.c        ****                 if (ack_time_cnt >= 100)    //  re-notify and break.
+ 211:main.c        ****                 {
+ 212:main.c        ****                     MyI2C_Regs.status_out |= STAT_CHANGE | STAT_CARD_IN ;   // if timeout, set stat
+ 213:main.c        ****                     MyI2C_Regs.buffer1[11]++;
+ 214:main.c        ****                     break;
+ 215:main.c        ****                 }
+ 216:main.c        ****             }//while
+ 217:main.c        ****         } //if
+ 218:main.c        ****     } //main loop
+ 350              		.loc 1 218 0
+ 351 01b6 EBE7     		b	.L8
+ 352              	.L10:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 11
+
+
+ 353              		.align	2
+ 354              	.L9:
+ 355 01b8 64010000 		.word	MyI2C_Regs+356
+ 356 01bc 00000000 		.word	bu
+ 357 01c0 00000000 		.word	UART_TIMER_ISR_Interrupt
+ 358 01c4 00000000 		.word	Tamper_Timer_ISR_Interrupt
+ 359 01c8 00000000 		.word	Timeout_Timer_Isr_Interrupt
+ 360 01cc 00000000 		.word	Pin_50us_Reset
+ 361 01d0 00000000 		.word	isr_F2F_edge_Interrupt
+ 362 01d4 00000000 		.word	s
+ 363 01d8 00000000 		.word	MyI2C_Regs
+ 364 01dc 00000000 		.word	hw_old
+ 365 01e0 00000000 		.word	tp_old
+ 366 01e4 00000000 		.word	TOC_port_init
+ 367 01e8 00000000 		.word	card_ack
+ 368 01ec 00000000 		.word	buttonPressed
+ 369 01f0 00000000 		.word	buttonReleased
+ 370 01f4 00000000 		.word	buttonDuration
+ 371 01f8 00000000 		.word	isWiegandDataReady
+ 372              		.cfi_endproc
+ 373              	.LFE64:
+ 374              		.size	main, .-main
+ 375              		.bss
+ 376              		.align	2
+ 377              	st_div.7667:
+ 378 0004 00000000 		.space	4
+ 379              		.text
+ 380              	.Letext0:
+ 381              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 382              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 383              		.file 4 "softuart.h"
+ 384              		.file 5 "system.h"
+ 385              		.file 6 "Generated_Source\\PSoC5/core_cm3.h"
+ 386              		.file 7 "osdp.h"
+ 387              		.section	.debug_info,"",%progbits
+ 388              	.Ldebug_info0:
+ 389 0000 D9040000 		.4byte	0x4d9
+ 390 0004 0400     		.2byte	0x4
+ 391 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 392 000a 04       		.byte	0x4
+ 393 000b 01       		.uleb128 0x1
+ 394 000c 79000000 		.4byte	.LASF75
+ 395 0010 0C       		.byte	0xc
+ 396 0011 86030000 		.4byte	.LASF76
+ 397 0015 28020000 		.4byte	.LASF77
+ 398 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 399 001d 00000000 		.4byte	0
+ 400 0021 00000000 		.4byte	.Ldebug_line0
+ 401 0025 02       		.uleb128 0x2
+ 402 0026 01       		.byte	0x1
+ 403 0027 06       		.byte	0x6
+ 404 0028 75010000 		.4byte	.LASF0
+ 405 002c 02       		.uleb128 0x2
+ 406 002d 01       		.byte	0x1
+ 407 002e 08       		.byte	0x8
+ 408 002f AA020000 		.4byte	.LASF1
+ 409 0033 02       		.uleb128 0x2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 12
+
+
+ 410 0034 02       		.byte	0x2
+ 411 0035 05       		.byte	0x5
+ 412 0036 26010000 		.4byte	.LASF2
+ 413 003a 02       		.uleb128 0x2
+ 414 003b 02       		.byte	0x2
+ 415 003c 07       		.byte	0x7
+ 416 003d 68030000 		.4byte	.LASF3
+ 417 0041 03       		.uleb128 0x3
+ 418 0042 BD030000 		.4byte	.LASF9
+ 419 0046 02       		.byte	0x2
+ 420 0047 3F       		.byte	0x3f
+ 421 0048 4C000000 		.4byte	0x4c
+ 422 004c 02       		.uleb128 0x2
+ 423 004d 04       		.byte	0x4
+ 424 004e 05       		.byte	0x5
+ 425 004f E3010000 		.4byte	.LASF4
+ 426 0053 02       		.uleb128 0x2
+ 427 0054 04       		.byte	0x4
+ 428 0055 07       		.byte	0x7
+ 429 0056 EC010000 		.4byte	.LASF5
+ 430 005a 02       		.uleb128 0x2
+ 431 005b 08       		.byte	0x8
+ 432 005c 05       		.byte	0x5
+ 433 005d 13010000 		.4byte	.LASF6
+ 434 0061 02       		.uleb128 0x2
+ 435 0062 08       		.byte	0x8
+ 436 0063 07       		.byte	0x7
+ 437 0064 DC020000 		.4byte	.LASF7
+ 438 0068 04       		.uleb128 0x4
+ 439 0069 04       		.byte	0x4
+ 440 006a 05       		.byte	0x5
+ 441 006b 696E7400 		.ascii	"int\000"
+ 442 006f 02       		.uleb128 0x2
+ 443 0070 04       		.byte	0x4
+ 444 0071 07       		.byte	0x7
+ 445 0072 F3020000 		.4byte	.LASF8
+ 446 0076 03       		.uleb128 0x3
+ 447 0077 38030000 		.4byte	.LASF10
+ 448 007b 03       		.byte	0x3
+ 449 007c 2C       		.byte	0x2c
+ 450 007d 41000000 		.4byte	0x41
+ 451 0081 02       		.uleb128 0x2
+ 452 0082 04       		.byte	0x4
+ 453 0083 04       		.byte	0x4
+ 454 0084 88010000 		.4byte	.LASF11
+ 455 0088 02       		.uleb128 0x2
+ 456 0089 08       		.byte	0x8
+ 457 008a 04       		.byte	0x4
+ 458 008b F5030000 		.4byte	.LASF12
+ 459 008f 02       		.uleb128 0x2
+ 460 0090 01       		.byte	0x1
+ 461 0091 08       		.byte	0x8
+ 462 0092 2E030000 		.4byte	.LASF13
+ 463 0096 02       		.uleb128 0x2
+ 464 0097 08       		.byte	0x8
+ 465 0098 04       		.byte	0x4
+ 466 0099 00000000 		.4byte	.LASF14
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 13
+
+
+ 467 009d 02       		.uleb128 0x2
+ 468 009e 04       		.byte	0x4
+ 469 009f 07       		.byte	0x7
+ 470 00a0 40000000 		.4byte	.LASF15
+ 471 00a4 05       		.uleb128 0x5
+ 472 00a5 28       		.byte	0x28
+ 473 00a6 04       		.byte	0x4
+ 474 00a7 0D       		.byte	0xd
+ 475 00a8 3D010000 		.4byte	0x13d
+ 476 00ac 06       		.uleb128 0x6
+ 477 00ad 94020000 		.4byte	.LASF16
+ 478 00b1 04       		.byte	0x4
+ 479 00b2 0F       		.byte	0xf
+ 480 00b3 68000000 		.4byte	0x68
+ 481 00b7 00       		.byte	0
+ 482 00b8 06       		.uleb128 0x6
+ 483 00b9 06020000 		.4byte	.LASF17
+ 484 00bd 04       		.byte	0x4
+ 485 00be 10       		.byte	0x10
+ 486 00bf 68000000 		.4byte	0x68
+ 487 00c3 04       		.byte	0x4
+ 488 00c4 06       		.uleb128 0x6
+ 489 00c5 00030000 		.4byte	.LASF18
+ 490 00c9 04       		.byte	0x4
+ 491 00ca 11       		.byte	0x11
+ 492 00cb 68000000 		.4byte	0x68
+ 493 00cf 08       		.byte	0x8
+ 494 00d0 06       		.uleb128 0x6
+ 495 00d1 8E010000 		.4byte	.LASF19
+ 496 00d5 04       		.byte	0x4
+ 497 00d6 12       		.byte	0x12
+ 498 00d7 68000000 		.4byte	0x68
+ 499 00db 0C       		.byte	0xc
+ 500 00dc 06       		.uleb128 0x6
+ 501 00dd 59030000 		.4byte	.LASF20
+ 502 00e1 04       		.byte	0x4
+ 503 00e2 13       		.byte	0x13
+ 504 00e3 3A000000 		.4byte	0x3a
+ 505 00e7 10       		.byte	0x10
+ 506 00e8 06       		.uleb128 0x6
+ 507 00e9 FE010000 		.4byte	.LASF21
+ 508 00ed 04       		.byte	0x4
+ 509 00ee 14       		.byte	0x14
+ 510 00ef 3D010000 		.4byte	0x13d
+ 511 00f3 12       		.byte	0x12
+ 512 00f4 06       		.uleb128 0x6
+ 513 00f5 26030000 		.4byte	.LASF22
+ 514 00f9 04       		.byte	0x4
+ 515 00fa 15       		.byte	0x15
+ 516 00fb 3D010000 		.4byte	0x13d
+ 517 00ff 14       		.byte	0x14
+ 518 0100 06       		.uleb128 0x6
+ 519 0101 30010000 		.4byte	.LASF23
+ 520 0105 04       		.byte	0x4
+ 521 0106 16       		.byte	0x16
+ 522 0107 3A000000 		.4byte	0x3a
+ 523 010b 16       		.byte	0x16
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 14
+
+
+ 524 010c 06       		.uleb128 0x6
+ 525 010d D6020000 		.4byte	.LASF24
+ 526 0111 04       		.byte	0x4
+ 527 0112 17       		.byte	0x17
+ 528 0113 42010000 		.4byte	0x142
+ 529 0117 18       		.byte	0x18
+ 530 0118 06       		.uleb128 0x6
+ 531 0119 2A040000 		.4byte	.LASF25
+ 532 011d 04       		.byte	0x4
+ 533 011e 18       		.byte	0x18
+ 534 011f 42010000 		.4byte	0x142
+ 535 0123 1C       		.byte	0x1c
+ 536 0124 06       		.uleb128 0x6
+ 537 0125 0C000000 		.4byte	.LASF26
+ 538 0129 04       		.byte	0x4
+ 539 012a 19       		.byte	0x19
+ 540 012b 42010000 		.4byte	0x142
+ 541 012f 20       		.byte	0x20
+ 542 0130 06       		.uleb128 0x6
+ 543 0131 1E030000 		.4byte	.LASF27
+ 544 0135 04       		.byte	0x4
+ 545 0136 1A       		.byte	0x1a
+ 546 0137 42010000 		.4byte	0x142
+ 547 013b 24       		.byte	0x24
+ 548 013c 00       		.byte	0
+ 549 013d 07       		.uleb128 0x7
+ 550 013e 3A000000 		.4byte	0x3a
+ 551 0142 07       		.uleb128 0x7
+ 552 0143 68000000 		.4byte	0x68
+ 553 0147 03       		.uleb128 0x3
+ 554 0148 75020000 		.4byte	.LASF28
+ 555 014c 04       		.byte	0x4
+ 556 014d 1B       		.byte	0x1b
+ 557 014e A4000000 		.4byte	0xa4
+ 558 0152 08       		.uleb128 0x8
+ 559 0153 9E030000 		.4byte	.LASF55
+ 560 0157 DC01     		.2byte	0x1dc
+ 561 0159 05       		.byte	0x5
+ 562 015a 1E       		.byte	0x1e
+ 563 015b B2020000 		.4byte	0x2b2
+ 564 015f 06       		.uleb128 0x6
+ 565 0160 C7030000 		.4byte	.LASF29
+ 566 0164 05       		.byte	0x5
+ 567 0165 1F       		.byte	0x1f
+ 568 0166 8F000000 		.4byte	0x8f
+ 569 016a 00       		.byte	0
+ 570 016b 06       		.uleb128 0x6
+ 571 016c 8D030000 		.4byte	.LASF30
+ 572 0170 05       		.byte	0x5
+ 573 0171 20       		.byte	0x20
+ 574 0172 8F000000 		.4byte	0x8f
+ 575 0176 01       		.byte	0x1
+ 576 0177 09       		.uleb128 0x9
+ 577 0178 636D6400 		.ascii	"cmd\000"
+ 578 017c 05       		.byte	0x5
+ 579 017d 21       		.byte	0x21
+ 580 017e 8F000000 		.4byte	0x8f
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 15
+
+
+ 581 0182 02       		.byte	0x2
+ 582 0183 06       		.uleb128 0x6
+ 583 0184 21010000 		.4byte	.LASF31
+ 584 0188 05       		.byte	0x5
+ 585 0189 22       		.byte	0x22
+ 586 018a 2C000000 		.4byte	0x2c
+ 587 018e 03       		.byte	0x3
+ 588 018f 06       		.uleb128 0x6
+ 589 0190 9F010000 		.4byte	.LASF32
+ 590 0194 05       		.byte	0x5
+ 591 0195 23       		.byte	0x23
+ 592 0196 8F000000 		.4byte	0x8f
+ 593 019a 04       		.byte	0x4
+ 594 019b 06       		.uleb128 0x6
+ 595 019c 13030000 		.4byte	.LASF33
+ 596 01a0 05       		.byte	0x5
+ 597 01a1 24       		.byte	0x24
+ 598 01a2 8F000000 		.4byte	0x8f
+ 599 01a6 05       		.byte	0x5
+ 600 01a7 06       		.uleb128 0x6
+ 601 01a8 5F000000 		.4byte	.LASF34
+ 602 01ac 05       		.byte	0x5
+ 603 01ad 25       		.byte	0x25
+ 604 01ae 8F000000 		.4byte	0x8f
+ 605 01b2 06       		.byte	0x6
+ 606 01b3 06       		.uleb128 0x6
+ 607 01b4 6D000000 		.4byte	.LASF35
+ 608 01b8 05       		.byte	0x5
+ 609 01b9 26       		.byte	0x26
+ 610 01ba B2020000 		.4byte	0x2b2
+ 611 01be 07       		.byte	0x7
+ 612 01bf 06       		.uleb128 0x6
+ 613 01c0 8E010000 		.4byte	.LASF19
+ 614 01c4 05       		.byte	0x5
+ 615 01c5 27       		.byte	0x27
+ 616 01c6 2C000000 		.4byte	0x2c
+ 617 01ca 09       		.byte	0x9
+ 618 01cb 06       		.uleb128 0x6
+ 619 01cc 1E020000 		.4byte	.LASF36
+ 620 01d0 05       		.byte	0x5
+ 621 01d1 28       		.byte	0x28
+ 622 01d2 2C000000 		.4byte	0x2c
+ 623 01d6 0A       		.byte	0xa
+ 624 01d7 06       		.uleb128 0x6
+ 625 01d8 4A010000 		.4byte	.LASF37
+ 626 01dc 05       		.byte	0x5
+ 627 01dd 29       		.byte	0x29
+ 628 01de 2C000000 		.4byte	0x2c
+ 629 01e2 0B       		.byte	0xb
+ 630 01e3 06       		.uleb128 0x6
+ 631 01e4 CA020000 		.4byte	.LASF38
+ 632 01e8 05       		.byte	0x5
+ 633 01e9 2A       		.byte	0x2a
+ 634 01ea 2C000000 		.4byte	0x2c
+ 635 01ee 0C       		.byte	0xc
+ 636 01ef 06       		.uleb128 0x6
+ 637 01f0 53000000 		.4byte	.LASF39
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 16
+
+
+ 638 01f4 05       		.byte	0x5
+ 639 01f5 2B       		.byte	0x2b
+ 640 01f6 2C000000 		.4byte	0x2c
+ 641 01fa 0D       		.byte	0xd
+ 642 01fb 06       		.uleb128 0x6
+ 643 01fc A7030000 		.4byte	.LASF40
+ 644 0200 05       		.byte	0x5
+ 645 0201 2C       		.byte	0x2c
+ 646 0202 C2020000 		.4byte	0x2c2
+ 647 0206 0E       		.byte	0xe
+ 648 0207 06       		.uleb128 0x6
+ 649 0208 DB030000 		.4byte	.LASF41
+ 650 020c 05       		.byte	0x5
+ 651 020d 2D       		.byte	0x2d
+ 652 020e D2020000 		.4byte	0x2d2
+ 653 0212 43       		.byte	0x43
+ 654 0213 06       		.uleb128 0x6
+ 655 0214 16040000 		.4byte	.LASF42
+ 656 0218 05       		.byte	0x5
+ 657 0219 2E       		.byte	0x2e
+ 658 021a D2020000 		.4byte	0x2d2
+ 659 021e 46       		.byte	0x46
+ 660 021f 06       		.uleb128 0x6
+ 661 0220 B5030000 		.4byte	.LASF43
+ 662 0224 05       		.byte	0x5
+ 663 0225 2F       		.byte	0x2f
+ 664 0226 E2020000 		.4byte	0x2e2
+ 665 022a 49       		.byte	0x49
+ 666 022b 06       		.uleb128 0x6
+ 667 022c 21040000 		.4byte	.LASF44
+ 668 0230 05       		.byte	0x5
+ 669 0231 30       		.byte	0x30
+ 670 0232 2C000000 		.4byte	0x2c
+ 671 0236 5D       		.byte	0x5d
+ 672 0237 06       		.uleb128 0x6
+ 673 0238 19000000 		.4byte	.LASF45
+ 674 023c 05       		.byte	0x5
+ 675 023d 31       		.byte	0x31
+ 676 023e 2C000000 		.4byte	0x2c
+ 677 0242 5E       		.byte	0x5e
+ 678 0243 06       		.uleb128 0x6
+ 679 0244 99020000 		.4byte	.LASF46
+ 680 0248 05       		.byte	0x5
+ 681 0249 32       		.byte	0x32
+ 682 024a 2C000000 		.4byte	0x2c
+ 683 024e 5F       		.byte	0x5f
+ 684 024f 06       		.uleb128 0x6
+ 685 0250 49000000 		.4byte	.LASF47
+ 686 0254 05       		.byte	0x5
+ 687 0255 33       		.byte	0x33
+ 688 0256 2C000000 		.4byte	0x2c
+ 689 025a 60       		.byte	0x60
+ 690 025b 06       		.uleb128 0x6
+ 691 025c 07010000 		.4byte	.LASF48
+ 692 0260 05       		.byte	0x5
+ 693 0261 34       		.byte	0x34
+ 694 0262 F2020000 		.4byte	0x2f2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 17
+
+
+ 695 0266 61       		.byte	0x61
+ 696 0267 06       		.uleb128 0x6
+ 697 0268 25000000 		.4byte	.LASF49
+ 698 026c 05       		.byte	0x5
+ 699 026d 35       		.byte	0x35
+ 700 026e 2C000000 		.4byte	0x2c
+ 701 0272 E1       		.byte	0xe1
+ 702 0273 06       		.uleb128 0x6
+ 703 0274 B6010000 		.4byte	.LASF50
+ 704 0278 05       		.byte	0x5
+ 705 0279 36       		.byte	0x36
+ 706 027a 2C000000 		.4byte	0x2c
+ 707 027e E2       		.byte	0xe2
+ 708 027f 06       		.uleb128 0x6
+ 709 0280 0D020000 		.4byte	.LASF51
+ 710 0284 05       		.byte	0x5
+ 711 0285 37       		.byte	0x37
+ 712 0286 2C000000 		.4byte	0x2c
+ 713 028a E3       		.byte	0xe3
+ 714 028b 06       		.uleb128 0x6
+ 715 028c 54020000 		.4byte	.LASF52
+ 716 0290 05       		.byte	0x5
+ 717 0291 38       		.byte	0x38
+ 718 0292 F2020000 		.4byte	0x2f2
+ 719 0296 E4       		.byte	0xe4
+ 720 0297 0A       		.uleb128 0xa
+ 721 0298 61030000 		.4byte	.LASF53
+ 722 029c 05       		.byte	0x5
+ 723 029d 39       		.byte	0x39
+ 724 029e 02030000 		.4byte	0x302
+ 725 02a2 6401     		.2byte	0x164
+ 726 02a4 0A       		.uleb128 0xa
+ 727 02a5 AE030000 		.4byte	.LASF54
+ 728 02a9 05       		.byte	0x5
+ 729 02aa 3A       		.byte	0x3a
+ 730 02ab E2020000 		.4byte	0x2e2
+ 731 02af C801     		.2byte	0x1c8
+ 732 02b1 00       		.byte	0
+ 733 02b2 0B       		.uleb128 0xb
+ 734 02b3 2C000000 		.4byte	0x2c
+ 735 02b7 C2020000 		.4byte	0x2c2
+ 736 02bb 0C       		.uleb128 0xc
+ 737 02bc 9D000000 		.4byte	0x9d
+ 738 02c0 01       		.byte	0x1
+ 739 02c1 00       		.byte	0
+ 740 02c2 0B       		.uleb128 0xb
+ 741 02c3 2C000000 		.4byte	0x2c
+ 742 02c7 D2020000 		.4byte	0x2d2
+ 743 02cb 0C       		.uleb128 0xc
+ 744 02cc 9D000000 		.4byte	0x9d
+ 745 02d0 34       		.byte	0x34
+ 746 02d1 00       		.byte	0
+ 747 02d2 0B       		.uleb128 0xb
+ 748 02d3 8F000000 		.4byte	0x8f
+ 749 02d7 E2020000 		.4byte	0x2e2
+ 750 02db 0C       		.uleb128 0xc
+ 751 02dc 9D000000 		.4byte	0x9d
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 18
+
+
+ 752 02e0 02       		.byte	0x2
+ 753 02e1 00       		.byte	0
+ 754 02e2 0B       		.uleb128 0xb
+ 755 02e3 2C000000 		.4byte	0x2c
+ 756 02e7 F2020000 		.4byte	0x2f2
+ 757 02eb 0C       		.uleb128 0xc
+ 758 02ec 9D000000 		.4byte	0x9d
+ 759 02f0 13       		.byte	0x13
+ 760 02f1 00       		.byte	0
+ 761 02f2 0B       		.uleb128 0xb
+ 762 02f3 2C000000 		.4byte	0x2c
+ 763 02f7 02030000 		.4byte	0x302
+ 764 02fb 0C       		.uleb128 0xc
+ 765 02fc 9D000000 		.4byte	0x9d
+ 766 0300 7F       		.byte	0x7f
+ 767 0301 00       		.byte	0
+ 768 0302 0B       		.uleb128 0xb
+ 769 0303 2C000000 		.4byte	0x2c
+ 770 0307 12030000 		.4byte	0x312
+ 771 030b 0C       		.uleb128 0xc
+ 772 030c 9D000000 		.4byte	0x9d
+ 773 0310 63       		.byte	0x63
+ 774 0311 00       		.byte	0
+ 775 0312 03       		.uleb128 0x3
+ 776 0313 9E030000 		.4byte	.LASF55
+ 777 0317 05       		.byte	0x5
+ 778 0318 3B       		.byte	0x3b
+ 779 0319 52010000 		.4byte	0x152
+ 780 031d 0D       		.uleb128 0xd
+ 781 031e 7B030000 		.4byte	.LASF78
+ 782 0322 01       		.byte	0x1
+ 783 0323 4B       		.byte	0x4b
+ 784 0324 00000000 		.4byte	.LFB63
+ 785 0328 40000000 		.4byte	.LFE63-.LFB63
+ 786 032c 01       		.uleb128 0x1
+ 787 032d 9C       		.byte	0x9c
+ 788 032e 0E       		.uleb128 0xe
+ 789 032f 33030000 		.4byte	.LASF79
+ 790 0333 01       		.byte	0x1
+ 791 0334 58       		.byte	0x58
+ 792 0335 68000000 		.4byte	0x68
+ 793 0339 00000000 		.4byte	.LFB64
+ 794 033d FC010000 		.4byte	.LFE64-.LFB64
+ 795 0341 01       		.uleb128 0x1
+ 796 0342 9C       		.byte	0x9c
+ 797 0343 BC030000 		.4byte	0x3bc
+ 798 0347 0F       		.uleb128 0xf
+ 799 0348 FC030000 		.4byte	.LASF80
+ 800 034c 01       		.byte	0x1
+ 801 034d 5A       		.byte	0x5a
+ 802 034e 68000000 		.4byte	0x68
+ 803 0352 10       		.uleb128 0x10
+ 804 0353 746D7000 		.ascii	"tmp\000"
+ 805 0357 01       		.byte	0x1
+ 806 0358 5B       		.byte	0x5b
+ 807 0359 68000000 		.4byte	0x68
+ 808 035d 02       		.uleb128 0x2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 19
+
+
+ 809 035e 91       		.byte	0x91
+ 810 035f 74       		.sleb128 -12
+ 811 0360 11       		.uleb128 0x11
+ 812 0361 67020000 		.4byte	.LASF56
+ 813 0365 01       		.byte	0x1
+ 814 0366 66       		.byte	0x66
+ 815 0367 68000000 		.4byte	0x68
+ 816 036b 71030000 		.4byte	0x371
+ 817 036f 12       		.uleb128 0x12
+ 818 0370 00       		.byte	0
+ 819 0371 11       		.uleb128 0x11
+ 820 0372 0A030000 		.4byte	.LASF57
+ 821 0376 01       		.byte	0x1
+ 822 0377 69       		.byte	0x69
+ 823 0378 68000000 		.4byte	0x68
+ 824 037c 82030000 		.4byte	0x382
+ 825 0380 12       		.uleb128 0x12
+ 826 0381 00       		.byte	0
+ 827 0382 11       		.uleb128 0x11
+ 828 0383 AB010000 		.4byte	.LASF58
+ 829 0387 01       		.byte	0x1
+ 830 0388 81       		.byte	0x81
+ 831 0389 68000000 		.4byte	0x68
+ 832 038d 93030000 		.4byte	0x393
+ 833 0391 12       		.uleb128 0x12
+ 834 0392 00       		.byte	0
+ 835 0393 13       		.uleb128 0x13
+ 836 0394 90010000 		.4byte	.LBB2
+ 837 0398 26000000 		.4byte	.LBE2-.LBB2
+ 838 039c 14       		.uleb128 0x14
+ 839 039d 97030000 		.4byte	.LASF59
+ 840 03a1 01       		.byte	0x1
+ 841 03a2 BD       		.byte	0xbd
+ 842 03a3 68000000 		.4byte	0x68
+ 843 03a7 05       		.uleb128 0x5
+ 844 03a8 03       		.byte	0x3
+ 845 03a9 04000000 		.4byte	st_div.7667
+ 846 03ad 15       		.uleb128 0x15
+ 847 03ae 40030000 		.4byte	.LASF81
+ 848 03b2 01       		.byte	0x1
+ 849 03b3 BE       		.byte	0xbe
+ 850 03b4 68000000 		.4byte	0x68
+ 851 03b8 12       		.uleb128 0x12
+ 852 03b9 00       		.byte	0
+ 853 03ba 00       		.byte	0
+ 854 03bb 00       		.byte	0
+ 855 03bc 16       		.uleb128 0x16
+ 856 03bd 09040000 		.4byte	.LASF60
+ 857 03c1 06       		.byte	0x6
+ 858 03c2 1207     		.2byte	0x712
+ 859 03c4 C8030000 		.4byte	0x3c8
+ 860 03c8 07       		.uleb128 0x7
+ 861 03c9 76000000 		.4byte	0x76
+ 862 03cd 17       		.uleb128 0x17
+ 863 03ce 35000000 		.4byte	.LASF61
+ 864 03d2 05       		.byte	0x5
+ 865 03d3 3D       		.byte	0x3d
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 20
+
+
+ 866 03d4 12030000 		.4byte	0x312
+ 867 03d8 18       		.uleb128 0x18
+ 868 03d9 7300     		.ascii	"s\000"
+ 869 03db 05       		.byte	0x5
+ 870 03dc 3E       		.byte	0x3e
+ 871 03dd 47010000 		.4byte	0x147
+ 872 03e1 05       		.uleb128 0x5
+ 873 03e2 03       		.byte	0x3
+ 874 03e3 00000000 		.4byte	s
+ 875 03e7 19       		.uleb128 0x19
+ 876 03e8 38010000 		.4byte	.LASF62
+ 877 03ec 05       		.byte	0x5
+ 878 03ed 47       		.byte	0x47
+ 879 03ee 8F000000 		.4byte	0x8f
+ 880 03f2 05       		.uleb128 0x5
+ 881 03f3 03       		.byte	0x3
+ 882 03f4 00000000 		.4byte	currentAccessType
+ 883 03f8 19       		.uleb128 0x19
+ 884 03f9 CE010000 		.4byte	.LASF63
+ 885 03fd 05       		.byte	0x5
+ 886 03fe 48       		.byte	0x48
+ 887 03ff 8F000000 		.4byte	0x8f
+ 888 0403 05       		.uleb128 0x5
+ 889 0404 03       		.byte	0x3
+ 890 0405 00000000 		.4byte	hw_old
+ 891 0409 19       		.uleb128 0x19
+ 892 040a 81010000 		.4byte	.LASF64
+ 893 040e 05       		.byte	0x5
+ 894 040f 49       		.byte	0x49
+ 895 0410 8F000000 		.4byte	0x8f
+ 896 0414 05       		.uleb128 0x5
+ 897 0415 03       		.byte	0x3
+ 898 0416 00000000 		.4byte	tp_old
+ 899 041a 19       		.uleb128 0x19
+ 900 041b B8020000 		.4byte	.LASF65
+ 901 041f 05       		.byte	0x5
+ 902 0420 4A       		.byte	0x4a
+ 903 0421 68000000 		.4byte	0x68
+ 904 0425 05       		.uleb128 0x5
+ 905 0426 03       		.byte	0x3
+ 906 0427 00000000 		.4byte	tamperCR_polarity
+ 907 042b 19       		.uleb128 0x19
+ 908 042c 37040000 		.4byte	.LASF66
+ 909 0430 05       		.byte	0x5
+ 910 0431 4B       		.byte	0x4b
+ 911 0432 68000000 		.4byte	0x68
+ 912 0436 05       		.uleb128 0x5
+ 913 0437 03       		.byte	0x3
+ 914 0438 00000000 		.4byte	tamper_out_polarity
+ 915 043c 19       		.uleb128 0x19
+ 916 043d D2030000 		.4byte	.LASF67
+ 917 0441 05       		.byte	0x5
+ 918 0442 4E       		.byte	0x4e
+ 919 0443 68000000 		.4byte	0x68
+ 920 0447 05       		.uleb128 0x5
+ 921 0448 03       		.byte	0x3
+ 922 0449 00000000 		.4byte	card_ack
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 21
+
+
+ 923 044d 19       		.uleb128 0x19
+ 924 044e 93010000 		.4byte	.LASF68
+ 925 0452 05       		.byte	0x5
+ 926 0453 4F       		.byte	0x4f
+ 927 0454 68000000 		.4byte	0x68
+ 928 0458 05       		.uleb128 0x5
+ 929 0459 03       		.byte	0x3
+ 930 045a 00000000 		.4byte	card_in_buf
+ 931 045e 19       		.uleb128 0x19
+ 932 045f 68010000 		.4byte	.LASF69
+ 933 0463 07       		.byte	0x7
+ 934 0464 38       		.byte	0x38
+ 935 0465 68000000 		.4byte	0x68
+ 936 0469 05       		.uleb128 0x5
+ 937 046a 03       		.byte	0x3
+ 938 046b 00000000 		.4byte	osdp_timeout
+ 939 046f 17       		.uleb128 0x17
+ 940 0470 D5010000 		.4byte	.LASF70
+ 941 0474 05       		.byte	0x5
+ 942 0475 66       		.byte	0x66
+ 943 0476 8F000000 		.4byte	0x8f
+ 944 047a 17       		.uleb128 0x17
+ 945 047b 4A030000 		.4byte	.LASF71
+ 946 047f 05       		.byte	0x5
+ 947 0480 67       		.byte	0x67
+ 948 0481 8F000000 		.4byte	0x8f
+ 949 0485 17       		.uleb128 0x17
+ 950 0486 E6030000 		.4byte	.LASF72
+ 951 048a 05       		.byte	0x5
+ 952 048b 68       		.byte	0x68
+ 953 048c 4C000000 		.4byte	0x4c
+ 954 0490 16       		.uleb128 0x16
+ 955 0491 55010000 		.4byte	.LASF73
+ 956 0495 05       		.byte	0x5
+ 957 0496 1C01     		.2byte	0x11c
+ 958 0498 8F000000 		.4byte	0x8f
+ 959 049c 0B       		.uleb128 0xb
+ 960 049d 2C000000 		.4byte	0x2c
+ 961 04a1 AC040000 		.4byte	0x4ac
+ 962 04a5 0C       		.uleb128 0xc
+ 963 04a6 9D000000 		.4byte	0x9d
+ 964 04aa 0F       		.byte	0xf
+ 965 04ab 00       		.byte	0
+ 966 04ac 18       		.uleb128 0x18
+ 967 04ad 627500   		.ascii	"bu\000"
+ 968 04b0 01       		.byte	0x1
+ 969 04b1 43       		.byte	0x43
+ 970 04b2 9C040000 		.4byte	0x49c
+ 971 04b6 05       		.uleb128 0x5
+ 972 04b7 03       		.byte	0x3
+ 973 04b8 00000000 		.4byte	bu
+ 974 04bc 18       		.uleb128 0x18
+ 975 04bd 7A00     		.ascii	"z\000"
+ 976 04bf 01       		.byte	0x1
+ 977 04c0 44       		.byte	0x44
+ 978 04c1 68000000 		.4byte	0x68
+ 979 04c5 05       		.uleb128 0x5
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 22
+
+
+ 980 04c6 03       		.byte	0x3
+ 981 04c7 00000000 		.4byte	z
+ 982 04cb 19       		.uleb128 0x19
+ 983 04cc 86020000 		.4byte	.LASF74
+ 984 04d0 01       		.byte	0x1
+ 985 04d1 45       		.byte	0x45
+ 986 04d2 8F000000 		.4byte	0x8f
+ 987 04d6 05       		.uleb128 0x5
+ 988 04d7 03       		.byte	0x3
+ 989 04d8 00000000 		.4byte	TOC_port_init
+ 990 04dc 00       		.byte	0
+ 991              		.section	.debug_abbrev,"",%progbits
+ 992              	.Ldebug_abbrev0:
+ 993 0000 01       		.uleb128 0x1
+ 994 0001 11       		.uleb128 0x11
+ 995 0002 01       		.byte	0x1
+ 996 0003 25       		.uleb128 0x25
+ 997 0004 0E       		.uleb128 0xe
+ 998 0005 13       		.uleb128 0x13
+ 999 0006 0B       		.uleb128 0xb
+ 1000 0007 03       		.uleb128 0x3
+ 1001 0008 0E       		.uleb128 0xe
+ 1002 0009 1B       		.uleb128 0x1b
+ 1003 000a 0E       		.uleb128 0xe
+ 1004 000b 55       		.uleb128 0x55
+ 1005 000c 17       		.uleb128 0x17
+ 1006 000d 11       		.uleb128 0x11
+ 1007 000e 01       		.uleb128 0x1
+ 1008 000f 10       		.uleb128 0x10
+ 1009 0010 17       		.uleb128 0x17
+ 1010 0011 00       		.byte	0
+ 1011 0012 00       		.byte	0
+ 1012 0013 02       		.uleb128 0x2
+ 1013 0014 24       		.uleb128 0x24
+ 1014 0015 00       		.byte	0
+ 1015 0016 0B       		.uleb128 0xb
+ 1016 0017 0B       		.uleb128 0xb
+ 1017 0018 3E       		.uleb128 0x3e
+ 1018 0019 0B       		.uleb128 0xb
+ 1019 001a 03       		.uleb128 0x3
+ 1020 001b 0E       		.uleb128 0xe
+ 1021 001c 00       		.byte	0
+ 1022 001d 00       		.byte	0
+ 1023 001e 03       		.uleb128 0x3
+ 1024 001f 16       		.uleb128 0x16
+ 1025 0020 00       		.byte	0
+ 1026 0021 03       		.uleb128 0x3
+ 1027 0022 0E       		.uleb128 0xe
+ 1028 0023 3A       		.uleb128 0x3a
+ 1029 0024 0B       		.uleb128 0xb
+ 1030 0025 3B       		.uleb128 0x3b
+ 1031 0026 0B       		.uleb128 0xb
+ 1032 0027 49       		.uleb128 0x49
+ 1033 0028 13       		.uleb128 0x13
+ 1034 0029 00       		.byte	0
+ 1035 002a 00       		.byte	0
+ 1036 002b 04       		.uleb128 0x4
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 23
+
+
+ 1037 002c 24       		.uleb128 0x24
+ 1038 002d 00       		.byte	0
+ 1039 002e 0B       		.uleb128 0xb
+ 1040 002f 0B       		.uleb128 0xb
+ 1041 0030 3E       		.uleb128 0x3e
+ 1042 0031 0B       		.uleb128 0xb
+ 1043 0032 03       		.uleb128 0x3
+ 1044 0033 08       		.uleb128 0x8
+ 1045 0034 00       		.byte	0
+ 1046 0035 00       		.byte	0
+ 1047 0036 05       		.uleb128 0x5
+ 1048 0037 13       		.uleb128 0x13
+ 1049 0038 01       		.byte	0x1
+ 1050 0039 0B       		.uleb128 0xb
+ 1051 003a 0B       		.uleb128 0xb
+ 1052 003b 3A       		.uleb128 0x3a
+ 1053 003c 0B       		.uleb128 0xb
+ 1054 003d 3B       		.uleb128 0x3b
+ 1055 003e 0B       		.uleb128 0xb
+ 1056 003f 01       		.uleb128 0x1
+ 1057 0040 13       		.uleb128 0x13
+ 1058 0041 00       		.byte	0
+ 1059 0042 00       		.byte	0
+ 1060 0043 06       		.uleb128 0x6
+ 1061 0044 0D       		.uleb128 0xd
+ 1062 0045 00       		.byte	0
+ 1063 0046 03       		.uleb128 0x3
+ 1064 0047 0E       		.uleb128 0xe
+ 1065 0048 3A       		.uleb128 0x3a
+ 1066 0049 0B       		.uleb128 0xb
+ 1067 004a 3B       		.uleb128 0x3b
+ 1068 004b 0B       		.uleb128 0xb
+ 1069 004c 49       		.uleb128 0x49
+ 1070 004d 13       		.uleb128 0x13
+ 1071 004e 38       		.uleb128 0x38
+ 1072 004f 0B       		.uleb128 0xb
+ 1073 0050 00       		.byte	0
+ 1074 0051 00       		.byte	0
+ 1075 0052 07       		.uleb128 0x7
+ 1076 0053 35       		.uleb128 0x35
+ 1077 0054 00       		.byte	0
+ 1078 0055 49       		.uleb128 0x49
+ 1079 0056 13       		.uleb128 0x13
+ 1080 0057 00       		.byte	0
+ 1081 0058 00       		.byte	0
+ 1082 0059 08       		.uleb128 0x8
+ 1083 005a 13       		.uleb128 0x13
+ 1084 005b 01       		.byte	0x1
+ 1085 005c 03       		.uleb128 0x3
+ 1086 005d 0E       		.uleb128 0xe
+ 1087 005e 0B       		.uleb128 0xb
+ 1088 005f 05       		.uleb128 0x5
+ 1089 0060 3A       		.uleb128 0x3a
+ 1090 0061 0B       		.uleb128 0xb
+ 1091 0062 3B       		.uleb128 0x3b
+ 1092 0063 0B       		.uleb128 0xb
+ 1093 0064 01       		.uleb128 0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 24
+
+
+ 1094 0065 13       		.uleb128 0x13
+ 1095 0066 00       		.byte	0
+ 1096 0067 00       		.byte	0
+ 1097 0068 09       		.uleb128 0x9
+ 1098 0069 0D       		.uleb128 0xd
+ 1099 006a 00       		.byte	0
+ 1100 006b 03       		.uleb128 0x3
+ 1101 006c 08       		.uleb128 0x8
+ 1102 006d 3A       		.uleb128 0x3a
+ 1103 006e 0B       		.uleb128 0xb
+ 1104 006f 3B       		.uleb128 0x3b
+ 1105 0070 0B       		.uleb128 0xb
+ 1106 0071 49       		.uleb128 0x49
+ 1107 0072 13       		.uleb128 0x13
+ 1108 0073 38       		.uleb128 0x38
+ 1109 0074 0B       		.uleb128 0xb
+ 1110 0075 00       		.byte	0
+ 1111 0076 00       		.byte	0
+ 1112 0077 0A       		.uleb128 0xa
+ 1113 0078 0D       		.uleb128 0xd
+ 1114 0079 00       		.byte	0
+ 1115 007a 03       		.uleb128 0x3
+ 1116 007b 0E       		.uleb128 0xe
+ 1117 007c 3A       		.uleb128 0x3a
+ 1118 007d 0B       		.uleb128 0xb
+ 1119 007e 3B       		.uleb128 0x3b
+ 1120 007f 0B       		.uleb128 0xb
+ 1121 0080 49       		.uleb128 0x49
+ 1122 0081 13       		.uleb128 0x13
+ 1123 0082 38       		.uleb128 0x38
+ 1124 0083 05       		.uleb128 0x5
+ 1125 0084 00       		.byte	0
+ 1126 0085 00       		.byte	0
+ 1127 0086 0B       		.uleb128 0xb
+ 1128 0087 01       		.uleb128 0x1
+ 1129 0088 01       		.byte	0x1
+ 1130 0089 49       		.uleb128 0x49
+ 1131 008a 13       		.uleb128 0x13
+ 1132 008b 01       		.uleb128 0x1
+ 1133 008c 13       		.uleb128 0x13
+ 1134 008d 00       		.byte	0
+ 1135 008e 00       		.byte	0
+ 1136 008f 0C       		.uleb128 0xc
+ 1137 0090 21       		.uleb128 0x21
+ 1138 0091 00       		.byte	0
+ 1139 0092 49       		.uleb128 0x49
+ 1140 0093 13       		.uleb128 0x13
+ 1141 0094 2F       		.uleb128 0x2f
+ 1142 0095 0B       		.uleb128 0xb
+ 1143 0096 00       		.byte	0
+ 1144 0097 00       		.byte	0
+ 1145 0098 0D       		.uleb128 0xd
+ 1146 0099 2E       		.uleb128 0x2e
+ 1147 009a 00       		.byte	0
+ 1148 009b 3F       		.uleb128 0x3f
+ 1149 009c 19       		.uleb128 0x19
+ 1150 009d 03       		.uleb128 0x3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 25
+
+
+ 1151 009e 0E       		.uleb128 0xe
+ 1152 009f 3A       		.uleb128 0x3a
+ 1153 00a0 0B       		.uleb128 0xb
+ 1154 00a1 3B       		.uleb128 0x3b
+ 1155 00a2 0B       		.uleb128 0xb
+ 1156 00a3 11       		.uleb128 0x11
+ 1157 00a4 01       		.uleb128 0x1
+ 1158 00a5 12       		.uleb128 0x12
+ 1159 00a6 06       		.uleb128 0x6
+ 1160 00a7 40       		.uleb128 0x40
+ 1161 00a8 18       		.uleb128 0x18
+ 1162 00a9 9742     		.uleb128 0x2117
+ 1163 00ab 19       		.uleb128 0x19
+ 1164 00ac 00       		.byte	0
+ 1165 00ad 00       		.byte	0
+ 1166 00ae 0E       		.uleb128 0xe
+ 1167 00af 2E       		.uleb128 0x2e
+ 1168 00b0 01       		.byte	0x1
+ 1169 00b1 3F       		.uleb128 0x3f
+ 1170 00b2 19       		.uleb128 0x19
+ 1171 00b3 03       		.uleb128 0x3
+ 1172 00b4 0E       		.uleb128 0xe
+ 1173 00b5 3A       		.uleb128 0x3a
+ 1174 00b6 0B       		.uleb128 0xb
+ 1175 00b7 3B       		.uleb128 0x3b
+ 1176 00b8 0B       		.uleb128 0xb
+ 1177 00b9 49       		.uleb128 0x49
+ 1178 00ba 13       		.uleb128 0x13
+ 1179 00bb 11       		.uleb128 0x11
+ 1180 00bc 01       		.uleb128 0x1
+ 1181 00bd 12       		.uleb128 0x12
+ 1182 00be 06       		.uleb128 0x6
+ 1183 00bf 40       		.uleb128 0x40
+ 1184 00c0 18       		.uleb128 0x18
+ 1185 00c1 9642     		.uleb128 0x2116
+ 1186 00c3 19       		.uleb128 0x19
+ 1187 00c4 01       		.uleb128 0x1
+ 1188 00c5 13       		.uleb128 0x13
+ 1189 00c6 00       		.byte	0
+ 1190 00c7 00       		.byte	0
+ 1191 00c8 0F       		.uleb128 0xf
+ 1192 00c9 34       		.uleb128 0x34
+ 1193 00ca 00       		.byte	0
+ 1194 00cb 03       		.uleb128 0x3
+ 1195 00cc 0E       		.uleb128 0xe
+ 1196 00cd 3A       		.uleb128 0x3a
+ 1197 00ce 0B       		.uleb128 0xb
+ 1198 00cf 3B       		.uleb128 0x3b
+ 1199 00d0 0B       		.uleb128 0xb
+ 1200 00d1 49       		.uleb128 0x49
+ 1201 00d2 13       		.uleb128 0x13
+ 1202 00d3 00       		.byte	0
+ 1203 00d4 00       		.byte	0
+ 1204 00d5 10       		.uleb128 0x10
+ 1205 00d6 34       		.uleb128 0x34
+ 1206 00d7 00       		.byte	0
+ 1207 00d8 03       		.uleb128 0x3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 26
+
+
+ 1208 00d9 08       		.uleb128 0x8
+ 1209 00da 3A       		.uleb128 0x3a
+ 1210 00db 0B       		.uleb128 0xb
+ 1211 00dc 3B       		.uleb128 0x3b
+ 1212 00dd 0B       		.uleb128 0xb
+ 1213 00de 49       		.uleb128 0x49
+ 1214 00df 13       		.uleb128 0x13
+ 1215 00e0 02       		.uleb128 0x2
+ 1216 00e1 18       		.uleb128 0x18
+ 1217 00e2 00       		.byte	0
+ 1218 00e3 00       		.byte	0
+ 1219 00e4 11       		.uleb128 0x11
+ 1220 00e5 2E       		.uleb128 0x2e
+ 1221 00e6 01       		.byte	0x1
+ 1222 00e7 3F       		.uleb128 0x3f
+ 1223 00e8 19       		.uleb128 0x19
+ 1224 00e9 03       		.uleb128 0x3
+ 1225 00ea 0E       		.uleb128 0xe
+ 1226 00eb 3A       		.uleb128 0x3a
+ 1227 00ec 0B       		.uleb128 0xb
+ 1228 00ed 3B       		.uleb128 0x3b
+ 1229 00ee 0B       		.uleb128 0xb
+ 1230 00ef 49       		.uleb128 0x49
+ 1231 00f0 13       		.uleb128 0x13
+ 1232 00f1 3C       		.uleb128 0x3c
+ 1233 00f2 19       		.uleb128 0x19
+ 1234 00f3 01       		.uleb128 0x1
+ 1235 00f4 13       		.uleb128 0x13
+ 1236 00f5 00       		.byte	0
+ 1237 00f6 00       		.byte	0
+ 1238 00f7 12       		.uleb128 0x12
+ 1239 00f8 18       		.uleb128 0x18
+ 1240 00f9 00       		.byte	0
+ 1241 00fa 00       		.byte	0
+ 1242 00fb 00       		.byte	0
+ 1243 00fc 13       		.uleb128 0x13
+ 1244 00fd 0B       		.uleb128 0xb
+ 1245 00fe 01       		.byte	0x1
+ 1246 00ff 11       		.uleb128 0x11
+ 1247 0100 01       		.uleb128 0x1
+ 1248 0101 12       		.uleb128 0x12
+ 1249 0102 06       		.uleb128 0x6
+ 1250 0103 00       		.byte	0
+ 1251 0104 00       		.byte	0
+ 1252 0105 14       		.uleb128 0x14
+ 1253 0106 34       		.uleb128 0x34
+ 1254 0107 00       		.byte	0
+ 1255 0108 03       		.uleb128 0x3
+ 1256 0109 0E       		.uleb128 0xe
+ 1257 010a 3A       		.uleb128 0x3a
+ 1258 010b 0B       		.uleb128 0xb
+ 1259 010c 3B       		.uleb128 0x3b
+ 1260 010d 0B       		.uleb128 0xb
+ 1261 010e 49       		.uleb128 0x49
+ 1262 010f 13       		.uleb128 0x13
+ 1263 0110 02       		.uleb128 0x2
+ 1264 0111 18       		.uleb128 0x18
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 27
+
+
+ 1265 0112 00       		.byte	0
+ 1266 0113 00       		.byte	0
+ 1267 0114 15       		.uleb128 0x15
+ 1268 0115 2E       		.uleb128 0x2e
+ 1269 0116 01       		.byte	0x1
+ 1270 0117 3F       		.uleb128 0x3f
+ 1271 0118 19       		.uleb128 0x19
+ 1272 0119 03       		.uleb128 0x3
+ 1273 011a 0E       		.uleb128 0xe
+ 1274 011b 3A       		.uleb128 0x3a
+ 1275 011c 0B       		.uleb128 0xb
+ 1276 011d 3B       		.uleb128 0x3b
+ 1277 011e 0B       		.uleb128 0xb
+ 1278 011f 49       		.uleb128 0x49
+ 1279 0120 13       		.uleb128 0x13
+ 1280 0121 3C       		.uleb128 0x3c
+ 1281 0122 19       		.uleb128 0x19
+ 1282 0123 00       		.byte	0
+ 1283 0124 00       		.byte	0
+ 1284 0125 16       		.uleb128 0x16
+ 1285 0126 34       		.uleb128 0x34
+ 1286 0127 00       		.byte	0
+ 1287 0128 03       		.uleb128 0x3
+ 1288 0129 0E       		.uleb128 0xe
+ 1289 012a 3A       		.uleb128 0x3a
+ 1290 012b 0B       		.uleb128 0xb
+ 1291 012c 3B       		.uleb128 0x3b
+ 1292 012d 05       		.uleb128 0x5
+ 1293 012e 49       		.uleb128 0x49
+ 1294 012f 13       		.uleb128 0x13
+ 1295 0130 3F       		.uleb128 0x3f
+ 1296 0131 19       		.uleb128 0x19
+ 1297 0132 3C       		.uleb128 0x3c
+ 1298 0133 19       		.uleb128 0x19
+ 1299 0134 00       		.byte	0
+ 1300 0135 00       		.byte	0
+ 1301 0136 17       		.uleb128 0x17
+ 1302 0137 34       		.uleb128 0x34
+ 1303 0138 00       		.byte	0
+ 1304 0139 03       		.uleb128 0x3
+ 1305 013a 0E       		.uleb128 0xe
+ 1306 013b 3A       		.uleb128 0x3a
+ 1307 013c 0B       		.uleb128 0xb
+ 1308 013d 3B       		.uleb128 0x3b
+ 1309 013e 0B       		.uleb128 0xb
+ 1310 013f 49       		.uleb128 0x49
+ 1311 0140 13       		.uleb128 0x13
+ 1312 0141 3F       		.uleb128 0x3f
+ 1313 0142 19       		.uleb128 0x19
+ 1314 0143 3C       		.uleb128 0x3c
+ 1315 0144 19       		.uleb128 0x19
+ 1316 0145 00       		.byte	0
+ 1317 0146 00       		.byte	0
+ 1318 0147 18       		.uleb128 0x18
+ 1319 0148 34       		.uleb128 0x34
+ 1320 0149 00       		.byte	0
+ 1321 014a 03       		.uleb128 0x3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 28
+
+
+ 1322 014b 08       		.uleb128 0x8
+ 1323 014c 3A       		.uleb128 0x3a
+ 1324 014d 0B       		.uleb128 0xb
+ 1325 014e 3B       		.uleb128 0x3b
+ 1326 014f 0B       		.uleb128 0xb
+ 1327 0150 49       		.uleb128 0x49
+ 1328 0151 13       		.uleb128 0x13
+ 1329 0152 3F       		.uleb128 0x3f
+ 1330 0153 19       		.uleb128 0x19
+ 1331 0154 02       		.uleb128 0x2
+ 1332 0155 18       		.uleb128 0x18
+ 1333 0156 00       		.byte	0
+ 1334 0157 00       		.byte	0
+ 1335 0158 19       		.uleb128 0x19
+ 1336 0159 34       		.uleb128 0x34
+ 1337 015a 00       		.byte	0
+ 1338 015b 03       		.uleb128 0x3
+ 1339 015c 0E       		.uleb128 0xe
+ 1340 015d 3A       		.uleb128 0x3a
+ 1341 015e 0B       		.uleb128 0xb
+ 1342 015f 3B       		.uleb128 0x3b
+ 1343 0160 0B       		.uleb128 0xb
+ 1344 0161 49       		.uleb128 0x49
+ 1345 0162 13       		.uleb128 0x13
+ 1346 0163 3F       		.uleb128 0x3f
+ 1347 0164 19       		.uleb128 0x19
+ 1348 0165 02       		.uleb128 0x2
+ 1349 0166 18       		.uleb128 0x18
+ 1350 0167 00       		.byte	0
+ 1351 0168 00       		.byte	0
+ 1352 0169 00       		.byte	0
+ 1353              		.section	.debug_aranges,"",%progbits
+ 1354 0000 24000000 		.4byte	0x24
+ 1355 0004 0200     		.2byte	0x2
+ 1356 0006 00000000 		.4byte	.Ldebug_info0
+ 1357 000a 04       		.byte	0x4
+ 1358 000b 00       		.byte	0
+ 1359 000c 0000     		.2byte	0
+ 1360 000e 0000     		.2byte	0
+ 1361 0010 00000000 		.4byte	.LFB63
+ 1362 0014 40000000 		.4byte	.LFE63-.LFB63
+ 1363 0018 00000000 		.4byte	.LFB64
+ 1364 001c FC010000 		.4byte	.LFE64-.LFB64
+ 1365 0020 00000000 		.4byte	0
+ 1366 0024 00000000 		.4byte	0
+ 1367              		.section	.debug_ranges,"",%progbits
+ 1368              	.Ldebug_ranges0:
+ 1369 0000 00000000 		.4byte	.LFB63
+ 1370 0004 40000000 		.4byte	.LFE63
+ 1371 0008 00000000 		.4byte	.LFB64
+ 1372 000c FC010000 		.4byte	.LFE64
+ 1373 0010 00000000 		.4byte	0
+ 1374 0014 00000000 		.4byte	0
+ 1375              		.section	.debug_line,"",%progbits
+ 1376              	.Ldebug_line0:
+ 1377 0000 DF010000 		.section	.debug_str,"MS",%progbits,1
+ 1377      02006301 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 29
+
+
+ 1377      00000201 
+ 1377      FB0E0D00 
+ 1377      01010101 
+ 1378              	.LASF14:
+ 1379 0000 6C6F6E67 		.ascii	"long double\000"
+ 1379      20646F75 
+ 1379      626C6500 
+ 1380              	.LASF26:
+ 1381 000c 74696D65 		.ascii	"timer_rx_ctr\000"
+ 1381      725F7278 
+ 1381      5F637472 
+ 1381      00
+ 1382              	.LASF45:
+ 1383 0019 6F736470 		.ascii	"osdp_status\000"
+ 1383      5F737461 
+ 1383      74757300 
+ 1384              	.LASF49:
+ 1385 0025 6F736470 		.ascii	"osdp_reader_cmd\000"
+ 1385      5F726561 
+ 1385      6465725F 
+ 1385      636D6400 
+ 1386              	.LASF61:
+ 1387 0035 4D794932 		.ascii	"MyI2C_Regs\000"
+ 1387      435F5265 
+ 1387      677300
+ 1388              	.LASF15:
+ 1389 0040 73697A65 		.ascii	"sizetype\000"
+ 1389      74797065 
+ 1389      00
+ 1390              	.LASF47:
+ 1391 0049 6F736470 		.ascii	"osdp_rate\000"
+ 1391      5F726174 
+ 1391      6500
+ 1392              	.LASF39:
+ 1393 0053 73656E64 		.ascii	"send_mobile\000"
+ 1393      5F6D6F62 
+ 1393      696C6500 
+ 1394              	.LASF34:
+ 1395 005f 66616374 		.ascii	"factory_reset\000"
+ 1395      6F72795F 
+ 1395      72657365 
+ 1395      7400
+ 1396              	.LASF35:
+ 1397 006d 64617461 		.ascii	"data_length\000"
+ 1397      5F6C656E 
+ 1397      67746800 
+ 1398              	.LASF75:
+ 1399 0079 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1399      43313120 
+ 1399      352E342E 
+ 1399      31203230 
+ 1399      31363036 
+ 1400 00ac 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 1400      20726576 
+ 1400      6973696F 
+ 1400      6E203233 
+ 1400      37373135 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 30
+
+
+ 1401 00df 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 1401      66756E63 
+ 1401      74696F6E 
+ 1401      2D736563 
+ 1401      74696F6E 
+ 1402              	.LASF48:
+ 1403 0107 6F736470 		.ascii	"osdp_buffer\000"
+ 1403      5F627566 
+ 1403      66657200 
+ 1404              	.LASF6:
+ 1405 0113 6C6F6E67 		.ascii	"long long int\000"
+ 1405      206C6F6E 
+ 1405      6720696E 
+ 1405      7400
+ 1406              	.LASF31:
+ 1407 0121 6D6F6465 		.ascii	"mode\000"
+ 1407      00
+ 1408              	.LASF2:
+ 1409 0126 73686F72 		.ascii	"short int\000"
+ 1409      7420696E 
+ 1409      7400
+ 1410              	.LASF23:
+ 1411 0130 72785F62 		.ascii	"rx_bits\000"
+ 1411      69747300 
+ 1412              	.LASF62:
+ 1413 0138 63757272 		.ascii	"currentAccessType\000"
+ 1413      656E7441 
+ 1413      63636573 
+ 1413      73547970 
+ 1413      6500
+ 1414              	.LASF37:
+ 1415 014a 70757368 		.ascii	"pushbtn_in\000"
+ 1415      62746E5F 
+ 1415      696E00
+ 1416              	.LASF73:
+ 1417 0155 69735769 		.ascii	"isWiegandDataReady\000"
+ 1417      6567616E 
+ 1417      64446174 
+ 1417      61526561 
+ 1417      647900
+ 1418              	.LASF69:
+ 1419 0168 6F736470 		.ascii	"osdp_timeout\000"
+ 1419      5F74696D 
+ 1419      656F7574 
+ 1419      00
+ 1420              	.LASF0:
+ 1421 0175 7369676E 		.ascii	"signed char\000"
+ 1421      65642063 
+ 1421      68617200 
+ 1422              	.LASF64:
+ 1423 0181 74705F6F 		.ascii	"tp_old\000"
+ 1423      6C6400
+ 1424              	.LASF11:
+ 1425 0188 666C6F61 		.ascii	"float\000"
+ 1425      7400
+ 1426              	.LASF19:
+ 1427 018e 62697473 		.ascii	"bits\000"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 31
+
+
+ 1427      00
+ 1428              	.LASF68:
+ 1429 0193 63617264 		.ascii	"card_in_buf\000"
+ 1429      5F696E5F 
+ 1429      62756600 
+ 1430              	.LASF32:
+ 1431 019f 6163735F 		.ascii	"acs_outputs\000"
+ 1431      6F757470 
+ 1431      75747300 
+ 1432              	.LASF58:
+ 1433 01ab 504F455F 		.ascii	"POE_OIM_En\000"
+ 1433      4F494D5F 
+ 1433      456E00
+ 1434              	.LASF50:
+ 1435 01b6 6F736470 		.ascii	"osdp_reader_data_length\000"
+ 1435      5F726561 
+ 1435      6465725F 
+ 1435      64617461 
+ 1435      5F6C656E 
+ 1436              	.LASF63:
+ 1437 01ce 68775F6F 		.ascii	"hw_old\000"
+ 1437      6C6400
+ 1438              	.LASF70:
+ 1439 01d5 62757474 		.ascii	"buttonPressed\000"
+ 1439      6F6E5072 
+ 1439      65737365 
+ 1439      6400
+ 1440              	.LASF4:
+ 1441 01e3 6C6F6E67 		.ascii	"long int\000"
+ 1441      20696E74 
+ 1441      00
+ 1442              	.LASF5:
+ 1443 01ec 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1443      20756E73 
+ 1443      69676E65 
+ 1443      6420696E 
+ 1443      7400
+ 1444              	.LASF21:
+ 1445 01fe 74785F62 		.ascii	"tx_byte\000"
+ 1445      79746500 
+ 1446              	.LASF17:
+ 1447 0206 70617269 		.ascii	"parity\000"
+ 1447      747900
+ 1448              	.LASF51:
+ 1449 020d 6F736470 		.ascii	"osdp_reader_rate\000"
+ 1449      5F726561 
+ 1449      6465725F 
+ 1449      72617465 
+ 1449      00
+ 1450              	.LASF36:
+ 1451 021e 74616D70 		.ascii	"tamper_in\000"
+ 1451      65725F69 
+ 1451      6E00
+ 1452              	.LASF77:
+ 1453 0228 443A5C65 		.ascii	"D:\\ext\\psoc_dual\\nanoNxt_ICM3\\ext_pim.cydsn\000"
+ 1453      78745C70 
+ 1453      736F635F 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 32
+
+
+ 1453      6475616C 
+ 1453      5C6E616E 
+ 1454              	.LASF52:
+ 1455 0254 6F736470 		.ascii	"osdp_reader_buffer\000"
+ 1455      5F726561 
+ 1455      6465725F 
+ 1455      62756666 
+ 1455      657200
+ 1456              	.LASF56:
+ 1457 0267 7274635F 		.ascii	"rtc_write_reg\000"
+ 1457      77726974 
+ 1457      655F7265 
+ 1457      6700
+ 1458              	.LASF28:
+ 1459 0275 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 1459      5F554152 
+ 1459      545F5354 
+ 1459      52554354 
+ 1459      00
+ 1460              	.LASF74:
+ 1461 0286 544F435F 		.ascii	"TOC_port_init\000"
+ 1461      706F7274 
+ 1461      5F696E69 
+ 1461      7400
+ 1462              	.LASF16:
+ 1463 0294 62617564 		.ascii	"baud\000"
+ 1463      00
+ 1464              	.LASF46:
+ 1465 0299 6F736470 		.ascii	"osdp_data_length\000"
+ 1465      5F646174 
+ 1465      615F6C65 
+ 1465      6E677468 
+ 1465      00
+ 1466              	.LASF1:
+ 1467 02aa 756E7369 		.ascii	"unsigned char\000"
+ 1467      676E6564 
+ 1467      20636861 
+ 1467      7200
+ 1468              	.LASF65:
+ 1469 02b8 74616D70 		.ascii	"tamperCR_polarity\000"
+ 1469      65724352 
+ 1469      5F706F6C 
+ 1469      61726974 
+ 1469      7900
+ 1470              	.LASF38:
+ 1471 02ca 6D6F6269 		.ascii	"mobile_mode\000"
+ 1471      6C655F6D 
+ 1471      6F646500 
+ 1472              	.LASF24:
+ 1473 02d6 666C6167 		.ascii	"flags\000"
+ 1473      7300
+ 1474              	.LASF7:
+ 1475 02dc 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1475      206C6F6E 
+ 1475      6720756E 
+ 1475      7369676E 
+ 1475      65642069 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 33
+
+
+ 1476              	.LASF8:
+ 1477 02f3 756E7369 		.ascii	"unsigned int\000"
+ 1477      676E6564 
+ 1477      20696E74 
+ 1477      00
+ 1478              	.LASF18:
+ 1479 0300 73746F70 		.ascii	"stop_bits\000"
+ 1479      5F626974 
+ 1479      7300
+ 1480              	.LASF57:
+ 1481 030a 7274635F 		.ascii	"rtc_read\000"
+ 1481      72656164 
+ 1481      00
+ 1482              	.LASF33:
+ 1483 0313 6163735F 		.ascii	"acs_inputs\000"
+ 1483      696E7075 
+ 1483      747300
+ 1484              	.LASF27:
+ 1485 031e 72785F72 		.ascii	"rx_recv\000"
+ 1485      65637600 
+ 1486              	.LASF22:
+ 1487 0326 74785F62 		.ascii	"tx_bits\000"
+ 1487      69747300 
+ 1488              	.LASF13:
+ 1489 032e 63686172 		.ascii	"char\000"
+ 1489      00
+ 1490              	.LASF79:
+ 1491 0333 6D61696E 		.ascii	"main\000"
+ 1491      00
+ 1492              	.LASF10:
+ 1493 0338 696E7433 		.ascii	"int32_t\000"
+ 1493      325F7400 
+ 1494              	.LASF81:
+ 1495 0340 48616E64 		.ascii	"HandleUSB\000"
+ 1495      6C655553 
+ 1495      4200
+ 1496              	.LASF71:
+ 1497 034a 62757474 		.ascii	"buttonReleased\000"
+ 1497      6F6E5265 
+ 1497      6C656173 
+ 1497      656400
+ 1498              	.LASF20:
+ 1499 0359 72785F62 		.ascii	"rx_byte\000"
+ 1499      79746500 
+ 1500              	.LASF53:
+ 1501 0361 62756666 		.ascii	"buffer\000"
+ 1501      657200
+ 1502              	.LASF3:
+ 1503 0368 73686F72 		.ascii	"short unsigned int\000"
+ 1503      7420756E 
+ 1503      7369676E 
+ 1503      65642069 
+ 1503      6E7400
+ 1504              	.LASF78:
+ 1505 037b 53657456 		.ascii	"SetVersion\000"
+ 1505      65727369 
+ 1505      6F6E00
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 34
+
+
+ 1506              	.LASF76:
+ 1507 0386 6D61696E 		.ascii	"main.c\000"
+ 1507      2E6300
+ 1508              	.LASF30:
+ 1509 038d 73746174 		.ascii	"status_in\000"
+ 1509      75735F69 
+ 1509      6E00
+ 1510              	.LASF59:
+ 1511 0397 73745F64 		.ascii	"st_div\000"
+ 1511      697600
+ 1512              	.LASF55:
+ 1513 039e 4932435F 		.ascii	"I2C_Regs\000"
+ 1513      52656773 
+ 1513      00
+ 1514              	.LASF40:
+ 1515 03a7 64756D6D 		.ascii	"dummy0\000"
+ 1515      793000
+ 1516              	.LASF54:
+ 1517 03ae 64756D6D 		.ascii	"dummy1\000"
+ 1517      793100
+ 1518              	.LASF43:
+ 1519 03b5 62756666 		.ascii	"buffer1\000"
+ 1519      65723100 
+ 1520              	.LASF9:
+ 1521 03bd 5F5F696E 		.ascii	"__int32_t\000"
+ 1521      7433325F 
+ 1521      7400
+ 1522              	.LASF29:
+ 1523 03c7 73746174 		.ascii	"status_out\000"
+ 1523      75735F6F 
+ 1523      757400
+ 1524              	.LASF67:
+ 1525 03d2 63617264 		.ascii	"card_ack\000"
+ 1525      5F61636B 
+ 1525      00
+ 1526              	.LASF41:
+ 1527 03db 73775F76 		.ascii	"sw_version\000"
+ 1527      65727369 
+ 1527      6F6E00
+ 1528              	.LASF72:
+ 1529 03e6 62757474 		.ascii	"buttonDuration\000"
+ 1529      6F6E4475 
+ 1529      72617469 
+ 1529      6F6E00
+ 1530              	.LASF12:
+ 1531 03f5 646F7562 		.ascii	"double\000"
+ 1531      6C6500
+ 1532              	.LASF80:
+ 1533 03fc 61636B5F 		.ascii	"ack_time_cnt\000"
+ 1533      74696D65 
+ 1533      5F636E74 
+ 1533      00
+ 1534              	.LASF60:
+ 1535 0409 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 1535      52784275 
+ 1535      66666572 
+ 1535      00
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccIN6Ss3.s 			page 35
+
+
+ 1536              	.LASF42:
+ 1537 0416 68775F76 		.ascii	"hw_version\000"
+ 1537      65727369 
+ 1537      6F6E00
+ 1538              	.LASF44:
+ 1539 0421 6F736470 		.ascii	"osdp_cmd\000"
+ 1539      5F636D64 
+ 1539      00
+ 1540              	.LASF25:
+ 1541 042a 74696D65 		.ascii	"timer_tx_ctr\000"
+ 1541      725F7478 
+ 1541      5F637472 
+ 1541      00
+ 1542              	.LASF66:
+ 1543 0437 74616D70 		.ascii	"tamper_out_polarity\000"
+ 1543      65725F6F 
+ 1543      75745F70 
+ 1543      6F6C6172 
+ 1543      69747900 
+ 1544              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

@@ -1,0 +1,4928 @@
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"commandhandler.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	s,40,4
+  20              		.comm	currentAccessType,1,1
+  21              		.comm	hw_old,1,1
+  22              		.comm	tp_old,1,1
+  23              		.comm	tamperCR_polarity,4,4
+  24              		.comm	tamper_out_polarity,4,4
+  25              		.comm	card_ack,4,4
+  26              		.comm	card_in_buf,4,4
+  27              		.comm	osdp_timeout,4,4
+  28              		.comm	MyI2C_Regs,476,4
+  29              		.comm	run_mode,1,1
+  30              		.comm	passmode_timeout,4,4
+  31              		.comm	debug_msg_delay,4,4
+  32              		.global	poe_en_stat
+  33              		.data
+  34              		.type	poe_en_stat, %object
+  35              		.size	poe_en_stat, 1
+  36              	poe_en_stat:
+  37 0000 FF       		.byte	-1
+  38              		.section	.text.USBUART_PutDataBig,"ax",%progbits
+  39              		.align	2
+  40              		.global	USBUART_PutDataBig
+  41              		.thumb
+  42              		.thumb_func
+  43              		.type	USBUART_PutDataBig, %function
+  44              	USBUART_PutDataBig:
+  45              	.LFB63:
+  46              		.file 1 "commandhandler.c"
+   1:commandhandler.c **** /* ========================================
+   2:commandhandler.c ****  *
+   3:commandhandler.c ****  * Copyright YOUR COMPANY, THE YEAR
+   4:commandhandler.c ****  * All Rights Reserved
+   5:commandhandler.c ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:commandhandler.c ****  *
+   7:commandhandler.c ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:commandhandler.c ****  * WHICH IS THE PROPERTY OF your company.
+   9:commandhandler.c ****  *
+  10:commandhandler.c ****  * ========================================
+  11:commandhandler.c **** */
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 2
+
+
+  12:commandhandler.c **** #include "system.h"
+  13:commandhandler.c **** #include "commandhandler.h"
+  14:commandhandler.c **** #include "osdp.h"
+  15:commandhandler.c **** #include "f2f.h"
+  16:commandhandler.c **** #include "wiegand.h"
+  17:commandhandler.c **** #include "i2cuart.h"
+  18:commandhandler.c **** #include "toc.h"
+  19:commandhandler.c **** #include "hid.h"
+  20:commandhandler.c **** I2C_Regs MyI2C_Regs;
+  21:commandhandler.c **** unsigned char run_mode;
+  22:commandhandler.c **** int passmode_timeout;
+  23:commandhandler.c **** int debug_msg_delay;
+  24:commandhandler.c **** 
+  25:commandhandler.c **** uint8 poe_en_stat=-1;
+  26:commandhandler.c **** 
+  27:commandhandler.c **** void USBUART_PutDataBig(unsigned char *p,int len)
+  28:commandhandler.c **** #define min(a,b) ((a>b)?b:a)
+  29:commandhandler.c **** {
+  47              		.loc 1 29 0
+  48              		.cfi_startproc
+  49              		@ args = 0, pretend = 0, frame = 16
+  50              		@ frame_needed = 1, uses_anonymous_args = 0
+  51 0000 80B5     		push	{r7, lr}
+  52              		.cfi_def_cfa_offset 8
+  53              		.cfi_offset 7, -8
+  54              		.cfi_offset 14, -4
+  55 0002 84B0     		sub	sp, sp, #16
+  56              		.cfi_def_cfa_offset 24
+  57 0004 00AF     		add	r7, sp, #0
+  58              		.cfi_def_cfa_register 7
+  59 0006 7860     		str	r0, [r7, #4]
+  60 0008 3960     		str	r1, [r7]
+  30:commandhandler.c ****     int to_send;
+  31:commandhandler.c ****     while (len)
+  61              		.loc 1 31 0
+  62 000a 18E0     		b	.L2
+  63              	.L4:
+  32:commandhandler.c ****     {
+  33:commandhandler.c ****         to_send=min(len,64);
+  64              		.loc 1 33 0
+  65 000c 3B68     		ldr	r3, [r7]
+  66 000e 402B     		cmp	r3, #64
+  67 0010 A8BF     		it	ge
+  68 0012 4023     		movge	r3, #64
+  69 0014 FB60     		str	r3, [r7, #12]
+  34:commandhandler.c ****         while(USBUART_CDCIsReady() == 0u);    /* Wait till component is ready to send more data to 
+  70              		.loc 1 34 0
+  71 0016 00BF     		nop
+  72              	.L3:
+  73              		.loc 1 34 0 is_stmt 0 discriminator 1
+  74 0018 FFF7FEFF 		bl	USBUART_CDCIsReady
+  75 001c 0346     		mov	r3, r0
+  76 001e 002B     		cmp	r3, #0
+  77 0020 FAD0     		beq	.L3
+  35:commandhandler.c **** 
+  36:commandhandler.c ****         USBUART_PutData(p,to_send);
+  78              		.loc 1 36 0 is_stmt 1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 3
+
+
+  79 0022 FB68     		ldr	r3, [r7, #12]
+  80 0024 9BB2     		uxth	r3, r3
+  81 0026 1946     		mov	r1, r3
+  82 0028 7868     		ldr	r0, [r7, #4]
+  83 002a FFF7FEFF 		bl	USBUART_PutData
+  37:commandhandler.c ****         p+=to_send;
+  84              		.loc 1 37 0
+  85 002e FB68     		ldr	r3, [r7, #12]
+  86 0030 7A68     		ldr	r2, [r7, #4]
+  87 0032 1344     		add	r3, r3, r2
+  88 0034 7B60     		str	r3, [r7, #4]
+  38:commandhandler.c ****         len-=to_send;
+  89              		.loc 1 38 0
+  90 0036 3A68     		ldr	r2, [r7]
+  91 0038 FB68     		ldr	r3, [r7, #12]
+  92 003a D31A     		subs	r3, r2, r3
+  93 003c 3B60     		str	r3, [r7]
+  94              	.L2:
+  31:commandhandler.c ****     {
+  95              		.loc 1 31 0
+  96 003e 3B68     		ldr	r3, [r7]
+  97 0040 002B     		cmp	r3, #0
+  98 0042 E3D1     		bne	.L4
+  39:commandhandler.c ****     }
+  40:commandhandler.c **** }
+  99              		.loc 1 40 0
+ 100 0044 00BF     		nop
+ 101 0046 1037     		adds	r7, r7, #16
+ 102              		.cfi_def_cfa_offset 8
+ 103 0048 BD46     		mov	sp, r7
+ 104              		.cfi_def_cfa_register 13
+ 105              		@ sp needed
+ 106 004a 80BD     		pop	{r7, pc}
+ 107              		.cfi_endproc
+ 108              	.LFE63:
+ 109              		.size	USBUART_PutDataBig, .-USBUART_PutDataBig
+ 110              		.section	.text.SendHID,"ax",%progbits
+ 111              		.align	2
+ 112              		.global	SendHID
+ 113              		.thumb
+ 114              		.thumb_func
+ 115              		.type	SendHID, %function
+ 116              	SendHID:
+ 117              	.LFB64:
+  41:commandhandler.c **** 
+  42:commandhandler.c **** void SendHID()
+  43:commandhandler.c **** {
+ 118              		.loc 1 43 0
+ 119              		.cfi_startproc
+ 120              		@ args = 0, pretend = 0, frame = 48
+ 121              		@ frame_needed = 1, uses_anonymous_args = 0
+ 122 0000 80B5     		push	{r7, lr}
+ 123              		.cfi_def_cfa_offset 8
+ 124              		.cfi_offset 7, -8
+ 125              		.cfi_offset 14, -4
+ 126 0002 8CB0     		sub	sp, sp, #48
+ 127              		.cfi_def_cfa_offset 56
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 4
+
+
+ 128 0004 00AF     		add	r7, sp, #0
+ 129              		.cfi_def_cfa_register 7
+  44:commandhandler.c ****     Tamper_Timer_Stop();
+ 130              		.loc 1 44 0
+ 131 0006 FFF7FEFF 		bl	Tamper_Timer_Stop
+  45:commandhandler.c ****     
+  46:commandhandler.c ****     char serialOut[20];
+  47:commandhandler.c **** 	char tmp;
+  48:commandhandler.c **** 	int i,j;
+  49:commandhandler.c **** 	int padBytes;
+  50:commandhandler.c ****     int xbytes;
+  51:commandhandler.c ****     int ybits;
+  52:commandhandler.c ****     MyI2C_Regs.data_length[0] = 0;
+ 132              		.loc 1 52 0
+ 133 000a 584B     		ldr	r3, .L11
+ 134 000c 0022     		movs	r2, #0
+ 135 000e DA71     		strb	r2, [r3, #7]
+  53:commandhandler.c ****     MyI2C_Regs.data_length[1] = 26;
+ 136              		.loc 1 53 0
+ 137 0010 564B     		ldr	r3, .L11
+ 138 0012 1A22     		movs	r2, #26
+ 139 0014 1A72     		strb	r2, [r3, #8]
+  54:commandhandler.c ****     xbytes =  MyI2C_Regs.data_length[1]/8;
+ 140              		.loc 1 54 0
+ 141 0016 554B     		ldr	r3, .L11
+ 142 0018 1B7A     		ldrb	r3, [r3, #8]	@ zero_extendqisi2
+ 143 001a DB08     		lsrs	r3, r3, #3
+ 144 001c DBB2     		uxtb	r3, r3
+ 145 001e 3B62     		str	r3, [r7, #32]
+  55:commandhandler.c ****     ybits =   MyI2C_Regs.data_length[1] - (xbytes*8);
+ 146              		.loc 1 55 0
+ 147 0020 524B     		ldr	r3, .L11
+ 148 0022 1B7A     		ldrb	r3, [r3, #8]	@ zero_extendqisi2
+ 149 0024 1A46     		mov	r2, r3
+ 150 0026 3B6A     		ldr	r3, [r7, #32]
+ 151 0028 DB00     		lsls	r3, r3, #3
+ 152 002a D31A     		subs	r3, r2, r3
+ 153 002c FB61     		str	r3, [r7, #28]
+  56:commandhandler.c ****     padBytes = 18  -  xbytes;
+ 154              		.loc 1 56 0
+ 155 002e 3B6A     		ldr	r3, [r7, #32]
+ 156 0030 C3F11203 		rsb	r3, r3, #18
+ 157 0034 7B62     		str	r3, [r7, #36]
+  57:commandhandler.c ****     
+  58:commandhandler.c ****     if(ybits  >  0)
+ 158              		.loc 1 58 0
+ 159 0036 FB69     		ldr	r3, [r7, #28]
+ 160 0038 002B     		cmp	r3, #0
+ 161 003a 02DD     		ble	.L6
+  59:commandhandler.c **** 	   padBytes = padBytes - 1;
+ 162              		.loc 1 59 0
+ 163 003c 7B6A     		ldr	r3, [r7, #36]
+ 164 003e 013B     		subs	r3, r3, #1
+ 165 0040 7B62     		str	r3, [r7, #36]
+ 166              	.L6:
+  60:commandhandler.c ****     
+  61:commandhandler.c ****     for (i = 0;i < padBytes;i++)
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 5
+
+
+ 167              		.loc 1 61 0
+ 168 0042 0023     		movs	r3, #0
+ 169 0044 FB62     		str	r3, [r7, #44]
+ 170 0046 0FE0     		b	.L7
+ 171              	.L8:
+  62:commandhandler.c ****     {
+  63:commandhandler.c ****        serialOut[i] = 0x00;
+ 172              		.loc 1 63 0 discriminator 3
+ 173 0048 3A1D     		adds	r2, r7, #4
+ 174 004a FB6A     		ldr	r3, [r7, #44]
+ 175 004c 1344     		add	r3, r3, r2
+ 176 004e 0022     		movs	r2, #0
+ 177 0050 1A70     		strb	r2, [r3]
+  64:commandhandler.c ****        SU_PutChar(&s,serialOut[i]);
+ 178              		.loc 1 64 0 discriminator 3
+ 179 0052 3A1D     		adds	r2, r7, #4
+ 180 0054 FB6A     		ldr	r3, [r7, #44]
+ 181 0056 1344     		add	r3, r3, r2
+ 182 0058 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 183 005a 1946     		mov	r1, r3
+ 184 005c 4448     		ldr	r0, .L11+4
+ 185 005e FFF7FEFF 		bl	SU_PutChar
+  61:commandhandler.c ****     {
+ 186              		.loc 1 61 0 discriminator 3
+ 187 0062 FB6A     		ldr	r3, [r7, #44]
+ 188 0064 0133     		adds	r3, r3, #1
+ 189 0066 FB62     		str	r3, [r7, #44]
+ 190              	.L7:
+  61:commandhandler.c ****     {
+ 191              		.loc 1 61 0 is_stmt 0 discriminator 1
+ 192 0068 FA6A     		ldr	r2, [r7, #44]
+ 193 006a 7B6A     		ldr	r3, [r7, #36]
+ 194 006c 9A42     		cmp	r2, r3
+ 195 006e EBDB     		blt	.L8
+  65:commandhandler.c ****     }
+  66:commandhandler.c **** 	
+  67:commandhandler.c ****     serialOut[14] = 0x01 << ybits;
+ 196              		.loc 1 67 0 is_stmt 1
+ 197 0070 0122     		movs	r2, #1
+ 198 0072 FB69     		ldr	r3, [r7, #28]
+ 199 0074 02FA03F3 		lsl	r3, r2, r3
+ 200 0078 DBB2     		uxtb	r3, r3
+ 201 007a BB74     		strb	r3, [r7, #18]
+  68:commandhandler.c **** 	tmp = MyI2C_Regs.buffer[0] & (0xFF << (8-ybits));		
+ 202              		.loc 1 68 0
+ 203 007c 3B4B     		ldr	r3, .L11
+ 204 007e 93F86431 		ldrb	r3, [r3, #356]	@ zero_extendqisi2
+ 205 0082 5AB2     		sxtb	r2, r3
+ 206 0084 FB69     		ldr	r3, [r7, #28]
+ 207 0086 C3F10803 		rsb	r3, r3, #8
+ 208 008a FF21     		movs	r1, #255
+ 209 008c 01FA03F3 		lsl	r3, r1, r3
+ 210 0090 5BB2     		sxtb	r3, r3
+ 211 0092 1340     		ands	r3, r3, r2
+ 212 0094 5BB2     		sxtb	r3, r3
+ 213 0096 FB76     		strb	r3, [r7, #27]
+  69:commandhandler.c ****     tmp = tmp >> (8-ybits);
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 6
+
+
+ 214              		.loc 1 69 0
+ 215 0098 FA7E     		ldrb	r2, [r7, #27]	@ zero_extendqisi2
+ 216 009a FB69     		ldr	r3, [r7, #28]
+ 217 009c C3F10803 		rsb	r3, r3, #8
+ 218 00a0 42FA03F3 		asr	r3, r2, r3
+ 219 00a4 FB76     		strb	r3, [r7, #27]
+  70:commandhandler.c **** 	serialOut[i] |= tmp; 
+ 220              		.loc 1 70 0
+ 221 00a6 3A1D     		adds	r2, r7, #4
+ 222 00a8 FB6A     		ldr	r3, [r7, #44]
+ 223 00aa 1344     		add	r3, r3, r2
+ 224 00ac 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 225 00ae FB7E     		ldrb	r3, [r7, #27]
+ 226 00b0 1343     		orrs	r3, r3, r2
+ 227 00b2 D9B2     		uxtb	r1, r3
+ 228 00b4 3A1D     		adds	r2, r7, #4
+ 229 00b6 FB6A     		ldr	r3, [r7, #44]
+ 230 00b8 1344     		add	r3, r3, r2
+ 231 00ba 0A46     		mov	r2, r1
+ 232 00bc 1A70     		strb	r2, [r3]
+  71:commandhandler.c **** 	SU_PutChar(&s,serialOut[i]);
+ 233              		.loc 1 71 0
+ 234 00be 3A1D     		adds	r2, r7, #4
+ 235 00c0 FB6A     		ldr	r3, [r7, #44]
+ 236 00c2 1344     		add	r3, r3, r2
+ 237 00c4 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 238 00c6 1946     		mov	r1, r3
+ 239 00c8 2948     		ldr	r0, .L11+4
+ 240 00ca FFF7FEFF 		bl	SU_PutChar
+  72:commandhandler.c **** 	i++;
+ 241              		.loc 1 72 0
+ 242 00ce FB6A     		ldr	r3, [r7, #44]
+ 243 00d0 0133     		adds	r3, r3, #1
+ 244 00d2 FB62     		str	r3, [r7, #44]
+  73:commandhandler.c **** 		
+  74:commandhandler.c **** 	for (j = 1; j< (18- padBytes); j++)
+ 245              		.loc 1 74 0
+ 246 00d4 0123     		movs	r3, #1
+ 247 00d6 BB62     		str	r3, [r7, #40]
+ 248 00d8 36E0     		b	.L9
+ 249              	.L10:
+  75:commandhandler.c **** 	{
+  76:commandhandler.c **** 		serialOut[i] = (MyI2C_Regs.buffer[j-1] << ybits );// & (0xFF << ybits);
+ 250              		.loc 1 76 0 discriminator 3
+ 251 00da BB6A     		ldr	r3, [r7, #40]
+ 252 00dc 013B     		subs	r3, r3, #1
+ 253 00de 234A     		ldr	r2, .L11
+ 254 00e0 1344     		add	r3, r3, r2
+ 255 00e2 93F86431 		ldrb	r3, [r3, #356]	@ zero_extendqisi2
+ 256 00e6 1A46     		mov	r2, r3
+ 257 00e8 FB69     		ldr	r3, [r7, #28]
+ 258 00ea 02FA03F3 		lsl	r3, r2, r3
+ 259 00ee D9B2     		uxtb	r1, r3
+ 260 00f0 3A1D     		adds	r2, r7, #4
+ 261 00f2 FB6A     		ldr	r3, [r7, #44]
+ 262 00f4 1344     		add	r3, r3, r2
+ 263 00f6 0A46     		mov	r2, r1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 7
+
+
+ 264 00f8 1A70     		strb	r2, [r3]
+  77:commandhandler.c **** 		tmp = (MyI2C_Regs.buffer[j] >> (8-ybits));// & (0xFF >> (8-ybits));
+ 265              		.loc 1 77 0 discriminator 3
+ 266 00fa 1C4A     		ldr	r2, .L11
+ 267 00fc BB6A     		ldr	r3, [r7, #40]
+ 268 00fe 1344     		add	r3, r3, r2
+ 269 0100 03F5B273 		add	r3, r3, #356
+ 270 0104 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 271 0106 1A46     		mov	r2, r3
+ 272 0108 FB69     		ldr	r3, [r7, #28]
+ 273 010a C3F10803 		rsb	r3, r3, #8
+ 274 010e 42FA03F3 		asr	r3, r2, r3
+ 275 0112 FB76     		strb	r3, [r7, #27]
+  78:commandhandler.c **** 		serialOut[i] |= tmp;
+ 276              		.loc 1 78 0 discriminator 3
+ 277 0114 3A1D     		adds	r2, r7, #4
+ 278 0116 FB6A     		ldr	r3, [r7, #44]
+ 279 0118 1344     		add	r3, r3, r2
+ 280 011a 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 281 011c FB7E     		ldrb	r3, [r7, #27]
+ 282 011e 1343     		orrs	r3, r3, r2
+ 283 0120 D9B2     		uxtb	r1, r3
+ 284 0122 3A1D     		adds	r2, r7, #4
+ 285 0124 FB6A     		ldr	r3, [r7, #44]
+ 286 0126 1344     		add	r3, r3, r2
+ 287 0128 0A46     		mov	r2, r1
+ 288 012a 1A70     		strb	r2, [r3]
+  79:commandhandler.c **** 		SU_PutChar(&s,serialOut[i]);
+ 289              		.loc 1 79 0 discriminator 3
+ 290 012c 3A1D     		adds	r2, r7, #4
+ 291 012e FB6A     		ldr	r3, [r7, #44]
+ 292 0130 1344     		add	r3, r3, r2
+ 293 0132 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 294 0134 1946     		mov	r1, r3
+ 295 0136 0E48     		ldr	r0, .L11+4
+ 296 0138 FFF7FEFF 		bl	SU_PutChar
+  80:commandhandler.c **** 		i++;
+ 297              		.loc 1 80 0 discriminator 3
+ 298 013c FB6A     		ldr	r3, [r7, #44]
+ 299 013e 0133     		adds	r3, r3, #1
+ 300 0140 FB62     		str	r3, [r7, #44]
+  74:commandhandler.c **** 	{
+ 301              		.loc 1 74 0 discriminator 3
+ 302 0142 BB6A     		ldr	r3, [r7, #40]
+ 303 0144 0133     		adds	r3, r3, #1
+ 304 0146 BB62     		str	r3, [r7, #40]
+ 305              	.L9:
+  74:commandhandler.c **** 	{
+ 306              		.loc 1 74 0 is_stmt 0 discriminator 1
+ 307 0148 7B6A     		ldr	r3, [r7, #36]
+ 308 014a C3F11202 		rsb	r2, r3, #18
+ 309 014e BB6A     		ldr	r3, [r7, #40]
+ 310 0150 9A42     		cmp	r2, r3
+ 311 0152 C2DC     		bgt	.L10
+  81:commandhandler.c **** 	}
+  82:commandhandler.c ****     
+  83:commandhandler.c ****     Tamper_Timer_Start();    
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 8
+
+
+ 312              		.loc 1 83 0 is_stmt 1
+ 313 0154 FFF7FEFF 		bl	Tamper_Timer_Start
+  84:commandhandler.c ****     serialOut[i] = 0x00;
+ 314              		.loc 1 84 0
+ 315 0158 3A1D     		adds	r2, r7, #4
+ 316 015a FB6A     		ldr	r3, [r7, #44]
+ 317 015c 1344     		add	r3, r3, r2
+ 318 015e 0022     		movs	r2, #0
+ 319 0160 1A70     		strb	r2, [r3]
+  85:commandhandler.c **** }
+ 320              		.loc 1 85 0
+ 321 0162 00BF     		nop
+ 322 0164 3037     		adds	r7, r7, #48
+ 323              		.cfi_def_cfa_offset 8
+ 324 0166 BD46     		mov	sp, r7
+ 325              		.cfi_def_cfa_register 13
+ 326              		@ sp needed
+ 327 0168 80BD     		pop	{r7, pc}
+ 328              	.L12:
+ 329 016a 00BF     		.align	2
+ 330              	.L11:
+ 331 016c 00000000 		.word	MyI2C_Regs
+ 332 0170 00000000 		.word	s
+ 333              		.cfi_endproc
+ 334              	.LFE64:
+ 335              		.size	SendHID, .-SendHID
+ 336              		.section	.text.POE_OIM_En,"ax",%progbits
+ 337              		.align	2
+ 338              		.global	POE_OIM_En
+ 339              		.thumb
+ 340              		.thumb_func
+ 341              		.type	POE_OIM_En, %function
+ 342              	POE_OIM_En:
+ 343              	.LFB65:
+  86:commandhandler.c **** 
+  87:commandhandler.c **** 
+  88:commandhandler.c **** 
+  89:commandhandler.c **** void   POE_OIM_En(uint8 en)
+  90:commandhandler.c **** {
+ 344              		.loc 1 90 0
+ 345              		.cfi_startproc
+ 346              		@ args = 0, pretend = 0, frame = 8
+ 347              		@ frame_needed = 1, uses_anonymous_args = 0
+ 348 0000 80B5     		push	{r7, lr}
+ 349              		.cfi_def_cfa_offset 8
+ 350              		.cfi_offset 7, -8
+ 351              		.cfi_offset 14, -4
+ 352 0002 82B0     		sub	sp, sp, #8
+ 353              		.cfi_def_cfa_offset 16
+ 354 0004 00AF     		add	r7, sp, #0
+ 355              		.cfi_def_cfa_register 7
+ 356 0006 0346     		mov	r3, r0
+ 357 0008 FB71     		strb	r3, [r7, #7]
+  91:commandhandler.c **** if (poe_en_stat ==en)
+ 358              		.loc 1 91 0
+ 359 000a 0F4B     		ldr	r3, .L17
+ 360 000c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 9
+
+
+ 361 000e FA79     		ldrb	r2, [r7, #7]	@ zero_extendqisi2
+ 362 0010 9A42     		cmp	r2, r3
+ 363 0012 15D0     		beq	.L16
+  92:commandhandler.c ****    return;
+  93:commandhandler.c **** POE_OIM_SDn_Write(0);
+ 364              		.loc 1 93 0
+ 365 0014 0020     		movs	r0, #0
+ 366 0016 FFF7FEFF 		bl	POE_OIM_SDn_Write
+  94:commandhandler.c **** POE_RST_Write(0);
+ 367              		.loc 1 94 0
+ 368 001a 0020     		movs	r0, #0
+ 369 001c FFF7FEFF 		bl	POE_RST_Write
+  95:commandhandler.c **** CyDelay(1000);
+ 370              		.loc 1 95 0
+ 371 0020 4FF47A70 		mov	r0, #1000
+ 372 0024 FFF7FEFF 		bl	CyDelay
+  96:commandhandler.c **** POE_RST_Write(en);
+ 373              		.loc 1 96 0
+ 374 0028 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 375 002a 1846     		mov	r0, r3
+ 376 002c FFF7FEFF 		bl	POE_RST_Write
+  97:commandhandler.c **** POE_OIM_SDn_Write(en);
+ 377              		.loc 1 97 0
+ 378 0030 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 379 0032 1846     		mov	r0, r3
+ 380 0034 FFF7FEFF 		bl	POE_OIM_SDn_Write
+  98:commandhandler.c **** poe_en_stat=en;
+ 381              		.loc 1 98 0
+ 382 0038 034A     		ldr	r2, .L17
+ 383 003a FB79     		ldrb	r3, [r7, #7]
+ 384 003c 1370     		strb	r3, [r2]
+ 385 003e 00E0     		b	.L13
+ 386              	.L16:
+  92:commandhandler.c **** POE_OIM_SDn_Write(0);
+ 387              		.loc 1 92 0
+ 388 0040 00BF     		nop
+ 389              	.L13:
+  99:commandhandler.c **** }
+ 390              		.loc 1 99 0
+ 391 0042 0837     		adds	r7, r7, #8
+ 392              		.cfi_def_cfa_offset 8
+ 393 0044 BD46     		mov	sp, r7
+ 394              		.cfi_def_cfa_register 13
+ 395              		@ sp needed
+ 396 0046 80BD     		pop	{r7, pc}
+ 397              	.L18:
+ 398              		.align	2
+ 399              	.L17:
+ 400 0048 00000000 		.word	poe_en_stat
+ 401              		.cfi_endproc
+ 402              	.LFE65:
+ 403              		.size	POE_OIM_En, .-POE_OIM_En
+ 404              		.section	.text.rtc_write_reg,"ax",%progbits
+ 405              		.align	2
+ 406              		.global	rtc_write_reg
+ 407              		.thumb
+ 408              		.thumb_func
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 10
+
+
+ 409              		.type	rtc_write_reg, %function
+ 410              	rtc_write_reg:
+ 411              	.LFB66:
+ 100:commandhandler.c **** #define RTC_ADDRESS (0XA2>>1)
+ 101:commandhandler.c **** void rtc_write_reg(uint8 reg, uint8 val)
+ 102:commandhandler.c **** {
+ 412              		.loc 1 102 0
+ 413              		.cfi_startproc
+ 414              		@ args = 0, pretend = 0, frame = 8
+ 415              		@ frame_needed = 1, uses_anonymous_args = 0
+ 416 0000 80B5     		push	{r7, lr}
+ 417              		.cfi_def_cfa_offset 8
+ 418              		.cfi_offset 7, -8
+ 419              		.cfi_offset 14, -4
+ 420 0002 82B0     		sub	sp, sp, #8
+ 421              		.cfi_def_cfa_offset 16
+ 422 0004 00AF     		add	r7, sp, #0
+ 423              		.cfi_def_cfa_register 7
+ 424 0006 0346     		mov	r3, r0
+ 425 0008 0A46     		mov	r2, r1
+ 426 000a FB71     		strb	r3, [r7, #7]
+ 427 000c 1346     		mov	r3, r2
+ 428 000e BB71     		strb	r3, [r7, #6]
+ 103:commandhandler.c ****    
+ 104:commandhandler.c ****      I2C_Master_MasterSendStart(RTC_ADDRESS,0);
+ 429              		.loc 1 104 0
+ 430 0010 0021     		movs	r1, #0
+ 431 0012 5120     		movs	r0, #81
+ 432 0014 FFF7FEFF 		bl	I2C_Master_MasterSendStart
+ 105:commandhandler.c ****      I2C_Master_MasterWriteByte(reg);
+ 433              		.loc 1 105 0
+ 434 0018 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 435 001a 1846     		mov	r0, r3
+ 436 001c FFF7FEFF 		bl	I2C_Master_MasterWriteByte
+ 106:commandhandler.c ****      I2C_Master_MasterWriteByte(val);
+ 437              		.loc 1 106 0
+ 438 0020 BB79     		ldrb	r3, [r7, #6]	@ zero_extendqisi2
+ 439 0022 1846     		mov	r0, r3
+ 440 0024 FFF7FEFF 		bl	I2C_Master_MasterWriteByte
+ 107:commandhandler.c ****      I2C_Master_MasterSendStop();
+ 441              		.loc 1 107 0
+ 442 0028 FFF7FEFF 		bl	I2C_Master_MasterSendStop
+ 108:commandhandler.c **** }
+ 443              		.loc 1 108 0
+ 444 002c 00BF     		nop
+ 445 002e 0837     		adds	r7, r7, #8
+ 446              		.cfi_def_cfa_offset 8
+ 447 0030 BD46     		mov	sp, r7
+ 448              		.cfi_def_cfa_register 13
+ 449              		@ sp needed
+ 450 0032 80BD     		pop	{r7, pc}
+ 451              		.cfi_endproc
+ 452              	.LFE66:
+ 453              		.size	rtc_write_reg, .-rtc_write_reg
+ 454              		.section	.text.rtc_write,"ax",%progbits
+ 455              		.align	2
+ 456              		.global	rtc_write
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 11
+
+
+ 457              		.thumb
+ 458              		.thumb_func
+ 459              		.type	rtc_write, %function
+ 460              	rtc_write:
+ 461              	.LFB67:
+ 109:commandhandler.c **** void rtc_write(uint8 addr,unsigned char *buff, uint8 len)
+ 110:commandhandler.c **** {
+ 462              		.loc 1 110 0
+ 463              		.cfi_startproc
+ 464              		@ args = 0, pretend = 0, frame = 8
+ 465              		@ frame_needed = 1, uses_anonymous_args = 0
+ 466 0000 80B5     		push	{r7, lr}
+ 467              		.cfi_def_cfa_offset 8
+ 468              		.cfi_offset 7, -8
+ 469              		.cfi_offset 14, -4
+ 470 0002 82B0     		sub	sp, sp, #8
+ 471              		.cfi_def_cfa_offset 16
+ 472 0004 00AF     		add	r7, sp, #0
+ 473              		.cfi_def_cfa_register 7
+ 474 0006 0346     		mov	r3, r0
+ 475 0008 3960     		str	r1, [r7]
+ 476 000a FB71     		strb	r3, [r7, #7]
+ 477 000c 1346     		mov	r3, r2
+ 478 000e BB71     		strb	r3, [r7, #6]
+ 111:commandhandler.c ****     
+ 112:commandhandler.c ****     I2C_Master_MasterSendStart(RTC_ADDRESS,0);
+ 479              		.loc 1 112 0
+ 480 0010 0021     		movs	r1, #0
+ 481 0012 5120     		movs	r0, #81
+ 482 0014 FFF7FEFF 		bl	I2C_Master_MasterSendStart
+ 113:commandhandler.c ****     I2C_Master_MasterWriteByte(addr);
+ 483              		.loc 1 113 0
+ 484 0018 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 485 001a 1846     		mov	r0, r3
+ 486 001c FFF7FEFF 		bl	I2C_Master_MasterWriteByte
+ 114:commandhandler.c ****     while(len--)
+ 487              		.loc 1 114 0
+ 488 0020 06E0     		b	.L21
+ 489              	.L22:
+ 115:commandhandler.c ****      I2C_Master_MasterWriteByte(*buff++);
+ 490              		.loc 1 115 0
+ 491 0022 3B68     		ldr	r3, [r7]
+ 492 0024 5A1C     		adds	r2, r3, #1
+ 493 0026 3A60     		str	r2, [r7]
+ 494 0028 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 495 002a 1846     		mov	r0, r3
+ 496 002c FFF7FEFF 		bl	I2C_Master_MasterWriteByte
+ 497              	.L21:
+ 114:commandhandler.c ****     while(len--)
+ 498              		.loc 1 114 0
+ 499 0030 BB79     		ldrb	r3, [r7, #6]	@ zero_extendqisi2
+ 500 0032 5A1E     		subs	r2, r3, #1
+ 501 0034 BA71     		strb	r2, [r7, #6]
+ 502 0036 002B     		cmp	r3, #0
+ 503 0038 F3D1     		bne	.L22
+ 116:commandhandler.c ****      I2C_Master_MasterSendStop();
+ 504              		.loc 1 116 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 12
+
+
+ 505 003a FFF7FEFF 		bl	I2C_Master_MasterSendStop
+ 117:commandhandler.c **** }
+ 506              		.loc 1 117 0
+ 507 003e 00BF     		nop
+ 508 0040 0837     		adds	r7, r7, #8
+ 509              		.cfi_def_cfa_offset 8
+ 510 0042 BD46     		mov	sp, r7
+ 511              		.cfi_def_cfa_register 13
+ 512              		@ sp needed
+ 513 0044 80BD     		pop	{r7, pc}
+ 514              		.cfi_endproc
+ 515              	.LFE67:
+ 516              		.size	rtc_write, .-rtc_write
+ 517 0046 00BF     		.section	.text.rtc_read,"ax",%progbits
+ 518              		.align	2
+ 519              		.global	rtc_read
+ 520              		.thumb
+ 521              		.thumb_func
+ 522              		.type	rtc_read, %function
+ 523              	rtc_read:
+ 524              	.LFB68:
+ 118:commandhandler.c **** void rtc_read(int addr, unsigned char *buff, int len)
+ 119:commandhandler.c **** {
+ 525              		.loc 1 119 0
+ 526              		.cfi_startproc
+ 527              		@ args = 0, pretend = 0, frame = 24
+ 528              		@ frame_needed = 1, uses_anonymous_args = 0
+ 529 0000 90B5     		push	{r4, r7, lr}
+ 530              		.cfi_def_cfa_offset 12
+ 531              		.cfi_offset 4, -12
+ 532              		.cfi_offset 7, -8
+ 533              		.cfi_offset 14, -4
+ 534 0002 87B0     		sub	sp, sp, #28
+ 535              		.cfi_def_cfa_offset 40
+ 536 0004 00AF     		add	r7, sp, #0
+ 537              		.cfi_def_cfa_register 7
+ 538 0006 F860     		str	r0, [r7, #12]
+ 539 0008 B960     		str	r1, [r7, #8]
+ 540 000a 7A60     		str	r2, [r7, #4]
+ 120:commandhandler.c ****     int x;
+ 121:commandhandler.c ****     
+ 122:commandhandler.c ****     I2C_Master_MasterSendStart(RTC_ADDRESS,0);
+ 541              		.loc 1 122 0
+ 542 000c 0021     		movs	r1, #0
+ 543 000e 5120     		movs	r0, #81
+ 544 0010 FFF7FEFF 		bl	I2C_Master_MasterSendStart
+ 123:commandhandler.c ****     I2C_Master_MasterWriteByte(addr);
+ 545              		.loc 1 123 0
+ 546 0014 FB68     		ldr	r3, [r7, #12]
+ 547 0016 DBB2     		uxtb	r3, r3
+ 548 0018 1846     		mov	r0, r3
+ 549 001a FFF7FEFF 		bl	I2C_Master_MasterWriteByte
+ 124:commandhandler.c ****     I2C_Master_MasterSendRestart(RTC_ADDRESS,1);
+ 550              		.loc 1 124 0
+ 551 001e 0121     		movs	r1, #1
+ 552 0020 5120     		movs	r0, #81
+ 553 0022 FFF7FEFF 		bl	I2C_Master_MasterSendRestart
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 13
+
+
+ 125:commandhandler.c ****     
+ 126:commandhandler.c ****   //  I2C_Master_MasterSendStart(RTC_ADDRESS,1);
+ 127:commandhandler.c ****     for (x=0; x< len-1;x++)
+ 554              		.loc 1 127 0
+ 555 0026 0023     		movs	r3, #0
+ 556 0028 7B61     		str	r3, [r7, #20]
+ 557 002a 0AE0     		b	.L24
+ 558              	.L25:
+ 128:commandhandler.c ****        *buff++=I2C_Master_MasterReadByte(1);
+ 559              		.loc 1 128 0 discriminator 3
+ 560 002c BC68     		ldr	r4, [r7, #8]
+ 561 002e 631C     		adds	r3, r4, #1
+ 562 0030 BB60     		str	r3, [r7, #8]
+ 563 0032 0120     		movs	r0, #1
+ 564 0034 FFF7FEFF 		bl	I2C_Master_MasterReadByte
+ 565 0038 0346     		mov	r3, r0
+ 566 003a 2370     		strb	r3, [r4]
+ 127:commandhandler.c ****        *buff++=I2C_Master_MasterReadByte(1);
+ 567              		.loc 1 127 0 discriminator 3
+ 568 003c 7B69     		ldr	r3, [r7, #20]
+ 569 003e 0133     		adds	r3, r3, #1
+ 570 0040 7B61     		str	r3, [r7, #20]
+ 571              	.L24:
+ 127:commandhandler.c ****        *buff++=I2C_Master_MasterReadByte(1);
+ 572              		.loc 1 127 0 is_stmt 0 discriminator 1
+ 573 0042 7B68     		ldr	r3, [r7, #4]
+ 574 0044 5A1E     		subs	r2, r3, #1
+ 575 0046 7B69     		ldr	r3, [r7, #20]
+ 576 0048 9A42     		cmp	r2, r3
+ 577 004a EFDC     		bgt	.L25
+ 129:commandhandler.c ****     *buff++=I2C_Master_MasterReadByte(0);
+ 578              		.loc 1 129 0 is_stmt 1
+ 579 004c BC68     		ldr	r4, [r7, #8]
+ 580 004e 631C     		adds	r3, r4, #1
+ 581 0050 BB60     		str	r3, [r7, #8]
+ 582 0052 0020     		movs	r0, #0
+ 583 0054 FFF7FEFF 		bl	I2C_Master_MasterReadByte
+ 584 0058 0346     		mov	r3, r0
+ 585 005a 2370     		strb	r3, [r4]
+ 130:commandhandler.c ****     I2C_Master_MasterSendStop();
+ 586              		.loc 1 130 0
+ 587 005c FFF7FEFF 		bl	I2C_Master_MasterSendStop
+ 131:commandhandler.c **** }
+ 588              		.loc 1 131 0
+ 589 0060 00BF     		nop
+ 590 0062 1C37     		adds	r7, r7, #28
+ 591              		.cfi_def_cfa_offset 12
+ 592 0064 BD46     		mov	sp, r7
+ 593              		.cfi_def_cfa_register 13
+ 594              		@ sp needed
+ 595 0066 90BD     		pop	{r4, r7, pc}
+ 596              		.cfi_endproc
+ 597              	.LFE68:
+ 598              		.size	rtc_read, .-rtc_read
+ 599              		.comm	usb_command_buffer,259,4
+ 600              		.global	usb_buf_len
+ 601              		.bss
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 14
+
+
+ 602              		.align	2
+ 603              		.type	usb_buf_len, %object
+ 604              		.size	usb_buf_len, 4
+ 605              	usb_buf_len:
+ 606 0000 00000000 		.space	4
+ 607              		.comm	tick_count,4,4
+ 608              		.comm	last_rx,4,4
+ 609              		.section	.text.HandleUSB,"ax",%progbits
+ 610              		.align	2
+ 611              		.global	HandleUSB
+ 612              		.thumb
+ 613              		.thumb_func
+ 614              		.type	HandleUSB, %function
+ 615              	HandleUSB:
+ 616              	.LFB69:
+ 132:commandhandler.c **** 
+ 133:commandhandler.c **** #define MAX_USB_COMMAND 255 +4
+ 134:commandhandler.c **** unsigned char usb_command_buffer[MAX_USB_COMMAND];
+ 135:commandhandler.c **** int usb_buf_len=0;
+ 136:commandhandler.c **** int tick_count;
+ 137:commandhandler.c **** int last_rx;
+ 138:commandhandler.c **** #define CMD_USB_WRITE 57
+ 139:commandhandler.c **** #define CMD_USB_READ  56
+ 140:commandhandler.c **** #define CMD_USB_BOOT_LOAD 58
+ 141:commandhandler.c **** 
+ 142:commandhandler.c **** 
+ 143:commandhandler.c **** void HandleUSB()
+ 144:commandhandler.c **** 
+ 145:commandhandler.c **** {
+ 617              		.loc 1 145 0
+ 618              		.cfi_startproc
+ 619              		@ args = 0, pretend = 0, frame = 24
+ 620              		@ frame_needed = 1, uses_anonymous_args = 0
+ 621 0000 80B5     		push	{r7, lr}
+ 622              		.cfi_def_cfa_offset 8
+ 623              		.cfi_offset 7, -8
+ 624              		.cfi_offset 14, -4
+ 625 0002 86B0     		sub	sp, sp, #24
+ 626              		.cfi_def_cfa_offset 32
+ 627 0004 00AF     		add	r7, sp, #0
+ 628              		.cfi_def_cfa_register 7
+ 146:commandhandler.c ****     int bcount;
+ 147:commandhandler.c ****         if (0u != USBUART_IsConfigurationChanged())
+ 629              		.loc 1 147 0
+ 630 0006 FFF7FEFF 		bl	USBUART_IsConfigurationChanged
+ 631 000a 0346     		mov	r3, r0
+ 632 000c 002B     		cmp	r3, #0
+ 633 000e 06D0     		beq	.L27
+ 148:commandhandler.c ****         {
+ 149:commandhandler.c ****             /* Initialize IN endpoints when device is configured. */
+ 150:commandhandler.c ****             if (0u != USBUART_GetConfiguration())
+ 634              		.loc 1 150 0
+ 635 0010 FFF7FEFF 		bl	USBUART_GetConfiguration
+ 636 0014 0346     		mov	r3, r0
+ 637 0016 002B     		cmp	r3, #0
+ 638 0018 01D0     		beq	.L27
+ 151:commandhandler.c ****             {
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 15
+
+
+ 152:commandhandler.c ****                 /* Enumeration is done, enable OUT endpoint to receive data 
+ 153:commandhandler.c ****                  * from host. */
+ 154:commandhandler.c ****                 USBUART_CDC_Init();
+ 639              		.loc 1 154 0
+ 640 001a FFF7FEFF 		bl	USBUART_CDC_Init
+ 641              	.L27:
+ 155:commandhandler.c ****             }
+ 156:commandhandler.c ****         }
+ 157:commandhandler.c ****     bcount=USBUART_GetCount();
+ 642              		.loc 1 157 0
+ 643 001e FFF7FEFF 		bl	USBUART_GetCount
+ 644 0022 0346     		mov	r3, r0
+ 645 0024 7B61     		str	r3, [r7, #20]
+ 158:commandhandler.c ****     if (bcount)
+ 646              		.loc 1 158 0
+ 647 0026 7B69     		ldr	r3, [r7, #20]
+ 648 0028 002B     		cmp	r3, #0
+ 649 002a 77D0     		beq	.L34
+ 650              	.LBB2:
+ 159:commandhandler.c ****         {
+ 160:commandhandler.c ****             int len;
+ 161:commandhandler.c ****             int data_len;
+ 162:commandhandler.c ****             
+ 163:commandhandler.c ****             if ((tick_count-last_rx)>100)
+ 651              		.loc 1 163 0
+ 652 002c 3D4B     		ldr	r3, .L35
+ 653 002e 1A68     		ldr	r2, [r3]
+ 654 0030 3D4B     		ldr	r3, .L35+4
+ 655 0032 1B68     		ldr	r3, [r3]
+ 656 0034 D31A     		subs	r3, r2, r3
+ 657 0036 642B     		cmp	r3, #100
+ 658 0038 02DD     		ble	.L29
+ 164:commandhandler.c ****                usb_buf_len=0;
+ 659              		.loc 1 164 0
+ 660 003a 3C4B     		ldr	r3, .L35+8
+ 661 003c 0022     		movs	r2, #0
+ 662 003e 1A60     		str	r2, [r3]
+ 663              	.L29:
+ 165:commandhandler.c ****             last_rx = tick_count;
+ 664              		.loc 1 165 0
+ 665 0040 384B     		ldr	r3, .L35
+ 666 0042 1B68     		ldr	r3, [r3]
+ 667 0044 384A     		ldr	r2, .L35+4
+ 668 0046 1360     		str	r3, [r2]
+ 166:commandhandler.c ****             USBUART_GetAll(&usb_command_buffer[usb_buf_len]);
+ 669              		.loc 1 166 0
+ 670 0048 384B     		ldr	r3, .L35+8
+ 671 004a 1B68     		ldr	r3, [r3]
+ 672 004c 384A     		ldr	r2, .L35+12
+ 673 004e 1344     		add	r3, r3, r2
+ 674 0050 1846     		mov	r0, r3
+ 675 0052 FFF7FEFF 		bl	USBUART_GetAll
+ 167:commandhandler.c ****             usb_buf_len+=bcount;
+ 676              		.loc 1 167 0
+ 677 0056 354B     		ldr	r3, .L35+8
+ 678 0058 1A68     		ldr	r2, [r3]
+ 679 005a 7B69     		ldr	r3, [r7, #20]
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 16
+
+
+ 680 005c 1344     		add	r3, r3, r2
+ 681 005e 334A     		ldr	r2, .L35+8
+ 682 0060 1360     		str	r3, [r2]
+ 168:commandhandler.c ****             data_len = (usb_command_buffer[3]);// | (usb_command_buffer[4]&0xff);
+ 683              		.loc 1 168 0
+ 684 0062 334B     		ldr	r3, .L35+12
+ 685 0064 DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 686 0066 3B61     		str	r3, [r7, #16]
+ 169:commandhandler.c ****             if (usb_buf_len>3)
+ 687              		.loc 1 169 0
+ 688 0068 304B     		ldr	r3, .L35+8
+ 689 006a 1B68     		ldr	r3, [r3]
+ 690 006c 032B     		cmp	r3, #3
+ 691 006e 55DD     		ble	.L34
+ 692              	.LBB3:
+ 170:commandhandler.c ****                 {
+ 171:commandhandler.c ****                     int reg =  (usb_command_buffer[1]<<8) | (usb_command_buffer[2]&0xff);
+ 693              		.loc 1 171 0
+ 694 0070 2F4B     		ldr	r3, .L35+12
+ 695 0072 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 696 0074 1B02     		lsls	r3, r3, #8
+ 697 0076 2E4A     		ldr	r2, .L35+12
+ 698 0078 9278     		ldrb	r2, [r2, #2]	@ zero_extendqisi2
+ 699 007a 1343     		orrs	r3, r3, r2
+ 700 007c FB60     		str	r3, [r7, #12]
+ 172:commandhandler.c ****                     if (usb_command_buffer[0]==CMD_USB_BOOT_LOAD)
+ 701              		.loc 1 172 0
+ 702 007e 2C4B     		ldr	r3, .L35+12
+ 703 0080 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 704 0082 3A2B     		cmp	r3, #58
+ 705 0084 12D1     		bne	.L30
+ 173:commandhandler.c ****                        {
+ 174:commandhandler.c ****                         if ((usb_command_buffer[1]==0x55) && (usb_command_buffer[2]=0xaa))
+ 706              		.loc 1 174 0
+ 707 0086 2A4B     		ldr	r3, .L35+12
+ 708 0088 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 709 008a 552B     		cmp	r3, #85
+ 710 008c 0BD1     		bne	.L31
+ 711              		.loc 1 174 0 is_stmt 0 discriminator 1
+ 712 008e 284B     		ldr	r3, .L35+12
+ 713 0090 AA22     		movs	r2, #170
+ 714 0092 9A70     		strb	r2, [r3, #2]
+ 175:commandhandler.c ****                             {
+ 176:commandhandler.c ****                              EEPROM_EraseSector(0);
+ 715              		.loc 1 176 0 is_stmt 1 discriminator 1
+ 716 0094 0020     		movs	r0, #0
+ 717 0096 FFF7FEFF 		bl	EEPROM_EraseSector
+ 177:commandhandler.c ****                              EEPROM_WriteByte(0x55,0);
+ 718              		.loc 1 177 0 discriminator 1
+ 719 009a 0021     		movs	r1, #0
+ 720 009c 5520     		movs	r0, #85
+ 721 009e FFF7FEFF 		bl	EEPROM_WriteByte
+ 178:commandhandler.c ****                              CySoftwareReset();
+ 722              		.loc 1 178 0 discriminator 1
+ 723 00a2 FFF7FEFF 		bl	CySoftwareReset
+ 724              	.L31:
+ 179:commandhandler.c **** 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 17
+
+
+ 180:commandhandler.c ****                             }
+ 181:commandhandler.c ****                             usb_buf_len=0;
+ 725              		.loc 1 181 0
+ 726 00a6 214B     		ldr	r3, .L35+8
+ 727 00a8 0022     		movs	r2, #0
+ 728 00aa 1A60     		str	r2, [r3]
+ 729              	.L30:
+ 182:commandhandler.c ****                         }
+ 183:commandhandler.c ****                     if (usb_command_buffer[0]==CMD_USB_READ)
+ 730              		.loc 1 183 0
+ 731 00ac 204B     		ldr	r3, .L35+12
+ 732 00ae 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 733 00b0 382B     		cmp	r3, #56
+ 734 00b2 12D1     		bne	.L32
+ 735              	.LBB4:
+ 184:commandhandler.c ****                         {
+ 185:commandhandler.c ****                         unsigned char *p = (unsigned char *)&MyI2C_Regs ;
+ 736              		.loc 1 185 0
+ 737 00b4 1F4B     		ldr	r3, .L35+16
+ 738 00b6 BB60     		str	r3, [r7, #8]
+ 186:commandhandler.c ****                         memcpy(&usb_command_buffer[4],p+reg,data_len);
+ 739              		.loc 1 186 0
+ 740 00b8 FB68     		ldr	r3, [r7, #12]
+ 741 00ba BA68     		ldr	r2, [r7, #8]
+ 742 00bc 1344     		add	r3, r3, r2
+ 743 00be 3A69     		ldr	r2, [r7, #16]
+ 744 00c0 1946     		mov	r1, r3
+ 745 00c2 1D48     		ldr	r0, .L35+20
+ 746 00c4 FFF7FEFF 		bl	memcpy
+ 187:commandhandler.c ****                         USBUART_PutDataBig(usb_command_buffer,4+data_len );       /* Send data back
+ 747              		.loc 1 187 0
+ 748 00c8 3B69     		ldr	r3, [r7, #16]
+ 749 00ca 0433     		adds	r3, r3, #4
+ 750 00cc 1946     		mov	r1, r3
+ 751 00ce 1848     		ldr	r0, .L35+12
+ 752 00d0 FFF7FEFF 		bl	USBUART_PutDataBig
+ 188:commandhandler.c ****                         usb_buf_len=0;
+ 753              		.loc 1 188 0
+ 754 00d4 154B     		ldr	r3, .L35+8
+ 755 00d6 0022     		movs	r2, #0
+ 756 00d8 1A60     		str	r2, [r3]
+ 757              	.L32:
+ 758              	.LBE4:
+ 189:commandhandler.c ****                         }
+ 190:commandhandler.c ****                     if ((usb_command_buffer[0]==CMD_USB_WRITE)  && ((usb_buf_len+4)>=data_len))
+ 759              		.loc 1 190 0
+ 760 00da 154B     		ldr	r3, .L35+12
+ 761 00dc 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 762 00de 392B     		cmp	r3, #57
+ 763 00e0 1CD1     		bne	.L34
+ 764              		.loc 1 190 0 is_stmt 0 discriminator 1
+ 765 00e2 124B     		ldr	r3, .L35+8
+ 766 00e4 1B68     		ldr	r3, [r3]
+ 767 00e6 1A1D     		adds	r2, r3, #4
+ 768 00e8 3B69     		ldr	r3, [r7, #16]
+ 769 00ea 9A42     		cmp	r2, r3
+ 770 00ec 16DB     		blt	.L34
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 18
+
+
+ 771              	.LBB5:
+ 191:commandhandler.c ****                         {
+ 192:commandhandler.c ****                             unsigned char *p = (unsigned char *)&MyI2C_Regs ;
+ 772              		.loc 1 192 0 is_stmt 1
+ 773 00ee 114B     		ldr	r3, .L35+16
+ 774 00f0 7B60     		str	r3, [r7, #4]
+ 193:commandhandler.c ****                             memcpy(p+reg,&usb_command_buffer[4],data_len);
+ 775              		.loc 1 193 0
+ 776 00f2 FB68     		ldr	r3, [r7, #12]
+ 777 00f4 7A68     		ldr	r2, [r7, #4]
+ 778 00f6 1344     		add	r3, r3, r2
+ 779 00f8 3A69     		ldr	r2, [r7, #16]
+ 780 00fa 0F49     		ldr	r1, .L35+20
+ 781 00fc 1846     		mov	r0, r3
+ 782 00fe FFF7FEFF 		bl	memcpy
+ 194:commandhandler.c ****                             while(USBUART_CDCIsReady() == 0u);    /* Wait till component is ready t
+ 783              		.loc 1 194 0
+ 784 0102 00BF     		nop
+ 785              	.L33:
+ 786              		.loc 1 194 0 is_stmt 0 discriminator 1
+ 787 0104 FFF7FEFF 		bl	USBUART_CDCIsReady
+ 788 0108 0346     		mov	r3, r0
+ 789 010a 002B     		cmp	r3, #0
+ 790 010c FAD0     		beq	.L33
+ 195:commandhandler.c ****                             USBUART_PutData(usb_command_buffer, 4);       /* Send data back to PC *
+ 791              		.loc 1 195 0 is_stmt 1
+ 792 010e 0421     		movs	r1, #4
+ 793 0110 0748     		ldr	r0, .L35+12
+ 794 0112 FFF7FEFF 		bl	USBUART_PutData
+ 196:commandhandler.c ****                             usb_buf_len=0;
+ 795              		.loc 1 196 0
+ 796 0116 054B     		ldr	r3, .L35+8
+ 797 0118 0022     		movs	r2, #0
+ 798 011a 1A60     		str	r2, [r3]
+ 799              	.L34:
+ 800              	.LBE5:
+ 801              	.LBE3:
+ 802              	.LBE2:
+ 197:commandhandler.c ****                         }
+ 198:commandhandler.c ****                         
+ 199:commandhandler.c ****                 }
+ 200:commandhandler.c ****         }
+ 201:commandhandler.c ****     
+ 202:commandhandler.c **** }
+ 803              		.loc 1 202 0
+ 804 011c 00BF     		nop
+ 805 011e 1837     		adds	r7, r7, #24
+ 806              		.cfi_def_cfa_offset 8
+ 807 0120 BD46     		mov	sp, r7
+ 808              		.cfi_def_cfa_register 13
+ 809              		@ sp needed
+ 810 0122 80BD     		pop	{r7, pc}
+ 811              	.L36:
+ 812              		.align	2
+ 813              	.L35:
+ 814 0124 00000000 		.word	tick_count
+ 815 0128 00000000 		.word	last_rx
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 19
+
+
+ 816 012c 00000000 		.word	usb_buf_len
+ 817 0130 00000000 		.word	usb_command_buffer
+ 818 0134 00000000 		.word	MyI2C_Regs
+ 819 0138 04000000 		.word	usb_command_buffer+4
+ 820              		.cfi_endproc
+ 821              	.LFE69:
+ 822              		.size	HandleUSB, .-HandleUSB
+ 823              		.global	f2f_alive_message
+ 824              		.data
+ 825 0001 000000   		.align	2
+ 826              		.type	f2f_alive_message, %object
+ 827              		.size	f2f_alive_message, 9
+ 828              	f2f_alive_message:
+ 829 0004 00       		.byte	0
+ 830 0005 34       		.byte	52
+ 831 0006 E3       		.byte	-29
+ 832 0007 FD       		.byte	-3
+ 833 0008 A0       		.byte	-96
+ 834 0009 00       		.byte	0
+ 835 000a 00       		.byte	0
+ 836 000b 00       		.byte	0
+ 837 000c 00       		.byte	0
+ 838              		.section	.text.commandSendF2F,"ax",%progbits
+ 839              		.align	2
+ 840              		.global	commandSendF2F
+ 841              		.thumb
+ 842              		.thumb_func
+ 843              		.type	commandSendF2F, %function
+ 844              	commandSendF2F:
+ 845              	.LFB70:
+ 203:commandhandler.c **** 
+ 204:commandhandler.c **** 
+ 205:commandhandler.c **** unsigned char f2f_alive_message[] = {0x0,0x34,0xE3,0xFD,0xA0,0x0,0x0,0x0,0x0};
+ 206:commandhandler.c **** extern char TOC_port_init;
+ 207:commandhandler.c **** void commandSendF2F(int len){
+ 846              		.loc 1 207 0
+ 847              		.cfi_startproc
+ 848              		@ args = 0, pretend = 0, frame = 8
+ 849              		@ frame_needed = 1, uses_anonymous_args = 0
+ 850 0000 80B5     		push	{r7, lr}
+ 851              		.cfi_def_cfa_offset 8
+ 852              		.cfi_offset 7, -8
+ 853              		.cfi_offset 14, -4
+ 854 0002 82B0     		sub	sp, sp, #8
+ 855              		.cfi_def_cfa_offset 16
+ 856 0004 00AF     		add	r7, sp, #0
+ 857              		.cfi_def_cfa_register 7
+ 858 0006 7860     		str	r0, [r7, #4]
+ 208:commandhandler.c ****     LED_YEL_Write(OFF);
+ 859              		.loc 1 208 0
+ 860 0008 0120     		movs	r0, #1
+ 861 000a FFF7FEFF 		bl	LED_YEL_Write
+ 209:commandhandler.c **** 	SendF2F(MyI2C_Regs.buffer, len);  //len is bytes
+ 862              		.loc 1 209 0
+ 863 000e 7968     		ldr	r1, [r7, #4]
+ 864 0010 0648     		ldr	r0, .L38
+ 865 0012 FFF7FEFF 		bl	SendF2F
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 20
+
+
+ 210:commandhandler.c ****     MyI2C_Regs.cmd = CMD_NONE;
+ 866              		.loc 1 210 0
+ 867 0016 064B     		ldr	r3, .L38+4
+ 868 0018 0022     		movs	r2, #0
+ 869 001a 9A70     		strb	r2, [r3, #2]
+ 211:commandhandler.c ****     LED_YEL_Write(ON);
+ 870              		.loc 1 211 0
+ 871 001c 0020     		movs	r0, #0
+ 872 001e FFF7FEFF 		bl	LED_YEL_Write
+ 212:commandhandler.c **** }
+ 873              		.loc 1 212 0
+ 874 0022 00BF     		nop
+ 875 0024 0837     		adds	r7, r7, #8
+ 876              		.cfi_def_cfa_offset 8
+ 877 0026 BD46     		mov	sp, r7
+ 878              		.cfi_def_cfa_register 13
+ 879              		@ sp needed
+ 880 0028 80BD     		pop	{r7, pc}
+ 881              	.L39:
+ 882 002a 00BF     		.align	2
+ 883              	.L38:
+ 884 002c 64010000 		.word	MyI2C_Regs+356
+ 885 0030 00000000 		.word	MyI2C_Regs
+ 886              		.cfi_endproc
+ 887              	.LFE70:
+ 888              		.size	commandSendF2F, .-commandSendF2F
+ 889              		.section	.text.commandSendWiegand,"ax",%progbits
+ 890              		.align	2
+ 891              		.global	commandSendWiegand
+ 892              		.thumb
+ 893              		.thumb_func
+ 894              		.type	commandSendWiegand, %function
+ 895              	commandSendWiegand:
+ 896              	.LFB71:
+ 213:commandhandler.c **** void commandSendWiegand(){
+ 897              		.loc 1 213 0
+ 898              		.cfi_startproc
+ 899              		@ args = 0, pretend = 0, frame = 0
+ 900              		@ frame_needed = 1, uses_anonymous_args = 0
+ 901 0000 80B5     		push	{r7, lr}
+ 902              		.cfi_def_cfa_offset 8
+ 903              		.cfi_offset 7, -8
+ 904              		.cfi_offset 14, -4
+ 905 0002 00AF     		add	r7, sp, #0
+ 906              		.cfi_def_cfa_register 7
+ 214:commandhandler.c ****     LED_YEL_Write(ON);
+ 907              		.loc 1 214 0
+ 908 0004 0020     		movs	r0, #0
+ 909 0006 FFF7FEFF 		bl	LED_YEL_Write
+ 215:commandhandler.c **** 	SendWeigand(MyI2C_Regs.buffer, MyI2C_Regs.bits);
+ 910              		.loc 1 215 0
+ 911 000a 074B     		ldr	r3, .L41
+ 912 000c 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 913 000e 1946     		mov	r1, r3
+ 914 0010 0648     		ldr	r0, .L41+4
+ 915 0012 FFF7FEFF 		bl	SendWeigand
+ 216:commandhandler.c ****     MyI2C_Regs.cmd = CMD_NONE;
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 21
+
+
+ 916              		.loc 1 216 0
+ 917 0016 044B     		ldr	r3, .L41
+ 918 0018 0022     		movs	r2, #0
+ 919 001a 9A70     		strb	r2, [r3, #2]
+ 217:commandhandler.c ****     LED_YEL_Write(OFF);
+ 920              		.loc 1 217 0
+ 921 001c 0120     		movs	r0, #1
+ 922 001e FFF7FEFF 		bl	LED_YEL_Write
+ 218:commandhandler.c **** }
+ 923              		.loc 1 218 0
+ 924 0022 00BF     		nop
+ 925 0024 80BD     		pop	{r7, pc}
+ 926              	.L42:
+ 927 0026 00BF     		.align	2
+ 928              	.L41:
+ 929 0028 00000000 		.word	MyI2C_Regs
+ 930 002c 64010000 		.word	MyI2C_Regs+356
+ 931              		.cfi_endproc
+ 932              	.LFE71:
+ 933              		.size	commandSendWiegand, .-commandSendWiegand
+ 934              		.section	.text.commandSendTOC,"ax",%progbits
+ 935              		.align	2
+ 936              		.global	commandSendTOC
+ 937              		.thumb
+ 938              		.thumb_func
+ 939              		.type	commandSendTOC, %function
+ 940              	commandSendTOC:
+ 941              	.LFB72:
+ 219:commandhandler.c **** 
+ 220:commandhandler.c **** void commandSendTOC(int len){
+ 942              		.loc 1 220 0
+ 943              		.cfi_startproc
+ 944              		@ args = 0, pretend = 0, frame = 8
+ 945              		@ frame_needed = 1, uses_anonymous_args = 0
+ 946 0000 80B5     		push	{r7, lr}
+ 947              		.cfi_def_cfa_offset 8
+ 948              		.cfi_offset 7, -8
+ 949              		.cfi_offset 14, -4
+ 950 0002 82B0     		sub	sp, sp, #8
+ 951              		.cfi_def_cfa_offset 16
+ 952 0004 00AF     		add	r7, sp, #0
+ 953              		.cfi_def_cfa_register 7
+ 954 0006 7860     		str	r0, [r7, #4]
+ 221:commandhandler.c ****     card_ack = 1; //stop resending function
+ 955              		.loc 1 221 0
+ 956 0008 0F4B     		ldr	r3, .L45
+ 957 000a 0122     		movs	r2, #1
+ 958 000c 1A60     		str	r2, [r3]
+ 222:commandhandler.c ****     MyI2C_Regs.status_out = 0; //clear old status.
+ 959              		.loc 1 222 0
+ 960 000e 0F4B     		ldr	r3, .L45+4
+ 961 0010 0022     		movs	r2, #0
+ 962 0012 1A70     		strb	r2, [r3]
+ 223:commandhandler.c ****     if (TOC_port_init == 0){
+ 963              		.loc 1 223 0
+ 964 0014 0E4B     		ldr	r3, .L45+8
+ 965 0016 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 22
+
+
+ 966 0018 002B     		cmp	r3, #0
+ 967 001a 04D1     		bne	.L44
+ 224:commandhandler.c ****         initTocReaderUART();
+ 968              		.loc 1 224 0
+ 969 001c FFF7FEFF 		bl	initTocReaderUART
+ 225:commandhandler.c ****         TOC_port_init = 1;
+ 970              		.loc 1 225 0
+ 971 0020 0B4B     		ldr	r3, .L45+8
+ 972 0022 0122     		movs	r2, #1
+ 973 0024 1A70     		strb	r2, [r3]
+ 974              	.L44:
+ 226:commandhandler.c ****     }
+ 227:commandhandler.c ****                         //initTocReaderUART();
+ 228:commandhandler.c ****     SendWaveLynxReader(MyI2C_Regs.buffer,len);
+ 975              		.loc 1 228 0
+ 976 0026 7968     		ldr	r1, [r7, #4]
+ 977 0028 0A48     		ldr	r0, .L45+12
+ 978 002a FFF7FEFF 		bl	SendWaveLynxReader
+ 229:commandhandler.c ****     rxi = 0;
+ 979              		.loc 1 229 0
+ 980 002e 0A4B     		ldr	r3, .L45+16
+ 981 0030 0022     		movs	r2, #0
+ 982 0032 1A60     		str	r2, [r3]
+ 230:commandhandler.c ****     tlv_ready=0;
+ 983              		.loc 1 230 0
+ 984 0034 094B     		ldr	r3, .L45+20
+ 985 0036 0022     		movs	r2, #0
+ 986 0038 1A70     		strb	r2, [r3]
+ 231:commandhandler.c ****     MyI2C_Regs.cmd = CMD_READ;                
+ 987              		.loc 1 231 0
+ 988 003a 044B     		ldr	r3, .L45+4
+ 989 003c 0222     		movs	r2, #2
+ 990 003e 9A70     		strb	r2, [r3, #2]
+ 232:commandhandler.c **** }
+ 991              		.loc 1 232 0
+ 992 0040 00BF     		nop
+ 993 0042 0837     		adds	r7, r7, #8
+ 994              		.cfi_def_cfa_offset 8
+ 995 0044 BD46     		mov	sp, r7
+ 996              		.cfi_def_cfa_register 13
+ 997              		@ sp needed
+ 998 0046 80BD     		pop	{r7, pc}
+ 999              	.L46:
+ 1000              		.align	2
+ 1001              	.L45:
+ 1002 0048 00000000 		.word	card_ack
+ 1003 004c 00000000 		.word	MyI2C_Regs
+ 1004 0050 00000000 		.word	TOC_port_init
+ 1005 0054 64010000 		.word	MyI2C_Regs+356
+ 1006 0058 00000000 		.word	rxi
+ 1007 005c 00000000 		.word	tlv_ready
+ 1008              		.cfi_endproc
+ 1009              	.LFE72:
+ 1010              		.size	commandSendTOC, .-commandSendTOC
+ 1011              		.section	.text.commandSendPAC,"ax",%progbits
+ 1012              		.align	2
+ 1013              		.global	commandSendPAC
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 23
+
+
+ 1014              		.thumb
+ 1015              		.thumb_func
+ 1016              		.type	commandSendPAC, %function
+ 1017              	commandSendPAC:
+ 1018              	.LFB73:
+ 233:commandhandler.c **** 
+ 234:commandhandler.c **** void commandSendPAC(){
+ 1019              		.loc 1 234 0
+ 1020              		.cfi_startproc
+ 1021              		@ args = 0, pretend = 0, frame = 0
+ 1022              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1023 0000 80B5     		push	{r7, lr}
+ 1024              		.cfi_def_cfa_offset 8
+ 1025              		.cfi_offset 7, -8
+ 1026              		.cfi_offset 14, -4
+ 1027 0002 00AF     		add	r7, sp, #0
+ 1028              		.cfi_def_cfa_register 7
+ 235:commandhandler.c **** 
+ 236:commandhandler.c ****     LED_YEL_Write(OFF);
+ 1029              		.loc 1 236 0
+ 1030 0004 0120     		movs	r0, #1
+ 1031 0006 FFF7FEFF 		bl	LED_YEL_Write
+ 237:commandhandler.c ****     SetupUART(PAC);
+ 1032              		.loc 1 237 0
+ 1033 000a 0C20     		movs	r0, #12
+ 1034 000c FFF7FEFF 		bl	SetupUART
+ 238:commandhandler.c ****     SendPAC(MyI2C_Regs.buffer);
+ 1035              		.loc 1 238 0
+ 1036 0010 0548     		ldr	r0, .L48
+ 1037 0012 FFF7FEFF 		bl	SendPAC
+ 239:commandhandler.c ****     MyI2C_Regs.cmd = CMD_NONE;
+ 1038              		.loc 1 239 0
+ 1039 0016 054B     		ldr	r3, .L48+4
+ 1040 0018 0022     		movs	r2, #0
+ 1041 001a 9A70     		strb	r2, [r3, #2]
+ 240:commandhandler.c ****     LED_YEL_Write(ON);
+ 1042              		.loc 1 240 0
+ 1043 001c 0020     		movs	r0, #0
+ 1044 001e FFF7FEFF 		bl	LED_YEL_Write
+ 241:commandhandler.c **** }
+ 1045              		.loc 1 241 0
+ 1046 0022 00BF     		nop
+ 1047 0024 80BD     		pop	{r7, pc}
+ 1048              	.L49:
+ 1049 0026 00BF     		.align	2
+ 1050              	.L48:
+ 1051 0028 64010000 		.word	MyI2C_Regs+356
+ 1052 002c 00000000 		.word	MyI2C_Regs
+ 1053              		.cfi_endproc
+ 1054              	.LFE73:
+ 1055              		.size	commandSendPAC, .-commandSendPAC
+ 1056              		.section	.text.commandReadTOC,"ax",%progbits
+ 1057              		.align	2
+ 1058              		.global	commandReadTOC
+ 1059              		.thumb
+ 1060              		.thumb_func
+ 1061              		.type	commandReadTOC, %function
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 24
+
+
+ 1062              	commandReadTOC:
+ 1063              	.LFB74:
+ 242:commandhandler.c **** void commandReadTOC(){
+ 1064              		.loc 1 242 0
+ 1065              		.cfi_startproc
+ 1066              		@ args = 0, pretend = 0, frame = 0
+ 1067              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1068 0000 80B5     		push	{r7, lr}
+ 1069              		.cfi_def_cfa_offset 8
+ 1070              		.cfi_offset 7, -8
+ 1071              		.cfi_offset 14, -4
+ 1072 0002 00AF     		add	r7, sp, #0
+ 1073              		.cfi_def_cfa_register 7
+ 243:commandhandler.c ****     if (card_in_buf == 0 && card_ack == 1){
+ 1074              		.loc 1 243 0
+ 1075 0004 0C4B     		ldr	r3, .L53
+ 1076 0006 1B68     		ldr	r3, [r3]
+ 1077 0008 002B     		cmp	r3, #0
+ 1078 000a 08D1     		bne	.L51
+ 1079              		.loc 1 243 0 is_stmt 0 discriminator 1
+ 1080 000c 0B4B     		ldr	r3, .L53+4
+ 1081 000e 1B68     		ldr	r3, [r3]
+ 1082 0010 012B     		cmp	r3, #1
+ 1083 0012 04D1     		bne	.L51
+ 244:commandhandler.c ****         card_ack = 0;
+ 1084              		.loc 1 244 0 is_stmt 1
+ 1085 0014 094B     		ldr	r3, .L53+4
+ 1086 0016 0022     		movs	r2, #0
+ 1087 0018 1A60     		str	r2, [r3]
+ 245:commandhandler.c ****         resetImgBuf();
+ 1088              		.loc 1 245 0
+ 1089 001a FFF7FEFF 		bl	resetImgBuf
+ 1090              	.L51:
+ 246:commandhandler.c ****     }
+ 247:commandhandler.c ****     if (TOC_port_init == 0){
+ 1091              		.loc 1 247 0
+ 1092 001e 084B     		ldr	r3, .L53+8
+ 1093 0020 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1094 0022 002B     		cmp	r3, #0
+ 1095 0024 04D1     		bne	.L52
+ 248:commandhandler.c ****         initTocReaderUART();
+ 1096              		.loc 1 248 0
+ 1097 0026 FFF7FEFF 		bl	initTocReaderUART
+ 249:commandhandler.c ****         TOC_port_init = 1;
+ 1098              		.loc 1 249 0
+ 1099 002a 054B     		ldr	r3, .L53+8
+ 1100 002c 0122     		movs	r2, #1
+ 1101 002e 1A70     		strb	r2, [r3]
+ 1102              	.L52:
+ 250:commandhandler.c ****     }
+ 251:commandhandler.c ****         //initTocReaderUART();
+ 252:commandhandler.c ****     ReadImageCard();
+ 1103              		.loc 1 252 0
+ 1104 0030 FFF7FEFF 		bl	ReadImageCard
+ 253:commandhandler.c ****   
+ 254:commandhandler.c **** }
+ 1105              		.loc 1 254 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 25
+
+
+ 1106 0034 00BF     		nop
+ 1107 0036 80BD     		pop	{r7, pc}
+ 1108              	.L54:
+ 1109              		.align	2
+ 1110              	.L53:
+ 1111 0038 00000000 		.word	card_in_buf
+ 1112 003c 00000000 		.word	card_ack
+ 1113 0040 00000000 		.word	TOC_port_init
+ 1114              		.cfi_endproc
+ 1115              	.LFE74:
+ 1116              		.size	commandReadTOC, .-commandReadTOC
+ 1117              		.section	.text.HandleCommand,"ax",%progbits
+ 1118              		.align	2
+ 1119              		.global	HandleCommand
+ 1120              		.thumb
+ 1121              		.thumb_func
+ 1122              		.type	HandleCommand, %function
+ 1123              	HandleCommand:
+ 1124              	.LFB75:
+ 255:commandhandler.c **** 
+ 256:commandhandler.c **** 
+ 257:commandhandler.c **** void HandleCommand()
+ 258:commandhandler.c **** {
+ 1125              		.loc 1 258 0
+ 1126              		.cfi_startproc
+ 1127              		@ args = 0, pretend = 0, frame = 16
+ 1128              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1129 0000 80B5     		push	{r7, lr}
+ 1130              		.cfi_def_cfa_offset 8
+ 1131              		.cfi_offset 7, -8
+ 1132              		.cfi_offset 14, -4
+ 1133 0002 84B0     		sub	sp, sp, #16
+ 1134              		.cfi_def_cfa_offset 24
+ 1135 0004 00AF     		add	r7, sp, #0
+ 1136              		.cfi_def_cfa_register 7
+ 259:commandhandler.c ****     char cmd;
+ 260:commandhandler.c ****     int len;
+ 261:commandhandler.c ****     int i;
+ 262:commandhandler.c ****     cmd = MyI2C_Regs.cmd;
+ 1137              		.loc 1 262 0
+ 1138 0006 DE4B     		ldr	r3, .L149
+ 1139 0008 9B78     		ldrb	r3, [r3, #2]
+ 1140 000a FB72     		strb	r3, [r7, #11]
+ 263:commandhandler.c ****     run_mode = MyI2C_Regs.mode;
+ 1141              		.loc 1 263 0
+ 1142 000c DC4B     		ldr	r3, .L149
+ 1143 000e DA78     		ldrb	r2, [r3, #3]	@ zero_extendqisi2
+ 1144 0010 DC4B     		ldr	r3, .L149+4
+ 1145 0012 1A70     		strb	r2, [r3]
+ 264:commandhandler.c ****     len = (MyI2C_Regs.data_length[0] << 8) + MyI2C_Regs.data_length[1];
+ 1146              		.loc 1 264 0
+ 1147 0014 DA4B     		ldr	r3, .L149
+ 1148 0016 DB79     		ldrb	r3, [r3, #7]	@ zero_extendqisi2
+ 1149 0018 1B02     		lsls	r3, r3, #8
+ 1150 001a D94A     		ldr	r2, .L149
+ 1151 001c 127A     		ldrb	r2, [r2, #8]	@ zero_extendqisi2
+ 1152 001e 1344     		add	r3, r3, r2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 26
+
+
+ 1153 0020 7B60     		str	r3, [r7, #4]
+ 265:commandhandler.c ****     
+ 266:commandhandler.c ****     
+ 267:commandhandler.c ****     if(cmd == CMD_SEND){
+ 1154              		.loc 1 267 0
+ 1155 0022 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1156 0024 032B     		cmp	r3, #3
+ 1157 0026 0DD1     		bne	.L56
+ 268:commandhandler.c ****         if (run_mode == 0) run_mode = MODE_WIEGAND; //garbage in
+ 1158              		.loc 1 268 0
+ 1159 0028 D64B     		ldr	r3, .L149+4
+ 1160 002a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1161 002c 002B     		cmp	r3, #0
+ 1162 002e 02D1     		bne	.L57
+ 1163              		.loc 1 268 0 is_stmt 0 discriminator 1
+ 1164 0030 D44B     		ldr	r3, .L149+4
+ 1165 0032 0622     		movs	r2, #6
+ 1166 0034 1A70     		strb	r2, [r3]
+ 1167              	.L57:
+ 269:commandhandler.c ****         if (MyI2C_Regs.bits == 0) MyI2C_Regs.bits = 0x1A; //garbage in, right out
+ 1168              		.loc 1 269 0 is_stmt 1
+ 1169 0036 D24B     		ldr	r3, .L149
+ 1170 0038 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 1171 003a 002B     		cmp	r3, #0
+ 1172 003c 02D1     		bne	.L56
+ 1173              		.loc 1 269 0 is_stmt 0 discriminator 1
+ 1174 003e D04B     		ldr	r3, .L149
+ 1175 0040 1A22     		movs	r2, #26
+ 1176 0042 5A72     		strb	r2, [r3, #9]
+ 1177              	.L56:
+ 270:commandhandler.c ****     }
+ 271:commandhandler.c ****     if((run_mode == MODE_WIEGAND) || (run_mode == MODE_WIEGAND + BASE_PASS) || (run_mode == MODE_WI
+ 1178              		.loc 1 271 0 is_stmt 1
+ 1179 0044 CF4B     		ldr	r3, .L149+4
+ 1180 0046 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1181 0048 062B     		cmp	r3, #6
+ 1182 004a 07D0     		beq	.L58
+ 1183              		.loc 1 271 0 is_stmt 0 discriminator 1
+ 1184 004c CD4B     		ldr	r3, .L149+4
+ 1185 004e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1186 0050 6A2B     		cmp	r3, #106
+ 1187 0052 03D0     		beq	.L58
+ 1188              		.loc 1 271 0 discriminator 2
+ 1189 0054 CB4B     		ldr	r3, .L149+4
+ 1190 0056 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1191 0058 9C2B     		cmp	r3, #156
+ 1192 005a 02D1     		bne	.L59
+ 1193              	.L58:
+ 272:commandhandler.c ****         isr_WD_SYNC_Enable();
+ 1194              		.loc 1 272 0 is_stmt 1
+ 1195 005c FFF7FEFF 		bl	isr_WD_SYNC_Enable
+ 1196 0060 01E0     		b	.L60
+ 1197              	.L59:
+ 273:commandhandler.c ****     } else {
+ 274:commandhandler.c ****         isr_WD_SYNC_Disable();
+ 1198              		.loc 1 274 0
+ 1199 0062 FFF7FEFF 		bl	isr_WD_SYNC_Disable
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 27
+
+
+ 1200              	.L60:
+ 275:commandhandler.c ****     }
+ 276:commandhandler.c ****         if((run_mode == MODE_F2F) || (run_mode == MODE_F2F + BASE_PASS)){
+ 1201              		.loc 1 276 0
+ 1202 0066 C74B     		ldr	r3, .L149+4
+ 1203 0068 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1204 006a 052B     		cmp	r3, #5
+ 1205 006c 03D0     		beq	.L61
+ 1206              		.loc 1 276 0 is_stmt 0 discriminator 1
+ 1207 006e C54B     		ldr	r3, .L149+4
+ 1208 0070 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1209 0072 692B     		cmp	r3, #105
+ 1210 0074 02D1     		bne	.L62
+ 1211              	.L61:
+ 277:commandhandler.c ****         isr_F2F_edge_Enable();
+ 1212              		.loc 1 277 0 is_stmt 1
+ 1213 0076 FFF7FEFF 		bl	isr_F2F_edge_Enable
+ 1214 007a 01E0     		b	.L63
+ 1215              	.L62:
+ 278:commandhandler.c ****     } else {
+ 279:commandhandler.c ****         isr_F2F_edge_Disable();
+ 1216              		.loc 1 279 0
+ 1217 007c FFF7FEFF 		bl	isr_F2F_edge_Disable
+ 1218              	.L63:
+ 280:commandhandler.c ****     }
+ 281:commandhandler.c **** 
+ 282:commandhandler.c ****     
+ 283:commandhandler.c ****     switch (run_mode)
+ 1219              		.loc 1 283 0
+ 1220 0080 C04B     		ldr	r3, .L149+4
+ 1221 0082 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1222 0084 023B     		subs	r3, r3, #2
+ 1223 0086 9A2B     		cmp	r3, #154
+ 1224 0088 00F2BE82 		bhi	.L134
+ 1225 008c 01A2     		adr	r2, .L66
+ 1226 008e 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 1227 0092 00BF     		.p2align 2
+ 1228              	.L66:
+ 1229 0094 01030000 		.word	.L65+1
+ 1230 0098 CF050000 		.word	.L67+1
+ 1231 009c 33050000 		.word	.L68+1
+ 1232 00a0 4F030000 		.word	.L69+1
+ 1233 00a4 57040000 		.word	.L70+1
+ 1234 00a8 09060000 		.word	.L134+1
+ 1235 00ac 09060000 		.word	.L134+1
+ 1236 00b0 09060000 		.word	.L134+1
+ 1237 00b4 09060000 		.word	.L134+1
+ 1238 00b8 09060000 		.word	.L134+1
+ 1239 00bc 09060000 		.word	.L134+1
+ 1240 00c0 09060000 		.word	.L134+1
+ 1241 00c4 09060000 		.word	.L134+1
+ 1242 00c8 09060000 		.word	.L134+1
+ 1243 00cc 09060000 		.word	.L134+1
+ 1244 00d0 09060000 		.word	.L134+1
+ 1245 00d4 09060000 		.word	.L134+1
+ 1246 00d8 09060000 		.word	.L134+1
+ 1247 00dc 09060000 		.word	.L134+1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 28
+
+
+ 1248 00e0 09060000 		.word	.L134+1
+ 1249 00e4 09060000 		.word	.L134+1
+ 1250 00e8 09060000 		.word	.L134+1
+ 1251 00ec 09060000 		.word	.L134+1
+ 1252 00f0 09060000 		.word	.L134+1
+ 1253 00f4 09060000 		.word	.L134+1
+ 1254 00f8 09060000 		.word	.L134+1
+ 1255 00fc 09060000 		.word	.L134+1
+ 1256 0100 09060000 		.word	.L134+1
+ 1257 0104 09060000 		.word	.L134+1
+ 1258 0108 09060000 		.word	.L134+1
+ 1259 010c 09060000 		.word	.L134+1
+ 1260 0110 09060000 		.word	.L134+1
+ 1261 0114 09060000 		.word	.L134+1
+ 1262 0118 09060000 		.word	.L134+1
+ 1263 011c 09060000 		.word	.L134+1
+ 1264 0120 09060000 		.word	.L134+1
+ 1265 0124 09060000 		.word	.L134+1
+ 1266 0128 09060000 		.word	.L134+1
+ 1267 012c 09060000 		.word	.L134+1
+ 1268 0130 09060000 		.word	.L134+1
+ 1269 0134 09060000 		.word	.L134+1
+ 1270 0138 09060000 		.word	.L134+1
+ 1271 013c 09060000 		.word	.L134+1
+ 1272 0140 09060000 		.word	.L134+1
+ 1273 0144 09060000 		.word	.L134+1
+ 1274 0148 09060000 		.word	.L134+1
+ 1275 014c 09060000 		.word	.L134+1
+ 1276 0150 09060000 		.word	.L134+1
+ 1277 0154 09060000 		.word	.L134+1
+ 1278 0158 09060000 		.word	.L134+1
+ 1279 015c 25030000 		.word	.L71+1
+ 1280 0160 CF050000 		.word	.L67+1
+ 1281 0164 7D050000 		.word	.L72+1
+ 1282 0168 31040000 		.word	.L73+1
+ 1283 016c 9B040000 		.word	.L74+1
+ 1284 0170 09060000 		.word	.L134+1
+ 1285 0174 09060000 		.word	.L134+1
+ 1286 0178 09060000 		.word	.L134+1
+ 1287 017c 09060000 		.word	.L134+1
+ 1288 0180 09060000 		.word	.L134+1
+ 1289 0184 09060000 		.word	.L134+1
+ 1290 0188 09060000 		.word	.L134+1
+ 1291 018c 09060000 		.word	.L134+1
+ 1292 0190 09060000 		.word	.L134+1
+ 1293 0194 09060000 		.word	.L134+1
+ 1294 0198 09060000 		.word	.L134+1
+ 1295 019c 09060000 		.word	.L134+1
+ 1296 01a0 09060000 		.word	.L134+1
+ 1297 01a4 09060000 		.word	.L134+1
+ 1298 01a8 09060000 		.word	.L134+1
+ 1299 01ac 09060000 		.word	.L134+1
+ 1300 01b0 09060000 		.word	.L134+1
+ 1301 01b4 09060000 		.word	.L134+1
+ 1302 01b8 09060000 		.word	.L134+1
+ 1303 01bc 09060000 		.word	.L134+1
+ 1304 01c0 09060000 		.word	.L134+1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 29
+
+
+ 1305 01c4 09060000 		.word	.L134+1
+ 1306 01c8 09060000 		.word	.L134+1
+ 1307 01cc 09060000 		.word	.L134+1
+ 1308 01d0 09060000 		.word	.L134+1
+ 1309 01d4 09060000 		.word	.L134+1
+ 1310 01d8 09060000 		.word	.L134+1
+ 1311 01dc 09060000 		.word	.L134+1
+ 1312 01e0 09060000 		.word	.L134+1
+ 1313 01e4 09060000 		.word	.L134+1
+ 1314 01e8 09060000 		.word	.L134+1
+ 1315 01ec 09060000 		.word	.L134+1
+ 1316 01f0 09060000 		.word	.L134+1
+ 1317 01f4 09060000 		.word	.L134+1
+ 1318 01f8 09060000 		.word	.L134+1
+ 1319 01fc 09060000 		.word	.L134+1
+ 1320 0200 09060000 		.word	.L134+1
+ 1321 0204 09060000 		.word	.L134+1
+ 1322 0208 09060000 		.word	.L134+1
+ 1323 020c 09060000 		.word	.L134+1
+ 1324 0210 09060000 		.word	.L134+1
+ 1325 0214 09060000 		.word	.L134+1
+ 1326 0218 09060000 		.word	.L134+1
+ 1327 021c 09060000 		.word	.L134+1
+ 1328 0220 09060000 		.word	.L134+1
+ 1329 0224 01030000 		.word	.L65+1
+ 1330 0228 E5050000 		.word	.L75+1
+ 1331 022c 9F050000 		.word	.L76+1
+ 1332 0230 CD030000 		.word	.L77+1
+ 1333 0234 BF040000 		.word	.L78+1
+ 1334 0238 09060000 		.word	.L134+1
+ 1335 023c 09060000 		.word	.L134+1
+ 1336 0240 09060000 		.word	.L134+1
+ 1337 0244 09060000 		.word	.L134+1
+ 1338 0248 09060000 		.word	.L134+1
+ 1339 024c 09060000 		.word	.L134+1
+ 1340 0250 09060000 		.word	.L134+1
+ 1341 0254 09060000 		.word	.L134+1
+ 1342 0258 09060000 		.word	.L134+1
+ 1343 025c 09060000 		.word	.L134+1
+ 1344 0260 09060000 		.word	.L134+1
+ 1345 0264 09060000 		.word	.L134+1
+ 1346 0268 09060000 		.word	.L134+1
+ 1347 026c 09060000 		.word	.L134+1
+ 1348 0270 09060000 		.word	.L134+1
+ 1349 0274 09060000 		.word	.L134+1
+ 1350 0278 09060000 		.word	.L134+1
+ 1351 027c 09060000 		.word	.L134+1
+ 1352 0280 09060000 		.word	.L134+1
+ 1353 0284 09060000 		.word	.L134+1
+ 1354 0288 09060000 		.word	.L134+1
+ 1355 028c 09060000 		.word	.L134+1
+ 1356 0290 09060000 		.word	.L134+1
+ 1357 0294 09060000 		.word	.L134+1
+ 1358 0298 09060000 		.word	.L134+1
+ 1359 029c 09060000 		.word	.L134+1
+ 1360 02a0 09060000 		.word	.L134+1
+ 1361 02a4 09060000 		.word	.L134+1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 30
+
+
+ 1362 02a8 09060000 		.word	.L134+1
+ 1363 02ac 09060000 		.word	.L134+1
+ 1364 02b0 09060000 		.word	.L134+1
+ 1365 02b4 09060000 		.word	.L134+1
+ 1366 02b8 09060000 		.word	.L134+1
+ 1367 02bc 09060000 		.word	.L134+1
+ 1368 02c0 09060000 		.word	.L134+1
+ 1369 02c4 09060000 		.word	.L134+1
+ 1370 02c8 09060000 		.word	.L134+1
+ 1371 02cc 09060000 		.word	.L134+1
+ 1372 02d0 09060000 		.word	.L134+1
+ 1373 02d4 09060000 		.word	.L134+1
+ 1374 02d8 09060000 		.word	.L134+1
+ 1375 02dc 09060000 		.word	.L134+1
+ 1376 02e0 09060000 		.word	.L134+1
+ 1377 02e4 09060000 		.word	.L134+1
+ 1378 02e8 09060000 		.word	.L134+1
+ 1379 02ec 09060000 		.word	.L134+1
+ 1380 02f0 09060000 		.word	.L134+1
+ 1381 02f4 09060000 		.word	.L134+1
+ 1382 02f8 09060000 		.word	.L134+1
+ 1383 02fc F1040000 		.word	.L79+1
+ 1384              		.p2align 1
+ 1385              	.L65:
+ 284:commandhandler.c ****     {
+ 285:commandhandler.c ****         case MODE_OSDP:
+ 286:commandhandler.c ****         case MODE_OSDP + BASE_PASS:
+ 287:commandhandler.c ****             if(0==isr_keepalive_GetState())
+ 1386              		.loc 1 287 0
+ 1387 0300 FFF7FEFF 		bl	isr_keepalive_GetState
+ 1388 0304 0346     		mov	r3, r0
+ 1389 0306 002B     		cmp	r3, #0
+ 1390 0308 01D1     		bne	.L80
+ 288:commandhandler.c ****             {
+ 289:commandhandler.c **** 
+ 290:commandhandler.c ****                 initOSDP();
+ 1391              		.loc 1 290 0
+ 1392 030a FFF7FEFF 		bl	initOSDP
+ 1393              	.L80:
+ 291:commandhandler.c ****             }
+ 292:commandhandler.c ****                 MyI2C_Regs.buffer1[12] ++;
+ 1394              		.loc 1 292 0
+ 1395 030e 1C4B     		ldr	r3, .L149
+ 1396 0310 93F85530 		ldrb	r3, [r3, #85]	@ zero_extendqisi2
+ 1397 0314 0133     		adds	r3, r3, #1
+ 1398 0316 DAB2     		uxtb	r2, r3
+ 1399 0318 194B     		ldr	r3, .L149
+ 1400 031a 83F85520 		strb	r2, [r3, #85]
+ 293:commandhandler.c ****                 HandleOSDP();
+ 1401              		.loc 1 293 0
+ 1402 031e FFF7FEFF 		bl	HandleOSDP
+ 294:commandhandler.c ****             return;
+ 1403              		.loc 1 294 0
+ 1404 0322 FBE1     		b	.L55
+ 1405              	.L71:
+ 295:commandhandler.c ****         case MODE_OSDP + BASE_TOC:
+ 296:commandhandler.c ****             if(cmd == CMD_SEND_TOC_READER){
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 31
+
+
+ 1406              		.loc 1 296 0
+ 1407 0324 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1408 0326 042B     		cmp	r3, #4
+ 1409 0328 02D1     		bne	.L82
+ 297:commandhandler.c ****                 commandSendTOC(len);
+ 1410              		.loc 1 297 0
+ 1411 032a 7868     		ldr	r0, [r7, #4]
+ 1412 032c FFF7FEFF 		bl	commandSendTOC
+ 1413              	.L82:
+ 298:commandhandler.c ****             }
+ 299:commandhandler.c ****             if(cmd == CMD_READ){
+ 1414              		.loc 1 299 0
+ 1415 0330 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1416 0332 022B     		cmp	r3, #2
+ 1417 0334 01D1     		bne	.L83
+ 300:commandhandler.c ****                 commandReadTOC();
+ 1418              		.loc 1 300 0
+ 1419 0336 FFF7FEFF 		bl	commandReadTOC
+ 1420              	.L83:
+ 301:commandhandler.c ****             }
+ 302:commandhandler.c ****             if(0==isr_keepalive_GetState())
+ 1421              		.loc 1 302 0
+ 1422 033a FFF7FEFF 		bl	isr_keepalive_GetState
+ 1423 033e 0346     		mov	r3, r0
+ 1424 0340 002B     		cmp	r3, #0
+ 1425 0342 01D1     		bne	.L84
+ 303:commandhandler.c ****             {
+ 304:commandhandler.c ****                 initOSDP();
+ 1426              		.loc 1 304 0
+ 1427 0344 FFF7FEFF 		bl	initOSDP
+ 1428              	.L84:
+ 305:commandhandler.c ****             }
+ 306:commandhandler.c ****             HandleOSDP();
+ 1429              		.loc 1 306 0
+ 1430 0348 FFF7FEFF 		bl	HandleOSDP
+ 307:commandhandler.c ****             return;
+ 1431              		.loc 1 307 0
+ 1432 034c E6E1     		b	.L55
+ 1433              	.L69:
+ 308:commandhandler.c ****         case MODE_F2F:
+ 309:commandhandler.c ****             if (f2f_send_alive)
+ 1434              		.loc 1 309 0
+ 1435 034e 0E4B     		ldr	r3, .L149+8
+ 1436 0350 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1437 0352 002B     		cmp	r3, #0
+ 1438 0354 0DD0     		beq	.L85
+ 310:commandhandler.c ****             {
+ 311:commandhandler.c ****                 SendF2F(f2f_alive_message,5);
+ 1439              		.loc 1 311 0
+ 1440 0356 0521     		movs	r1, #5
+ 1441 0358 0C48     		ldr	r0, .L149+12
+ 1442 035a FFF7FEFF 		bl	SendF2F
+ 312:commandhandler.c ****                 Tamper_Timer_ISR_Disable();
+ 1443              		.loc 1 312 0
+ 1444 035e FFF7FEFF 		bl	Tamper_Timer_ISR_Disable
+ 313:commandhandler.c ****                 f2f_send_alive = 0;
+ 1445              		.loc 1 313 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 32
+
+
+ 1446 0362 094B     		ldr	r3, .L149+8
+ 1447 0364 0022     		movs	r2, #0
+ 1448 0366 1A70     		strb	r2, [r3]
+ 314:commandhandler.c ****                 f2f_alive_delay_cnt = 0;
+ 1449              		.loc 1 314 0
+ 1450 0368 094B     		ldr	r3, .L149+16
+ 1451 036a 0022     		movs	r2, #0
+ 1452 036c 1A60     		str	r2, [r3]
+ 315:commandhandler.c ****                 Tamper_Timer_ISR_Enable();
+ 1453              		.loc 1 315 0
+ 1454 036e FFF7FEFF 		bl	Tamper_Timer_ISR_Enable
+ 1455              	.L85:
+ 316:commandhandler.c ****             }
+ 317:commandhandler.c **** 		    if(cmd == CMD_READ){
+ 1456              		.loc 1 317 0
+ 1457 0372 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1458 0374 022B     		cmp	r3, #2
+ 1459 0376 21D1     		bne	.L86
+ 318:commandhandler.c ****                 LED_GRN_Write(OFF);
+ 1460              		.loc 1 318 0
+ 1461 0378 0120     		movs	r0, #1
+ 1462 037a FFF7FEFF 		bl	LED_GRN_Write
+ 319:commandhandler.c ****                 while(ReadF2F(MyI2C_Regs.bits,0) == 0)
+ 1463              		.loc 1 319 0
+ 1464 037e 0FE0     		b	.L87
+ 1465              	.L150:
+ 1466              		.align	2
+ 1467              	.L149:
+ 1468 0380 00000000 		.word	MyI2C_Regs
+ 1469 0384 00000000 		.word	run_mode
+ 1470 0388 00000000 		.word	f2f_send_alive
+ 1471 038c 00000000 		.word	f2f_alive_message
+ 1472 0390 00000000 		.word	f2f_alive_delay_cnt
+ 1473              	.L90:
+ 320:commandhandler.c ****                 {
+ 321:commandhandler.c ****                     if( MyI2C_Regs.cmd != CMD_READ ) 
+ 1474              		.loc 1 321 0
+ 1475 0394 B64B     		ldr	r3, .L151
+ 1476 0396 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 1477 0398 022B     		cmp	r3, #2
+ 1478 039a 0BD1     		bne	.L135
+ 322:commandhandler.c ****                          break;
+ 323:commandhandler.c ****                     HandleUSB();
+ 1479              		.loc 1 323 0
+ 1480 039c FFF7FEFF 		bl	HandleUSB
+ 1481              	.L87:
+ 319:commandhandler.c ****                 {
+ 1482              		.loc 1 319 0
+ 1483 03a0 B34B     		ldr	r3, .L151
+ 1484 03a2 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 1485 03a4 0021     		movs	r1, #0
+ 1486 03a6 1846     		mov	r0, r3
+ 1487 03a8 FFF7FEFF 		bl	ReadF2F
+ 1488 03ac 0346     		mov	r3, r0
+ 1489 03ae 002B     		cmp	r3, #0
+ 1490 03b0 F0D0     		beq	.L90
+ 1491 03b2 00E0     		b	.L89
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 33
+
+
+ 1492              	.L135:
+ 322:commandhandler.c ****                          break;
+ 1493              		.loc 1 322 0
+ 1494 03b4 00BF     		nop
+ 1495              	.L89:
+ 324:commandhandler.c ****                 }
+ 325:commandhandler.c ****                 LED_GRN_Write(ON);
+ 1496              		.loc 1 325 0
+ 1497 03b6 0020     		movs	r0, #0
+ 1498 03b8 FFF7FEFF 		bl	LED_GRN_Write
+ 1499              	.L86:
+ 326:commandhandler.c **** 		    }	
+ 327:commandhandler.c **** 		    if(cmd == CMD_SEND){
+ 1500              		.loc 1 327 0
+ 1501 03bc FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1502 03be 032B     		cmp	r3, #3
+ 1503 03c0 40F02481 		bne	.L136
+ 328:commandhandler.c ****                 commandSendF2F(len);
+ 1504              		.loc 1 328 0
+ 1505 03c4 7868     		ldr	r0, [r7, #4]
+ 1506 03c6 FFF7FEFF 		bl	commandSendF2F
+ 329:commandhandler.c **** 		    }
+ 330:commandhandler.c ****             break;
+ 1507              		.loc 1 330 0
+ 1508 03ca 1FE1     		b	.L136
+ 1509              	.L77:
+ 331:commandhandler.c ****         case MODE_F2F + BASE_PASS:
+ 332:commandhandler.c ****             if (f2f_send_alive)
+ 1510              		.loc 1 332 0
+ 1511 03cc A94B     		ldr	r3, .L151+4
+ 1512 03ce 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1513 03d0 002B     		cmp	r3, #0
+ 1514 03d2 0DD0     		beq	.L93
+ 333:commandhandler.c ****             {
+ 334:commandhandler.c ****                 SendF2F(f2f_alive_message,5);
+ 1515              		.loc 1 334 0
+ 1516 03d4 0521     		movs	r1, #5
+ 1517 03d6 A848     		ldr	r0, .L151+8
+ 1518 03d8 FFF7FEFF 		bl	SendF2F
+ 335:commandhandler.c ****                 Tamper_Timer_ISR_Disable();
+ 1519              		.loc 1 335 0
+ 1520 03dc FFF7FEFF 		bl	Tamper_Timer_ISR_Disable
+ 336:commandhandler.c ****                 f2f_send_alive = 0;
+ 1521              		.loc 1 336 0
+ 1522 03e0 A44B     		ldr	r3, .L151+4
+ 1523 03e2 0022     		movs	r2, #0
+ 1524 03e4 1A70     		strb	r2, [r3]
+ 337:commandhandler.c ****                 f2f_alive_delay_cnt = 0;
+ 1525              		.loc 1 337 0
+ 1526 03e6 A54B     		ldr	r3, .L151+12
+ 1527 03e8 0022     		movs	r2, #0
+ 1528 03ea 1A60     		str	r2, [r3]
+ 338:commandhandler.c ****                 Tamper_Timer_ISR_Enable();
+ 1529              		.loc 1 338 0
+ 1530 03ec FFF7FEFF 		bl	Tamper_Timer_ISR_Enable
+ 1531              	.L93:
+ 339:commandhandler.c ****             }
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 34
+
+
+ 340:commandhandler.c **** 		    if(cmd == CMD_NONE){
+ 1532              		.loc 1 340 0
+ 1533 03f0 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1534 03f2 002B     		cmp	r3, #0
+ 1535 03f4 14D1     		bne	.L94
+ 341:commandhandler.c ****                 LED_GRN_Write(OFF);
+ 1536              		.loc 1 341 0
+ 1537 03f6 0120     		movs	r0, #1
+ 1538 03f8 FFF7FEFF 		bl	LED_GRN_Write
+ 342:commandhandler.c ****                 for (i=0; i<10; i++){ //wait a while
+ 1539              		.loc 1 342 0
+ 1540 03fc 0023     		movs	r3, #0
+ 1541 03fe FB60     		str	r3, [r7, #12]
+ 1542 0400 08E0     		b	.L95
+ 1543              	.L96:
+ 343:commandhandler.c ****                     ReadF2F(MyI2C_Regs.bits,1);
+ 1544              		.loc 1 343 0 discriminator 3
+ 1545 0402 9B4B     		ldr	r3, .L151
+ 1546 0404 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 1547 0406 0121     		movs	r1, #1
+ 1548 0408 1846     		mov	r0, r3
+ 1549 040a FFF7FEFF 		bl	ReadF2F
+ 342:commandhandler.c ****                 for (i=0; i<10; i++){ //wait a while
+ 1550              		.loc 1 342 0 discriminator 3
+ 1551 040e FB68     		ldr	r3, [r7, #12]
+ 1552 0410 0133     		adds	r3, r3, #1
+ 1553 0412 FB60     		str	r3, [r7, #12]
+ 1554              	.L95:
+ 342:commandhandler.c ****                 for (i=0; i<10; i++){ //wait a while
+ 1555              		.loc 1 342 0 is_stmt 0 discriminator 1
+ 1556 0414 FB68     		ldr	r3, [r7, #12]
+ 1557 0416 092B     		cmp	r3, #9
+ 1558 0418 F3DD     		ble	.L96
+ 344:commandhandler.c ****                 }
+ 345:commandhandler.c ****                 LED_GRN_Write(ON);
+ 1559              		.loc 1 345 0 is_stmt 1
+ 1560 041a 0020     		movs	r0, #0
+ 1561 041c FFF7FEFF 		bl	LED_GRN_Write
+ 1562              	.L94:
+ 346:commandhandler.c **** 		    }
+ 347:commandhandler.c **** 		    if(cmd == CMD_SEND){
+ 1563              		.loc 1 347 0
+ 1564 0420 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1565 0422 032B     		cmp	r3, #3
+ 1566 0424 40F0F480 		bne	.L137
+ 348:commandhandler.c ****                 commandSendF2F(len);
+ 1567              		.loc 1 348 0
+ 1568 0428 7868     		ldr	r0, [r7, #4]
+ 1569 042a FFF7FEFF 		bl	commandSendF2F
+ 349:commandhandler.c ****     		}
+ 350:commandhandler.c ****             break;
+ 1570              		.loc 1 350 0
+ 1571 042e EFE0     		b	.L137
+ 1572              	.L73:
+ 351:commandhandler.c **** 	    case MODE_F2F + BASE_TOC:
+ 352:commandhandler.c **** 		    if(cmd == CMD_SEND){
+ 1573              		.loc 1 352 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 35
+
+
+ 1574 0430 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1575 0432 032B     		cmp	r3, #3
+ 1576 0434 02D1     		bne	.L98
+ 353:commandhandler.c ****                 commandSendF2F(len);
+ 1577              		.loc 1 353 0
+ 1578 0436 7868     		ldr	r0, [r7, #4]
+ 1579 0438 FFF7FEFF 		bl	commandSendF2F
+ 1580              	.L98:
+ 354:commandhandler.c ****     		}
+ 355:commandhandler.c ****             if(cmd == CMD_READ){
+ 1581              		.loc 1 355 0
+ 1582 043c FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1583 043e 022B     		cmp	r3, #2
+ 1584 0440 01D1     		bne	.L99
+ 356:commandhandler.c ****                 commandReadTOC();
+ 1585              		.loc 1 356 0
+ 1586 0442 FFF7FEFF 		bl	commandReadTOC
+ 1587              	.L99:
+ 357:commandhandler.c ****             }
+ 358:commandhandler.c ****             if(cmd == CMD_SEND_TOC_READER){
+ 1588              		.loc 1 358 0
+ 1589 0446 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1590 0448 042B     		cmp	r3, #4
+ 1591 044a 40F0E380 		bne	.L138
+ 359:commandhandler.c ****                 commandSendTOC(len);
+ 1592              		.loc 1 359 0
+ 1593 044e 7868     		ldr	r0, [r7, #4]
+ 1594 0450 FFF7FEFF 		bl	commandSendTOC
+ 360:commandhandler.c ****             }
+ 361:commandhandler.c ****   
+ 362:commandhandler.c **** 		    break;
+ 1595              		.loc 1 362 0
+ 1596 0454 DEE0     		b	.L138
+ 1597              	.L70:
+ 363:commandhandler.c ****         case MODE_WIEGAND:
+ 364:commandhandler.c ****             if(cmd == CMD_READ){
+ 1598              		.loc 1 364 0
+ 1599 0456 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1600 0458 022B     		cmp	r3, #2
+ 1601 045a 17D1     		bne	.L101
+ 365:commandhandler.c ****                 LED_GRN_Write(OFF);
+ 1602              		.loc 1 365 0
+ 1603 045c 0120     		movs	r0, #1
+ 1604 045e FFF7FEFF 		bl	LED_GRN_Write
+ 366:commandhandler.c ****                 while(ReadWeigand(MyI2C_Regs.bits,0) == 0)
+ 1605              		.loc 1 366 0
+ 1606 0462 05E0     		b	.L102
+ 1607              	.L105:
+ 367:commandhandler.c ****                 {
+ 368:commandhandler.c ****                     if(MyI2C_Regs.cmd !=CMD_READ ) 
+ 1608              		.loc 1 368 0
+ 1609 0464 824B     		ldr	r3, .L151
+ 1610 0466 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 1611 0468 022B     		cmp	r3, #2
+ 1612 046a 0BD1     		bne	.L139
+ 369:commandhandler.c ****                       break;
+ 370:commandhandler.c ****                     HandleUSB();
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 36
+
+
+ 1613              		.loc 1 370 0
+ 1614 046c FFF7FEFF 		bl	HandleUSB
+ 1615              	.L102:
+ 366:commandhandler.c ****                 {
+ 1616              		.loc 1 366 0
+ 1617 0470 7F4B     		ldr	r3, .L151
+ 1618 0472 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 1619 0474 0021     		movs	r1, #0
+ 1620 0476 1846     		mov	r0, r3
+ 1621 0478 FFF7FEFF 		bl	ReadWeigand
+ 1622 047c 0346     		mov	r3, r0
+ 1623 047e 002B     		cmp	r3, #0
+ 1624 0480 F0D0     		beq	.L105
+ 1625 0482 00E0     		b	.L104
+ 1626              	.L139:
+ 369:commandhandler.c ****                       break;
+ 1627              		.loc 1 369 0
+ 1628 0484 00BF     		nop
+ 1629              	.L104:
+ 371:commandhandler.c ****                 };
+ 372:commandhandler.c ****                 LED_GRN_Write(ON);
+ 1630              		.loc 1 372 0
+ 1631 0486 0020     		movs	r0, #0
+ 1632 0488 FFF7FEFF 		bl	LED_GRN_Write
+ 1633              	.L101:
+ 373:commandhandler.c ****             }
+ 374:commandhandler.c ****             if(cmd == CMD_SEND){
+ 1634              		.loc 1 374 0
+ 1635 048c FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1636 048e 032B     		cmp	r3, #3
+ 1637 0490 40F0C280 		bne	.L140
+ 375:commandhandler.c ****                 commandSendWiegand();
+ 1638              		.loc 1 375 0
+ 1639 0494 FFF7FEFF 		bl	commandSendWiegand
+ 376:commandhandler.c ****             }
+ 377:commandhandler.c ****             break;
+ 1640              		.loc 1 377 0
+ 1641 0498 BEE0     		b	.L140
+ 1642              	.L74:
+ 378:commandhandler.c ****         case MODE_WIEGAND + BASE_TOC:
+ 379:commandhandler.c ****             if(cmd == CMD_SEND_TOC_READER){
+ 1643              		.loc 1 379 0
+ 1644 049a FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1645 049c 042B     		cmp	r3, #4
+ 1646 049e 02D1     		bne	.L107
+ 380:commandhandler.c ****                 commandSendTOC(len);
+ 1647              		.loc 1 380 0
+ 1648 04a0 7868     		ldr	r0, [r7, #4]
+ 1649 04a2 FFF7FEFF 		bl	commandSendTOC
+ 1650              	.L107:
+ 381:commandhandler.c ****             }
+ 382:commandhandler.c ****             if(cmd == CMD_READ){
+ 1651              		.loc 1 382 0
+ 1652 04a6 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1653 04a8 022B     		cmp	r3, #2
+ 1654 04aa 01D1     		bne	.L108
+ 383:commandhandler.c ****                 commandReadTOC();
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 37
+
+
+ 1655              		.loc 1 383 0
+ 1656 04ac FFF7FEFF 		bl	commandReadTOC
+ 1657              	.L108:
+ 384:commandhandler.c ****             }
+ 385:commandhandler.c ****             if(cmd == CMD_SEND){
+ 1658              		.loc 1 385 0
+ 1659 04b0 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1660 04b2 032B     		cmp	r3, #3
+ 1661 04b4 40F0B280 		bne	.L141
+ 386:commandhandler.c ****                 commandSendWiegand();
+ 1662              		.loc 1 386 0
+ 1663 04b8 FFF7FEFF 		bl	commandSendWiegand
+ 387:commandhandler.c ****             }
+ 388:commandhandler.c ****             
+ 389:commandhandler.c ****             break;
+ 1664              		.loc 1 389 0
+ 1665 04bc AEE0     		b	.L141
+ 1666              	.L78:
+ 390:commandhandler.c ****         case MODE_WIEGAND + BASE_PASS:
+ 391:commandhandler.c ****             if(cmd == CMD_NONE){// || (cmd == CMD_READ)){
+ 1667              		.loc 1 391 0
+ 1668 04be FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1669 04c0 002B     		cmp	r3, #0
+ 1670 04c2 0ED1     		bne	.L110
+ 392:commandhandler.c ****                 LED_GRN_Write(OFF);
+ 1671              		.loc 1 392 0
+ 1672 04c4 0120     		movs	r0, #1
+ 1673 04c6 FFF7FEFF 		bl	LED_GRN_Write
+ 393:commandhandler.c ****               
+ 394:commandhandler.c ****                 if (ReadWeigand(MyI2C_Regs.bits,1) == 1) {
+ 1674              		.loc 1 394 0
+ 1675 04ca 694B     		ldr	r3, .L151
+ 1676 04cc 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 1677 04ce 0121     		movs	r1, #1
+ 1678 04d0 1846     		mov	r0, r3
+ 1679 04d2 FFF7FEFF 		bl	ReadWeigand
+ 1680 04d6 0346     		mov	r3, r0
+ 1681 04d8 012B     		cmp	r3, #1
+ 1682 04da 02D1     		bne	.L110
+ 395:commandhandler.c ****                     LED_GRN_Write(ON);
+ 1683              		.loc 1 395 0
+ 1684 04dc 0020     		movs	r0, #0
+ 1685 04de FFF7FEFF 		bl	LED_GRN_Write
+ 1686              	.L110:
+ 396:commandhandler.c ****                 }
+ 397:commandhandler.c ****             }
+ 398:commandhandler.c ****             if(cmd == CMD_SEND){
+ 1687              		.loc 1 398 0
+ 1688 04e2 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1689 04e4 032B     		cmp	r3, #3
+ 1690 04e6 40F09B80 		bne	.L142
+ 399:commandhandler.c ****                 commandSendWiegand();
+ 1691              		.loc 1 399 0
+ 1692 04ea FFF7FEFF 		bl	commandSendWiegand
+ 400:commandhandler.c ****             }
+ 401:commandhandler.c ****             break;
+ 1693              		.loc 1 401 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 38
+
+
+ 1694 04ee 97E0     		b	.L142
+ 1695              	.L79:
+ 402:commandhandler.c ****         case MODE_WIEGAND + PIN_PASS:
+ 403:commandhandler.c ****             if(cmd == CMD_READ){
+ 1696              		.loc 1 403 0
+ 1697 04f0 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1698 04f2 022B     		cmp	r3, #2
+ 1699 04f4 0ED1     		bne	.L112
+ 404:commandhandler.c ****                 LED_GRN_Write(OFF);
+ 1700              		.loc 1 404 0
+ 1701 04f6 0120     		movs	r0, #1
+ 1702 04f8 FFF7FEFF 		bl	LED_GRN_Write
+ 405:commandhandler.c ****                         //ClearBuffer(); //seems better than without
+ 406:commandhandler.c ****                 if (ReadWeigand(MyI2C_Regs.bits,0) == 1) {
+ 1703              		.loc 1 406 0
+ 1704 04fc 5C4B     		ldr	r3, .L151
+ 1705 04fe 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 1706 0500 0021     		movs	r1, #0
+ 1707 0502 1846     		mov	r0, r3
+ 1708 0504 FFF7FEFF 		bl	ReadWeigand
+ 1709 0508 0346     		mov	r3, r0
+ 1710 050a 012B     		cmp	r3, #1
+ 1711 050c 02D1     		bne	.L112
+ 407:commandhandler.c ****                     LED_GRN_Write(ON);
+ 1712              		.loc 1 407 0
+ 1713 050e 0020     		movs	r0, #0
+ 1714 0510 FFF7FEFF 		bl	LED_GRN_Write
+ 1715              	.L112:
+ 408:commandhandler.c ****                 }
+ 409:commandhandler.c ****             }
+ 410:commandhandler.c ****             if(cmd == CMD_NONE){
+ 1716              		.loc 1 410 0
+ 1717 0514 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1718 0516 002B     		cmp	r3, #0
+ 1719 0518 05D1     		bne	.L113
+ 411:commandhandler.c ****                 if (ReadWeigand(MyI2C_Regs.bits,1) == 1) {
+ 1720              		.loc 1 411 0
+ 1721 051a 554B     		ldr	r3, .L151
+ 1722 051c 5B7A     		ldrb	r3, [r3, #9]	@ zero_extendqisi2
+ 1723 051e 0121     		movs	r1, #1
+ 1724 0520 1846     		mov	r0, r3
+ 1725 0522 FFF7FEFF 		bl	ReadWeigand
+ 1726              	.L113:
+ 412:commandhandler.c **** //                   LED_GRN_Write(ON);
+ 413:commandhandler.c ****                 }
+ 414:commandhandler.c ****             }
+ 415:commandhandler.c ****             if(cmd == CMD_SEND){
+ 1727              		.loc 1 415 0
+ 1728 0526 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1729 0528 032B     		cmp	r3, #3
+ 1730 052a 7BD1     		bne	.L143
+ 416:commandhandler.c ****                 commandSendWiegand();
+ 1731              		.loc 1 416 0
+ 1732 052c FFF7FEFF 		bl	commandSendWiegand
+ 417:commandhandler.c ****             }
+ 418:commandhandler.c ****             break;
+ 1733              		.loc 1 418 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 39
+
+
+ 1734 0530 78E0     		b	.L143
+ 1735              	.L68:
+ 419:commandhandler.c ****             
+ 420:commandhandler.c ****         case MODE_PAC:
+ 421:commandhandler.c ****             if(cmd == CMD_READ){
+ 1736              		.loc 1 421 0
+ 1737 0532 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1738 0534 022B     		cmp	r3, #2
+ 1739 0536 1BD1     		bne	.L115
+ 422:commandhandler.c ****                 LED_GRN_Write(OFF);
+ 1740              		.loc 1 422 0
+ 1741 0538 0120     		movs	r0, #1
+ 1742 053a FFF7FEFF 		bl	LED_GRN_Write
+ 423:commandhandler.c ****                 ClearBuffer(); // added here - GRI 2/2/15
+ 1743              		.loc 1 423 0
+ 1744 053e FFF7FEFF 		bl	ClearBuffer
+ 424:commandhandler.c ****                 SetupUART(PAC);
+ 1745              		.loc 1 424 0
+ 1746 0542 0C20     		movs	r0, #12
+ 1747 0544 FFF7FEFF 		bl	SetupUART
+ 425:commandhandler.c ****                 while(ReadPAC(0)== 0)
+ 1748              		.loc 1 425 0
+ 1749 0548 04E0     		b	.L116
+ 1750              	.L119:
+ 426:commandhandler.c ****                 {
+ 427:commandhandler.c ****                     if(cmd != CMD_READ )
+ 1751              		.loc 1 427 0
+ 1752 054a FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1753 054c 022B     		cmp	r3, #2
+ 1754 054e 08D1     		bne	.L144
+ 428:commandhandler.c ****                             break;
+ 429:commandhandler.c ****                 HandleUSB();
+ 1755              		.loc 1 429 0
+ 1756 0550 FFF7FEFF 		bl	HandleUSB
+ 1757              	.L116:
+ 425:commandhandler.c ****                 {
+ 1758              		.loc 1 425 0
+ 1759 0554 0020     		movs	r0, #0
+ 1760 0556 FFF7FEFF 		bl	ReadPAC
+ 1761 055a 0346     		mov	r3, r0
+ 1762 055c 002B     		cmp	r3, #0
+ 1763 055e F4D0     		beq	.L119
+ 1764 0560 00E0     		b	.L118
+ 1765              	.L144:
+ 428:commandhandler.c ****                             break;
+ 1766              		.loc 1 428 0
+ 1767 0562 00BF     		nop
+ 1768              	.L118:
+ 430:commandhandler.c ****                 }
+ 431:commandhandler.c ****                 LED_GRN_Write(ON);
+ 1769              		.loc 1 431 0
+ 1770 0564 0020     		movs	r0, #0
+ 1771 0566 FFF7FEFF 		bl	LED_GRN_Write
+ 432:commandhandler.c ****                 OptSelect_Write(1);
+ 1772              		.loc 1 432 0
+ 1773 056a 0120     		movs	r0, #1
+ 1774 056c FFF7FEFF 		bl	OptSelect_Write
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 40
+
+
+ 1775              	.L115:
+ 433:commandhandler.c ****             }
+ 434:commandhandler.c ****             if(cmd == CMD_SEND){
+ 1776              		.loc 1 434 0
+ 1777 0570 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1778 0572 032B     		cmp	r3, #3
+ 1779 0574 58D1     		bne	.L145
+ 435:commandhandler.c ****                 commandSendPAC();
+ 1780              		.loc 1 435 0
+ 1781 0576 FFF7FEFF 		bl	commandSendPAC
+ 436:commandhandler.c ****             }
+ 437:commandhandler.c ****             break;
+ 1782              		.loc 1 437 0
+ 1783 057a 55E0     		b	.L145
+ 1784              	.L72:
+ 438:commandhandler.c ****         case MODE_PAC + BASE_TOC:
+ 439:commandhandler.c ****             if(cmd == CMD_SEND){
+ 1785              		.loc 1 439 0
+ 1786 057c FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1787 057e 032B     		cmp	r3, #3
+ 1788 0580 01D1     		bne	.L121
+ 440:commandhandler.c ****                 commandSendPAC();
+ 1789              		.loc 1 440 0
+ 1790 0582 FFF7FEFF 		bl	commandSendPAC
+ 1791              	.L121:
+ 441:commandhandler.c ****             }
+ 442:commandhandler.c ****             if(cmd == CMD_READ){
+ 1792              		.loc 1 442 0
+ 1793 0586 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1794 0588 022B     		cmp	r3, #2
+ 1795 058a 01D1     		bne	.L122
+ 443:commandhandler.c ****                 commandReadTOC();
+ 1796              		.loc 1 443 0
+ 1797 058c FFF7FEFF 		bl	commandReadTOC
+ 1798              	.L122:
+ 444:commandhandler.c ****             }
+ 445:commandhandler.c ****             if(cmd == CMD_SEND_TOC_READER){
+ 1799              		.loc 1 445 0
+ 1800 0590 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1801 0592 042B     		cmp	r3, #4
+ 1802 0594 4AD1     		bne	.L146
+ 446:commandhandler.c ****                 commandSendTOC(len);
+ 1803              		.loc 1 446 0
+ 1804 0596 7868     		ldr	r0, [r7, #4]
+ 1805 0598 FFF7FEFF 		bl	commandSendTOC
+ 447:commandhandler.c ****             }
+ 448:commandhandler.c ****             break;
+ 1806              		.loc 1 448 0
+ 1807 059c 46E0     		b	.L146
+ 1808              	.L76:
+ 449:commandhandler.c ****         case MODE_PAC + BASE_PASS:
+ 450:commandhandler.c ****             if(cmd == CMD_NONE){
+ 1809              		.loc 1 450 0
+ 1810 059e FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1811 05a0 002B     		cmp	r3, #0
+ 1812 05a2 0ED1     		bne	.L124
+ 451:commandhandler.c ****                 LED_GRN_Write(OFF);
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 41
+
+
+ 1813              		.loc 1 451 0
+ 1814 05a4 0120     		movs	r0, #1
+ 1815 05a6 FFF7FEFF 		bl	LED_GRN_Write
+ 452:commandhandler.c ****                 SetupUART(PAC);
+ 1816              		.loc 1 452 0
+ 1817 05aa 0C20     		movs	r0, #12
+ 1818 05ac FFF7FEFF 		bl	SetupUART
+ 453:commandhandler.c ****                 ReadPAC(1);
+ 1819              		.loc 1 453 0
+ 1820 05b0 0120     		movs	r0, #1
+ 1821 05b2 FFF7FEFF 		bl	ReadPAC
+ 454:commandhandler.c ****                 LED_GRN_Write(ON);
+ 1822              		.loc 1 454 0
+ 1823 05b6 0020     		movs	r0, #0
+ 1824 05b8 FFF7FEFF 		bl	LED_GRN_Write
+ 455:commandhandler.c ****                 OptSelect_Write(1);
+ 1825              		.loc 1 455 0
+ 1826 05bc 0120     		movs	r0, #1
+ 1827 05be FFF7FEFF 		bl	OptSelect_Write
+ 1828              	.L124:
+ 456:commandhandler.c ****             }
+ 457:commandhandler.c ****             if(cmd == CMD_SEND){
+ 1829              		.loc 1 457 0
+ 1830 05c2 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1831 05c4 032B     		cmp	r3, #3
+ 1832 05c6 33D1     		bne	.L147
+ 458:commandhandler.c ****                 commandSendPAC();
+ 1833              		.loc 1 458 0
+ 1834 05c8 FFF7FEFF 		bl	commandSendPAC
+ 459:commandhandler.c ****             }
+ 460:commandhandler.c ****             break;
+ 1835              		.loc 1 460 0
+ 1836 05cc 30E0     		b	.L147
+ 1837              	.L67:
+ 461:commandhandler.c ****         case MODE_HID:
+ 462:commandhandler.c ****         case MODE_HID + BASE_TOC:
+ 463:commandhandler.c ****             if(cmd == CMD_READ){
+ 1838              		.loc 1 463 0
+ 1839 05ce FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1840 05d0 022B     		cmp	r3, #2
+ 1841 05d2 01D1     		bne	.L126
+ 464:commandhandler.c ****                 commandReadTOC();
+ 1842              		.loc 1 464 0
+ 1843 05d4 FFF7FEFF 		bl	commandReadTOC
+ 1844              	.L126:
+ 465:commandhandler.c ****             }
+ 466:commandhandler.c ****             if(cmd == CMD_SEND_TOC_READER){
+ 1845              		.loc 1 466 0
+ 1846 05d8 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1847 05da 042B     		cmp	r3, #4
+ 1848 05dc 02D1     		bne	.L75
+ 467:commandhandler.c ****                 commandSendTOC(len);
+ 1849              		.loc 1 467 0
+ 1850 05de 7868     		ldr	r0, [r7, #4]
+ 1851 05e0 FFF7FEFF 		bl	commandSendTOC
+ 1852              	.L75:
+ 468:commandhandler.c ****             }
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 42
+
+
+ 469:commandhandler.c ****         case MODE_HID + BASE_PASS:
+ 470:commandhandler.c ****             if(cmd == CMD_SEND){
+ 1853              		.loc 1 470 0
+ 1854 05e4 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1855 05e6 032B     		cmp	r3, #3
+ 1856 05e8 24D1     		bne	.L148
+ 471:commandhandler.c ****                 LED_YEL_Write(OFF);
+ 1857              		.loc 1 471 0
+ 1858 05ea 0120     		movs	r0, #1
+ 1859 05ec FFF7FEFF 		bl	LED_YEL_Write
+ 472:commandhandler.c ****                 OptSelect_Write(1);
+ 1860              		.loc 1 472 0
+ 1861 05f0 0120     		movs	r0, #1
+ 1862 05f2 FFF7FEFF 		bl	OptSelect_Write
+ 473:commandhandler.c ****         //               SendHID_SP533();
+ 474:commandhandler.c ****                 SendHID();
+ 1863              		.loc 1 474 0
+ 1864 05f6 FFF7FEFF 		bl	SendHID
+ 475:commandhandler.c ****                 MyI2C_Regs.cmd = CMD_NONE;
+ 1865              		.loc 1 475 0
+ 1866 05fa 1D4B     		ldr	r3, .L151
+ 1867 05fc 0022     		movs	r2, #0
+ 1868 05fe 9A70     		strb	r2, [r3, #2]
+ 476:commandhandler.c ****                 LED_YEL_Write(ON);
+ 1869              		.loc 1 476 0
+ 1870 0600 0020     		movs	r0, #0
+ 1871 0602 FFF7FEFF 		bl	LED_YEL_Write
+ 477:commandhandler.c ****             }
+ 478:commandhandler.c ****             break;
+ 1872              		.loc 1 478 0
+ 1873 0606 15E0     		b	.L148
+ 1874              	.L134:
+ 479:commandhandler.c ****         default:
+ 480:commandhandler.c ****             break;
+ 1875              		.loc 1 480 0
+ 1876 0608 00BF     		nop
+ 1877 060a 14E0     		b	.L92
+ 1878              	.L136:
+ 330:commandhandler.c ****         case MODE_F2F + BASE_PASS:
+ 1879              		.loc 1 330 0
+ 1880 060c 00BF     		nop
+ 1881 060e 12E0     		b	.L92
+ 1882              	.L137:
+ 350:commandhandler.c **** 	    case MODE_F2F + BASE_TOC:
+ 1883              		.loc 1 350 0
+ 1884 0610 00BF     		nop
+ 1885 0612 10E0     		b	.L92
+ 1886              	.L138:
+ 362:commandhandler.c ****         case MODE_WIEGAND:
+ 1887              		.loc 1 362 0
+ 1888 0614 00BF     		nop
+ 1889 0616 0EE0     		b	.L92
+ 1890              	.L140:
+ 377:commandhandler.c ****         case MODE_WIEGAND + BASE_TOC:
+ 1891              		.loc 1 377 0
+ 1892 0618 00BF     		nop
+ 1893 061a 0CE0     		b	.L92
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 43
+
+
+ 1894              	.L141:
+ 389:commandhandler.c ****         case MODE_WIEGAND + BASE_PASS:
+ 1895              		.loc 1 389 0
+ 1896 061c 00BF     		nop
+ 1897 061e 0AE0     		b	.L92
+ 1898              	.L142:
+ 401:commandhandler.c ****         case MODE_WIEGAND + PIN_PASS:
+ 1899              		.loc 1 401 0
+ 1900 0620 00BF     		nop
+ 1901 0622 08E0     		b	.L92
+ 1902              	.L143:
+ 418:commandhandler.c ****             
+ 1903              		.loc 1 418 0
+ 1904 0624 00BF     		nop
+ 1905 0626 06E0     		b	.L92
+ 1906              	.L145:
+ 437:commandhandler.c ****         case MODE_PAC + BASE_TOC:
+ 1907              		.loc 1 437 0
+ 1908 0628 00BF     		nop
+ 1909 062a 04E0     		b	.L92
+ 1910              	.L146:
+ 448:commandhandler.c ****         case MODE_PAC + BASE_PASS:
+ 1911              		.loc 1 448 0
+ 1912 062c 00BF     		nop
+ 1913 062e 02E0     		b	.L92
+ 1914              	.L147:
+ 460:commandhandler.c ****         case MODE_HID:
+ 1915              		.loc 1 460 0
+ 1916 0630 00BF     		nop
+ 1917 0632 00E0     		b	.L92
+ 1918              	.L148:
+ 478:commandhandler.c ****         default:
+ 1919              		.loc 1 478 0
+ 1920 0634 00BF     		nop
+ 1921              	.L92:
+ 481:commandhandler.c ****     }             
+ 482:commandhandler.c ****     
+ 483:commandhandler.c ****     
+ 484:commandhandler.c ****    switch (cmd)
+ 1922              		.loc 1 484 0
+ 1923 0636 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 1924 0638 053B     		subs	r3, r3, #5
+ 1925 063a 032B     		cmp	r3, #3
+ 1926 063c 61D8     		bhi	.L128
+ 1927 063e 01A2     		adr	r2, .L130
+ 1928 0640 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 1929              		.p2align 2
+ 1930              	.L130:
+ 1931 0644 D9060000 		.word	.L129+1
+ 1932 0648 F1060000 		.word	.L131+1
+ 1933 064c 81060000 		.word	.L132+1
+ 1934 0650 55060000 		.word	.L133+1
+ 1935              		.p2align 1
+ 1936              	.L133:
+ 485:commandhandler.c ****     {
+ 486:commandhandler.c ****         case CMD_POE_ENABLE:
+ 487:commandhandler.c ****         {
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 44
+
+
+ 488:commandhandler.c ****             POE_OIM_En(MyI2C_Regs.buffer[0]);
+ 1937              		.loc 1 488 0
+ 1938 0654 064B     		ldr	r3, .L151
+ 1939 0656 93F86431 		ldrb	r3, [r3, #356]	@ zero_extendqisi2
+ 1940 065a 1846     		mov	r0, r3
+ 1941 065c FFF7FEFF 		bl	POE_OIM_En
+ 489:commandhandler.c ****                 MyI2C_Regs.status_out=1;
+ 1942              		.loc 1 489 0
+ 1943 0660 034B     		ldr	r3, .L151
+ 1944 0662 0122     		movs	r2, #1
+ 1945 0664 1A70     		strb	r2, [r3]
+ 490:commandhandler.c ****                 MyI2C_Regs.cmd=0;
+ 1946              		.loc 1 490 0
+ 1947 0666 024B     		ldr	r3, .L151
+ 1948 0668 0022     		movs	r2, #0
+ 1949 066a 9A70     		strb	r2, [r3, #2]
+ 491:commandhandler.c ****         }
+ 492:commandhandler.c ****         break;
+ 1950              		.loc 1 492 0
+ 1951 066c 49E0     		b	.L128
+ 1952              	.L152:
+ 1953 066e 00BF     		.align	2
+ 1954              	.L151:
+ 1955 0670 00000000 		.word	MyI2C_Regs
+ 1956 0674 00000000 		.word	f2f_send_alive
+ 1957 0678 00000000 		.word	f2f_alive_message
+ 1958 067c 00000000 		.word	f2f_alive_delay_cnt
+ 1959              	.L132:
+ 1960              	.LBB6:
+ 493:commandhandler.c ****         case CMD_RGB:
+ 494:commandhandler.c ****             {
+ 495:commandhandler.c ****                 uint8_t v;
+ 496:commandhandler.c ****                 uint8_t *p;
+ 497:commandhandler.c ****                 v= MyI2C_Regs.buffer[0];
+ 1961              		.loc 1 497 0
+ 1962 0680 284B     		ldr	r3, .L153
+ 1963 0682 93F86431 		ldrb	r3, [r3, #356]
+ 1964 0686 FB70     		strb	r3, [r7, #3]
+ 498:commandhandler.c ****                 
+ 499:commandhandler.c ****                 ST_LED_0_Write(v&0x1?0:1);
+ 1965              		.loc 1 499 0
+ 1966 0688 FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 1967 068a 03F00103 		and	r3, r3, #1
+ 1968 068e 002B     		cmp	r3, #0
+ 1969 0690 0CBF     		ite	eq
+ 1970 0692 0123     		moveq	r3, #1
+ 1971 0694 0023     		movne	r3, #0
+ 1972 0696 DBB2     		uxtb	r3, r3
+ 1973 0698 1846     		mov	r0, r3
+ 1974 069a FFF7FEFF 		bl	ST_LED_0_Write
+ 500:commandhandler.c ****                 ST_LED_1_Write(v&0x2?0:1);
+ 1975              		.loc 1 500 0
+ 1976 069e FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 1977 06a0 03F00203 		and	r3, r3, #2
+ 1978 06a4 002B     		cmp	r3, #0
+ 1979 06a6 0CBF     		ite	eq
+ 1980 06a8 0123     		moveq	r3, #1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 45
+
+
+ 1981 06aa 0023     		movne	r3, #0
+ 1982 06ac DBB2     		uxtb	r3, r3
+ 1983 06ae 1846     		mov	r0, r3
+ 1984 06b0 FFF7FEFF 		bl	ST_LED_1_Write
+ 501:commandhandler.c ****                 ST_LED_2_Write(v&0x4?0:1);
+ 1985              		.loc 1 501 0
+ 1986 06b4 FB78     		ldrb	r3, [r7, #3]	@ zero_extendqisi2
+ 1987 06b6 03F00403 		and	r3, r3, #4
+ 1988 06ba 002B     		cmp	r3, #0
+ 1989 06bc 0CBF     		ite	eq
+ 1990 06be 0123     		moveq	r3, #1
+ 1991 06c0 0023     		movne	r3, #0
+ 1992 06c2 DBB2     		uxtb	r3, r3
+ 1993 06c4 1846     		mov	r0, r3
+ 1994 06c6 FFF7FEFF 		bl	ST_LED_2_Write
+ 502:commandhandler.c ****                 MyI2C_Regs.status_out=1;
+ 1995              		.loc 1 502 0
+ 1996 06ca 164B     		ldr	r3, .L153
+ 1997 06cc 0122     		movs	r2, #1
+ 1998 06ce 1A70     		strb	r2, [r3]
+ 503:commandhandler.c ****                 MyI2C_Regs.cmd=0;
+ 1999              		.loc 1 503 0
+ 2000 06d0 144B     		ldr	r3, .L153
+ 2001 06d2 0022     		movs	r2, #0
+ 2002 06d4 9A70     		strb	r2, [r3, #2]
+ 2003              	.LBE6:
+ 504:commandhandler.c ****             }
+ 505:commandhandler.c ****             break;
+ 2004              		.loc 1 505 0
+ 2005 06d6 14E0     		b	.L128
+ 2006              	.L129:
+ 506:commandhandler.c **** //#define CMD_POE_ENABLE      8
+ 507:commandhandler.c ****         case CMD_RTC_READ:
+ 508:commandhandler.c ****             {
+ 509:commandhandler.c ****                //ST_LED_1_Write(0);
+ 510:commandhandler.c ****  
+ 511:commandhandler.c ****                 rtc_read(0, MyI2C_Regs.buffer, 8);
+ 2007              		.loc 1 511 0
+ 2008 06d8 0822     		movs	r2, #8
+ 2009 06da 1349     		ldr	r1, .L153+4
+ 2010 06dc 0020     		movs	r0, #0
+ 2011 06de FFF7FEFF 		bl	rtc_read
+ 512:commandhandler.c ****                 MyI2C_Regs.status_out=1;
+ 2012              		.loc 1 512 0
+ 2013 06e2 104B     		ldr	r3, .L153
+ 2014 06e4 0122     		movs	r2, #1
+ 2015 06e6 1A70     		strb	r2, [r3]
+ 513:commandhandler.c ****                 MyI2C_Regs.cmd=0;
+ 2016              		.loc 1 513 0
+ 2017 06e8 0E4B     		ldr	r3, .L153
+ 2018 06ea 0022     		movs	r2, #0
+ 2019 06ec 9A70     		strb	r2, [r3, #2]
+ 514:commandhandler.c ****                //ST_LED_1_Write(1);
+ 515:commandhandler.c ****                  break;
+ 2020              		.loc 1 515 0
+ 2021 06ee 08E0     		b	.L128
+ 2022              	.L131:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 46
+
+
+ 516:commandhandler.c ****             }
+ 517:commandhandler.c ****         case CMD_RTC_WRITE:
+ 518:commandhandler.c ****             {
+ 519:commandhandler.c ****                 rtc_write(0, MyI2C_Regs.buffer, 8);
+ 2023              		.loc 1 519 0
+ 2024 06f0 0822     		movs	r2, #8
+ 2025 06f2 0D49     		ldr	r1, .L153+4
+ 2026 06f4 0020     		movs	r0, #0
+ 2027 06f6 FFF7FEFF 		bl	rtc_write
+ 520:commandhandler.c ****                 //MyI2C_Regs.status_out=1;
+ 521:commandhandler.c ****                 MyI2C_Regs.cmd=0;
+ 2028              		.loc 1 521 0
+ 2029 06fa 0A4B     		ldr	r3, .L153
+ 2030 06fc 0022     		movs	r2, #0
+ 2031 06fe 9A70     		strb	r2, [r3, #2]
+ 522:commandhandler.c ****                 break;
+ 2032              		.loc 1 522 0
+ 2033 0700 00BF     		nop
+ 2034              	.L128:
+ 523:commandhandler.c ****             }
+ 524:commandhandler.c ****     }
+ 525:commandhandler.c ****     if(cmd == CMD_BOOTLOAD){
+ 2035              		.loc 1 525 0
+ 2036 0702 FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+ 2037 0704 012B     		cmp	r3, #1
+ 2038 0706 09D1     		bne	.L55
+ 526:commandhandler.c ****         MyI2C_Regs.buffer[0] ++; 
+ 2039              		.loc 1 526 0
+ 2040 0708 064B     		ldr	r3, .L153
+ 2041 070a 93F86431 		ldrb	r3, [r3, #356]	@ zero_extendqisi2
+ 2042 070e 0133     		adds	r3, r3, #1
+ 2043 0710 DAB2     		uxtb	r2, r3
+ 2044 0712 044B     		ldr	r3, .L153
+ 2045 0714 83F86421 		strb	r2, [r3, #356]
+ 527:commandhandler.c ****         EZI2Cs_Stop();
+ 2046              		.loc 1 527 0
+ 2047 0718 FFF7FEFF 		bl	EZI2Cs_Stop
+ 2048              	.L55:
+ 528:commandhandler.c **** //        BootloadableI2C_Load();
+ 529:commandhandler.c ****     }
+ 530:commandhandler.c ****     
+ 531:commandhandler.c **** }
+ 2049              		.loc 1 531 0
+ 2050 071c 1037     		adds	r7, r7, #16
+ 2051              		.cfi_def_cfa_offset 8
+ 2052 071e BD46     		mov	sp, r7
+ 2053              		.cfi_def_cfa_register 13
+ 2054              		@ sp needed
+ 2055 0720 80BD     		pop	{r7, pc}
+ 2056              	.L154:
+ 2057 0722 00BF     		.align	2
+ 2058              	.L153:
+ 2059 0724 00000000 		.word	MyI2C_Regs
+ 2060 0728 64010000 		.word	MyI2C_Regs+356
+ 2061              		.cfi_endproc
+ 2062              	.LFE75:
+ 2063              		.size	HandleCommand, .-HandleCommand
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 47
+
+
+ 2064              		.text
+ 2065              	.Letext0:
+ 2066              		.file 2 "softuart.h"
+ 2067              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 2068              		.file 4 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 2069              		.file 5 "Generated_Source\\PSoC5/cytypes.h"
+ 2070              		.file 6 "system.h"
+ 2071              		.file 7 "Generated_Source\\PSoC5/core_cm3.h"
+ 2072              		.file 8 "osdp.h"
+ 2073              		.file 9 "toc.h"
+ 2074              		.section	.debug_info,"",%progbits
+ 2075              	.Ldebug_info0:
+ 2076 0000 02080000 		.4byte	0x802
+ 2077 0004 0400     		.2byte	0x4
+ 2078 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 2079 000a 04       		.byte	0x4
+ 2080 000b 01       		.uleb128 0x1
+ 2081 000c 7E000000 		.4byte	.LASF104
+ 2082 0010 0C       		.byte	0xc
+ 2083 0011 7B010000 		.4byte	.LASF105
+ 2084 0015 92020000 		.4byte	.LASF106
+ 2085 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 2086 001d 00000000 		.4byte	0
+ 2087 0021 00000000 		.4byte	.Ldebug_line0
+ 2088 0025 02       		.uleb128 0x2
+ 2089 0026 28       		.byte	0x28
+ 2090 0027 02       		.byte	0x2
+ 2091 0028 0D       		.byte	0xd
+ 2092 0029 BE000000 		.4byte	0xbe
+ 2093 002d 03       		.uleb128 0x3
+ 2094 002e FC020000 		.4byte	.LASF0
+ 2095 0032 02       		.byte	0x2
+ 2096 0033 0F       		.byte	0xf
+ 2097 0034 BE000000 		.4byte	0xbe
+ 2098 0038 00       		.byte	0
+ 2099 0039 03       		.uleb128 0x3
+ 2100 003a 4B010000 		.4byte	.LASF1
+ 2101 003e 02       		.byte	0x2
+ 2102 003f 10       		.byte	0x10
+ 2103 0040 BE000000 		.4byte	0xbe
+ 2104 0044 04       		.byte	0x4
+ 2105 0045 03       		.uleb128 0x3
+ 2106 0046 83030000 		.4byte	.LASF2
+ 2107 004a 02       		.byte	0x2
+ 2108 004b 11       		.byte	0x11
+ 2109 004c BE000000 		.4byte	0xbe
+ 2110 0050 08       		.byte	0x8
+ 2111 0051 03       		.uleb128 0x3
+ 2112 0052 D2010000 		.4byte	.LASF3
+ 2113 0056 02       		.byte	0x2
+ 2114 0057 12       		.byte	0x12
+ 2115 0058 BE000000 		.4byte	0xbe
+ 2116 005c 0C       		.byte	0xc
+ 2117 005d 03       		.uleb128 0x3
+ 2118 005e 32040000 		.4byte	.LASF4
+ 2119 0062 02       		.byte	0x2
+ 2120 0063 13       		.byte	0x13
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 48
+
+
+ 2121 0064 C5000000 		.4byte	0xc5
+ 2122 0068 10       		.byte	0x10
+ 2123 0069 03       		.uleb128 0x3
+ 2124 006a 5A020000 		.4byte	.LASF5
+ 2125 006e 02       		.byte	0x2
+ 2126 006f 14       		.byte	0x14
+ 2127 0070 CC000000 		.4byte	0xcc
+ 2128 0074 12       		.byte	0x12
+ 2129 0075 03       		.uleb128 0x3
+ 2130 0076 28000000 		.4byte	.LASF6
+ 2131 007a 02       		.byte	0x2
+ 2132 007b 15       		.byte	0x15
+ 2133 007c CC000000 		.4byte	0xcc
+ 2134 0080 14       		.byte	0x14
+ 2135 0081 03       		.uleb128 0x3
+ 2136 0082 52010000 		.4byte	.LASF7
+ 2137 0086 02       		.byte	0x2
+ 2138 0087 16       		.byte	0x16
+ 2139 0088 C5000000 		.4byte	0xc5
+ 2140 008c 16       		.byte	0x16
+ 2141 008d 03       		.uleb128 0x3
+ 2142 008e 43030000 		.4byte	.LASF8
+ 2143 0092 02       		.byte	0x2
+ 2144 0093 17       		.byte	0x17
+ 2145 0094 D1000000 		.4byte	0xd1
+ 2146 0098 18       		.byte	0x18
+ 2147 0099 03       		.uleb128 0x3
+ 2148 009a 54050000 		.4byte	.LASF9
+ 2149 009e 02       		.byte	0x2
+ 2150 009f 18       		.byte	0x18
+ 2151 00a0 D1000000 		.4byte	0xd1
+ 2152 00a4 1C       		.byte	0x1c
+ 2153 00a5 03       		.uleb128 0x3
+ 2154 00a6 A5010000 		.4byte	.LASF10
+ 2155 00aa 02       		.byte	0x2
+ 2156 00ab 19       		.byte	0x19
+ 2157 00ac D1000000 		.4byte	0xd1
+ 2158 00b0 20       		.byte	0x20
+ 2159 00b1 03       		.uleb128 0x3
+ 2160 00b2 A9030000 		.4byte	.LASF11
+ 2161 00b6 02       		.byte	0x2
+ 2162 00b7 1A       		.byte	0x1a
+ 2163 00b8 D1000000 		.4byte	0xd1
+ 2164 00bc 24       		.byte	0x24
+ 2165 00bd 00       		.byte	0
+ 2166 00be 04       		.uleb128 0x4
+ 2167 00bf 04       		.byte	0x4
+ 2168 00c0 05       		.byte	0x5
+ 2169 00c1 696E7400 		.ascii	"int\000"
+ 2170 00c5 05       		.uleb128 0x5
+ 2171 00c6 02       		.byte	0x2
+ 2172 00c7 07       		.byte	0x7
+ 2173 00c8 12040000 		.4byte	.LASF12
+ 2174 00cc 06       		.uleb128 0x6
+ 2175 00cd C5000000 		.4byte	0xc5
+ 2176 00d1 06       		.uleb128 0x6
+ 2177 00d2 BE000000 		.4byte	0xbe
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 49
+
+
+ 2178 00d6 07       		.uleb128 0x7
+ 2179 00d7 30010000 		.4byte	.LASF14
+ 2180 00db 02       		.byte	0x2
+ 2181 00dc 1B       		.byte	0x1b
+ 2182 00dd 25000000 		.4byte	0x25
+ 2183 00e1 05       		.uleb128 0x5
+ 2184 00e2 01       		.byte	0x1
+ 2185 00e3 06       		.byte	0x6
+ 2186 00e4 B2010000 		.4byte	.LASF13
+ 2187 00e8 07       		.uleb128 0x7
+ 2188 00e9 62020000 		.4byte	.LASF15
+ 2189 00ed 03       		.byte	0x3
+ 2190 00ee 1D       		.byte	0x1d
+ 2191 00ef F3000000 		.4byte	0xf3
+ 2192 00f3 05       		.uleb128 0x5
+ 2193 00f4 01       		.byte	0x1
+ 2194 00f5 08       		.byte	0x8
+ 2195 00f6 D1020000 		.4byte	.LASF16
+ 2196 00fa 05       		.uleb128 0x5
+ 2197 00fb 02       		.byte	0x2
+ 2198 00fc 05       		.byte	0x5
+ 2199 00fd 41010000 		.4byte	.LASF17
+ 2200 0101 07       		.uleb128 0x7
+ 2201 0102 E4040000 		.4byte	.LASF18
+ 2202 0106 03       		.byte	0x3
+ 2203 0107 3F       		.byte	0x3f
+ 2204 0108 0C010000 		.4byte	0x10c
+ 2205 010c 05       		.uleb128 0x5
+ 2206 010d 04       		.byte	0x4
+ 2207 010e 05       		.byte	0x5
+ 2208 010f 2B020000 		.4byte	.LASF19
+ 2209 0113 05       		.uleb128 0x5
+ 2210 0114 04       		.byte	0x4
+ 2211 0115 07       		.byte	0x7
+ 2212 0116 39020000 		.4byte	.LASF20
+ 2213 011a 05       		.uleb128 0x5
+ 2214 011b 08       		.byte	0x8
+ 2215 011c 05       		.byte	0x5
+ 2216 011d 18010000 		.4byte	.LASF21
+ 2217 0121 05       		.uleb128 0x5
+ 2218 0122 08       		.byte	0x8
+ 2219 0123 07       		.byte	0x7
+ 2220 0124 49030000 		.4byte	.LASF22
+ 2221 0128 05       		.uleb128 0x5
+ 2222 0129 04       		.byte	0x4
+ 2223 012a 07       		.byte	0x7
+ 2224 012b 76030000 		.4byte	.LASF23
+ 2225 012f 07       		.uleb128 0x7
+ 2226 0130 68010000 		.4byte	.LASF24
+ 2227 0134 04       		.byte	0x4
+ 2228 0135 18       		.byte	0x18
+ 2229 0136 E8000000 		.4byte	0xe8
+ 2230 013a 07       		.uleb128 0x7
+ 2231 013b F7030000 		.4byte	.LASF25
+ 2232 013f 04       		.byte	0x4
+ 2233 0140 2C       		.byte	0x2c
+ 2234 0141 01010000 		.4byte	0x101
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 50
+
+
+ 2235 0145 08       		.uleb128 0x8
+ 2236 0146 25040000 		.4byte	.LASF26
+ 2237 014a 05       		.byte	0x5
+ 2238 014b 9201     		.2byte	0x192
+ 2239 014d F3000000 		.4byte	0xf3
+ 2240 0151 05       		.uleb128 0x5
+ 2241 0152 04       		.byte	0x4
+ 2242 0153 04       		.byte	0x4
+ 2243 0154 CC010000 		.4byte	.LASF27
+ 2244 0158 05       		.uleb128 0x5
+ 2245 0159 08       		.byte	0x8
+ 2246 015a 04       		.byte	0x4
+ 2247 015b 18050000 		.4byte	.LASF28
+ 2248 015f 05       		.uleb128 0x5
+ 2249 0160 01       		.byte	0x1
+ 2250 0161 08       		.byte	0x8
+ 2251 0162 CF030000 		.4byte	.LASF29
+ 2252 0166 05       		.uleb128 0x5
+ 2253 0167 08       		.byte	0x8
+ 2254 0168 04       		.byte	0x4
+ 2255 0169 00000000 		.4byte	.LASF30
+ 2256 016d 05       		.uleb128 0x5
+ 2257 016e 04       		.byte	0x4
+ 2258 016f 07       		.byte	0x7
+ 2259 0170 3B000000 		.4byte	.LASF31
+ 2260 0174 09       		.uleb128 0x9
+ 2261 0175 04       		.byte	0x4
+ 2262 0176 F3000000 		.4byte	0xf3
+ 2263 017a 0A       		.uleb128 0xa
+ 2264 017b 90040000 		.4byte	.LASF58
+ 2265 017f DC01     		.2byte	0x1dc
+ 2266 0181 06       		.byte	0x6
+ 2267 0182 1E       		.byte	0x1e
+ 2268 0183 DA020000 		.4byte	0x2da
+ 2269 0187 03       		.uleb128 0x3
+ 2270 0188 EE040000 		.4byte	.LASF32
+ 2271 018c 06       		.byte	0x6
+ 2272 018d 1F       		.byte	0x1f
+ 2273 018e 5F010000 		.4byte	0x15f
+ 2274 0192 00       		.byte	0
+ 2275 0193 03       		.uleb128 0x3
+ 2276 0194 86040000 		.4byte	.LASF33
+ 2277 0198 06       		.byte	0x6
+ 2278 0199 20       		.byte	0x20
+ 2279 019a 5F010000 		.4byte	0x15f
+ 2280 019e 01       		.byte	0x1
+ 2281 019f 0B       		.uleb128 0xb
+ 2282 01a0 636D6400 		.ascii	"cmd\000"
+ 2283 01a4 06       		.byte	0x6
+ 2284 01a5 21       		.byte	0x21
+ 2285 01a6 5F010000 		.4byte	0x15f
+ 2286 01aa 02       		.byte	0x2
+ 2287 01ab 03       		.uleb128 0x3
+ 2288 01ac 2B010000 		.4byte	.LASF34
+ 2289 01b0 06       		.byte	0x6
+ 2290 01b1 22       		.byte	0x22
+ 2291 01b2 F3000000 		.4byte	0xf3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 51
+
+
+ 2292 01b6 03       		.byte	0x3
+ 2293 01b7 03       		.uleb128 0x3
+ 2294 01b8 E3010000 		.4byte	.LASF35
+ 2295 01bc 06       		.byte	0x6
+ 2296 01bd 23       		.byte	0x23
+ 2297 01be 5F010000 		.4byte	0x15f
+ 2298 01c2 04       		.byte	0x4
+ 2299 01c3 03       		.uleb128 0x3
+ 2300 01c4 9E030000 		.4byte	.LASF36
+ 2301 01c8 06       		.byte	0x6
+ 2302 01c9 24       		.byte	0x24
+ 2303 01ca 5F010000 		.4byte	0x15f
+ 2304 01ce 05       		.byte	0x5
+ 2305 01cf 03       		.uleb128 0x3
+ 2306 01d0 64000000 		.4byte	.LASF37
+ 2307 01d4 06       		.byte	0x6
+ 2308 01d5 25       		.byte	0x25
+ 2309 01d6 5F010000 		.4byte	0x15f
+ 2310 01da 06       		.byte	0x6
+ 2311 01db 03       		.uleb128 0x3
+ 2312 01dc 72000000 		.4byte	.LASF38
+ 2313 01e0 06       		.byte	0x6
+ 2314 01e1 26       		.byte	0x26
+ 2315 01e2 DA020000 		.4byte	0x2da
+ 2316 01e6 07       		.byte	0x7
+ 2317 01e7 03       		.uleb128 0x3
+ 2318 01e8 D2010000 		.4byte	.LASF3
+ 2319 01ec 06       		.byte	0x6
+ 2320 01ed 27       		.byte	0x27
+ 2321 01ee F3000000 		.4byte	0xf3
+ 2322 01f2 09       		.byte	0x9
+ 2323 01f3 03       		.uleb128 0x3
+ 2324 01f4 37050000 		.4byte	.LASF39
+ 2325 01f8 06       		.byte	0x6
+ 2326 01f9 28       		.byte	0x28
+ 2327 01fa F3000000 		.4byte	0xf3
+ 2328 01fe 0A       		.byte	0xa
+ 2329 01ff 03       		.uleb128 0x3
+ 2330 0200 70010000 		.4byte	.LASF40
+ 2331 0204 06       		.byte	0x6
+ 2332 0205 29       		.byte	0x29
+ 2333 0206 F3000000 		.4byte	0xf3
+ 2334 020a 0B       		.byte	0xb
+ 2335 020b 03       		.uleb128 0x3
+ 2336 020c 37030000 		.4byte	.LASF41
+ 2337 0210 06       		.byte	0x6
+ 2338 0211 2A       		.byte	0x2a
+ 2339 0212 F3000000 		.4byte	0xf3
+ 2340 0216 0C       		.byte	0xc
+ 2341 0217 03       		.uleb128 0x3
+ 2342 0218 4E000000 		.4byte	.LASF42
+ 2343 021c 06       		.byte	0x6
+ 2344 021d 2B       		.byte	0x2b
+ 2345 021e F3000000 		.4byte	0xf3
+ 2346 0222 0D       		.byte	0xd
+ 2347 0223 03       		.uleb128 0x3
+ 2348 0224 C5010000 		.4byte	.LASF43
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 52
+
+
+ 2349 0228 06       		.byte	0x6
+ 2350 0229 2C       		.byte	0x2c
+ 2351 022a EA020000 		.4byte	0x2ea
+ 2352 022e 0E       		.byte	0xe
+ 2353 022f 03       		.uleb128 0x3
+ 2354 0230 AD040000 		.4byte	.LASF44
+ 2355 0234 06       		.byte	0x6
+ 2356 0235 2D       		.byte	0x2d
+ 2357 0236 FA020000 		.4byte	0x2fa
+ 2358 023a 43       		.byte	0x43
+ 2359 023b 03       		.uleb128 0x3
+ 2360 023c 2C050000 		.4byte	.LASF45
+ 2361 0240 06       		.byte	0x6
+ 2362 0241 2E       		.byte	0x2e
+ 2363 0242 FA020000 		.4byte	0x2fa
+ 2364 0246 46       		.byte	0x46
+ 2365 0247 03       		.uleb128 0x3
+ 2366 0248 DC040000 		.4byte	.LASF46
+ 2367 024c 06       		.byte	0x6
+ 2368 024d 2F       		.byte	0x2f
+ 2369 024e 0A030000 		.4byte	0x30a
+ 2370 0252 49       		.byte	0x49
+ 2371 0253 03       		.uleb128 0x3
+ 2372 0254 09040000 		.4byte	.LASF47
+ 2373 0258 06       		.byte	0x6
+ 2374 0259 30       		.byte	0x30
+ 2375 025a F3000000 		.4byte	0xf3
+ 2376 025e 5D       		.byte	0x5d
+ 2377 025f 03       		.uleb128 0x3
+ 2378 0260 0C000000 		.4byte	.LASF48
+ 2379 0264 06       		.byte	0x6
+ 2380 0265 31       		.byte	0x31
+ 2381 0266 F3000000 		.4byte	0xf3
+ 2382 026a 5E       		.byte	0x5e
+ 2383 026b 03       		.uleb128 0x3
+ 2384 026c 14030000 		.4byte	.LASF49
+ 2385 0270 06       		.byte	0x6
+ 2386 0271 32       		.byte	0x32
+ 2387 0272 F3000000 		.4byte	0xf3
+ 2388 0276 5F       		.byte	0x5f
+ 2389 0277 03       		.uleb128 0x3
+ 2390 0278 44000000 		.4byte	.LASF50
+ 2391 027c 06       		.byte	0x6
+ 2392 027d 33       		.byte	0x33
+ 2393 027e F3000000 		.4byte	0xf3
+ 2394 0282 60       		.byte	0x60
+ 2395 0283 03       		.uleb128 0x3
+ 2396 0284 0C010000 		.4byte	.LASF51
+ 2397 0288 06       		.byte	0x6
+ 2398 0289 34       		.byte	0x34
+ 2399 028a 1A030000 		.4byte	0x31a
+ 2400 028e 61       		.byte	0x61
+ 2401 028f 03       		.uleb128 0x3
+ 2402 0290 18000000 		.4byte	.LASF52
+ 2403 0294 06       		.byte	0x6
+ 2404 0295 35       		.byte	0x35
+ 2405 0296 F3000000 		.4byte	0xf3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 53
+
+
+ 2406 029a E1       		.byte	0xe1
+ 2407 029b 03       		.uleb128 0x3
+ 2408 029c FA010000 		.4byte	.LASF53
+ 2409 02a0 06       		.byte	0x6
+ 2410 02a1 36       		.byte	0x36
+ 2411 02a2 F3000000 		.4byte	0xf3
+ 2412 02a6 E2       		.byte	0xe2
+ 2413 02a7 03       		.uleb128 0x3
+ 2414 02a8 7A020000 		.4byte	.LASF54
+ 2415 02ac 06       		.byte	0x6
+ 2416 02ad 37       		.byte	0x37
+ 2417 02ae F3000000 		.4byte	0xf3
+ 2418 02b2 E3       		.byte	0xe3
+ 2419 02b3 03       		.uleb128 0x3
+ 2420 02b4 BE020000 		.4byte	.LASF55
+ 2421 02b8 06       		.byte	0x6
+ 2422 02b9 38       		.byte	0x38
+ 2423 02ba 1A030000 		.4byte	0x31a
+ 2424 02be E4       		.byte	0xe4
+ 2425 02bf 0C       		.uleb128 0xc
+ 2426 02c0 2B040000 		.4byte	.LASF56
+ 2427 02c4 06       		.byte	0x6
+ 2428 02c5 39       		.byte	0x39
+ 2429 02c6 2A030000 		.4byte	0x32a
+ 2430 02ca 6401     		.2byte	0x164
+ 2431 02cc 0C       		.uleb128 0xc
+ 2432 02cd C3040000 		.4byte	.LASF57
+ 2433 02d1 06       		.byte	0x6
+ 2434 02d2 3A       		.byte	0x3a
+ 2435 02d3 0A030000 		.4byte	0x30a
+ 2436 02d7 C801     		.2byte	0x1c8
+ 2437 02d9 00       		.byte	0
+ 2438 02da 0D       		.uleb128 0xd
+ 2439 02db F3000000 		.4byte	0xf3
+ 2440 02df EA020000 		.4byte	0x2ea
+ 2441 02e3 0E       		.uleb128 0xe
+ 2442 02e4 6D010000 		.4byte	0x16d
+ 2443 02e8 01       		.byte	0x1
+ 2444 02e9 00       		.byte	0
+ 2445 02ea 0D       		.uleb128 0xd
+ 2446 02eb F3000000 		.4byte	0xf3
+ 2447 02ef FA020000 		.4byte	0x2fa
+ 2448 02f3 0E       		.uleb128 0xe
+ 2449 02f4 6D010000 		.4byte	0x16d
+ 2450 02f8 34       		.byte	0x34
+ 2451 02f9 00       		.byte	0
+ 2452 02fa 0D       		.uleb128 0xd
+ 2453 02fb 5F010000 		.4byte	0x15f
+ 2454 02ff 0A030000 		.4byte	0x30a
+ 2455 0303 0E       		.uleb128 0xe
+ 2456 0304 6D010000 		.4byte	0x16d
+ 2457 0308 02       		.byte	0x2
+ 2458 0309 00       		.byte	0
+ 2459 030a 0D       		.uleb128 0xd
+ 2460 030b F3000000 		.4byte	0xf3
+ 2461 030f 1A030000 		.4byte	0x31a
+ 2462 0313 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 54
+
+
+ 2463 0314 6D010000 		.4byte	0x16d
+ 2464 0318 13       		.byte	0x13
+ 2465 0319 00       		.byte	0
+ 2466 031a 0D       		.uleb128 0xd
+ 2467 031b F3000000 		.4byte	0xf3
+ 2468 031f 2A030000 		.4byte	0x32a
+ 2469 0323 0E       		.uleb128 0xe
+ 2470 0324 6D010000 		.4byte	0x16d
+ 2471 0328 7F       		.byte	0x7f
+ 2472 0329 00       		.byte	0
+ 2473 032a 0D       		.uleb128 0xd
+ 2474 032b F3000000 		.4byte	0xf3
+ 2475 032f 3A030000 		.4byte	0x33a
+ 2476 0333 0E       		.uleb128 0xe
+ 2477 0334 6D010000 		.4byte	0x16d
+ 2478 0338 63       		.byte	0x63
+ 2479 0339 00       		.byte	0
+ 2480 033a 07       		.uleb128 0x7
+ 2481 033b 90040000 		.4byte	.LASF58
+ 2482 033f 06       		.byte	0x6
+ 2483 0340 3B       		.byte	0x3b
+ 2484 0341 7A010000 		.4byte	0x17a
+ 2485 0345 0F       		.uleb128 0xf
+ 2486 0346 01030000 		.4byte	.LASF64
+ 2487 034a 01       		.byte	0x1
+ 2488 034b 1B       		.byte	0x1b
+ 2489 034c 00000000 		.4byte	.LFB63
+ 2490 0350 4C000000 		.4byte	.LFE63-.LFB63
+ 2491 0354 01       		.uleb128 0x1
+ 2492 0355 9C       		.byte	0x9c
+ 2493 0356 83030000 		.4byte	0x383
+ 2494 035a 10       		.uleb128 0x10
+ 2495 035b 7000     		.ascii	"p\000"
+ 2496 035d 01       		.byte	0x1
+ 2497 035e 1B       		.byte	0x1b
+ 2498 035f 74010000 		.4byte	0x174
+ 2499 0363 02       		.uleb128 0x2
+ 2500 0364 91       		.byte	0x91
+ 2501 0365 6C       		.sleb128 -20
+ 2502 0366 10       		.uleb128 0x10
+ 2503 0367 6C656E00 		.ascii	"len\000"
+ 2504 036b 01       		.byte	0x1
+ 2505 036c 1B       		.byte	0x1b
+ 2506 036d BE000000 		.4byte	0xbe
+ 2507 0371 02       		.uleb128 0x2
+ 2508 0372 91       		.byte	0x91
+ 2509 0373 68       		.sleb128 -24
+ 2510 0374 11       		.uleb128 0x11
+ 2511 0375 99040000 		.4byte	.LASF59
+ 2512 0379 01       		.byte	0x1
+ 2513 037a 1E       		.byte	0x1e
+ 2514 037b BE000000 		.4byte	0xbe
+ 2515 037f 02       		.uleb128 0x2
+ 2516 0380 91       		.byte	0x91
+ 2517 0381 74       		.sleb128 -12
+ 2518 0382 00       		.byte	0
+ 2519 0383 12       		.uleb128 0x12
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 55
+
+
+ 2520 0384 8C010000 		.4byte	.LASF71
+ 2521 0388 01       		.byte	0x1
+ 2522 0389 2A       		.byte	0x2a
+ 2523 038a 00000000 		.4byte	.LFB64
+ 2524 038e 74010000 		.4byte	.LFE64-.LFB64
+ 2525 0392 01       		.uleb128 0x1
+ 2526 0393 9C       		.byte	0x9c
+ 2527 0394 F7030000 		.4byte	0x3f7
+ 2528 0398 11       		.uleb128 0x11
+ 2529 0399 D4030000 		.4byte	.LASF60
+ 2530 039d 01       		.byte	0x1
+ 2531 039e 2E       		.byte	0x2e
+ 2532 039f F7030000 		.4byte	0x3f7
+ 2533 03a3 02       		.uleb128 0x2
+ 2534 03a4 91       		.byte	0x91
+ 2535 03a5 4C       		.sleb128 -52
+ 2536 03a6 13       		.uleb128 0x13
+ 2537 03a7 746D7000 		.ascii	"tmp\000"
+ 2538 03ab 01       		.byte	0x1
+ 2539 03ac 2F       		.byte	0x2f
+ 2540 03ad 5F010000 		.4byte	0x15f
+ 2541 03b1 02       		.uleb128 0x2
+ 2542 03b2 91       		.byte	0x91
+ 2543 03b3 63       		.sleb128 -29
+ 2544 03b4 13       		.uleb128 0x13
+ 2545 03b5 6900     		.ascii	"i\000"
+ 2546 03b7 01       		.byte	0x1
+ 2547 03b8 30       		.byte	0x30
+ 2548 03b9 BE000000 		.4byte	0xbe
+ 2549 03bd 02       		.uleb128 0x2
+ 2550 03be 91       		.byte	0x91
+ 2551 03bf 74       		.sleb128 -12
+ 2552 03c0 13       		.uleb128 0x13
+ 2553 03c1 6A00     		.ascii	"j\000"
+ 2554 03c3 01       		.byte	0x1
+ 2555 03c4 30       		.byte	0x30
+ 2556 03c5 BE000000 		.4byte	0xbe
+ 2557 03c9 02       		.uleb128 0x2
+ 2558 03ca 91       		.byte	0x91
+ 2559 03cb 70       		.sleb128 -16
+ 2560 03cc 11       		.uleb128 0x11
+ 2561 03cd 19020000 		.4byte	.LASF61
+ 2562 03d1 01       		.byte	0x1
+ 2563 03d2 31       		.byte	0x31
+ 2564 03d3 BE000000 		.4byte	0xbe
+ 2565 03d7 02       		.uleb128 0x2
+ 2566 03d8 91       		.byte	0x91
+ 2567 03d9 6C       		.sleb128 -20
+ 2568 03da 11       		.uleb128 0x11
+ 2569 03db 4A040000 		.4byte	.LASF62
+ 2570 03df 01       		.byte	0x1
+ 2571 03e0 32       		.byte	0x32
+ 2572 03e1 BE000000 		.4byte	0xbe
+ 2573 03e5 02       		.uleb128 0x2
+ 2574 03e6 91       		.byte	0x91
+ 2575 03e7 68       		.sleb128 -24
+ 2576 03e8 11       		.uleb128 0x11
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 56
+
+
+ 2577 03e9 F1030000 		.4byte	.LASF63
+ 2578 03ed 01       		.byte	0x1
+ 2579 03ee 33       		.byte	0x33
+ 2580 03ef BE000000 		.4byte	0xbe
+ 2581 03f3 02       		.uleb128 0x2
+ 2582 03f4 91       		.byte	0x91
+ 2583 03f5 64       		.sleb128 -28
+ 2584 03f6 00       		.byte	0
+ 2585 03f7 0D       		.uleb128 0xd
+ 2586 03f8 5F010000 		.4byte	0x15f
+ 2587 03fc 07040000 		.4byte	0x407
+ 2588 0400 0E       		.uleb128 0xe
+ 2589 0401 6D010000 		.4byte	0x16d
+ 2590 0405 13       		.byte	0x13
+ 2591 0406 00       		.byte	0
+ 2592 0407 0F       		.uleb128 0xf
+ 2593 0408 EF010000 		.4byte	.LASF65
+ 2594 040c 01       		.byte	0x1
+ 2595 040d 59       		.byte	0x59
+ 2596 040e 00000000 		.4byte	.LFB65
+ 2597 0412 4C000000 		.4byte	.LFE65-.LFB65
+ 2598 0416 01       		.uleb128 0x1
+ 2599 0417 9C       		.byte	0x9c
+ 2600 0418 2A040000 		.4byte	0x42a
+ 2601 041c 10       		.uleb128 0x10
+ 2602 041d 656E00   		.ascii	"en\000"
+ 2603 0420 01       		.byte	0x1
+ 2604 0421 59       		.byte	0x59
+ 2605 0422 45010000 		.4byte	0x145
+ 2606 0426 02       		.uleb128 0x2
+ 2607 0427 91       		.byte	0x91
+ 2608 0428 77       		.sleb128 -9
+ 2609 0429 00       		.byte	0
+ 2610 042a 0F       		.uleb128 0xf
+ 2611 042b 5A010000 		.4byte	.LASF66
+ 2612 042f 01       		.byte	0x1
+ 2613 0430 65       		.byte	0x65
+ 2614 0431 00000000 		.4byte	.LFB66
+ 2615 0435 34000000 		.4byte	.LFE66-.LFB66
+ 2616 0439 01       		.uleb128 0x1
+ 2617 043a 9C       		.byte	0x9c
+ 2618 043b 5C040000 		.4byte	0x45c
+ 2619 043f 10       		.uleb128 0x10
+ 2620 0440 72656700 		.ascii	"reg\000"
+ 2621 0444 01       		.byte	0x1
+ 2622 0445 65       		.byte	0x65
+ 2623 0446 45010000 		.4byte	0x145
+ 2624 044a 02       		.uleb128 0x2
+ 2625 044b 91       		.byte	0x91
+ 2626 044c 77       		.sleb128 -9
+ 2627 044d 10       		.uleb128 0x10
+ 2628 044e 76616C00 		.ascii	"val\000"
+ 2629 0452 01       		.byte	0x1
+ 2630 0453 65       		.byte	0x65
+ 2631 0454 45010000 		.4byte	0x145
+ 2632 0458 02       		.uleb128 0x2
+ 2633 0459 91       		.byte	0x91
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 57
+
+
+ 2634 045a 76       		.sleb128 -10
+ 2635 045b 00       		.byte	0
+ 2636 045c 0F       		.uleb128 0xf
+ 2637 045d 5A000000 		.4byte	.LASF67
+ 2638 0461 01       		.byte	0x1
+ 2639 0462 6D       		.byte	0x6d
+ 2640 0463 00000000 		.4byte	.LFB67
+ 2641 0467 46000000 		.4byte	.LFE67-.LFB67
+ 2642 046b 01       		.uleb128 0x1
+ 2643 046c 9C       		.byte	0x9c
+ 2644 046d 9C040000 		.4byte	0x49c
+ 2645 0471 14       		.uleb128 0x14
+ 2646 0472 34020000 		.4byte	.LASF68
+ 2647 0476 01       		.byte	0x1
+ 2648 0477 6D       		.byte	0x6d
+ 2649 0478 45010000 		.4byte	0x145
+ 2650 047c 02       		.uleb128 0x2
+ 2651 047d 91       		.byte	0x91
+ 2652 047e 77       		.sleb128 -9
+ 2653 047f 14       		.uleb128 0x14
+ 2654 0480 26010000 		.4byte	.LASF69
+ 2655 0484 01       		.byte	0x1
+ 2656 0485 6D       		.byte	0x6d
+ 2657 0486 74010000 		.4byte	0x174
+ 2658 048a 02       		.uleb128 0x2
+ 2659 048b 91       		.byte	0x91
+ 2660 048c 70       		.sleb128 -16
+ 2661 048d 10       		.uleb128 0x10
+ 2662 048e 6C656E00 		.ascii	"len\000"
+ 2663 0492 01       		.byte	0x1
+ 2664 0493 6D       		.byte	0x6d
+ 2665 0494 45010000 		.4byte	0x145
+ 2666 0498 02       		.uleb128 0x2
+ 2667 0499 91       		.byte	0x91
+ 2668 049a 76       		.sleb128 -10
+ 2669 049b 00       		.byte	0
+ 2670 049c 0F       		.uleb128 0xf
+ 2671 049d 95030000 		.4byte	.LASF70
+ 2672 04a1 01       		.byte	0x1
+ 2673 04a2 76       		.byte	0x76
+ 2674 04a3 00000000 		.4byte	.LFB68
+ 2675 04a7 68000000 		.4byte	.LFE68-.LFB68
+ 2676 04ab 01       		.uleb128 0x1
+ 2677 04ac 9C       		.byte	0x9c
+ 2678 04ad E8040000 		.4byte	0x4e8
+ 2679 04b1 14       		.uleb128 0x14
+ 2680 04b2 34020000 		.4byte	.LASF68
+ 2681 04b6 01       		.byte	0x1
+ 2682 04b7 76       		.byte	0x76
+ 2683 04b8 BE000000 		.4byte	0xbe
+ 2684 04bc 02       		.uleb128 0x2
+ 2685 04bd 91       		.byte	0x91
+ 2686 04be 64       		.sleb128 -28
+ 2687 04bf 14       		.uleb128 0x14
+ 2688 04c0 26010000 		.4byte	.LASF69
+ 2689 04c4 01       		.byte	0x1
+ 2690 04c5 76       		.byte	0x76
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 58
+
+
+ 2691 04c6 74010000 		.4byte	0x174
+ 2692 04ca 02       		.uleb128 0x2
+ 2693 04cb 91       		.byte	0x91
+ 2694 04cc 60       		.sleb128 -32
+ 2695 04cd 10       		.uleb128 0x10
+ 2696 04ce 6C656E00 		.ascii	"len\000"
+ 2697 04d2 01       		.byte	0x1
+ 2698 04d3 76       		.byte	0x76
+ 2699 04d4 BE000000 		.4byte	0xbe
+ 2700 04d8 02       		.uleb128 0x2
+ 2701 04d9 91       		.byte	0x91
+ 2702 04da 5C       		.sleb128 -36
+ 2703 04db 13       		.uleb128 0x13
+ 2704 04dc 7800     		.ascii	"x\000"
+ 2705 04de 01       		.byte	0x1
+ 2706 04df 78       		.byte	0x78
+ 2707 04e0 BE000000 		.4byte	0xbe
+ 2708 04e4 02       		.uleb128 0x2
+ 2709 04e5 91       		.byte	0x91
+ 2710 04e6 6C       		.sleb128 -20
+ 2711 04e7 00       		.byte	0
+ 2712 04e8 12       		.uleb128 0x12
+ 2713 04e9 FF030000 		.4byte	.LASF72
+ 2714 04ed 01       		.byte	0x1
+ 2715 04ee 8F       		.byte	0x8f
+ 2716 04ef 00000000 		.4byte	.LFB69
+ 2717 04f3 3C010000 		.4byte	.LFE69-.LFB69
+ 2718 04f7 01       		.uleb128 0x1
+ 2719 04f8 9C       		.byte	0x9c
+ 2720 04f9 77050000 		.4byte	0x577
+ 2721 04fd 11       		.uleb128 0x11
+ 2722 04fe 8B020000 		.4byte	.LASF73
+ 2723 0502 01       		.byte	0x1
+ 2724 0503 92       		.byte	0x92
+ 2725 0504 BE000000 		.4byte	0xbe
+ 2726 0508 02       		.uleb128 0x2
+ 2727 0509 91       		.byte	0x91
+ 2728 050a 74       		.sleb128 -12
+ 2729 050b 15       		.uleb128 0x15
+ 2730 050c 2C000000 		.4byte	.LBB2
+ 2731 0510 F0000000 		.4byte	.LBE2-.LBB2
+ 2732 0514 16       		.uleb128 0x16
+ 2733 0515 6C656E00 		.ascii	"len\000"
+ 2734 0519 01       		.byte	0x1
+ 2735 051a A0       		.byte	0xa0
+ 2736 051b BE000000 		.4byte	0xbe
+ 2737 051f 11       		.uleb128 0x11
+ 2738 0520 6D030000 		.4byte	.LASF74
+ 2739 0524 01       		.byte	0x1
+ 2740 0525 A1       		.byte	0xa1
+ 2741 0526 BE000000 		.4byte	0xbe
+ 2742 052a 02       		.uleb128 0x2
+ 2743 052b 91       		.byte	0x91
+ 2744 052c 70       		.sleb128 -16
+ 2745 052d 15       		.uleb128 0x15
+ 2746 052e 70000000 		.4byte	.LBB3
+ 2747 0532 AC000000 		.4byte	.LBE3-.LBB3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 59
+
+
+ 2748 0536 13       		.uleb128 0x13
+ 2749 0537 72656700 		.ascii	"reg\000"
+ 2750 053b 01       		.byte	0x1
+ 2751 053c AB       		.byte	0xab
+ 2752 053d BE000000 		.4byte	0xbe
+ 2753 0541 02       		.uleb128 0x2
+ 2754 0542 91       		.byte	0x91
+ 2755 0543 6C       		.sleb128 -20
+ 2756 0544 17       		.uleb128 0x17
+ 2757 0545 B4000000 		.4byte	.LBB4
+ 2758 0549 26000000 		.4byte	.LBE4-.LBB4
+ 2759 054d 5E050000 		.4byte	0x55e
+ 2760 0551 13       		.uleb128 0x13
+ 2761 0552 7000     		.ascii	"p\000"
+ 2762 0554 01       		.byte	0x1
+ 2763 0555 B9       		.byte	0xb9
+ 2764 0556 74010000 		.4byte	0x174
+ 2765 055a 02       		.uleb128 0x2
+ 2766 055b 91       		.byte	0x91
+ 2767 055c 68       		.sleb128 -24
+ 2768 055d 00       		.byte	0
+ 2769 055e 15       		.uleb128 0x15
+ 2770 055f EE000000 		.4byte	.LBB5
+ 2771 0563 2E000000 		.4byte	.LBE5-.LBB5
+ 2772 0567 13       		.uleb128 0x13
+ 2773 0568 7000     		.ascii	"p\000"
+ 2774 056a 01       		.byte	0x1
+ 2775 056b C0       		.byte	0xc0
+ 2776 056c 74010000 		.4byte	0x174
+ 2777 0570 02       		.uleb128 0x2
+ 2778 0571 91       		.byte	0x91
+ 2779 0572 64       		.sleb128 -28
+ 2780 0573 00       		.byte	0
+ 2781 0574 00       		.byte	0
+ 2782 0575 00       		.byte	0
+ 2783 0576 00       		.byte	0
+ 2784 0577 0F       		.uleb128 0xf
+ 2785 0578 B1030000 		.4byte	.LASF75
+ 2786 057c 01       		.byte	0x1
+ 2787 057d CF       		.byte	0xcf
+ 2788 057e 00000000 		.4byte	.LFB70
+ 2789 0582 34000000 		.4byte	.LFE70-.LFB70
+ 2790 0586 01       		.uleb128 0x1
+ 2791 0587 9C       		.byte	0x9c
+ 2792 0588 9B050000 		.4byte	0x59b
+ 2793 058c 10       		.uleb128 0x10
+ 2794 058d 6C656E00 		.ascii	"len\000"
+ 2795 0591 01       		.byte	0x1
+ 2796 0592 CF       		.byte	0xcf
+ 2797 0593 BE000000 		.4byte	0xbe
+ 2798 0597 02       		.uleb128 0x2
+ 2799 0598 91       		.byte	0x91
+ 2800 0599 74       		.sleb128 -12
+ 2801 059a 00       		.byte	0
+ 2802 059b 18       		.uleb128 0x18
+ 2803 059c 41050000 		.4byte	.LASF77
+ 2804 05a0 01       		.byte	0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 60
+
+
+ 2805 05a1 D5       		.byte	0xd5
+ 2806 05a2 00000000 		.4byte	.LFB71
+ 2807 05a6 30000000 		.4byte	.LFE71-.LFB71
+ 2808 05aa 01       		.uleb128 0x1
+ 2809 05ab 9C       		.byte	0x9c
+ 2810 05ac 0F       		.uleb128 0xf
+ 2811 05ad 51040000 		.4byte	.LASF76
+ 2812 05b1 01       		.byte	0x1
+ 2813 05b2 DC       		.byte	0xdc
+ 2814 05b3 00000000 		.4byte	.LFB72
+ 2815 05b7 60000000 		.4byte	.LFE72-.LFB72
+ 2816 05bb 01       		.uleb128 0x1
+ 2817 05bc 9C       		.byte	0x9c
+ 2818 05bd D0050000 		.4byte	0x5d0
+ 2819 05c1 10       		.uleb128 0x10
+ 2820 05c2 6C656E00 		.ascii	"len\000"
+ 2821 05c6 01       		.byte	0x1
+ 2822 05c7 DC       		.byte	0xdc
+ 2823 05c8 BE000000 		.4byte	0xbe
+ 2824 05cc 02       		.uleb128 0x2
+ 2825 05cd 91       		.byte	0x91
+ 2826 05ce 74       		.sleb128 -12
+ 2827 05cf 00       		.byte	0
+ 2828 05d0 18       		.uleb128 0x18
+ 2829 05d1 DF020000 		.4byte	.LASF78
+ 2830 05d5 01       		.byte	0x1
+ 2831 05d6 EA       		.byte	0xea
+ 2832 05d7 00000000 		.4byte	.LFB73
+ 2833 05db 30000000 		.4byte	.LFE73-.LFB73
+ 2834 05df 01       		.uleb128 0x1
+ 2835 05e0 9C       		.byte	0x9c
+ 2836 05e1 18       		.uleb128 0x18
+ 2837 05e2 C0030000 		.4byte	.LASF79
+ 2838 05e6 01       		.byte	0x1
+ 2839 05e7 F2       		.byte	0xf2
+ 2840 05e8 00000000 		.4byte	.LFB74
+ 2841 05ec 44000000 		.4byte	.LFE74-.LFB74
+ 2842 05f0 01       		.uleb128 0x1
+ 2843 05f1 9C       		.byte	0x9c
+ 2844 05f2 19       		.uleb128 0x19
+ 2845 05f3 6C020000 		.4byte	.LASF80
+ 2846 05f7 01       		.byte	0x1
+ 2847 05f8 0101     		.2byte	0x101
+ 2848 05fa 00000000 		.4byte	.LFB75
+ 2849 05fe 2C070000 		.4byte	.LFE75-.LFB75
+ 2850 0602 01       		.uleb128 0x1
+ 2851 0603 9C       		.byte	0x9c
+ 2852 0604 55060000 		.4byte	0x655
+ 2853 0608 1A       		.uleb128 0x1a
+ 2854 0609 636D6400 		.ascii	"cmd\000"
+ 2855 060d 01       		.byte	0x1
+ 2856 060e 0301     		.2byte	0x103
+ 2857 0610 5F010000 		.4byte	0x15f
+ 2858 0614 02       		.uleb128 0x2
+ 2859 0615 91       		.byte	0x91
+ 2860 0616 73       		.sleb128 -13
+ 2861 0617 1A       		.uleb128 0x1a
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 61
+
+
+ 2862 0618 6C656E00 		.ascii	"len\000"
+ 2863 061c 01       		.byte	0x1
+ 2864 061d 0401     		.2byte	0x104
+ 2865 061f BE000000 		.4byte	0xbe
+ 2866 0623 02       		.uleb128 0x2
+ 2867 0624 91       		.byte	0x91
+ 2868 0625 6C       		.sleb128 -20
+ 2869 0626 1A       		.uleb128 0x1a
+ 2870 0627 6900     		.ascii	"i\000"
+ 2871 0629 01       		.byte	0x1
+ 2872 062a 0501     		.2byte	0x105
+ 2873 062c BE000000 		.4byte	0xbe
+ 2874 0630 02       		.uleb128 0x2
+ 2875 0631 91       		.byte	0x91
+ 2876 0632 74       		.sleb128 -12
+ 2877 0633 15       		.uleb128 0x15
+ 2878 0634 80060000 		.4byte	.LBB6
+ 2879 0638 56000000 		.4byte	.LBE6-.LBB6
+ 2880 063c 1A       		.uleb128 0x1a
+ 2881 063d 7600     		.ascii	"v\000"
+ 2882 063f 01       		.byte	0x1
+ 2883 0640 EF01     		.2byte	0x1ef
+ 2884 0642 2F010000 		.4byte	0x12f
+ 2885 0646 02       		.uleb128 0x2
+ 2886 0647 91       		.byte	0x91
+ 2887 0648 6B       		.sleb128 -21
+ 2888 0649 1B       		.uleb128 0x1b
+ 2889 064a 7000     		.ascii	"p\000"
+ 2890 064c 01       		.byte	0x1
+ 2891 064d F001     		.2byte	0x1f0
+ 2892 064f 55060000 		.4byte	0x655
+ 2893 0653 00       		.byte	0
+ 2894 0654 00       		.byte	0
+ 2895 0655 09       		.uleb128 0x9
+ 2896 0656 04       		.byte	0x4
+ 2897 0657 2F010000 		.4byte	0x12f
+ 2898 065b 1C       		.uleb128 0x1c
+ 2899 065c 1F050000 		.4byte	.LASF81
+ 2900 0660 07       		.byte	0x7
+ 2901 0661 1207     		.2byte	0x712
+ 2902 0663 67060000 		.4byte	0x667
+ 2903 0667 06       		.uleb128 0x6
+ 2904 0668 3A010000 		.4byte	0x13a
+ 2905 066c 1D       		.uleb128 0x1d
+ 2906 066d 30000000 		.4byte	.LASF82
+ 2907 0671 01       		.byte	0x1
+ 2908 0672 14       		.byte	0x14
+ 2909 0673 3A030000 		.4byte	0x33a
+ 2910 0677 05       		.uleb128 0x5
+ 2911 0678 03       		.byte	0x3
+ 2912 0679 00000000 		.4byte	MyI2C_Regs
+ 2913 067d 1E       		.uleb128 0x1e
+ 2914 067e 7300     		.ascii	"s\000"
+ 2915 0680 06       		.byte	0x6
+ 2916 0681 3E       		.byte	0x3e
+ 2917 0682 D6000000 		.4byte	0xd6
+ 2918 0686 05       		.uleb128 0x5
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 62
+
+
+ 2919 0687 03       		.byte	0x3
+ 2920 0688 00000000 		.4byte	s
+ 2921 068c 1D       		.uleb128 0x1d
+ 2922 068d 0F050000 		.4byte	.LASF83
+ 2923 0691 01       		.byte	0x1
+ 2924 0692 15       		.byte	0x15
+ 2925 0693 F3000000 		.4byte	0xf3
+ 2926 0697 05       		.uleb128 0x5
+ 2927 0698 03       		.byte	0x3
+ 2928 0699 00000000 		.4byte	run_mode
+ 2929 069d 1F       		.uleb128 0x1f
+ 2930 069e 72786900 		.ascii	"rxi\000"
+ 2931 06a2 06       		.byte	0x6
+ 2932 06a3 42       		.byte	0x42
+ 2933 06a4 BE000000 		.4byte	0xbe
+ 2934 06a8 1D       		.uleb128 0x1d
+ 2935 06a9 CA040000 		.4byte	.LASF84
+ 2936 06ad 06       		.byte	0x6
+ 2937 06ae 47       		.byte	0x47
+ 2938 06af 5F010000 		.4byte	0x15f
+ 2939 06b3 05       		.uleb128 0x5
+ 2940 06b4 03       		.byte	0x3
+ 2941 06b5 00000000 		.4byte	currentAccessType
+ 2942 06b9 1D       		.uleb128 0x1d
+ 2943 06ba 12020000 		.4byte	.LASF85
+ 2944 06be 06       		.byte	0x6
+ 2945 06bf 48       		.byte	0x48
+ 2946 06c0 5F010000 		.4byte	0x15f
+ 2947 06c4 05       		.uleb128 0x5
+ 2948 06c5 03       		.byte	0x3
+ 2949 06c6 00000000 		.4byte	hw_old
+ 2950 06ca 1D       		.uleb128 0x1d
+ 2951 06cb BE010000 		.4byte	.LASF86
+ 2952 06cf 06       		.byte	0x6
+ 2953 06d0 49       		.byte	0x49
+ 2954 06d1 5F010000 		.4byte	0x15f
+ 2955 06d5 05       		.uleb128 0x5
+ 2956 06d6 03       		.byte	0x3
+ 2957 06d7 00000000 		.4byte	tp_old
+ 2958 06db 1D       		.uleb128 0x1d
+ 2959 06dc 25030000 		.4byte	.LASF87
+ 2960 06e0 06       		.byte	0x6
+ 2961 06e1 4A       		.byte	0x4a
+ 2962 06e2 BE000000 		.4byte	0xbe
+ 2963 06e6 05       		.uleb128 0x5
+ 2964 06e7 03       		.byte	0x3
+ 2965 06e8 00000000 		.4byte	tamperCR_polarity
+ 2966 06ec 1D       		.uleb128 0x1d
+ 2967 06ed 61050000 		.4byte	.LASF88
+ 2968 06f1 06       		.byte	0x6
+ 2969 06f2 4B       		.byte	0x4b
+ 2970 06f3 BE000000 		.4byte	0xbe
+ 2971 06f7 05       		.uleb128 0x5
+ 2972 06f8 03       		.byte	0x3
+ 2973 06f9 00000000 		.4byte	tamper_out_polarity
+ 2974 06fd 1D       		.uleb128 0x1d
+ 2975 06fe 22020000 		.4byte	.LASF89
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 63
+
+
+ 2976 0702 06       		.byte	0x6
+ 2977 0703 4E       		.byte	0x4e
+ 2978 0704 BE000000 		.4byte	0xbe
+ 2979 0708 05       		.uleb128 0x5
+ 2980 0709 03       		.byte	0x3
+ 2981 070a 00000000 		.4byte	card_ack
+ 2982 070e 1D       		.uleb128 0x1d
+ 2983 070f D7010000 		.4byte	.LASF90
+ 2984 0713 06       		.byte	0x6
+ 2985 0714 4F       		.byte	0x4f
+ 2986 0715 BE000000 		.4byte	0xbe
+ 2987 0719 05       		.uleb128 0x5
+ 2988 071a 03       		.byte	0x3
+ 2989 071b 00000000 		.4byte	card_in_buf
+ 2990 071f 1D       		.uleb128 0x1d
+ 2991 0720 60030000 		.4byte	.LASF91
+ 2992 0724 08       		.byte	0x8
+ 2993 0725 38       		.byte	0x38
+ 2994 0726 BE000000 		.4byte	0xbe
+ 2995 072a 05       		.uleb128 0x5
+ 2996 072b 03       		.byte	0x3
+ 2997 072c 00000000 		.4byte	osdp_timeout
+ 2998 0730 20       		.uleb128 0x20
+ 2999 0731 4B020000 		.4byte	.LASF92
+ 3000 0735 06       		.byte	0x6
+ 3001 0736 5B       		.byte	0x5b
+ 3002 0737 5F010000 		.4byte	0x15f
+ 3003 073b 20       		.uleb128 0x20
+ 3004 073c 72040000 		.4byte	.LASF93
+ 3005 0740 06       		.byte	0x6
+ 3006 0741 5C       		.byte	0x5c
+ 3007 0742 BE000000 		.4byte	0xbe
+ 3008 0746 1D       		.uleb128 0x1d
+ 3009 0747 3A040000 		.4byte	.LASF94
+ 3010 074b 01       		.byte	0x1
+ 3011 074c 17       		.byte	0x17
+ 3012 074d BE000000 		.4byte	0xbe
+ 3013 0751 05       		.uleb128 0x5
+ 3014 0752 03       		.byte	0x3
+ 3015 0753 00000000 		.4byte	debug_msg_delay
+ 3016 0757 1D       		.uleb128 0x1d
+ 3017 0758 94010000 		.4byte	.LASF95
+ 3018 075c 01       		.byte	0x1
+ 3019 075d 16       		.byte	0x16
+ 3020 075e BE000000 		.4byte	0xbe
+ 3021 0762 05       		.uleb128 0x5
+ 3022 0763 03       		.byte	0x3
+ 3023 0764 00000000 		.4byte	passmode_timeout
+ 3024 0768 20       		.uleb128 0x20
+ 3025 0769 05050000 		.4byte	.LASF96
+ 3026 076d 09       		.byte	0x9
+ 3027 076e 14       		.byte	0x14
+ 3028 076f 45010000 		.4byte	0x145
+ 3029 0773 1D       		.uleb128 0x1d
+ 3030 0774 A1040000 		.4byte	.LASF97
+ 3031 0778 01       		.byte	0x1
+ 3032 0779 19       		.byte	0x19
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 64
+
+
+ 3033 077a 45010000 		.4byte	0x145
+ 3034 077e 05       		.uleb128 0x5
+ 3035 077f 03       		.byte	0x3
+ 3036 0780 00000000 		.4byte	poe_en_stat
+ 3037 0784 0D       		.uleb128 0xd
+ 3038 0785 F3000000 		.4byte	0xf3
+ 3039 0789 95070000 		.4byte	0x795
+ 3040 078d 21       		.uleb128 0x21
+ 3041 078e 6D010000 		.4byte	0x16d
+ 3042 0792 0201     		.2byte	0x102
+ 3043 0794 00       		.byte	0
+ 3044 0795 1D       		.uleb128 0x1d
+ 3045 0796 DE030000 		.4byte	.LASF98
+ 3046 079a 01       		.byte	0x1
+ 3047 079b 86       		.byte	0x86
+ 3048 079c 84070000 		.4byte	0x784
+ 3049 07a0 05       		.uleb128 0x5
+ 3050 07a1 03       		.byte	0x3
+ 3051 07a2 00000000 		.4byte	usb_command_buffer
+ 3052 07a6 1D       		.uleb128 0x1d
+ 3053 07a7 F9040000 		.4byte	.LASF99
+ 3054 07ab 01       		.byte	0x1
+ 3055 07ac 87       		.byte	0x87
+ 3056 07ad BE000000 		.4byte	0xbe
+ 3057 07b1 05       		.uleb128 0x5
+ 3058 07b2 03       		.byte	0x3
+ 3059 07b3 00000000 		.4byte	usb_buf_len
+ 3060 07b7 1D       		.uleb128 0x1d
+ 3061 07b8 B8040000 		.4byte	.LASF100
+ 3062 07bc 01       		.byte	0x1
+ 3063 07bd 88       		.byte	0x88
+ 3064 07be BE000000 		.4byte	0xbe
+ 3065 07c2 05       		.uleb128 0x5
+ 3066 07c3 03       		.byte	0x3
+ 3067 07c4 00000000 		.4byte	tick_count
+ 3068 07c8 1D       		.uleb128 0x1d
+ 3069 07c9 8D030000 		.4byte	.LASF101
+ 3070 07cd 01       		.byte	0x1
+ 3071 07ce 89       		.byte	0x89
+ 3072 07cf BE000000 		.4byte	0xbe
+ 3073 07d3 05       		.uleb128 0x5
+ 3074 07d4 03       		.byte	0x3
+ 3075 07d5 00000000 		.4byte	last_rx
+ 3076 07d9 0D       		.uleb128 0xd
+ 3077 07da F3000000 		.4byte	0xf3
+ 3078 07de E9070000 		.4byte	0x7e9
+ 3079 07e2 0E       		.uleb128 0xe
+ 3080 07e3 6D010000 		.4byte	0x16d
+ 3081 07e7 08       		.byte	0x8
+ 3082 07e8 00       		.byte	0
+ 3083 07e9 1D       		.uleb128 0x1d
+ 3084 07ea 60040000 		.4byte	.LASF102
+ 3085 07ee 01       		.byte	0x1
+ 3086 07ef CD       		.byte	0xcd
+ 3087 07f0 D9070000 		.4byte	0x7d9
+ 3088 07f4 05       		.uleb128 0x5
+ 3089 07f5 03       		.byte	0x3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 65
+
+
+ 3090 07f6 00000000 		.4byte	f2f_alive_message
+ 3091 07fa 20       		.uleb128 0x20
+ 3092 07fb EE020000 		.4byte	.LASF103
+ 3093 07ff 01       		.byte	0x1
+ 3094 0800 CE       		.byte	0xce
+ 3095 0801 5F010000 		.4byte	0x15f
+ 3096 0805 00       		.byte	0
+ 3097              		.section	.debug_abbrev,"",%progbits
+ 3098              	.Ldebug_abbrev0:
+ 3099 0000 01       		.uleb128 0x1
+ 3100 0001 11       		.uleb128 0x11
+ 3101 0002 01       		.byte	0x1
+ 3102 0003 25       		.uleb128 0x25
+ 3103 0004 0E       		.uleb128 0xe
+ 3104 0005 13       		.uleb128 0x13
+ 3105 0006 0B       		.uleb128 0xb
+ 3106 0007 03       		.uleb128 0x3
+ 3107 0008 0E       		.uleb128 0xe
+ 3108 0009 1B       		.uleb128 0x1b
+ 3109 000a 0E       		.uleb128 0xe
+ 3110 000b 55       		.uleb128 0x55
+ 3111 000c 17       		.uleb128 0x17
+ 3112 000d 11       		.uleb128 0x11
+ 3113 000e 01       		.uleb128 0x1
+ 3114 000f 10       		.uleb128 0x10
+ 3115 0010 17       		.uleb128 0x17
+ 3116 0011 00       		.byte	0
+ 3117 0012 00       		.byte	0
+ 3118 0013 02       		.uleb128 0x2
+ 3119 0014 13       		.uleb128 0x13
+ 3120 0015 01       		.byte	0x1
+ 3121 0016 0B       		.uleb128 0xb
+ 3122 0017 0B       		.uleb128 0xb
+ 3123 0018 3A       		.uleb128 0x3a
+ 3124 0019 0B       		.uleb128 0xb
+ 3125 001a 3B       		.uleb128 0x3b
+ 3126 001b 0B       		.uleb128 0xb
+ 3127 001c 01       		.uleb128 0x1
+ 3128 001d 13       		.uleb128 0x13
+ 3129 001e 00       		.byte	0
+ 3130 001f 00       		.byte	0
+ 3131 0020 03       		.uleb128 0x3
+ 3132 0021 0D       		.uleb128 0xd
+ 3133 0022 00       		.byte	0
+ 3134 0023 03       		.uleb128 0x3
+ 3135 0024 0E       		.uleb128 0xe
+ 3136 0025 3A       		.uleb128 0x3a
+ 3137 0026 0B       		.uleb128 0xb
+ 3138 0027 3B       		.uleb128 0x3b
+ 3139 0028 0B       		.uleb128 0xb
+ 3140 0029 49       		.uleb128 0x49
+ 3141 002a 13       		.uleb128 0x13
+ 3142 002b 38       		.uleb128 0x38
+ 3143 002c 0B       		.uleb128 0xb
+ 3144 002d 00       		.byte	0
+ 3145 002e 00       		.byte	0
+ 3146 002f 04       		.uleb128 0x4
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 66
+
+
+ 3147 0030 24       		.uleb128 0x24
+ 3148 0031 00       		.byte	0
+ 3149 0032 0B       		.uleb128 0xb
+ 3150 0033 0B       		.uleb128 0xb
+ 3151 0034 3E       		.uleb128 0x3e
+ 3152 0035 0B       		.uleb128 0xb
+ 3153 0036 03       		.uleb128 0x3
+ 3154 0037 08       		.uleb128 0x8
+ 3155 0038 00       		.byte	0
+ 3156 0039 00       		.byte	0
+ 3157 003a 05       		.uleb128 0x5
+ 3158 003b 24       		.uleb128 0x24
+ 3159 003c 00       		.byte	0
+ 3160 003d 0B       		.uleb128 0xb
+ 3161 003e 0B       		.uleb128 0xb
+ 3162 003f 3E       		.uleb128 0x3e
+ 3163 0040 0B       		.uleb128 0xb
+ 3164 0041 03       		.uleb128 0x3
+ 3165 0042 0E       		.uleb128 0xe
+ 3166 0043 00       		.byte	0
+ 3167 0044 00       		.byte	0
+ 3168 0045 06       		.uleb128 0x6
+ 3169 0046 35       		.uleb128 0x35
+ 3170 0047 00       		.byte	0
+ 3171 0048 49       		.uleb128 0x49
+ 3172 0049 13       		.uleb128 0x13
+ 3173 004a 00       		.byte	0
+ 3174 004b 00       		.byte	0
+ 3175 004c 07       		.uleb128 0x7
+ 3176 004d 16       		.uleb128 0x16
+ 3177 004e 00       		.byte	0
+ 3178 004f 03       		.uleb128 0x3
+ 3179 0050 0E       		.uleb128 0xe
+ 3180 0051 3A       		.uleb128 0x3a
+ 3181 0052 0B       		.uleb128 0xb
+ 3182 0053 3B       		.uleb128 0x3b
+ 3183 0054 0B       		.uleb128 0xb
+ 3184 0055 49       		.uleb128 0x49
+ 3185 0056 13       		.uleb128 0x13
+ 3186 0057 00       		.byte	0
+ 3187 0058 00       		.byte	0
+ 3188 0059 08       		.uleb128 0x8
+ 3189 005a 16       		.uleb128 0x16
+ 3190 005b 00       		.byte	0
+ 3191 005c 03       		.uleb128 0x3
+ 3192 005d 0E       		.uleb128 0xe
+ 3193 005e 3A       		.uleb128 0x3a
+ 3194 005f 0B       		.uleb128 0xb
+ 3195 0060 3B       		.uleb128 0x3b
+ 3196 0061 05       		.uleb128 0x5
+ 3197 0062 49       		.uleb128 0x49
+ 3198 0063 13       		.uleb128 0x13
+ 3199 0064 00       		.byte	0
+ 3200 0065 00       		.byte	0
+ 3201 0066 09       		.uleb128 0x9
+ 3202 0067 0F       		.uleb128 0xf
+ 3203 0068 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 67
+
+
+ 3204 0069 0B       		.uleb128 0xb
+ 3205 006a 0B       		.uleb128 0xb
+ 3206 006b 49       		.uleb128 0x49
+ 3207 006c 13       		.uleb128 0x13
+ 3208 006d 00       		.byte	0
+ 3209 006e 00       		.byte	0
+ 3210 006f 0A       		.uleb128 0xa
+ 3211 0070 13       		.uleb128 0x13
+ 3212 0071 01       		.byte	0x1
+ 3213 0072 03       		.uleb128 0x3
+ 3214 0073 0E       		.uleb128 0xe
+ 3215 0074 0B       		.uleb128 0xb
+ 3216 0075 05       		.uleb128 0x5
+ 3217 0076 3A       		.uleb128 0x3a
+ 3218 0077 0B       		.uleb128 0xb
+ 3219 0078 3B       		.uleb128 0x3b
+ 3220 0079 0B       		.uleb128 0xb
+ 3221 007a 01       		.uleb128 0x1
+ 3222 007b 13       		.uleb128 0x13
+ 3223 007c 00       		.byte	0
+ 3224 007d 00       		.byte	0
+ 3225 007e 0B       		.uleb128 0xb
+ 3226 007f 0D       		.uleb128 0xd
+ 3227 0080 00       		.byte	0
+ 3228 0081 03       		.uleb128 0x3
+ 3229 0082 08       		.uleb128 0x8
+ 3230 0083 3A       		.uleb128 0x3a
+ 3231 0084 0B       		.uleb128 0xb
+ 3232 0085 3B       		.uleb128 0x3b
+ 3233 0086 0B       		.uleb128 0xb
+ 3234 0087 49       		.uleb128 0x49
+ 3235 0088 13       		.uleb128 0x13
+ 3236 0089 38       		.uleb128 0x38
+ 3237 008a 0B       		.uleb128 0xb
+ 3238 008b 00       		.byte	0
+ 3239 008c 00       		.byte	0
+ 3240 008d 0C       		.uleb128 0xc
+ 3241 008e 0D       		.uleb128 0xd
+ 3242 008f 00       		.byte	0
+ 3243 0090 03       		.uleb128 0x3
+ 3244 0091 0E       		.uleb128 0xe
+ 3245 0092 3A       		.uleb128 0x3a
+ 3246 0093 0B       		.uleb128 0xb
+ 3247 0094 3B       		.uleb128 0x3b
+ 3248 0095 0B       		.uleb128 0xb
+ 3249 0096 49       		.uleb128 0x49
+ 3250 0097 13       		.uleb128 0x13
+ 3251 0098 38       		.uleb128 0x38
+ 3252 0099 05       		.uleb128 0x5
+ 3253 009a 00       		.byte	0
+ 3254 009b 00       		.byte	0
+ 3255 009c 0D       		.uleb128 0xd
+ 3256 009d 01       		.uleb128 0x1
+ 3257 009e 01       		.byte	0x1
+ 3258 009f 49       		.uleb128 0x49
+ 3259 00a0 13       		.uleb128 0x13
+ 3260 00a1 01       		.uleb128 0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 68
+
+
+ 3261 00a2 13       		.uleb128 0x13
+ 3262 00a3 00       		.byte	0
+ 3263 00a4 00       		.byte	0
+ 3264 00a5 0E       		.uleb128 0xe
+ 3265 00a6 21       		.uleb128 0x21
+ 3266 00a7 00       		.byte	0
+ 3267 00a8 49       		.uleb128 0x49
+ 3268 00a9 13       		.uleb128 0x13
+ 3269 00aa 2F       		.uleb128 0x2f
+ 3270 00ab 0B       		.uleb128 0xb
+ 3271 00ac 00       		.byte	0
+ 3272 00ad 00       		.byte	0
+ 3273 00ae 0F       		.uleb128 0xf
+ 3274 00af 2E       		.uleb128 0x2e
+ 3275 00b0 01       		.byte	0x1
+ 3276 00b1 3F       		.uleb128 0x3f
+ 3277 00b2 19       		.uleb128 0x19
+ 3278 00b3 03       		.uleb128 0x3
+ 3279 00b4 0E       		.uleb128 0xe
+ 3280 00b5 3A       		.uleb128 0x3a
+ 3281 00b6 0B       		.uleb128 0xb
+ 3282 00b7 3B       		.uleb128 0x3b
+ 3283 00b8 0B       		.uleb128 0xb
+ 3284 00b9 27       		.uleb128 0x27
+ 3285 00ba 19       		.uleb128 0x19
+ 3286 00bb 11       		.uleb128 0x11
+ 3287 00bc 01       		.uleb128 0x1
+ 3288 00bd 12       		.uleb128 0x12
+ 3289 00be 06       		.uleb128 0x6
+ 3290 00bf 40       		.uleb128 0x40
+ 3291 00c0 18       		.uleb128 0x18
+ 3292 00c1 9642     		.uleb128 0x2116
+ 3293 00c3 19       		.uleb128 0x19
+ 3294 00c4 01       		.uleb128 0x1
+ 3295 00c5 13       		.uleb128 0x13
+ 3296 00c6 00       		.byte	0
+ 3297 00c7 00       		.byte	0
+ 3298 00c8 10       		.uleb128 0x10
+ 3299 00c9 05       		.uleb128 0x5
+ 3300 00ca 00       		.byte	0
+ 3301 00cb 03       		.uleb128 0x3
+ 3302 00cc 08       		.uleb128 0x8
+ 3303 00cd 3A       		.uleb128 0x3a
+ 3304 00ce 0B       		.uleb128 0xb
+ 3305 00cf 3B       		.uleb128 0x3b
+ 3306 00d0 0B       		.uleb128 0xb
+ 3307 00d1 49       		.uleb128 0x49
+ 3308 00d2 13       		.uleb128 0x13
+ 3309 00d3 02       		.uleb128 0x2
+ 3310 00d4 18       		.uleb128 0x18
+ 3311 00d5 00       		.byte	0
+ 3312 00d6 00       		.byte	0
+ 3313 00d7 11       		.uleb128 0x11
+ 3314 00d8 34       		.uleb128 0x34
+ 3315 00d9 00       		.byte	0
+ 3316 00da 03       		.uleb128 0x3
+ 3317 00db 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 69
+
+
+ 3318 00dc 3A       		.uleb128 0x3a
+ 3319 00dd 0B       		.uleb128 0xb
+ 3320 00de 3B       		.uleb128 0x3b
+ 3321 00df 0B       		.uleb128 0xb
+ 3322 00e0 49       		.uleb128 0x49
+ 3323 00e1 13       		.uleb128 0x13
+ 3324 00e2 02       		.uleb128 0x2
+ 3325 00e3 18       		.uleb128 0x18
+ 3326 00e4 00       		.byte	0
+ 3327 00e5 00       		.byte	0
+ 3328 00e6 12       		.uleb128 0x12
+ 3329 00e7 2E       		.uleb128 0x2e
+ 3330 00e8 01       		.byte	0x1
+ 3331 00e9 3F       		.uleb128 0x3f
+ 3332 00ea 19       		.uleb128 0x19
+ 3333 00eb 03       		.uleb128 0x3
+ 3334 00ec 0E       		.uleb128 0xe
+ 3335 00ed 3A       		.uleb128 0x3a
+ 3336 00ee 0B       		.uleb128 0xb
+ 3337 00ef 3B       		.uleb128 0x3b
+ 3338 00f0 0B       		.uleb128 0xb
+ 3339 00f1 11       		.uleb128 0x11
+ 3340 00f2 01       		.uleb128 0x1
+ 3341 00f3 12       		.uleb128 0x12
+ 3342 00f4 06       		.uleb128 0x6
+ 3343 00f5 40       		.uleb128 0x40
+ 3344 00f6 18       		.uleb128 0x18
+ 3345 00f7 9642     		.uleb128 0x2116
+ 3346 00f9 19       		.uleb128 0x19
+ 3347 00fa 01       		.uleb128 0x1
+ 3348 00fb 13       		.uleb128 0x13
+ 3349 00fc 00       		.byte	0
+ 3350 00fd 00       		.byte	0
+ 3351 00fe 13       		.uleb128 0x13
+ 3352 00ff 34       		.uleb128 0x34
+ 3353 0100 00       		.byte	0
+ 3354 0101 03       		.uleb128 0x3
+ 3355 0102 08       		.uleb128 0x8
+ 3356 0103 3A       		.uleb128 0x3a
+ 3357 0104 0B       		.uleb128 0xb
+ 3358 0105 3B       		.uleb128 0x3b
+ 3359 0106 0B       		.uleb128 0xb
+ 3360 0107 49       		.uleb128 0x49
+ 3361 0108 13       		.uleb128 0x13
+ 3362 0109 02       		.uleb128 0x2
+ 3363 010a 18       		.uleb128 0x18
+ 3364 010b 00       		.byte	0
+ 3365 010c 00       		.byte	0
+ 3366 010d 14       		.uleb128 0x14
+ 3367 010e 05       		.uleb128 0x5
+ 3368 010f 00       		.byte	0
+ 3369 0110 03       		.uleb128 0x3
+ 3370 0111 0E       		.uleb128 0xe
+ 3371 0112 3A       		.uleb128 0x3a
+ 3372 0113 0B       		.uleb128 0xb
+ 3373 0114 3B       		.uleb128 0x3b
+ 3374 0115 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 70
+
+
+ 3375 0116 49       		.uleb128 0x49
+ 3376 0117 13       		.uleb128 0x13
+ 3377 0118 02       		.uleb128 0x2
+ 3378 0119 18       		.uleb128 0x18
+ 3379 011a 00       		.byte	0
+ 3380 011b 00       		.byte	0
+ 3381 011c 15       		.uleb128 0x15
+ 3382 011d 0B       		.uleb128 0xb
+ 3383 011e 01       		.byte	0x1
+ 3384 011f 11       		.uleb128 0x11
+ 3385 0120 01       		.uleb128 0x1
+ 3386 0121 12       		.uleb128 0x12
+ 3387 0122 06       		.uleb128 0x6
+ 3388 0123 00       		.byte	0
+ 3389 0124 00       		.byte	0
+ 3390 0125 16       		.uleb128 0x16
+ 3391 0126 34       		.uleb128 0x34
+ 3392 0127 00       		.byte	0
+ 3393 0128 03       		.uleb128 0x3
+ 3394 0129 08       		.uleb128 0x8
+ 3395 012a 3A       		.uleb128 0x3a
+ 3396 012b 0B       		.uleb128 0xb
+ 3397 012c 3B       		.uleb128 0x3b
+ 3398 012d 0B       		.uleb128 0xb
+ 3399 012e 49       		.uleb128 0x49
+ 3400 012f 13       		.uleb128 0x13
+ 3401 0130 00       		.byte	0
+ 3402 0131 00       		.byte	0
+ 3403 0132 17       		.uleb128 0x17
+ 3404 0133 0B       		.uleb128 0xb
+ 3405 0134 01       		.byte	0x1
+ 3406 0135 11       		.uleb128 0x11
+ 3407 0136 01       		.uleb128 0x1
+ 3408 0137 12       		.uleb128 0x12
+ 3409 0138 06       		.uleb128 0x6
+ 3410 0139 01       		.uleb128 0x1
+ 3411 013a 13       		.uleb128 0x13
+ 3412 013b 00       		.byte	0
+ 3413 013c 00       		.byte	0
+ 3414 013d 18       		.uleb128 0x18
+ 3415 013e 2E       		.uleb128 0x2e
+ 3416 013f 00       		.byte	0
+ 3417 0140 3F       		.uleb128 0x3f
+ 3418 0141 19       		.uleb128 0x19
+ 3419 0142 03       		.uleb128 0x3
+ 3420 0143 0E       		.uleb128 0xe
+ 3421 0144 3A       		.uleb128 0x3a
+ 3422 0145 0B       		.uleb128 0xb
+ 3423 0146 3B       		.uleb128 0x3b
+ 3424 0147 0B       		.uleb128 0xb
+ 3425 0148 11       		.uleb128 0x11
+ 3426 0149 01       		.uleb128 0x1
+ 3427 014a 12       		.uleb128 0x12
+ 3428 014b 06       		.uleb128 0x6
+ 3429 014c 40       		.uleb128 0x40
+ 3430 014d 18       		.uleb128 0x18
+ 3431 014e 9642     		.uleb128 0x2116
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 71
+
+
+ 3432 0150 19       		.uleb128 0x19
+ 3433 0151 00       		.byte	0
+ 3434 0152 00       		.byte	0
+ 3435 0153 19       		.uleb128 0x19
+ 3436 0154 2E       		.uleb128 0x2e
+ 3437 0155 01       		.byte	0x1
+ 3438 0156 3F       		.uleb128 0x3f
+ 3439 0157 19       		.uleb128 0x19
+ 3440 0158 03       		.uleb128 0x3
+ 3441 0159 0E       		.uleb128 0xe
+ 3442 015a 3A       		.uleb128 0x3a
+ 3443 015b 0B       		.uleb128 0xb
+ 3444 015c 3B       		.uleb128 0x3b
+ 3445 015d 05       		.uleb128 0x5
+ 3446 015e 11       		.uleb128 0x11
+ 3447 015f 01       		.uleb128 0x1
+ 3448 0160 12       		.uleb128 0x12
+ 3449 0161 06       		.uleb128 0x6
+ 3450 0162 40       		.uleb128 0x40
+ 3451 0163 18       		.uleb128 0x18
+ 3452 0164 9642     		.uleb128 0x2116
+ 3453 0166 19       		.uleb128 0x19
+ 3454 0167 01       		.uleb128 0x1
+ 3455 0168 13       		.uleb128 0x13
+ 3456 0169 00       		.byte	0
+ 3457 016a 00       		.byte	0
+ 3458 016b 1A       		.uleb128 0x1a
+ 3459 016c 34       		.uleb128 0x34
+ 3460 016d 00       		.byte	0
+ 3461 016e 03       		.uleb128 0x3
+ 3462 016f 08       		.uleb128 0x8
+ 3463 0170 3A       		.uleb128 0x3a
+ 3464 0171 0B       		.uleb128 0xb
+ 3465 0172 3B       		.uleb128 0x3b
+ 3466 0173 05       		.uleb128 0x5
+ 3467 0174 49       		.uleb128 0x49
+ 3468 0175 13       		.uleb128 0x13
+ 3469 0176 02       		.uleb128 0x2
+ 3470 0177 18       		.uleb128 0x18
+ 3471 0178 00       		.byte	0
+ 3472 0179 00       		.byte	0
+ 3473 017a 1B       		.uleb128 0x1b
+ 3474 017b 34       		.uleb128 0x34
+ 3475 017c 00       		.byte	0
+ 3476 017d 03       		.uleb128 0x3
+ 3477 017e 08       		.uleb128 0x8
+ 3478 017f 3A       		.uleb128 0x3a
+ 3479 0180 0B       		.uleb128 0xb
+ 3480 0181 3B       		.uleb128 0x3b
+ 3481 0182 05       		.uleb128 0x5
+ 3482 0183 49       		.uleb128 0x49
+ 3483 0184 13       		.uleb128 0x13
+ 3484 0185 00       		.byte	0
+ 3485 0186 00       		.byte	0
+ 3486 0187 1C       		.uleb128 0x1c
+ 3487 0188 34       		.uleb128 0x34
+ 3488 0189 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 72
+
+
+ 3489 018a 03       		.uleb128 0x3
+ 3490 018b 0E       		.uleb128 0xe
+ 3491 018c 3A       		.uleb128 0x3a
+ 3492 018d 0B       		.uleb128 0xb
+ 3493 018e 3B       		.uleb128 0x3b
+ 3494 018f 05       		.uleb128 0x5
+ 3495 0190 49       		.uleb128 0x49
+ 3496 0191 13       		.uleb128 0x13
+ 3497 0192 3F       		.uleb128 0x3f
+ 3498 0193 19       		.uleb128 0x19
+ 3499 0194 3C       		.uleb128 0x3c
+ 3500 0195 19       		.uleb128 0x19
+ 3501 0196 00       		.byte	0
+ 3502 0197 00       		.byte	0
+ 3503 0198 1D       		.uleb128 0x1d
+ 3504 0199 34       		.uleb128 0x34
+ 3505 019a 00       		.byte	0
+ 3506 019b 03       		.uleb128 0x3
+ 3507 019c 0E       		.uleb128 0xe
+ 3508 019d 3A       		.uleb128 0x3a
+ 3509 019e 0B       		.uleb128 0xb
+ 3510 019f 3B       		.uleb128 0x3b
+ 3511 01a0 0B       		.uleb128 0xb
+ 3512 01a1 49       		.uleb128 0x49
+ 3513 01a2 13       		.uleb128 0x13
+ 3514 01a3 3F       		.uleb128 0x3f
+ 3515 01a4 19       		.uleb128 0x19
+ 3516 01a5 02       		.uleb128 0x2
+ 3517 01a6 18       		.uleb128 0x18
+ 3518 01a7 00       		.byte	0
+ 3519 01a8 00       		.byte	0
+ 3520 01a9 1E       		.uleb128 0x1e
+ 3521 01aa 34       		.uleb128 0x34
+ 3522 01ab 00       		.byte	0
+ 3523 01ac 03       		.uleb128 0x3
+ 3524 01ad 08       		.uleb128 0x8
+ 3525 01ae 3A       		.uleb128 0x3a
+ 3526 01af 0B       		.uleb128 0xb
+ 3527 01b0 3B       		.uleb128 0x3b
+ 3528 01b1 0B       		.uleb128 0xb
+ 3529 01b2 49       		.uleb128 0x49
+ 3530 01b3 13       		.uleb128 0x13
+ 3531 01b4 3F       		.uleb128 0x3f
+ 3532 01b5 19       		.uleb128 0x19
+ 3533 01b6 02       		.uleb128 0x2
+ 3534 01b7 18       		.uleb128 0x18
+ 3535 01b8 00       		.byte	0
+ 3536 01b9 00       		.byte	0
+ 3537 01ba 1F       		.uleb128 0x1f
+ 3538 01bb 34       		.uleb128 0x34
+ 3539 01bc 00       		.byte	0
+ 3540 01bd 03       		.uleb128 0x3
+ 3541 01be 08       		.uleb128 0x8
+ 3542 01bf 3A       		.uleb128 0x3a
+ 3543 01c0 0B       		.uleb128 0xb
+ 3544 01c1 3B       		.uleb128 0x3b
+ 3545 01c2 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 73
+
+
+ 3546 01c3 49       		.uleb128 0x49
+ 3547 01c4 13       		.uleb128 0x13
+ 3548 01c5 3F       		.uleb128 0x3f
+ 3549 01c6 19       		.uleb128 0x19
+ 3550 01c7 3C       		.uleb128 0x3c
+ 3551 01c8 19       		.uleb128 0x19
+ 3552 01c9 00       		.byte	0
+ 3553 01ca 00       		.byte	0
+ 3554 01cb 20       		.uleb128 0x20
+ 3555 01cc 34       		.uleb128 0x34
+ 3556 01cd 00       		.byte	0
+ 3557 01ce 03       		.uleb128 0x3
+ 3558 01cf 0E       		.uleb128 0xe
+ 3559 01d0 3A       		.uleb128 0x3a
+ 3560 01d1 0B       		.uleb128 0xb
+ 3561 01d2 3B       		.uleb128 0x3b
+ 3562 01d3 0B       		.uleb128 0xb
+ 3563 01d4 49       		.uleb128 0x49
+ 3564 01d5 13       		.uleb128 0x13
+ 3565 01d6 3F       		.uleb128 0x3f
+ 3566 01d7 19       		.uleb128 0x19
+ 3567 01d8 3C       		.uleb128 0x3c
+ 3568 01d9 19       		.uleb128 0x19
+ 3569 01da 00       		.byte	0
+ 3570 01db 00       		.byte	0
+ 3571 01dc 21       		.uleb128 0x21
+ 3572 01dd 21       		.uleb128 0x21
+ 3573 01de 00       		.byte	0
+ 3574 01df 49       		.uleb128 0x49
+ 3575 01e0 13       		.uleb128 0x13
+ 3576 01e1 2F       		.uleb128 0x2f
+ 3577 01e2 05       		.uleb128 0x5
+ 3578 01e3 00       		.byte	0
+ 3579 01e4 00       		.byte	0
+ 3580 01e5 00       		.byte	0
+ 3581              		.section	.debug_aranges,"",%progbits
+ 3582 0000 7C000000 		.4byte	0x7c
+ 3583 0004 0200     		.2byte	0x2
+ 3584 0006 00000000 		.4byte	.Ldebug_info0
+ 3585 000a 04       		.byte	0x4
+ 3586 000b 00       		.byte	0
+ 3587 000c 0000     		.2byte	0
+ 3588 000e 0000     		.2byte	0
+ 3589 0010 00000000 		.4byte	.LFB63
+ 3590 0014 4C000000 		.4byte	.LFE63-.LFB63
+ 3591 0018 00000000 		.4byte	.LFB64
+ 3592 001c 74010000 		.4byte	.LFE64-.LFB64
+ 3593 0020 00000000 		.4byte	.LFB65
+ 3594 0024 4C000000 		.4byte	.LFE65-.LFB65
+ 3595 0028 00000000 		.4byte	.LFB66
+ 3596 002c 34000000 		.4byte	.LFE66-.LFB66
+ 3597 0030 00000000 		.4byte	.LFB67
+ 3598 0034 46000000 		.4byte	.LFE67-.LFB67
+ 3599 0038 00000000 		.4byte	.LFB68
+ 3600 003c 68000000 		.4byte	.LFE68-.LFB68
+ 3601 0040 00000000 		.4byte	.LFB69
+ 3602 0044 3C010000 		.4byte	.LFE69-.LFB69
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 74
+
+
+ 3603 0048 00000000 		.4byte	.LFB70
+ 3604 004c 34000000 		.4byte	.LFE70-.LFB70
+ 3605 0050 00000000 		.4byte	.LFB71
+ 3606 0054 30000000 		.4byte	.LFE71-.LFB71
+ 3607 0058 00000000 		.4byte	.LFB72
+ 3608 005c 60000000 		.4byte	.LFE72-.LFB72
+ 3609 0060 00000000 		.4byte	.LFB73
+ 3610 0064 30000000 		.4byte	.LFE73-.LFB73
+ 3611 0068 00000000 		.4byte	.LFB74
+ 3612 006c 44000000 		.4byte	.LFE74-.LFB74
+ 3613 0070 00000000 		.4byte	.LFB75
+ 3614 0074 2C070000 		.4byte	.LFE75-.LFB75
+ 3615 0078 00000000 		.4byte	0
+ 3616 007c 00000000 		.4byte	0
+ 3617              		.section	.debug_ranges,"",%progbits
+ 3618              	.Ldebug_ranges0:
+ 3619 0000 00000000 		.4byte	.LFB63
+ 3620 0004 4C000000 		.4byte	.LFE63
+ 3621 0008 00000000 		.4byte	.LFB64
+ 3622 000c 74010000 		.4byte	.LFE64
+ 3623 0010 00000000 		.4byte	.LFB65
+ 3624 0014 4C000000 		.4byte	.LFE65
+ 3625 0018 00000000 		.4byte	.LFB66
+ 3626 001c 34000000 		.4byte	.LFE66
+ 3627 0020 00000000 		.4byte	.LFB67
+ 3628 0024 46000000 		.4byte	.LFE67
+ 3629 0028 00000000 		.4byte	.LFB68
+ 3630 002c 68000000 		.4byte	.LFE68
+ 3631 0030 00000000 		.4byte	.LFB69
+ 3632 0034 3C010000 		.4byte	.LFE69
+ 3633 0038 00000000 		.4byte	.LFB70
+ 3634 003c 34000000 		.4byte	.LFE70
+ 3635 0040 00000000 		.4byte	.LFB71
+ 3636 0044 30000000 		.4byte	.LFE71
+ 3637 0048 00000000 		.4byte	.LFB72
+ 3638 004c 60000000 		.4byte	.LFE72
+ 3639 0050 00000000 		.4byte	.LFB73
+ 3640 0054 30000000 		.4byte	.LFE73
+ 3641 0058 00000000 		.4byte	.LFB74
+ 3642 005c 44000000 		.4byte	.LFE74
+ 3643 0060 00000000 		.4byte	.LFB75
+ 3644 0064 2C070000 		.4byte	.LFE75
+ 3645 0068 00000000 		.4byte	0
+ 3646 006c 00000000 		.4byte	0
+ 3647              		.section	.debug_line,"",%progbits
+ 3648              	.Ldebug_line0:
+ 3649 0000 4D040000 		.section	.debug_str,"MS",%progbits,1
+ 3649      02008301 
+ 3649      00000201 
+ 3649      FB0E0D00 
+ 3649      01010101 
+ 3650              	.LASF30:
+ 3651 0000 6C6F6E67 		.ascii	"long double\000"
+ 3651      20646F75 
+ 3651      626C6500 
+ 3652              	.LASF48:
+ 3653 000c 6F736470 		.ascii	"osdp_status\000"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 75
+
+
+ 3653      5F737461 
+ 3653      74757300 
+ 3654              	.LASF52:
+ 3655 0018 6F736470 		.ascii	"osdp_reader_cmd\000"
+ 3655      5F726561 
+ 3655      6465725F 
+ 3655      636D6400 
+ 3656              	.LASF6:
+ 3657 0028 74785F62 		.ascii	"tx_bits\000"
+ 3657      69747300 
+ 3658              	.LASF82:
+ 3659 0030 4D794932 		.ascii	"MyI2C_Regs\000"
+ 3659      435F5265 
+ 3659      677300
+ 3660              	.LASF31:
+ 3661 003b 73697A65 		.ascii	"sizetype\000"
+ 3661      74797065 
+ 3661      00
+ 3662              	.LASF50:
+ 3663 0044 6F736470 		.ascii	"osdp_rate\000"
+ 3663      5F726174 
+ 3663      6500
+ 3664              	.LASF42:
+ 3665 004e 73656E64 		.ascii	"send_mobile\000"
+ 3665      5F6D6F62 
+ 3665      696C6500 
+ 3666              	.LASF67:
+ 3667 005a 7274635F 		.ascii	"rtc_write\000"
+ 3667      77726974 
+ 3667      6500
+ 3668              	.LASF37:
+ 3669 0064 66616374 		.ascii	"factory_reset\000"
+ 3669      6F72795F 
+ 3669      72657365 
+ 3669      7400
+ 3670              	.LASF38:
+ 3671 0072 64617461 		.ascii	"data_length\000"
+ 3671      5F6C656E 
+ 3671      67746800 
+ 3672              	.LASF104:
+ 3673 007e 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 3673      43313120 
+ 3673      352E342E 
+ 3673      31203230 
+ 3673      31363036 
+ 3674 00b1 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 3674      20726576 
+ 3674      6973696F 
+ 3674      6E203233 
+ 3674      37373135 
+ 3675 00e4 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 3675      66756E63 
+ 3675      74696F6E 
+ 3675      2D736563 
+ 3675      74696F6E 
+ 3676              	.LASF51:
+ 3677 010c 6F736470 		.ascii	"osdp_buffer\000"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 76
+
+
+ 3677      5F627566 
+ 3677      66657200 
+ 3678              	.LASF21:
+ 3679 0118 6C6F6E67 		.ascii	"long long int\000"
+ 3679      206C6F6E 
+ 3679      6720696E 
+ 3679      7400
+ 3680              	.LASF69:
+ 3681 0126 62756666 		.ascii	"buff\000"
+ 3681      00
+ 3682              	.LASF34:
+ 3683 012b 6D6F6465 		.ascii	"mode\000"
+ 3683      00
+ 3684              	.LASF14:
+ 3685 0130 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 3685      5F554152 
+ 3685      545F5354 
+ 3685      52554354 
+ 3685      00
+ 3686              	.LASF17:
+ 3687 0141 73686F72 		.ascii	"short int\000"
+ 3687      7420696E 
+ 3687      7400
+ 3688              	.LASF1:
+ 3689 014b 70617269 		.ascii	"parity\000"
+ 3689      747900
+ 3690              	.LASF7:
+ 3691 0152 72785F62 		.ascii	"rx_bits\000"
+ 3691      69747300 
+ 3692              	.LASF66:
+ 3693 015a 7274635F 		.ascii	"rtc_write_reg\000"
+ 3693      77726974 
+ 3693      655F7265 
+ 3693      6700
+ 3694              	.LASF24:
+ 3695 0168 75696E74 		.ascii	"uint8_t\000"
+ 3695      385F7400 
+ 3696              	.LASF40:
+ 3697 0170 70757368 		.ascii	"pushbtn_in\000"
+ 3697      62746E5F 
+ 3697      696E00
+ 3698              	.LASF105:
+ 3699 017b 636F6D6D 		.ascii	"commandhandler.c\000"
+ 3699      616E6468 
+ 3699      616E646C 
+ 3699      65722E63 
+ 3699      00
+ 3700              	.LASF71:
+ 3701 018c 53656E64 		.ascii	"SendHID\000"
+ 3701      48494400 
+ 3702              	.LASF95:
+ 3703 0194 70617373 		.ascii	"passmode_timeout\000"
+ 3703      6D6F6465 
+ 3703      5F74696D 
+ 3703      656F7574 
+ 3703      00
+ 3704              	.LASF10:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 77
+
+
+ 3705 01a5 74696D65 		.ascii	"timer_rx_ctr\000"
+ 3705      725F7278 
+ 3705      5F637472 
+ 3705      00
+ 3706              	.LASF13:
+ 3707 01b2 7369676E 		.ascii	"signed char\000"
+ 3707      65642063 
+ 3707      68617200 
+ 3708              	.LASF86:
+ 3709 01be 74705F6F 		.ascii	"tp_old\000"
+ 3709      6C6400
+ 3710              	.LASF43:
+ 3711 01c5 64756D6D 		.ascii	"dummy0\000"
+ 3711      793000
+ 3712              	.LASF27:
+ 3713 01cc 666C6F61 		.ascii	"float\000"
+ 3713      7400
+ 3714              	.LASF3:
+ 3715 01d2 62697473 		.ascii	"bits\000"
+ 3715      00
+ 3716              	.LASF90:
+ 3717 01d7 63617264 		.ascii	"card_in_buf\000"
+ 3717      5F696E5F 
+ 3717      62756600 
+ 3718              	.LASF35:
+ 3719 01e3 6163735F 		.ascii	"acs_outputs\000"
+ 3719      6F757470 
+ 3719      75747300 
+ 3720              	.LASF65:
+ 3721 01ef 504F455F 		.ascii	"POE_OIM_En\000"
+ 3721      4F494D5F 
+ 3721      456E00
+ 3722              	.LASF53:
+ 3723 01fa 6F736470 		.ascii	"osdp_reader_data_length\000"
+ 3723      5F726561 
+ 3723      6465725F 
+ 3723      64617461 
+ 3723      5F6C656E 
+ 3724              	.LASF85:
+ 3725 0212 68775F6F 		.ascii	"hw_old\000"
+ 3725      6C6400
+ 3726              	.LASF61:
+ 3727 0219 70616442 		.ascii	"padBytes\000"
+ 3727      79746573 
+ 3727      00
+ 3728              	.LASF89:
+ 3729 0222 63617264 		.ascii	"card_ack\000"
+ 3729      5F61636B 
+ 3729      00
+ 3730              	.LASF19:
+ 3731 022b 6C6F6E67 		.ascii	"long int\000"
+ 3731      20696E74 
+ 3731      00
+ 3732              	.LASF68:
+ 3733 0234 61646472 		.ascii	"addr\000"
+ 3733      00
+ 3734              	.LASF20:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 78
+
+
+ 3735 0239 6C6F6E67 		.ascii	"long unsigned int\000"
+ 3735      20756E73 
+ 3735      69676E65 
+ 3735      6420696E 
+ 3735      7400
+ 3736              	.LASF92:
+ 3737 024b 6632665F 		.ascii	"f2f_send_alive\000"
+ 3737      73656E64 
+ 3737      5F616C69 
+ 3737      766500
+ 3738              	.LASF5:
+ 3739 025a 74785F62 		.ascii	"tx_byte\000"
+ 3739      79746500 
+ 3740              	.LASF15:
+ 3741 0262 5F5F7569 		.ascii	"__uint8_t\000"
+ 3741      6E74385F 
+ 3741      7400
+ 3742              	.LASF80:
+ 3743 026c 48616E64 		.ascii	"HandleCommand\000"
+ 3743      6C65436F 
+ 3743      6D6D616E 
+ 3743      6400
+ 3744              	.LASF54:
+ 3745 027a 6F736470 		.ascii	"osdp_reader_rate\000"
+ 3745      5F726561 
+ 3745      6465725F 
+ 3745      72617465 
+ 3745      00
+ 3746              	.LASF73:
+ 3747 028b 62636F75 		.ascii	"bcount\000"
+ 3747      6E7400
+ 3748              	.LASF106:
+ 3749 0292 443A5C65 		.ascii	"D:\\ext\\psoc_dual\\nanoNxt_ICM3\\ext_pim.cydsn\000"
+ 3749      78745C70 
+ 3749      736F635F 
+ 3749      6475616C 
+ 3749      5C6E616E 
+ 3750              	.LASF55:
+ 3751 02be 6F736470 		.ascii	"osdp_reader_buffer\000"
+ 3751      5F726561 
+ 3751      6465725F 
+ 3751      62756666 
+ 3751      657200
+ 3752              	.LASF16:
+ 3753 02d1 756E7369 		.ascii	"unsigned char\000"
+ 3753      676E6564 
+ 3753      20636861 
+ 3753      7200
+ 3754              	.LASF78:
+ 3755 02df 636F6D6D 		.ascii	"commandSendPAC\000"
+ 3755      616E6453 
+ 3755      656E6450 
+ 3755      414300
+ 3756              	.LASF103:
+ 3757 02ee 544F435F 		.ascii	"TOC_port_init\000"
+ 3757      706F7274 
+ 3757      5F696E69 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 79
+
+
+ 3757      7400
+ 3758              	.LASF0:
+ 3759 02fc 62617564 		.ascii	"baud\000"
+ 3759      00
+ 3760              	.LASF64:
+ 3761 0301 55534255 		.ascii	"USBUART_PutDataBig\000"
+ 3761      4152545F 
+ 3761      50757444 
+ 3761      61746142 
+ 3761      696700
+ 3762              	.LASF49:
+ 3763 0314 6F736470 		.ascii	"osdp_data_length\000"
+ 3763      5F646174 
+ 3763      615F6C65 
+ 3763      6E677468 
+ 3763      00
+ 3764              	.LASF87:
+ 3765 0325 74616D70 		.ascii	"tamperCR_polarity\000"
+ 3765      65724352 
+ 3765      5F706F6C 
+ 3765      61726974 
+ 3765      7900
+ 3766              	.LASF41:
+ 3767 0337 6D6F6269 		.ascii	"mobile_mode\000"
+ 3767      6C655F6D 
+ 3767      6F646500 
+ 3768              	.LASF8:
+ 3769 0343 666C6167 		.ascii	"flags\000"
+ 3769      7300
+ 3770              	.LASF22:
+ 3771 0349 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 3771      206C6F6E 
+ 3771      6720756E 
+ 3771      7369676E 
+ 3771      65642069 
+ 3772              	.LASF91:
+ 3773 0360 6F736470 		.ascii	"osdp_timeout\000"
+ 3773      5F74696D 
+ 3773      656F7574 
+ 3773      00
+ 3774              	.LASF74:
+ 3775 036d 64617461 		.ascii	"data_len\000"
+ 3775      5F6C656E 
+ 3775      00
+ 3776              	.LASF23:
+ 3777 0376 756E7369 		.ascii	"unsigned int\000"
+ 3777      676E6564 
+ 3777      20696E74 
+ 3777      00
+ 3778              	.LASF2:
+ 3779 0383 73746F70 		.ascii	"stop_bits\000"
+ 3779      5F626974 
+ 3779      7300
+ 3780              	.LASF101:
+ 3781 038d 6C617374 		.ascii	"last_rx\000"
+ 3781      5F727800 
+ 3782              	.LASF70:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 80
+
+
+ 3783 0395 7274635F 		.ascii	"rtc_read\000"
+ 3783      72656164 
+ 3783      00
+ 3784              	.LASF36:
+ 3785 039e 6163735F 		.ascii	"acs_inputs\000"
+ 3785      696E7075 
+ 3785      747300
+ 3786              	.LASF11:
+ 3787 03a9 72785F72 		.ascii	"rx_recv\000"
+ 3787      65637600 
+ 3788              	.LASF75:
+ 3789 03b1 636F6D6D 		.ascii	"commandSendF2F\000"
+ 3789      616E6453 
+ 3789      656E6446 
+ 3789      324600
+ 3790              	.LASF79:
+ 3791 03c0 636F6D6D 		.ascii	"commandReadTOC\000"
+ 3791      616E6452 
+ 3791      65616454 
+ 3791      4F4300
+ 3792              	.LASF29:
+ 3793 03cf 63686172 		.ascii	"char\000"
+ 3793      00
+ 3794              	.LASF60:
+ 3795 03d4 73657269 		.ascii	"serialOut\000"
+ 3795      616C4F75 
+ 3795      7400
+ 3796              	.LASF98:
+ 3797 03de 7573625F 		.ascii	"usb_command_buffer\000"
+ 3797      636F6D6D 
+ 3797      616E645F 
+ 3797      62756666 
+ 3797      657200
+ 3798              	.LASF63:
+ 3799 03f1 79626974 		.ascii	"ybits\000"
+ 3799      7300
+ 3800              	.LASF25:
+ 3801 03f7 696E7433 		.ascii	"int32_t\000"
+ 3801      325F7400 
+ 3802              	.LASF72:
+ 3803 03ff 48616E64 		.ascii	"HandleUSB\000"
+ 3803      6C655553 
+ 3803      4200
+ 3804              	.LASF47:
+ 3805 0409 6F736470 		.ascii	"osdp_cmd\000"
+ 3805      5F636D64 
+ 3805      00
+ 3806              	.LASF12:
+ 3807 0412 73686F72 		.ascii	"short unsigned int\000"
+ 3807      7420756E 
+ 3807      7369676E 
+ 3807      65642069 
+ 3807      6E7400
+ 3808              	.LASF26:
+ 3809 0425 75696E74 		.ascii	"uint8\000"
+ 3809      3800
+ 3810              	.LASF56:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 81
+
+
+ 3811 042b 62756666 		.ascii	"buffer\000"
+ 3811      657200
+ 3812              	.LASF4:
+ 3813 0432 72785F62 		.ascii	"rx_byte\000"
+ 3813      79746500 
+ 3814              	.LASF94:
+ 3815 043a 64656275 		.ascii	"debug_msg_delay\000"
+ 3815      675F6D73 
+ 3815      675F6465 
+ 3815      6C617900 
+ 3816              	.LASF62:
+ 3817 044a 78627974 		.ascii	"xbytes\000"
+ 3817      657300
+ 3818              	.LASF76:
+ 3819 0451 636F6D6D 		.ascii	"commandSendTOC\000"
+ 3819      616E6453 
+ 3819      656E6454 
+ 3819      4F4300
+ 3820              	.LASF102:
+ 3821 0460 6632665F 		.ascii	"f2f_alive_message\000"
+ 3821      616C6976 
+ 3821      655F6D65 
+ 3821      73736167 
+ 3821      6500
+ 3822              	.LASF93:
+ 3823 0472 6632665F 		.ascii	"f2f_alive_delay_cnt\000"
+ 3823      616C6976 
+ 3823      655F6465 
+ 3823      6C61795F 
+ 3823      636E7400 
+ 3824              	.LASF33:
+ 3825 0486 73746174 		.ascii	"status_in\000"
+ 3825      75735F69 
+ 3825      6E00
+ 3826              	.LASF58:
+ 3827 0490 4932435F 		.ascii	"I2C_Regs\000"
+ 3827      52656773 
+ 3827      00
+ 3828              	.LASF59:
+ 3829 0499 746F5F73 		.ascii	"to_send\000"
+ 3829      656E6400 
+ 3830              	.LASF97:
+ 3831 04a1 706F655F 		.ascii	"poe_en_stat\000"
+ 3831      656E5F73 
+ 3831      74617400 
+ 3832              	.LASF44:
+ 3833 04ad 73775F76 		.ascii	"sw_version\000"
+ 3833      65727369 
+ 3833      6F6E00
+ 3834              	.LASF100:
+ 3835 04b8 7469636B 		.ascii	"tick_count\000"
+ 3835      5F636F75 
+ 3835      6E7400
+ 3836              	.LASF57:
+ 3837 04c3 64756D6D 		.ascii	"dummy1\000"
+ 3837      793100
+ 3838              	.LASF84:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 82
+
+
+ 3839 04ca 63757272 		.ascii	"currentAccessType\000"
+ 3839      656E7441 
+ 3839      63636573 
+ 3839      73547970 
+ 3839      6500
+ 3840              	.LASF46:
+ 3841 04dc 62756666 		.ascii	"buffer1\000"
+ 3841      65723100 
+ 3842              	.LASF18:
+ 3843 04e4 5F5F696E 		.ascii	"__int32_t\000"
+ 3843      7433325F 
+ 3843      7400
+ 3844              	.LASF32:
+ 3845 04ee 73746174 		.ascii	"status_out\000"
+ 3845      75735F6F 
+ 3845      757400
+ 3846              	.LASF99:
+ 3847 04f9 7573625F 		.ascii	"usb_buf_len\000"
+ 3847      6275665F 
+ 3847      6C656E00 
+ 3848              	.LASF96:
+ 3849 0505 746C765F 		.ascii	"tlv_ready\000"
+ 3849      72656164 
+ 3849      7900
+ 3850              	.LASF83:
+ 3851 050f 72756E5F 		.ascii	"run_mode\000"
+ 3851      6D6F6465 
+ 3851      00
+ 3852              	.LASF28:
+ 3853 0518 646F7562 		.ascii	"double\000"
+ 3853      6C6500
+ 3854              	.LASF81:
+ 3855 051f 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 3855      52784275 
+ 3855      66666572 
+ 3855      00
+ 3856              	.LASF45:
+ 3857 052c 68775F76 		.ascii	"hw_version\000"
+ 3857      65727369 
+ 3857      6F6E00
+ 3858              	.LASF39:
+ 3859 0537 74616D70 		.ascii	"tamper_in\000"
+ 3859      65725F69 
+ 3859      6E00
+ 3860              	.LASF77:
+ 3861 0541 636F6D6D 		.ascii	"commandSendWiegand\000"
+ 3861      616E6453 
+ 3861      656E6457 
+ 3861      69656761 
+ 3861      6E6400
+ 3862              	.LASF9:
+ 3863 0554 74696D65 		.ascii	"timer_tx_ctr\000"
+ 3863      725F7478 
+ 3863      5F637472 
+ 3863      00
+ 3864              	.LASF88:
+ 3865 0561 74616D70 		.ascii	"tamper_out_polarity\000"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccMXbg4e.s 			page 83
+
+
+ 3865      65725F6F 
+ 3865      75745F70 
+ 3865      6F6C6172 
+ 3865      69747900 
+ 3866              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

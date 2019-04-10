@@ -1,0 +1,2600 @@
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"motor.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.MotGetPos,"ax",%progbits
+  20              		.align	2
+  21              		.global	MotGetPos
+  22              		.code	16
+  23              		.thumb_func
+  24              		.type	MotGetPos, %function
+  25              	MotGetPos:
+  26              	.LFB34:
+  27              		.file 1 "motor.c"
+   1:motor.c       **** /* ========================================
+   2:motor.c       ****  *
+   3:motor.c       ****  * Copyright YOUR COMPANY, THE YEAR
+   4:motor.c       ****  * All Rights Reserved
+   5:motor.c       ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:motor.c       ****  *
+   7:motor.c       ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:motor.c       ****  * WHICH IS THE PROPERTY OF your company.
+   9:motor.c       ****  *
+  10:motor.c       ****  * ========================================
+  11:motor.c       **** */
+  12:motor.c       **** 
+  13:motor.c       **** #include "project.h"
+  14:motor.c       **** #include "settings.h"
+  15:motor.c       **** 
+  16:motor.c       **** int mot_start;
+  17:motor.c       **** int mot_decel_start;
+  18:motor.c       **** int mot_target,half_dist;
+  19:motor.c       **** uint8 mot_active =0;
+  20:motor.c       **** uint8 mot_homed=0;
+  21:motor.c       **** int mot_pos;
+  22:motor.c       **** 
+  23:motor.c       **** #define ACCEL (set.mot_accel*10)
+  24:motor.c       **** #define MAX_V 250
+  25:motor.c       **** #define MIN_SPEED_ACCEL set.mot_min_speed_a//100
+  26:motor.c       **** #define MIN_SPEED_DECEL set.mot_min_speed_d//100/2
+  27:motor.c       **** #define HOME_SPEED 255//70*2
+  28:motor.c       **** #define HOME_I 50*2
+  29:motor.c       **** #define RUN_I 255 +127
+  30:motor.c       **** #define RUN_I_COUNTER_SPRING 255 +127
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 2
+
+
+  31:motor.c       **** #define MAX_ACTIVE 500000
+  32:motor.c       **** #include "math.h"
+  33:motor.c       **** #include "motor.h"
+  34:motor.c       **** 
+  35:motor.c       **** int MotGetPos(void)
+  36:motor.c       **** {
+  28              		.loc 1 36 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+  37:motor.c       ****     return mot_pos;
+  33              		.loc 1 37 0
+  34 0000 014B     		ldr	r3, .L2
+  35 0002 1868     		ldr	r0, [r3]
+  38:motor.c       **** }
+  36              		.loc 1 38 0
+  37              		@ sp needed
+  38 0004 7047     		bx	lr
+  39              	.L3:
+  40 0006 C046     		.align	2
+  41              	.L2:
+  42 0008 00000000 		.word	mot_pos
+  43              		.cfi_endproc
+  44              	.LFE34:
+  45              		.size	MotGetPos, .-MotGetPos
+  46              		.section	.text.MotSetTrip,"ax",%progbits
+  47              		.align	2
+  48              		.global	MotSetTrip
+  49              		.code	16
+  50              		.thumb_func
+  51              		.type	MotSetTrip, %function
+  52              	MotSetTrip:
+  53              	.LFB35:
+  39:motor.c       **** 
+  40:motor.c       **** #define TO_HOME_STEP 50000
+  41:motor.c       ****  int last_count;
+  42:motor.c       **** 
+  43:motor.c       **** void MotSetTrip(int val)
+  44:motor.c       **** {
+  54              		.loc 1 44 0
+  55              		.cfi_startproc
+  56              		@ args = 0, pretend = 0, frame = 0
+  57              		@ frame_needed = 0, uses_anonymous_args = 0
+  58              	.LVL0:
+  59 0000 70B5     		push	{r4, r5, r6, lr}
+  60              		.cfi_def_cfa_offset 16
+  61              		.cfi_offset 4, -16
+  62              		.cfi_offset 5, -12
+  63              		.cfi_offset 6, -8
+  64              		.cfi_offset 14, -4
+  65 0002 0400     		movs	r4, r0
+  45:motor.c       ****     int v1;
+  46:motor.c       ****     v1= val>255?255:val;
+  66              		.loc 1 46 0
+  67 0004 0500     		movs	r5, r0
+  68 0006 FF28     		cmp	r0, #255
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 3
+
+
+  69 0008 00DD     		ble	.L5
+  70 000a FF25     		movs	r5, #255
+  71              	.L5:
+  72              	.LVL1:
+  47:motor.c       ****     IDAC_1_SetValue(v1);
+  73              		.loc 1 47 0
+  74 000c 2800     		movs	r0, r5
+  75              	.LVL2:
+  76 000e FFF7FEFF 		bl	IDAC_1_SetValue
+  77              	.LVL3:
+  48:motor.c       ****     IDAC_2_SetValue(val-v1);
+  78              		.loc 1 48 0
+  79 0012 601B     		subs	r0, r4, r5
+  80 0014 FFF7FEFF 		bl	IDAC_2_SetValue
+  81              	.LVL4:
+  49:motor.c       **** }
+  82              		.loc 1 49 0
+  83              		@ sp needed
+  84              	.LVL5:
+  85              	.LVL6:
+  86 0018 70BD     		pop	{r4, r5, r6, pc}
+  87              		.cfi_endproc
+  88              	.LFE35:
+  89              		.size	MotSetTrip, .-MotSetTrip
+  90 001a C046     		.section	.text.MotHome,"ax",%progbits
+  91              		.align	2
+  92              		.global	MotHome
+  93              		.code	16
+  94              		.thumb_func
+  95              		.type	MotHome, %function
+  96              	MotHome:
+  97              	.LFB36:
+  50:motor.c       **** void MotHome()
+  51:motor.c       **** {
+  98              		.loc 1 51 0
+  99              		.cfi_startproc
+ 100              		@ args = 0, pretend = 0, frame = 0
+ 101              		@ frame_needed = 0, uses_anonymous_args = 0
+ 102 0000 70B5     		push	{r4, r5, r6, lr}
+ 103              		.cfi_def_cfa_offset 16
+ 104              		.cfi_offset 4, -16
+ 105              		.cfi_offset 5, -12
+ 106              		.cfi_offset 6, -8
+ 107              		.cfi_offset 14, -4
+ 108              	.LVL7:
+  52:motor.c       ****     int x,lp=0;
+  53:motor.c       ****     
+  54:motor.c       ****     int to=TO_HOME_STEP;
+  55:motor.c       ****     int count;
+  56:motor.c       ****     MotSetTrip(HOME_I);
+ 109              		.loc 1 56 0
+ 110 0002 6420     		movs	r0, #100
+ 111 0004 FFF7FEFF 		bl	MotSetTrip
+ 112              	.LVL8:
+  57:motor.c       ****    
+  58:motor.c       ****     PWM_M_WriteCompare1(HOME_SPEED);
+ 113              		.loc 1 58 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 4
+
+
+ 114 0008 FF20     		movs	r0, #255
+ 115 000a FFF7FEFF 		bl	PWM_M_WriteCompare1
+ 116              	.LVL9:
+  59:motor.c       ****     CW_Write(1);
+ 117              		.loc 1 59 0
+ 118 000e 0120     		movs	r0, #1
+ 119 0010 FFF7FEFF 		bl	CW_Write
+ 120              	.LVL10:
+  60:motor.c       ****     STEP_COUNT_WriteCounter(1000);
+ 121              		.loc 1 60 0
+ 122 0014 FA20     		movs	r0, #250
+ 123 0016 8000     		lsls	r0, r0, #2
+ 124 0018 FFF7FEFF 		bl	STEP_COUNT_WriteCounter
+ 125              	.LVL11:
+  61:motor.c       ****    // while(((x=STEP_COUNT_ReadCounter())<10008) && (to--))
+  62:motor.c       ****    //     CyDelayUs(100);
+  63:motor.c       ****  #define MIN_HOMING_MOVES 10
+  64:motor.c       ****         
+  65:motor.c       ****     last_count=STEP_COUNT_ReadCounter()+MIN_HOMING_MOVES;
+ 126              		.loc 1 65 0
+ 127 001c FFF7FEFF 		bl	STEP_COUNT_ReadCounter
+ 128              	.LVL12:
+ 129 0020 0A30     		adds	r0, r0, #10
+ 130 0022 1B4B     		ldr	r3, .L12
+ 131 0024 1860     		str	r0, [r3]
+  54:motor.c       ****     int count;
+ 132              		.loc 1 54 0
+ 133 0026 1B4D     		ldr	r5, .L12+4
+  52:motor.c       ****     
+ 134              		.loc 1 52 0
+ 135 0028 0024     		movs	r4, #0
+ 136              	.LVL13:
+ 137              	.L11:
+  66:motor.c       ****  
+  67:motor.c       ****     //add timeout for homing
+  68:motor.c       ****     while (1)
+  69:motor.c       ****         {
+  70:motor.c       ****          to--;
+ 138              		.loc 1 70 0
+ 139 002a 013D     		subs	r5, r5, #1
+ 140              	.LVL14:
+  71:motor.c       ****          CyDelayUs(50000);
+ 141              		.loc 1 71 0
+ 142 002c 1948     		ldr	r0, .L12+4
+ 143 002e FFF7FEFF 		bl	CyDelayUs
+ 144              	.LVL15:
+  72:motor.c       ****          lp++;
+ 145              		.loc 1 72 0
+ 146 0032 0134     		adds	r4, r4, #1
+ 147              	.LVL16:
+  73:motor.c       ****         // wait some amount of time before we detect stop condition
+  74:motor.c       ****          if (lp>2)
+ 148              		.loc 1 74 0
+ 149 0034 022C     		cmp	r4, #2
+ 150 0036 22DD     		ble	.L7
+  75:motor.c       ****             {
+  76:motor.c       ****              // stop if we over current
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 5
+
+
+  77:motor.c       ****             //    if (1)
+  78:motor.c       ****             if (Comp_ISENSE_GetCompare()==1)
+ 151              		.loc 1 78 0
+ 152 0038 FFF7FEFF 		bl	Comp_ISENSE_GetCompare
+ 153              	.LVL17:
+ 154 003c 0128     		cmp	r0, #1
+ 155 003e 0AD1     		bne	.L8
+  79:motor.c       ****                {
+  80:motor.c       ****                 mot_active=0;
+ 156              		.loc 1 80 0
+ 157 0040 154C     		ldr	r4, .L12+8
+ 158              	.LVL18:
+ 159 0042 0025     		movs	r5, #0
+ 160              	.LVL19:
+ 161 0044 2570     		strb	r5, [r4]
+  81:motor.c       ****                 PWM_M_WriteCompare1(0);
+ 162              		.loc 1 81 0
+ 163 0046 0020     		movs	r0, #0
+ 164 0048 FFF7FEFF 		bl	PWM_M_WriteCompare1
+ 165              	.LVL20:
+  82:motor.c       ****                 mot_pos=0;
+ 166              		.loc 1 82 0
+ 167 004c 134B     		ldr	r3, .L12+12
+ 168 004e 1D60     		str	r5, [r3]
+  83:motor.c       ****                 mot_homed=1;
+ 169              		.loc 1 83 0
+ 170 0050 0123     		movs	r3, #1
+ 171 0052 6370     		strb	r3, [r4, #1]
+  84:motor.c       ****                 break;
+ 172              		.loc 1 84 0
+ 173 0054 1BE0     		b	.L6
+ 174              	.LVL21:
+ 175              	.L8:
+  85:motor.c       ****                }
+  86:motor.c       ****             // stop if we are no longer moving
+  87:motor.c       ****            count=STEP_COUNT_ReadCounter();
+ 176              		.loc 1 87 0
+ 177 0056 FFF7FEFF 		bl	STEP_COUNT_ReadCounter
+ 178              	.LVL22:
+  88:motor.c       ****            if ((count-last_count)< MIN_HOMING_MOVES)
+ 179              		.loc 1 88 0
+ 180 005a 0D4B     		ldr	r3, .L12
+ 181 005c 1B68     		ldr	r3, [r3]
+ 182 005e C31A     		subs	r3, r0, r3
+ 183 0060 092B     		cmp	r3, #9
+ 184 0062 0ADC     		bgt	.L10
+  89:motor.c       ****                 {
+  90:motor.c       ****                 mot_active=0;
+ 185              		.loc 1 90 0
+ 186 0064 0C4C     		ldr	r4, .L12+8
+ 187              	.LVL23:
+ 188 0066 0025     		movs	r5, #0
+ 189              	.LVL24:
+ 190 0068 2570     		strb	r5, [r4]
+  91:motor.c       ****                 PWM_M_WriteCompare1(0);
+ 191              		.loc 1 91 0
+ 192 006a 0020     		movs	r0, #0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 6
+
+
+ 193              	.LVL25:
+ 194 006c FFF7FEFF 		bl	PWM_M_WriteCompare1
+ 195              	.LVL26:
+  92:motor.c       ****                 mot_pos=0;
+ 196              		.loc 1 92 0
+ 197 0070 0A4B     		ldr	r3, .L12+12
+ 198 0072 1D60     		str	r5, [r3]
+  93:motor.c       ****                 mot_homed=1;
+ 199              		.loc 1 93 0
+ 200 0074 0123     		movs	r3, #1
+ 201 0076 6370     		strb	r3, [r4, #1]
+  94:motor.c       ****                 break;
+ 202              		.loc 1 94 0
+ 203 0078 09E0     		b	.L6
+ 204              	.LVL27:
+ 205              	.L10:
+  95:motor.c       ****                 }
+  96:motor.c       ****             last_count = count;           
+ 206              		.loc 1 96 0
+ 207 007a 054B     		ldr	r3, .L12
+ 208 007c 1860     		str	r0, [r3]
+ 209              	.LVL28:
+ 210              	.L7:
+  97:motor.c       ****             }
+  98:motor.c       ****         if (to<0)
+ 211              		.loc 1 98 0
+ 212 007e 002D     		cmp	r5, #0
+ 213 0080 D3DA     		bge	.L11
+  99:motor.c       ****            {
+ 100:motor.c       ****             mot_pos=0;
+ 214              		.loc 1 100 0
+ 215 0082 0022     		movs	r2, #0
+ 216 0084 054B     		ldr	r3, .L12+12
+ 217 0086 1A60     		str	r2, [r3]
+ 101:motor.c       ****             PWM_M_WriteCompare1(0);
+ 218              		.loc 1 101 0
+ 219 0088 0020     		movs	r0, #0
+ 220 008a FFF7FEFF 		bl	PWM_M_WriteCompare1
+ 221              	.LVL29:
+ 222              	.L6:
+ 102:motor.c       ****             break;
+ 103:motor.c       ****             }
+ 104:motor.c       ****         }
+ 105:motor.c       **** }
+ 223              		.loc 1 105 0
+ 224              		@ sp needed
+ 225 008e 70BD     		pop	{r4, r5, r6, pc}
+ 226              	.L13:
+ 227              		.align	2
+ 228              	.L12:
+ 229 0090 00000000 		.word	last_count
+ 230 0094 50C30000 		.word	50000
+ 231 0098 00000000 		.word	.LANCHOR0
+ 232 009c 00000000 		.word	mot_pos
+ 233              		.cfi_endproc
+ 234              	.LFE36:
+ 235              		.size	MotHome, .-MotHome
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 7
+
+
+ 236              		.section	.text.isqrt,"ax",%progbits
+ 237              		.align	2
+ 238              		.global	isqrt
+ 239              		.code	16
+ 240              		.thumb_func
+ 241              		.type	isqrt, %function
+ 242              	isqrt:
+ 243              	.LFB37:
+ 106:motor.c       **** unsigned short isqrt(unsigned long a) {
+ 244              		.loc 1 106 0
+ 245              		.cfi_startproc
+ 246              		@ args = 0, pretend = 0, frame = 0
+ 247              		@ frame_needed = 0, uses_anonymous_args = 0
+ 248              	.LVL30:
+ 249 0000 10B5     		push	{r4, lr}
+ 250              		.cfi_def_cfa_offset 8
+ 251              		.cfi_offset 4, -8
+ 252              		.cfi_offset 14, -4
+ 253              	.LVL31:
+ 107:motor.c       ****     unsigned long rem = 0;
+ 108:motor.c       ****     int root = 0;
+ 109:motor.c       ****     int i;
+ 110:motor.c       **** 
+ 111:motor.c       ****     for (i = 0; i < 16; i++) {
+ 254              		.loc 1 111 0
+ 255 0002 0021     		movs	r1, #0
+ 108:motor.c       ****     int i;
+ 256              		.loc 1 108 0
+ 257 0004 0022     		movs	r2, #0
+ 107:motor.c       ****     unsigned long rem = 0;
+ 258              		.loc 1 107 0
+ 259 0006 0023     		movs	r3, #0
+ 260              		.loc 1 111 0
+ 261 0008 0AE0     		b	.L15
+ 262              	.LVL32:
+ 263              	.L17:
+ 112:motor.c       ****         root <<= 1;
+ 264              		.loc 1 112 0
+ 265 000a 5200     		lsls	r2, r2, #1
+ 266              	.LVL33:
+ 113:motor.c       ****         rem <<= 2;
+ 267              		.loc 1 113 0
+ 268 000c 9B00     		lsls	r3, r3, #2
+ 269              	.LVL34:
+ 114:motor.c       ****         rem += a >> 30;
+ 270              		.loc 1 114 0
+ 271 000e 840F     		lsrs	r4, r0, #30
+ 272 0010 1B19     		adds	r3, r3, r4
+ 273              	.LVL35:
+ 115:motor.c       ****         a <<= 2;
+ 274              		.loc 1 115 0
+ 275 0012 8000     		lsls	r0, r0, #2
+ 276              	.LVL36:
+ 116:motor.c       **** 
+ 117:motor.c       ****         if (root < rem) {
+ 277              		.loc 1 117 0
+ 278 0014 9342     		cmp	r3, r2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 8
+
+
+ 279 0016 02D9     		bls	.L16
+ 118:motor.c       ****             root++;
+ 280              		.loc 1 118 0
+ 281 0018 541C     		adds	r4, r2, #1
+ 282              	.LVL37:
+ 119:motor.c       ****             rem -= root;
+ 283              		.loc 1 119 0
+ 284 001a 1B1B     		subs	r3, r3, r4
+ 285              	.LVL38:
+ 120:motor.c       ****             root++;
+ 286              		.loc 1 120 0
+ 287 001c 0232     		adds	r2, r2, #2
+ 288              	.LVL39:
+ 289              	.L16:
+ 111:motor.c       ****         root <<= 1;
+ 290              		.loc 1 111 0 discriminator 2
+ 291 001e 0131     		adds	r1, r1, #1
+ 292              	.LVL40:
+ 293              	.L15:
+ 111:motor.c       ****         root <<= 1;
+ 294              		.loc 1 111 0 is_stmt 0 discriminator 1
+ 295 0020 0F29     		cmp	r1, #15
+ 296 0022 F2DD     		ble	.L17
+ 121:motor.c       ****         }
+ 122:motor.c       ****     }
+ 123:motor.c       **** 
+ 124:motor.c       ****     return (unsigned short) (root >> 1);
+ 297              		.loc 1 124 0 is_stmt 1
+ 298 0024 5210     		asrs	r2, r2, #1
+ 299              	.LVL41:
+ 300 0026 90B2     		uxth	r0, r2
+ 301              	.LVL42:
+ 125:motor.c       **** }
+ 302              		.loc 1 125 0
+ 303              		@ sp needed
+ 304 0028 10BD     		pop	{r4, pc}
+ 305              		.cfi_endproc
+ 306              	.LFE37:
+ 307              		.size	isqrt, .-isqrt
+ 308 002a C046     		.section	.text.MotMoveRel,"ax",%progbits
+ 309              		.align	2
+ 310              		.global	MotMoveRel
+ 311              		.code	16
+ 312              		.thumb_func
+ 313              		.type	MotMoveRel, %function
+ 314              	MotMoveRel:
+ 315              	.LFB38:
+ 126:motor.c       **** int active_count=0;
+ 127:motor.c       **** 
+ 128:motor.c       **** uint8 MotMoveRel(int steps)
+ 129:motor.c       **** {
+ 316              		.loc 1 129 0
+ 317              		.cfi_startproc
+ 318              		@ args = 0, pretend = 0, frame = 0
+ 319              		@ frame_needed = 0, uses_anonymous_args = 0
+ 320              	.LVL43:
+ 321 0000 10B5     		push	{r4, lr}
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 9
+
+
+ 322              		.cfi_def_cfa_offset 8
+ 323              		.cfi_offset 4, -8
+ 324              		.cfi_offset 14, -4
+ 325 0002 0400     		movs	r4, r0
+ 130:motor.c       ****     if ( mot_active)
+ 326              		.loc 1 130 0
+ 327 0004 1E4B     		ldr	r3, .L24
+ 328 0006 1B78     		ldrb	r3, [r3]
+ 329 0008 002B     		cmp	r3, #0
+ 330 000a 35D1     		bne	.L22
+ 131:motor.c       ****       return 0;
+ 132:motor.c       ****     if (steps==0)
+ 331              		.loc 1 132 0
+ 332 000c 0028     		cmp	r0, #0
+ 333 000e 35D0     		beq	.L23
+ 133:motor.c       ****       return 1;
+ 134:motor.c       ****     active_count=0;
+ 334              		.loc 1 134 0
+ 335 0010 0022     		movs	r2, #0
+ 336 0012 1B4B     		ldr	r3, .L24
+ 337 0014 5A60     		str	r2, [r3, #4]
+ 135:motor.c       ****      IDAC_1_SetValue(RUN_I);
+ 338              		.loc 1 135 0
+ 339 0016 BF20     		movs	r0, #191
+ 340              	.LVL44:
+ 341 0018 4000     		lsls	r0, r0, #1
+ 342 001a FFF7FEFF 		bl	IDAC_1_SetValue
+ 343              	.LVL45:
+ 136:motor.c       ****     mot_pos+=steps;
+ 344              		.loc 1 136 0
+ 345 001e 194A     		ldr	r2, .L24+4
+ 346 0020 1368     		ldr	r3, [r2]
+ 347 0022 1B19     		adds	r3, r3, r4
+ 348 0024 1360     		str	r3, [r2]
+ 137:motor.c       ****     if (steps>0)
+ 349              		.loc 1 137 0
+ 350 0026 002C     		cmp	r4, #0
+ 351 0028 07DD     		ble	.L20
+ 138:motor.c       ****     {
+ 139:motor.c       ****        CW_Write(0);
+ 352              		.loc 1 139 0
+ 353 002a 0020     		movs	r0, #0
+ 354 002c FFF7FEFF 		bl	CW_Write
+ 355              	.LVL46:
+ 140:motor.c       ****     MotSetTrip(RUN_I_COUNTER_SPRING);
+ 356              		.loc 1 140 0
+ 357 0030 BF20     		movs	r0, #191
+ 358 0032 4000     		lsls	r0, r0, #1
+ 359 0034 FFF7FEFF 		bl	MotSetTrip
+ 360              	.LVL47:
+ 361 0038 07E0     		b	.L21
+ 362              	.L20:
+ 141:motor.c       ****     }
+ 142:motor.c       ****     else
+ 143:motor.c       ****        {
+ 144:motor.c       ****         CW_Write(1);
+ 363              		.loc 1 144 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 10
+
+
+ 364 003a 0120     		movs	r0, #1
+ 365 003c FFF7FEFF 		bl	CW_Write
+ 366              	.LVL48:
+ 145:motor.c       ****         steps=-steps;
+ 367              		.loc 1 145 0
+ 368 0040 6442     		rsbs	r4, r4, #0
+ 369              	.LVL49:
+ 146:motor.c       ****         MotSetTrip(RUN_I);
+ 370              		.loc 1 146 0
+ 371 0042 BF20     		movs	r0, #191
+ 372 0044 4000     		lsls	r0, r0, #1
+ 373 0046 FFF7FEFF 		bl	MotSetTrip
+ 374              	.LVL50:
+ 375              	.L21:
+ 147:motor.c       ****        }
+ 148:motor.c       ****     
+ 149:motor.c       ****     STEP_COUNT_WriteCounter(10000);
+ 376              		.loc 1 149 0
+ 377 004a 0F48     		ldr	r0, .L24+8
+ 378 004c FFF7FEFF 		bl	STEP_COUNT_WriteCounter
+ 379              	.LVL51:
+ 150:motor.c       ****     mot_start=STEP_COUNT_ReadCounter();
+ 380              		.loc 1 150 0
+ 381 0050 FFF7FEFF 		bl	STEP_COUNT_ReadCounter
+ 382              	.LVL52:
+ 383 0054 0D4B     		ldr	r3, .L24+12
+ 384 0056 1860     		str	r0, [r3]
+ 151:motor.c       ****     mot_target = mot_start +steps;
+ 385              		.loc 1 151 0
+ 386 0058 2218     		adds	r2, r4, r0
+ 387 005a 0D4B     		ldr	r3, .L24+16
+ 388 005c 1A60     		str	r2, [r3]
+ 152:motor.c       ****     half_dist = mot_start +steps/2;
+ 389              		.loc 1 152 0
+ 390 005e E30F     		lsrs	r3, r4, #31
+ 391 0060 1C19     		adds	r4, r3, r4
+ 392              	.LVL53:
+ 393 0062 6410     		asrs	r4, r4, #1
+ 394 0064 0019     		adds	r0, r0, r4
+ 395 0066 0B4B     		ldr	r3, .L24+20
+ 396 0068 1860     		str	r0, [r3]
+ 153:motor.c       ****     active_count=0;
+ 397              		.loc 1 153 0
+ 398 006a 054B     		ldr	r3, .L24
+ 399 006c 0022     		movs	r2, #0
+ 400 006e 5A60     		str	r2, [r3, #4]
+ 154:motor.c       ****     mot_active=1;
+ 401              		.loc 1 154 0
+ 402 0070 0132     		adds	r2, r2, #1
+ 403 0072 1A70     		strb	r2, [r3]
+ 155:motor.c       ****     return 1;
+ 404              		.loc 1 155 0
+ 405 0074 0120     		movs	r0, #1
+ 406 0076 02E0     		b	.L19
+ 407              	.LVL54:
+ 408              	.L22:
+ 131:motor.c       ****     if (steps==0)
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 11
+
+
+ 409              		.loc 1 131 0
+ 410 0078 0020     		movs	r0, #0
+ 411              	.LVL55:
+ 412 007a 00E0     		b	.L19
+ 413              	.LVL56:
+ 414              	.L23:
+ 133:motor.c       ****     active_count=0;
+ 415              		.loc 1 133 0
+ 416 007c 0120     		movs	r0, #1
+ 417              	.LVL57:
+ 418              	.L19:
+ 156:motor.c       **** }
+ 419              		.loc 1 156 0
+ 420              		@ sp needed
+ 421 007e 10BD     		pop	{r4, pc}
+ 422              	.L25:
+ 423              		.align	2
+ 424              	.L24:
+ 425 0080 00000000 		.word	.LANCHOR0
+ 426 0084 00000000 		.word	mot_pos
+ 427 0088 10270000 		.word	10000
+ 428 008c 00000000 		.word	mot_start
+ 429 0090 00000000 		.word	mot_target
+ 430 0094 00000000 		.word	half_dist
+ 431              		.cfi_endproc
+ 432              	.LFE38:
+ 433              		.size	MotMoveRel, .-MotMoveRel
+ 434              		.section	.text.MotTask,"ax",%progbits
+ 435              		.align	2
+ 436              		.global	MotTask
+ 437              		.code	16
+ 438              		.thumb_func
+ 439              		.type	MotTask, %function
+ 440              	MotTask:
+ 441              	.LFB39:
+ 157:motor.c       **** int last_p, last_x;
+ 158:motor.c       **** int MotTask()
+ 159:motor.c       **** {
+ 442              		.loc 1 159 0
+ 443              		.cfi_startproc
+ 444              		@ args = 0, pretend = 0, frame = 0
+ 445              		@ frame_needed = 0, uses_anonymous_args = 0
+ 446 0000 70B5     		push	{r4, r5, r6, lr}
+ 447              		.cfi_def_cfa_offset 16
+ 448              		.cfi_offset 4, -16
+ 449              		.cfi_offset 5, -12
+ 450              		.cfi_offset 6, -8
+ 451              		.cfi_offset 14, -4
+ 160:motor.c       ****    int x,p;
+ 161:motor.c       ****     
+ 162:motor.c       ****    if (mot_active)
+ 452              		.loc 1 162 0
+ 453 0002 2A4B     		ldr	r3, .L36
+ 454 0004 1B78     		ldrb	r3, [r3]
+ 455 0006 002B     		cmp	r3, #0
+ 456 0008 4DD0     		beq	.L33
+ 163:motor.c       ****        {
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 12
+
+
+ 164:motor.c       ****          active_count++;
+ 457              		.loc 1 164 0
+ 458 000a 284C     		ldr	r4, .L36
+ 459 000c 6368     		ldr	r3, [r4, #4]
+ 460 000e 0133     		adds	r3, r3, #1
+ 461 0010 6360     		str	r3, [r4, #4]
+ 165:motor.c       ****         x=STEP_COUNT_ReadCounter();
+ 462              		.loc 1 165 0
+ 463 0012 FFF7FEFF 		bl	STEP_COUNT_ReadCounter
+ 464              	.LVL58:
+ 465 0016 0500     		movs	r5, r0
+ 466              	.LVL59:
+ 166:motor.c       ****         if ((active_count>MAX_ACTIVE))//ik disable current sense ||(Comp_ISENSE_GetCompare()==1))
+ 467              		.loc 1 166 0
+ 468 0018 6268     		ldr	r2, [r4, #4]
+ 469 001a 254B     		ldr	r3, .L36+4
+ 470 001c 9A42     		cmp	r2, r3
+ 471 001e 07DD     		ble	.L28
+ 167:motor.c       ****            {
+ 168:motor.c       ****             mot_active=0;
+ 472              		.loc 1 168 0
+ 473 0020 0022     		movs	r2, #0
+ 474 0022 224B     		ldr	r3, .L36
+ 475 0024 1A70     		strb	r2, [r3]
+ 169:motor.c       ****             PWM_M_WriteCompare1(0);
+ 476              		.loc 1 169 0
+ 477 0026 0020     		movs	r0, #0
+ 478              	.LVL60:
+ 479 0028 FFF7FEFF 		bl	PWM_M_WriteCompare1
+ 480              	.LVL61:
+ 170:motor.c       ****             return 0;
+ 481              		.loc 1 170 0
+ 482 002c 0020     		movs	r0, #0
+ 483 002e 3BE0     		b	.L27
+ 484              	.LVL62:
+ 485              	.L28:
+ 171:motor.c       ****            }
+ 172:motor.c       ****        
+ 173:motor.c       ****        if (x<half_dist)
+ 486              		.loc 1 173 0
+ 487 0030 204B     		ldr	r3, .L36+8
+ 488 0032 1B68     		ldr	r3, [r3]
+ 489 0034 9842     		cmp	r0, r3
+ 490 0036 0EDA     		bge	.L29
+ 174:motor.c       ****             p = isqrt((x-mot_start)*ACCEL*2)+MIN_SPEED_ACCEL;
+ 491              		.loc 1 174 0
+ 492 0038 1F4B     		ldr	r3, .L36+12
+ 493 003a 1868     		ldr	r0, [r3]
+ 494              	.LVL63:
+ 495 003c 2A1A     		subs	r2, r5, r0
+ 496 003e 1F4C     		ldr	r4, .L36+16
+ 497 0040 A37B     		ldrb	r3, [r4, #14]
+ 498 0042 DBB2     		uxtb	r3, r3
+ 499 0044 9900     		lsls	r1, r3, #2
+ 500 0046 CB18     		adds	r3, r1, r3
+ 501 0048 9800     		lsls	r0, r3, #2
+ 502 004a 5043     		muls	r0, r2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 13
+
+
+ 503 004c FFF7FEFF 		bl	isqrt
+ 504              	.LVL64:
+ 505 0050 247B     		ldrb	r4, [r4, #12]
+ 506 0052 2418     		adds	r4, r4, r0
+ 507              	.LVL65:
+ 508 0054 11E0     		b	.L30
+ 509              	.LVL66:
+ 510              	.L29:
+ 175:motor.c       ****        else
+ 176:motor.c       ****                if (mot_target-x>0)
+ 511              		.loc 1 176 0
+ 512 0056 1A4B     		ldr	r3, .L36+20
+ 513 0058 1868     		ldr	r0, [r3]
+ 514              	.LVL67:
+ 515 005a 401B     		subs	r0, r0, r5
+ 516 005c 0028     		cmp	r0, #0
+ 517 005e 0BDD     		ble	.L34
+ 177:motor.c       ****                     p = isqrt((mot_target-x)*ACCEL*2)+MIN_SPEED_DECEL;
+ 518              		.loc 1 177 0
+ 519 0060 164C     		ldr	r4, .L36+16
+ 520 0062 A37B     		ldrb	r3, [r4, #14]
+ 521 0064 DBB2     		uxtb	r3, r3
+ 522 0066 9A00     		lsls	r2, r3, #2
+ 523 0068 D318     		adds	r3, r2, r3
+ 524 006a 9A00     		lsls	r2, r3, #2
+ 525 006c 5043     		muls	r0, r2
+ 526 006e FFF7FEFF 		bl	isqrt
+ 527              	.LVL68:
+ 528 0072 647B     		ldrb	r4, [r4, #13]
+ 529 0074 2418     		adds	r4, r4, r0
+ 530              	.LVL69:
+ 531 0076 00E0     		b	.L30
+ 532              	.LVL70:
+ 533              	.L34:
+ 178:motor.c       ****                else
+ 179:motor.c       ****                     p=0;
+ 534              		.loc 1 179 0
+ 535 0078 0024     		movs	r4, #0
+ 536              	.L30:
+ 537              	.LVL71:
+ 180:motor.c       ****        if (p>MAX_V)
+ 538              		.loc 1 180 0
+ 539 007a FA2C     		cmp	r4, #250
+ 540 007c 00DD     		ble	.L31
+ 181:motor.c       ****           p=MAX_V;
+ 541              		.loc 1 181 0
+ 542 007e FA24     		movs	r4, #250
+ 543              	.LVL72:
+ 544              	.L31:
+ 182:motor.c       ****        PWM_M_WriteCompare1(p);
+ 545              		.loc 1 182 0
+ 546 0080 E0B2     		uxtb	r0, r4
+ 547 0082 FFF7FEFF 		bl	PWM_M_WriteCompare1
+ 548              	.LVL73:
+ 183:motor.c       ****        if (x>=mot_target)
+ 549              		.loc 1 183 0
+ 550 0086 0E4B     		ldr	r3, .L36+20
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 14
+
+
+ 551 0088 1B68     		ldr	r3, [r3]
+ 552 008a 9D42     		cmp	r5, r3
+ 553 008c 05DB     		blt	.L32
+ 184:motor.c       ****           {
+ 185:motor.c       ****           mot_active=0;
+ 554              		.loc 1 185 0
+ 555 008e 0022     		movs	r2, #0
+ 556 0090 064B     		ldr	r3, .L36
+ 557 0092 1A70     		strb	r2, [r3]
+ 186:motor.c       ****           PWM_M_WriteCompare1(0);
+ 558              		.loc 1 186 0
+ 559 0094 0020     		movs	r0, #0
+ 560 0096 FFF7FEFF 		bl	PWM_M_WriteCompare1
+ 561              	.LVL74:
+ 562              	.L32:
+ 187:motor.c       ****           }
+ 188:motor.c       ****          last_p=p;
+ 563              		.loc 1 188 0
+ 564 009a 0A4B     		ldr	r3, .L36+24
+ 565 009c 1C60     		str	r4, [r3]
+ 189:motor.c       ****          last_x=x;
+ 566              		.loc 1 189 0
+ 567 009e 0A4B     		ldr	r3, .L36+28
+ 568 00a0 1D60     		str	r5, [r3]
+ 190:motor.c       ****         return 1;
+ 569              		.loc 1 190 0
+ 570 00a2 0120     		movs	r0, #1
+ 571 00a4 00E0     		b	.L27
+ 572              	.LVL75:
+ 573              	.L33:
+ 191:motor.c       ****      }
+ 192:motor.c       **** 
+ 193:motor.c       ****     return 0;
+ 574              		.loc 1 193 0
+ 575 00a6 0020     		movs	r0, #0
+ 576              	.L27:
+ 194:motor.c       **** }
+ 577              		.loc 1 194 0
+ 578              		@ sp needed
+ 579 00a8 70BD     		pop	{r4, r5, r6, pc}
+ 580              	.L37:
+ 581 00aa C046     		.align	2
+ 582              	.L36:
+ 583 00ac 00000000 		.word	.LANCHOR0
+ 584 00b0 20A10700 		.word	500000
+ 585 00b4 00000000 		.word	half_dist
+ 586 00b8 00000000 		.word	mot_start
+ 587 00bc 00000000 		.word	set
+ 588 00c0 00000000 		.word	mot_target
+ 589 00c4 00000000 		.word	last_p
+ 590 00c8 00000000 		.word	last_x
+ 591              		.cfi_endproc
+ 592              	.LFE39:
+ 593              		.size	MotTask, .-MotTask
+ 594              		.comm	last_x,4,4
+ 595              		.comm	last_p,4,4
+ 596              		.global	active_count
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 15
+
+
+ 597              		.comm	last_count,4,4
+ 598              		.comm	mot_pos,4,4
+ 599              		.global	mot_homed
+ 600              		.global	mot_active
+ 601              		.comm	half_dist,4,4
+ 602              		.comm	mot_target,4,4
+ 603              		.comm	mot_decel_start,4,4
+ 604              		.comm	mot_start,4,4
+ 605              		.comm	set,35,4
+ 606              		.bss
+ 607              		.align	2
+ 608              		.set	.LANCHOR0,. + 0
+ 609              		.type	mot_active, %object
+ 610              		.size	mot_active, 1
+ 611              	mot_active:
+ 612 0000 00       		.space	1
+ 613              		.type	mot_homed, %object
+ 614              		.size	mot_homed, 1
+ 615              	mot_homed:
+ 616 0001 00       		.space	1
+ 617 0002 0000     		.space	2
+ 618              		.type	active_count, %object
+ 619              		.size	active_count, 4
+ 620              	active_count:
+ 621 0004 00000000 		.space	4
+ 622              		.text
+ 623              	.Letext0:
+ 624              		.file 2 "settings.h"
+ 625              		.file 3 "Generated_Source\\PSoC4/cytypes.h"
+ 626              		.file 4 "Generated_Source\\PSoC4/IDAC_1.h"
+ 627              		.file 5 "Generated_Source\\PSoC4/IDAC_2.h"
+ 628              		.file 6 "Generated_Source\\PSoC4/PWM_M.h"
+ 629              		.file 7 "Generated_Source\\PSoC4/CW.h"
+ 630              		.file 8 "Generated_Source\\PSoC4/STEP_COUNT.h"
+ 631              		.file 9 "Generated_Source\\PSoC4/CyLib.h"
+ 632              		.file 10 "Generated_Source\\PSoC4/Comp_ISENSE.h"
+ 633              		.section	.debug_info,"",%progbits
+ 634              	.Ldebug_info0:
+ 635 0000 93050000 		.4byte	0x593
+ 636 0004 0400     		.2byte	0x4
+ 637 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 638 000a 04       		.byte	0x4
+ 639 000b 01       		.uleb128 0x1
+ 640 000c 91000000 		.4byte	.LASF53
+ 641 0010 0C       		.byte	0xc
+ 642 0011 D4020000 		.4byte	.LASF54
+ 643 0015 5B000000 		.4byte	.LASF55
+ 644 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 645 001d 00000000 		.4byte	0
+ 646 0021 00000000 		.4byte	.Ldebug_line0
+ 647 0025 02       		.uleb128 0x2
+ 648 0026 01       		.byte	0x1
+ 649 0027 06       		.byte	0x6
+ 650 0028 4C010000 		.4byte	.LASF0
+ 651 002c 02       		.uleb128 0x2
+ 652 002d 01       		.byte	0x1
+ 653 002e 08       		.byte	0x8
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 16
+
+
+ 654 002f C7010000 		.4byte	.LASF1
+ 655 0033 02       		.uleb128 0x2
+ 656 0034 02       		.byte	0x2
+ 657 0035 05       		.byte	0x5
+ 658 0036 33000000 		.4byte	.LASF2
+ 659 003a 02       		.uleb128 0x2
+ 660 003b 02       		.byte	0x2
+ 661 003c 07       		.byte	0x7
+ 662 003d 46020000 		.4byte	.LASF3
+ 663 0041 02       		.uleb128 0x2
+ 664 0042 04       		.byte	0x4
+ 665 0043 05       		.byte	0x5
+ 666 0044 B1010000 		.4byte	.LASF4
+ 667 0048 02       		.uleb128 0x2
+ 668 0049 04       		.byte	0x4
+ 669 004a 07       		.byte	0x7
+ 670 004b 9A020000 		.4byte	.LASF5
+ 671 004f 02       		.uleb128 0x2
+ 672 0050 08       		.byte	0x8
+ 673 0051 05       		.byte	0x5
+ 674 0052 85010000 		.4byte	.LASF6
+ 675 0056 02       		.uleb128 0x2
+ 676 0057 08       		.byte	0x8
+ 677 0058 07       		.byte	0x7
+ 678 0059 93010000 		.4byte	.LASF7
+ 679 005d 03       		.uleb128 0x3
+ 680 005e 04       		.byte	0x4
+ 681 005f 05       		.byte	0x5
+ 682 0060 696E7400 		.ascii	"int\000"
+ 683 0064 02       		.uleb128 0x2
+ 684 0065 04       		.byte	0x4
+ 685 0066 07       		.byte	0x7
+ 686 0067 12020000 		.4byte	.LASF8
+ 687 006b 04       		.uleb128 0x4
+ 688 006c 2F010000 		.4byte	.LASF25
+ 689 0070 03       		.byte	0x3
+ 690 0071 B901     		.2byte	0x1b9
+ 691 0073 2C000000 		.4byte	0x2c
+ 692 0077 02       		.uleb128 0x2
+ 693 0078 04       		.byte	0x4
+ 694 0079 04       		.byte	0x4
+ 695 007a 58010000 		.4byte	.LASF9
+ 696 007e 02       		.uleb128 0x2
+ 697 007f 08       		.byte	0x8
+ 698 0080 04       		.byte	0x4
+ 699 0081 AC020000 		.4byte	.LASF10
+ 700 0085 02       		.uleb128 0x2
+ 701 0086 01       		.byte	0x1
+ 702 0087 08       		.byte	0x8
+ 703 0088 62020000 		.4byte	.LASF11
+ 704 008c 02       		.uleb128 0x2
+ 705 008d 08       		.byte	0x8
+ 706 008e 04       		.byte	0x4
+ 707 008f D5010000 		.4byte	.LASF12
+ 708 0093 02       		.uleb128 0x2
+ 709 0094 04       		.byte	0x4
+ 710 0095 07       		.byte	0x7
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 17
+
+
+ 711 0096 47000000 		.4byte	.LASF13
+ 712 009a 05       		.uleb128 0x5
+ 713 009b 23       		.byte	0x23
+ 714 009c 02       		.byte	0x2
+ 715 009d 0D       		.byte	0xd
+ 716 009e 5D010000 		.4byte	0x15d
+ 717 00a2 06       		.uleb128 0x6
+ 718 00a3 AA010000 		.4byte	.LASF14
+ 719 00a7 02       		.byte	0x2
+ 720 00a8 0F       		.byte	0xf
+ 721 00a9 2C000000 		.4byte	0x2c
+ 722 00ad 00       		.byte	0
+ 723 00ae 07       		.uleb128 0x7
+ 724 00af 63684100 		.ascii	"chA\000"
+ 725 00b3 02       		.byte	0x2
+ 726 00b4 10       		.byte	0x10
+ 727 00b5 2C000000 		.4byte	0x2c
+ 728 00b9 01       		.byte	0x1
+ 729 00ba 07       		.uleb128 0x7
+ 730 00bb 63684200 		.ascii	"chB\000"
+ 731 00bf 02       		.byte	0x2
+ 732 00c0 11       		.byte	0x11
+ 733 00c1 2C000000 		.4byte	0x2c
+ 734 00c5 02       		.byte	0x2
+ 735 00c6 07       		.uleb128 0x7
+ 736 00c7 7200     		.ascii	"r\000"
+ 737 00c9 02       		.byte	0x2
+ 738 00ca 12       		.byte	0x12
+ 739 00cb 2C000000 		.4byte	0x2c
+ 740 00cf 03       		.byte	0x3
+ 741 00d0 07       		.uleb128 0x7
+ 742 00d1 6700     		.ascii	"g\000"
+ 743 00d3 02       		.byte	0x2
+ 744 00d4 13       		.byte	0x13
+ 745 00d5 2C000000 		.4byte	0x2c
+ 746 00d9 04       		.byte	0x4
+ 747 00da 07       		.uleb128 0x7
+ 748 00db 6200     		.ascii	"b\000"
+ 749 00dd 02       		.byte	0x2
+ 750 00de 14       		.byte	0x14
+ 751 00df 2C000000 		.4byte	0x2c
+ 752 00e3 05       		.byte	0x5
+ 753 00e4 06       		.uleb128 0x6
+ 754 00e5 50000000 		.4byte	.LASF15
+ 755 00e9 02       		.byte	0x2
+ 756 00ea 15       		.byte	0x15
+ 757 00eb 2C000000 		.4byte	0x2c
+ 758 00ef 06       		.byte	0x6
+ 759 00f0 06       		.uleb128 0x6
+ 760 00f1 08000000 		.4byte	.LASF16
+ 761 00f5 02       		.byte	0x2
+ 762 00f6 16       		.byte	0x16
+ 763 00f7 2C000000 		.4byte	0x2c
+ 764 00fb 07       		.byte	0x7
+ 765 00fc 06       		.uleb128 0x6
+ 766 00fd 59020000 		.4byte	.LASF17
+ 767 0101 02       		.byte	0x2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 18
+
+
+ 768 0102 17       		.byte	0x17
+ 769 0103 2C000000 		.4byte	0x2c
+ 770 0107 08       		.byte	0x8
+ 771 0108 06       		.uleb128 0x6
+ 772 0109 67020000 		.4byte	.LASF18
+ 773 010d 02       		.byte	0x2
+ 774 010e 18       		.byte	0x18
+ 775 010f 2C000000 		.4byte	0x2c
+ 776 0113 09       		.byte	0x9
+ 777 0114 06       		.uleb128 0x6
+ 778 0115 00000000 		.4byte	.LASF19
+ 779 0119 02       		.byte	0x2
+ 780 011a 19       		.byte	0x19
+ 781 011b 2C000000 		.4byte	0x2c
+ 782 011f 0A       		.byte	0xa
+ 783 0120 06       		.uleb128 0x6
+ 784 0121 1F020000 		.4byte	.LASF20
+ 785 0125 02       		.byte	0x2
+ 786 0126 1A       		.byte	0x1a
+ 787 0127 2C000000 		.4byte	0x2c
+ 788 012b 0B       		.byte	0xb
+ 789 012c 06       		.uleb128 0x6
+ 790 012d 1F010000 		.4byte	.LASF21
+ 791 0131 02       		.byte	0x2
+ 792 0132 1B       		.byte	0x1b
+ 793 0133 2C000000 		.4byte	0x2c
+ 794 0137 0C       		.byte	0xc
+ 795 0138 06       		.uleb128 0x6
+ 796 0139 35010000 		.4byte	.LASF22
+ 797 013d 02       		.byte	0x2
+ 798 013e 1C       		.byte	0x1c
+ 799 013f 2C000000 		.4byte	0x2c
+ 800 0143 0D       		.byte	0xd
+ 801 0144 06       		.uleb128 0x6
+ 802 0145 1E000000 		.4byte	.LASF23
+ 803 0149 02       		.byte	0x2
+ 804 014a 1D       		.byte	0x1d
+ 805 014b 2C000000 		.4byte	0x2c
+ 806 014f 0E       		.byte	0xe
+ 807 0150 06       		.uleb128 0x6
+ 808 0151 8C000000 		.4byte	.LASF24
+ 809 0155 02       		.byte	0x2
+ 810 0156 1F       		.byte	0x1f
+ 811 0157 5D010000 		.4byte	0x15d
+ 812 015b 0F       		.byte	0xf
+ 813 015c 00       		.byte	0
+ 814 015d 08       		.uleb128 0x8
+ 815 015e 2C000000 		.4byte	0x2c
+ 816 0162 6D010000 		.4byte	0x16d
+ 817 0166 09       		.uleb128 0x9
+ 818 0167 93000000 		.4byte	0x93
+ 819 016b 13       		.byte	0x13
+ 820 016c 00       		.byte	0
+ 821 016d 0A       		.uleb128 0xa
+ 822 016e 91020000 		.4byte	.LASF26
+ 823 0172 02       		.byte	0x2
+ 824 0173 21       		.byte	0x21
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 19
+
+
+ 825 0174 9A000000 		.4byte	0x9a
+ 826 0178 0B       		.uleb128 0xb
+ 827 0179 82000000 		.4byte	.LASF56
+ 828 017d 01       		.byte	0x1
+ 829 017e 23       		.byte	0x23
+ 830 017f 5D000000 		.4byte	0x5d
+ 831 0183 00000000 		.4byte	.LFB34
+ 832 0187 0C000000 		.4byte	.LFE34-.LFB34
+ 833 018b 01       		.uleb128 0x1
+ 834 018c 9C       		.byte	0x9c
+ 835 018d 0C       		.uleb128 0xc
+ 836 018e 28000000 		.4byte	.LASF32
+ 837 0192 01       		.byte	0x1
+ 838 0193 2B       		.byte	0x2b
+ 839 0194 00000000 		.4byte	.LFB35
+ 840 0198 1A000000 		.4byte	.LFE35-.LFB35
+ 841 019c 01       		.uleb128 0x1
+ 842 019d 9C       		.byte	0x9c
+ 843 019e E7010000 		.4byte	0x1e7
+ 844 01a2 0D       		.uleb128 0xd
+ 845 01a3 76616C00 		.ascii	"val\000"
+ 846 01a7 01       		.byte	0x1
+ 847 01a8 2B       		.byte	0x2b
+ 848 01a9 5D000000 		.4byte	0x5d
+ 849 01ad 00000000 		.4byte	.LLST0
+ 850 01b1 0E       		.uleb128 0xe
+ 851 01b2 763100   		.ascii	"v1\000"
+ 852 01b5 01       		.byte	0x1
+ 853 01b6 2D       		.byte	0x2d
+ 854 01b7 5D000000 		.4byte	0x5d
+ 855 01bb 2C000000 		.4byte	.LLST1
+ 856 01bf 0F       		.uleb128 0xf
+ 857 01c0 12000000 		.4byte	.LVL3
+ 858 01c4 3C050000 		.4byte	0x53c
+ 859 01c8 D3010000 		.4byte	0x1d3
+ 860 01cc 10       		.uleb128 0x10
+ 861 01cd 01       		.uleb128 0x1
+ 862 01ce 50       		.byte	0x50
+ 863 01cf 02       		.uleb128 0x2
+ 864 01d0 75       		.byte	0x75
+ 865 01d1 00       		.sleb128 0
+ 866 01d2 00       		.byte	0
+ 867 01d3 11       		.uleb128 0x11
+ 868 01d4 18000000 		.4byte	.LVL4
+ 869 01d8 47050000 		.4byte	0x547
+ 870 01dc 10       		.uleb128 0x10
+ 871 01dd 01       		.uleb128 0x1
+ 872 01de 50       		.byte	0x50
+ 873 01df 05       		.uleb128 0x5
+ 874 01e0 74       		.byte	0x74
+ 875 01e1 00       		.sleb128 0
+ 876 01e2 75       		.byte	0x75
+ 877 01e3 00       		.sleb128 0
+ 878 01e4 1C       		.byte	0x1c
+ 879 01e5 00       		.byte	0
+ 880 01e6 00       		.byte	0
+ 881 01e7 12       		.uleb128 0x12
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 20
+
+
+ 882 01e8 0A020000 		.4byte	.LASF57
+ 883 01ec 01       		.byte	0x1
+ 884 01ed 32       		.byte	0x32
+ 885 01ee 00000000 		.4byte	.LFB36
+ 886 01f2 A0000000 		.4byte	.LFE36-.LFB36
+ 887 01f6 01       		.uleb128 0x1
+ 888 01f7 9C       		.byte	0x9c
+ 889 01f8 E8020000 		.4byte	0x2e8
+ 890 01fc 13       		.uleb128 0x13
+ 891 01fd 7800     		.ascii	"x\000"
+ 892 01ff 01       		.byte	0x1
+ 893 0200 34       		.byte	0x34
+ 894 0201 5D000000 		.4byte	0x5d
+ 895 0205 0E       		.uleb128 0xe
+ 896 0206 6C7000   		.ascii	"lp\000"
+ 897 0209 01       		.byte	0x1
+ 898 020a 34       		.byte	0x34
+ 899 020b 5D000000 		.4byte	0x5d
+ 900 020f 3F000000 		.4byte	.LLST2
+ 901 0213 0E       		.uleb128 0xe
+ 902 0214 746F00   		.ascii	"to\000"
+ 903 0217 01       		.byte	0x1
+ 904 0218 36       		.byte	0x36
+ 905 0219 5D000000 		.4byte	0x5d
+ 906 021d 74000000 		.4byte	.LLST3
+ 907 0221 14       		.uleb128 0x14
+ 908 0222 CE020000 		.4byte	.LASF27
+ 909 0226 01       		.byte	0x1
+ 910 0227 37       		.byte	0x37
+ 911 0228 5D000000 		.4byte	0x5d
+ 912 022c AB000000 		.4byte	.LLST4
+ 913 0230 0F       		.uleb128 0xf
+ 914 0231 08000000 		.4byte	.LVL8
+ 915 0235 8D010000 		.4byte	0x18d
+ 916 0239 44020000 		.4byte	0x244
+ 917 023d 10       		.uleb128 0x10
+ 918 023e 01       		.uleb128 0x1
+ 919 023f 50       		.byte	0x50
+ 920 0240 02       		.uleb128 0x2
+ 921 0241 08       		.byte	0x8
+ 922 0242 64       		.byte	0x64
+ 923 0243 00       		.byte	0
+ 924 0244 0F       		.uleb128 0xf
+ 925 0245 0E000000 		.4byte	.LVL9
+ 926 0249 52050000 		.4byte	0x552
+ 927 024d 58020000 		.4byte	0x258
+ 928 0251 10       		.uleb128 0x10
+ 929 0252 01       		.uleb128 0x1
+ 930 0253 50       		.byte	0x50
+ 931 0254 02       		.uleb128 0x2
+ 932 0255 09       		.byte	0x9
+ 933 0256 FF       		.byte	0xff
+ 934 0257 00       		.byte	0
+ 935 0258 0F       		.uleb128 0xf
+ 936 0259 14000000 		.4byte	.LVL10
+ 937 025d 5D050000 		.4byte	0x55d
+ 938 0261 6B020000 		.4byte	0x26b
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 21
+
+
+ 939 0265 10       		.uleb128 0x10
+ 940 0266 01       		.uleb128 0x1
+ 941 0267 50       		.byte	0x50
+ 942 0268 01       		.uleb128 0x1
+ 943 0269 31       		.byte	0x31
+ 944 026a 00       		.byte	0
+ 945 026b 0F       		.uleb128 0xf
+ 946 026c 1C000000 		.4byte	.LVL11
+ 947 0270 68050000 		.4byte	0x568
+ 948 0274 80020000 		.4byte	0x280
+ 949 0278 10       		.uleb128 0x10
+ 950 0279 01       		.uleb128 0x1
+ 951 027a 50       		.byte	0x50
+ 952 027b 03       		.uleb128 0x3
+ 953 027c 0A       		.byte	0xa
+ 954 027d E803     		.2byte	0x3e8
+ 955 027f 00       		.byte	0
+ 956 0280 15       		.uleb128 0x15
+ 957 0281 20000000 		.4byte	.LVL12
+ 958 0285 74050000 		.4byte	0x574
+ 959 0289 0F       		.uleb128 0xf
+ 960 028a 32000000 		.4byte	.LVL15
+ 961 028e 80050000 		.4byte	0x580
+ 962 0292 9E020000 		.4byte	0x29e
+ 963 0296 10       		.uleb128 0x10
+ 964 0297 01       		.uleb128 0x1
+ 965 0298 50       		.byte	0x50
+ 966 0299 03       		.uleb128 0x3
+ 967 029a 0B       		.byte	0xb
+ 968 029b 50C3     		.2byte	0xc350
+ 969 029d 00       		.byte	0
+ 970 029e 15       		.uleb128 0x15
+ 971 029f 3C000000 		.4byte	.LVL17
+ 972 02a3 8B050000 		.4byte	0x58b
+ 973 02a7 0F       		.uleb128 0xf
+ 974 02a8 4C000000 		.4byte	.LVL20
+ 975 02ac 52050000 		.4byte	0x552
+ 976 02b0 BB020000 		.4byte	0x2bb
+ 977 02b4 10       		.uleb128 0x10
+ 978 02b5 01       		.uleb128 0x1
+ 979 02b6 50       		.byte	0x50
+ 980 02b7 02       		.uleb128 0x2
+ 981 02b8 75       		.byte	0x75
+ 982 02b9 00       		.sleb128 0
+ 983 02ba 00       		.byte	0
+ 984 02bb 15       		.uleb128 0x15
+ 985 02bc 5A000000 		.4byte	.LVL22
+ 986 02c0 74050000 		.4byte	0x574
+ 987 02c4 0F       		.uleb128 0xf
+ 988 02c5 70000000 		.4byte	.LVL26
+ 989 02c9 52050000 		.4byte	0x552
+ 990 02cd D8020000 		.4byte	0x2d8
+ 991 02d1 10       		.uleb128 0x10
+ 992 02d2 01       		.uleb128 0x1
+ 993 02d3 50       		.byte	0x50
+ 994 02d4 02       		.uleb128 0x2
+ 995 02d5 75       		.byte	0x75
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 22
+
+
+ 996 02d6 00       		.sleb128 0
+ 997 02d7 00       		.byte	0
+ 998 02d8 11       		.uleb128 0x11
+ 999 02d9 8E000000 		.4byte	.LVL29
+ 1000 02dd 52050000 		.4byte	0x552
+ 1001 02e1 10       		.uleb128 0x10
+ 1002 02e2 01       		.uleb128 0x1
+ 1003 02e3 50       		.byte	0x50
+ 1004 02e4 01       		.uleb128 0x1
+ 1005 02e5 30       		.byte	0x30
+ 1006 02e6 00       		.byte	0
+ 1007 02e7 00       		.byte	0
+ 1008 02e8 16       		.uleb128 0x16
+ 1009 02e9 E1010000 		.4byte	.LASF29
+ 1010 02ed 01       		.byte	0x1
+ 1011 02ee 6A       		.byte	0x6a
+ 1012 02ef 3A000000 		.4byte	0x3a
+ 1013 02f3 00000000 		.4byte	.LFB37
+ 1014 02f7 2A000000 		.4byte	.LFE37-.LFB37
+ 1015 02fb 01       		.uleb128 0x1
+ 1016 02fc 9C       		.byte	0x9c
+ 1017 02fd 3A030000 		.4byte	0x33a
+ 1018 0301 0D       		.uleb128 0xd
+ 1019 0302 6100     		.ascii	"a\000"
+ 1020 0304 01       		.byte	0x1
+ 1021 0305 6A       		.byte	0x6a
+ 1022 0306 48000000 		.4byte	0x48
+ 1023 030a C9000000 		.4byte	.LLST5
+ 1024 030e 0E       		.uleb128 0xe
+ 1025 030f 72656D00 		.ascii	"rem\000"
+ 1026 0313 01       		.byte	0x1
+ 1027 0314 6B       		.byte	0x6b
+ 1028 0315 48000000 		.4byte	0x48
+ 1029 0319 E7000000 		.4byte	.LLST6
+ 1030 031d 14       		.uleb128 0x14
+ 1031 031e 15030000 		.4byte	.LASF28
+ 1032 0322 01       		.byte	0x1
+ 1033 0323 6C       		.byte	0x6c
+ 1034 0324 5D000000 		.4byte	0x5d
+ 1035 0328 06010000 		.4byte	.LLST7
+ 1036 032c 0E       		.uleb128 0xe
+ 1037 032d 6900     		.ascii	"i\000"
+ 1038 032f 01       		.byte	0x1
+ 1039 0330 6D       		.byte	0x6d
+ 1040 0331 5D000000 		.4byte	0x5d
+ 1041 0335 3B010000 		.4byte	.LLST8
+ 1042 0339 00       		.byte	0
+ 1043 033a 16       		.uleb128 0x16
+ 1044 033b 24030000 		.4byte	.LASF30
+ 1045 033f 01       		.byte	0x1
+ 1046 0340 80       		.byte	0x80
+ 1047 0341 6B000000 		.4byte	0x6b
+ 1048 0345 00000000 		.4byte	.LFB38
+ 1049 0349 98000000 		.4byte	.LFE38-.LFB38
+ 1050 034d 01       		.uleb128 0x1
+ 1051 034e 9C       		.byte	0x9c
+ 1052 034f E6030000 		.4byte	0x3e6
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 23
+
+
+ 1053 0353 17       		.uleb128 0x17
+ 1054 0354 40020000 		.4byte	.LASF31
+ 1055 0358 01       		.byte	0x1
+ 1056 0359 80       		.byte	0x80
+ 1057 035a 5D000000 		.4byte	0x5d
+ 1058 035e 5A010000 		.4byte	.LLST9
+ 1059 0362 0F       		.uleb128 0xf
+ 1060 0363 1E000000 		.4byte	.LVL45
+ 1061 0367 3C050000 		.4byte	0x53c
+ 1062 036b 77030000 		.4byte	0x377
+ 1063 036f 10       		.uleb128 0x10
+ 1064 0370 01       		.uleb128 0x1
+ 1065 0371 50       		.byte	0x50
+ 1066 0372 03       		.uleb128 0x3
+ 1067 0373 0A       		.byte	0xa
+ 1068 0374 7E01     		.2byte	0x17e
+ 1069 0376 00       		.byte	0
+ 1070 0377 0F       		.uleb128 0xf
+ 1071 0378 30000000 		.4byte	.LVL46
+ 1072 037c 5D050000 		.4byte	0x55d
+ 1073 0380 8A030000 		.4byte	0x38a
+ 1074 0384 10       		.uleb128 0x10
+ 1075 0385 01       		.uleb128 0x1
+ 1076 0386 50       		.byte	0x50
+ 1077 0387 01       		.uleb128 0x1
+ 1078 0388 30       		.byte	0x30
+ 1079 0389 00       		.byte	0
+ 1080 038a 0F       		.uleb128 0xf
+ 1081 038b 38000000 		.4byte	.LVL47
+ 1082 038f 8D010000 		.4byte	0x18d
+ 1083 0393 9F030000 		.4byte	0x39f
+ 1084 0397 10       		.uleb128 0x10
+ 1085 0398 01       		.uleb128 0x1
+ 1086 0399 50       		.byte	0x50
+ 1087 039a 03       		.uleb128 0x3
+ 1088 039b 0A       		.byte	0xa
+ 1089 039c 7E01     		.2byte	0x17e
+ 1090 039e 00       		.byte	0
+ 1091 039f 0F       		.uleb128 0xf
+ 1092 03a0 40000000 		.4byte	.LVL48
+ 1093 03a4 5D050000 		.4byte	0x55d
+ 1094 03a8 B2030000 		.4byte	0x3b2
+ 1095 03ac 10       		.uleb128 0x10
+ 1096 03ad 01       		.uleb128 0x1
+ 1097 03ae 50       		.byte	0x50
+ 1098 03af 01       		.uleb128 0x1
+ 1099 03b0 31       		.byte	0x31
+ 1100 03b1 00       		.byte	0
+ 1101 03b2 0F       		.uleb128 0xf
+ 1102 03b3 4A000000 		.4byte	.LVL50
+ 1103 03b7 8D010000 		.4byte	0x18d
+ 1104 03bb C7030000 		.4byte	0x3c7
+ 1105 03bf 10       		.uleb128 0x10
+ 1106 03c0 01       		.uleb128 0x1
+ 1107 03c1 50       		.byte	0x50
+ 1108 03c2 03       		.uleb128 0x3
+ 1109 03c3 0A       		.byte	0xa
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 24
+
+
+ 1110 03c4 7E01     		.2byte	0x17e
+ 1111 03c6 00       		.byte	0
+ 1112 03c7 0F       		.uleb128 0xf
+ 1113 03c8 50000000 		.4byte	.LVL51
+ 1114 03cc 68050000 		.4byte	0x568
+ 1115 03d0 DC030000 		.4byte	0x3dc
+ 1116 03d4 10       		.uleb128 0x10
+ 1117 03d5 01       		.uleb128 0x1
+ 1118 03d6 50       		.byte	0x50
+ 1119 03d7 03       		.uleb128 0x3
+ 1120 03d8 0A       		.byte	0xa
+ 1121 03d9 1027     		.2byte	0x2710
+ 1122 03db 00       		.byte	0
+ 1123 03dc 15       		.uleb128 0x15
+ 1124 03dd 54000000 		.4byte	.LVL52
+ 1125 03e1 74050000 		.4byte	0x574
+ 1126 03e5 00       		.byte	0
+ 1127 03e6 18       		.uleb128 0x18
+ 1128 03e7 E6020000 		.4byte	.LASF33
+ 1129 03eb 01       		.byte	0x1
+ 1130 03ec 9E       		.byte	0x9e
+ 1131 03ed 5D000000 		.4byte	0x5d
+ 1132 03f1 00000000 		.4byte	.LFB39
+ 1133 03f5 CC000000 		.4byte	.LFE39-.LFB39
+ 1134 03f9 01       		.uleb128 0x1
+ 1135 03fa 9C       		.byte	0x9c
+ 1136 03fb 6B040000 		.4byte	0x46b
+ 1137 03ff 0E       		.uleb128 0xe
+ 1138 0400 7800     		.ascii	"x\000"
+ 1139 0402 01       		.byte	0x1
+ 1140 0403 A0       		.byte	0xa0
+ 1141 0404 5D000000 		.4byte	0x5d
+ 1142 0408 99010000 		.4byte	.LLST10
+ 1143 040c 0E       		.uleb128 0xe
+ 1144 040d 7000     		.ascii	"p\000"
+ 1145 040f 01       		.byte	0x1
+ 1146 0410 A0       		.byte	0xa0
+ 1147 0411 5D000000 		.4byte	0x5d
+ 1148 0415 E3010000 		.4byte	.LLST11
+ 1149 0419 15       		.uleb128 0x15
+ 1150 041a 16000000 		.4byte	.LVL58
+ 1151 041e 74050000 		.4byte	0x574
+ 1152 0422 0F       		.uleb128 0xf
+ 1153 0423 2C000000 		.4byte	.LVL61
+ 1154 0427 52050000 		.4byte	0x552
+ 1155 042b 35040000 		.4byte	0x435
+ 1156 042f 10       		.uleb128 0x10
+ 1157 0430 01       		.uleb128 0x1
+ 1158 0431 50       		.byte	0x50
+ 1159 0432 01       		.uleb128 0x1
+ 1160 0433 30       		.byte	0x30
+ 1161 0434 00       		.byte	0
+ 1162 0435 15       		.uleb128 0x15
+ 1163 0436 50000000 		.4byte	.LVL64
+ 1164 043a E8020000 		.4byte	0x2e8
+ 1165 043e 15       		.uleb128 0x15
+ 1166 043f 72000000 		.4byte	.LVL68
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 25
+
+
+ 1167 0443 E8020000 		.4byte	0x2e8
+ 1168 0447 0F       		.uleb128 0xf
+ 1169 0448 86000000 		.4byte	.LVL73
+ 1170 044c 52050000 		.4byte	0x552
+ 1171 0450 5B040000 		.4byte	0x45b
+ 1172 0454 10       		.uleb128 0x10
+ 1173 0455 01       		.uleb128 0x1
+ 1174 0456 50       		.byte	0x50
+ 1175 0457 02       		.uleb128 0x2
+ 1176 0458 74       		.byte	0x74
+ 1177 0459 00       		.sleb128 0
+ 1178 045a 00       		.byte	0
+ 1179 045b 11       		.uleb128 0x11
+ 1180 045c 9A000000 		.4byte	.LVL74
+ 1181 0460 52050000 		.4byte	0x552
+ 1182 0464 10       		.uleb128 0x10
+ 1183 0465 01       		.uleb128 0x1
+ 1184 0466 50       		.byte	0x50
+ 1185 0467 01       		.uleb128 0x1
+ 1186 0468 30       		.byte	0x30
+ 1187 0469 00       		.byte	0
+ 1188 046a 00       		.byte	0
+ 1189 046b 19       		.uleb128 0x19
+ 1190 046c 73657400 		.ascii	"set\000"
+ 1191 0470 02       		.byte	0x2
+ 1192 0471 22       		.byte	0x22
+ 1193 0472 7C040000 		.4byte	0x47c
+ 1194 0476 05       		.uleb128 0x5
+ 1195 0477 03       		.byte	0x3
+ 1196 0478 00000000 		.4byte	set
+ 1197 047c 1A       		.uleb128 0x1a
+ 1198 047d 6D010000 		.4byte	0x16d
+ 1199 0481 1B       		.uleb128 0x1b
+ 1200 0482 1A030000 		.4byte	.LASF34
+ 1201 0486 01       		.byte	0x1
+ 1202 0487 10       		.byte	0x10
+ 1203 0488 5D000000 		.4byte	0x5d
+ 1204 048c 05       		.uleb128 0x5
+ 1205 048d 03       		.byte	0x3
+ 1206 048e 00000000 		.4byte	mot_start
+ 1207 0492 1B       		.uleb128 0x1b
+ 1208 0493 BE020000 		.4byte	.LASF35
+ 1209 0497 01       		.byte	0x1
+ 1210 0498 11       		.byte	0x11
+ 1211 0499 5D000000 		.4byte	0x5d
+ 1212 049d 05       		.uleb128 0x5
+ 1213 049e 03       		.byte	0x3
+ 1214 049f 00000000 		.4byte	mot_decel_start
+ 1215 04a3 1B       		.uleb128 0x1b
+ 1216 04a4 86020000 		.4byte	.LASF36
+ 1217 04a8 01       		.byte	0x1
+ 1218 04a9 12       		.byte	0x12
+ 1219 04aa 5D000000 		.4byte	0x5d
+ 1220 04ae 05       		.uleb128 0x5
+ 1221 04af 03       		.byte	0x3
+ 1222 04b0 00000000 		.4byte	mot_target
+ 1223 04b4 1B       		.uleb128 0x1b
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 26
+
+
+ 1224 04b5 DC020000 		.4byte	.LASF37
+ 1225 04b9 01       		.byte	0x1
+ 1226 04ba 12       		.byte	0x12
+ 1227 04bb 5D000000 		.4byte	0x5d
+ 1228 04bf 05       		.uleb128 0x5
+ 1229 04c0 03       		.byte	0x3
+ 1230 04c1 00000000 		.4byte	half_dist
+ 1231 04c5 1B       		.uleb128 0x1b
+ 1232 04c6 B3020000 		.4byte	.LASF38
+ 1233 04ca 01       		.byte	0x1
+ 1234 04cb 13       		.byte	0x13
+ 1235 04cc 6B000000 		.4byte	0x6b
+ 1236 04d0 05       		.uleb128 0x5
+ 1237 04d1 03       		.byte	0x3
+ 1238 04d2 00000000 		.4byte	mot_active
+ 1239 04d6 1B       		.uleb128 0x1b
+ 1240 04d7 3D000000 		.4byte	.LASF39
+ 1241 04db 01       		.byte	0x1
+ 1242 04dc 14       		.byte	0x14
+ 1243 04dd 6B000000 		.4byte	0x6b
+ 1244 04e1 05       		.uleb128 0x5
+ 1245 04e2 03       		.byte	0x3
+ 1246 04e3 00000000 		.4byte	mot_homed
+ 1247 04e7 1B       		.uleb128 0x1b
+ 1248 04e8 7D010000 		.4byte	.LASF40
+ 1249 04ec 01       		.byte	0x1
+ 1250 04ed 15       		.byte	0x15
+ 1251 04ee 5D000000 		.4byte	0x5d
+ 1252 04f2 05       		.uleb128 0x5
+ 1253 04f3 03       		.byte	0x3
+ 1254 04f4 00000000 		.4byte	mot_pos
+ 1255 04f8 1B       		.uleb128 0x1b
+ 1256 04f9 13000000 		.4byte	.LASF41
+ 1257 04fd 01       		.byte	0x1
+ 1258 04fe 29       		.byte	0x29
+ 1259 04ff 5D000000 		.4byte	0x5d
+ 1260 0503 05       		.uleb128 0x5
+ 1261 0504 03       		.byte	0x3
+ 1262 0505 00000000 		.4byte	last_count
+ 1263 0509 1B       		.uleb128 0x1b
+ 1264 050a BA010000 		.4byte	.LASF42
+ 1265 050e 01       		.byte	0x1
+ 1266 050f 7E       		.byte	0x7e
+ 1267 0510 5D000000 		.4byte	0x5d
+ 1268 0514 05       		.uleb128 0x5
+ 1269 0515 03       		.byte	0x3
+ 1270 0516 00000000 		.4byte	active_count
+ 1271 051a 1B       		.uleb128 0x1b
+ 1272 051b 45010000 		.4byte	.LASF43
+ 1273 051f 01       		.byte	0x1
+ 1274 0520 9D       		.byte	0x9d
+ 1275 0521 5D000000 		.4byte	0x5d
+ 1276 0525 05       		.uleb128 0x5
+ 1277 0526 03       		.byte	0x3
+ 1278 0527 00000000 		.4byte	last_p
+ 1279 052b 1B       		.uleb128 0x1b
+ 1280 052c 5E010000 		.4byte	.LASF44
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 27
+
+
+ 1281 0530 01       		.byte	0x1
+ 1282 0531 9D       		.byte	0x9d
+ 1283 0532 5D000000 		.4byte	0x5d
+ 1284 0536 05       		.uleb128 0x5
+ 1285 0537 03       		.byte	0x3
+ 1286 0538 00000000 		.4byte	last_x
+ 1287 053c 1C       		.uleb128 0x1c
+ 1288 053d F0010000 		.4byte	.LASF45
+ 1289 0541 F0010000 		.4byte	.LASF45
+ 1290 0545 04       		.byte	0x4
+ 1291 0546 54       		.byte	0x54
+ 1292 0547 1C       		.uleb128 0x1c
+ 1293 0548 05030000 		.4byte	.LASF46
+ 1294 054c 05030000 		.4byte	.LASF46
+ 1295 0550 05       		.byte	0x5
+ 1296 0551 54       		.byte	0x54
+ 1297 0552 1C       		.uleb128 0x1c
+ 1298 0553 2C020000 		.4byte	.LASF47
+ 1299 0557 2C020000 		.4byte	.LASF47
+ 1300 055b 06       		.byte	0x6
+ 1301 055c C7       		.byte	0xc7
+ 1302 055d 1C       		.uleb128 0x1c
+ 1303 055e E7010000 		.4byte	.LASF48
+ 1304 0562 E7010000 		.4byte	.LASF48
+ 1305 0566 07       		.byte	0x7
+ 1306 0567 33       		.byte	0x33
+ 1307 0568 1D       		.uleb128 0x1d
+ 1308 0569 65010000 		.4byte	.LASF49
+ 1309 056d 65010000 		.4byte	.LASF49
+ 1310 0571 08       		.byte	0x8
+ 1311 0572 4A01     		.2byte	0x14a
+ 1312 0574 1D       		.uleb128 0x1d
+ 1313 0575 EE020000 		.4byte	.LASF50
+ 1314 0579 EE020000 		.4byte	.LASF50
+ 1315 057d 08       		.byte	0x8
+ 1316 057e 4B01     		.2byte	0x14b
+ 1317 0580 1C       		.uleb128 0x1c
+ 1318 0581 00020000 		.4byte	.LASF51
+ 1319 0585 00020000 		.4byte	.LASF51
+ 1320 0589 09       		.byte	0x9
+ 1321 058a DA       		.byte	0xda
+ 1322 058b 1C       		.uleb128 0x1c
+ 1323 058c 6F020000 		.4byte	.LASF52
+ 1324 0590 6F020000 		.4byte	.LASF52
+ 1325 0594 0A       		.byte	0xa
+ 1326 0595 34       		.byte	0x34
+ 1327 0596 00       		.byte	0
+ 1328              		.section	.debug_abbrev,"",%progbits
+ 1329              	.Ldebug_abbrev0:
+ 1330 0000 01       		.uleb128 0x1
+ 1331 0001 11       		.uleb128 0x11
+ 1332 0002 01       		.byte	0x1
+ 1333 0003 25       		.uleb128 0x25
+ 1334 0004 0E       		.uleb128 0xe
+ 1335 0005 13       		.uleb128 0x13
+ 1336 0006 0B       		.uleb128 0xb
+ 1337 0007 03       		.uleb128 0x3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 28
+
+
+ 1338 0008 0E       		.uleb128 0xe
+ 1339 0009 1B       		.uleb128 0x1b
+ 1340 000a 0E       		.uleb128 0xe
+ 1341 000b 55       		.uleb128 0x55
+ 1342 000c 17       		.uleb128 0x17
+ 1343 000d 11       		.uleb128 0x11
+ 1344 000e 01       		.uleb128 0x1
+ 1345 000f 10       		.uleb128 0x10
+ 1346 0010 17       		.uleb128 0x17
+ 1347 0011 00       		.byte	0
+ 1348 0012 00       		.byte	0
+ 1349 0013 02       		.uleb128 0x2
+ 1350 0014 24       		.uleb128 0x24
+ 1351 0015 00       		.byte	0
+ 1352 0016 0B       		.uleb128 0xb
+ 1353 0017 0B       		.uleb128 0xb
+ 1354 0018 3E       		.uleb128 0x3e
+ 1355 0019 0B       		.uleb128 0xb
+ 1356 001a 03       		.uleb128 0x3
+ 1357 001b 0E       		.uleb128 0xe
+ 1358 001c 00       		.byte	0
+ 1359 001d 00       		.byte	0
+ 1360 001e 03       		.uleb128 0x3
+ 1361 001f 24       		.uleb128 0x24
+ 1362 0020 00       		.byte	0
+ 1363 0021 0B       		.uleb128 0xb
+ 1364 0022 0B       		.uleb128 0xb
+ 1365 0023 3E       		.uleb128 0x3e
+ 1366 0024 0B       		.uleb128 0xb
+ 1367 0025 03       		.uleb128 0x3
+ 1368 0026 08       		.uleb128 0x8
+ 1369 0027 00       		.byte	0
+ 1370 0028 00       		.byte	0
+ 1371 0029 04       		.uleb128 0x4
+ 1372 002a 16       		.uleb128 0x16
+ 1373 002b 00       		.byte	0
+ 1374 002c 03       		.uleb128 0x3
+ 1375 002d 0E       		.uleb128 0xe
+ 1376 002e 3A       		.uleb128 0x3a
+ 1377 002f 0B       		.uleb128 0xb
+ 1378 0030 3B       		.uleb128 0x3b
+ 1379 0031 05       		.uleb128 0x5
+ 1380 0032 49       		.uleb128 0x49
+ 1381 0033 13       		.uleb128 0x13
+ 1382 0034 00       		.byte	0
+ 1383 0035 00       		.byte	0
+ 1384 0036 05       		.uleb128 0x5
+ 1385 0037 13       		.uleb128 0x13
+ 1386 0038 01       		.byte	0x1
+ 1387 0039 0B       		.uleb128 0xb
+ 1388 003a 0B       		.uleb128 0xb
+ 1389 003b 3A       		.uleb128 0x3a
+ 1390 003c 0B       		.uleb128 0xb
+ 1391 003d 3B       		.uleb128 0x3b
+ 1392 003e 0B       		.uleb128 0xb
+ 1393 003f 01       		.uleb128 0x1
+ 1394 0040 13       		.uleb128 0x13
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 29
+
+
+ 1395 0041 00       		.byte	0
+ 1396 0042 00       		.byte	0
+ 1397 0043 06       		.uleb128 0x6
+ 1398 0044 0D       		.uleb128 0xd
+ 1399 0045 00       		.byte	0
+ 1400 0046 03       		.uleb128 0x3
+ 1401 0047 0E       		.uleb128 0xe
+ 1402 0048 3A       		.uleb128 0x3a
+ 1403 0049 0B       		.uleb128 0xb
+ 1404 004a 3B       		.uleb128 0x3b
+ 1405 004b 0B       		.uleb128 0xb
+ 1406 004c 49       		.uleb128 0x49
+ 1407 004d 13       		.uleb128 0x13
+ 1408 004e 38       		.uleb128 0x38
+ 1409 004f 0B       		.uleb128 0xb
+ 1410 0050 00       		.byte	0
+ 1411 0051 00       		.byte	0
+ 1412 0052 07       		.uleb128 0x7
+ 1413 0053 0D       		.uleb128 0xd
+ 1414 0054 00       		.byte	0
+ 1415 0055 03       		.uleb128 0x3
+ 1416 0056 08       		.uleb128 0x8
+ 1417 0057 3A       		.uleb128 0x3a
+ 1418 0058 0B       		.uleb128 0xb
+ 1419 0059 3B       		.uleb128 0x3b
+ 1420 005a 0B       		.uleb128 0xb
+ 1421 005b 49       		.uleb128 0x49
+ 1422 005c 13       		.uleb128 0x13
+ 1423 005d 38       		.uleb128 0x38
+ 1424 005e 0B       		.uleb128 0xb
+ 1425 005f 00       		.byte	0
+ 1426 0060 00       		.byte	0
+ 1427 0061 08       		.uleb128 0x8
+ 1428 0062 01       		.uleb128 0x1
+ 1429 0063 01       		.byte	0x1
+ 1430 0064 49       		.uleb128 0x49
+ 1431 0065 13       		.uleb128 0x13
+ 1432 0066 01       		.uleb128 0x1
+ 1433 0067 13       		.uleb128 0x13
+ 1434 0068 00       		.byte	0
+ 1435 0069 00       		.byte	0
+ 1436 006a 09       		.uleb128 0x9
+ 1437 006b 21       		.uleb128 0x21
+ 1438 006c 00       		.byte	0
+ 1439 006d 49       		.uleb128 0x49
+ 1440 006e 13       		.uleb128 0x13
+ 1441 006f 2F       		.uleb128 0x2f
+ 1442 0070 0B       		.uleb128 0xb
+ 1443 0071 00       		.byte	0
+ 1444 0072 00       		.byte	0
+ 1445 0073 0A       		.uleb128 0xa
+ 1446 0074 16       		.uleb128 0x16
+ 1447 0075 00       		.byte	0
+ 1448 0076 03       		.uleb128 0x3
+ 1449 0077 0E       		.uleb128 0xe
+ 1450 0078 3A       		.uleb128 0x3a
+ 1451 0079 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 30
+
+
+ 1452 007a 3B       		.uleb128 0x3b
+ 1453 007b 0B       		.uleb128 0xb
+ 1454 007c 49       		.uleb128 0x49
+ 1455 007d 13       		.uleb128 0x13
+ 1456 007e 00       		.byte	0
+ 1457 007f 00       		.byte	0
+ 1458 0080 0B       		.uleb128 0xb
+ 1459 0081 2E       		.uleb128 0x2e
+ 1460 0082 00       		.byte	0
+ 1461 0083 3F       		.uleb128 0x3f
+ 1462 0084 19       		.uleb128 0x19
+ 1463 0085 03       		.uleb128 0x3
+ 1464 0086 0E       		.uleb128 0xe
+ 1465 0087 3A       		.uleb128 0x3a
+ 1466 0088 0B       		.uleb128 0xb
+ 1467 0089 3B       		.uleb128 0x3b
+ 1468 008a 0B       		.uleb128 0xb
+ 1469 008b 27       		.uleb128 0x27
+ 1470 008c 19       		.uleb128 0x19
+ 1471 008d 49       		.uleb128 0x49
+ 1472 008e 13       		.uleb128 0x13
+ 1473 008f 11       		.uleb128 0x11
+ 1474 0090 01       		.uleb128 0x1
+ 1475 0091 12       		.uleb128 0x12
+ 1476 0092 06       		.uleb128 0x6
+ 1477 0093 40       		.uleb128 0x40
+ 1478 0094 18       		.uleb128 0x18
+ 1479 0095 9742     		.uleb128 0x2117
+ 1480 0097 19       		.uleb128 0x19
+ 1481 0098 00       		.byte	0
+ 1482 0099 00       		.byte	0
+ 1483 009a 0C       		.uleb128 0xc
+ 1484 009b 2E       		.uleb128 0x2e
+ 1485 009c 01       		.byte	0x1
+ 1486 009d 3F       		.uleb128 0x3f
+ 1487 009e 19       		.uleb128 0x19
+ 1488 009f 03       		.uleb128 0x3
+ 1489 00a0 0E       		.uleb128 0xe
+ 1490 00a1 3A       		.uleb128 0x3a
+ 1491 00a2 0B       		.uleb128 0xb
+ 1492 00a3 3B       		.uleb128 0x3b
+ 1493 00a4 0B       		.uleb128 0xb
+ 1494 00a5 27       		.uleb128 0x27
+ 1495 00a6 19       		.uleb128 0x19
+ 1496 00a7 11       		.uleb128 0x11
+ 1497 00a8 01       		.uleb128 0x1
+ 1498 00a9 12       		.uleb128 0x12
+ 1499 00aa 06       		.uleb128 0x6
+ 1500 00ab 40       		.uleb128 0x40
+ 1501 00ac 18       		.uleb128 0x18
+ 1502 00ad 9742     		.uleb128 0x2117
+ 1503 00af 19       		.uleb128 0x19
+ 1504 00b0 01       		.uleb128 0x1
+ 1505 00b1 13       		.uleb128 0x13
+ 1506 00b2 00       		.byte	0
+ 1507 00b3 00       		.byte	0
+ 1508 00b4 0D       		.uleb128 0xd
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 31
+
+
+ 1509 00b5 05       		.uleb128 0x5
+ 1510 00b6 00       		.byte	0
+ 1511 00b7 03       		.uleb128 0x3
+ 1512 00b8 08       		.uleb128 0x8
+ 1513 00b9 3A       		.uleb128 0x3a
+ 1514 00ba 0B       		.uleb128 0xb
+ 1515 00bb 3B       		.uleb128 0x3b
+ 1516 00bc 0B       		.uleb128 0xb
+ 1517 00bd 49       		.uleb128 0x49
+ 1518 00be 13       		.uleb128 0x13
+ 1519 00bf 02       		.uleb128 0x2
+ 1520 00c0 17       		.uleb128 0x17
+ 1521 00c1 00       		.byte	0
+ 1522 00c2 00       		.byte	0
+ 1523 00c3 0E       		.uleb128 0xe
+ 1524 00c4 34       		.uleb128 0x34
+ 1525 00c5 00       		.byte	0
+ 1526 00c6 03       		.uleb128 0x3
+ 1527 00c7 08       		.uleb128 0x8
+ 1528 00c8 3A       		.uleb128 0x3a
+ 1529 00c9 0B       		.uleb128 0xb
+ 1530 00ca 3B       		.uleb128 0x3b
+ 1531 00cb 0B       		.uleb128 0xb
+ 1532 00cc 49       		.uleb128 0x49
+ 1533 00cd 13       		.uleb128 0x13
+ 1534 00ce 02       		.uleb128 0x2
+ 1535 00cf 17       		.uleb128 0x17
+ 1536 00d0 00       		.byte	0
+ 1537 00d1 00       		.byte	0
+ 1538 00d2 0F       		.uleb128 0xf
+ 1539 00d3 898201   		.uleb128 0x4109
+ 1540 00d6 01       		.byte	0x1
+ 1541 00d7 11       		.uleb128 0x11
+ 1542 00d8 01       		.uleb128 0x1
+ 1543 00d9 31       		.uleb128 0x31
+ 1544 00da 13       		.uleb128 0x13
+ 1545 00db 01       		.uleb128 0x1
+ 1546 00dc 13       		.uleb128 0x13
+ 1547 00dd 00       		.byte	0
+ 1548 00de 00       		.byte	0
+ 1549 00df 10       		.uleb128 0x10
+ 1550 00e0 8A8201   		.uleb128 0x410a
+ 1551 00e3 00       		.byte	0
+ 1552 00e4 02       		.uleb128 0x2
+ 1553 00e5 18       		.uleb128 0x18
+ 1554 00e6 9142     		.uleb128 0x2111
+ 1555 00e8 18       		.uleb128 0x18
+ 1556 00e9 00       		.byte	0
+ 1557 00ea 00       		.byte	0
+ 1558 00eb 11       		.uleb128 0x11
+ 1559 00ec 898201   		.uleb128 0x4109
+ 1560 00ef 01       		.byte	0x1
+ 1561 00f0 11       		.uleb128 0x11
+ 1562 00f1 01       		.uleb128 0x1
+ 1563 00f2 31       		.uleb128 0x31
+ 1564 00f3 13       		.uleb128 0x13
+ 1565 00f4 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 32
+
+
+ 1566 00f5 00       		.byte	0
+ 1567 00f6 12       		.uleb128 0x12
+ 1568 00f7 2E       		.uleb128 0x2e
+ 1569 00f8 01       		.byte	0x1
+ 1570 00f9 3F       		.uleb128 0x3f
+ 1571 00fa 19       		.uleb128 0x19
+ 1572 00fb 03       		.uleb128 0x3
+ 1573 00fc 0E       		.uleb128 0xe
+ 1574 00fd 3A       		.uleb128 0x3a
+ 1575 00fe 0B       		.uleb128 0xb
+ 1576 00ff 3B       		.uleb128 0x3b
+ 1577 0100 0B       		.uleb128 0xb
+ 1578 0101 11       		.uleb128 0x11
+ 1579 0102 01       		.uleb128 0x1
+ 1580 0103 12       		.uleb128 0x12
+ 1581 0104 06       		.uleb128 0x6
+ 1582 0105 40       		.uleb128 0x40
+ 1583 0106 18       		.uleb128 0x18
+ 1584 0107 9742     		.uleb128 0x2117
+ 1585 0109 19       		.uleb128 0x19
+ 1586 010a 01       		.uleb128 0x1
+ 1587 010b 13       		.uleb128 0x13
+ 1588 010c 00       		.byte	0
+ 1589 010d 00       		.byte	0
+ 1590 010e 13       		.uleb128 0x13
+ 1591 010f 34       		.uleb128 0x34
+ 1592 0110 00       		.byte	0
+ 1593 0111 03       		.uleb128 0x3
+ 1594 0112 08       		.uleb128 0x8
+ 1595 0113 3A       		.uleb128 0x3a
+ 1596 0114 0B       		.uleb128 0xb
+ 1597 0115 3B       		.uleb128 0x3b
+ 1598 0116 0B       		.uleb128 0xb
+ 1599 0117 49       		.uleb128 0x49
+ 1600 0118 13       		.uleb128 0x13
+ 1601 0119 00       		.byte	0
+ 1602 011a 00       		.byte	0
+ 1603 011b 14       		.uleb128 0x14
+ 1604 011c 34       		.uleb128 0x34
+ 1605 011d 00       		.byte	0
+ 1606 011e 03       		.uleb128 0x3
+ 1607 011f 0E       		.uleb128 0xe
+ 1608 0120 3A       		.uleb128 0x3a
+ 1609 0121 0B       		.uleb128 0xb
+ 1610 0122 3B       		.uleb128 0x3b
+ 1611 0123 0B       		.uleb128 0xb
+ 1612 0124 49       		.uleb128 0x49
+ 1613 0125 13       		.uleb128 0x13
+ 1614 0126 02       		.uleb128 0x2
+ 1615 0127 17       		.uleb128 0x17
+ 1616 0128 00       		.byte	0
+ 1617 0129 00       		.byte	0
+ 1618 012a 15       		.uleb128 0x15
+ 1619 012b 898201   		.uleb128 0x4109
+ 1620 012e 00       		.byte	0
+ 1621 012f 11       		.uleb128 0x11
+ 1622 0130 01       		.uleb128 0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 33
+
+
+ 1623 0131 31       		.uleb128 0x31
+ 1624 0132 13       		.uleb128 0x13
+ 1625 0133 00       		.byte	0
+ 1626 0134 00       		.byte	0
+ 1627 0135 16       		.uleb128 0x16
+ 1628 0136 2E       		.uleb128 0x2e
+ 1629 0137 01       		.byte	0x1
+ 1630 0138 3F       		.uleb128 0x3f
+ 1631 0139 19       		.uleb128 0x19
+ 1632 013a 03       		.uleb128 0x3
+ 1633 013b 0E       		.uleb128 0xe
+ 1634 013c 3A       		.uleb128 0x3a
+ 1635 013d 0B       		.uleb128 0xb
+ 1636 013e 3B       		.uleb128 0x3b
+ 1637 013f 0B       		.uleb128 0xb
+ 1638 0140 27       		.uleb128 0x27
+ 1639 0141 19       		.uleb128 0x19
+ 1640 0142 49       		.uleb128 0x49
+ 1641 0143 13       		.uleb128 0x13
+ 1642 0144 11       		.uleb128 0x11
+ 1643 0145 01       		.uleb128 0x1
+ 1644 0146 12       		.uleb128 0x12
+ 1645 0147 06       		.uleb128 0x6
+ 1646 0148 40       		.uleb128 0x40
+ 1647 0149 18       		.uleb128 0x18
+ 1648 014a 9742     		.uleb128 0x2117
+ 1649 014c 19       		.uleb128 0x19
+ 1650 014d 01       		.uleb128 0x1
+ 1651 014e 13       		.uleb128 0x13
+ 1652 014f 00       		.byte	0
+ 1653 0150 00       		.byte	0
+ 1654 0151 17       		.uleb128 0x17
+ 1655 0152 05       		.uleb128 0x5
+ 1656 0153 00       		.byte	0
+ 1657 0154 03       		.uleb128 0x3
+ 1658 0155 0E       		.uleb128 0xe
+ 1659 0156 3A       		.uleb128 0x3a
+ 1660 0157 0B       		.uleb128 0xb
+ 1661 0158 3B       		.uleb128 0x3b
+ 1662 0159 0B       		.uleb128 0xb
+ 1663 015a 49       		.uleb128 0x49
+ 1664 015b 13       		.uleb128 0x13
+ 1665 015c 02       		.uleb128 0x2
+ 1666 015d 17       		.uleb128 0x17
+ 1667 015e 00       		.byte	0
+ 1668 015f 00       		.byte	0
+ 1669 0160 18       		.uleb128 0x18
+ 1670 0161 2E       		.uleb128 0x2e
+ 1671 0162 01       		.byte	0x1
+ 1672 0163 3F       		.uleb128 0x3f
+ 1673 0164 19       		.uleb128 0x19
+ 1674 0165 03       		.uleb128 0x3
+ 1675 0166 0E       		.uleb128 0xe
+ 1676 0167 3A       		.uleb128 0x3a
+ 1677 0168 0B       		.uleb128 0xb
+ 1678 0169 3B       		.uleb128 0x3b
+ 1679 016a 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 34
+
+
+ 1680 016b 49       		.uleb128 0x49
+ 1681 016c 13       		.uleb128 0x13
+ 1682 016d 11       		.uleb128 0x11
+ 1683 016e 01       		.uleb128 0x1
+ 1684 016f 12       		.uleb128 0x12
+ 1685 0170 06       		.uleb128 0x6
+ 1686 0171 40       		.uleb128 0x40
+ 1687 0172 18       		.uleb128 0x18
+ 1688 0173 9742     		.uleb128 0x2117
+ 1689 0175 19       		.uleb128 0x19
+ 1690 0176 01       		.uleb128 0x1
+ 1691 0177 13       		.uleb128 0x13
+ 1692 0178 00       		.byte	0
+ 1693 0179 00       		.byte	0
+ 1694 017a 19       		.uleb128 0x19
+ 1695 017b 34       		.uleb128 0x34
+ 1696 017c 00       		.byte	0
+ 1697 017d 03       		.uleb128 0x3
+ 1698 017e 08       		.uleb128 0x8
+ 1699 017f 3A       		.uleb128 0x3a
+ 1700 0180 0B       		.uleb128 0xb
+ 1701 0181 3B       		.uleb128 0x3b
+ 1702 0182 0B       		.uleb128 0xb
+ 1703 0183 49       		.uleb128 0x49
+ 1704 0184 13       		.uleb128 0x13
+ 1705 0185 3F       		.uleb128 0x3f
+ 1706 0186 19       		.uleb128 0x19
+ 1707 0187 02       		.uleb128 0x2
+ 1708 0188 18       		.uleb128 0x18
+ 1709 0189 00       		.byte	0
+ 1710 018a 00       		.byte	0
+ 1711 018b 1A       		.uleb128 0x1a
+ 1712 018c 35       		.uleb128 0x35
+ 1713 018d 00       		.byte	0
+ 1714 018e 49       		.uleb128 0x49
+ 1715 018f 13       		.uleb128 0x13
+ 1716 0190 00       		.byte	0
+ 1717 0191 00       		.byte	0
+ 1718 0192 1B       		.uleb128 0x1b
+ 1719 0193 34       		.uleb128 0x34
+ 1720 0194 00       		.byte	0
+ 1721 0195 03       		.uleb128 0x3
+ 1722 0196 0E       		.uleb128 0xe
+ 1723 0197 3A       		.uleb128 0x3a
+ 1724 0198 0B       		.uleb128 0xb
+ 1725 0199 3B       		.uleb128 0x3b
+ 1726 019a 0B       		.uleb128 0xb
+ 1727 019b 49       		.uleb128 0x49
+ 1728 019c 13       		.uleb128 0x13
+ 1729 019d 3F       		.uleb128 0x3f
+ 1730 019e 19       		.uleb128 0x19
+ 1731 019f 02       		.uleb128 0x2
+ 1732 01a0 18       		.uleb128 0x18
+ 1733 01a1 00       		.byte	0
+ 1734 01a2 00       		.byte	0
+ 1735 01a3 1C       		.uleb128 0x1c
+ 1736 01a4 2E       		.uleb128 0x2e
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 35
+
+
+ 1737 01a5 00       		.byte	0
+ 1738 01a6 3F       		.uleb128 0x3f
+ 1739 01a7 19       		.uleb128 0x19
+ 1740 01a8 3C       		.uleb128 0x3c
+ 1741 01a9 19       		.uleb128 0x19
+ 1742 01aa 6E       		.uleb128 0x6e
+ 1743 01ab 0E       		.uleb128 0xe
+ 1744 01ac 03       		.uleb128 0x3
+ 1745 01ad 0E       		.uleb128 0xe
+ 1746 01ae 3A       		.uleb128 0x3a
+ 1747 01af 0B       		.uleb128 0xb
+ 1748 01b0 3B       		.uleb128 0x3b
+ 1749 01b1 0B       		.uleb128 0xb
+ 1750 01b2 00       		.byte	0
+ 1751 01b3 00       		.byte	0
+ 1752 01b4 1D       		.uleb128 0x1d
+ 1753 01b5 2E       		.uleb128 0x2e
+ 1754 01b6 00       		.byte	0
+ 1755 01b7 3F       		.uleb128 0x3f
+ 1756 01b8 19       		.uleb128 0x19
+ 1757 01b9 3C       		.uleb128 0x3c
+ 1758 01ba 19       		.uleb128 0x19
+ 1759 01bb 6E       		.uleb128 0x6e
+ 1760 01bc 0E       		.uleb128 0xe
+ 1761 01bd 03       		.uleb128 0x3
+ 1762 01be 0E       		.uleb128 0xe
+ 1763 01bf 3A       		.uleb128 0x3a
+ 1764 01c0 0B       		.uleb128 0xb
+ 1765 01c1 3B       		.uleb128 0x3b
+ 1766 01c2 05       		.uleb128 0x5
+ 1767 01c3 00       		.byte	0
+ 1768 01c4 00       		.byte	0
+ 1769 01c5 00       		.byte	0
+ 1770              		.section	.debug_loc,"",%progbits
+ 1771              	.Ldebug_loc0:
+ 1772              	.LLST0:
+ 1773 0000 00000000 		.4byte	.LVL0
+ 1774 0004 0E000000 		.4byte	.LVL2
+ 1775 0008 0100     		.2byte	0x1
+ 1776 000a 50       		.byte	0x50
+ 1777 000b 0E000000 		.4byte	.LVL2
+ 1778 000f 18000000 		.4byte	.LVL5
+ 1779 0013 0100     		.2byte	0x1
+ 1780 0015 54       		.byte	0x54
+ 1781 0016 18000000 		.4byte	.LVL5
+ 1782 001a 1A000000 		.4byte	.LFE35
+ 1783 001e 0400     		.2byte	0x4
+ 1784 0020 F3       		.byte	0xf3
+ 1785 0021 01       		.uleb128 0x1
+ 1786 0022 50       		.byte	0x50
+ 1787 0023 9F       		.byte	0x9f
+ 1788 0024 00000000 		.4byte	0
+ 1789 0028 00000000 		.4byte	0
+ 1790              	.LLST1:
+ 1791 002c 0C000000 		.4byte	.LVL1
+ 1792 0030 18000000 		.4byte	.LVL6
+ 1793 0034 0100     		.2byte	0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 36
+
+
+ 1794 0036 55       		.byte	0x55
+ 1795 0037 00000000 		.4byte	0
+ 1796 003b 00000000 		.4byte	0
+ 1797              	.LLST2:
+ 1798 003f 02000000 		.4byte	.LVL7
+ 1799 0043 2A000000 		.4byte	.LVL13
+ 1800 0047 0200     		.2byte	0x2
+ 1801 0049 30       		.byte	0x30
+ 1802 004a 9F       		.byte	0x9f
+ 1803 004b 2A000000 		.4byte	.LVL13
+ 1804 004f 42000000 		.4byte	.LVL18
+ 1805 0053 0100     		.2byte	0x1
+ 1806 0055 54       		.byte	0x54
+ 1807 0056 56000000 		.4byte	.LVL21
+ 1808 005a 66000000 		.4byte	.LVL23
+ 1809 005e 0100     		.2byte	0x1
+ 1810 0060 54       		.byte	0x54
+ 1811 0061 7A000000 		.4byte	.LVL27
+ 1812 0065 8E000000 		.4byte	.LVL29
+ 1813 0069 0100     		.2byte	0x1
+ 1814 006b 54       		.byte	0x54
+ 1815 006c 00000000 		.4byte	0
+ 1816 0070 00000000 		.4byte	0
+ 1817              	.LLST3:
+ 1818 0074 02000000 		.4byte	.LVL7
+ 1819 0078 2A000000 		.4byte	.LVL13
+ 1820 007c 0400     		.2byte	0x4
+ 1821 007e 0A       		.byte	0xa
+ 1822 007f 50C3     		.2byte	0xc350
+ 1823 0081 9F       		.byte	0x9f
+ 1824 0082 2A000000 		.4byte	.LVL13
+ 1825 0086 44000000 		.4byte	.LVL19
+ 1826 008a 0100     		.2byte	0x1
+ 1827 008c 55       		.byte	0x55
+ 1828 008d 56000000 		.4byte	.LVL21
+ 1829 0091 68000000 		.4byte	.LVL24
+ 1830 0095 0100     		.2byte	0x1
+ 1831 0097 55       		.byte	0x55
+ 1832 0098 7A000000 		.4byte	.LVL27
+ 1833 009c 8E000000 		.4byte	.LVL29
+ 1834 00a0 0100     		.2byte	0x1
+ 1835 00a2 55       		.byte	0x55
+ 1836 00a3 00000000 		.4byte	0
+ 1837 00a7 00000000 		.4byte	0
+ 1838              	.LLST4:
+ 1839 00ab 5A000000 		.4byte	.LVL22
+ 1840 00af 6C000000 		.4byte	.LVL25
+ 1841 00b3 0100     		.2byte	0x1
+ 1842 00b5 50       		.byte	0x50
+ 1843 00b6 7A000000 		.4byte	.LVL27
+ 1844 00ba 7E000000 		.4byte	.LVL28
+ 1845 00be 0100     		.2byte	0x1
+ 1846 00c0 50       		.byte	0x50
+ 1847 00c1 00000000 		.4byte	0
+ 1848 00c5 00000000 		.4byte	0
+ 1849              	.LLST5:
+ 1850 00c9 00000000 		.4byte	.LVL30
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 37
+
+
+ 1851 00cd 14000000 		.4byte	.LVL36
+ 1852 00d1 0100     		.2byte	0x1
+ 1853 00d3 50       		.byte	0x50
+ 1854 00d4 14000000 		.4byte	.LVL36
+ 1855 00d8 28000000 		.4byte	.LVL42
+ 1856 00dc 0100     		.2byte	0x1
+ 1857 00de 50       		.byte	0x50
+ 1858 00df 00000000 		.4byte	0
+ 1859 00e3 00000000 		.4byte	0
+ 1860              	.LLST6:
+ 1861 00e7 02000000 		.4byte	.LVL31
+ 1862 00eb 0A000000 		.4byte	.LVL32
+ 1863 00ef 0200     		.2byte	0x2
+ 1864 00f1 30       		.byte	0x30
+ 1865 00f2 9F       		.byte	0x9f
+ 1866 00f3 0A000000 		.4byte	.LVL32
+ 1867 00f7 2A000000 		.4byte	.LFE37
+ 1868 00fb 0100     		.2byte	0x1
+ 1869 00fd 53       		.byte	0x53
+ 1870 00fe 00000000 		.4byte	0
+ 1871 0102 00000000 		.4byte	0
+ 1872              	.LLST7:
+ 1873 0106 02000000 		.4byte	.LVL31
+ 1874 010a 0A000000 		.4byte	.LVL32
+ 1875 010e 0200     		.2byte	0x2
+ 1876 0110 30       		.byte	0x30
+ 1877 0111 9F       		.byte	0x9f
+ 1878 0112 0A000000 		.4byte	.LVL32
+ 1879 0116 1A000000 		.4byte	.LVL37
+ 1880 011a 0100     		.2byte	0x1
+ 1881 011c 52       		.byte	0x52
+ 1882 011d 1A000000 		.4byte	.LVL37
+ 1883 0121 1E000000 		.4byte	.LVL39
+ 1884 0125 0100     		.2byte	0x1
+ 1885 0127 54       		.byte	0x54
+ 1886 0128 1E000000 		.4byte	.LVL39
+ 1887 012c 26000000 		.4byte	.LVL41
+ 1888 0130 0100     		.2byte	0x1
+ 1889 0132 52       		.byte	0x52
+ 1890 0133 00000000 		.4byte	0
+ 1891 0137 00000000 		.4byte	0
+ 1892              	.LLST8:
+ 1893 013b 02000000 		.4byte	.LVL31
+ 1894 013f 0A000000 		.4byte	.LVL32
+ 1895 0143 0200     		.2byte	0x2
+ 1896 0145 30       		.byte	0x30
+ 1897 0146 9F       		.byte	0x9f
+ 1898 0147 0A000000 		.4byte	.LVL32
+ 1899 014b 2A000000 		.4byte	.LFE37
+ 1900 014f 0100     		.2byte	0x1
+ 1901 0151 51       		.byte	0x51
+ 1902 0152 00000000 		.4byte	0
+ 1903 0156 00000000 		.4byte	0
+ 1904              	.LLST9:
+ 1905 015a 00000000 		.4byte	.LVL43
+ 1906 015e 18000000 		.4byte	.LVL44
+ 1907 0162 0100     		.2byte	0x1
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 38
+
+
+ 1908 0164 50       		.byte	0x50
+ 1909 0165 18000000 		.4byte	.LVL44
+ 1910 0169 62000000 		.4byte	.LVL53
+ 1911 016d 0100     		.2byte	0x1
+ 1912 016f 54       		.byte	0x54
+ 1913 0170 78000000 		.4byte	.LVL54
+ 1914 0174 7A000000 		.4byte	.LVL55
+ 1915 0178 0100     		.2byte	0x1
+ 1916 017a 50       		.byte	0x50
+ 1917 017b 7A000000 		.4byte	.LVL55
+ 1918 017f 7C000000 		.4byte	.LVL56
+ 1919 0183 0100     		.2byte	0x1
+ 1920 0185 54       		.byte	0x54
+ 1921 0186 7C000000 		.4byte	.LVL56
+ 1922 018a 7E000000 		.4byte	.LVL57
+ 1923 018e 0100     		.2byte	0x1
+ 1924 0190 50       		.byte	0x50
+ 1925 0191 00000000 		.4byte	0
+ 1926 0195 00000000 		.4byte	0
+ 1927              	.LLST10:
+ 1928 0199 18000000 		.4byte	.LVL59
+ 1929 019d 28000000 		.4byte	.LVL60
+ 1930 01a1 0100     		.2byte	0x1
+ 1931 01a3 50       		.byte	0x50
+ 1932 01a4 28000000 		.4byte	.LVL60
+ 1933 01a8 30000000 		.4byte	.LVL62
+ 1934 01ac 0100     		.2byte	0x1
+ 1935 01ae 55       		.byte	0x55
+ 1936 01af 30000000 		.4byte	.LVL62
+ 1937 01b3 3C000000 		.4byte	.LVL63
+ 1938 01b7 0100     		.2byte	0x1
+ 1939 01b9 50       		.byte	0x50
+ 1940 01ba 3C000000 		.4byte	.LVL63
+ 1941 01be 56000000 		.4byte	.LVL66
+ 1942 01c2 0100     		.2byte	0x1
+ 1943 01c4 55       		.byte	0x55
+ 1944 01c5 56000000 		.4byte	.LVL66
+ 1945 01c9 5A000000 		.4byte	.LVL67
+ 1946 01cd 0100     		.2byte	0x1
+ 1947 01cf 50       		.byte	0x50
+ 1948 01d0 5A000000 		.4byte	.LVL67
+ 1949 01d4 A6000000 		.4byte	.LVL75
+ 1950 01d8 0100     		.2byte	0x1
+ 1951 01da 55       		.byte	0x55
+ 1952 01db 00000000 		.4byte	0
+ 1953 01df 00000000 		.4byte	0
+ 1954              	.LLST11:
+ 1955 01e3 54000000 		.4byte	.LVL65
+ 1956 01e7 56000000 		.4byte	.LVL66
+ 1957 01eb 0100     		.2byte	0x1
+ 1958 01ed 54       		.byte	0x54
+ 1959 01ee 76000000 		.4byte	.LVL69
+ 1960 01f2 78000000 		.4byte	.LVL70
+ 1961 01f6 0100     		.2byte	0x1
+ 1962 01f8 54       		.byte	0x54
+ 1963 01f9 7A000000 		.4byte	.LVL71
+ 1964 01fd A6000000 		.4byte	.LVL75
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 39
+
+
+ 1965 0201 0100     		.2byte	0x1
+ 1966 0203 54       		.byte	0x54
+ 1967 0204 00000000 		.4byte	0
+ 1968 0208 00000000 		.4byte	0
+ 1969              		.section	.debug_aranges,"",%progbits
+ 1970 0000 44000000 		.4byte	0x44
+ 1971 0004 0200     		.2byte	0x2
+ 1972 0006 00000000 		.4byte	.Ldebug_info0
+ 1973 000a 04       		.byte	0x4
+ 1974 000b 00       		.byte	0
+ 1975 000c 0000     		.2byte	0
+ 1976 000e 0000     		.2byte	0
+ 1977 0010 00000000 		.4byte	.LFB34
+ 1978 0014 0C000000 		.4byte	.LFE34-.LFB34
+ 1979 0018 00000000 		.4byte	.LFB35
+ 1980 001c 1A000000 		.4byte	.LFE35-.LFB35
+ 1981 0020 00000000 		.4byte	.LFB36
+ 1982 0024 A0000000 		.4byte	.LFE36-.LFB36
+ 1983 0028 00000000 		.4byte	.LFB37
+ 1984 002c 2A000000 		.4byte	.LFE37-.LFB37
+ 1985 0030 00000000 		.4byte	.LFB38
+ 1986 0034 98000000 		.4byte	.LFE38-.LFB38
+ 1987 0038 00000000 		.4byte	.LFB39
+ 1988 003c CC000000 		.4byte	.LFE39-.LFB39
+ 1989 0040 00000000 		.4byte	0
+ 1990 0044 00000000 		.4byte	0
+ 1991              		.section	.debug_ranges,"",%progbits
+ 1992              	.Ldebug_ranges0:
+ 1993 0000 00000000 		.4byte	.LFB34
+ 1994 0004 0C000000 		.4byte	.LFE34
+ 1995 0008 00000000 		.4byte	.LFB35
+ 1996 000c 1A000000 		.4byte	.LFE35
+ 1997 0010 00000000 		.4byte	.LFB36
+ 1998 0014 A0000000 		.4byte	.LFE36
+ 1999 0018 00000000 		.4byte	.LFB37
+ 2000 001c 2A000000 		.4byte	.LFE37
+ 2001 0020 00000000 		.4byte	.LFB38
+ 2002 0024 98000000 		.4byte	.LFE38
+ 2003 0028 00000000 		.4byte	.LFB39
+ 2004 002c CC000000 		.4byte	.LFE39
+ 2005 0030 00000000 		.4byte	0
+ 2006 0034 00000000 		.4byte	0
+ 2007              		.section	.debug_line,"",%progbits
+ 2008              	.Ldebug_line0:
+ 2009 0000 7F010000 		.section	.debug_str,"MS",%progbits,1
+ 2009      0200A700 
+ 2009      00000201 
+ 2009      FB0E0D00 
+ 2009      01010101 
+ 2010              	.LASF19:
+ 2011 0000 76657273 		.ascii	"version\000"
+ 2011      696F6E00 
+ 2012              	.LASF16:
+ 2013 0008 6D6F745F 		.ascii	"mot_pos_hi\000"
+ 2013      706F735F 
+ 2013      686900
+ 2014              	.LASF41:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 40
+
+
+ 2015 0013 6C617374 		.ascii	"last_count\000"
+ 2015      5F636F75 
+ 2015      6E7400
+ 2016              	.LASF23:
+ 2017 001e 6D6F745F 		.ascii	"mot_accel\000"
+ 2017      61636365 
+ 2017      6C00
+ 2018              	.LASF32:
+ 2019 0028 4D6F7453 		.ascii	"MotSetTrip\000"
+ 2019      65745472 
+ 2019      697000
+ 2020              	.LASF2:
+ 2021 0033 73686F72 		.ascii	"short int\000"
+ 2021      7420696E 
+ 2021      7400
+ 2022              	.LASF39:
+ 2023 003d 6D6F745F 		.ascii	"mot_homed\000"
+ 2023      686F6D65 
+ 2023      6400
+ 2024              	.LASF13:
+ 2025 0047 73697A65 		.ascii	"sizetype\000"
+ 2025      74797065 
+ 2025      00
+ 2026              	.LASF15:
+ 2027 0050 6D6F745F 		.ascii	"mot_pos_lo\000"
+ 2027      706F735F 
+ 2027      6C6F00
+ 2028              	.LASF55:
+ 2029 005b 443A5C65 		.ascii	"D:\\ext\\EXTPSOC\\fixed\\Fixed\\fixed.cydsn\000"
+ 2029      78745C45 
+ 2029      58545053 
+ 2029      4F435C66 
+ 2029      69786564 
+ 2030              	.LASF56:
+ 2031 0082 4D6F7447 		.ascii	"MotGetPos\000"
+ 2031      6574506F 
+ 2031      7300
+ 2032              	.LASF24:
+ 2033 008c 66696C6C 		.ascii	"fill\000"
+ 2033      00
+ 2034              	.LASF53:
+ 2035 0091 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 2035      43313120 
+ 2035      352E342E 
+ 2035      31203230 
+ 2035      31363036 
+ 2036 00c4 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0 -mthumb -g -O"
+ 2036      20726576 
+ 2036      6973696F 
+ 2036      6E203233 
+ 2036      37373135 
+ 2037 00f7 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 2037      66756E63 
+ 2037      74696F6E 
+ 2037      2D736563 
+ 2037      74696F6E 
+ 2038              	.LASF21:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 41
+
+
+ 2039 011f 6D6F745F 		.ascii	"mot_min_speed_a\000"
+ 2039      6D696E5F 
+ 2039      73706565 
+ 2039      645F6100 
+ 2040              	.LASF25:
+ 2041 012f 75696E74 		.ascii	"uint8\000"
+ 2041      3800
+ 2042              	.LASF22:
+ 2043 0135 6D6F745F 		.ascii	"mot_min_speed_d\000"
+ 2043      6D696E5F 
+ 2043      73706565 
+ 2043      645F6400 
+ 2044              	.LASF43:
+ 2045 0145 6C617374 		.ascii	"last_p\000"
+ 2045      5F7000
+ 2046              	.LASF0:
+ 2047 014c 7369676E 		.ascii	"signed char\000"
+ 2047      65642063 
+ 2047      68617200 
+ 2048              	.LASF9:
+ 2049 0158 666C6F61 		.ascii	"float\000"
+ 2049      7400
+ 2050              	.LASF44:
+ 2051 015e 6C617374 		.ascii	"last_x\000"
+ 2051      5F7800
+ 2052              	.LASF49:
+ 2053 0165 53544550 		.ascii	"STEP_COUNT_WriteCounter\000"
+ 2053      5F434F55 
+ 2053      4E545F57 
+ 2053      72697465 
+ 2053      436F756E 
+ 2054              	.LASF40:
+ 2055 017d 6D6F745F 		.ascii	"mot_pos\000"
+ 2055      706F7300 
+ 2056              	.LASF6:
+ 2057 0185 6C6F6E67 		.ascii	"long long int\000"
+ 2057      206C6F6E 
+ 2057      6720696E 
+ 2057      7400
+ 2058              	.LASF7:
+ 2059 0193 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 2059      206C6F6E 
+ 2059      6720756E 
+ 2059      7369676E 
+ 2059      65642069 
+ 2060              	.LASF14:
+ 2061 01aa 61637469 		.ascii	"action\000"
+ 2061      6F6E00
+ 2062              	.LASF4:
+ 2063 01b1 6C6F6E67 		.ascii	"long int\000"
+ 2063      20696E74 
+ 2063      00
+ 2064              	.LASF42:
+ 2065 01ba 61637469 		.ascii	"active_count\000"
+ 2065      76655F63 
+ 2065      6F756E74 
+ 2065      00
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 42
+
+
+ 2066              	.LASF1:
+ 2067 01c7 756E7369 		.ascii	"unsigned char\000"
+ 2067      676E6564 
+ 2067      20636861 
+ 2067      7200
+ 2068              	.LASF12:
+ 2069 01d5 6C6F6E67 		.ascii	"long double\000"
+ 2069      20646F75 
+ 2069      626C6500 
+ 2070              	.LASF29:
+ 2071 01e1 69737172 		.ascii	"isqrt\000"
+ 2071      7400
+ 2072              	.LASF48:
+ 2073 01e7 43575F57 		.ascii	"CW_Write\000"
+ 2073      72697465 
+ 2073      00
+ 2074              	.LASF45:
+ 2075 01f0 49444143 		.ascii	"IDAC_1_SetValue\000"
+ 2075      5F315F53 
+ 2075      65745661 
+ 2075      6C756500 
+ 2076              	.LASF51:
+ 2077 0200 43794465 		.ascii	"CyDelayUs\000"
+ 2077      6C617955 
+ 2077      7300
+ 2078              	.LASF57:
+ 2079 020a 4D6F7448 		.ascii	"MotHome\000"
+ 2079      6F6D6500 
+ 2080              	.LASF8:
+ 2081 0212 756E7369 		.ascii	"unsigned int\000"
+ 2081      676E6564 
+ 2081      20696E74 
+ 2081      00
+ 2082              	.LASF20:
+ 2083 021f 706C6174 		.ascii	"plate_detect\000"
+ 2083      655F6465 
+ 2083      74656374 
+ 2083      00
+ 2084              	.LASF47:
+ 2085 022c 50574D5F 		.ascii	"PWM_M_WriteCompare1\000"
+ 2085      4D5F5772 
+ 2085      69746543 
+ 2085      6F6D7061 
+ 2085      72653100 
+ 2086              	.LASF31:
+ 2087 0240 73746570 		.ascii	"steps\000"
+ 2087      7300
+ 2088              	.LASF3:
+ 2089 0246 73686F72 		.ascii	"short unsigned int\000"
+ 2089      7420756E 
+ 2089      7369676E 
+ 2089      65642069 
+ 2089      6E7400
+ 2090              	.LASF17:
+ 2091 0259 6D6F745F 		.ascii	"mot_stat\000"
+ 2091      73746174 
+ 2091      00
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 43
+
+
+ 2092              	.LASF11:
+ 2093 0262 63686172 		.ascii	"char\000"
+ 2093      00
+ 2094              	.LASF18:
+ 2095 0267 6175645F 		.ascii	"aud_set\000"
+ 2095      73657400 
+ 2096              	.LASF52:
+ 2097 026f 436F6D70 		.ascii	"Comp_ISENSE_GetCompare\000"
+ 2097      5F495345 
+ 2097      4E53455F 
+ 2097      47657443 
+ 2097      6F6D7061 
+ 2098              	.LASF36:
+ 2099 0286 6D6F745F 		.ascii	"mot_target\000"
+ 2099      74617267 
+ 2099      657400
+ 2100              	.LASF26:
+ 2101 0291 53455454 		.ascii	"SETTINGS\000"
+ 2101      494E4753 
+ 2101      00
+ 2102              	.LASF5:
+ 2103 029a 6C6F6E67 		.ascii	"long unsigned int\000"
+ 2103      20756E73 
+ 2103      69676E65 
+ 2103      6420696E 
+ 2103      7400
+ 2104              	.LASF10:
+ 2105 02ac 646F7562 		.ascii	"double\000"
+ 2105      6C6500
+ 2106              	.LASF38:
+ 2107 02b3 6D6F745F 		.ascii	"mot_active\000"
+ 2107      61637469 
+ 2107      766500
+ 2108              	.LASF35:
+ 2109 02be 6D6F745F 		.ascii	"mot_decel_start\000"
+ 2109      64656365 
+ 2109      6C5F7374 
+ 2109      61727400 
+ 2110              	.LASF27:
+ 2111 02ce 636F756E 		.ascii	"count\000"
+ 2111      7400
+ 2112              	.LASF54:
+ 2113 02d4 6D6F746F 		.ascii	"motor.c\000"
+ 2113      722E6300 
+ 2114              	.LASF37:
+ 2115 02dc 68616C66 		.ascii	"half_dist\000"
+ 2115      5F646973 
+ 2115      7400
+ 2116              	.LASF33:
+ 2117 02e6 4D6F7454 		.ascii	"MotTask\000"
+ 2117      61736B00 
+ 2118              	.LASF50:
+ 2119 02ee 53544550 		.ascii	"STEP_COUNT_ReadCounter\000"
+ 2119      5F434F55 
+ 2119      4E545F52 
+ 2119      65616443 
+ 2119      6F756E74 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\ccFjfX2e.s 			page 44
+
+
+ 2120              	.LASF46:
+ 2121 0305 49444143 		.ascii	"IDAC_2_SetValue\000"
+ 2121      5F325F53 
+ 2121      65745661 
+ 2121      6C756500 
+ 2122              	.LASF28:
+ 2123 0315 726F6F74 		.ascii	"root\000"
+ 2123      00
+ 2124              	.LASF34:
+ 2125 031a 6D6F745F 		.ascii	"mot_start\000"
+ 2125      73746172 
+ 2125      7400
+ 2126              	.LASF30:
+ 2127 0324 4D6F744D 		.ascii	"MotMoveRel\000"
+ 2127      6F766552 
+ 2127      656C00
+ 2128              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran
