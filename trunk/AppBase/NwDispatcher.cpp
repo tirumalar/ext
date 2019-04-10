@@ -100,7 +100,8 @@ void NwDispatcher::process(MatchResult *mr) {
 			}
 			else if(m_type == RAW){
 				//char * uid=mr->getUID(idlen);
-				const char *uid = mr->getName().c_str();
+				std::string uidStr = mr->getName();
+				const char *uid = uidStr.c_str();
 				idlen = strlen(uid); //getUID seems to truncate IDs to 128 length.  Need to find out why.
 				//in the mean time this will do the job.  The whole ID gets returned so there shouldn't be a problem.
 				if(m_debug)printf("RAW::(%d) %s\n",idlen,uid);
