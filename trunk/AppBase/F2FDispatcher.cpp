@@ -1806,6 +1806,7 @@ bool F2FDispatcher::SetDualTransCommand(int command){
 
 	count = 2000;
 	while (count--) {	// 2 sec
+		BobSetCommand(command);
 		if (BoBGetCommand() == command){
 			status2 = false;
 			break;
