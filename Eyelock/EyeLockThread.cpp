@@ -1301,6 +1301,8 @@ unsigned int EyeLockThread::ChangeProcessingMode(EyelockProcessMode mode, const 
 		m_ImageProcessor->setShouldDetectEyes(true);
 	}
 
+	m_ImageProcessor->clearFrameBuffer();
+
 	if(m_Master)
 	{
 		FormatProcessModeMessage(m_Mode, address);
