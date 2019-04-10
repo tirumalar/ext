@@ -1,0 +1,2186 @@
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"Cm3Start.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.noinit,"aw",%progbits
+  20              		.align	2
+  21              		.type	cySysNoInitDataValid, %object
+  22              		.size	cySysNoInitDataValid, 4
+  23              	cySysNoInitDataValid:
+  24 0000 00000000 		.space	4
+  25              		.global	CyRamVectors
+  26              		.section	.ramvectors,"aw",%progbits
+  27              		.align	8
+  28              		.type	CyRamVectors, %object
+  29              		.size	CyRamVectors, 192
+  30              	CyRamVectors:
+  31 0000 00000000 		.space	192
+  31      00000000 
+  31      00000000 
+  31      00000000 
+  31      00000000 
+  32              		.section	.text.IntDefaultHandler,"ax",%progbits
+  33              		.align	2
+  34              		.global	IntDefaultHandler
+  35              		.thumb
+  36              		.thumb_func
+  37              		.type	IntDefaultHandler, %function
+  38              	IntDefaultHandler:
+  39              	.LFB0:
+  40              		.file 1 "Generated_Source\\PSoC5\\Cm3Start.c"
+   1:Generated_Source\PSoC5/Cm3Start.c **** /***************************************************************************//**
+   2:Generated_Source\PSoC5/Cm3Start.c **** * \file Cm3Start.c
+   3:Generated_Source\PSoC5/Cm3Start.c **** * \version 5.60
+   4:Generated_Source\PSoC5/Cm3Start.c **** *
+   5:Generated_Source\PSoC5/Cm3Start.c **** *  \brief
+   6:Generated_Source\PSoC5/Cm3Start.c **** *  Startup code for the ARM CM3.
+   7:Generated_Source\PSoC5/Cm3Start.c **** *
+   8:Generated_Source\PSoC5/Cm3Start.c **** ********************************************************************************
+   9:Generated_Source\PSoC5/Cm3Start.c **** * \copyright
+  10:Generated_Source\PSoC5/Cm3Start.c **** * Copyright 2008-2017, Cypress Semiconductor Corporation. All rights reserved.
+  11:Generated_Source\PSoC5/Cm3Start.c **** * You may use this file only in accordance with the license, terms, conditions,
+  12:Generated_Source\PSoC5/Cm3Start.c **** * disclaimers, and limitations in the end user license agreement accompanying
+  13:Generated_Source\PSoC5/Cm3Start.c **** * the software package with which this file was provided.
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 2
+
+
+  14:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+  15:Generated_Source\PSoC5/Cm3Start.c **** 
+  16:Generated_Source\PSoC5/Cm3Start.c **** #include <limits.h>
+  17:Generated_Source\PSoC5/Cm3Start.c **** #include "cydevice_trm.h"
+  18:Generated_Source\PSoC5/Cm3Start.c **** #include "cytypes.h"
+  19:Generated_Source\PSoC5/Cm3Start.c **** #include "cyfitter_cfg.h"
+  20:Generated_Source\PSoC5/Cm3Start.c **** #include "CyLib.h"
+  21:Generated_Source\PSoC5/Cm3Start.c **** #include "CyDmac.h"
+  22:Generated_Source\PSoC5/Cm3Start.c **** #include "cyfitter.h"
+  23:Generated_Source\PSoC5/Cm3Start.c **** 
+  24:Generated_Source\PSoC5/Cm3Start.c **** 
+  25:Generated_Source\PSoC5/Cm3Start.c **** #define CY_NUM_INTERRUPTS           (32u)
+  26:Generated_Source\PSoC5/Cm3Start.c **** #define CY_NUM_VECTORS              (CYINT_IRQ_BASE + CY_NUM_INTERRUPTS)
+  27:Generated_Source\PSoC5/Cm3Start.c **** #define CY_NUM_ROM_VECTORS          (4u)
+  28:Generated_Source\PSoC5/Cm3Start.c **** #define CY_NVIC_APINT_PTR           ((reg32 *) CYREG_NVIC_APPLN_INTR)
+  29:Generated_Source\PSoC5/Cm3Start.c **** #define CY_NVIC_CFG_CTRL_PTR        ((reg32 *) CYREG_NVIC_CFG_CONTROL)
+  30:Generated_Source\PSoC5/Cm3Start.c **** #define CY_NVIC_APINT_PRIGROUP_3_5  (0x00000400u)  /* Priority group 3.5 split */
+  31:Generated_Source\PSoC5/Cm3Start.c **** #define CY_NVIC_APINT_VECTKEY       (0x05FA0000u)  /* This key is required in order to write the NV
+  32:Generated_Source\PSoC5/Cm3Start.c **** #define CY_NVIC_CFG_STACKALIGN      (0x00000200u)  /* This specifies that the exception stack must 
+  33:Generated_Source\PSoC5/Cm3Start.c **** 
+  34:Generated_Source\PSoC5/Cm3Start.c **** #if defined(__ARMCC_VERSION)
+  35:Generated_Source\PSoC5/Cm3Start.c ****     #define INITIAL_STACK_POINTER ((cyisraddress)(uint32)&Image$$ARM_LIB_STACK$$ZI$$Limit)
+  36:Generated_Source\PSoC5/Cm3Start.c **** #elif defined (__GNUC__)
+  37:Generated_Source\PSoC5/Cm3Start.c ****     #define INITIAL_STACK_POINTER (&__cy_stack)
+  38:Generated_Source\PSoC5/Cm3Start.c **** #elif defined (__ICCARM__)
+  39:Generated_Source\PSoC5/Cm3Start.c ****     #pragma language=extended
+  40:Generated_Source\PSoC5/Cm3Start.c ****     #pragma segment="CSTACK"
+  41:Generated_Source\PSoC5/Cm3Start.c ****     #define INITIAL_STACK_POINTER  { .__ptr = __sfe( "CSTACK" ) }
+  42:Generated_Source\PSoC5/Cm3Start.c **** 
+  43:Generated_Source\PSoC5/Cm3Start.c ****     extern void __iar_program_start( void );
+  44:Generated_Source\PSoC5/Cm3Start.c ****     extern void __iar_data_init3 (void);
+  45:Generated_Source\PSoC5/Cm3Start.c **** #endif  /* (__ARMCC_VERSION) */
+  46:Generated_Source\PSoC5/Cm3Start.c **** 
+  47:Generated_Source\PSoC5/Cm3Start.c **** #if defined(__GNUC__)
+  48:Generated_Source\PSoC5/Cm3Start.c ****     #include <errno.h>
+  49:Generated_Source\PSoC5/Cm3Start.c ****     extern int  errno;
+  50:Generated_Source\PSoC5/Cm3Start.c ****     extern int  end;
+  51:Generated_Source\PSoC5/Cm3Start.c **** #endif  /* defined(__GNUC__) */
+  52:Generated_Source\PSoC5/Cm3Start.c **** 
+  53:Generated_Source\PSoC5/Cm3Start.c **** /* Extern functions */
+  54:Generated_Source\PSoC5/Cm3Start.c **** extern void CyBtldr_CheckLaunch(void);
+  55:Generated_Source\PSoC5/Cm3Start.c **** 
+  56:Generated_Source\PSoC5/Cm3Start.c **** /* Function prototypes */
+  57:Generated_Source\PSoC5/Cm3Start.c **** void initialize_psoc(void);
+  58:Generated_Source\PSoC5/Cm3Start.c **** CY_ISR(IntDefaultHandler);
+  59:Generated_Source\PSoC5/Cm3Start.c **** void Reset(void);
+  60:Generated_Source\PSoC5/Cm3Start.c **** 
+  61:Generated_Source\PSoC5/Cm3Start.c **** /* Global variables */
+  62:Generated_Source\PSoC5/Cm3Start.c **** #if !defined (__ICCARM__)
+  63:Generated_Source\PSoC5/Cm3Start.c ****     CY_NOINIT static uint32 cySysNoInitDataValid;
+  64:Generated_Source\PSoC5/Cm3Start.c **** #endif  /* !defined (__ICCARM__) */
+  65:Generated_Source\PSoC5/Cm3Start.c **** 
+  66:Generated_Source\PSoC5/Cm3Start.c **** 
+  67:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+  68:Generated_Source\PSoC5/Cm3Start.c **** * Default Ram Interrupt Vector table storage area. Must be 256-byte aligned.
+  69:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+  70:Generated_Source\PSoC5/Cm3Start.c **** #if defined (__ICCARM__)
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 3
+
+
+  71:Generated_Source\PSoC5/Cm3Start.c ****     #pragma location=".ramvectors"
+  72:Generated_Source\PSoC5/Cm3Start.c ****     #pragma data_alignment=256
+  73:Generated_Source\PSoC5/Cm3Start.c **** #else
+  74:Generated_Source\PSoC5/Cm3Start.c ****     CY_SECTION(".ramvectors")
+  75:Generated_Source\PSoC5/Cm3Start.c ****     CY_ALIGN(256)
+  76:Generated_Source\PSoC5/Cm3Start.c **** #endif  /* defined (__ICCARM__) */
+  77:Generated_Source\PSoC5/Cm3Start.c **** cyisraddress CyRamVectors[CY_NUM_VECTORS];
+  78:Generated_Source\PSoC5/Cm3Start.c **** 
+  79:Generated_Source\PSoC5/Cm3Start.c **** 
+  80:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+  81:Generated_Source\PSoC5/Cm3Start.c **** * Function Name: IntDefaultHandler
+  82:Generated_Source\PSoC5/Cm3Start.c **** ****************************************************************************//**
+  83:Generated_Source\PSoC5/Cm3Start.c **** *
+  84:Generated_Source\PSoC5/Cm3Start.c **** *  This function is called for all interrupts, other than a reset that gets
+  85:Generated_Source\PSoC5/Cm3Start.c **** *  called before the system is setup.
+  86:Generated_Source\PSoC5/Cm3Start.c **** *
+  87:Generated_Source\PSoC5/Cm3Start.c **** * Theory:
+  88:Generated_Source\PSoC5/Cm3Start.c **** *  Any value other than zero is acceptable.
+  89:Generated_Source\PSoC5/Cm3Start.c **** *
+  90:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+  91:Generated_Source\PSoC5/Cm3Start.c **** CY_ISR(IntDefaultHandler)
+  92:Generated_Source\PSoC5/Cm3Start.c **** {
+  41              		.loc 1 92 0
+  42              		.cfi_startproc
+  43              		@ args = 0, pretend = 0, frame = 0
+  44              		@ frame_needed = 1, uses_anonymous_args = 0
+  45 0000 80B5     		push	{r7, lr}
+  46              		.cfi_def_cfa_offset 8
+  47              		.cfi_offset 7, -8
+  48              		.cfi_offset 14, -4
+  49 0002 00AF     		add	r7, sp, #0
+  50              		.cfi_def_cfa_register 7
+  93:Generated_Source\PSoC5/Cm3Start.c ****     /***************************************************************************
+  94:Generated_Source\PSoC5/Cm3Start.c ****     * We must not get here. If we do, a serious problem occurs, so go into
+  95:Generated_Source\PSoC5/Cm3Start.c ****     * an infinite loop.
+  96:Generated_Source\PSoC5/Cm3Start.c ****     ***************************************************************************/
+  97:Generated_Source\PSoC5/Cm3Start.c **** 
+  98:Generated_Source\PSoC5/Cm3Start.c ****     #if defined(__GNUC__)
+  99:Generated_Source\PSoC5/Cm3Start.c ****         if (errno == ENOMEM)
+  51              		.loc 1 99 0
+  52 0004 FFF7FEFF 		bl	__errno
+  53 0008 0346     		mov	r3, r0
+  54 000a 1B68     		ldr	r3, [r3]
+  55 000c 0C2B     		cmp	r3, #12
+  56 000e 00D1     		bne	.L2
+  57              	.L3:
+ 100:Generated_Source\PSoC5/Cm3Start.c ****         {
+ 101:Generated_Source\PSoC5/Cm3Start.c ****             #ifdef CY_BOOT_INT_DEFAULT_HANDLER_ENOMEM_EXCEPTION_CALLBACK
+ 102:Generated_Source\PSoC5/Cm3Start.c ****                 CyBoot_IntDefaultHandler_Enomem_Exception_Callback();
+ 103:Generated_Source\PSoC5/Cm3Start.c ****             #endif /* CY_BOOT_INT_DEFAULT_HANDLER_ENOMEM_EXCEPTION_CALLBACK */
+ 104:Generated_Source\PSoC5/Cm3Start.c ****             
+ 105:Generated_Source\PSoC5/Cm3Start.c ****             while(1)
+ 106:Generated_Source\PSoC5/Cm3Start.c ****             {
+ 107:Generated_Source\PSoC5/Cm3Start.c ****                 /* Out Of Heap Space
+ 108:Generated_Source\PSoC5/Cm3Start.c ****                  * This can be increased in the System tab of the Design Wide Resources.
+ 109:Generated_Source\PSoC5/Cm3Start.c ****                  */
+ 110:Generated_Source\PSoC5/Cm3Start.c ****             }
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 4
+
+
+  58              		.loc 1 110 0 discriminator 1
+  59 0010 FEE7     		b	.L3
+  60              	.L2:
+ 111:Generated_Source\PSoC5/Cm3Start.c ****         }
+ 112:Generated_Source\PSoC5/Cm3Start.c ****         else
+ 113:Generated_Source\PSoC5/Cm3Start.c ****     #endif
+ 114:Generated_Source\PSoC5/Cm3Start.c ****         {
+ 115:Generated_Source\PSoC5/Cm3Start.c ****             #ifdef CY_BOOT_INT_DEFAULT_HANDLER_EXCEPTION_ENTRY_CALLBACK
+ 116:Generated_Source\PSoC5/Cm3Start.c ****                 CyBoot_IntDefaultHandler_Exception_EntryCallback();
+ 117:Generated_Source\PSoC5/Cm3Start.c ****             #endif /* CY_BOOT_INT_DEFAULT_HANDLER_EXCEPTION_ENTRY_CALLBACK */
+ 118:Generated_Source\PSoC5/Cm3Start.c **** 
+ 119:Generated_Source\PSoC5/Cm3Start.c ****             while(1)
+ 120:Generated_Source\PSoC5/Cm3Start.c ****             {
+ 121:Generated_Source\PSoC5/Cm3Start.c **** 
+ 122:Generated_Source\PSoC5/Cm3Start.c ****             }
+  61              		.loc 1 122 0 discriminator 2
+  62 0012 FEE7     		b	.L2
+  63              		.cfi_endproc
+  64              	.LFE0:
+  65              		.size	IntDefaultHandler, .-IntDefaultHandler
+  66              		.section	.text._exit,"ax",%progbits
+  67              		.align	2
+  68              		.weak	_exit
+  69              		.thumb
+  70              		.thumb_func
+  71              		.type	_exit, %function
+  72              	_exit:
+  73              	.LFB1:
+ 123:Generated_Source\PSoC5/Cm3Start.c ****         }
+ 124:Generated_Source\PSoC5/Cm3Start.c **** }
+ 125:Generated_Source\PSoC5/Cm3Start.c **** 
+ 126:Generated_Source\PSoC5/Cm3Start.c **** 
+ 127:Generated_Source\PSoC5/Cm3Start.c **** #if defined(__ARMCC_VERSION)
+ 128:Generated_Source\PSoC5/Cm3Start.c **** 
+ 129:Generated_Source\PSoC5/Cm3Start.c **** /* Local function for device reset. */
+ 130:Generated_Source\PSoC5/Cm3Start.c **** extern void Reset(void);
+ 131:Generated_Source\PSoC5/Cm3Start.c **** 
+ 132:Generated_Source\PSoC5/Cm3Start.c **** /* Application entry point. */
+ 133:Generated_Source\PSoC5/Cm3Start.c **** extern void $Super$$main(void);
+ 134:Generated_Source\PSoC5/Cm3Start.c **** 
+ 135:Generated_Source\PSoC5/Cm3Start.c **** /* Linker-generated Stack Base addresses, Two Region and One Region */
+ 136:Generated_Source\PSoC5/Cm3Start.c **** extern uint32 Image$$ARM_LIB_STACK$$ZI$$Limit;
+ 137:Generated_Source\PSoC5/Cm3Start.c **** 
+ 138:Generated_Source\PSoC5/Cm3Start.c **** /* RealView C Library initialization. */
+ 139:Generated_Source\PSoC5/Cm3Start.c **** extern int __main(void);
+ 140:Generated_Source\PSoC5/Cm3Start.c **** 
+ 141:Generated_Source\PSoC5/Cm3Start.c **** 
+ 142:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+ 143:Generated_Source\PSoC5/Cm3Start.c **** * Function Name: Reset
+ 144:Generated_Source\PSoC5/Cm3Start.c **** ****************************************************************************//**
+ 145:Generated_Source\PSoC5/Cm3Start.c **** *
+ 146:Generated_Source\PSoC5/Cm3Start.c **** *  This function handles the reset interrupt for the RVDS/MDK toolchains.
+ 147:Generated_Source\PSoC5/Cm3Start.c **** *  This is the first bit of code that is executed at startup.
+ 148:Generated_Source\PSoC5/Cm3Start.c **** *
+ 149:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+ 150:Generated_Source\PSoC5/Cm3Start.c **** void Reset(void)
+ 151:Generated_Source\PSoC5/Cm3Start.c **** {
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 5
+
+
+ 152:Generated_Source\PSoC5/Cm3Start.c ****     #if(CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLE && CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLEA
+ 153:Generated_Source\PSoC5/Cm3Start.c **** 
+ 154:Generated_Source\PSoC5/Cm3Start.c ****         /* For PSoC 5LP, debugging is enabled by default */
+ 155:Generated_Source\PSoC5/Cm3Start.c ****         #if(CYDEV_DEBUGGING_ENABLE == 0)
+ 156:Generated_Source\PSoC5/Cm3Start.c ****             *(reg32 *)(CYDEV_DEBUG_ENABLE_REGISTER) |= CYDEV_DEBUG_ENABLE_MASK;
+ 157:Generated_Source\PSoC5/Cm3Start.c ****         #endif /* (CYDEV_DEBUGGING_ENABLE) */
+ 158:Generated_Source\PSoC5/Cm3Start.c **** 
+ 159:Generated_Source\PSoC5/Cm3Start.c ****         /* Reset Status Register has Read-to-clear SW access mode.
+ 160:Generated_Source\PSoC5/Cm3Start.c ****         * Preserve current RESET_SR0 state to make it available for next reading.
+ 161:Generated_Source\PSoC5/Cm3Start.c ****         */
+ 162:Generated_Source\PSoC5/Cm3Start.c ****         *(reg32 *)(CYREG_PHUB_CFGMEM23_CFG1) = *(reg32 *)(CYREG_RESET_SR0);
+ 163:Generated_Source\PSoC5/Cm3Start.c **** 
+ 164:Generated_Source\PSoC5/Cm3Start.c ****     #endif  /* (CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLE && CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_L
+ 165:Generated_Source\PSoC5/Cm3Start.c **** 
+ 166:Generated_Source\PSoC5/Cm3Start.c ****     #if ((CYDEV_BOOTLOADER_ENABLE) && (CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLEANDBOOTLOADER))
+ 167:Generated_Source\PSoC5/Cm3Start.c ****         CyBtldr_CheckLaunch();
+ 168:Generated_Source\PSoC5/Cm3Start.c ****     #endif /* ((CYDEV_BOOTLOADER_ENABLE) && (CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLEANDBOOTLOAD
+ 169:Generated_Source\PSoC5/Cm3Start.c **** 
+ 170:Generated_Source\PSoC5/Cm3Start.c ****     __main();
+ 171:Generated_Source\PSoC5/Cm3Start.c **** }
+ 172:Generated_Source\PSoC5/Cm3Start.c **** 
+ 173:Generated_Source\PSoC5/Cm3Start.c **** 
+ 174:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+ 175:Generated_Source\PSoC5/Cm3Start.c **** * Function Name: $Sub$$main
+ 176:Generated_Source\PSoC5/Cm3Start.c **** ****************************************************************************//**
+ 177:Generated_Source\PSoC5/Cm3Start.c **** *
+ 178:Generated_Source\PSoC5/Cm3Start.c **** *  This function is called immediately before the users main
+ 179:Generated_Source\PSoC5/Cm3Start.c **** *
+ 180:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+ 181:Generated_Source\PSoC5/Cm3Start.c **** void $Sub$$main(void)
+ 182:Generated_Source\PSoC5/Cm3Start.c **** {
+ 183:Generated_Source\PSoC5/Cm3Start.c ****     initialize_psoc();
+ 184:Generated_Source\PSoC5/Cm3Start.c **** 
+ 185:Generated_Source\PSoC5/Cm3Start.c ****     /* Call original main */
+ 186:Generated_Source\PSoC5/Cm3Start.c ****     $Super$$main();
+ 187:Generated_Source\PSoC5/Cm3Start.c **** 
+ 188:Generated_Source\PSoC5/Cm3Start.c ****     while (1)
+ 189:Generated_Source\PSoC5/Cm3Start.c ****     {
+ 190:Generated_Source\PSoC5/Cm3Start.c ****         /* If main returns, it is undefined what we should do. */
+ 191:Generated_Source\PSoC5/Cm3Start.c ****     }
+ 192:Generated_Source\PSoC5/Cm3Start.c **** }
+ 193:Generated_Source\PSoC5/Cm3Start.c **** 
+ 194:Generated_Source\PSoC5/Cm3Start.c **** #elif defined(__GNUC__)
+ 195:Generated_Source\PSoC5/Cm3Start.c **** 
+ 196:Generated_Source\PSoC5/Cm3Start.c **** void Start_c(void);
+ 197:Generated_Source\PSoC5/Cm3Start.c **** 
+ 198:Generated_Source\PSoC5/Cm3Start.c **** /* Stack Base address */
+ 199:Generated_Source\PSoC5/Cm3Start.c **** extern void __cy_stack(void);
+ 200:Generated_Source\PSoC5/Cm3Start.c **** 
+ 201:Generated_Source\PSoC5/Cm3Start.c **** /* Application entry point. */
+ 202:Generated_Source\PSoC5/Cm3Start.c **** extern int main(void);
+ 203:Generated_Source\PSoC5/Cm3Start.c **** 
+ 204:Generated_Source\PSoC5/Cm3Start.c **** /* Static objects constructors initializer */
+ 205:Generated_Source\PSoC5/Cm3Start.c **** extern void __libc_init_array(void);
+ 206:Generated_Source\PSoC5/Cm3Start.c **** 
+ 207:Generated_Source\PSoC5/Cm3Start.c **** typedef unsigned char __cy_byte_align8 __attribute ((aligned (8)));
+ 208:Generated_Source\PSoC5/Cm3Start.c **** 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 6
+
+
+ 209:Generated_Source\PSoC5/Cm3Start.c **** struct __cy_region
+ 210:Generated_Source\PSoC5/Cm3Start.c **** {
+ 211:Generated_Source\PSoC5/Cm3Start.c ****     __cy_byte_align8 *init; /* Initial contents of this region.  */
+ 212:Generated_Source\PSoC5/Cm3Start.c ****     __cy_byte_align8 *data; /* Start address of region.  */
+ 213:Generated_Source\PSoC5/Cm3Start.c ****     size_t init_size;       /* Size of initial data.  */
+ 214:Generated_Source\PSoC5/Cm3Start.c ****     size_t zero_size;       /* Additional size to be zeroed.  */
+ 215:Generated_Source\PSoC5/Cm3Start.c **** };
+ 216:Generated_Source\PSoC5/Cm3Start.c **** 
+ 217:Generated_Source\PSoC5/Cm3Start.c **** extern const struct __cy_region __cy_regions[];
+ 218:Generated_Source\PSoC5/Cm3Start.c **** extern const char __cy_region_num __attribute__((weak));
+ 219:Generated_Source\PSoC5/Cm3Start.c **** #define __cy_region_num ((size_t)&__cy_region_num)
+ 220:Generated_Source\PSoC5/Cm3Start.c **** 
+ 221:Generated_Source\PSoC5/Cm3Start.c **** 
+ 222:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+ 223:Generated_Source\PSoC5/Cm3Start.c **** * System Calls of the Red Hat newlib C Library
+ 224:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+ 225:Generated_Source\PSoC5/Cm3Start.c **** 
+ 226:Generated_Source\PSoC5/Cm3Start.c **** 
+ 227:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+ 228:Generated_Source\PSoC5/Cm3Start.c **** * Function Name: _exit
+ 229:Generated_Source\PSoC5/Cm3Start.c **** ****************************************************************************//**
+ 230:Generated_Source\PSoC5/Cm3Start.c **** *
+ 231:Generated_Source\PSoC5/Cm3Start.c **** *  Exit a program without cleaning up files. If your system doesn't provide
+ 232:Generated_Source\PSoC5/Cm3Start.c **** *  this, it is best to avoid linking with subroutines that require it (exit,
+ 233:Generated_Source\PSoC5/Cm3Start.c **** *  system).
+ 234:Generated_Source\PSoC5/Cm3Start.c **** *
+ 235:Generated_Source\PSoC5/Cm3Start.c **** *  \param status: Status caused program exit.
+ 236:Generated_Source\PSoC5/Cm3Start.c **** *
+ 237:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+ 238:Generated_Source\PSoC5/Cm3Start.c **** __attribute__((weak))
+ 239:Generated_Source\PSoC5/Cm3Start.c **** void _exit(int status)
+ 240:Generated_Source\PSoC5/Cm3Start.c **** {
+  74              		.loc 1 240 0
+  75              		.cfi_startproc
+  76              		@ args = 0, pretend = 0, frame = 8
+  77              		@ frame_needed = 1, uses_anonymous_args = 0
+  78 0000 80B5     		push	{r7, lr}
+  79              		.cfi_def_cfa_offset 8
+  80              		.cfi_offset 7, -8
+  81              		.cfi_offset 14, -4
+  82 0002 82B0     		sub	sp, sp, #8
+  83              		.cfi_def_cfa_offset 16
+  84 0004 00AF     		add	r7, sp, #0
+  85              		.cfi_def_cfa_register 7
+  86 0006 7860     		str	r0, [r7, #4]
+ 241:Generated_Source\PSoC5/Cm3Start.c ****     CyHalt((uint8) status);
+  87              		.loc 1 241 0
+  88 0008 7B68     		ldr	r3, [r7, #4]
+  89 000a DBB2     		uxtb	r3, r3
+  90 000c 1846     		mov	r0, r3
+  91 000e FFF7FEFF 		bl	CyHalt
+  92              	.L5:
+ 242:Generated_Source\PSoC5/Cm3Start.c ****     while(1)
+ 243:Generated_Source\PSoC5/Cm3Start.c ****     {
+ 244:Generated_Source\PSoC5/Cm3Start.c **** 
+ 245:Generated_Source\PSoC5/Cm3Start.c ****     }
+  93              		.loc 1 245 0 discriminator 1
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 7
+
+
+  94 0012 FEE7     		b	.L5
+  95              		.cfi_endproc
+  96              	.LFE1:
+  97              		.size	_exit, .-_exit
+  98              		.section	.text._sbrk,"ax",%progbits
+  99              		.align	2
+ 100              		.weak	_sbrk
+ 101              		.thumb
+ 102              		.thumb_func
+ 103              		.type	_sbrk, %function
+ 104              	_sbrk:
+ 105              	.LFB2:
+ 246:Generated_Source\PSoC5/Cm3Start.c **** }
+ 247:Generated_Source\PSoC5/Cm3Start.c **** 
+ 248:Generated_Source\PSoC5/Cm3Start.c **** 
+ 249:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+ 250:Generated_Source\PSoC5/Cm3Start.c **** * Function Name: _sbrk
+ 251:Generated_Source\PSoC5/Cm3Start.c **** ****************************************************************************//**
+ 252:Generated_Source\PSoC5/Cm3Start.c **** *
+ 253:Generated_Source\PSoC5/Cm3Start.c **** *  Increase program data space. As malloc and related functions depend on this,
+ 254:Generated_Source\PSoC5/Cm3Start.c **** *  it is useful to have a working implementation. The following suffices for a
+ 255:Generated_Source\PSoC5/Cm3Start.c **** *  standalone system; it exploits the symbol end automatically defined by the
+ 256:Generated_Source\PSoC5/Cm3Start.c **** *  GNU linker.
+ 257:Generated_Source\PSoC5/Cm3Start.c **** *
+ 258:Generated_Source\PSoC5/Cm3Start.c **** *  \param nbytes: The number of bytes requested (if the parameter value is positive)
+ 259:Generated_Source\PSoC5/Cm3Start.c **** *  from the heap or returned back to the heap (if the parameter value is
+ 260:Generated_Source\PSoC5/Cm3Start.c **** *  negative).
+ 261:Generated_Source\PSoC5/Cm3Start.c **** *
+ 262:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+ 263:Generated_Source\PSoC5/Cm3Start.c **** __attribute__((weak))
+ 264:Generated_Source\PSoC5/Cm3Start.c **** void * _sbrk (int nbytes)
+ 265:Generated_Source\PSoC5/Cm3Start.c **** {
+ 106              		.loc 1 265 0
+ 107              		.cfi_startproc
+ 108              		@ args = 0, pretend = 0, frame = 16
+ 109              		@ frame_needed = 1, uses_anonymous_args = 0
+ 110 0000 80B5     		push	{r7, lr}
+ 111              		.cfi_def_cfa_offset 8
+ 112              		.cfi_offset 7, -8
+ 113              		.cfi_offset 14, -4
+ 114 0002 84B0     		sub	sp, sp, #16
+ 115              		.cfi_def_cfa_offset 24
+ 116 0004 00AF     		add	r7, sp, #0
+ 117              		.cfi_def_cfa_register 7
+ 118 0006 7860     		str	r0, [r7, #4]
+ 266:Generated_Source\PSoC5/Cm3Start.c ****     extern int  end;            /* Symbol defined by linker map. Start of free memory (as symbol). 
+ 267:Generated_Source\PSoC5/Cm3Start.c ****     void *      returnValue;
+ 268:Generated_Source\PSoC5/Cm3Start.c **** 
+ 269:Generated_Source\PSoC5/Cm3Start.c ****     /* The statically held previous end of the heap, with its initialization. */
+ 270:Generated_Source\PSoC5/Cm3Start.c ****     static uint8 *heapPointer = (uint8 *) &end;                 /* Previous end */
+ 271:Generated_Source\PSoC5/Cm3Start.c **** 
+ 272:Generated_Source\PSoC5/Cm3Start.c ****     if (((heapPointer + nbytes) - (uint8 *) &end) <= CYDEV_HEAP_SIZE)
+ 119              		.loc 1 272 0
+ 120 0008 104B     		ldr	r3, .L10
+ 121 000a 1A68     		ldr	r2, [r3]
+ 122 000c 7B68     		ldr	r3, [r7, #4]
+ 123 000e 1344     		add	r3, r3, r2
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 8
+
+
+ 124 0010 1A46     		mov	r2, r3
+ 125 0012 0F4B     		ldr	r3, .L10+4
+ 126 0014 D31A     		subs	r3, r2, r3
+ 127 0016 B3F5006F 		cmp	r3, #2048
+ 128 001a 09DC     		bgt	.L7
+ 273:Generated_Source\PSoC5/Cm3Start.c ****     {
+ 274:Generated_Source\PSoC5/Cm3Start.c ****         returnValue  = (void *) heapPointer;
+ 129              		.loc 1 274 0
+ 130 001c 0B4B     		ldr	r3, .L10
+ 131 001e 1B68     		ldr	r3, [r3]
+ 132 0020 FB60     		str	r3, [r7, #12]
+ 275:Generated_Source\PSoC5/Cm3Start.c ****         heapPointer += nbytes;
+ 133              		.loc 1 275 0
+ 134 0022 0A4B     		ldr	r3, .L10
+ 135 0024 1A68     		ldr	r2, [r3]
+ 136 0026 7B68     		ldr	r3, [r7, #4]
+ 137 0028 1344     		add	r3, r3, r2
+ 138 002a 084A     		ldr	r2, .L10
+ 139 002c 1360     		str	r3, [r2]
+ 140 002e 07E0     		b	.L8
+ 141              	.L7:
+ 276:Generated_Source\PSoC5/Cm3Start.c ****     }
+ 277:Generated_Source\PSoC5/Cm3Start.c ****     else
+ 278:Generated_Source\PSoC5/Cm3Start.c ****     {
+ 279:Generated_Source\PSoC5/Cm3Start.c ****         errno = ENOMEM;
+ 142              		.loc 1 279 0
+ 143 0030 FFF7FEFF 		bl	__errno
+ 144 0034 0246     		mov	r2, r0
+ 145 0036 0C23     		movs	r3, #12
+ 146 0038 1360     		str	r3, [r2]
+ 280:Generated_Source\PSoC5/Cm3Start.c ****         returnValue = (void *) -1;
+ 147              		.loc 1 280 0
+ 148 003a 4FF0FF33 		mov	r3, #-1
+ 149 003e FB60     		str	r3, [r7, #12]
+ 150              	.L8:
+ 281:Generated_Source\PSoC5/Cm3Start.c ****     }
+ 282:Generated_Source\PSoC5/Cm3Start.c **** 
+ 283:Generated_Source\PSoC5/Cm3Start.c ****     return (returnValue);
+ 151              		.loc 1 283 0
+ 152 0040 FB68     		ldr	r3, [r7, #12]
+ 284:Generated_Source\PSoC5/Cm3Start.c **** }
+ 153              		.loc 1 284 0
+ 154 0042 1846     		mov	r0, r3
+ 155 0044 1037     		adds	r7, r7, #16
+ 156              		.cfi_def_cfa_offset 8
+ 157 0046 BD46     		mov	sp, r7
+ 158              		.cfi_def_cfa_register 13
+ 159              		@ sp needed
+ 160 0048 80BD     		pop	{r7, pc}
+ 161              	.L11:
+ 162 004a 00BF     		.align	2
+ 163              	.L10:
+ 164 004c 00000000 		.word	heapPointer.5064
+ 165 0050 00000000 		.word	end
+ 166              		.cfi_endproc
+ 167              	.LFE2:
+ 168              		.size	_sbrk, .-_sbrk
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 9
+
+
+ 169              		.section	.text.Reset,"ax",%progbits
+ 170              		.align	2
+ 171              		.global	Reset
+ 172              		.thumb
+ 173              		.thumb_func
+ 174              		.type	Reset, %function
+ 175              	Reset:
+ 176              	.LFB3:
+ 285:Generated_Source\PSoC5/Cm3Start.c **** 
+ 286:Generated_Source\PSoC5/Cm3Start.c **** 
+ 287:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+ 288:Generated_Source\PSoC5/Cm3Start.c **** * Function Name: Reset
+ 289:Generated_Source\PSoC5/Cm3Start.c **** ****************************************************************************//**
+ 290:Generated_Source\PSoC5/Cm3Start.c **** *
+ 291:Generated_Source\PSoC5/Cm3Start.c **** *  This function handles the reset interrupt for the GCC toolchain. This is the
+ 292:Generated_Source\PSoC5/Cm3Start.c **** *  first bit of code that is executed at startup.
+ 293:Generated_Source\PSoC5/Cm3Start.c **** *
+ 294:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+ 295:Generated_Source\PSoC5/Cm3Start.c **** void Reset(void)
+ 296:Generated_Source\PSoC5/Cm3Start.c **** {
+ 177              		.loc 1 296 0
+ 178              		.cfi_startproc
+ 179              		@ args = 0, pretend = 0, frame = 0
+ 180              		@ frame_needed = 1, uses_anonymous_args = 0
+ 181 0000 80B5     		push	{r7, lr}
+ 182              		.cfi_def_cfa_offset 8
+ 183              		.cfi_offset 7, -8
+ 184              		.cfi_offset 14, -4
+ 185 0002 00AF     		add	r7, sp, #0
+ 186              		.cfi_def_cfa_register 7
+ 297:Generated_Source\PSoC5/Cm3Start.c ****     #if(CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLE && CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLEA
+ 298:Generated_Source\PSoC5/Cm3Start.c **** 
+ 299:Generated_Source\PSoC5/Cm3Start.c ****         /* For PSoC 5LP, debugging is enabled by default */
+ 300:Generated_Source\PSoC5/Cm3Start.c ****         #if(CYDEV_DEBUGGING_ENABLE == 0)
+ 301:Generated_Source\PSoC5/Cm3Start.c ****             *(reg32 *)(CYDEV_DEBUG_ENABLE_REGISTER) |= CYDEV_DEBUG_ENABLE_MASK;
+ 302:Generated_Source\PSoC5/Cm3Start.c ****         #endif /* (CYDEV_DEBUGGING_ENABLE) */
+ 303:Generated_Source\PSoC5/Cm3Start.c **** 
+ 304:Generated_Source\PSoC5/Cm3Start.c ****         /* Reset Status Register has Read-to-clear SW access mode.
+ 305:Generated_Source\PSoC5/Cm3Start.c ****         * Preserve current RESET_SR0 state to make it available for next reading.
+ 306:Generated_Source\PSoC5/Cm3Start.c ****         */
+ 307:Generated_Source\PSoC5/Cm3Start.c ****         *(reg32 *)(CYREG_PHUB_CFGMEM23_CFG1) = *(reg32 *)(CYREG_RESET_SR0);
+ 308:Generated_Source\PSoC5/Cm3Start.c **** 
+ 309:Generated_Source\PSoC5/Cm3Start.c ****     #endif  /* (CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLE && CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_L
+ 310:Generated_Source\PSoC5/Cm3Start.c **** 
+ 311:Generated_Source\PSoC5/Cm3Start.c ****     #if ((CYDEV_BOOTLOADER_ENABLE) && (CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLEANDBOOTLOADER))
+ 312:Generated_Source\PSoC5/Cm3Start.c ****         CyBtldr_CheckLaunch();
+ 313:Generated_Source\PSoC5/Cm3Start.c ****     #endif /* ((CYDEV_BOOTLOADER_ENABLE) && (CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLEANDBOOTLOAD
+ 314:Generated_Source\PSoC5/Cm3Start.c **** 
+ 315:Generated_Source\PSoC5/Cm3Start.c ****     Start_c();
+ 187              		.loc 1 315 0
+ 188 0004 FFF7FEFF 		bl	Start_c
+ 189              		.cfi_endproc
+ 190              	.LFE3:
+ 191              		.size	Reset, .-Reset
+ 192              		.section	.text.Start_c,"ax",%progbits
+ 193              		.align	2
+ 194              		.global	Start_c
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 10
+
+
+ 195              		.thumb
+ 196              		.thumb_func
+ 197              		.type	Start_c, %function
+ 198              	Start_c:
+ 199              	.LFB4:
+ 316:Generated_Source\PSoC5/Cm3Start.c **** }
+ 317:Generated_Source\PSoC5/Cm3Start.c **** 
+ 318:Generated_Source\PSoC5/Cm3Start.c **** 
+ 319:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+ 320:Generated_Source\PSoC5/Cm3Start.c **** * Function Name: Start_c
+ 321:Generated_Source\PSoC5/Cm3Start.c **** ****************************************************************************//**
+ 322:Generated_Source\PSoC5/Cm3Start.c **** *
+ 323:Generated_Source\PSoC5/Cm3Start.c **** *  This function handles initializing the .data and .bss sections in
+ 324:Generated_Source\PSoC5/Cm3Start.c **** *  preparation for running the standard C code.  Once initialization is complete
+ 325:Generated_Source\PSoC5/Cm3Start.c **** *  it will call main(). This function will never return.
+ 326:Generated_Source\PSoC5/Cm3Start.c **** *
+ 327:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+ 328:Generated_Source\PSoC5/Cm3Start.c **** void Start_c(void)  __attribute__ ((noreturn));
+ 329:Generated_Source\PSoC5/Cm3Start.c **** void Start_c(void)
+ 330:Generated_Source\PSoC5/Cm3Start.c **** {
+ 200              		.loc 1 330 0
+ 201              		.cfi_startproc
+ 202              		@ args = 0, pretend = 0, frame = 24
+ 203              		@ frame_needed = 1, uses_anonymous_args = 0
+ 204 0000 80B5     		push	{r7, lr}
+ 205              		.cfi_def_cfa_offset 8
+ 206              		.cfi_offset 7, -8
+ 207              		.cfi_offset 14, -4
+ 208 0002 86B0     		sub	sp, sp, #24
+ 209              		.cfi_def_cfa_offset 32
+ 210 0004 00AF     		add	r7, sp, #0
+ 211              		.cfi_def_cfa_register 7
+ 331:Generated_Source\PSoC5/Cm3Start.c ****     unsigned regions = __cy_region_num;
+ 212              		.loc 1 331 0
+ 213 0006 224B     		ldr	r3, .L21
+ 214 0008 7B61     		str	r3, [r7, #20]
+ 332:Generated_Source\PSoC5/Cm3Start.c ****     const struct __cy_region *rptr = __cy_regions;
+ 215              		.loc 1 332 0
+ 216 000a 224B     		ldr	r3, .L21+4
+ 217 000c 3B61     		str	r3, [r7, #16]
+ 333:Generated_Source\PSoC5/Cm3Start.c **** 
+ 334:Generated_Source\PSoC5/Cm3Start.c ****     /* Initialize memory */
+ 335:Generated_Source\PSoC5/Cm3Start.c ****     for (regions = __cy_region_num; regions != 0u; regions--)
+ 218              		.loc 1 335 0
+ 219 000e 204B     		ldr	r3, .L21
+ 220 0010 7B61     		str	r3, [r7, #20]
+ 221 0012 35E0     		b	.L14
+ 222              	.L19:
+ 223              	.LBB2:
+ 336:Generated_Source\PSoC5/Cm3Start.c ****     {
+ 337:Generated_Source\PSoC5/Cm3Start.c ****         uint32 *src = (uint32 *)rptr->init;
+ 224              		.loc 1 337 0
+ 225 0014 3B69     		ldr	r3, [r7, #16]
+ 226 0016 1B68     		ldr	r3, [r3]
+ 227 0018 FB60     		str	r3, [r7, #12]
+ 338:Generated_Source\PSoC5/Cm3Start.c ****         uint32 *dst = (uint32 *)rptr->data;
+ 228              		.loc 1 338 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 11
+
+
+ 229 001a 3B69     		ldr	r3, [r7, #16]
+ 230 001c 5B68     		ldr	r3, [r3, #4]
+ 231 001e BB60     		str	r3, [r7, #8]
+ 339:Generated_Source\PSoC5/Cm3Start.c ****         unsigned limit = rptr->init_size;
+ 232              		.loc 1 339 0
+ 233 0020 3B69     		ldr	r3, [r7, #16]
+ 234 0022 9B68     		ldr	r3, [r3, #8]
+ 235 0024 3B60     		str	r3, [r7]
+ 340:Generated_Source\PSoC5/Cm3Start.c ****         unsigned count;
+ 341:Generated_Source\PSoC5/Cm3Start.c **** 
+ 342:Generated_Source\PSoC5/Cm3Start.c ****         for (count = 0u; count != limit; count += sizeof (uint32))
+ 236              		.loc 1 342 0
+ 237 0026 0023     		movs	r3, #0
+ 238 0028 7B60     		str	r3, [r7, #4]
+ 239 002a 0CE0     		b	.L15
+ 240              	.L16:
+ 343:Generated_Source\PSoC5/Cm3Start.c ****         {
+ 344:Generated_Source\PSoC5/Cm3Start.c ****             *dst = *src;
+ 241              		.loc 1 344 0 discriminator 3
+ 242 002c FB68     		ldr	r3, [r7, #12]
+ 243 002e 1A68     		ldr	r2, [r3]
+ 244 0030 BB68     		ldr	r3, [r7, #8]
+ 245 0032 1A60     		str	r2, [r3]
+ 345:Generated_Source\PSoC5/Cm3Start.c ****             dst++;
+ 246              		.loc 1 345 0 discriminator 3
+ 247 0034 BB68     		ldr	r3, [r7, #8]
+ 248 0036 0433     		adds	r3, r3, #4
+ 249 0038 BB60     		str	r3, [r7, #8]
+ 346:Generated_Source\PSoC5/Cm3Start.c ****             src++;
+ 250              		.loc 1 346 0 discriminator 3
+ 251 003a FB68     		ldr	r3, [r7, #12]
+ 252 003c 0433     		adds	r3, r3, #4
+ 253 003e FB60     		str	r3, [r7, #12]
+ 342:Generated_Source\PSoC5/Cm3Start.c ****         {
+ 254              		.loc 1 342 0 discriminator 3
+ 255 0040 7B68     		ldr	r3, [r7, #4]
+ 256 0042 0433     		adds	r3, r3, #4
+ 257 0044 7B60     		str	r3, [r7, #4]
+ 258              	.L15:
+ 342:Generated_Source\PSoC5/Cm3Start.c ****         {
+ 259              		.loc 1 342 0 is_stmt 0 discriminator 1
+ 260 0046 7A68     		ldr	r2, [r7, #4]
+ 261 0048 3B68     		ldr	r3, [r7]
+ 262 004a 9A42     		cmp	r2, r3
+ 263 004c EED1     		bne	.L16
+ 347:Generated_Source\PSoC5/Cm3Start.c ****         }
+ 348:Generated_Source\PSoC5/Cm3Start.c ****         limit = rptr->zero_size;
+ 264              		.loc 1 348 0 is_stmt 1
+ 265 004e 3B69     		ldr	r3, [r7, #16]
+ 266 0050 DB68     		ldr	r3, [r3, #12]
+ 267 0052 3B60     		str	r3, [r7]
+ 349:Generated_Source\PSoC5/Cm3Start.c ****         for (count = 0u; count != limit; count += sizeof (uint32))
+ 268              		.loc 1 349 0
+ 269 0054 0023     		movs	r3, #0
+ 270 0056 7B60     		str	r3, [r7, #4]
+ 271 0058 08E0     		b	.L17
+ 272              	.L18:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 12
+
+
+ 350:Generated_Source\PSoC5/Cm3Start.c ****         {
+ 351:Generated_Source\PSoC5/Cm3Start.c ****             *dst = 0u;
+ 273              		.loc 1 351 0 discriminator 3
+ 274 005a BB68     		ldr	r3, [r7, #8]
+ 275 005c 0022     		movs	r2, #0
+ 276 005e 1A60     		str	r2, [r3]
+ 352:Generated_Source\PSoC5/Cm3Start.c ****             dst++;
+ 277              		.loc 1 352 0 discriminator 3
+ 278 0060 BB68     		ldr	r3, [r7, #8]
+ 279 0062 0433     		adds	r3, r3, #4
+ 280 0064 BB60     		str	r3, [r7, #8]
+ 349:Generated_Source\PSoC5/Cm3Start.c ****         for (count = 0u; count != limit; count += sizeof (uint32))
+ 281              		.loc 1 349 0 discriminator 3
+ 282 0066 7B68     		ldr	r3, [r7, #4]
+ 283 0068 0433     		adds	r3, r3, #4
+ 284 006a 7B60     		str	r3, [r7, #4]
+ 285              	.L17:
+ 349:Generated_Source\PSoC5/Cm3Start.c ****         for (count = 0u; count != limit; count += sizeof (uint32))
+ 286              		.loc 1 349 0 is_stmt 0 discriminator 1
+ 287 006c 7A68     		ldr	r2, [r7, #4]
+ 288 006e 3B68     		ldr	r3, [r7]
+ 289 0070 9A42     		cmp	r2, r3
+ 290 0072 F2D1     		bne	.L18
+ 353:Generated_Source\PSoC5/Cm3Start.c ****         }
+ 354:Generated_Source\PSoC5/Cm3Start.c **** 
+ 355:Generated_Source\PSoC5/Cm3Start.c ****         rptr++;
+ 291              		.loc 1 355 0 is_stmt 1 discriminator 2
+ 292 0074 3B69     		ldr	r3, [r7, #16]
+ 293 0076 1033     		adds	r3, r3, #16
+ 294 0078 3B61     		str	r3, [r7, #16]
+ 295              	.LBE2:
+ 335:Generated_Source\PSoC5/Cm3Start.c ****     {
+ 296              		.loc 1 335 0 discriminator 2
+ 297 007a 7B69     		ldr	r3, [r7, #20]
+ 298 007c 013B     		subs	r3, r3, #1
+ 299 007e 7B61     		str	r3, [r7, #20]
+ 300              	.L14:
+ 335:Generated_Source\PSoC5/Cm3Start.c ****     {
+ 301              		.loc 1 335 0 is_stmt 0 discriminator 1
+ 302 0080 7B69     		ldr	r3, [r7, #20]
+ 303 0082 002B     		cmp	r3, #0
+ 304 0084 C6D1     		bne	.L19
+ 356:Generated_Source\PSoC5/Cm3Start.c ****     }
+ 357:Generated_Source\PSoC5/Cm3Start.c **** 
+ 358:Generated_Source\PSoC5/Cm3Start.c ****     /* Invoke static objects constructors */
+ 359:Generated_Source\PSoC5/Cm3Start.c ****     __libc_init_array();
+ 305              		.loc 1 359 0 is_stmt 1
+ 306 0086 FFF7FEFF 		bl	__libc_init_array
+ 360:Generated_Source\PSoC5/Cm3Start.c ****     (void) main();
+ 307              		.loc 1 360 0
+ 308 008a FFF7FEFF 		bl	main
+ 309              	.L20:
+ 361:Generated_Source\PSoC5/Cm3Start.c **** 
+ 362:Generated_Source\PSoC5/Cm3Start.c ****     while (1)
+ 363:Generated_Source\PSoC5/Cm3Start.c ****     {
+ 364:Generated_Source\PSoC5/Cm3Start.c ****         /* If main returns, make sure we don't return. */
+ 365:Generated_Source\PSoC5/Cm3Start.c ****     }
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 13
+
+
+ 310              		.loc 1 365 0 discriminator 1
+ 311 008e FEE7     		b	.L20
+ 312              	.L22:
+ 313              		.align	2
+ 314              	.L21:
+ 315 0090 00000000 		.word	__cy_region_num
+ 316 0094 00000000 		.word	__cy_regions
+ 317              		.cfi_endproc
+ 318              	.LFE4:
+ 319              		.size	Start_c, .-Start_c
+ 320              		.global	RomVectors
+ 321              		.section	.romvectors,"a",%progbits
+ 322              		.align	2
+ 323              		.type	RomVectors, %object
+ 324              		.size	RomVectors, 16
+ 325              	RomVectors:
+ 326 0000 00000000 		.word	__cy_stack
+ 327 0004 00000000 		.word	Reset
+ 328 0008 00000000 		.word	IntDefaultHandler
+ 329 000c 00000000 		.word	IntDefaultHandler
+ 330              		.section	.text.initialize_psoc,"ax",%progbits
+ 331              		.align	2
+ 332              		.global	initialize_psoc
+ 333              		.thumb
+ 334              		.thumb_func
+ 335              		.type	initialize_psoc, %function
+ 336              	initialize_psoc:
+ 337              	.LFB5:
+ 366:Generated_Source\PSoC5/Cm3Start.c **** }
+ 367:Generated_Source\PSoC5/Cm3Start.c **** 
+ 368:Generated_Source\PSoC5/Cm3Start.c **** 
+ 369:Generated_Source\PSoC5/Cm3Start.c **** #elif defined (__ICCARM__)
+ 370:Generated_Source\PSoC5/Cm3Start.c **** 
+ 371:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+ 372:Generated_Source\PSoC5/Cm3Start.c **** * Function Name: __low_level_init
+ 373:Generated_Source\PSoC5/Cm3Start.c **** ****************************************************************************//**
+ 374:Generated_Source\PSoC5/Cm3Start.c **** *
+ 375:Generated_Source\PSoC5/Cm3Start.c **** *  This function performs early initializations for the IAR Embedded
+ 376:Generated_Source\PSoC5/Cm3Start.c **** *  Workbench IDE. It is executed in the context of a reset interrupt handler
+ 377:Generated_Source\PSoC5/Cm3Start.c **** *  before the data sections are initialized.
+ 378:Generated_Source\PSoC5/Cm3Start.c **** *
+ 379:Generated_Source\PSoC5/Cm3Start.c **** * \return
+ 380:Generated_Source\PSoC5/Cm3Start.c **** *  The value that determines whether or not data sections should be initialized
+ 381:Generated_Source\PSoC5/Cm3Start.c **** *  by the system startup code:
+ 382:Generated_Source\PSoC5/Cm3Start.c **** *    0 - skip data sections initialization;
+ 383:Generated_Source\PSoC5/Cm3Start.c **** *    1 - initialize data sections;
+ 384:Generated_Source\PSoC5/Cm3Start.c **** *
+ 385:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+ 386:Generated_Source\PSoC5/Cm3Start.c **** int __low_level_init(void)
+ 387:Generated_Source\PSoC5/Cm3Start.c **** {
+ 388:Generated_Source\PSoC5/Cm3Start.c ****     #if (CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLE && CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLE
+ 389:Generated_Source\PSoC5/Cm3Start.c **** 
+ 390:Generated_Source\PSoC5/Cm3Start.c ****         /* For PSoC 5LP, debugging is enabled by default */
+ 391:Generated_Source\PSoC5/Cm3Start.c ****         #if(CYDEV_DEBUGGING_ENABLE == 0)
+ 392:Generated_Source\PSoC5/Cm3Start.c ****             *(reg32 *)(CYDEV_DEBUG_ENABLE_REGISTER) |= CYDEV_DEBUG_ENABLE_MASK;
+ 393:Generated_Source\PSoC5/Cm3Start.c ****         #endif /* (CYDEV_DEBUGGING_ENABLE) */
+ 394:Generated_Source\PSoC5/Cm3Start.c **** 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 14
+
+
+ 395:Generated_Source\PSoC5/Cm3Start.c ****         /* Reset Status Register has Read-to-clear SW access mode.
+ 396:Generated_Source\PSoC5/Cm3Start.c ****         * Preserve current RESET_SR0 state to make it available for next reading.
+ 397:Generated_Source\PSoC5/Cm3Start.c ****         */
+ 398:Generated_Source\PSoC5/Cm3Start.c ****         *(reg32 *)(CYREG_PHUB_CFGMEM23_CFG1) = *(reg32 *)(CYREG_RESET_SR0);
+ 399:Generated_Source\PSoC5/Cm3Start.c **** 
+ 400:Generated_Source\PSoC5/Cm3Start.c ****     #endif  /* (CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLE && CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_L
+ 401:Generated_Source\PSoC5/Cm3Start.c **** 
+ 402:Generated_Source\PSoC5/Cm3Start.c ****     #if ((CYDEV_BOOTLOADER_ENABLE) && (CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLEANDBOOTLOADER))
+ 403:Generated_Source\PSoC5/Cm3Start.c ****         CyBtldr_CheckLaunch();
+ 404:Generated_Source\PSoC5/Cm3Start.c ****     #endif /* ((CYDEV_BOOTLOADER_ENABLE) && (CYDEV_PROJ_TYPE != CYDEV_PROJ_TYPE_LOADABLEANDBOOTLOAD
+ 405:Generated_Source\PSoC5/Cm3Start.c **** 
+ 406:Generated_Source\PSoC5/Cm3Start.c ****     /* Initialize data sections */
+ 407:Generated_Source\PSoC5/Cm3Start.c ****     __iar_data_init3();
+ 408:Generated_Source\PSoC5/Cm3Start.c **** 
+ 409:Generated_Source\PSoC5/Cm3Start.c ****     initialize_psoc();
+ 410:Generated_Source\PSoC5/Cm3Start.c **** 
+ 411:Generated_Source\PSoC5/Cm3Start.c ****     return 0;
+ 412:Generated_Source\PSoC5/Cm3Start.c **** }
+ 413:Generated_Source\PSoC5/Cm3Start.c **** 
+ 414:Generated_Source\PSoC5/Cm3Start.c **** #endif /* __GNUC__ */
+ 415:Generated_Source\PSoC5/Cm3Start.c **** 
+ 416:Generated_Source\PSoC5/Cm3Start.c **** 
+ 417:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+ 418:Generated_Source\PSoC5/Cm3Start.c **** *
+ 419:Generated_Source\PSoC5/Cm3Start.c **** * Default Rom Interrupt Vector table.
+ 420:Generated_Source\PSoC5/Cm3Start.c **** *
+ 421:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+ 422:Generated_Source\PSoC5/Cm3Start.c **** #if defined(__ARMCC_VERSION)
+ 423:Generated_Source\PSoC5/Cm3Start.c ****     /* Suppress diagnostic message 1296-D: extended constant initialiser used */
+ 424:Generated_Source\PSoC5/Cm3Start.c ****     #pragma diag_suppress 1296
+ 425:Generated_Source\PSoC5/Cm3Start.c **** #endif  /* defined(__ARMCC_VERSION) */
+ 426:Generated_Source\PSoC5/Cm3Start.c **** 
+ 427:Generated_Source\PSoC5/Cm3Start.c **** #if defined (__ICCARM__)
+ 428:Generated_Source\PSoC5/Cm3Start.c ****     #pragma location=".romvectors"
+ 429:Generated_Source\PSoC5/Cm3Start.c ****     const intvec_elem __vector_table[CY_NUM_ROM_VECTORS] =
+ 430:Generated_Source\PSoC5/Cm3Start.c **** #else
+ 431:Generated_Source\PSoC5/Cm3Start.c ****     CY_SECTION(".romvectors")
+ 432:Generated_Source\PSoC5/Cm3Start.c ****     const cyisraddress RomVectors[CY_NUM_ROM_VECTORS] =
+ 433:Generated_Source\PSoC5/Cm3Start.c **** #endif  /* defined (__ICCARM__) */
+ 434:Generated_Source\PSoC5/Cm3Start.c **** {
+ 435:Generated_Source\PSoC5/Cm3Start.c ****     INITIAL_STACK_POINTER,   /* Initial stack pointer  0 */
+ 436:Generated_Source\PSoC5/Cm3Start.c ****     #if defined (__ICCARM__) /* Reset handler          1 */
+ 437:Generated_Source\PSoC5/Cm3Start.c ****         __iar_program_start,
+ 438:Generated_Source\PSoC5/Cm3Start.c ****     #else
+ 439:Generated_Source\PSoC5/Cm3Start.c ****         (cyisraddress)&Reset,
+ 440:Generated_Source\PSoC5/Cm3Start.c ****     #endif  /* defined (__ICCARM__) */
+ 441:Generated_Source\PSoC5/Cm3Start.c ****     &IntDefaultHandler,      /* NMI handler            2 */
+ 442:Generated_Source\PSoC5/Cm3Start.c ****     &IntDefaultHandler,      /* Hard fault handler     3 */
+ 443:Generated_Source\PSoC5/Cm3Start.c **** };
+ 444:Generated_Source\PSoC5/Cm3Start.c **** 
+ 445:Generated_Source\PSoC5/Cm3Start.c **** #if defined(__ARMCC_VERSION)
+ 446:Generated_Source\PSoC5/Cm3Start.c ****     #pragma diag_default 1296
+ 447:Generated_Source\PSoC5/Cm3Start.c **** #endif  /* defined(__ARMCC_VERSION) */
+ 448:Generated_Source\PSoC5/Cm3Start.c **** 
+ 449:Generated_Source\PSoC5/Cm3Start.c **** 
+ 450:Generated_Source\PSoC5/Cm3Start.c **** /*******************************************************************************
+ 451:Generated_Source\PSoC5/Cm3Start.c **** * Function Name: initialize_psoc
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 15
+
+
+ 452:Generated_Source\PSoC5/Cm3Start.c **** ****************************************************************************//**
+ 453:Generated_Source\PSoC5/Cm3Start.c **** *
+ 454:Generated_Source\PSoC5/Cm3Start.c **** *  This function used to initialize the PSoC chip before calling main.
+ 455:Generated_Source\PSoC5/Cm3Start.c **** *
+ 456:Generated_Source\PSoC5/Cm3Start.c **** *******************************************************************************/
+ 457:Generated_Source\PSoC5/Cm3Start.c **** #if (defined(__GNUC__) && !defined(__ARMCC_VERSION))
+ 458:Generated_Source\PSoC5/Cm3Start.c **** __attribute__ ((constructor(101)))
+ 459:Generated_Source\PSoC5/Cm3Start.c **** #endif
+ 460:Generated_Source\PSoC5/Cm3Start.c **** void initialize_psoc(void)
+ 461:Generated_Source\PSoC5/Cm3Start.c **** {
+ 338              		.loc 1 461 0
+ 339              		.cfi_startproc
+ 340              		@ args = 0, pretend = 0, frame = 8
+ 341              		@ frame_needed = 1, uses_anonymous_args = 0
+ 342 0000 80B5     		push	{r7, lr}
+ 343              		.cfi_def_cfa_offset 8
+ 344              		.cfi_offset 7, -8
+ 345              		.cfi_offset 14, -4
+ 346 0002 82B0     		sub	sp, sp, #8
+ 347              		.cfi_def_cfa_offset 16
+ 348 0004 00AF     		add	r7, sp, #0
+ 349              		.cfi_def_cfa_register 7
+ 462:Generated_Source\PSoC5/Cm3Start.c ****     uint32 i;
+ 463:Generated_Source\PSoC5/Cm3Start.c **** 
+ 464:Generated_Source\PSoC5/Cm3Start.c ****     /* Set Priority group 5. */
+ 465:Generated_Source\PSoC5/Cm3Start.c **** 
+ 466:Generated_Source\PSoC5/Cm3Start.c ****     /* Writes to NVIC_APINT register require the VECTKEY in the upper half */
+ 467:Generated_Source\PSoC5/Cm3Start.c ****     *CY_NVIC_APINT_PTR = CY_NVIC_APINT_VECTKEY | CY_NVIC_APINT_PRIGROUP_3_5;
+ 350              		.loc 1 467 0
+ 351 0006 184B     		ldr	r3, .L28
+ 352 0008 184A     		ldr	r2, .L28+4
+ 353 000a 1A60     		str	r2, [r3]
+ 468:Generated_Source\PSoC5/Cm3Start.c ****     *CY_NVIC_CFG_CTRL_PTR |= CY_NVIC_CFG_STACKALIGN;
+ 354              		.loc 1 468 0
+ 355 000c 184A     		ldr	r2, .L28+8
+ 356 000e 184B     		ldr	r3, .L28+8
+ 357 0010 1B68     		ldr	r3, [r3]
+ 358 0012 43F40073 		orr	r3, r3, #512
+ 359 0016 1360     		str	r3, [r2]
+ 469:Generated_Source\PSoC5/Cm3Start.c **** 
+ 470:Generated_Source\PSoC5/Cm3Start.c ****     /* Set Ram interrupt vectors to default functions. */
+ 471:Generated_Source\PSoC5/Cm3Start.c ****     for (i = 0u; i < CY_NUM_VECTORS; i++)
+ 360              		.loc 1 471 0
+ 361 0018 0023     		movs	r3, #0
+ 362 001a 7B60     		str	r3, [r7, #4]
+ 363 001c 0FE0     		b	.L24
+ 364              	.L27:
+ 472:Generated_Source\PSoC5/Cm3Start.c ****     {
+ 473:Generated_Source\PSoC5/Cm3Start.c ****         #if defined (__ICCARM__)
+ 474:Generated_Source\PSoC5/Cm3Start.c ****             CyRamVectors[i] = (i < CY_NUM_ROM_VECTORS) ? __vector_table[i].__fun : &IntDefaultHandl
+ 475:Generated_Source\PSoC5/Cm3Start.c ****         #else
+ 476:Generated_Source\PSoC5/Cm3Start.c ****             CyRamVectors[i] = (i < CY_NUM_ROM_VECTORS) ? RomVectors[i] : &IntDefaultHandler;
+ 365              		.loc 1 476 0
+ 366 001e 7B68     		ldr	r3, [r7, #4]
+ 367 0020 032B     		cmp	r3, #3
+ 368 0022 04D8     		bhi	.L25
+ 369              		.loc 1 476 0 is_stmt 0 discriminator 1
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 16
+
+
+ 370 0024 134A     		ldr	r2, .L28+12
+ 371 0026 7B68     		ldr	r3, [r7, #4]
+ 372 0028 52F82330 		ldr	r3, [r2, r3, lsl #2]
+ 373 002c 00E0     		b	.L26
+ 374              	.L25:
+ 375              		.loc 1 476 0 discriminator 2
+ 376 002e 124B     		ldr	r3, .L28+16
+ 377              	.L26:
+ 378              		.loc 1 476 0 discriminator 4
+ 379 0030 1249     		ldr	r1, .L28+20
+ 380 0032 7A68     		ldr	r2, [r7, #4]
+ 381 0034 41F82230 		str	r3, [r1, r2, lsl #2]
+ 471:Generated_Source\PSoC5/Cm3Start.c ****     {
+ 382              		.loc 1 471 0 is_stmt 1 discriminator 4
+ 383 0038 7B68     		ldr	r3, [r7, #4]
+ 384 003a 0133     		adds	r3, r3, #1
+ 385 003c 7B60     		str	r3, [r7, #4]
+ 386              	.L24:
+ 471:Generated_Source\PSoC5/Cm3Start.c ****     {
+ 387              		.loc 1 471 0 is_stmt 0 discriminator 2
+ 388 003e 7B68     		ldr	r3, [r7, #4]
+ 389 0040 2F2B     		cmp	r3, #47
+ 390 0042 ECD9     		bls	.L27
+ 477:Generated_Source\PSoC5/Cm3Start.c ****         #endif  /* defined (__ICCARM__) */
+ 478:Generated_Source\PSoC5/Cm3Start.c ****     }
+ 479:Generated_Source\PSoC5/Cm3Start.c **** 
+ 480:Generated_Source\PSoC5/Cm3Start.c ****     /* Was stored in CFGMEM to avoid being cleared while SRAM gets cleared */
+ 481:Generated_Source\PSoC5/Cm3Start.c ****     CyResetStatus = CY_GET_REG8(CYREG_PHUB_CFGMEM23_CFG1);
+ 391              		.loc 1 481 0 is_stmt 1
+ 392 0044 0E4B     		ldr	r3, .L28+24
+ 393 0046 1B78     		ldrb	r3, [r3]
+ 394 0048 DAB2     		uxtb	r2, r3
+ 395 004a 0E4B     		ldr	r3, .L28+28
+ 396 004c 1A70     		strb	r2, [r3]
+ 482:Generated_Source\PSoC5/Cm3Start.c **** 
+ 483:Generated_Source\PSoC5/Cm3Start.c ****     /* Point NVIC at RAM vector table. */
+ 484:Generated_Source\PSoC5/Cm3Start.c ****     *CYINT_VECT_TABLE = CyRamVectors;
+ 397              		.loc 1 484 0
+ 398 004e 0E4B     		ldr	r3, .L28+32
+ 399 0050 0A4A     		ldr	r2, .L28+20
+ 400 0052 1A60     		str	r2, [r3]
+ 485:Generated_Source\PSoC5/Cm3Start.c **** 
+ 486:Generated_Source\PSoC5/Cm3Start.c ****     /* Initialize the configuration registers. */
+ 487:Generated_Source\PSoC5/Cm3Start.c ****     cyfitter_cfg();
+ 401              		.loc 1 487 0
+ 402 0054 FFF7FEFF 		bl	cyfitter_cfg
+ 488:Generated_Source\PSoC5/Cm3Start.c **** 
+ 489:Generated_Source\PSoC5/Cm3Start.c ****     #if(0u != DMA_CHANNELS_USED__MASK0)
+ 490:Generated_Source\PSoC5/Cm3Start.c **** 
+ 491:Generated_Source\PSoC5/Cm3Start.c ****         /* Setup DMA - only necessary if design contains DMA component. */
+ 492:Generated_Source\PSoC5/Cm3Start.c ****         CyDmacConfigure();
+ 493:Generated_Source\PSoC5/Cm3Start.c **** 
+ 494:Generated_Source\PSoC5/Cm3Start.c ****     #endif  /* (0u != DMA_CHANNELS_USED__MASK0) */
+ 495:Generated_Source\PSoC5/Cm3Start.c **** 
+ 496:Generated_Source\PSoC5/Cm3Start.c ****     #if !defined (__ICCARM__)
+ 497:Generated_Source\PSoC5/Cm3Start.c ****         /* Actually, no need to clean this variable, just to make compiler happy. */
+ 498:Generated_Source\PSoC5/Cm3Start.c ****         cySysNoInitDataValid = 0u;
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 17
+
+
+ 403              		.loc 1 498 0
+ 404 0058 0C4B     		ldr	r3, .L28+36
+ 405 005a 0022     		movs	r2, #0
+ 406 005c 1A60     		str	r2, [r3]
+ 499:Generated_Source\PSoC5/Cm3Start.c ****     #endif  /* !defined (__ICCARM__) */
+ 500:Generated_Source\PSoC5/Cm3Start.c **** }
+ 407              		.loc 1 500 0
+ 408 005e 00BF     		nop
+ 409 0060 0837     		adds	r7, r7, #8
+ 410              		.cfi_def_cfa_offset 8
+ 411 0062 BD46     		mov	sp, r7
+ 412              		.cfi_def_cfa_register 13
+ 413              		@ sp needed
+ 414 0064 80BD     		pop	{r7, pc}
+ 415              	.L29:
+ 416 0066 00BF     		.align	2
+ 417              	.L28:
+ 418 0068 0CED00E0 		.word	-536810228
+ 419 006c 0004FA05 		.word	100271104
+ 420 0070 14ED00E0 		.word	-536810220
+ 421 0074 00000000 		.word	RomVectors
+ 422 0078 00000000 		.word	IntDefaultHandler
+ 423 007c 00000000 		.word	CyRamVectors
+ 424 0080 BC760040 		.word	1073772220
+ 425 0084 00000000 		.word	CyResetStatus
+ 426 0088 08ED00E0 		.word	-536810232
+ 427 008c 00000000 		.word	cySysNoInitDataValid
+ 428              		.cfi_endproc
+ 429              	.LFE5:
+ 430              		.size	initialize_psoc, .-initialize_psoc
+ 431              		.section	.init_array,"aw",%init_array
+ 432              		.align	2
+ 433 0000 00000000 		.word	initialize_psoc(target1)
+ 434              		.data
+ 435              		.align	2
+ 436              		.type	heapPointer.5064, %object
+ 437              		.size	heapPointer.5064, 4
+ 438              	heapPointer.5064:
+ 439 0000 00000000 		.word	end
+ 440              		.weak	__cy_region_num
+ 441              		.text
+ 442              	.Letext0:
+ 443              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 444              		.file 3 "Generated_Source\\PSoC5\\cytypes.h"
+ 445              		.file 4 "Generated_Source\\PSoC5\\CyLib.h"
+ 446              		.section	.debug_info,"",%progbits
+ 447              	.Ldebug_info0:
+ 448 0000 27030000 		.4byte	0x327
+ 449 0004 0400     		.2byte	0x4
+ 450 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 451 000a 04       		.byte	0x4
+ 452 000b 01       		.uleb128 0x1
+ 453 000c 0D000000 		.4byte	.LASF44
+ 454 0010 0C       		.byte	0xc
+ 455 0011 77010000 		.4byte	.LASF45
+ 456 0015 E1010000 		.4byte	.LASF46
+ 457 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 18
+
+
+ 458 001d 00000000 		.4byte	0
+ 459 0021 00000000 		.4byte	.Ldebug_line0
+ 460 0025 02       		.uleb128 0x2
+ 461 0026 01       		.byte	0x1
+ 462 0027 06       		.byte	0x6
+ 463 0028 A4020000 		.4byte	.LASF0
+ 464 002c 02       		.uleb128 0x2
+ 465 002d 01       		.byte	0x1
+ 466 002e 08       		.byte	0x8
+ 467 002f 19010000 		.4byte	.LASF1
+ 468 0033 02       		.uleb128 0x2
+ 469 0034 02       		.byte	0x2
+ 470 0035 05       		.byte	0x5
+ 471 0036 85020000 		.4byte	.LASF2
+ 472 003a 02       		.uleb128 0x2
+ 473 003b 02       		.byte	0x2
+ 474 003c 07       		.byte	0x7
+ 475 003d D0000000 		.4byte	.LASF3
+ 476 0041 02       		.uleb128 0x2
+ 477 0042 04       		.byte	0x4
+ 478 0043 05       		.byte	0x5
+ 479 0044 8F020000 		.4byte	.LASF4
+ 480 0048 02       		.uleb128 0x2
+ 481 0049 04       		.byte	0x4
+ 482 004a 07       		.byte	0x7
+ 483 004b 3E010000 		.4byte	.LASF5
+ 484 004f 02       		.uleb128 0x2
+ 485 0050 08       		.byte	0x8
+ 486 0051 05       		.byte	0x5
+ 487 0052 72020000 		.4byte	.LASF6
+ 488 0056 02       		.uleb128 0x2
+ 489 0057 08       		.byte	0x8
+ 490 0058 07       		.byte	0x7
+ 491 0059 CA010000 		.4byte	.LASF7
+ 492 005d 03       		.uleb128 0x3
+ 493 005e 04       		.byte	0x4
+ 494 005f 05       		.byte	0x5
+ 495 0060 696E7400 		.ascii	"int\000"
+ 496 0064 02       		.uleb128 0x2
+ 497 0065 04       		.byte	0x4
+ 498 0066 07       		.byte	0x7
+ 499 0067 BD010000 		.4byte	.LASF8
+ 500 006b 04       		.uleb128 0x4
+ 501 006c 06000000 		.4byte	.LASF10
+ 502 0070 02       		.byte	0x2
+ 503 0071 D8       		.byte	0xd8
+ 504 0072 64000000 		.4byte	0x64
+ 505 0076 02       		.uleb128 0x2
+ 506 0077 08       		.byte	0x8
+ 507 0078 04       		.byte	0x4
+ 508 0079 98020000 		.4byte	.LASF9
+ 509 007d 05       		.uleb128 0x5
+ 510 007e 65010000 		.4byte	.LASF11
+ 511 0082 03       		.byte	0x3
+ 512 0083 9201     		.2byte	0x192
+ 513 0085 2C000000 		.4byte	0x2c
+ 514 0089 05       		.uleb128 0x5
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 19
+
+
+ 515 008a B6010000 		.4byte	.LASF12
+ 516 008e 03       		.byte	0x3
+ 517 008f 9401     		.2byte	0x194
+ 518 0091 48000000 		.4byte	0x48
+ 519 0095 02       		.uleb128 0x2
+ 520 0096 04       		.byte	0x4
+ 521 0097 04       		.byte	0x4
+ 522 0098 0E010000 		.4byte	.LASF13
+ 523 009c 02       		.uleb128 0x2
+ 524 009d 08       		.byte	0x8
+ 525 009e 04       		.byte	0x4
+ 526 009f 9F010000 		.4byte	.LASF14
+ 527 00a3 02       		.uleb128 0x2
+ 528 00a4 01       		.byte	0x1
+ 529 00a5 08       		.byte	0x8
+ 530 00a6 80020000 		.4byte	.LASF15
+ 531 00aa 05       		.uleb128 0x5
+ 532 00ab 64020000 		.4byte	.LASF16
+ 533 00af 03       		.byte	0x3
+ 534 00b0 3C02     		.2byte	0x23c
+ 535 00b2 B6000000 		.4byte	0xb6
+ 536 00b6 06       		.uleb128 0x6
+ 537 00b7 7D000000 		.4byte	0x7d
+ 538 00bb 05       		.uleb128 0x5
+ 539 00bc 00000000 		.4byte	.LASF17
+ 540 00c0 03       		.byte	0x3
+ 541 00c1 3E02     		.2byte	0x23e
+ 542 00c3 C7000000 		.4byte	0xc7
+ 543 00c7 06       		.uleb128 0x6
+ 544 00c8 89000000 		.4byte	0x89
+ 545 00cc 05       		.uleb128 0x5
+ 546 00cd 3C020000 		.4byte	.LASF18
+ 547 00d1 03       		.byte	0x3
+ 548 00d2 4E02     		.2byte	0x24e
+ 549 00d4 D8000000 		.4byte	0xd8
+ 550 00d8 07       		.uleb128 0x7
+ 551 00d9 04       		.byte	0x4
+ 552 00da DE000000 		.4byte	0xde
+ 553 00de 08       		.uleb128 0x8
+ 554 00df 02       		.uleb128 0x2
+ 555 00e0 04       		.byte	0x4
+ 556 00e1 07       		.byte	0x7
+ 557 00e2 69020000 		.4byte	.LASF19
+ 558 00e6 09       		.uleb128 0x9
+ 559 00e7 04       		.byte	0x4
+ 560 00e8 0A       		.uleb128 0xa
+ 561 00e9 A3000000 		.4byte	0xa3
+ 562 00ed 04       		.uleb128 0x4
+ 563 00ee 53020000 		.4byte	.LASF20
+ 564 00f2 01       		.byte	0x1
+ 565 00f3 CF       		.byte	0xcf
+ 566 00f4 2C000000 		.4byte	0x2c
+ 567 00f8 0B       		.uleb128 0xb
+ 568 00f9 DE020000 		.4byte	.LASF47
+ 569 00fd 10       		.byte	0x10
+ 570 00fe 01       		.byte	0x1
+ 571 00ff D1       		.byte	0xd1
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 20
+
+
+ 572 0100 35010000 		.4byte	0x135
+ 573 0104 0C       		.uleb128 0xc
+ 574 0105 F3000000 		.4byte	.LASF21
+ 575 0109 01       		.byte	0x1
+ 576 010a D3       		.byte	0xd3
+ 577 010b 35010000 		.4byte	0x135
+ 578 010f 00       		.byte	0
+ 579 0110 0C       		.uleb128 0xc
+ 580 0111 14010000 		.4byte	.LASF22
+ 581 0115 01       		.byte	0x1
+ 582 0116 D4       		.byte	0xd4
+ 583 0117 35010000 		.4byte	0x135
+ 584 011b 04       		.byte	0x4
+ 585 011c 0C       		.uleb128 0xc
+ 586 011d 49020000 		.4byte	.LASF23
+ 587 0121 01       		.byte	0x1
+ 588 0122 D5       		.byte	0xd5
+ 589 0123 6B000000 		.4byte	0x6b
+ 590 0127 08       		.byte	0x8
+ 591 0128 0C       		.uleb128 0xc
+ 592 0129 FF000000 		.4byte	.LASF24
+ 593 012d 01       		.byte	0x1
+ 594 012e D6       		.byte	0xd6
+ 595 012f 6B000000 		.4byte	0x6b
+ 596 0133 0C       		.byte	0xc
+ 597 0134 00       		.byte	0
+ 598 0135 07       		.uleb128 0x7
+ 599 0136 04       		.byte	0x4
+ 600 0137 ED000000 		.4byte	0xed
+ 601 013b 0D       		.uleb128 0xd
+ 602 013c B0020000 		.4byte	.LASF31
+ 603 0140 01       		.byte	0x1
+ 604 0141 5B       		.byte	0x5b
+ 605 0142 00000000 		.4byte	.LFB0
+ 606 0146 14000000 		.4byte	.LFE0-.LFB0
+ 607 014a 01       		.uleb128 0x1
+ 608 014b 9C       		.byte	0x9c
+ 609 014c 0E       		.uleb128 0xe
+ 610 014d 71010000 		.4byte	.LASF25
+ 611 0151 01       		.byte	0x1
+ 612 0152 EF       		.byte	0xef
+ 613 0153 00000000 		.4byte	.LFB1
+ 614 0157 14000000 		.4byte	.LFE1-.LFB1
+ 615 015b 01       		.uleb128 0x1
+ 616 015c 9C       		.byte	0x9c
+ 617 015d 70010000 		.4byte	0x170
+ 618 0161 0F       		.uleb128 0xf
+ 619 0162 F8000000 		.4byte	.LASF27
+ 620 0166 01       		.byte	0x1
+ 621 0167 EF       		.byte	0xef
+ 622 0168 5D000000 		.4byte	0x5d
+ 623 016c 02       		.uleb128 0x2
+ 624 016d 91       		.byte	0x91
+ 625 016e 74       		.sleb128 -12
+ 626 016f 00       		.byte	0
+ 627 0170 10       		.uleb128 0x10
+ 628 0171 99010000 		.4byte	.LASF26
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 21
+
+
+ 629 0175 01       		.byte	0x1
+ 630 0176 0801     		.2byte	0x108
+ 631 0178 E6000000 		.4byte	0xe6
+ 632 017c 00000000 		.4byte	.LFB2
+ 633 0180 54000000 		.4byte	.LFE2-.LFB2
+ 634 0184 01       		.uleb128 0x1
+ 635 0185 9C       		.byte	0x9c
+ 636 0186 C7010000 		.4byte	0x1c7
+ 637 018a 11       		.uleb128 0x11
+ 638 018b D7020000 		.4byte	.LASF28
+ 639 018f 01       		.byte	0x1
+ 640 0190 0801     		.2byte	0x108
+ 641 0192 5D000000 		.4byte	0x5d
+ 642 0196 02       		.uleb128 0x2
+ 643 0197 91       		.byte	0x91
+ 644 0198 6C       		.sleb128 -20
+ 645 0199 12       		.uleb128 0x12
+ 646 019a 656E6400 		.ascii	"end\000"
+ 647 019e 01       		.byte	0x1
+ 648 019f 0A01     		.2byte	0x10a
+ 649 01a1 5D000000 		.4byte	0x5d
+ 650 01a5 13       		.uleb128 0x13
+ 651 01a6 27010000 		.4byte	.LASF29
+ 652 01aa 01       		.byte	0x1
+ 653 01ab 0B01     		.2byte	0x10b
+ 654 01ad E6000000 		.4byte	0xe6
+ 655 01b1 02       		.uleb128 0x2
+ 656 01b2 91       		.byte	0x91
+ 657 01b3 74       		.sleb128 -12
+ 658 01b4 13       		.uleb128 0x13
+ 659 01b5 C4000000 		.4byte	.LASF30
+ 660 01b9 01       		.byte	0x1
+ 661 01ba 0E01     		.2byte	0x10e
+ 662 01bc C7010000 		.4byte	0x1c7
+ 663 01c0 05       		.uleb128 0x5
+ 664 01c1 03       		.byte	0x3
+ 665 01c2 00000000 		.4byte	heapPointer.5064
+ 666 01c6 00       		.byte	0
+ 667 01c7 07       		.uleb128 0x7
+ 668 01c8 04       		.byte	0x4
+ 669 01c9 7D000000 		.4byte	0x7d
+ 670 01cd 14       		.uleb128 0x14
+ 671 01ce 6B010000 		.4byte	.LASF32
+ 672 01d2 01       		.byte	0x1
+ 673 01d3 2701     		.2byte	0x127
+ 674 01d5 00000000 		.4byte	.LFB3
+ 675 01d9 08000000 		.4byte	.LFE3-.LFB3
+ 676 01dd 01       		.uleb128 0x1
+ 677 01de 9C       		.byte	0x9c
+ 678 01df 15       		.uleb128 0x15
+ 679 01e0 B6000000 		.4byte	.LASF33
+ 680 01e4 01       		.byte	0x1
+ 681 01e5 4901     		.2byte	0x149
+ 682 01e7 00000000 		.4byte	.LFB4
+ 683 01eb 98000000 		.4byte	.LFE4-.LFB4
+ 684 01ef 01       		.uleb128 0x1
+ 685 01f0 9C       		.byte	0x9c
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 22
+
+
+ 686 01f1 5A020000 		.4byte	0x25a
+ 687 01f5 13       		.uleb128 0x13
+ 688 01f6 CF020000 		.4byte	.LASF34
+ 689 01fa 01       		.byte	0x1
+ 690 01fb 4B01     		.2byte	0x14b
+ 691 01fd 64000000 		.4byte	0x64
+ 692 0201 02       		.uleb128 0x2
+ 693 0202 91       		.byte	0x91
+ 694 0203 74       		.sleb128 -12
+ 695 0204 13       		.uleb128 0x13
+ 696 0205 09010000 		.4byte	.LASF35
+ 697 0209 01       		.byte	0x1
+ 698 020a 4C01     		.2byte	0x14c
+ 699 020c 5A020000 		.4byte	0x25a
+ 700 0210 02       		.uleb128 0x2
+ 701 0211 91       		.byte	0x91
+ 702 0212 70       		.sleb128 -16
+ 703 0213 16       		.uleb128 0x16
+ 704 0214 14000000 		.4byte	.LBB2
+ 705 0218 66000000 		.4byte	.LBE2-.LBB2
+ 706 021c 17       		.uleb128 0x17
+ 707 021d 73726300 		.ascii	"src\000"
+ 708 0221 01       		.byte	0x1
+ 709 0222 5101     		.2byte	0x151
+ 710 0224 65020000 		.4byte	0x265
+ 711 0228 02       		.uleb128 0x2
+ 712 0229 91       		.byte	0x91
+ 713 022a 6C       		.sleb128 -20
+ 714 022b 17       		.uleb128 0x17
+ 715 022c 64737400 		.ascii	"dst\000"
+ 716 0230 01       		.byte	0x1
+ 717 0231 5201     		.2byte	0x152
+ 718 0233 65020000 		.4byte	0x265
+ 719 0237 02       		.uleb128 0x2
+ 720 0238 91       		.byte	0x91
+ 721 0239 68       		.sleb128 -24
+ 722 023a 13       		.uleb128 0x13
+ 723 023b 36020000 		.4byte	.LASF36
+ 724 023f 01       		.byte	0x1
+ 725 0240 5301     		.2byte	0x153
+ 726 0242 64000000 		.4byte	0x64
+ 727 0246 02       		.uleb128 0x2
+ 728 0247 91       		.byte	0x91
+ 729 0248 60       		.sleb128 -32
+ 730 0249 13       		.uleb128 0x13
+ 731 024a BE000000 		.4byte	.LASF37
+ 732 024e 01       		.byte	0x1
+ 733 024f 5401     		.2byte	0x154
+ 734 0251 64000000 		.4byte	0x64
+ 735 0255 02       		.uleb128 0x2
+ 736 0256 91       		.byte	0x91
+ 737 0257 64       		.sleb128 -28
+ 738 0258 00       		.byte	0
+ 739 0259 00       		.byte	0
+ 740 025a 07       		.uleb128 0x7
+ 741 025b 04       		.byte	0x4
+ 742 025c 60020000 		.4byte	0x260
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 23
+
+
+ 743 0260 0A       		.uleb128 0xa
+ 744 0261 F8000000 		.4byte	0xf8
+ 745 0265 07       		.uleb128 0x7
+ 746 0266 04       		.byte	0x4
+ 747 0267 89000000 		.4byte	0x89
+ 748 026b 18       		.uleb128 0x18
+ 749 026c A6010000 		.4byte	.LASF48
+ 750 0270 01       		.byte	0x1
+ 751 0271 CC01     		.2byte	0x1cc
+ 752 0273 00000000 		.4byte	.LFB5
+ 753 0277 90000000 		.4byte	.LFE5-.LFB5
+ 754 027b 01       		.uleb128 0x1
+ 755 027c 9C       		.byte	0x9c
+ 756 027d 8F020000 		.4byte	0x28f
+ 757 0281 17       		.uleb128 0x17
+ 758 0282 6900     		.ascii	"i\000"
+ 759 0284 01       		.byte	0x1
+ 760 0285 CE01     		.2byte	0x1ce
+ 761 0287 89000000 		.4byte	0x89
+ 762 028b 02       		.uleb128 0x2
+ 763 028c 91       		.byte	0x91
+ 764 028d 74       		.sleb128 -12
+ 765 028e 00       		.byte	0
+ 766 028f 19       		.uleb128 0x19
+ 767 0290 50010000 		.4byte	.LASF38
+ 768 0294 01       		.byte	0x1
+ 769 0295 3F       		.byte	0x3f
+ 770 0296 89000000 		.4byte	0x89
+ 771 029a 05       		.uleb128 0x5
+ 772 029b 03       		.byte	0x3
+ 773 029c 00000000 		.4byte	cySysNoInitDataValid
+ 774 02a0 1A       		.uleb128 0x1a
+ 775 02a1 A8000000 		.4byte	.LASF39
+ 776 02a5 04       		.byte	0x4
+ 777 02a6 2C       		.byte	0x2c
+ 778 02a7 7D000000 		.4byte	0x7d
+ 779 02ab 12       		.uleb128 0x12
+ 780 02ac 656E6400 		.ascii	"end\000"
+ 781 02b0 01       		.byte	0x1
+ 782 02b1 0A01     		.2byte	0x10a
+ 783 02b3 5D000000 		.4byte	0x5d
+ 784 02b7 1B       		.uleb128 0x1b
+ 785 02b8 CC000000 		.4byte	0xcc
+ 786 02bc C7020000 		.4byte	0x2c7
+ 787 02c0 1C       		.uleb128 0x1c
+ 788 02c1 DF000000 		.4byte	0xdf
+ 789 02c5 2F       		.byte	0x2f
+ 790 02c6 00       		.byte	0
+ 791 02c7 1D       		.uleb128 0x1d
+ 792 02c8 9B000000 		.4byte	.LASF40
+ 793 02cc 01       		.byte	0x1
+ 794 02cd 4D       		.byte	0x4d
+ 795 02ce B7020000 		.4byte	0x2b7
+ 796 02d2 05       		.uleb128 0x5
+ 797 02d3 03       		.byte	0x3
+ 798 02d4 00000000 		.4byte	CyRamVectors
+ 799 02d8 1B       		.uleb128 0x1b
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 24
+
+
+ 800 02d9 60020000 		.4byte	0x260
+ 801 02dd E3020000 		.4byte	0x2e3
+ 802 02e1 1E       		.uleb128 0x1e
+ 803 02e2 00       		.byte	0
+ 804 02e3 1A       		.uleb128 0x1a
+ 805 02e4 C2020000 		.4byte	.LASF41
+ 806 02e8 01       		.byte	0x1
+ 807 02e9 D9       		.byte	0xd9
+ 808 02ea EE020000 		.4byte	0x2ee
+ 809 02ee 0A       		.uleb128 0xa
+ 810 02ef D8020000 		.4byte	0x2d8
+ 811 02f3 1A       		.uleb128 0x1a
+ 812 02f4 E3000000 		.4byte	.LASF42
+ 813 02f8 01       		.byte	0x1
+ 814 02f9 DA       		.byte	0xda
+ 815 02fa E8000000 		.4byte	0xe8
+ 816 02fe 1B       		.uleb128 0x1b
+ 817 02ff 0E030000 		.4byte	0x30e
+ 818 0303 0E030000 		.4byte	0x30e
+ 819 0307 1C       		.uleb128 0x1c
+ 820 0308 DF000000 		.4byte	0xdf
+ 821 030c 03       		.byte	0x3
+ 822 030d 00       		.byte	0
+ 823 030e 0A       		.uleb128 0xa
+ 824 030f CC000000 		.4byte	0xcc
+ 825 0313 1F       		.uleb128 0x1f
+ 826 0314 33010000 		.4byte	.LASF43
+ 827 0318 01       		.byte	0x1
+ 828 0319 B001     		.2byte	0x1b0
+ 829 031b 25030000 		.4byte	0x325
+ 830 031f 05       		.uleb128 0x5
+ 831 0320 03       		.byte	0x3
+ 832 0321 00000000 		.4byte	RomVectors
+ 833 0325 0A       		.uleb128 0xa
+ 834 0326 FE020000 		.4byte	0x2fe
+ 835 032a 00       		.byte	0
+ 836              		.section	.debug_abbrev,"",%progbits
+ 837              	.Ldebug_abbrev0:
+ 838 0000 01       		.uleb128 0x1
+ 839 0001 11       		.uleb128 0x11
+ 840 0002 01       		.byte	0x1
+ 841 0003 25       		.uleb128 0x25
+ 842 0004 0E       		.uleb128 0xe
+ 843 0005 13       		.uleb128 0x13
+ 844 0006 0B       		.uleb128 0xb
+ 845 0007 03       		.uleb128 0x3
+ 846 0008 0E       		.uleb128 0xe
+ 847 0009 1B       		.uleb128 0x1b
+ 848 000a 0E       		.uleb128 0xe
+ 849 000b 55       		.uleb128 0x55
+ 850 000c 17       		.uleb128 0x17
+ 851 000d 11       		.uleb128 0x11
+ 852 000e 01       		.uleb128 0x1
+ 853 000f 10       		.uleb128 0x10
+ 854 0010 17       		.uleb128 0x17
+ 855 0011 00       		.byte	0
+ 856 0012 00       		.byte	0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 25
+
+
+ 857 0013 02       		.uleb128 0x2
+ 858 0014 24       		.uleb128 0x24
+ 859 0015 00       		.byte	0
+ 860 0016 0B       		.uleb128 0xb
+ 861 0017 0B       		.uleb128 0xb
+ 862 0018 3E       		.uleb128 0x3e
+ 863 0019 0B       		.uleb128 0xb
+ 864 001a 03       		.uleb128 0x3
+ 865 001b 0E       		.uleb128 0xe
+ 866 001c 00       		.byte	0
+ 867 001d 00       		.byte	0
+ 868 001e 03       		.uleb128 0x3
+ 869 001f 24       		.uleb128 0x24
+ 870 0020 00       		.byte	0
+ 871 0021 0B       		.uleb128 0xb
+ 872 0022 0B       		.uleb128 0xb
+ 873 0023 3E       		.uleb128 0x3e
+ 874 0024 0B       		.uleb128 0xb
+ 875 0025 03       		.uleb128 0x3
+ 876 0026 08       		.uleb128 0x8
+ 877 0027 00       		.byte	0
+ 878 0028 00       		.byte	0
+ 879 0029 04       		.uleb128 0x4
+ 880 002a 16       		.uleb128 0x16
+ 881 002b 00       		.byte	0
+ 882 002c 03       		.uleb128 0x3
+ 883 002d 0E       		.uleb128 0xe
+ 884 002e 3A       		.uleb128 0x3a
+ 885 002f 0B       		.uleb128 0xb
+ 886 0030 3B       		.uleb128 0x3b
+ 887 0031 0B       		.uleb128 0xb
+ 888 0032 49       		.uleb128 0x49
+ 889 0033 13       		.uleb128 0x13
+ 890 0034 00       		.byte	0
+ 891 0035 00       		.byte	0
+ 892 0036 05       		.uleb128 0x5
+ 893 0037 16       		.uleb128 0x16
+ 894 0038 00       		.byte	0
+ 895 0039 03       		.uleb128 0x3
+ 896 003a 0E       		.uleb128 0xe
+ 897 003b 3A       		.uleb128 0x3a
+ 898 003c 0B       		.uleb128 0xb
+ 899 003d 3B       		.uleb128 0x3b
+ 900 003e 05       		.uleb128 0x5
+ 901 003f 49       		.uleb128 0x49
+ 902 0040 13       		.uleb128 0x13
+ 903 0041 00       		.byte	0
+ 904 0042 00       		.byte	0
+ 905 0043 06       		.uleb128 0x6
+ 906 0044 35       		.uleb128 0x35
+ 907 0045 00       		.byte	0
+ 908 0046 49       		.uleb128 0x49
+ 909 0047 13       		.uleb128 0x13
+ 910 0048 00       		.byte	0
+ 911 0049 00       		.byte	0
+ 912 004a 07       		.uleb128 0x7
+ 913 004b 0F       		.uleb128 0xf
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 26
+
+
+ 914 004c 00       		.byte	0
+ 915 004d 0B       		.uleb128 0xb
+ 916 004e 0B       		.uleb128 0xb
+ 917 004f 49       		.uleb128 0x49
+ 918 0050 13       		.uleb128 0x13
+ 919 0051 00       		.byte	0
+ 920 0052 00       		.byte	0
+ 921 0053 08       		.uleb128 0x8
+ 922 0054 15       		.uleb128 0x15
+ 923 0055 00       		.byte	0
+ 924 0056 27       		.uleb128 0x27
+ 925 0057 19       		.uleb128 0x19
+ 926 0058 00       		.byte	0
+ 927 0059 00       		.byte	0
+ 928 005a 09       		.uleb128 0x9
+ 929 005b 0F       		.uleb128 0xf
+ 930 005c 00       		.byte	0
+ 931 005d 0B       		.uleb128 0xb
+ 932 005e 0B       		.uleb128 0xb
+ 933 005f 00       		.byte	0
+ 934 0060 00       		.byte	0
+ 935 0061 0A       		.uleb128 0xa
+ 936 0062 26       		.uleb128 0x26
+ 937 0063 00       		.byte	0
+ 938 0064 49       		.uleb128 0x49
+ 939 0065 13       		.uleb128 0x13
+ 940 0066 00       		.byte	0
+ 941 0067 00       		.byte	0
+ 942 0068 0B       		.uleb128 0xb
+ 943 0069 13       		.uleb128 0x13
+ 944 006a 01       		.byte	0x1
+ 945 006b 03       		.uleb128 0x3
+ 946 006c 0E       		.uleb128 0xe
+ 947 006d 0B       		.uleb128 0xb
+ 948 006e 0B       		.uleb128 0xb
+ 949 006f 3A       		.uleb128 0x3a
+ 950 0070 0B       		.uleb128 0xb
+ 951 0071 3B       		.uleb128 0x3b
+ 952 0072 0B       		.uleb128 0xb
+ 953 0073 01       		.uleb128 0x1
+ 954 0074 13       		.uleb128 0x13
+ 955 0075 00       		.byte	0
+ 956 0076 00       		.byte	0
+ 957 0077 0C       		.uleb128 0xc
+ 958 0078 0D       		.uleb128 0xd
+ 959 0079 00       		.byte	0
+ 960 007a 03       		.uleb128 0x3
+ 961 007b 0E       		.uleb128 0xe
+ 962 007c 3A       		.uleb128 0x3a
+ 963 007d 0B       		.uleb128 0xb
+ 964 007e 3B       		.uleb128 0x3b
+ 965 007f 0B       		.uleb128 0xb
+ 966 0080 49       		.uleb128 0x49
+ 967 0081 13       		.uleb128 0x13
+ 968 0082 38       		.uleb128 0x38
+ 969 0083 0B       		.uleb128 0xb
+ 970 0084 00       		.byte	0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 27
+
+
+ 971 0085 00       		.byte	0
+ 972 0086 0D       		.uleb128 0xd
+ 973 0087 2E       		.uleb128 0x2e
+ 974 0088 00       		.byte	0
+ 975 0089 3F       		.uleb128 0x3f
+ 976 008a 19       		.uleb128 0x19
+ 977 008b 03       		.uleb128 0x3
+ 978 008c 0E       		.uleb128 0xe
+ 979 008d 3A       		.uleb128 0x3a
+ 980 008e 0B       		.uleb128 0xb
+ 981 008f 3B       		.uleb128 0x3b
+ 982 0090 0B       		.uleb128 0xb
+ 983 0091 27       		.uleb128 0x27
+ 984 0092 19       		.uleb128 0x19
+ 985 0093 11       		.uleb128 0x11
+ 986 0094 01       		.uleb128 0x1
+ 987 0095 12       		.uleb128 0x12
+ 988 0096 06       		.uleb128 0x6
+ 989 0097 40       		.uleb128 0x40
+ 990 0098 18       		.uleb128 0x18
+ 991 0099 9642     		.uleb128 0x2116
+ 992 009b 19       		.uleb128 0x19
+ 993 009c 00       		.byte	0
+ 994 009d 00       		.byte	0
+ 995 009e 0E       		.uleb128 0xe
+ 996 009f 2E       		.uleb128 0x2e
+ 997 00a0 01       		.byte	0x1
+ 998 00a1 3F       		.uleb128 0x3f
+ 999 00a2 19       		.uleb128 0x19
+ 1000 00a3 03       		.uleb128 0x3
+ 1001 00a4 0E       		.uleb128 0xe
+ 1002 00a5 3A       		.uleb128 0x3a
+ 1003 00a6 0B       		.uleb128 0xb
+ 1004 00a7 3B       		.uleb128 0x3b
+ 1005 00a8 0B       		.uleb128 0xb
+ 1006 00a9 27       		.uleb128 0x27
+ 1007 00aa 19       		.uleb128 0x19
+ 1008 00ab 8701     		.uleb128 0x87
+ 1009 00ad 19       		.uleb128 0x19
+ 1010 00ae 11       		.uleb128 0x11
+ 1011 00af 01       		.uleb128 0x1
+ 1012 00b0 12       		.uleb128 0x12
+ 1013 00b1 06       		.uleb128 0x6
+ 1014 00b2 40       		.uleb128 0x40
+ 1015 00b3 18       		.uleb128 0x18
+ 1016 00b4 9642     		.uleb128 0x2116
+ 1017 00b6 19       		.uleb128 0x19
+ 1018 00b7 01       		.uleb128 0x1
+ 1019 00b8 13       		.uleb128 0x13
+ 1020 00b9 00       		.byte	0
+ 1021 00ba 00       		.byte	0
+ 1022 00bb 0F       		.uleb128 0xf
+ 1023 00bc 05       		.uleb128 0x5
+ 1024 00bd 00       		.byte	0
+ 1025 00be 03       		.uleb128 0x3
+ 1026 00bf 0E       		.uleb128 0xe
+ 1027 00c0 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 28
+
+
+ 1028 00c1 0B       		.uleb128 0xb
+ 1029 00c2 3B       		.uleb128 0x3b
+ 1030 00c3 0B       		.uleb128 0xb
+ 1031 00c4 49       		.uleb128 0x49
+ 1032 00c5 13       		.uleb128 0x13
+ 1033 00c6 02       		.uleb128 0x2
+ 1034 00c7 18       		.uleb128 0x18
+ 1035 00c8 00       		.byte	0
+ 1036 00c9 00       		.byte	0
+ 1037 00ca 10       		.uleb128 0x10
+ 1038 00cb 2E       		.uleb128 0x2e
+ 1039 00cc 01       		.byte	0x1
+ 1040 00cd 3F       		.uleb128 0x3f
+ 1041 00ce 19       		.uleb128 0x19
+ 1042 00cf 03       		.uleb128 0x3
+ 1043 00d0 0E       		.uleb128 0xe
+ 1044 00d1 3A       		.uleb128 0x3a
+ 1045 00d2 0B       		.uleb128 0xb
+ 1046 00d3 3B       		.uleb128 0x3b
+ 1047 00d4 05       		.uleb128 0x5
+ 1048 00d5 27       		.uleb128 0x27
+ 1049 00d6 19       		.uleb128 0x19
+ 1050 00d7 49       		.uleb128 0x49
+ 1051 00d8 13       		.uleb128 0x13
+ 1052 00d9 11       		.uleb128 0x11
+ 1053 00da 01       		.uleb128 0x1
+ 1054 00db 12       		.uleb128 0x12
+ 1055 00dc 06       		.uleb128 0x6
+ 1056 00dd 40       		.uleb128 0x40
+ 1057 00de 18       		.uleb128 0x18
+ 1058 00df 9642     		.uleb128 0x2116
+ 1059 00e1 19       		.uleb128 0x19
+ 1060 00e2 01       		.uleb128 0x1
+ 1061 00e3 13       		.uleb128 0x13
+ 1062 00e4 00       		.byte	0
+ 1063 00e5 00       		.byte	0
+ 1064 00e6 11       		.uleb128 0x11
+ 1065 00e7 05       		.uleb128 0x5
+ 1066 00e8 00       		.byte	0
+ 1067 00e9 03       		.uleb128 0x3
+ 1068 00ea 0E       		.uleb128 0xe
+ 1069 00eb 3A       		.uleb128 0x3a
+ 1070 00ec 0B       		.uleb128 0xb
+ 1071 00ed 3B       		.uleb128 0x3b
+ 1072 00ee 05       		.uleb128 0x5
+ 1073 00ef 49       		.uleb128 0x49
+ 1074 00f0 13       		.uleb128 0x13
+ 1075 00f1 02       		.uleb128 0x2
+ 1076 00f2 18       		.uleb128 0x18
+ 1077 00f3 00       		.byte	0
+ 1078 00f4 00       		.byte	0
+ 1079 00f5 12       		.uleb128 0x12
+ 1080 00f6 34       		.uleb128 0x34
+ 1081 00f7 00       		.byte	0
+ 1082 00f8 03       		.uleb128 0x3
+ 1083 00f9 08       		.uleb128 0x8
+ 1084 00fa 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 29
+
+
+ 1085 00fb 0B       		.uleb128 0xb
+ 1086 00fc 3B       		.uleb128 0x3b
+ 1087 00fd 05       		.uleb128 0x5
+ 1088 00fe 49       		.uleb128 0x49
+ 1089 00ff 13       		.uleb128 0x13
+ 1090 0100 3F       		.uleb128 0x3f
+ 1091 0101 19       		.uleb128 0x19
+ 1092 0102 3C       		.uleb128 0x3c
+ 1093 0103 19       		.uleb128 0x19
+ 1094 0104 00       		.byte	0
+ 1095 0105 00       		.byte	0
+ 1096 0106 13       		.uleb128 0x13
+ 1097 0107 34       		.uleb128 0x34
+ 1098 0108 00       		.byte	0
+ 1099 0109 03       		.uleb128 0x3
+ 1100 010a 0E       		.uleb128 0xe
+ 1101 010b 3A       		.uleb128 0x3a
+ 1102 010c 0B       		.uleb128 0xb
+ 1103 010d 3B       		.uleb128 0x3b
+ 1104 010e 05       		.uleb128 0x5
+ 1105 010f 49       		.uleb128 0x49
+ 1106 0110 13       		.uleb128 0x13
+ 1107 0111 02       		.uleb128 0x2
+ 1108 0112 18       		.uleb128 0x18
+ 1109 0113 00       		.byte	0
+ 1110 0114 00       		.byte	0
+ 1111 0115 14       		.uleb128 0x14
+ 1112 0116 2E       		.uleb128 0x2e
+ 1113 0117 00       		.byte	0
+ 1114 0118 3F       		.uleb128 0x3f
+ 1115 0119 19       		.uleb128 0x19
+ 1116 011a 03       		.uleb128 0x3
+ 1117 011b 0E       		.uleb128 0xe
+ 1118 011c 3A       		.uleb128 0x3a
+ 1119 011d 0B       		.uleb128 0xb
+ 1120 011e 3B       		.uleb128 0x3b
+ 1121 011f 05       		.uleb128 0x5
+ 1122 0120 27       		.uleb128 0x27
+ 1123 0121 19       		.uleb128 0x19
+ 1124 0122 11       		.uleb128 0x11
+ 1125 0123 01       		.uleb128 0x1
+ 1126 0124 12       		.uleb128 0x12
+ 1127 0125 06       		.uleb128 0x6
+ 1128 0126 40       		.uleb128 0x40
+ 1129 0127 18       		.uleb128 0x18
+ 1130 0128 9642     		.uleb128 0x2116
+ 1131 012a 19       		.uleb128 0x19
+ 1132 012b 00       		.byte	0
+ 1133 012c 00       		.byte	0
+ 1134 012d 15       		.uleb128 0x15
+ 1135 012e 2E       		.uleb128 0x2e
+ 1136 012f 01       		.byte	0x1
+ 1137 0130 3F       		.uleb128 0x3f
+ 1138 0131 19       		.uleb128 0x19
+ 1139 0132 03       		.uleb128 0x3
+ 1140 0133 0E       		.uleb128 0xe
+ 1141 0134 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 30
+
+
+ 1142 0135 0B       		.uleb128 0xb
+ 1143 0136 3B       		.uleb128 0x3b
+ 1144 0137 05       		.uleb128 0x5
+ 1145 0138 27       		.uleb128 0x27
+ 1146 0139 19       		.uleb128 0x19
+ 1147 013a 8701     		.uleb128 0x87
+ 1148 013c 19       		.uleb128 0x19
+ 1149 013d 11       		.uleb128 0x11
+ 1150 013e 01       		.uleb128 0x1
+ 1151 013f 12       		.uleb128 0x12
+ 1152 0140 06       		.uleb128 0x6
+ 1153 0141 40       		.uleb128 0x40
+ 1154 0142 18       		.uleb128 0x18
+ 1155 0143 9642     		.uleb128 0x2116
+ 1156 0145 19       		.uleb128 0x19
+ 1157 0146 01       		.uleb128 0x1
+ 1158 0147 13       		.uleb128 0x13
+ 1159 0148 00       		.byte	0
+ 1160 0149 00       		.byte	0
+ 1161 014a 16       		.uleb128 0x16
+ 1162 014b 0B       		.uleb128 0xb
+ 1163 014c 01       		.byte	0x1
+ 1164 014d 11       		.uleb128 0x11
+ 1165 014e 01       		.uleb128 0x1
+ 1166 014f 12       		.uleb128 0x12
+ 1167 0150 06       		.uleb128 0x6
+ 1168 0151 00       		.byte	0
+ 1169 0152 00       		.byte	0
+ 1170 0153 17       		.uleb128 0x17
+ 1171 0154 34       		.uleb128 0x34
+ 1172 0155 00       		.byte	0
+ 1173 0156 03       		.uleb128 0x3
+ 1174 0157 08       		.uleb128 0x8
+ 1175 0158 3A       		.uleb128 0x3a
+ 1176 0159 0B       		.uleb128 0xb
+ 1177 015a 3B       		.uleb128 0x3b
+ 1178 015b 05       		.uleb128 0x5
+ 1179 015c 49       		.uleb128 0x49
+ 1180 015d 13       		.uleb128 0x13
+ 1181 015e 02       		.uleb128 0x2
+ 1182 015f 18       		.uleb128 0x18
+ 1183 0160 00       		.byte	0
+ 1184 0161 00       		.byte	0
+ 1185 0162 18       		.uleb128 0x18
+ 1186 0163 2E       		.uleb128 0x2e
+ 1187 0164 01       		.byte	0x1
+ 1188 0165 3F       		.uleb128 0x3f
+ 1189 0166 19       		.uleb128 0x19
+ 1190 0167 03       		.uleb128 0x3
+ 1191 0168 0E       		.uleb128 0xe
+ 1192 0169 3A       		.uleb128 0x3a
+ 1193 016a 0B       		.uleb128 0xb
+ 1194 016b 3B       		.uleb128 0x3b
+ 1195 016c 05       		.uleb128 0x5
+ 1196 016d 27       		.uleb128 0x27
+ 1197 016e 19       		.uleb128 0x19
+ 1198 016f 11       		.uleb128 0x11
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 31
+
+
+ 1199 0170 01       		.uleb128 0x1
+ 1200 0171 12       		.uleb128 0x12
+ 1201 0172 06       		.uleb128 0x6
+ 1202 0173 40       		.uleb128 0x40
+ 1203 0174 18       		.uleb128 0x18
+ 1204 0175 9642     		.uleb128 0x2116
+ 1205 0177 19       		.uleb128 0x19
+ 1206 0178 01       		.uleb128 0x1
+ 1207 0179 13       		.uleb128 0x13
+ 1208 017a 00       		.byte	0
+ 1209 017b 00       		.byte	0
+ 1210 017c 19       		.uleb128 0x19
+ 1211 017d 34       		.uleb128 0x34
+ 1212 017e 00       		.byte	0
+ 1213 017f 03       		.uleb128 0x3
+ 1214 0180 0E       		.uleb128 0xe
+ 1215 0181 3A       		.uleb128 0x3a
+ 1216 0182 0B       		.uleb128 0xb
+ 1217 0183 3B       		.uleb128 0x3b
+ 1218 0184 0B       		.uleb128 0xb
+ 1219 0185 49       		.uleb128 0x49
+ 1220 0186 13       		.uleb128 0x13
+ 1221 0187 02       		.uleb128 0x2
+ 1222 0188 18       		.uleb128 0x18
+ 1223 0189 00       		.byte	0
+ 1224 018a 00       		.byte	0
+ 1225 018b 1A       		.uleb128 0x1a
+ 1226 018c 34       		.uleb128 0x34
+ 1227 018d 00       		.byte	0
+ 1228 018e 03       		.uleb128 0x3
+ 1229 018f 0E       		.uleb128 0xe
+ 1230 0190 3A       		.uleb128 0x3a
+ 1231 0191 0B       		.uleb128 0xb
+ 1232 0192 3B       		.uleb128 0x3b
+ 1233 0193 0B       		.uleb128 0xb
+ 1234 0194 49       		.uleb128 0x49
+ 1235 0195 13       		.uleb128 0x13
+ 1236 0196 3F       		.uleb128 0x3f
+ 1237 0197 19       		.uleb128 0x19
+ 1238 0198 3C       		.uleb128 0x3c
+ 1239 0199 19       		.uleb128 0x19
+ 1240 019a 00       		.byte	0
+ 1241 019b 00       		.byte	0
+ 1242 019c 1B       		.uleb128 0x1b
+ 1243 019d 01       		.uleb128 0x1
+ 1244 019e 01       		.byte	0x1
+ 1245 019f 49       		.uleb128 0x49
+ 1246 01a0 13       		.uleb128 0x13
+ 1247 01a1 01       		.uleb128 0x1
+ 1248 01a2 13       		.uleb128 0x13
+ 1249 01a3 00       		.byte	0
+ 1250 01a4 00       		.byte	0
+ 1251 01a5 1C       		.uleb128 0x1c
+ 1252 01a6 21       		.uleb128 0x21
+ 1253 01a7 00       		.byte	0
+ 1254 01a8 49       		.uleb128 0x49
+ 1255 01a9 13       		.uleb128 0x13
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 32
+
+
+ 1256 01aa 2F       		.uleb128 0x2f
+ 1257 01ab 0B       		.uleb128 0xb
+ 1258 01ac 00       		.byte	0
+ 1259 01ad 00       		.byte	0
+ 1260 01ae 1D       		.uleb128 0x1d
+ 1261 01af 34       		.uleb128 0x34
+ 1262 01b0 00       		.byte	0
+ 1263 01b1 03       		.uleb128 0x3
+ 1264 01b2 0E       		.uleb128 0xe
+ 1265 01b3 3A       		.uleb128 0x3a
+ 1266 01b4 0B       		.uleb128 0xb
+ 1267 01b5 3B       		.uleb128 0x3b
+ 1268 01b6 0B       		.uleb128 0xb
+ 1269 01b7 49       		.uleb128 0x49
+ 1270 01b8 13       		.uleb128 0x13
+ 1271 01b9 3F       		.uleb128 0x3f
+ 1272 01ba 19       		.uleb128 0x19
+ 1273 01bb 02       		.uleb128 0x2
+ 1274 01bc 18       		.uleb128 0x18
+ 1275 01bd 00       		.byte	0
+ 1276 01be 00       		.byte	0
+ 1277 01bf 1E       		.uleb128 0x1e
+ 1278 01c0 21       		.uleb128 0x21
+ 1279 01c1 00       		.byte	0
+ 1280 01c2 00       		.byte	0
+ 1281 01c3 00       		.byte	0
+ 1282 01c4 1F       		.uleb128 0x1f
+ 1283 01c5 34       		.uleb128 0x34
+ 1284 01c6 00       		.byte	0
+ 1285 01c7 03       		.uleb128 0x3
+ 1286 01c8 0E       		.uleb128 0xe
+ 1287 01c9 3A       		.uleb128 0x3a
+ 1288 01ca 0B       		.uleb128 0xb
+ 1289 01cb 3B       		.uleb128 0x3b
+ 1290 01cc 05       		.uleb128 0x5
+ 1291 01cd 49       		.uleb128 0x49
+ 1292 01ce 13       		.uleb128 0x13
+ 1293 01cf 3F       		.uleb128 0x3f
+ 1294 01d0 19       		.uleb128 0x19
+ 1295 01d1 02       		.uleb128 0x2
+ 1296 01d2 18       		.uleb128 0x18
+ 1297 01d3 00       		.byte	0
+ 1298 01d4 00       		.byte	0
+ 1299 01d5 00       		.byte	0
+ 1300              		.section	.debug_aranges,"",%progbits
+ 1301 0000 44000000 		.4byte	0x44
+ 1302 0004 0200     		.2byte	0x2
+ 1303 0006 00000000 		.4byte	.Ldebug_info0
+ 1304 000a 04       		.byte	0x4
+ 1305 000b 00       		.byte	0
+ 1306 000c 0000     		.2byte	0
+ 1307 000e 0000     		.2byte	0
+ 1308 0010 00000000 		.4byte	.LFB0
+ 1309 0014 14000000 		.4byte	.LFE0-.LFB0
+ 1310 0018 00000000 		.4byte	.LFB1
+ 1311 001c 14000000 		.4byte	.LFE1-.LFB1
+ 1312 0020 00000000 		.4byte	.LFB2
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 33
+
+
+ 1313 0024 54000000 		.4byte	.LFE2-.LFB2
+ 1314 0028 00000000 		.4byte	.LFB3
+ 1315 002c 08000000 		.4byte	.LFE3-.LFB3
+ 1316 0030 00000000 		.4byte	.LFB4
+ 1317 0034 98000000 		.4byte	.LFE4-.LFB4
+ 1318 0038 00000000 		.4byte	.LFB5
+ 1319 003c 90000000 		.4byte	.LFE5-.LFB5
+ 1320 0040 00000000 		.4byte	0
+ 1321 0044 00000000 		.4byte	0
+ 1322              		.section	.debug_ranges,"",%progbits
+ 1323              	.Ldebug_ranges0:
+ 1324 0000 00000000 		.4byte	.LFB0
+ 1325 0004 14000000 		.4byte	.LFE0
+ 1326 0008 00000000 		.4byte	.LFB1
+ 1327 000c 14000000 		.4byte	.LFE1
+ 1328 0010 00000000 		.4byte	.LFB2
+ 1329 0014 54000000 		.4byte	.LFE2
+ 1330 0018 00000000 		.4byte	.LFB3
+ 1331 001c 08000000 		.4byte	.LFE3
+ 1332 0020 00000000 		.4byte	.LFB4
+ 1333 0024 98000000 		.4byte	.LFE4
+ 1334 0028 00000000 		.4byte	.LFB5
+ 1335 002c 90000000 		.4byte	.LFE5
+ 1336 0030 00000000 		.4byte	0
+ 1337 0034 00000000 		.4byte	0
+ 1338              		.section	.debug_line,"",%progbits
+ 1339              	.Ldebug_line0:
+ 1340 0000 D7010000 		.section	.debug_str,"MS",%progbits,1
+ 1340      0200D200 
+ 1340      00000201 
+ 1340      FB0E0D00 
+ 1340      01010101 
+ 1341              	.LASF17:
+ 1342 0000 72656733 		.ascii	"reg32\000"
+ 1342      3200
+ 1343              	.LASF10:
+ 1344 0006 73697A65 		.ascii	"size_t\000"
+ 1344      5F7400
+ 1345              	.LASF44:
+ 1346 000d 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1346      43313120 
+ 1346      352E342E 
+ 1346      31203230 
+ 1346      31363036 
+ 1347 0040 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 1347      20726576 
+ 1347      6973696F 
+ 1347      6E203233 
+ 1347      37373135 
+ 1348 0073 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 1348      66756E63 
+ 1348      74696F6E 
+ 1348      2D736563 
+ 1348      74696F6E 
+ 1349              	.LASF40:
+ 1350 009b 43795261 		.ascii	"CyRamVectors\000"
+ 1350      6D566563 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 34
+
+
+ 1350      746F7273 
+ 1350      00
+ 1351              	.LASF39:
+ 1352 00a8 43795265 		.ascii	"CyResetStatus\000"
+ 1352      73657453 
+ 1352      74617475 
+ 1352      7300
+ 1353              	.LASF33:
+ 1354 00b6 53746172 		.ascii	"Start_c\000"
+ 1354      745F6300 
+ 1355              	.LASF37:
+ 1356 00be 636F756E 		.ascii	"count\000"
+ 1356      7400
+ 1357              	.LASF30:
+ 1358 00c4 68656170 		.ascii	"heapPointer\000"
+ 1358      506F696E 
+ 1358      74657200 
+ 1359              	.LASF3:
+ 1360 00d0 73686F72 		.ascii	"short unsigned int\000"
+ 1360      7420756E 
+ 1360      7369676E 
+ 1360      65642069 
+ 1360      6E7400
+ 1361              	.LASF42:
+ 1362 00e3 5F5F6379 		.ascii	"__cy_region_num\000"
+ 1362      5F726567 
+ 1362      696F6E5F 
+ 1362      6E756D00 
+ 1363              	.LASF21:
+ 1364 00f3 696E6974 		.ascii	"init\000"
+ 1364      00
+ 1365              	.LASF27:
+ 1366 00f8 73746174 		.ascii	"status\000"
+ 1366      757300
+ 1367              	.LASF24:
+ 1368 00ff 7A65726F 		.ascii	"zero_size\000"
+ 1368      5F73697A 
+ 1368      6500
+ 1369              	.LASF35:
+ 1370 0109 72707472 		.ascii	"rptr\000"
+ 1370      00
+ 1371              	.LASF13:
+ 1372 010e 666C6F61 		.ascii	"float\000"
+ 1372      7400
+ 1373              	.LASF22:
+ 1374 0114 64617461 		.ascii	"data\000"
+ 1374      00
+ 1375              	.LASF1:
+ 1376 0119 756E7369 		.ascii	"unsigned char\000"
+ 1376      676E6564 
+ 1376      20636861 
+ 1376      7200
+ 1377              	.LASF29:
+ 1378 0127 72657475 		.ascii	"returnValue\000"
+ 1378      726E5661 
+ 1378      6C756500 
+ 1379              	.LASF43:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 35
+
+
+ 1380 0133 526F6D56 		.ascii	"RomVectors\000"
+ 1380      6563746F 
+ 1380      727300
+ 1381              	.LASF5:
+ 1382 013e 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1382      20756E73 
+ 1382      69676E65 
+ 1382      6420696E 
+ 1382      7400
+ 1383              	.LASF38:
+ 1384 0150 63795379 		.ascii	"cySysNoInitDataValid\000"
+ 1384      734E6F49 
+ 1384      6E697444 
+ 1384      61746156 
+ 1384      616C6964 
+ 1385              	.LASF11:
+ 1386 0165 75696E74 		.ascii	"uint8\000"
+ 1386      3800
+ 1387              	.LASF32:
+ 1388 016b 52657365 		.ascii	"Reset\000"
+ 1388      7400
+ 1389              	.LASF25:
+ 1390 0171 5F657869 		.ascii	"_exit\000"
+ 1390      7400
+ 1391              	.LASF45:
+ 1392 0177 47656E65 		.ascii	"Generated_Source\\PSoC5\\Cm3Start.c\000"
+ 1392      72617465 
+ 1392      645F536F 
+ 1392      75726365 
+ 1392      5C50536F 
+ 1393              	.LASF26:
+ 1394 0199 5F736272 		.ascii	"_sbrk\000"
+ 1394      6B00
+ 1395              	.LASF14:
+ 1396 019f 646F7562 		.ascii	"double\000"
+ 1396      6C6500
+ 1397              	.LASF48:
+ 1398 01a6 696E6974 		.ascii	"initialize_psoc\000"
+ 1398      69616C69 
+ 1398      7A655F70 
+ 1398      736F6300 
+ 1399              	.LASF12:
+ 1400 01b6 75696E74 		.ascii	"uint32\000"
+ 1400      333200
+ 1401              	.LASF8:
+ 1402 01bd 756E7369 		.ascii	"unsigned int\000"
+ 1402      676E6564 
+ 1402      20696E74 
+ 1402      00
+ 1403              	.LASF7:
+ 1404 01ca 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1404      206C6F6E 
+ 1404      6720756E 
+ 1404      7369676E 
+ 1404      65642069 
+ 1405              	.LASF46:
+ 1406 01e1 433A5C70 		.ascii	"C:\\psoc\\chamonix\\icm_stuff\\nanoNxt_ICM3_be_befo"
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 36
+
+
+ 1406      736F635C 
+ 1406      6368616D 
+ 1406      6F6E6978 
+ 1406      5C69636D 
+ 1407 0210 72655F72 		.ascii	"re_russian\\nanoNxt_ICM3\\ext_pim.cydsn\000"
+ 1407      75737369 
+ 1407      616E5C6E 
+ 1407      616E6F4E 
+ 1407      78745F49 
+ 1408              	.LASF36:
+ 1409 0236 6C696D69 		.ascii	"limit\000"
+ 1409      7400
+ 1410              	.LASF18:
+ 1411 023c 63796973 		.ascii	"cyisraddress\000"
+ 1411      72616464 
+ 1411      72657373 
+ 1411      00
+ 1412              	.LASF23:
+ 1413 0249 696E6974 		.ascii	"init_size\000"
+ 1413      5F73697A 
+ 1413      6500
+ 1414              	.LASF20:
+ 1415 0253 5F5F6379 		.ascii	"__cy_byte_align8\000"
+ 1415      5F627974 
+ 1415      655F616C 
+ 1415      69676E38 
+ 1415      00
+ 1416              	.LASF16:
+ 1417 0264 72656738 		.ascii	"reg8\000"
+ 1417      00
+ 1418              	.LASF19:
+ 1419 0269 73697A65 		.ascii	"sizetype\000"
+ 1419      74797065 
+ 1419      00
+ 1420              	.LASF6:
+ 1421 0272 6C6F6E67 		.ascii	"long long int\000"
+ 1421      206C6F6E 
+ 1421      6720696E 
+ 1421      7400
+ 1422              	.LASF15:
+ 1423 0280 63686172 		.ascii	"char\000"
+ 1423      00
+ 1424              	.LASF2:
+ 1425 0285 73686F72 		.ascii	"short int\000"
+ 1425      7420696E 
+ 1425      7400
+ 1426              	.LASF4:
+ 1427 028f 6C6F6E67 		.ascii	"long int\000"
+ 1427      20696E74 
+ 1427      00
+ 1428              	.LASF9:
+ 1429 0298 6C6F6E67 		.ascii	"long double\000"
+ 1429      20646F75 
+ 1429      626C6500 
+ 1430              	.LASF0:
+ 1431 02a4 7369676E 		.ascii	"signed char\000"
+ 1431      65642063 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccUh9sR5.s 			page 37
+
+
+ 1431      68617200 
+ 1432              	.LASF31:
+ 1433 02b0 496E7444 		.ascii	"IntDefaultHandler\000"
+ 1433      65666175 
+ 1433      6C744861 
+ 1433      6E646C65 
+ 1433      7200
+ 1434              	.LASF41:
+ 1435 02c2 5F5F6379 		.ascii	"__cy_regions\000"
+ 1435      5F726567 
+ 1435      696F6E73 
+ 1435      00
+ 1436              	.LASF34:
+ 1437 02cf 72656769 		.ascii	"regions\000"
+ 1437      6F6E7300 
+ 1438              	.LASF28:
+ 1439 02d7 6E627974 		.ascii	"nbytes\000"
+ 1439      657300
+ 1440              	.LASF47:
+ 1441 02de 5F5F6379 		.ascii	"__cy_region\000"
+ 1441      5F726567 
+ 1441      696F6E00 
+ 1442              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

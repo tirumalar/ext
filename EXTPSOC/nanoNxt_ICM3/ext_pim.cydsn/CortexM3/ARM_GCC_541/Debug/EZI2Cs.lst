@@ -1,0 +1,2184 @@
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"EZI2Cs.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.global	EZI2Cs_initVar
+  20              		.bss
+  21              		.type	EZI2Cs_initVar, %object
+  22              		.size	EZI2Cs_initVar, 1
+  23              	EZI2Cs_initVar:
+  24 0000 00       		.space	1
+  25              		.comm	EZI2Cs_curStatus,1,1
+  26              		.comm	EZI2Cs_curState,1,1
+  27              		.comm	EZI2Cs_dataPtrS1,4,4
+  28              		.comm	EZI2Cs_bufSizeS1,2,2
+  29              		.comm	EZI2Cs_wrProtectS1,2,2
+  30              		.comm	EZI2Cs_rwOffsetS1,2,2
+  31              		.comm	EZI2Cs_rwIndexS1,2,2
+  32              		.section	.text.EZI2Cs_Init,"ax",%progbits
+  33              		.align	2
+  34              		.global	EZI2Cs_Init
+  35              		.thumb
+  36              		.thumb_func
+  37              		.type	EZI2Cs_Init, %function
+  38              	EZI2Cs_Init:
+  39              	.LFB0:
+  40              		.file 1 "Generated_Source\\PSoC5\\EZI2Cs.c"
+   1:Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+   2:Generated_Source\PSoC5/EZI2Cs.c **** * File Name: EZI2Cs.c
+   3:Generated_Source\PSoC5/EZI2Cs.c **** * Version 2.0
+   4:Generated_Source\PSoC5/EZI2Cs.c **** *
+   5:Generated_Source\PSoC5/EZI2Cs.c **** * Description:
+   6:Generated_Source\PSoC5/EZI2Cs.c **** *  This file contains the setup, control and status commands for the EZI2C
+   7:Generated_Source\PSoC5/EZI2Cs.c **** *  component. The actual protocol and operation code resides in the interrupt
+   8:Generated_Source\PSoC5/EZI2Cs.c **** *  service routine file.
+   9:Generated_Source\PSoC5/EZI2Cs.c **** *
+  10:Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+  11:Generated_Source\PSoC5/EZI2Cs.c **** * Copyright 2008-2015, Cypress Semiconductor Corporation.  All rights reserved.
+  12:Generated_Source\PSoC5/EZI2Cs.c **** * You may use this file only in accordance with the license, terms, conditions,
+  13:Generated_Source\PSoC5/EZI2Cs.c **** * disclaimers, and limitations in the end user license agreement accompanying
+  14:Generated_Source\PSoC5/EZI2Cs.c **** * the software package with which this file was provided.
+  15:Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+  16:Generated_Source\PSoC5/EZI2Cs.c **** 
+  17:Generated_Source\PSoC5/EZI2Cs.c **** #include "EZI2Cs_PVT.h"
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 2
+
+
+  18:Generated_Source\PSoC5/EZI2Cs.c **** 
+  19:Generated_Source\PSoC5/EZI2Cs.c **** /**********************************
+  20:Generated_Source\PSoC5/EZI2Cs.c **** *      System variables
+  21:Generated_Source\PSoC5/EZI2Cs.c **** **********************************/
+  22:Generated_Source\PSoC5/EZI2Cs.c **** 
+  23:Generated_Source\PSoC5/EZI2Cs.c **** uint8 EZI2Cs_initVar = 0u; /* Defines if component was initialized */
+  24:Generated_Source\PSoC5/EZI2Cs.c **** 
+  25:Generated_Source\PSoC5/EZI2Cs.c **** /* Status and state variables */
+  26:Generated_Source\PSoC5/EZI2Cs.c **** volatile uint8 EZI2Cs_curStatus; /* Current status of the component */
+  27:Generated_Source\PSoC5/EZI2Cs.c **** volatile uint8 EZI2Cs_curState;  /* Current state of state machine */
+  28:Generated_Source\PSoC5/EZI2Cs.c **** 
+  29:Generated_Source\PSoC5/EZI2Cs.c **** /* Primary slave address variables */
+  30:Generated_Source\PSoC5/EZI2Cs.c **** volatile uint8* EZI2Cs_dataPtrS1; /* Pointer to data buffer 1 */
+  31:Generated_Source\PSoC5/EZI2Cs.c **** volatile uint16 EZI2Cs_bufSizeS1; /* Size of buffer 1 in bytes */
+  32:Generated_Source\PSoC5/EZI2Cs.c **** volatile uint16 EZI2Cs_wrProtectS1; /* Start index of write protected area in buffer 1 */
+  33:Generated_Source\PSoC5/EZI2Cs.c **** volatile uint16  EZI2Cs_rwOffsetS1; /* Current offset within buffer 1 */
+  34:Generated_Source\PSoC5/EZI2Cs.c **** volatile uint16  EZI2Cs_rwIndexS1;  /* Current index within buffer 1 */
+  35:Generated_Source\PSoC5/EZI2Cs.c **** 
+  36:Generated_Source\PSoC5/EZI2Cs.c **** /* Secondary slave address variables */
+  37:Generated_Source\PSoC5/EZI2Cs.c **** #if(EZI2Cs_ADDRESSES == EZI2Cs_TWO_ADDRESSES)
+  38:Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint8  EZI2Cs_addrS1; /* Primary slave address: software comparison */
+  39:Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint8  EZI2Cs_addrS2; /* Secondary slave address: software comparison */
+  40:Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint8* EZI2Cs_dataPtrS2; /* Pointer to data buffer 1 */
+  41:Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint16 EZI2Cs_bufSizeS2; /* Size of buffer 2 in bytes */
+  42:Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint16 EZI2Cs_wrProtectS2; /* Start index of write protected area in buffer 2 */
+  43:Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint16 EZI2Cs_rwOffsetS2; /* Current offset within buffer 2 */
+  44:Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint16 EZI2Cs_rwIndexS2;  /* Current index within buffer 2 */
+  45:Generated_Source\PSoC5/EZI2Cs.c **** #endif  /* (EZI2Cs_ADDRESSES == EZI2Cs_TWO_ADDRESSES) */
+  46:Generated_Source\PSoC5/EZI2Cs.c **** 
+  47:Generated_Source\PSoC5/EZI2Cs.c **** 
+  48:Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+  49:Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_Init
+  50:Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+  51:Generated_Source\PSoC5/EZI2Cs.c **** *
+  52:Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+  53:Generated_Source\PSoC5/EZI2Cs.c **** *  Initializes or restores the component according to the Configure dialog
+  54:Generated_Source\PSoC5/EZI2Cs.c **** *  settings. It is not necessary to call EZI2C_Init() because the EZI2C_Start()
+  55:Generated_Source\PSoC5/EZI2Cs.c **** *  API calls this function, which is the preferred method to begin component
+  56:Generated_Source\PSoC5/EZI2Cs.c **** *  operation.
+  57:Generated_Source\PSoC5/EZI2Cs.c **** *
+  58:Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+  59:Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+  60:Generated_Source\PSoC5/EZI2Cs.c **** *
+  61:Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+  62:Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+  63:Generated_Source\PSoC5/EZI2Cs.c **** *
+  64:Generated_Source\PSoC5/EZI2Cs.c **** * Global variables:
+  65:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar - It is used to indicate the initial configuration
+  66:Generated_Source\PSoC5/EZI2Cs.c **** *  of this component.  The variable is initialized to zero and set to 1
+  67:Generated_Source\PSoC5/EZI2Cs.c **** *  the first time EZI2Cs_Start() is called. This allows component  !
+  68:Generated_Source\PSoC5/EZI2Cs.c **** *  initialization without re-initialization in all subsequent calls
+  69:Generated_Source\PSoC5/EZI2Cs.c **** *  to the EZI2Cs_Start() routine.
+  70:Generated_Source\PSoC5/EZI2Cs.c **** *
+  71:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_curStatus - Stores the current status of the component.
+  72:Generated_Source\PSoC5/EZI2Cs.c **** *
+  73:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_curState- Stores the current state of an I2C state machine.
+  74:Generated_Source\PSoC5/EZI2Cs.c **** *
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 3
+
+
+  75:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwOffsetS1 - The global variable which stores an offset for read
+  76:Generated_Source\PSoC5/EZI2Cs.c **** *  and write operations, is set at each write sequence of the first slave
+  77:Generated_Source\PSoC5/EZI2Cs.c **** *  address is reset if EZI2Cs_initVar is 0, by
+  78:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar function call.
+  79:Generated_Source\PSoC5/EZI2Cs.c **** *
+  80:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwIndexS1 - The global variable which stores a pointer to the
+  81:Generated_Source\PSoC5/EZI2Cs.c **** *  next value to be read or written for the first slave address is reset if
+  82:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar is 0, by EZI2Cs_initVar function call.
+  83:Generated_Source\PSoC5/EZI2Cs.c **** *
+  84:Generated_Source\PSoC5/EZI2Cs.c **** * EZI2Cs_wrProtectS1 - The global variable which stores an offset where data
+  85:Generated_Source\PSoC5/EZI2Cs.c **** *  is read only for the first slave address is reset if
+  86:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar is 0, by EZI2Cs_initVar function call.
+  87:Generated_Source\PSoC5/EZI2Cs.c **** *
+  88:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwOffsetS2 - The global variable, which stores an offset for read
+  89:Generated_Source\PSoC5/EZI2Cs.c **** *  and write operations, is set at each write sequence of the second slave
+  90:Generated_Source\PSoC5/EZI2Cs.c **** *  device is reset if EZI2Cs_initVar is 0, by EZI2Cs_initVar
+  91:Generated_Source\PSoC5/EZI2Cs.c **** *  function call.
+  92:Generated_Source\PSoC5/EZI2Cs.c **** *
+  93:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwIndexS2 - The global variable which stores a pointer to the
+  94:Generated_Source\PSoC5/EZI2Cs.c **** *  next value to be read or written for the second slave address is reset if
+  95:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar is 0, by EZI2Cs_initVar function call.
+  96:Generated_Source\PSoC5/EZI2Cs.c **** *
+  97:Generated_Source\PSoC5/EZI2Cs.c **** * EZI2Cs_wrProtectS2 - The global variable which stores an offset where data
+  98:Generated_Source\PSoC5/EZI2Cs.c **** *  is read only for the second slave address is reset if
+  99:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar is 0, by EZI2Cs_initVar function call.
+ 100:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 101:Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 102:Generated_Source\PSoC5/EZI2Cs.c **** *  No.
+ 103:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 104:Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 105:Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_Init(void) 
+ 106:Generated_Source\PSoC5/EZI2Cs.c **** {
+  41              		.loc 1 106 0
+  42              		.cfi_startproc
+  43              		@ args = 0, pretend = 0, frame = 0
+  44              		@ frame_needed = 1, uses_anonymous_args = 0
+  45 0000 80B5     		push	{r7, lr}
+  46              		.cfi_def_cfa_offset 8
+  47              		.cfi_offset 7, -8
+  48              		.cfi_offset 14, -4
+  49 0002 00AF     		add	r7, sp, #0
+  50              		.cfi_def_cfa_register 7
+ 107:Generated_Source\PSoC5/EZI2Cs.c ****     /* Configure fixed function block */
+ 108:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CFG_REG  = EZI2Cs_DEFAULT_CFG;
+  51              		.loc 1 108 0
+  52 0004 154B     		ldr	r3, .L2
+  53 0006 0122     		movs	r2, #1
+  54 0008 1A70     		strb	r2, [r3]
+ 109:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_XCFG_REG = EZI2Cs_DEFAULT_XCFG;
+  55              		.loc 1 109 0
+  56 000a 154B     		ldr	r3, .L2+4
+  57 000c 8122     		movs	r2, #129
+  58 000e 1A70     		strb	r2, [r3]
+ 110:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_ADDR_REG = EZI2Cs_DEFAULT_ADDR;
+  59              		.loc 1 110 0
+  60 0010 144B     		ldr	r3, .L2+8
+  61 0012 3822     		movs	r2, #56
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 4
+
+
+  62 0014 1A70     		strb	r2, [r3]
+ 111:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CLKDIV1_REG = EZI2Cs_DEFAULT_CLKDIV1;
+  63              		.loc 1 111 0
+  64 0016 144B     		ldr	r3, .L2+12
+  65 0018 0722     		movs	r2, #7
+  66 001a 1A70     		strb	r2, [r3]
+ 112:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CLKDIV2_REG = EZI2Cs_DEFAULT_CLKDIV2;
+  67              		.loc 1 112 0
+  68 001c 134B     		ldr	r3, .L2+16
+  69 001e 0022     		movs	r2, #0
+  70 0020 1A70     		strb	r2, [r3]
+ 113:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 114:Generated_Source\PSoC5/EZI2Cs.c **** #if (EZI2Cs_TWO_ADDRESSES == EZI2Cs_ADDRESSES)
+ 115:Generated_Source\PSoC5/EZI2Cs.c ****     /* Set address variables */
+ 116:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_SetAddress1(EZI2Cs_DEFAULT_ADDR1);
+ 117:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_SetAddress2(EZI2Cs_DEFAULT_ADDR2);
+ 118:Generated_Source\PSoC5/EZI2Cs.c **** #endif /* #if (EZI2Cs_TWO_ADDRESSES == EZI2Cs_ADDRESSES) */
+ 119:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 120:Generated_Source\PSoC5/EZI2Cs.c ****     /* Configure interrupt */
+ 121:Generated_Source\PSoC5/EZI2Cs.c ****     CyIntDisable         (EZI2Cs_ISR_NUMBER);
+  71              		.loc 1 121 0
+  72 0022 134B     		ldr	r3, .L2+20
+  73 0024 4FF40042 		mov	r2, #32768
+  74 0028 1A60     		str	r2, [r3]
+ 122:Generated_Source\PSoC5/EZI2Cs.c ****     CyIntSetPriority     (EZI2Cs_ISR_NUMBER, EZI2Cs_ISR_PRIORITY);
+  75              		.loc 1 122 0
+  76 002a 0721     		movs	r1, #7
+  77 002c 0F20     		movs	r0, #15
+  78 002e FFF7FEFF 		bl	CyIntSetPriority
+ 123:Generated_Source\PSoC5/EZI2Cs.c ****     (void) CyIntSetVector(EZI2Cs_ISR_NUMBER, &EZI2Cs_ISR);
+  79              		.loc 1 123 0
+  80 0032 1049     		ldr	r1, .L2+24
+  81 0034 0F20     		movs	r0, #15
+  82 0036 FFF7FEFF 		bl	CyIntSetVector
+ 124:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 125:Generated_Source\PSoC5/EZI2Cs.c ****      /* Reset state and status to default */
+ 126:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_curState  = EZI2Cs_SM_IDLE;
+  83              		.loc 1 126 0
+  84 003a 0F4B     		ldr	r3, .L2+28
+  85 003c 0022     		movs	r2, #0
+  86 003e 1A70     		strb	r2, [r3]
+ 127:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_curStatus = 0u;
+  87              		.loc 1 127 0
+  88 0040 0E4B     		ldr	r3, .L2+32
+  89 0042 0022     		movs	r2, #0
+  90 0044 1A70     		strb	r2, [r3]
+ 128:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 129:Generated_Source\PSoC5/EZI2Cs.c ****     /* Reset all buffer 1 indexes (primary address) */
+ 130:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwOffsetS1  = 0u;
+  91              		.loc 1 130 0
+  92 0046 0E4B     		ldr	r3, .L2+36
+  93 0048 0022     		movs	r2, #0
+  94 004a 1A80     		strh	r2, [r3]	@ movhi
+ 131:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwIndexS1   = 0u;
+  95              		.loc 1 131 0
+  96 004c 0D4B     		ldr	r3, .L2+40
+  97 004e 0022     		movs	r2, #0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 5
+
+
+  98 0050 1A80     		strh	r2, [r3]	@ movhi
+ 132:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_wrProtectS1 = 0u;
+  99              		.loc 1 132 0
+ 100 0052 0D4B     		ldr	r3, .L2+44
+ 101 0054 0022     		movs	r2, #0
+ 102 0056 1A80     		strh	r2, [r3]	@ movhi
+ 133:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 134:Generated_Source\PSoC5/EZI2Cs.c **** #if (EZI2Cs_ADDRESSES == EZI2Cs_TWO_ADDRESSES)
+ 135:Generated_Source\PSoC5/EZI2Cs.c ****     /* Reset all buffer 2 indexes (secondary address) */
+ 136:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwOffsetS2  = 0u;
+ 137:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwIndexS2   = 0u;
+ 138:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_wrProtectS2 = 0u;
+ 139:Generated_Source\PSoC5/EZI2Cs.c **** #endif  /* (EZI2Cs_ADDRESSES == EZI2Cs_TWO_ADDRESSES) */
+ 140:Generated_Source\PSoC5/EZI2Cs.c **** }
+ 103              		.loc 1 140 0
+ 104 0058 00BF     		nop
+ 105 005a 80BD     		pop	{r7, pc}
+ 106              	.L3:
+ 107              		.align	2
+ 108              	.L2:
+ 109 005c D6490040 		.word	1073760726
+ 110 0060 C8490040 		.word	1073760712
+ 111 0064 CA490040 		.word	1073760714
+ 112 0068 DB490040 		.word	1073760731
+ 113 006c DC490040 		.word	1073760732
+ 114 0070 80E100E0 		.word	-536813184
+ 115 0074 00000000 		.word	EZI2Cs_ISR
+ 116 0078 00000000 		.word	EZI2Cs_curState
+ 117 007c 00000000 		.word	EZI2Cs_curStatus
+ 118 0080 00000000 		.word	EZI2Cs_rwOffsetS1
+ 119 0084 00000000 		.word	EZI2Cs_rwIndexS1
+ 120 0088 00000000 		.word	EZI2Cs_wrProtectS1
+ 121              		.cfi_endproc
+ 122              	.LFE0:
+ 123              		.size	EZI2Cs_Init, .-EZI2Cs_Init
+ 124              		.section	.text.EZI2Cs_Enable,"ax",%progbits
+ 125              		.align	2
+ 126              		.global	EZI2Cs_Enable
+ 127              		.thumb
+ 128              		.thumb_func
+ 129              		.type	EZI2Cs_Enable, %function
+ 130              	EZI2Cs_Enable:
+ 131              	.LFB1:
+ 141:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 142:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 143:Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 144:Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_Enable
+ 145:Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 146:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 147:Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 148:Generated_Source\PSoC5/EZI2Cs.c **** *  Activates the hardware and begins component operation.Calls EZI2C_EnableInt()
+ 149:Generated_Source\PSoC5/EZI2Cs.c **** *  to enable the I2C component interrupt. It is not necessary to call
+ 150:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2C_Enable() because the EZI2C_Start() API calls this function, which is
+ 151:Generated_Source\PSoC5/EZI2Cs.c **** *  the preferred method to begin component operation.
+ 152:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 153:Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 154:Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 6
+
+
+ 155:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 156:Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 157:Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 158:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 159:Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 160:Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_Enable(void) 
+ 161:Generated_Source\PSoC5/EZI2Cs.c **** {
+ 132              		.loc 1 161 0
+ 133              		.cfi_startproc
+ 134              		@ args = 0, pretend = 0, frame = 8
+ 135              		@ frame_needed = 1, uses_anonymous_args = 0
+ 136 0000 80B5     		push	{r7, lr}
+ 137              		.cfi_def_cfa_offset 8
+ 138              		.cfi_offset 7, -8
+ 139              		.cfi_offset 14, -4
+ 140 0002 82B0     		sub	sp, sp, #8
+ 141              		.cfi_def_cfa_offset 16
+ 142 0004 00AF     		add	r7, sp, #0
+ 143              		.cfi_def_cfa_register 7
+ 162:Generated_Source\PSoC5/EZI2Cs.c ****     uint8 intState;
+ 163:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 164:Generated_Source\PSoC5/EZI2Cs.c ****     /* Enable power to block */
+ 165:Generated_Source\PSoC5/EZI2Cs.c ****     intState = CyEnterCriticalSection();
+ 144              		.loc 1 165 0
+ 145 0006 FFF7FEFF 		bl	CyEnterCriticalSection
+ 146 000a 0346     		mov	r3, r0
+ 147 000c FB71     		strb	r3, [r7, #7]
+ 166:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_PM_ACT_CFG_REG  |= EZI2Cs_ACT_PWR_EN;
+ 148              		.loc 1 166 0
+ 149 000e 0E4A     		ldr	r2, .L5
+ 150 0010 0D4B     		ldr	r3, .L5
+ 151 0012 1B78     		ldrb	r3, [r3]
+ 152 0014 DBB2     		uxtb	r3, r3
+ 153 0016 43F00403 		orr	r3, r3, #4
+ 154 001a DBB2     		uxtb	r3, r3
+ 155 001c 1370     		strb	r3, [r2]
+ 167:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_PM_STBY_CFG_REG |= EZI2Cs_STBY_PWR_EN;
+ 156              		.loc 1 167 0
+ 157 001e 0B4A     		ldr	r2, .L5+4
+ 158 0020 0A4B     		ldr	r3, .L5+4
+ 159 0022 1B78     		ldrb	r3, [r3]
+ 160 0024 DBB2     		uxtb	r3, r3
+ 161 0026 43F00403 		orr	r3, r3, #4
+ 162 002a DBB2     		uxtb	r3, r3
+ 163 002c 1370     		strb	r3, [r2]
+ 168:Generated_Source\PSoC5/EZI2Cs.c ****     CyExitCriticalSection(intState);
+ 164              		.loc 1 168 0
+ 165 002e FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 166 0030 1846     		mov	r0, r3
+ 167 0032 FFF7FEFF 		bl	CyExitCriticalSection
+ 169:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 170:Generated_Source\PSoC5/EZI2Cs.c ****     /* Enable interrupt to start operation */
+ 171:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_EnableInt();
+ 168              		.loc 1 171 0
+ 169 0036 064B     		ldr	r3, .L5+8
+ 170 0038 4FF40042 		mov	r2, #32768
+ 171 003c 1A60     		str	r2, [r3]
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 7
+
+
+ 172:Generated_Source\PSoC5/EZI2Cs.c **** }
+ 172              		.loc 1 172 0
+ 173 003e 00BF     		nop
+ 174 0040 0837     		adds	r7, r7, #8
+ 175              		.cfi_def_cfa_offset 8
+ 176 0042 BD46     		mov	sp, r7
+ 177              		.cfi_def_cfa_register 13
+ 178              		@ sp needed
+ 179 0044 80BD     		pop	{r7, pc}
+ 180              	.L6:
+ 181 0046 00BF     		.align	2
+ 182              	.L5:
+ 183 0048 A5430040 		.word	1073759141
+ 184 004c B5430040 		.word	1073759157
+ 185 0050 00E100E0 		.word	-536813312
+ 186              		.cfi_endproc
+ 187              	.LFE1:
+ 188              		.size	EZI2Cs_Enable, .-EZI2Cs_Enable
+ 189              		.section	.text.EZI2Cs_Start,"ax",%progbits
+ 190              		.align	2
+ 191              		.global	EZI2Cs_Start
+ 192              		.thumb
+ 193              		.thumb_func
+ 194              		.type	EZI2Cs_Start, %function
+ 195              	EZI2Cs_Start:
+ 196              	.LFB2:
+ 173:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 174:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 175:Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 176:Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_Start
+ 177:Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 178:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 179:Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 180:Generated_Source\PSoC5/EZI2Cs.c **** *  This is the preferred method to begin component operation. EZI2C_Start(),
+ 181:Generated_Source\PSoC5/EZI2Cs.c **** *  calls the EZI2C_Init() function, and then calls the EZI2C_Enable() function.
+ 182:Generated_Source\PSoC5/EZI2Cs.c **** *  It must be executed before I2C bus operation.
+ 183:Generated_Source\PSoC5/EZI2Cs.c **** *  This function enables the component interrupt because interrupt is required
+ 184:Generated_Source\PSoC5/EZI2Cs.c **** *  for most component operations.
+ 185:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 186:Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 187:Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 188:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 189:Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 190:Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 191:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 192:Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 193:Generated_Source\PSoC5/EZI2Cs.c **** *  No.
+ 194:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 195:Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 196:Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_Start(void) 
+ 197:Generated_Source\PSoC5/EZI2Cs.c **** {
+ 197              		.loc 1 197 0
+ 198              		.cfi_startproc
+ 199              		@ args = 0, pretend = 0, frame = 0
+ 200              		@ frame_needed = 1, uses_anonymous_args = 0
+ 201 0000 80B5     		push	{r7, lr}
+ 202              		.cfi_def_cfa_offset 8
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 8
+
+
+ 203              		.cfi_offset 7, -8
+ 204              		.cfi_offset 14, -4
+ 205 0002 00AF     		add	r7, sp, #0
+ 206              		.cfi_def_cfa_register 7
+ 198:Generated_Source\PSoC5/EZI2Cs.c ****     if (0u == EZI2Cs_initVar)
+ 207              		.loc 1 198 0
+ 208 0004 064B     		ldr	r3, .L9
+ 209 0006 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 210 0008 002B     		cmp	r3, #0
+ 211 000a 04D1     		bne	.L8
+ 199:Generated_Source\PSoC5/EZI2Cs.c ****     {
+ 200:Generated_Source\PSoC5/EZI2Cs.c ****         EZI2Cs_Init();
+ 212              		.loc 1 200 0
+ 213 000c FFF7FEFF 		bl	EZI2Cs_Init
+ 201:Generated_Source\PSoC5/EZI2Cs.c ****         EZI2Cs_initVar = 1u; /* Component initialized */
+ 214              		.loc 1 201 0
+ 215 0010 034B     		ldr	r3, .L9
+ 216 0012 0122     		movs	r2, #1
+ 217 0014 1A70     		strb	r2, [r3]
+ 218              	.L8:
+ 202:Generated_Source\PSoC5/EZI2Cs.c ****     }
+ 203:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 204:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_Enable();
+ 219              		.loc 1 204 0
+ 220 0016 FFF7FEFF 		bl	EZI2Cs_Enable
+ 205:Generated_Source\PSoC5/EZI2Cs.c **** }
+ 221              		.loc 1 205 0
+ 222 001a 00BF     		nop
+ 223 001c 80BD     		pop	{r7, pc}
+ 224              	.L10:
+ 225 001e 00BF     		.align	2
+ 226              	.L9:
+ 227 0020 00000000 		.word	EZI2Cs_initVar
+ 228              		.cfi_endproc
+ 229              	.LFE2:
+ 230              		.size	EZI2Cs_Start, .-EZI2Cs_Start
+ 231              		.section	.text.EZI2Cs_Stop,"ax",%progbits
+ 232              		.align	2
+ 233              		.global	EZI2Cs_Stop
+ 234              		.thumb
+ 235              		.thumb_func
+ 236              		.type	EZI2Cs_Stop, %function
+ 237              	EZI2Cs_Stop:
+ 238              	.LFB3:
+ 206:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 207:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 208:Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 209:Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_Stop
+ 210:Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 211:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 212:Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 213:Generated_Source\PSoC5/EZI2Cs.c **** *  Disables I2C hardware and component interrupt. The I2C bus is released if it
+ 214:Generated_Source\PSoC5/EZI2Cs.c **** *  was locked up by the component.
+ 215:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 216:Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 217:Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 218:Generated_Source\PSoC5/EZI2Cs.c **** *
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 9
+
+
+ 219:Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 220:Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 221:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 222:Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 223:Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_Stop(void) 
+ 224:Generated_Source\PSoC5/EZI2Cs.c **** {
+ 239              		.loc 1 224 0
+ 240              		.cfi_startproc
+ 241              		@ args = 0, pretend = 0, frame = 8
+ 242              		@ frame_needed = 1, uses_anonymous_args = 0
+ 243 0000 80B5     		push	{r7, lr}
+ 244              		.cfi_def_cfa_offset 8
+ 245              		.cfi_offset 7, -8
+ 246              		.cfi_offset 14, -4
+ 247 0002 82B0     		sub	sp, sp, #8
+ 248              		.cfi_def_cfa_offset 16
+ 249 0004 00AF     		add	r7, sp, #0
+ 250              		.cfi_def_cfa_register 7
+ 225:Generated_Source\PSoC5/EZI2Cs.c ****     uint8  intState;
+ 226:Generated_Source\PSoC5/EZI2Cs.c ****     uint16 blockResetCycles;
+ 227:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 228:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_DisableInt();
+ 251              		.loc 1 228 0
+ 252 0006 354B     		ldr	r3, .L12
+ 253 0008 4FF40042 		mov	r2, #32768
+ 254 000c 1A60     		str	r2, [r3]
+ 229:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 230:Generated_Source\PSoC5/EZI2Cs.c ****     /* Store registers effected by block disable */
+ 231:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_backup.adr     = EZI2Cs_ADDR_REG;
+ 255              		.loc 1 231 0
+ 256 000e 344B     		ldr	r3, .L12+4
+ 257 0010 1B78     		ldrb	r3, [r3]
+ 258 0012 DAB2     		uxtb	r2, r3
+ 259 0014 334B     		ldr	r3, .L12+8
+ 260 0016 9A70     		strb	r2, [r3, #2]
+ 232:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_backup.clkDiv1 = EZI2Cs_CLKDIV1_REG;
+ 261              		.loc 1 232 0
+ 262 0018 334B     		ldr	r3, .L12+12
+ 263 001a 1B78     		ldrb	r3, [r3]
+ 264 001c DAB2     		uxtb	r2, r3
+ 265 001e 314B     		ldr	r3, .L12+8
+ 266 0020 1A71     		strb	r2, [r3, #4]
+ 233:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_backup.clkDiv2 = EZI2Cs_CLKDIV2_REG;
+ 267              		.loc 1 233 0
+ 268 0022 324B     		ldr	r3, .L12+16
+ 269 0024 1B78     		ldrb	r3, [r3]
+ 270 0026 DAB2     		uxtb	r2, r3
+ 271 0028 2E4B     		ldr	r3, .L12+8
+ 272 002a 5A71     		strb	r2, [r3, #5]
+ 234:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 235:Generated_Source\PSoC5/EZI2Cs.c ****     /* Calculate number of cycles to reset block */
+ 236:Generated_Source\PSoC5/EZI2Cs.c ****     blockResetCycles = ((uint16) ((uint16) EZI2Cs_CLKDIV2_REG << 8u) | EZI2Cs_CLKDIV1_REG) + 1u;
+ 273              		.loc 1 236 0
+ 274 002c 2F4B     		ldr	r3, .L12+16
+ 275 002e 1B78     		ldrb	r3, [r3]
+ 276 0030 DBB2     		uxtb	r3, r3
+ 277 0032 9BB2     		uxth	r3, r3
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 10
+
+
+ 278 0034 1B02     		lsls	r3, r3, #8
+ 279 0036 9AB2     		uxth	r2, r3
+ 280 0038 2B4B     		ldr	r3, .L12+12
+ 281 003a 1B78     		ldrb	r3, [r3]
+ 282 003c DBB2     		uxtb	r3, r3
+ 283 003e 9BB2     		uxth	r3, r3
+ 284 0040 1343     		orrs	r3, r3, r2
+ 285 0042 9BB2     		uxth	r3, r3
+ 286 0044 0133     		adds	r3, r3, #1
+ 287 0046 FB80     		strh	r3, [r7, #6]	@ movhi
+ 237:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 238:Generated_Source\PSoC5/EZI2Cs.c ****     /* Disable block */
+ 239:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CFG_REG &= (uint8) ~EZI2Cs_CFG_EN_SLAVE;
+ 288              		.loc 1 239 0
+ 289 0048 294A     		ldr	r2, .L12+20
+ 290 004a 294B     		ldr	r3, .L12+20
+ 291 004c 1B78     		ldrb	r3, [r3]
+ 292 004e DBB2     		uxtb	r3, r3
+ 293 0050 23F00103 		bic	r3, r3, #1
+ 294 0054 DBB2     		uxtb	r3, r3
+ 295 0056 1370     		strb	r3, [r2]
+ 240:Generated_Source\PSoC5/EZI2Cs.c ****     /* Wait for block reset before disable power */
+ 241:Generated_Source\PSoC5/EZI2Cs.c ****     CyDelayCycles((uint32) blockResetCycles);
+ 296              		.loc 1 241 0
+ 297 0058 FB88     		ldrh	r3, [r7, #6]
+ 298 005a 1846     		mov	r0, r3
+ 299 005c FFF7FEFF 		bl	CyDelayCycles
+ 242:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 243:Generated_Source\PSoC5/EZI2Cs.c ****     /* Disable power to block */
+ 244:Generated_Source\PSoC5/EZI2Cs.c ****     intState = CyEnterCriticalSection();
+ 300              		.loc 1 244 0
+ 301 0060 FFF7FEFF 		bl	CyEnterCriticalSection
+ 302 0064 0346     		mov	r3, r0
+ 303 0066 7B71     		strb	r3, [r7, #5]
+ 245:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_PM_ACT_CFG_REG  &= (uint8) ~EZI2Cs_ACT_PWR_EN;
+ 304              		.loc 1 245 0
+ 305 0068 224A     		ldr	r2, .L12+24
+ 306 006a 224B     		ldr	r3, .L12+24
+ 307 006c 1B78     		ldrb	r3, [r3]
+ 308 006e DBB2     		uxtb	r3, r3
+ 309 0070 23F00403 		bic	r3, r3, #4
+ 310 0074 DBB2     		uxtb	r3, r3
+ 311 0076 1370     		strb	r3, [r2]
+ 246:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_PM_STBY_CFG_REG &= (uint8) ~EZI2Cs_STBY_PWR_EN;
+ 312              		.loc 1 246 0
+ 313 0078 1F4A     		ldr	r2, .L12+28
+ 314 007a 1F4B     		ldr	r3, .L12+28
+ 315 007c 1B78     		ldrb	r3, [r3]
+ 316 007e DBB2     		uxtb	r3, r3
+ 317 0080 23F00403 		bic	r3, r3, #4
+ 318 0084 DBB2     		uxtb	r3, r3
+ 319 0086 1370     		strb	r3, [r2]
+ 247:Generated_Source\PSoC5/EZI2Cs.c ****     CyExitCriticalSection(intState);
+ 320              		.loc 1 247 0
+ 321 0088 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ 322 008a 1846     		mov	r0, r3
+ 323 008c FFF7FEFF 		bl	CyExitCriticalSection
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 11
+
+
+ 248:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 249:Generated_Source\PSoC5/EZI2Cs.c ****     /* Enable block */
+ 250:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CFG_REG |= (uint8) EZI2Cs_CFG_EN_SLAVE;
+ 324              		.loc 1 250 0
+ 325 0090 174A     		ldr	r2, .L12+20
+ 326 0092 174B     		ldr	r3, .L12+20
+ 327 0094 1B78     		ldrb	r3, [r3]
+ 328 0096 DBB2     		uxtb	r3, r3
+ 329 0098 43F00103 		orr	r3, r3, #1
+ 330 009c DBB2     		uxtb	r3, r3
+ 331 009e 1370     		strb	r3, [r2]
+ 251:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 252:Generated_Source\PSoC5/EZI2Cs.c ****     /* Restore registers effected by block disable. Ticket ID#198004 */
+ 253:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_ADDR_REG    = EZI2Cs_backup.adr;
+ 332              		.loc 1 253 0
+ 333 00a0 0F4B     		ldr	r3, .L12+4
+ 334 00a2 104A     		ldr	r2, .L12+8
+ 335 00a4 9278     		ldrb	r2, [r2, #2]	@ zero_extendqisi2
+ 336 00a6 1A70     		strb	r2, [r3]
+ 254:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_ADDR_REG    = EZI2Cs_backup.adr;
+ 337              		.loc 1 254 0
+ 338 00a8 0D4B     		ldr	r3, .L12+4
+ 339 00aa 0E4A     		ldr	r2, .L12+8
+ 340 00ac 9278     		ldrb	r2, [r2, #2]	@ zero_extendqisi2
+ 341 00ae 1A70     		strb	r2, [r3]
+ 255:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CLKDIV1_REG = EZI2Cs_backup.clkDiv1;
+ 342              		.loc 1 255 0
+ 343 00b0 0D4B     		ldr	r3, .L12+12
+ 344 00b2 0C4A     		ldr	r2, .L12+8
+ 345 00b4 1279     		ldrb	r2, [r2, #4]	@ zero_extendqisi2
+ 346 00b6 1A70     		strb	r2, [r3]
+ 256:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CLKDIV2_REG = EZI2Cs_backup.clkDiv2;
+ 347              		.loc 1 256 0
+ 348 00b8 0C4B     		ldr	r3, .L12+16
+ 349 00ba 0A4A     		ldr	r2, .L12+8
+ 350 00bc 5279     		ldrb	r2, [r2, #5]	@ zero_extendqisi2
+ 351 00be 1A70     		strb	r2, [r3]
+ 257:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 258:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_ClearPendingInt();
+ 352              		.loc 1 258 0
+ 353 00c0 0E4B     		ldr	r3, .L12+32
+ 354 00c2 4FF40042 		mov	r2, #32768
+ 355 00c6 1A60     		str	r2, [r3]
+ 259:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 260:Generated_Source\PSoC5/EZI2Cs.c ****     /* Reset state and status to default */
+ 261:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_curState  = EZI2Cs_SM_IDLE;
+ 356              		.loc 1 261 0
+ 357 00c8 0D4B     		ldr	r3, .L12+36
+ 358 00ca 0022     		movs	r2, #0
+ 359 00cc 1A70     		strb	r2, [r3]
+ 262:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_curStatus = 0u;
+ 360              		.loc 1 262 0
+ 361 00ce 0D4B     		ldr	r3, .L12+40
+ 362 00d0 0022     		movs	r2, #0
+ 363 00d2 1A70     		strb	r2, [r3]
+ 263:Generated_Source\PSoC5/EZI2Cs.c **** }
+ 364              		.loc 1 263 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 12
+
+
+ 365 00d4 00BF     		nop
+ 366 00d6 0837     		adds	r7, r7, #8
+ 367              		.cfi_def_cfa_offset 8
+ 368 00d8 BD46     		mov	sp, r7
+ 369              		.cfi_def_cfa_register 13
+ 370              		@ sp needed
+ 371 00da 80BD     		pop	{r7, pc}
+ 372              	.L13:
+ 373              		.align	2
+ 374              	.L12:
+ 375 00dc 80E100E0 		.word	-536813184
+ 376 00e0 CA490040 		.word	1073760714
+ 377 00e4 00000000 		.word	EZI2Cs_backup
+ 378 00e8 DB490040 		.word	1073760731
+ 379 00ec DC490040 		.word	1073760732
+ 380 00f0 D6490040 		.word	1073760726
+ 381 00f4 A5430040 		.word	1073759141
+ 382 00f8 B5430040 		.word	1073759157
+ 383 00fc 80E200E0 		.word	-536812928
+ 384 0100 00000000 		.word	EZI2Cs_curState
+ 385 0104 00000000 		.word	EZI2Cs_curStatus
+ 386              		.cfi_endproc
+ 387              	.LFE3:
+ 388              		.size	EZI2Cs_Stop, .-EZI2Cs_Stop
+ 389              		.section	.text.EZI2Cs_SetAddress1,"ax",%progbits
+ 390              		.align	2
+ 391              		.global	EZI2Cs_SetAddress1
+ 392              		.thumb
+ 393              		.thumb_func
+ 394              		.type	EZI2Cs_SetAddress1, %function
+ 395              	EZI2Cs_SetAddress1:
+ 396              	.LFB4:
+ 264:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 265:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 266:Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 267:Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_SetAddress1
+ 268:Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 269:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 270:Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 271:Generated_Source\PSoC5/EZI2Cs.c **** *  Sets the primary I2C slave address. This address is used by the master to
+ 272:Generated_Source\PSoC5/EZI2Cs.c **** *  access the primary data buffer.
+ 273:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 274:Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 275:Generated_Source\PSoC5/EZI2Cs.c **** *  address: Primary I2C slave address.
+ 276:Generated_Source\PSoC5/EZI2Cs.c **** *           This address is the 7-bit right-justified slave address and does not
+ 277:Generated_Source\PSoC5/EZI2Cs.c **** *           include the R/W bit.
+ 278:Generated_Source\PSoC5/EZI2Cs.c **** *           This value can be any address between 0 and 127 (0x00 to 0x7F).
+ 279:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 280:Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 281:Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 282:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 283:Generated_Source\PSoC5/EZI2Cs.c **** * Global variables:
+ 284:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_addrS1 - A new slave address for the first slave device is
+ 285:Generated_Source\PSoC5/EZI2Cs.c **** *  saved in it, if the component is configured to act as two slave devices.
+ 286:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 287:Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 288:Generated_Source\PSoC5/EZI2Cs.c **** *  No, if two addresses are used.
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 13
+
+
+ 289:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 290:Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 291:Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_SetAddress1(uint8 address) 
+ 292:Generated_Source\PSoC5/EZI2Cs.c **** {
+ 397              		.loc 1 292 0
+ 398              		.cfi_startproc
+ 399              		@ args = 0, pretend = 0, frame = 8
+ 400              		@ frame_needed = 1, uses_anonymous_args = 0
+ 401              		@ link register save eliminated.
+ 402 0000 80B4     		push	{r7}
+ 403              		.cfi_def_cfa_offset 4
+ 404              		.cfi_offset 7, -4
+ 405 0002 83B0     		sub	sp, sp, #12
+ 406              		.cfi_def_cfa_offset 16
+ 407 0004 00AF     		add	r7, sp, #0
+ 408              		.cfi_def_cfa_register 7
+ 409 0006 0346     		mov	r3, r0
+ 410 0008 FB71     		strb	r3, [r7, #7]
+ 293:Generated_Source\PSoC5/EZI2Cs.c **** #if (EZI2Cs_ONE_ADDRESS == EZI2Cs_ADDRESSES)
+ 294:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_ADDR_REG = (address & EZI2Cs_SADDR_MASK);
+ 411              		.loc 1 294 0
+ 412 000a 054A     		ldr	r2, .L15
+ 413 000c FB79     		ldrb	r3, [r7, #7]
+ 414 000e 03F07F03 		and	r3, r3, #127
+ 415 0012 DBB2     		uxtb	r3, r3
+ 416 0014 1370     		strb	r3, [r2]
+ 295:Generated_Source\PSoC5/EZI2Cs.c **** #else
+ 296:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_addrS1   = (address & EZI2Cs_SADDR_MASK);
+ 297:Generated_Source\PSoC5/EZI2Cs.c **** #endif /* (EZI2Cs_ONE_ADDRESS == EZI2Cs_ADDRESSES) */
+ 298:Generated_Source\PSoC5/EZI2Cs.c **** }
+ 417              		.loc 1 298 0
+ 418 0016 00BF     		nop
+ 419 0018 0C37     		adds	r7, r7, #12
+ 420              		.cfi_def_cfa_offset 4
+ 421 001a BD46     		mov	sp, r7
+ 422              		.cfi_def_cfa_register 13
+ 423              		@ sp needed
+ 424 001c 80BC     		pop	{r7}
+ 425              		.cfi_restore 7
+ 426              		.cfi_def_cfa_offset 0
+ 427 001e 7047     		bx	lr
+ 428              	.L16:
+ 429              		.align	2
+ 430              	.L15:
+ 431 0020 CA490040 		.word	1073760714
+ 432              		.cfi_endproc
+ 433              	.LFE4:
+ 434              		.size	EZI2Cs_SetAddress1, .-EZI2Cs_SetAddress1
+ 435              		.section	.text.EZI2Cs_GetAddress1,"ax",%progbits
+ 436              		.align	2
+ 437              		.global	EZI2Cs_GetAddress1
+ 438              		.thumb
+ 439              		.thumb_func
+ 440              		.type	EZI2Cs_GetAddress1, %function
+ 441              	EZI2Cs_GetAddress1:
+ 442              	.LFB5:
+ 299:Generated_Source\PSoC5/EZI2Cs.c **** 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 14
+
+
+ 300:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 301:Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 302:Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_GetAddress1
+ 303:Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 304:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 305:Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 306:Generated_Source\PSoC5/EZI2Cs.c **** *  Returns the primary I2C slave address.
+ 307:Generated_Source\PSoC5/EZI2Cs.c **** *  This address is the 7-bit right-justified slave address and does not include
+ 308:Generated_Source\PSoC5/EZI2Cs.c **** *  the R/W bit.
+ 309:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 310:Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 311:Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 312:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 313:Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 314:Generated_Source\PSoC5/EZI2Cs.c **** *  Primary I2C slave address.
+ 315:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 316:Generated_Source\PSoC5/EZI2Cs.c **** * Global variables:
+ 317:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_addrS1 - If component is configured to has two slave
+ 318:Generated_Source\PSoC5/EZI2Cs.c **** *  addresses than the primary address is saved here, otherwise the address is written to
+ 319:Generated_Source\PSoC5/EZI2Cs.c **** *  the register.
+ 320:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 321:Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 322:Generated_Source\PSoC5/EZI2Cs.c **** *  No.
+ 323:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 324:Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 325:Generated_Source\PSoC5/EZI2Cs.c **** uint8 EZI2Cs_GetAddress1(void) 
+ 326:Generated_Source\PSoC5/EZI2Cs.c **** {
+ 443              		.loc 1 326 0
+ 444              		.cfi_startproc
+ 445              		@ args = 0, pretend = 0, frame = 0
+ 446              		@ frame_needed = 1, uses_anonymous_args = 0
+ 447              		@ link register save eliminated.
+ 448 0000 80B4     		push	{r7}
+ 449              		.cfi_def_cfa_offset 4
+ 450              		.cfi_offset 7, -4
+ 451 0002 00AF     		add	r7, sp, #0
+ 452              		.cfi_def_cfa_register 7
+ 327:Generated_Source\PSoC5/EZI2Cs.c **** #if (EZI2Cs_ONE_ADDRESS == EZI2Cs_ADDRESSES)
+ 328:Generated_Source\PSoC5/EZI2Cs.c ****     return (EZI2Cs_ADDR_REG);
+ 453              		.loc 1 328 0
+ 454 0004 034B     		ldr	r3, .L19
+ 455 0006 1B78     		ldrb	r3, [r3]
+ 456 0008 DBB2     		uxtb	r3, r3
+ 329:Generated_Source\PSoC5/EZI2Cs.c **** #else
+ 330:Generated_Source\PSoC5/EZI2Cs.c ****     return (EZI2Cs_addrS1);
+ 331:Generated_Source\PSoC5/EZI2Cs.c **** #endif /* (EZI2Cs_ONE_ADDRESS == EZI2Cs_ADDRESSES) */
+ 332:Generated_Source\PSoC5/EZI2Cs.c **** }
+ 457              		.loc 1 332 0
+ 458 000a 1846     		mov	r0, r3
+ 459 000c BD46     		mov	sp, r7
+ 460              		.cfi_def_cfa_register 13
+ 461              		@ sp needed
+ 462 000e 80BC     		pop	{r7}
+ 463              		.cfi_restore 7
+ 464              		.cfi_def_cfa_offset 0
+ 465 0010 7047     		bx	lr
+ 466              	.L20:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 15
+
+
+ 467 0012 00BF     		.align	2
+ 468              	.L19:
+ 469 0014 CA490040 		.word	1073760714
+ 470              		.cfi_endproc
+ 471              	.LFE5:
+ 472              		.size	EZI2Cs_GetAddress1, .-EZI2Cs_GetAddress1
+ 473              		.section	.text.EZI2Cs_GetActivity,"ax",%progbits
+ 474              		.align	2
+ 475              		.global	EZI2Cs_GetActivity
+ 476              		.thumb
+ 477              		.thumb_func
+ 478              		.type	EZI2Cs_GetActivity, %function
+ 479              	EZI2Cs_GetActivity:
+ 480              	.LFB6:
+ 333:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 334:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 335:Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 336:Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_GetActivity
+ 337:Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 338:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 339:Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 340:Generated_Source\PSoC5/EZI2Cs.c **** *  Returns a non-zero value if an I2C read or write cycle has occurred since
+ 341:Generated_Source\PSoC5/EZI2Cs.c **** *  the last time this function was called. The activity flag resets to zero at
+ 342:Generated_Source\PSoC5/EZI2Cs.c **** *  the end of this function call.
+ 343:Generated_Source\PSoC5/EZI2Cs.c **** *  The Read and Write busy flags are cleared when read, but the “BUSY” flag is
+ 344:Generated_Source\PSoC5/EZI2Cs.c **** *  only cleared when slave is free (i.e master finishes communication with
+ 345:Generated_Source\PSoC5/EZI2Cs.c **** *  slave generating Stop or repeated Start condition).
+ 346:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 347:Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 348:Generated_Source\PSoC5/EZI2Cs.c **** *  None
+ 349:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 350:Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 351:Generated_Source\PSoC5/EZI2Cs.c **** *  Status of I2C activity.
+ 352:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 353:Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_READ1   Set if a Read sequence is detected for the first
+ 354:Generated_Source\PSoC5/EZI2Cs.c **** *                                   address. Cleared when the status is read.
+ 355:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 356:Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_WRITE1  Set if a Write sequence is detected for the first
+ 357:Generated_Source\PSoC5/EZI2Cs.c **** *                                   address. Cleared when the status is  read.
+ 358:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 359:Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_READ2   Set if a Read sequence is detected for the second
+ 360:Generated_Source\PSoC5/EZI2Cs.c **** *                                   address (if enabled). Cleared when the status
+ 361:Generated_Source\PSoC5/EZI2Cs.c **** *                                   read.
+ 362:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 363:Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_WRITE2  Set if a Write sequence is detected for the second
+ 364:Generated_Source\PSoC5/EZI2Cs.c **** *                                   address (if enabled). Cleared when the status is
+ 365:Generated_Source\PSoC5/EZI2Cs.c **** *                                   read.
+ 366:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 367:Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_BUSY    Set when the master starts communication with
+ 368:Generated_Source\PSoC5/EZI2Cs.c **** *                                   the slave (the slave is addressed with Start or
+ 369:Generated_Source\PSoC5/EZI2Cs.c **** *                                   repeated Start) and cleared when the master
+ 370:Generated_Source\PSoC5/EZI2Cs.c **** *                                   finishes communication (a Stop or repeated
+ 371:Generated_Source\PSoC5/EZI2Cs.c **** *                                   Start condition is generated).
+ 372:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 373:Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_ERR     Set when the I2C hardware is detected, cleared
+ 374:Generated_Source\PSoC5/EZI2Cs.c **** *                                   when the status is read.
+ 375:Generated_Source\PSoC5/EZI2Cs.c **** *
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 16
+
+
+ 376:Generated_Source\PSoC5/EZI2Cs.c **** * Global variables:
+ 377:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_curStatus - The global variable which stores the current
+ 378:Generated_Source\PSoC5/EZI2Cs.c **** *  component status.
+ 379:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 380:Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 381:Generated_Source\PSoC5/EZI2Cs.c **** *  No.
+ 382:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 383:Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 384:Generated_Source\PSoC5/EZI2Cs.c **** uint8 EZI2Cs_GetActivity(void) 
+ 385:Generated_Source\PSoC5/EZI2Cs.c **** {
+ 481              		.loc 1 385 0
+ 482              		.cfi_startproc
+ 483              		@ args = 0, pretend = 0, frame = 8
+ 484              		@ frame_needed = 1, uses_anonymous_args = 0
+ 485              		@ link register save eliminated.
+ 486 0000 80B4     		push	{r7}
+ 487              		.cfi_def_cfa_offset 4
+ 488              		.cfi_offset 7, -4
+ 489 0002 83B0     		sub	sp, sp, #12
+ 490              		.cfi_def_cfa_offset 16
+ 491 0004 00AF     		add	r7, sp, #0
+ 492              		.cfi_def_cfa_register 7
+ 386:Generated_Source\PSoC5/EZI2Cs.c ****     uint8 tmpStatus;
+ 387:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 388:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_DisableInt(); /* Lock from component interrupt */
+ 493              		.loc 1 388 0
+ 494 0006 0C4B     		ldr	r3, .L23
+ 495 0008 4FF40042 		mov	r2, #32768
+ 496 000c 1A60     		str	r2, [r3]
+ 389:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 390:Generated_Source\PSoC5/EZI2Cs.c ****     tmpStatus = EZI2Cs_curStatus;
+ 497              		.loc 1 390 0
+ 498 000e 0B4B     		ldr	r3, .L23+4
+ 499 0010 1B78     		ldrb	r3, [r3]
+ 500 0012 FB71     		strb	r3, [r7, #7]
+ 391:Generated_Source\PSoC5/EZI2Cs.c ****     /* Clear status bits. Do not touch busy status */
+ 392:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_curStatus &= EZI2Cs_STATUS_BUSY;
+ 501              		.loc 1 392 0
+ 502 0014 094B     		ldr	r3, .L23+4
+ 503 0016 1B78     		ldrb	r3, [r3]
+ 504 0018 DBB2     		uxtb	r3, r3
+ 505 001a 03F01003 		and	r3, r3, #16
+ 506 001e DAB2     		uxtb	r2, r3
+ 507 0020 064B     		ldr	r3, .L23+4
+ 508 0022 1A70     		strb	r2, [r3]
+ 393:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 394:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_EnableInt(); /* Release lock */
+ 509              		.loc 1 394 0
+ 510 0024 064B     		ldr	r3, .L23+8
+ 511 0026 4FF40042 		mov	r2, #32768
+ 512 002a 1A60     		str	r2, [r3]
+ 395:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 396:Generated_Source\PSoC5/EZI2Cs.c ****     return (tmpStatus);
+ 513              		.loc 1 396 0
+ 514 002c FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 397:Generated_Source\PSoC5/EZI2Cs.c **** }
+ 515              		.loc 1 397 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 17
+
+
+ 516 002e 1846     		mov	r0, r3
+ 517 0030 0C37     		adds	r7, r7, #12
+ 518              		.cfi_def_cfa_offset 4
+ 519 0032 BD46     		mov	sp, r7
+ 520              		.cfi_def_cfa_register 13
+ 521              		@ sp needed
+ 522 0034 80BC     		pop	{r7}
+ 523              		.cfi_restore 7
+ 524              		.cfi_def_cfa_offset 0
+ 525 0036 7047     		bx	lr
+ 526              	.L24:
+ 527              		.align	2
+ 528              	.L23:
+ 529 0038 80E100E0 		.word	-536813184
+ 530 003c 00000000 		.word	EZI2Cs_curStatus
+ 531 0040 00E100E0 		.word	-536813312
+ 532              		.cfi_endproc
+ 533              	.LFE6:
+ 534              		.size	EZI2Cs_GetActivity, .-EZI2Cs_GetActivity
+ 535              		.section	.text.EZI2Cs_SetBuffer1,"ax",%progbits
+ 536              		.align	2
+ 537              		.global	EZI2Cs_SetBuffer1
+ 538              		.thumb
+ 539              		.thumb_func
+ 540              		.type	EZI2Cs_SetBuffer1, %function
+ 541              	EZI2Cs_SetBuffer1:
+ 542              	.LFB7:
+ 398:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 399:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 400:Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 401:Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_SetBuffer1
+ 402:Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 403:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 404:Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 405:Generated_Source\PSoC5/EZI2Cs.c **** *  Sets up the data buffer to be exposed to the master on a primary slave
+ 406:Generated_Source\PSoC5/EZI2Cs.c **** *  address request.
+ 407:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 408:Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 409:Generated_Source\PSoC5/EZI2Cs.c **** *  bufSize:    Size of the buffer in bytes.
+ 410:Generated_Source\PSoC5/EZI2Cs.c **** *  rwBoundary: Number of data bytes starting from the beginning of the buffer
+ 411:Generated_Source\PSoC5/EZI2Cs.c **** *              with read and write access. Data bytes located at offset
+ 412:Generated_Source\PSoC5/EZI2Cs.c **** *              rwBoundary or greater are read only.
+ 413:Generated_Source\PSoC5/EZI2Cs.c **** *              This value must be less than or equal to the buffer size.
+ 414:Generated_Source\PSoC5/EZI2Cs.c **** *  dataPtr:    Pointer to the data buffer.
+ 415:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 416:Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 417:Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 418:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 419:Generated_Source\PSoC5/EZI2Cs.c **** * Global variables:
+ 420:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_dataPtrS1 - Stores the pointer to the data exposed to an I2C
+ 421:Generated_Source\PSoC5/EZI2Cs.c **** *  master for the first slave address, is modified with the the new pointer to    the    ?? no sens
+ 422:Generated_Source\PSoC5/EZI2Cs.c **** *  data passed by the function parameter.
+ 423:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 424:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwOffsetS1 - Stores an offset for read and write operations, is
+ 425:Generated_Source\PSoC5/EZI2Cs.c **** *  modified at each write sequence of the first slave address is?? reset.   ?
+ 426:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 427:Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwIndexS1 - Stores the pointer to the next value to be read or
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 18
+
+
+ 428:Generated_Source\PSoC5/EZI2Cs.c **** *  written for the first slave address is?? set to 0.  ??
+ 429:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 430:Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 431:Generated_Source\PSoC5/EZI2Cs.c **** *  No.
+ 432:Generated_Source\PSoC5/EZI2Cs.c **** *
+ 433:Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 434:Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_SetBuffer1(uint16 bufSize, uint16 rwBoundary, volatile uint8 * dataPtr) 
+ 435:Generated_Source\PSoC5/EZI2Cs.c **** {
+ 543              		.loc 1 435 0
+ 544              		.cfi_startproc
+ 545              		@ args = 0, pretend = 0, frame = 8
+ 546              		@ frame_needed = 1, uses_anonymous_args = 0
+ 547              		@ link register save eliminated.
+ 548 0000 80B4     		push	{r7}
+ 549              		.cfi_def_cfa_offset 4
+ 550              		.cfi_offset 7, -4
+ 551 0002 83B0     		sub	sp, sp, #12
+ 552              		.cfi_def_cfa_offset 16
+ 553 0004 00AF     		add	r7, sp, #0
+ 554              		.cfi_def_cfa_register 7
+ 555 0006 0346     		mov	r3, r0
+ 556 0008 3A60     		str	r2, [r7]
+ 557 000a FB80     		strh	r3, [r7, #6]	@ movhi
+ 558 000c 0B46     		mov	r3, r1	@ movhi
+ 559 000e BB80     		strh	r3, [r7, #4]	@ movhi
+ 436:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_DisableInt(); /* Lock from component interrupt */
+ 560              		.loc 1 436 0
+ 561 0010 0F4B     		ldr	r3, .L27
+ 562 0012 4FF40042 		mov	r2, #32768
+ 563 0016 1A60     		str	r2, [r3]
+ 437:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 438:Generated_Source\PSoC5/EZI2Cs.c ****     if (NULL != dataPtr)
+ 564              		.loc 1 438 0
+ 565 0018 3B68     		ldr	r3, [r7]
+ 566 001a 002B     		cmp	r3, #0
+ 567 001c 08D0     		beq	.L26
+ 439:Generated_Source\PSoC5/EZI2Cs.c ****     {
+ 440:Generated_Source\PSoC5/EZI2Cs.c ****         /* Configure buffer 1 */
+ 441:Generated_Source\PSoC5/EZI2Cs.c ****         EZI2Cs_dataPtrS1   = dataPtr;
+ 568              		.loc 1 441 0
+ 569 001e 0D4A     		ldr	r2, .L27+4
+ 570 0020 3B68     		ldr	r3, [r7]
+ 571 0022 1360     		str	r3, [r2]
+ 442:Generated_Source\PSoC5/EZI2Cs.c ****         EZI2Cs_bufSizeS1   = bufSize;
+ 572              		.loc 1 442 0
+ 573 0024 0C4A     		ldr	r2, .L27+8
+ 574 0026 FB88     		ldrh	r3, [r7, #6]	@ movhi
+ 575 0028 1380     		strh	r3, [r2]	@ movhi
+ 443:Generated_Source\PSoC5/EZI2Cs.c ****         EZI2Cs_wrProtectS1 = rwBoundary;
+ 576              		.loc 1 443 0
+ 577 002a 0C4A     		ldr	r2, .L27+12
+ 578 002c BB88     		ldrh	r3, [r7, #4]	@ movhi
+ 579 002e 1380     		strh	r3, [r2]	@ movhi
+ 580              	.L26:
+ 444:Generated_Source\PSoC5/EZI2Cs.c ****     }
+ 445:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 446:Generated_Source\PSoC5/EZI2Cs.c ****     /* Clear buffer offset and index */
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 19
+
+
+ 447:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwOffsetS1 = 0u;
+ 581              		.loc 1 447 0
+ 582 0030 0B4B     		ldr	r3, .L27+16
+ 583 0032 0022     		movs	r2, #0
+ 584 0034 1A80     		strh	r2, [r3]	@ movhi
+ 448:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwIndexS1  = 0u;
+ 585              		.loc 1 448 0
+ 586 0036 0B4B     		ldr	r3, .L27+20
+ 587 0038 0022     		movs	r2, #0
+ 588 003a 1A80     		strh	r2, [r3]	@ movhi
+ 449:Generated_Source\PSoC5/EZI2Cs.c **** 
+ 450:Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_EnableInt(); /* Release lock */
+ 589              		.loc 1 450 0
+ 590 003c 0A4B     		ldr	r3, .L27+24
+ 591 003e 4FF40042 		mov	r2, #32768
+ 592 0042 1A60     		str	r2, [r3]
+ 451:Generated_Source\PSoC5/EZI2Cs.c **** }
+ 593              		.loc 1 451 0
+ 594 0044 00BF     		nop
+ 595 0046 0C37     		adds	r7, r7, #12
+ 596              		.cfi_def_cfa_offset 4
+ 597 0048 BD46     		mov	sp, r7
+ 598              		.cfi_def_cfa_register 13
+ 599              		@ sp needed
+ 600 004a 80BC     		pop	{r7}
+ 601              		.cfi_restore 7
+ 602              		.cfi_def_cfa_offset 0
+ 603 004c 7047     		bx	lr
+ 604              	.L28:
+ 605 004e 00BF     		.align	2
+ 606              	.L27:
+ 607 0050 80E100E0 		.word	-536813184
+ 608 0054 00000000 		.word	EZI2Cs_dataPtrS1
+ 609 0058 00000000 		.word	EZI2Cs_bufSizeS1
+ 610 005c 00000000 		.word	EZI2Cs_wrProtectS1
+ 611 0060 00000000 		.word	EZI2Cs_rwOffsetS1
+ 612 0064 00000000 		.word	EZI2Cs_rwIndexS1
+ 613 0068 00E100E0 		.word	-536813312
+ 614              		.cfi_endproc
+ 615              	.LFE7:
+ 616              		.size	EZI2Cs_SetBuffer1, .-EZI2Cs_SetBuffer1
+ 617              		.text
+ 618              	.Letext0:
+ 619              		.file 2 "Generated_Source\\PSoC5\\cytypes.h"
+ 620              		.file 3 "Generated_Source\\PSoC5\\EZI2Cs.h"
+ 621              		.file 4 "Generated_Source\\PSoC5\\EZI2Cs_PVT.h"
+ 622              		.section	.debug_info,"",%progbits
+ 623              	.Ldebug_info0:
+ 624 0000 ED020000 		.4byte	0x2ed
+ 625 0004 0400     		.2byte	0x4
+ 626 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 627 000a 04       		.byte	0x4
+ 628 000b 01       		.uleb128 0x1
+ 629 000c 1F000000 		.4byte	.LASF46
+ 630 0010 0C       		.byte	0xc
+ 631 0011 8B010000 		.4byte	.LASF47
+ 632 0015 32020000 		.4byte	.LASF48
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 20
+
+
+ 633 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 634 001d 00000000 		.4byte	0
+ 635 0021 00000000 		.4byte	.Ldebug_line0
+ 636 0025 02       		.uleb128 0x2
+ 637 0026 01       		.byte	0x1
+ 638 0027 06       		.byte	0x6
+ 639 0028 1F030000 		.4byte	.LASF0
+ 640 002c 02       		.uleb128 0x2
+ 641 002d 01       		.byte	0x1
+ 642 002e 08       		.byte	0x8
+ 643 002f 40010000 		.4byte	.LASF1
+ 644 0033 02       		.uleb128 0x2
+ 645 0034 02       		.byte	0x2
+ 646 0035 05       		.byte	0x5
+ 647 0036 E7020000 		.4byte	.LASF2
+ 648 003a 02       		.uleb128 0x2
+ 649 003b 02       		.byte	0x2
+ 650 003c 07       		.byte	0x7
+ 651 003d B5000000 		.4byte	.LASF3
+ 652 0041 02       		.uleb128 0x2
+ 653 0042 04       		.byte	0x4
+ 654 0043 05       		.byte	0x5
+ 655 0044 F9020000 		.4byte	.LASF4
+ 656 0048 02       		.uleb128 0x2
+ 657 0049 04       		.byte	0x4
+ 658 004a 07       		.byte	0x7
+ 659 004b 5B010000 		.4byte	.LASF5
+ 660 004f 02       		.uleb128 0x2
+ 661 0050 08       		.byte	0x8
+ 662 0051 05       		.byte	0x5
+ 663 0052 BE020000 		.4byte	.LASF6
+ 664 0056 02       		.uleb128 0x2
+ 665 0057 08       		.byte	0x8
+ 666 0058 07       		.byte	0x7
+ 667 0059 08020000 		.4byte	.LASF7
+ 668 005d 03       		.uleb128 0x3
+ 669 005e 04       		.byte	0x4
+ 670 005f 05       		.byte	0x5
+ 671 0060 696E7400 		.ascii	"int\000"
+ 672 0064 02       		.uleb128 0x2
+ 673 0065 04       		.byte	0x4
+ 674 0066 07       		.byte	0x7
+ 675 0067 CE010000 		.4byte	.LASF8
+ 676 006b 04       		.uleb128 0x4
+ 677 006c 6D010000 		.4byte	.LASF9
+ 678 0070 02       		.byte	0x2
+ 679 0071 9201     		.2byte	0x192
+ 680 0073 2C000000 		.4byte	0x2c
+ 681 0077 04       		.uleb128 0x4
+ 682 0078 AB010000 		.4byte	.LASF10
+ 683 007c 02       		.byte	0x2
+ 684 007d 9301     		.2byte	0x193
+ 685 007f 3A000000 		.4byte	0x3a
+ 686 0083 04       		.uleb128 0x4
+ 687 0084 B2010000 		.4byte	.LASF11
+ 688 0088 02       		.byte	0x2
+ 689 0089 9401     		.2byte	0x194
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 21
+
+
+ 690 008b 48000000 		.4byte	0x48
+ 691 008f 02       		.uleb128 0x2
+ 692 0090 04       		.byte	0x4
+ 693 0091 04       		.byte	0x4
+ 694 0092 19010000 		.4byte	.LASF12
+ 695 0096 02       		.uleb128 0x2
+ 696 0097 08       		.byte	0x8
+ 697 0098 04       		.byte	0x4
+ 698 0099 84010000 		.4byte	.LASF13
+ 699 009d 02       		.uleb128 0x2
+ 700 009e 01       		.byte	0x1
+ 701 009f 08       		.byte	0x8
+ 702 00a0 CC020000 		.4byte	.LASF14
+ 703 00a4 04       		.uleb128 0x4
+ 704 00a5 4E010000 		.4byte	.LASF15
+ 705 00a9 02       		.byte	0x2
+ 706 00aa 3C02     		.2byte	0x23c
+ 707 00ac B0000000 		.4byte	0xb0
+ 708 00b0 05       		.uleb128 0x5
+ 709 00b1 6B000000 		.4byte	0x6b
+ 710 00b5 05       		.uleb128 0x5
+ 711 00b6 77000000 		.4byte	0x77
+ 712 00ba 04       		.uleb128 0x4
+ 713 00bb 0D000000 		.4byte	.LASF16
+ 714 00bf 02       		.byte	0x2
+ 715 00c0 3E02     		.2byte	0x23e
+ 716 00c2 C6000000 		.4byte	0xc6
+ 717 00c6 05       		.uleb128 0x5
+ 718 00c7 83000000 		.4byte	0x83
+ 719 00cb 02       		.uleb128 0x2
+ 720 00cc 08       		.byte	0x8
+ 721 00cd 04       		.byte	0x4
+ 722 00ce 8F020000 		.4byte	.LASF17
+ 723 00d2 02       		.uleb128 0x2
+ 724 00d3 04       		.byte	0x4
+ 725 00d4 07       		.byte	0x7
+ 726 00d5 B5020000 		.4byte	.LASF18
+ 727 00d9 06       		.uleb128 0x6
+ 728 00da 06       		.byte	0x6
+ 729 00db 03       		.byte	0x3
+ 730 00dc 42       		.byte	0x42
+ 731 00dd 2A010000 		.4byte	0x12a
+ 732 00e1 07       		.uleb128 0x7
+ 733 00e2 B9010000 		.4byte	.LASF19
+ 734 00e6 03       		.byte	0x3
+ 735 00e7 44       		.byte	0x44
+ 736 00e8 6B000000 		.4byte	0x6b
+ 737 00ec 00       		.byte	0
+ 738 00ed 07       		.uleb128 0x7
+ 739 00ee D1020000 		.4byte	.LASF20
+ 740 00f2 03       		.byte	0x3
+ 741 00f3 45       		.byte	0x45
+ 742 00f4 6B000000 		.4byte	0x6b
+ 743 00f8 01       		.byte	0x1
+ 744 00f9 08       		.uleb128 0x8
+ 745 00fa 61647200 		.ascii	"adr\000"
+ 746 00fe 03       		.byte	0x3
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 22
+
+
+ 747 00ff 46       		.byte	0x46
+ 748 0100 6B000000 		.4byte	0x6b
+ 749 0104 02       		.byte	0x2
+ 750 0105 08       		.uleb128 0x8
+ 751 0106 63666700 		.ascii	"cfg\000"
+ 752 010a 03       		.byte	0x3
+ 753 010b 47       		.byte	0x47
+ 754 010c 6B000000 		.4byte	0x6b
+ 755 0110 03       		.byte	0x3
+ 756 0111 07       		.uleb128 0x7
+ 757 0112 AD000000 		.4byte	.LASF21
+ 758 0116 03       		.byte	0x3
+ 759 0117 48       		.byte	0x48
+ 760 0118 6B000000 		.4byte	0x6b
+ 761 011c 04       		.byte	0x4
+ 762 011d 07       		.uleb128 0x7
+ 763 011e 87020000 		.4byte	.LASF22
+ 764 0122 03       		.byte	0x3
+ 765 0123 49       		.byte	0x49
+ 766 0124 6B000000 		.4byte	0x6b
+ 767 0128 05       		.byte	0x5
+ 768 0129 00       		.byte	0
+ 769 012a 09       		.uleb128 0x9
+ 770 012b E4000000 		.4byte	.LASF23
+ 771 012f 03       		.byte	0x3
+ 772 0130 4B       		.byte	0x4b
+ 773 0131 D9000000 		.4byte	0xd9
+ 774 0135 0A       		.uleb128 0xa
+ 775 0136 A9020000 		.4byte	.LASF24
+ 776 013a 01       		.byte	0x1
+ 777 013b 69       		.byte	0x69
+ 778 013c 00000000 		.4byte	.LFB0
+ 779 0140 8C000000 		.4byte	.LFE0-.LFB0
+ 780 0144 01       		.uleb128 0x1
+ 781 0145 9C       		.byte	0x9c
+ 782 0146 0B       		.uleb128 0xb
+ 783 0147 9B020000 		.4byte	.LASF26
+ 784 014b 01       		.byte	0x1
+ 785 014c A0       		.byte	0xa0
+ 786 014d 00000000 		.4byte	.LFB1
+ 787 0151 54000000 		.4byte	.LFE1-.LFB1
+ 788 0155 01       		.uleb128 0x1
+ 789 0156 9C       		.byte	0x9c
+ 790 0157 6A010000 		.4byte	0x16a
+ 791 015b 0C       		.uleb128 0xc
+ 792 015c C5010000 		.4byte	.LASF28
+ 793 0160 01       		.byte	0x1
+ 794 0161 A2       		.byte	0xa2
+ 795 0162 6B000000 		.4byte	0x6b
+ 796 0166 02       		.uleb128 0x2
+ 797 0167 91       		.byte	0x91
+ 798 0168 77       		.sleb128 -9
+ 799 0169 00       		.byte	0
+ 800 016a 0A       		.uleb128 0xa
+ 801 016b 00000000 		.4byte	.LASF25
+ 802 016f 01       		.byte	0x1
+ 803 0170 C4       		.byte	0xc4
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 23
+
+
+ 804 0171 00000000 		.4byte	.LFB2
+ 805 0175 24000000 		.4byte	.LFE2-.LFB2
+ 806 0179 01       		.uleb128 0x1
+ 807 017a 9C       		.byte	0x9c
+ 808 017b 0B       		.uleb128 0xb
+ 809 017c 13000000 		.4byte	.LASF27
+ 810 0180 01       		.byte	0x1
+ 811 0181 DF       		.byte	0xdf
+ 812 0182 00000000 		.4byte	.LFB3
+ 813 0186 08010000 		.4byte	.LFE3-.LFB3
+ 814 018a 01       		.uleb128 0x1
+ 815 018b 9C       		.byte	0x9c
+ 816 018c AD010000 		.4byte	0x1ad
+ 817 0190 0C       		.uleb128 0xc
+ 818 0191 C5010000 		.4byte	.LASF28
+ 819 0195 01       		.byte	0x1
+ 820 0196 E1       		.byte	0xe1
+ 821 0197 6B000000 		.4byte	0x6b
+ 822 019b 02       		.uleb128 0x2
+ 823 019c 91       		.byte	0x91
+ 824 019d 75       		.sleb128 -11
+ 825 019e 0C       		.uleb128 0xc
+ 826 019f F9000000 		.4byte	.LASF29
+ 827 01a3 01       		.byte	0x1
+ 828 01a4 E2       		.byte	0xe2
+ 829 01a5 77000000 		.4byte	0x77
+ 830 01a9 02       		.uleb128 0x2
+ 831 01aa 91       		.byte	0x91
+ 832 01ab 76       		.sleb128 -10
+ 833 01ac 00       		.byte	0
+ 834 01ad 0D       		.uleb128 0xd
+ 835 01ae 0C030000 		.4byte	.LASF30
+ 836 01b2 01       		.byte	0x1
+ 837 01b3 2301     		.2byte	0x123
+ 838 01b5 00000000 		.4byte	.LFB4
+ 839 01b9 24000000 		.4byte	.LFE4-.LFB4
+ 840 01bd 01       		.uleb128 0x1
+ 841 01be 9C       		.byte	0x9c
+ 842 01bf D3010000 		.4byte	0x1d3
+ 843 01c3 0E       		.uleb128 0xe
+ 844 01c4 00020000 		.4byte	.LASF33
+ 845 01c8 01       		.byte	0x1
+ 846 01c9 2301     		.2byte	0x123
+ 847 01cb 6B000000 		.4byte	0x6b
+ 848 01cf 02       		.uleb128 0x2
+ 849 01d0 91       		.byte	0x91
+ 850 01d1 77       		.sleb128 -9
+ 851 01d2 00       		.byte	0
+ 852 01d3 0F       		.uleb128 0xf
+ 853 01d4 ED010000 		.4byte	.LASF49
+ 854 01d8 01       		.byte	0x1
+ 855 01d9 4501     		.2byte	0x145
+ 856 01db 6B000000 		.4byte	0x6b
+ 857 01df 00000000 		.4byte	.LFB5
+ 858 01e3 18000000 		.4byte	.LFE5-.LFB5
+ 859 01e7 01       		.uleb128 0x1
+ 860 01e8 9C       		.byte	0x9c
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 24
+
+
+ 861 01e9 10       		.uleb128 0x10
+ 862 01ea 1F020000 		.4byte	.LASF50
+ 863 01ee 01       		.byte	0x1
+ 864 01ef 8001     		.2byte	0x180
+ 865 01f1 6B000000 		.4byte	0x6b
+ 866 01f5 00000000 		.4byte	.LFB6
+ 867 01f9 44000000 		.4byte	.LFE6-.LFB6
+ 868 01fd 01       		.uleb128 0x1
+ 869 01fe 9C       		.byte	0x9c
+ 870 01ff 13020000 		.4byte	0x213
+ 871 0203 11       		.uleb128 0x11
+ 872 0204 02030000 		.4byte	.LASF31
+ 873 0208 01       		.byte	0x1
+ 874 0209 8201     		.2byte	0x182
+ 875 020b 6B000000 		.4byte	0x6b
+ 876 020f 02       		.uleb128 0x2
+ 877 0210 91       		.byte	0x91
+ 878 0211 77       		.sleb128 -9
+ 879 0212 00       		.byte	0
+ 880 0213 0D       		.uleb128 0xd
+ 881 0214 4C030000 		.4byte	.LASF32
+ 882 0218 01       		.byte	0x1
+ 883 0219 B201     		.2byte	0x1b2
+ 884 021b 00000000 		.4byte	.LFB7
+ 885 021f 6C000000 		.4byte	.LFE7-.LFB7
+ 886 0223 01       		.uleb128 0x1
+ 887 0224 9C       		.byte	0x9c
+ 888 0225 57020000 		.4byte	0x257
+ 889 0229 0E       		.uleb128 0xe
+ 890 022a F1020000 		.4byte	.LASF34
+ 891 022e 01       		.byte	0x1
+ 892 022f B201     		.2byte	0x1b2
+ 893 0231 77000000 		.4byte	0x77
+ 894 0235 02       		.uleb128 0x2
+ 895 0236 91       		.byte	0x91
+ 896 0237 76       		.sleb128 -10
+ 897 0238 0E       		.uleb128 0xe
+ 898 0239 C8000000 		.4byte	.LASF35
+ 899 023d 01       		.byte	0x1
+ 900 023e B201     		.2byte	0x1b2
+ 901 0240 77000000 		.4byte	0x77
+ 902 0244 02       		.uleb128 0x2
+ 903 0245 91       		.byte	0x91
+ 904 0246 74       		.sleb128 -12
+ 905 0247 0E       		.uleb128 0xe
+ 906 0248 53010000 		.4byte	.LASF36
+ 907 024c 01       		.byte	0x1
+ 908 024d B201     		.2byte	0x1b2
+ 909 024f 57020000 		.4byte	0x257
+ 910 0253 02       		.uleb128 0x2
+ 911 0254 91       		.byte	0x91
+ 912 0255 70       		.sleb128 -16
+ 913 0256 00       		.byte	0
+ 914 0257 12       		.uleb128 0x12
+ 915 0258 04       		.byte	0x4
+ 916 0259 B0000000 		.4byte	0xb0
+ 917 025d 13       		.uleb128 0x13
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 25
+
+
+ 918 025e 0A010000 		.4byte	.LASF37
+ 919 0262 01       		.byte	0x1
+ 920 0263 17       		.byte	0x17
+ 921 0264 6B000000 		.4byte	0x6b
+ 922 0268 05       		.uleb128 0x5
+ 923 0269 03       		.byte	0x3
+ 924 026a 00000000 		.4byte	EZI2Cs_initVar
+ 925 026e 14       		.uleb128 0x14
+ 926 026f 32010000 		.4byte	.LASF38
+ 927 0273 04       		.byte	0x4
+ 928 0274 1A       		.byte	0x1a
+ 929 0275 2A010000 		.4byte	0x12a
+ 930 0279 13       		.uleb128 0x13
+ 931 027a 2B030000 		.4byte	.LASF39
+ 932 027e 01       		.byte	0x1
+ 933 027f 1A       		.byte	0x1a
+ 934 0280 B0000000 		.4byte	0xb0
+ 935 0284 05       		.uleb128 0x5
+ 936 0285 03       		.byte	0x3
+ 937 0286 00000000 		.4byte	EZI2Cs_curStatus
+ 938 028a 13       		.uleb128 0x13
+ 939 028b 3C030000 		.4byte	.LASF40
+ 940 028f 01       		.byte	0x1
+ 941 0290 1B       		.byte	0x1b
+ 942 0291 B0000000 		.4byte	0xb0
+ 943 0295 05       		.uleb128 0x5
+ 944 0296 03       		.byte	0x3
+ 945 0297 00000000 		.4byte	EZI2Cs_curState
+ 946 029b 13       		.uleb128 0x13
+ 947 029c D6020000 		.4byte	.LASF41
+ 948 02a0 01       		.byte	0x1
+ 949 02a1 1E       		.byte	0x1e
+ 950 02a2 57020000 		.4byte	0x257
+ 951 02a6 05       		.uleb128 0x5
+ 952 02a7 03       		.byte	0x3
+ 953 02a8 00000000 		.4byte	EZI2Cs_dataPtrS1
+ 954 02ac 13       		.uleb128 0x13
+ 955 02ad 73010000 		.4byte	.LASF42
+ 956 02b1 01       		.byte	0x1
+ 957 02b2 1F       		.byte	0x1f
+ 958 02b3 B5000000 		.4byte	0xb5
+ 959 02b7 05       		.uleb128 0x5
+ 960 02b8 03       		.byte	0x3
+ 961 02b9 00000000 		.4byte	EZI2Cs_bufSizeS1
+ 962 02bd 13       		.uleb128 0x13
+ 963 02be 1F010000 		.4byte	.LASF43
+ 964 02c2 01       		.byte	0x1
+ 965 02c3 20       		.byte	0x20
+ 966 02c4 B5000000 		.4byte	0xb5
+ 967 02c8 05       		.uleb128 0x5
+ 968 02c9 03       		.byte	0x3
+ 969 02ca 00000000 		.4byte	EZI2Cs_wrProtectS1
+ 970 02ce 13       		.uleb128 0x13
+ 971 02cf DB010000 		.4byte	.LASF44
+ 972 02d3 01       		.byte	0x1
+ 973 02d4 21       		.byte	0x21
+ 974 02d5 B5000000 		.4byte	0xb5
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 26
+
+
+ 975 02d9 05       		.uleb128 0x5
+ 976 02da 03       		.byte	0x3
+ 977 02db 00000000 		.4byte	EZI2Cs_rwOffsetS1
+ 978 02df 13       		.uleb128 0x13
+ 979 02e0 D3000000 		.4byte	.LASF45
+ 980 02e4 01       		.byte	0x1
+ 981 02e5 22       		.byte	0x22
+ 982 02e6 B5000000 		.4byte	0xb5
+ 983 02ea 05       		.uleb128 0x5
+ 984 02eb 03       		.byte	0x3
+ 985 02ec 00000000 		.4byte	EZI2Cs_rwIndexS1
+ 986 02f0 00       		.byte	0
+ 987              		.section	.debug_abbrev,"",%progbits
+ 988              	.Ldebug_abbrev0:
+ 989 0000 01       		.uleb128 0x1
+ 990 0001 11       		.uleb128 0x11
+ 991 0002 01       		.byte	0x1
+ 992 0003 25       		.uleb128 0x25
+ 993 0004 0E       		.uleb128 0xe
+ 994 0005 13       		.uleb128 0x13
+ 995 0006 0B       		.uleb128 0xb
+ 996 0007 03       		.uleb128 0x3
+ 997 0008 0E       		.uleb128 0xe
+ 998 0009 1B       		.uleb128 0x1b
+ 999 000a 0E       		.uleb128 0xe
+ 1000 000b 55       		.uleb128 0x55
+ 1001 000c 17       		.uleb128 0x17
+ 1002 000d 11       		.uleb128 0x11
+ 1003 000e 01       		.uleb128 0x1
+ 1004 000f 10       		.uleb128 0x10
+ 1005 0010 17       		.uleb128 0x17
+ 1006 0011 00       		.byte	0
+ 1007 0012 00       		.byte	0
+ 1008 0013 02       		.uleb128 0x2
+ 1009 0014 24       		.uleb128 0x24
+ 1010 0015 00       		.byte	0
+ 1011 0016 0B       		.uleb128 0xb
+ 1012 0017 0B       		.uleb128 0xb
+ 1013 0018 3E       		.uleb128 0x3e
+ 1014 0019 0B       		.uleb128 0xb
+ 1015 001a 03       		.uleb128 0x3
+ 1016 001b 0E       		.uleb128 0xe
+ 1017 001c 00       		.byte	0
+ 1018 001d 00       		.byte	0
+ 1019 001e 03       		.uleb128 0x3
+ 1020 001f 24       		.uleb128 0x24
+ 1021 0020 00       		.byte	0
+ 1022 0021 0B       		.uleb128 0xb
+ 1023 0022 0B       		.uleb128 0xb
+ 1024 0023 3E       		.uleb128 0x3e
+ 1025 0024 0B       		.uleb128 0xb
+ 1026 0025 03       		.uleb128 0x3
+ 1027 0026 08       		.uleb128 0x8
+ 1028 0027 00       		.byte	0
+ 1029 0028 00       		.byte	0
+ 1030 0029 04       		.uleb128 0x4
+ 1031 002a 16       		.uleb128 0x16
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 27
+
+
+ 1032 002b 00       		.byte	0
+ 1033 002c 03       		.uleb128 0x3
+ 1034 002d 0E       		.uleb128 0xe
+ 1035 002e 3A       		.uleb128 0x3a
+ 1036 002f 0B       		.uleb128 0xb
+ 1037 0030 3B       		.uleb128 0x3b
+ 1038 0031 05       		.uleb128 0x5
+ 1039 0032 49       		.uleb128 0x49
+ 1040 0033 13       		.uleb128 0x13
+ 1041 0034 00       		.byte	0
+ 1042 0035 00       		.byte	0
+ 1043 0036 05       		.uleb128 0x5
+ 1044 0037 35       		.uleb128 0x35
+ 1045 0038 00       		.byte	0
+ 1046 0039 49       		.uleb128 0x49
+ 1047 003a 13       		.uleb128 0x13
+ 1048 003b 00       		.byte	0
+ 1049 003c 00       		.byte	0
+ 1050 003d 06       		.uleb128 0x6
+ 1051 003e 13       		.uleb128 0x13
+ 1052 003f 01       		.byte	0x1
+ 1053 0040 0B       		.uleb128 0xb
+ 1054 0041 0B       		.uleb128 0xb
+ 1055 0042 3A       		.uleb128 0x3a
+ 1056 0043 0B       		.uleb128 0xb
+ 1057 0044 3B       		.uleb128 0x3b
+ 1058 0045 0B       		.uleb128 0xb
+ 1059 0046 01       		.uleb128 0x1
+ 1060 0047 13       		.uleb128 0x13
+ 1061 0048 00       		.byte	0
+ 1062 0049 00       		.byte	0
+ 1063 004a 07       		.uleb128 0x7
+ 1064 004b 0D       		.uleb128 0xd
+ 1065 004c 00       		.byte	0
+ 1066 004d 03       		.uleb128 0x3
+ 1067 004e 0E       		.uleb128 0xe
+ 1068 004f 3A       		.uleb128 0x3a
+ 1069 0050 0B       		.uleb128 0xb
+ 1070 0051 3B       		.uleb128 0x3b
+ 1071 0052 0B       		.uleb128 0xb
+ 1072 0053 49       		.uleb128 0x49
+ 1073 0054 13       		.uleb128 0x13
+ 1074 0055 38       		.uleb128 0x38
+ 1075 0056 0B       		.uleb128 0xb
+ 1076 0057 00       		.byte	0
+ 1077 0058 00       		.byte	0
+ 1078 0059 08       		.uleb128 0x8
+ 1079 005a 0D       		.uleb128 0xd
+ 1080 005b 00       		.byte	0
+ 1081 005c 03       		.uleb128 0x3
+ 1082 005d 08       		.uleb128 0x8
+ 1083 005e 3A       		.uleb128 0x3a
+ 1084 005f 0B       		.uleb128 0xb
+ 1085 0060 3B       		.uleb128 0x3b
+ 1086 0061 0B       		.uleb128 0xb
+ 1087 0062 49       		.uleb128 0x49
+ 1088 0063 13       		.uleb128 0x13
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 28
+
+
+ 1089 0064 38       		.uleb128 0x38
+ 1090 0065 0B       		.uleb128 0xb
+ 1091 0066 00       		.byte	0
+ 1092 0067 00       		.byte	0
+ 1093 0068 09       		.uleb128 0x9
+ 1094 0069 16       		.uleb128 0x16
+ 1095 006a 00       		.byte	0
+ 1096 006b 03       		.uleb128 0x3
+ 1097 006c 0E       		.uleb128 0xe
+ 1098 006d 3A       		.uleb128 0x3a
+ 1099 006e 0B       		.uleb128 0xb
+ 1100 006f 3B       		.uleb128 0x3b
+ 1101 0070 0B       		.uleb128 0xb
+ 1102 0071 49       		.uleb128 0x49
+ 1103 0072 13       		.uleb128 0x13
+ 1104 0073 00       		.byte	0
+ 1105 0074 00       		.byte	0
+ 1106 0075 0A       		.uleb128 0xa
+ 1107 0076 2E       		.uleb128 0x2e
+ 1108 0077 00       		.byte	0
+ 1109 0078 3F       		.uleb128 0x3f
+ 1110 0079 19       		.uleb128 0x19
+ 1111 007a 03       		.uleb128 0x3
+ 1112 007b 0E       		.uleb128 0xe
+ 1113 007c 3A       		.uleb128 0x3a
+ 1114 007d 0B       		.uleb128 0xb
+ 1115 007e 3B       		.uleb128 0x3b
+ 1116 007f 0B       		.uleb128 0xb
+ 1117 0080 27       		.uleb128 0x27
+ 1118 0081 19       		.uleb128 0x19
+ 1119 0082 11       		.uleb128 0x11
+ 1120 0083 01       		.uleb128 0x1
+ 1121 0084 12       		.uleb128 0x12
+ 1122 0085 06       		.uleb128 0x6
+ 1123 0086 40       		.uleb128 0x40
+ 1124 0087 18       		.uleb128 0x18
+ 1125 0088 9642     		.uleb128 0x2116
+ 1126 008a 19       		.uleb128 0x19
+ 1127 008b 00       		.byte	0
+ 1128 008c 00       		.byte	0
+ 1129 008d 0B       		.uleb128 0xb
+ 1130 008e 2E       		.uleb128 0x2e
+ 1131 008f 01       		.byte	0x1
+ 1132 0090 3F       		.uleb128 0x3f
+ 1133 0091 19       		.uleb128 0x19
+ 1134 0092 03       		.uleb128 0x3
+ 1135 0093 0E       		.uleb128 0xe
+ 1136 0094 3A       		.uleb128 0x3a
+ 1137 0095 0B       		.uleb128 0xb
+ 1138 0096 3B       		.uleb128 0x3b
+ 1139 0097 0B       		.uleb128 0xb
+ 1140 0098 27       		.uleb128 0x27
+ 1141 0099 19       		.uleb128 0x19
+ 1142 009a 11       		.uleb128 0x11
+ 1143 009b 01       		.uleb128 0x1
+ 1144 009c 12       		.uleb128 0x12
+ 1145 009d 06       		.uleb128 0x6
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 29
+
+
+ 1146 009e 40       		.uleb128 0x40
+ 1147 009f 18       		.uleb128 0x18
+ 1148 00a0 9642     		.uleb128 0x2116
+ 1149 00a2 19       		.uleb128 0x19
+ 1150 00a3 01       		.uleb128 0x1
+ 1151 00a4 13       		.uleb128 0x13
+ 1152 00a5 00       		.byte	0
+ 1153 00a6 00       		.byte	0
+ 1154 00a7 0C       		.uleb128 0xc
+ 1155 00a8 34       		.uleb128 0x34
+ 1156 00a9 00       		.byte	0
+ 1157 00aa 03       		.uleb128 0x3
+ 1158 00ab 0E       		.uleb128 0xe
+ 1159 00ac 3A       		.uleb128 0x3a
+ 1160 00ad 0B       		.uleb128 0xb
+ 1161 00ae 3B       		.uleb128 0x3b
+ 1162 00af 0B       		.uleb128 0xb
+ 1163 00b0 49       		.uleb128 0x49
+ 1164 00b1 13       		.uleb128 0x13
+ 1165 00b2 02       		.uleb128 0x2
+ 1166 00b3 18       		.uleb128 0x18
+ 1167 00b4 00       		.byte	0
+ 1168 00b5 00       		.byte	0
+ 1169 00b6 0D       		.uleb128 0xd
+ 1170 00b7 2E       		.uleb128 0x2e
+ 1171 00b8 01       		.byte	0x1
+ 1172 00b9 3F       		.uleb128 0x3f
+ 1173 00ba 19       		.uleb128 0x19
+ 1174 00bb 03       		.uleb128 0x3
+ 1175 00bc 0E       		.uleb128 0xe
+ 1176 00bd 3A       		.uleb128 0x3a
+ 1177 00be 0B       		.uleb128 0xb
+ 1178 00bf 3B       		.uleb128 0x3b
+ 1179 00c0 05       		.uleb128 0x5
+ 1180 00c1 27       		.uleb128 0x27
+ 1181 00c2 19       		.uleb128 0x19
+ 1182 00c3 11       		.uleb128 0x11
+ 1183 00c4 01       		.uleb128 0x1
+ 1184 00c5 12       		.uleb128 0x12
+ 1185 00c6 06       		.uleb128 0x6
+ 1186 00c7 40       		.uleb128 0x40
+ 1187 00c8 18       		.uleb128 0x18
+ 1188 00c9 9742     		.uleb128 0x2117
+ 1189 00cb 19       		.uleb128 0x19
+ 1190 00cc 01       		.uleb128 0x1
+ 1191 00cd 13       		.uleb128 0x13
+ 1192 00ce 00       		.byte	0
+ 1193 00cf 00       		.byte	0
+ 1194 00d0 0E       		.uleb128 0xe
+ 1195 00d1 05       		.uleb128 0x5
+ 1196 00d2 00       		.byte	0
+ 1197 00d3 03       		.uleb128 0x3
+ 1198 00d4 0E       		.uleb128 0xe
+ 1199 00d5 3A       		.uleb128 0x3a
+ 1200 00d6 0B       		.uleb128 0xb
+ 1201 00d7 3B       		.uleb128 0x3b
+ 1202 00d8 05       		.uleb128 0x5
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 30
+
+
+ 1203 00d9 49       		.uleb128 0x49
+ 1204 00da 13       		.uleb128 0x13
+ 1205 00db 02       		.uleb128 0x2
+ 1206 00dc 18       		.uleb128 0x18
+ 1207 00dd 00       		.byte	0
+ 1208 00de 00       		.byte	0
+ 1209 00df 0F       		.uleb128 0xf
+ 1210 00e0 2E       		.uleb128 0x2e
+ 1211 00e1 00       		.byte	0
+ 1212 00e2 3F       		.uleb128 0x3f
+ 1213 00e3 19       		.uleb128 0x19
+ 1214 00e4 03       		.uleb128 0x3
+ 1215 00e5 0E       		.uleb128 0xe
+ 1216 00e6 3A       		.uleb128 0x3a
+ 1217 00e7 0B       		.uleb128 0xb
+ 1218 00e8 3B       		.uleb128 0x3b
+ 1219 00e9 05       		.uleb128 0x5
+ 1220 00ea 27       		.uleb128 0x27
+ 1221 00eb 19       		.uleb128 0x19
+ 1222 00ec 49       		.uleb128 0x49
+ 1223 00ed 13       		.uleb128 0x13
+ 1224 00ee 11       		.uleb128 0x11
+ 1225 00ef 01       		.uleb128 0x1
+ 1226 00f0 12       		.uleb128 0x12
+ 1227 00f1 06       		.uleb128 0x6
+ 1228 00f2 40       		.uleb128 0x40
+ 1229 00f3 18       		.uleb128 0x18
+ 1230 00f4 9742     		.uleb128 0x2117
+ 1231 00f6 19       		.uleb128 0x19
+ 1232 00f7 00       		.byte	0
+ 1233 00f8 00       		.byte	0
+ 1234 00f9 10       		.uleb128 0x10
+ 1235 00fa 2E       		.uleb128 0x2e
+ 1236 00fb 01       		.byte	0x1
+ 1237 00fc 3F       		.uleb128 0x3f
+ 1238 00fd 19       		.uleb128 0x19
+ 1239 00fe 03       		.uleb128 0x3
+ 1240 00ff 0E       		.uleb128 0xe
+ 1241 0100 3A       		.uleb128 0x3a
+ 1242 0101 0B       		.uleb128 0xb
+ 1243 0102 3B       		.uleb128 0x3b
+ 1244 0103 05       		.uleb128 0x5
+ 1245 0104 27       		.uleb128 0x27
+ 1246 0105 19       		.uleb128 0x19
+ 1247 0106 49       		.uleb128 0x49
+ 1248 0107 13       		.uleb128 0x13
+ 1249 0108 11       		.uleb128 0x11
+ 1250 0109 01       		.uleb128 0x1
+ 1251 010a 12       		.uleb128 0x12
+ 1252 010b 06       		.uleb128 0x6
+ 1253 010c 40       		.uleb128 0x40
+ 1254 010d 18       		.uleb128 0x18
+ 1255 010e 9742     		.uleb128 0x2117
+ 1256 0110 19       		.uleb128 0x19
+ 1257 0111 01       		.uleb128 0x1
+ 1258 0112 13       		.uleb128 0x13
+ 1259 0113 00       		.byte	0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 31
+
+
+ 1260 0114 00       		.byte	0
+ 1261 0115 11       		.uleb128 0x11
+ 1262 0116 34       		.uleb128 0x34
+ 1263 0117 00       		.byte	0
+ 1264 0118 03       		.uleb128 0x3
+ 1265 0119 0E       		.uleb128 0xe
+ 1266 011a 3A       		.uleb128 0x3a
+ 1267 011b 0B       		.uleb128 0xb
+ 1268 011c 3B       		.uleb128 0x3b
+ 1269 011d 05       		.uleb128 0x5
+ 1270 011e 49       		.uleb128 0x49
+ 1271 011f 13       		.uleb128 0x13
+ 1272 0120 02       		.uleb128 0x2
+ 1273 0121 18       		.uleb128 0x18
+ 1274 0122 00       		.byte	0
+ 1275 0123 00       		.byte	0
+ 1276 0124 12       		.uleb128 0x12
+ 1277 0125 0F       		.uleb128 0xf
+ 1278 0126 00       		.byte	0
+ 1279 0127 0B       		.uleb128 0xb
+ 1280 0128 0B       		.uleb128 0xb
+ 1281 0129 49       		.uleb128 0x49
+ 1282 012a 13       		.uleb128 0x13
+ 1283 012b 00       		.byte	0
+ 1284 012c 00       		.byte	0
+ 1285 012d 13       		.uleb128 0x13
+ 1286 012e 34       		.uleb128 0x34
+ 1287 012f 00       		.byte	0
+ 1288 0130 03       		.uleb128 0x3
+ 1289 0131 0E       		.uleb128 0xe
+ 1290 0132 3A       		.uleb128 0x3a
+ 1291 0133 0B       		.uleb128 0xb
+ 1292 0134 3B       		.uleb128 0x3b
+ 1293 0135 0B       		.uleb128 0xb
+ 1294 0136 49       		.uleb128 0x49
+ 1295 0137 13       		.uleb128 0x13
+ 1296 0138 3F       		.uleb128 0x3f
+ 1297 0139 19       		.uleb128 0x19
+ 1298 013a 02       		.uleb128 0x2
+ 1299 013b 18       		.uleb128 0x18
+ 1300 013c 00       		.byte	0
+ 1301 013d 00       		.byte	0
+ 1302 013e 14       		.uleb128 0x14
+ 1303 013f 34       		.uleb128 0x34
+ 1304 0140 00       		.byte	0
+ 1305 0141 03       		.uleb128 0x3
+ 1306 0142 0E       		.uleb128 0xe
+ 1307 0143 3A       		.uleb128 0x3a
+ 1308 0144 0B       		.uleb128 0xb
+ 1309 0145 3B       		.uleb128 0x3b
+ 1310 0146 0B       		.uleb128 0xb
+ 1311 0147 49       		.uleb128 0x49
+ 1312 0148 13       		.uleb128 0x13
+ 1313 0149 3F       		.uleb128 0x3f
+ 1314 014a 19       		.uleb128 0x19
+ 1315 014b 3C       		.uleb128 0x3c
+ 1316 014c 19       		.uleb128 0x19
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 32
+
+
+ 1317 014d 00       		.byte	0
+ 1318 014e 00       		.byte	0
+ 1319 014f 00       		.byte	0
+ 1320              		.section	.debug_aranges,"",%progbits
+ 1321 0000 54000000 		.4byte	0x54
+ 1322 0004 0200     		.2byte	0x2
+ 1323 0006 00000000 		.4byte	.Ldebug_info0
+ 1324 000a 04       		.byte	0x4
+ 1325 000b 00       		.byte	0
+ 1326 000c 0000     		.2byte	0
+ 1327 000e 0000     		.2byte	0
+ 1328 0010 00000000 		.4byte	.LFB0
+ 1329 0014 8C000000 		.4byte	.LFE0-.LFB0
+ 1330 0018 00000000 		.4byte	.LFB1
+ 1331 001c 54000000 		.4byte	.LFE1-.LFB1
+ 1332 0020 00000000 		.4byte	.LFB2
+ 1333 0024 24000000 		.4byte	.LFE2-.LFB2
+ 1334 0028 00000000 		.4byte	.LFB3
+ 1335 002c 08010000 		.4byte	.LFE3-.LFB3
+ 1336 0030 00000000 		.4byte	.LFB4
+ 1337 0034 24000000 		.4byte	.LFE4-.LFB4
+ 1338 0038 00000000 		.4byte	.LFB5
+ 1339 003c 18000000 		.4byte	.LFE5-.LFB5
+ 1340 0040 00000000 		.4byte	.LFB6
+ 1341 0044 44000000 		.4byte	.LFE6-.LFB6
+ 1342 0048 00000000 		.4byte	.LFB7
+ 1343 004c 6C000000 		.4byte	.LFE7-.LFB7
+ 1344 0050 00000000 		.4byte	0
+ 1345 0054 00000000 		.4byte	0
+ 1346              		.section	.debug_ranges,"",%progbits
+ 1347              	.Ldebug_ranges0:
+ 1348 0000 00000000 		.4byte	.LFB0
+ 1349 0004 8C000000 		.4byte	.LFE0
+ 1350 0008 00000000 		.4byte	.LFB1
+ 1351 000c 54000000 		.4byte	.LFE1
+ 1352 0010 00000000 		.4byte	.LFB2
+ 1353 0014 24000000 		.4byte	.LFE2
+ 1354 0018 00000000 		.4byte	.LFB3
+ 1355 001c 08010000 		.4byte	.LFE3
+ 1356 0020 00000000 		.4byte	.LFB4
+ 1357 0024 24000000 		.4byte	.LFE4
+ 1358 0028 00000000 		.4byte	.LFB5
+ 1359 002c 18000000 		.4byte	.LFE5
+ 1360 0030 00000000 		.4byte	.LFB6
+ 1361 0034 44000000 		.4byte	.LFE6
+ 1362 0038 00000000 		.4byte	.LFB7
+ 1363 003c 6C000000 		.4byte	.LFE7
+ 1364 0040 00000000 		.4byte	0
+ 1365 0044 00000000 		.4byte	0
+ 1366              		.section	.debug_line,"",%progbits
+ 1367              	.Ldebug_line0:
+ 1368 0000 27010000 		.section	.debug_str,"MS",%progbits,1
+ 1368      02005F00 
+ 1368      00000201 
+ 1368      FB0E0D00 
+ 1368      01010101 
+ 1369              	.LASF25:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 33
+
+
+ 1370 0000 455A4932 		.ascii	"EZI2Cs_Start\000"
+ 1370      43735F53 
+ 1370      74617274 
+ 1370      00
+ 1371              	.LASF16:
+ 1372 000d 72656733 		.ascii	"reg32\000"
+ 1372      3200
+ 1373              	.LASF27:
+ 1374 0013 455A4932 		.ascii	"EZI2Cs_Stop\000"
+ 1374      43735F53 
+ 1374      746F7000 
+ 1375              	.LASF46:
+ 1376 001f 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1376      43313120 
+ 1376      352E342E 
+ 1376      31203230 
+ 1376      31363036 
+ 1377 0052 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 1377      20726576 
+ 1377      6973696F 
+ 1377      6E203233 
+ 1377      37373135 
+ 1378 0085 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 1378      66756E63 
+ 1378      74696F6E 
+ 1378      2D736563 
+ 1378      74696F6E 
+ 1379              	.LASF21:
+ 1380 00ad 636C6B44 		.ascii	"clkDiv1\000"
+ 1380      69763100 
+ 1381              	.LASF3:
+ 1382 00b5 73686F72 		.ascii	"short unsigned int\000"
+ 1382      7420756E 
+ 1382      7369676E 
+ 1382      65642069 
+ 1382      6E7400
+ 1383              	.LASF35:
+ 1384 00c8 7277426F 		.ascii	"rwBoundary\000"
+ 1384      756E6461 
+ 1384      727900
+ 1385              	.LASF45:
+ 1386 00d3 455A4932 		.ascii	"EZI2Cs_rwIndexS1\000"
+ 1386      43735F72 
+ 1386      77496E64 
+ 1386      65785331 
+ 1386      00
+ 1387              	.LASF23:
+ 1388 00e4 455A4932 		.ascii	"EZI2Cs_BACKUP_STRUCT\000"
+ 1388      43735F42 
+ 1388      41434B55 
+ 1388      505F5354 
+ 1388      52554354 
+ 1389              	.LASF29:
+ 1390 00f9 626C6F63 		.ascii	"blockResetCycles\000"
+ 1390      6B526573 
+ 1390      65744379 
+ 1390      636C6573 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 34
+
+
+ 1390      00
+ 1391              	.LASF37:
+ 1392 010a 455A4932 		.ascii	"EZI2Cs_initVar\000"
+ 1392      43735F69 
+ 1392      6E697456 
+ 1392      617200
+ 1393              	.LASF12:
+ 1394 0119 666C6F61 		.ascii	"float\000"
+ 1394      7400
+ 1395              	.LASF43:
+ 1396 011f 455A4932 		.ascii	"EZI2Cs_wrProtectS1\000"
+ 1396      43735F77 
+ 1396      7250726F 
+ 1396      74656374 
+ 1396      533100
+ 1397              	.LASF38:
+ 1398 0132 455A4932 		.ascii	"EZI2Cs_backup\000"
+ 1398      43735F62 
+ 1398      61636B75 
+ 1398      7000
+ 1399              	.LASF1:
+ 1400 0140 756E7369 		.ascii	"unsigned char\000"
+ 1400      676E6564 
+ 1400      20636861 
+ 1400      7200
+ 1401              	.LASF15:
+ 1402 014e 72656738 		.ascii	"reg8\000"
+ 1402      00
+ 1403              	.LASF36:
+ 1404 0153 64617461 		.ascii	"dataPtr\000"
+ 1404      50747200 
+ 1405              	.LASF5:
+ 1406 015b 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1406      20756E73 
+ 1406      69676E65 
+ 1406      6420696E 
+ 1406      7400
+ 1407              	.LASF9:
+ 1408 016d 75696E74 		.ascii	"uint8\000"
+ 1408      3800
+ 1409              	.LASF42:
+ 1410 0173 455A4932 		.ascii	"EZI2Cs_bufSizeS1\000"
+ 1410      43735F62 
+ 1410      75665369 
+ 1410      7A655331 
+ 1410      00
+ 1411              	.LASF13:
+ 1412 0184 646F7562 		.ascii	"double\000"
+ 1412      6C6500
+ 1413              	.LASF47:
+ 1414 018b 47656E65 		.ascii	"Generated_Source\\PSoC5\\EZI2Cs.c\000"
+ 1414      72617465 
+ 1414      645F536F 
+ 1414      75726365 
+ 1414      5C50536F 
+ 1415              	.LASF10:
+ 1416 01ab 75696E74 		.ascii	"uint16\000"
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 35
+
+
+ 1416      313600
+ 1417              	.LASF11:
+ 1418 01b2 75696E74 		.ascii	"uint32\000"
+ 1418      333200
+ 1419              	.LASF19:
+ 1420 01b9 656E6162 		.ascii	"enableState\000"
+ 1420      6C655374 
+ 1420      61746500 
+ 1421              	.LASF28:
+ 1422 01c5 696E7453 		.ascii	"intState\000"
+ 1422      74617465 
+ 1422      00
+ 1423              	.LASF8:
+ 1424 01ce 756E7369 		.ascii	"unsigned int\000"
+ 1424      676E6564 
+ 1424      20696E74 
+ 1424      00
+ 1425              	.LASF44:
+ 1426 01db 455A4932 		.ascii	"EZI2Cs_rwOffsetS1\000"
+ 1426      43735F72 
+ 1426      774F6666 
+ 1426      73657453 
+ 1426      3100
+ 1427              	.LASF49:
+ 1428 01ed 455A4932 		.ascii	"EZI2Cs_GetAddress1\000"
+ 1428      43735F47 
+ 1428      65744164 
+ 1428      64726573 
+ 1428      733100
+ 1429              	.LASF33:
+ 1430 0200 61646472 		.ascii	"address\000"
+ 1430      65737300 
+ 1431              	.LASF7:
+ 1432 0208 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1432      206C6F6E 
+ 1432      6720756E 
+ 1432      7369676E 
+ 1432      65642069 
+ 1433              	.LASF50:
+ 1434 021f 455A4932 		.ascii	"EZI2Cs_GetActivity\000"
+ 1434      43735F47 
+ 1434      65744163 
+ 1434      74697669 
+ 1434      747900
+ 1435              	.LASF48:
+ 1436 0232 433A5C70 		.ascii	"C:\\psoc\\chamonix\\icm_stuff\\nanoNxt_ICM3_be_befo"
+ 1436      736F635C 
+ 1436      6368616D 
+ 1436      6F6E6978 
+ 1436      5C69636D 
+ 1437 0261 72655F72 		.ascii	"re_russian\\nanoNxt_ICM3\\ext_pim.cydsn\000"
+ 1437      75737369 
+ 1437      616E5C6E 
+ 1437      616E6F4E 
+ 1437      78745F49 
+ 1438              	.LASF22:
+ 1439 0287 636C6B44 		.ascii	"clkDiv2\000"
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 36
+
+
+ 1439      69763200 
+ 1440              	.LASF17:
+ 1441 028f 6C6F6E67 		.ascii	"long double\000"
+ 1441      20646F75 
+ 1441      626C6500 
+ 1442              	.LASF26:
+ 1443 029b 455A4932 		.ascii	"EZI2Cs_Enable\000"
+ 1443      43735F45 
+ 1443      6E61626C 
+ 1443      6500
+ 1444              	.LASF24:
+ 1445 02a9 455A4932 		.ascii	"EZI2Cs_Init\000"
+ 1445      43735F49 
+ 1445      6E697400 
+ 1446              	.LASF18:
+ 1447 02b5 73697A65 		.ascii	"sizetype\000"
+ 1447      74797065 
+ 1447      00
+ 1448              	.LASF6:
+ 1449 02be 6C6F6E67 		.ascii	"long long int\000"
+ 1449      206C6F6E 
+ 1449      6720696E 
+ 1449      7400
+ 1450              	.LASF14:
+ 1451 02cc 63686172 		.ascii	"char\000"
+ 1451      00
+ 1452              	.LASF20:
+ 1453 02d1 78636667 		.ascii	"xcfg\000"
+ 1453      00
+ 1454              	.LASF41:
+ 1455 02d6 455A4932 		.ascii	"EZI2Cs_dataPtrS1\000"
+ 1455      43735F64 
+ 1455      61746150 
+ 1455      74725331 
+ 1455      00
+ 1456              	.LASF2:
+ 1457 02e7 73686F72 		.ascii	"short int\000"
+ 1457      7420696E 
+ 1457      7400
+ 1458              	.LASF34:
+ 1459 02f1 62756653 		.ascii	"bufSize\000"
+ 1459      697A6500 
+ 1460              	.LASF4:
+ 1461 02f9 6C6F6E67 		.ascii	"long int\000"
+ 1461      20696E74 
+ 1461      00
+ 1462              	.LASF31:
+ 1463 0302 746D7053 		.ascii	"tmpStatus\000"
+ 1463      74617475 
+ 1463      7300
+ 1464              	.LASF30:
+ 1465 030c 455A4932 		.ascii	"EZI2Cs_SetAddress1\000"
+ 1465      43735F53 
+ 1465      65744164 
+ 1465      64726573 
+ 1465      733100
+ 1466              	.LASF0:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccyVgDjv.s 			page 37
+
+
+ 1467 031f 7369676E 		.ascii	"signed char\000"
+ 1467      65642063 
+ 1467      68617200 
+ 1468              	.LASF39:
+ 1469 032b 455A4932 		.ascii	"EZI2Cs_curStatus\000"
+ 1469      43735F63 
+ 1469      75725374 
+ 1469      61747573 
+ 1469      00
+ 1470              	.LASF40:
+ 1471 033c 455A4932 		.ascii	"EZI2Cs_curState\000"
+ 1471      43735F63 
+ 1471      75725374 
+ 1471      61746500 
+ 1472              	.LASF32:
+ 1473 034c 455A4932 		.ascii	"EZI2Cs_SetBuffer1\000"
+ 1473      43735F53 
+ 1473      65744275 
+ 1473      66666572 
+ 1473      3100
+ 1474              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

@@ -1,0 +1,2304 @@
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"isr_F2F_edge.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	s,40,4
+  19              		.comm	currentAccessType,1,1
+  20              		.comm	old,1,1
+  21              		.comm	TAMPERCR_POLARITY,4,4
+  22              		.comm	card_ack,4,4
+  23              		.comm	card_in_buf,4,4
+  24              		.comm	got_pulse,1,1
+  25              		.comm	f2f_pulsewidth,4,4
+  26              		.comm	timeout_cnt,4,4
+  27              		.comm	activate_f2ftimer,1,1
+  28              		.section	.text.isr_F2F_edge_Start,"ax",%progbits
+  29              		.align	2
+  30              		.global	isr_F2F_edge_Start
+  31              		.thumb
+  32              		.thumb_func
+  33              		.type	isr_F2F_edge_Start, %function
+  34              	isr_F2F_edge_Start:
+  35              	.LFB0:
+  36              		.file 1 ".\\Generated_Source\\PSoC5\\isr_F2F_edge.c"
+   1:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+   2:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * File Name: isr_F2F_edge.c  
+   3:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Version 1.70
+   4:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+   5:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  Description:
+   6:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   API for controlling the state of an interrupt.
+   7:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+   8:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+   9:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  Note:
+  10:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  11:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+  12:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Copyright 2008-2015, Cypress Semiconductor Corporation.  All rights reserved.
+  13:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * You may use this file only in accordance with the license, terms, conditions, 
+  14:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * disclaimers, and limitations in the end user license agreement accompanying 
+  15:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * the software package with which this file was provided.
+  16:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+  17:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  18:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  19:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #include <cydevice_trm.h>
+  20:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #include <CyLib.h>
+  21:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #include <isr_F2F_edge.h>
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 2
+
+
+  22:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  23:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #if !defined(isr_F2F_edge__REMOVED) /* Check for removal by optimization */
+  24:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  25:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+  26:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  Place your includes, defines and code here 
+  27:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************/
+  28:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /* `#START isr_F2F_edge_intc` */
+  29:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #include "FilterReg.h"
+  30:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #include "Timeout_Timer.h"
+  31:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #include "system.h"
+  32:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /* `#END` */
+  33:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  34:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #ifndef CYINT_IRQ_BASE
+  35:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #define CYINT_IRQ_BASE      16
+  36:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #endif /* CYINT_IRQ_BASE */
+  37:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #ifndef CYINT_VECT_TABLE
+  38:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #define CYINT_VECT_TABLE    ((cyisraddress **) CYREG_NVIC_VECT_OFFSET)
+  39:.\Generated_Source\PSoC5/isr_F2F_edge.c **** #endif /* CYINT_VECT_TABLE */
+  40:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  41:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /* Declared in startup, used to set unused interrupts to. */
+  42:.\Generated_Source\PSoC5/isr_F2F_edge.c **** CY_ISR_PROTO(IntDefaultHandler);
+  43:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  44:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  45:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+  46:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_Start
+  47:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+  48:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  49:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+  50:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  Set up the interrupt and enable it. This function disables the interrupt, 
+  51:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  sets the default interrupt vector, sets the priority from the value in the
+  52:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  Design Wide Resources Interrupt Editor, then enables the interrupt to the 
+  53:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  interrupt controller.
+  54:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  55:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:  
+  56:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+  57:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  58:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+  59:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+  60:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  61:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+  62:.\Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_Start(void)
+  63:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+  37              		.loc 1 63 0
+  38              		.cfi_startproc
+  39              		@ args = 0, pretend = 0, frame = 0
+  40              		@ frame_needed = 1, uses_anonymous_args = 0
+  41 0000 80B5     		push	{r7, lr}
+  42              		.cfi_def_cfa_offset 8
+  43              		.cfi_offset 7, -8
+  44              		.cfi_offset 14, -4
+  45 0002 00AF     		add	r7, sp, #0
+  46              		.cfi_def_cfa_register 7
+  64:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* For all we know the interrupt is active. */
+  65:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_Disable();
+  47              		.loc 1 65 0
+  48 0004 FFF7FEFF 		bl	isr_F2F_edge_Disable
+  66:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 3
+
+
+  67:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Set the ISR to point to the isr_F2F_edge Interrupt. */
+  68:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_SetVector(&isr_F2F_edge_Interrupt);
+  49              		.loc 1 68 0
+  50 0008 0448     		ldr	r0, .L2
+  51 000a FFF7FEFF 		bl	isr_F2F_edge_SetVector
+  69:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  70:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Set the priority. */
+  71:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_SetPriority((uint8)isr_F2F_edge_INTC_PRIOR_NUMBER);
+  52              		.loc 1 71 0
+  53 000e 0720     		movs	r0, #7
+  54 0010 FFF7FEFF 		bl	isr_F2F_edge_SetPriority
+  72:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  73:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Enable it. */
+  74:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_Enable();
+  55              		.loc 1 74 0
+  56 0014 FFF7FEFF 		bl	isr_F2F_edge_Enable
+  75:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+  57              		.loc 1 75 0
+  58 0018 80BD     		pop	{r7, pc}
+  59              	.L3:
+  60 001a 00BF     		.align	2
+  61              	.L2:
+  62 001c 00000000 		.word	isr_F2F_edge_Interrupt
+  63              		.cfi_endproc
+  64              	.LFE0:
+  65              		.size	isr_F2F_edge_Start, .-isr_F2F_edge_Start
+  66              		.section	.text.isr_F2F_edge_StartEx,"ax",%progbits
+  67              		.align	2
+  68              		.global	isr_F2F_edge_StartEx
+  69              		.thumb
+  70              		.thumb_func
+  71              		.type	isr_F2F_edge_StartEx, %function
+  72              	isr_F2F_edge_StartEx:
+  73              	.LFB1:
+  76:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  77:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+  78:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+  79:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_StartEx
+  80:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+  81:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  82:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+  83:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  Sets up the interrupt and enables it. This function disables the interrupt,
+  84:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  sets the interrupt vector based on the address passed in, sets the priority 
+  85:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  from the value in the Design Wide Resources Interrupt Editor, then enables 
+  86:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  the interrupt to the interrupt controller.
+  87:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  
+  88:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
+  89:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  used to provide consistent definition across compilers:
+  90:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  
+  91:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *  Function definition example:
+  92:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   CY_ISR(MyISR)
+  93:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   {
+  94:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   }
+  95:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Function prototype example:
+  96:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   CY_ISR_PROTO(MyISR);
+  97:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+  98:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:  
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 4
+
+
+  99:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   address: Address of the ISR to set in the interrupt vector table.
+ 100:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 101:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 102:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 103:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 104:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 105:.\Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_StartEx(cyisraddress address)
+ 106:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+  74              		.loc 1 106 0
+  75              		.cfi_startproc
+  76              		@ args = 0, pretend = 0, frame = 8
+  77              		@ frame_needed = 1, uses_anonymous_args = 0
+  78 0000 80B5     		push	{r7, lr}
+  79              		.cfi_def_cfa_offset 8
+  80              		.cfi_offset 7, -8
+  81              		.cfi_offset 14, -4
+  82 0002 82B0     		sub	sp, sp, #8
+  83              		.cfi_def_cfa_offset 16
+  84 0004 00AF     		add	r7, sp, #0
+  85              		.cfi_def_cfa_register 7
+  86 0006 7860     		str	r0, [r7, #4]
+ 107:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* For all we know the interrupt is active. */
+ 108:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_Disable();
+  87              		.loc 1 108 0
+  88 0008 FFF7FEFF 		bl	isr_F2F_edge_Disable
+ 109:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 110:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Set the ISR to point to the isr_F2F_edge Interrupt. */
+ 111:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_SetVector(address);
+  89              		.loc 1 111 0
+  90 000c 7868     		ldr	r0, [r7, #4]
+  91 000e FFF7FEFF 		bl	isr_F2F_edge_SetVector
+ 112:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 113:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Set the priority. */
+ 114:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_SetPriority((uint8)isr_F2F_edge_INTC_PRIOR_NUMBER);
+  92              		.loc 1 114 0
+  93 0012 0720     		movs	r0, #7
+  94 0014 FFF7FEFF 		bl	isr_F2F_edge_SetPriority
+ 115:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 116:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Enable it. */
+ 117:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_Enable();
+  95              		.loc 1 117 0
+  96 0018 FFF7FEFF 		bl	isr_F2F_edge_Enable
+ 118:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+  97              		.loc 1 118 0
+  98 001c 0837     		adds	r7, r7, #8
+  99 001e BD46     		mov	sp, r7
+ 100              		@ sp needed
+ 101 0020 80BD     		pop	{r7, pc}
+ 102              		.cfi_endproc
+ 103              	.LFE1:
+ 104              		.size	isr_F2F_edge_StartEx, .-isr_F2F_edge_StartEx
+ 105 0022 00BF     		.section	.text.isr_F2F_edge_Stop,"ax",%progbits
+ 106              		.align	2
+ 107              		.global	isr_F2F_edge_Stop
+ 108              		.thumb
+ 109              		.thumb_func
+ 110              		.type	isr_F2F_edge_Stop, %function
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 5
+
+
+ 111              	isr_F2F_edge_Stop:
+ 112              	.LFB2:
+ 119:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 120:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 121:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 122:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_Stop
+ 123:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 124:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 125:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 126:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Disables and removes the interrupt.
+ 127:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 128:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:  
+ 129:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 130:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 131:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 132:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 133:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 134:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 135:.\Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_Stop(void)
+ 136:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 113              		.loc 1 136 0
+ 114              		.cfi_startproc
+ 115              		@ args = 0, pretend = 0, frame = 0
+ 116              		@ frame_needed = 1, uses_anonymous_args = 0
+ 117 0000 80B5     		push	{r7, lr}
+ 118              		.cfi_def_cfa_offset 8
+ 119              		.cfi_offset 7, -8
+ 120              		.cfi_offset 14, -4
+ 121 0002 00AF     		add	r7, sp, #0
+ 122              		.cfi_def_cfa_register 7
+ 137:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Disable this interrupt. */
+ 138:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_Disable();
+ 123              		.loc 1 138 0
+ 124 0004 FFF7FEFF 		bl	isr_F2F_edge_Disable
+ 139:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 140:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Set the ISR to point to the passive one. */
+ 141:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     isr_F2F_edge_SetVector(&IntDefaultHandler);
+ 125              		.loc 1 141 0
+ 126 0008 0148     		ldr	r0, .L6
+ 127 000a FFF7FEFF 		bl	isr_F2F_edge_SetVector
+ 142:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 128              		.loc 1 142 0
+ 129 000e 80BD     		pop	{r7, pc}
+ 130              	.L7:
+ 131              		.align	2
+ 132              	.L6:
+ 133 0010 00000000 		.word	IntDefaultHandler
+ 134              		.cfi_endproc
+ 135              	.LFE2:
+ 136              		.size	isr_F2F_edge_Stop, .-isr_F2F_edge_Stop
+ 137              		.section	.text.isr_F2F_edge_Interrupt,"ax",%progbits
+ 138              		.align	2
+ 139              		.global	isr_F2F_edge_Interrupt
+ 140              		.thumb
+ 141              		.thumb_func
+ 142              		.type	isr_F2F_edge_Interrupt, %function
+ 143              	isr_F2F_edge_Interrupt:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 6
+
+
+ 144              	.LFB3:
+ 143:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 144:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 145:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 146:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_Interrupt
+ 147:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 148:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 149:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 150:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   The default Interrupt Service Routine for isr_F2F_edge.
+ 151:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 152:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Add custom code between the coments to keep the next version of this file
+ 153:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   from over writting your code.
+ 154:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 155:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:  
+ 156:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 157:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 158:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 159:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 160:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 161:.\Generated_Source\PSoC5/isr_F2F_edge.c **** CY_ISR(isr_F2F_edge_Interrupt)
+ 162:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 145              		.loc 1 162 0
+ 146              		.cfi_startproc
+ 147              		@ args = 0, pretend = 0, frame = 0
+ 148              		@ frame_needed = 1, uses_anonymous_args = 0
+ 149 0000 80B5     		push	{r7, lr}
+ 150              		.cfi_def_cfa_offset 8
+ 151              		.cfi_offset 7, -8
+ 152              		.cfi_offset 14, -4
+ 153 0002 00AF     		add	r7, sp, #0
+ 154              		.cfi_def_cfa_register 7
+ 163:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /*  Place your Interrupt code here. */
+ 164:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* `#START isr_F2F_edge_Interrupt` */
+ 165:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     FilterReg_Read();  //reset debouncer
+ 155              		.loc 1 165 0
+ 156 0004 FFF7FEFF 		bl	FilterReg_Read
+ 166:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     if(activate_f2ftimer == 1)
+ 157              		.loc 1 166 0
+ 158 0008 0D4B     		ldr	r3, .L11
+ 159 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 160 000c 012B     		cmp	r3, #1
+ 161 000e 15D1     		bne	.L8
+ 167:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     {
+ 168:.\Generated_Source\PSoC5/isr_F2F_edge.c ****         if(timeout_cnt != 0 && timeout_cnt <0x40){
+ 162              		.loc 1 168 0
+ 163 0010 0C4B     		ldr	r3, .L11+4
+ 164 0012 1B68     		ldr	r3, [r3]
+ 165 0014 002B     		cmp	r3, #0
+ 166 0016 0AD0     		beq	.L10
+ 167              		.loc 1 168 0 is_stmt 0 discriminator 1
+ 168 0018 0A4B     		ldr	r3, .L11+4
+ 169 001a 1B68     		ldr	r3, [r3]
+ 170 001c 3F2B     		cmp	r3, #63
+ 171 001e 06DC     		bgt	.L10
+ 169:.\Generated_Source\PSoC5/isr_F2F_edge.c ****             got_pulse = 1;
+ 172              		.loc 1 169 0 is_stmt 1
+ 173 0020 094B     		ldr	r3, .L11+8
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 7
+
+
+ 174 0022 0122     		movs	r2, #1
+ 175 0024 1A70     		strb	r2, [r3]
+ 170:.\Generated_Source\PSoC5/isr_F2F_edge.c ****             f2f_pulsewidth = timeout_cnt;
+ 176              		.loc 1 170 0
+ 177 0026 074B     		ldr	r3, .L11+4
+ 178 0028 1A68     		ldr	r2, [r3]
+ 179 002a 084B     		ldr	r3, .L11+12
+ 180 002c 1A60     		str	r2, [r3]
+ 181              	.L10:
+ 171:.\Generated_Source\PSoC5/isr_F2F_edge.c ****         }
+ 172:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 173:.\Generated_Source\PSoC5/isr_F2F_edge.c ****         Timeout_Timer_Stop();
+ 182              		.loc 1 173 0
+ 183 002e FFF7FEFF 		bl	Timeout_Timer_Stop
+ 174:.\Generated_Source\PSoC5/isr_F2F_edge.c ****         timeout_cnt = 0;
+ 184              		.loc 1 174 0
+ 185 0032 044B     		ldr	r3, .L11+4
+ 186 0034 0022     		movs	r2, #0
+ 187 0036 1A60     		str	r2, [r3]
+ 175:.\Generated_Source\PSoC5/isr_F2F_edge.c ****         Timeout_Timer_Start();
+ 188              		.loc 1 175 0
+ 189 0038 FFF7FEFF 		bl	Timeout_Timer_Start
+ 190              	.L8:
+ 176:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     }
+ 177:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     
+ 178:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* `#END` */
+ 179:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 191              		.loc 1 179 0
+ 192 003c 80BD     		pop	{r7, pc}
+ 193              	.L12:
+ 194 003e 00BF     		.align	2
+ 195              	.L11:
+ 196 0040 00000000 		.word	activate_f2ftimer
+ 197 0044 00000000 		.word	timeout_cnt
+ 198 0048 00000000 		.word	got_pulse
+ 199 004c 00000000 		.word	f2f_pulsewidth
+ 200              		.cfi_endproc
+ 201              	.LFE3:
+ 202              		.size	isr_F2F_edge_Interrupt, .-isr_F2F_edge_Interrupt
+ 203              		.section	.text.isr_F2F_edge_SetVector,"ax",%progbits
+ 204              		.align	2
+ 205              		.global	isr_F2F_edge_SetVector
+ 206              		.thumb
+ 207              		.thumb_func
+ 208              		.type	isr_F2F_edge_SetVector, %function
+ 209              	isr_F2F_edge_SetVector:
+ 210              	.LFB4:
+ 180:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 181:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 182:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 183:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_SetVector
+ 184:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 185:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 186:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 187:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Change the ISR vector for the Interrupt. Note calling isr_F2F_edge_Start
+ 188:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   will override any effect this method would have had. To set the vector 
+ 189:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   before the component has been started use isr_F2F_edge_StartEx instead.
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 8
+
+
+ 190:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * 
+ 191:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
+ 192:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   used to provide consistent definition across compilers:
+ 193:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 194:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Function definition example:
+ 195:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   CY_ISR(MyISR)
+ 196:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   {
+ 197:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   }
+ 198:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 199:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Function prototype example:
+ 200:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *     CY_ISR_PROTO(MyISR);
+ 201:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 202:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 203:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   address: Address of the ISR to set in the interrupt vector table.
+ 204:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 205:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 206:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 207:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 208:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 209:.\Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_SetVector(cyisraddress address)
+ 210:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 211              		.loc 1 210 0
+ 212              		.cfi_startproc
+ 213              		@ args = 0, pretend = 0, frame = 16
+ 214              		@ frame_needed = 1, uses_anonymous_args = 0
+ 215              		@ link register save eliminated.
+ 216 0000 80B4     		push	{r7}
+ 217              		.cfi_def_cfa_offset 4
+ 218              		.cfi_offset 7, -4
+ 219 0002 85B0     		sub	sp, sp, #20
+ 220              		.cfi_def_cfa_offset 24
+ 221 0004 00AF     		add	r7, sp, #0
+ 222              		.cfi_def_cfa_register 7
+ 223 0006 7860     		str	r0, [r7, #4]
+ 211:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     cyisraddress * ramVectorTable;
+ 212:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 213:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
+ 224              		.loc 1 213 0
+ 225 0008 054B     		ldr	r3, .L14
+ 226 000a 1B68     		ldr	r3, [r3]
+ 227 000c FB60     		str	r3, [r7, #12]
+ 214:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 215:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_F2F_edge__INTC_NUMBER] = address;
+ 228              		.loc 1 215 0
+ 229 000e FB68     		ldr	r3, [r7, #12]
+ 230 0010 4833     		adds	r3, r3, #72
+ 231 0012 7A68     		ldr	r2, [r7, #4]
+ 232 0014 1A60     		str	r2, [r3]
+ 216:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 233              		.loc 1 216 0
+ 234 0016 1437     		adds	r7, r7, #20
+ 235 0018 BD46     		mov	sp, r7
+ 236              		@ sp needed
+ 237 001a 5DF8047B 		ldr	r7, [sp], #4
+ 238 001e 7047     		bx	lr
+ 239              	.L15:
+ 240              		.align	2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 9
+
+
+ 241              	.L14:
+ 242 0020 08ED00E0 		.word	-536810232
+ 243              		.cfi_endproc
+ 244              	.LFE4:
+ 245              		.size	isr_F2F_edge_SetVector, .-isr_F2F_edge_SetVector
+ 246              		.section	.text.isr_F2F_edge_GetVector,"ax",%progbits
+ 247              		.align	2
+ 248              		.global	isr_F2F_edge_GetVector
+ 249              		.thumb
+ 250              		.thumb_func
+ 251              		.type	isr_F2F_edge_GetVector, %function
+ 252              	isr_F2F_edge_GetVector:
+ 253              	.LFB5:
+ 217:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 218:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 219:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 220:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_GetVector
+ 221:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 222:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 223:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 224:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Gets the "address" of the current ISR vector for the Interrupt.
+ 225:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 226:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 227:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 228:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 229:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 230:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Address of the ISR in the interrupt vector table.
+ 231:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 232:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 233:.\Generated_Source\PSoC5/isr_F2F_edge.c **** cyisraddress isr_F2F_edge_GetVector(void)
+ 234:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 254              		.loc 1 234 0
+ 255              		.cfi_startproc
+ 256              		@ args = 0, pretend = 0, frame = 8
+ 257              		@ frame_needed = 1, uses_anonymous_args = 0
+ 258              		@ link register save eliminated.
+ 259 0000 80B4     		push	{r7}
+ 260              		.cfi_def_cfa_offset 4
+ 261              		.cfi_offset 7, -4
+ 262 0002 83B0     		sub	sp, sp, #12
+ 263              		.cfi_def_cfa_offset 16
+ 264 0004 00AF     		add	r7, sp, #0
+ 265              		.cfi_def_cfa_register 7
+ 235:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     cyisraddress * ramVectorTable;
+ 236:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 237:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
+ 266              		.loc 1 237 0
+ 267 0006 054B     		ldr	r3, .L18
+ 268 0008 1B68     		ldr	r3, [r3]
+ 269 000a 7B60     		str	r3, [r7, #4]
+ 238:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 239:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     return ramVectorTable[CYINT_IRQ_BASE + (uint32)isr_F2F_edge__INTC_NUMBER];
+ 270              		.loc 1 239 0
+ 271 000c 7B68     		ldr	r3, [r7, #4]
+ 272 000e 9B6C     		ldr	r3, [r3, #72]
+ 240:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 273              		.loc 1 240 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 10
+
+
+ 274 0010 1846     		mov	r0, r3
+ 275 0012 0C37     		adds	r7, r7, #12
+ 276 0014 BD46     		mov	sp, r7
+ 277              		@ sp needed
+ 278 0016 5DF8047B 		ldr	r7, [sp], #4
+ 279 001a 7047     		bx	lr
+ 280              	.L19:
+ 281              		.align	2
+ 282              	.L18:
+ 283 001c 08ED00E0 		.word	-536810232
+ 284              		.cfi_endproc
+ 285              	.LFE5:
+ 286              		.size	isr_F2F_edge_GetVector, .-isr_F2F_edge_GetVector
+ 287              		.section	.text.isr_F2F_edge_SetPriority,"ax",%progbits
+ 288              		.align	2
+ 289              		.global	isr_F2F_edge_SetPriority
+ 290              		.thumb
+ 291              		.thumb_func
+ 292              		.type	isr_F2F_edge_SetPriority, %function
+ 293              	isr_F2F_edge_SetPriority:
+ 294              	.LFB6:
+ 241:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 242:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 243:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 244:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_SetPriority
+ 245:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 246:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 247:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 248:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Sets the Priority of the Interrupt. 
+ 249:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 250:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Note calling isr_F2F_edge_Start or isr_F2F_edge_StartEx will 
+ 251:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   override any effect this API would have had. This API should only be called
+ 252:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   after isr_F2F_edge_Start or isr_F2F_edge_StartEx has been called. 
+ 253:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   To set the initial priority for the component, use the Design-Wide Resources
+ 254:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Interrupt Editor.
+ 255:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 256:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Note This API has no effect on Non-maskable interrupt NMI).
+ 257:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 258:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 259:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   priority: Priority of the interrupt, 0 being the highest priority
+ 260:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *             PSoC 3 and PSoC 5LP: Priority is from 0 to 7.
+ 261:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *             PSoC 4: Priority is from 0 to 3.
+ 262:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 263:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 264:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 265:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 266:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 267:.\Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_SetPriority(uint8 priority)
+ 268:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 295              		.loc 1 268 0
+ 296              		.cfi_startproc
+ 297              		@ args = 0, pretend = 0, frame = 8
+ 298              		@ frame_needed = 1, uses_anonymous_args = 0
+ 299              		@ link register save eliminated.
+ 300 0000 80B4     		push	{r7}
+ 301              		.cfi_def_cfa_offset 4
+ 302              		.cfi_offset 7, -4
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 11
+
+
+ 303 0002 83B0     		sub	sp, sp, #12
+ 304              		.cfi_def_cfa_offset 16
+ 305 0004 00AF     		add	r7, sp, #0
+ 306              		.cfi_def_cfa_register 7
+ 307 0006 0346     		mov	r3, r0
+ 308 0008 FB71     		strb	r3, [r7, #7]
+ 269:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     *isr_F2F_edge_INTC_PRIOR = priority << 5;
+ 309              		.loc 1 269 0
+ 310 000a 054B     		ldr	r3, .L21
+ 311 000c FA79     		ldrb	r2, [r7, #7]
+ 312 000e 5201     		lsls	r2, r2, #5
+ 313 0010 D2B2     		uxtb	r2, r2
+ 314 0012 1A70     		strb	r2, [r3]
+ 270:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 315              		.loc 1 270 0
+ 316 0014 0C37     		adds	r7, r7, #12
+ 317 0016 BD46     		mov	sp, r7
+ 318              		@ sp needed
+ 319 0018 5DF8047B 		ldr	r7, [sp], #4
+ 320 001c 7047     		bx	lr
+ 321              	.L22:
+ 322 001e 00BF     		.align	2
+ 323              	.L21:
+ 324 0020 02E400E0 		.word	-536812542
+ 325              		.cfi_endproc
+ 326              	.LFE6:
+ 327              		.size	isr_F2F_edge_SetPriority, .-isr_F2F_edge_SetPriority
+ 328              		.section	.text.isr_F2F_edge_GetPriority,"ax",%progbits
+ 329              		.align	2
+ 330              		.global	isr_F2F_edge_GetPriority
+ 331              		.thumb
+ 332              		.thumb_func
+ 333              		.type	isr_F2F_edge_GetPriority, %function
+ 334              	isr_F2F_edge_GetPriority:
+ 335              	.LFB7:
+ 271:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 272:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 273:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 274:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_GetPriority
+ 275:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 276:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 277:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 278:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Gets the Priority of the Interrupt.
+ 279:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 280:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 281:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 282:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 283:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 284:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Priority of the interrupt, 0 being the highest priority
+ 285:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *    PSoC 3 and PSoC 5LP: Priority is from 0 to 7.
+ 286:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *    PSoC 4: Priority is from 0 to 3.
+ 287:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 288:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 289:.\Generated_Source\PSoC5/isr_F2F_edge.c **** uint8 isr_F2F_edge_GetPriority(void)
+ 290:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 336              		.loc 1 290 0
+ 337              		.cfi_startproc
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 12
+
+
+ 338              		@ args = 0, pretend = 0, frame = 8
+ 339              		@ frame_needed = 1, uses_anonymous_args = 0
+ 340              		@ link register save eliminated.
+ 341 0000 80B4     		push	{r7}
+ 342              		.cfi_def_cfa_offset 4
+ 343              		.cfi_offset 7, -4
+ 344 0002 83B0     		sub	sp, sp, #12
+ 345              		.cfi_def_cfa_offset 16
+ 346 0004 00AF     		add	r7, sp, #0
+ 347              		.cfi_def_cfa_register 7
+ 291:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     uint8 priority;
+ 292:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 293:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 294:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     priority = *isr_F2F_edge_INTC_PRIOR >> 5;
+ 348              		.loc 1 294 0
+ 349 0006 064B     		ldr	r3, .L25
+ 350 0008 1B78     		ldrb	r3, [r3]
+ 351 000a DBB2     		uxtb	r3, r3
+ 352 000c 5B09     		lsrs	r3, r3, #5
+ 353 000e FB71     		strb	r3, [r7, #7]
+ 295:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 296:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     return priority;
+ 354              		.loc 1 296 0
+ 355 0010 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 297:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 356              		.loc 1 297 0
+ 357 0012 1846     		mov	r0, r3
+ 358 0014 0C37     		adds	r7, r7, #12
+ 359 0016 BD46     		mov	sp, r7
+ 360              		@ sp needed
+ 361 0018 5DF8047B 		ldr	r7, [sp], #4
+ 362 001c 7047     		bx	lr
+ 363              	.L26:
+ 364 001e 00BF     		.align	2
+ 365              	.L25:
+ 366 0020 02E400E0 		.word	-536812542
+ 367              		.cfi_endproc
+ 368              	.LFE7:
+ 369              		.size	isr_F2F_edge_GetPriority, .-isr_F2F_edge_GetPriority
+ 370              		.section	.text.isr_F2F_edge_Enable,"ax",%progbits
+ 371              		.align	2
+ 372              		.global	isr_F2F_edge_Enable
+ 373              		.thumb
+ 374              		.thumb_func
+ 375              		.type	isr_F2F_edge_Enable, %function
+ 376              	isr_F2F_edge_Enable:
+ 377              	.LFB8:
+ 298:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 299:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 300:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 301:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_Enable
+ 302:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 303:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 304:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 305:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Enables the interrupt to the interrupt controller. Do not call this function
+ 306:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   unless ISR_Start() has been called or the functionality of the ISR_Start() 
+ 307:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   function, which sets the vector and the priority, has been called.
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 13
+
+
+ 308:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 309:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 310:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 311:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 312:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 313:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 314:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 315:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 316:.\Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_Enable(void)
+ 317:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 378              		.loc 1 317 0
+ 379              		.cfi_startproc
+ 380              		@ args = 0, pretend = 0, frame = 0
+ 381              		@ frame_needed = 1, uses_anonymous_args = 0
+ 382              		@ link register save eliminated.
+ 383 0000 80B4     		push	{r7}
+ 384              		.cfi_def_cfa_offset 4
+ 385              		.cfi_offset 7, -4
+ 386 0002 00AF     		add	r7, sp, #0
+ 387              		.cfi_def_cfa_register 7
+ 318:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Enable the general interrupt. */
+ 319:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     *isr_F2F_edge_INTC_SET_EN = isr_F2F_edge__INTC_MASK;
+ 388              		.loc 1 319 0
+ 389 0004 034B     		ldr	r3, .L28
+ 390 0006 0422     		movs	r2, #4
+ 391 0008 1A60     		str	r2, [r3]
+ 320:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 392              		.loc 1 320 0
+ 393 000a BD46     		mov	sp, r7
+ 394              		@ sp needed
+ 395 000c 5DF8047B 		ldr	r7, [sp], #4
+ 396 0010 7047     		bx	lr
+ 397              	.L29:
+ 398 0012 00BF     		.align	2
+ 399              	.L28:
+ 400 0014 00E100E0 		.word	-536813312
+ 401              		.cfi_endproc
+ 402              	.LFE8:
+ 403              		.size	isr_F2F_edge_Enable, .-isr_F2F_edge_Enable
+ 404              		.section	.text.isr_F2F_edge_GetState,"ax",%progbits
+ 405              		.align	2
+ 406              		.global	isr_F2F_edge_GetState
+ 407              		.thumb
+ 408              		.thumb_func
+ 409              		.type	isr_F2F_edge_GetState, %function
+ 410              	isr_F2F_edge_GetState:
+ 411              	.LFB9:
+ 321:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 322:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 323:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 324:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_GetState
+ 325:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 326:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 327:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 328:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Gets the state (enabled, disabled) of the Interrupt.
+ 329:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 330:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 14
+
+
+ 331:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 332:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 333:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 334:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   1 if enabled, 0 if disabled.
+ 335:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 336:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 337:.\Generated_Source\PSoC5/isr_F2F_edge.c **** uint8 isr_F2F_edge_GetState(void)
+ 338:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 412              		.loc 1 338 0
+ 413              		.cfi_startproc
+ 414              		@ args = 0, pretend = 0, frame = 0
+ 415              		@ frame_needed = 1, uses_anonymous_args = 0
+ 416              		@ link register save eliminated.
+ 417 0000 80B4     		push	{r7}
+ 418              		.cfi_def_cfa_offset 4
+ 419              		.cfi_offset 7, -4
+ 420 0002 00AF     		add	r7, sp, #0
+ 421              		.cfi_def_cfa_register 7
+ 339:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Get the state of the general interrupt. */
+ 340:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     return ((*isr_F2F_edge_INTC_SET_EN & (uint32)isr_F2F_edge__INTC_MASK) != 0u) ? 1u:0u;
+ 422              		.loc 1 340 0
+ 423 0004 064B     		ldr	r3, .L34
+ 424 0006 1B68     		ldr	r3, [r3]
+ 425 0008 03F00403 		and	r3, r3, #4
+ 426 000c 002B     		cmp	r3, #0
+ 427 000e 01D0     		beq	.L31
+ 428              		.loc 1 340 0 is_stmt 0 discriminator 1
+ 429 0010 0123     		movs	r3, #1
+ 430 0012 00E0     		b	.L32
+ 431              	.L31:
+ 432              		.loc 1 340 0 discriminator 2
+ 433 0014 0023     		movs	r3, #0
+ 434              	.L32:
+ 341:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 435              		.loc 1 341 0 is_stmt 1 discriminator 3
+ 436 0016 1846     		mov	r0, r3
+ 437 0018 BD46     		mov	sp, r7
+ 438              		@ sp needed
+ 439 001a 5DF8047B 		ldr	r7, [sp], #4
+ 440 001e 7047     		bx	lr
+ 441              	.L35:
+ 442              		.align	2
+ 443              	.L34:
+ 444 0020 00E100E0 		.word	-536813312
+ 445              		.cfi_endproc
+ 446              	.LFE9:
+ 447              		.size	isr_F2F_edge_GetState, .-isr_F2F_edge_GetState
+ 448              		.section	.text.isr_F2F_edge_Disable,"ax",%progbits
+ 449              		.align	2
+ 450              		.global	isr_F2F_edge_Disable
+ 451              		.thumb
+ 452              		.thumb_func
+ 453              		.type	isr_F2F_edge_Disable, %function
+ 454              	isr_F2F_edge_Disable:
+ 455              	.LFB10:
+ 342:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 343:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 15
+
+
+ 344:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 345:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_Disable
+ 346:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 347:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 348:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 349:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Disables the Interrupt in the interrupt controller.
+ 350:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 351:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 352:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 353:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 354:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 355:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 356:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 357:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 358:.\Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_Disable(void)
+ 359:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 456              		.loc 1 359 0
+ 457              		.cfi_startproc
+ 458              		@ args = 0, pretend = 0, frame = 0
+ 459              		@ frame_needed = 1, uses_anonymous_args = 0
+ 460              		@ link register save eliminated.
+ 461 0000 80B4     		push	{r7}
+ 462              		.cfi_def_cfa_offset 4
+ 463              		.cfi_offset 7, -4
+ 464 0002 00AF     		add	r7, sp, #0
+ 465              		.cfi_def_cfa_register 7
+ 360:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     /* Disable the general interrupt. */
+ 361:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     *isr_F2F_edge_INTC_CLR_EN = isr_F2F_edge__INTC_MASK;
+ 466              		.loc 1 361 0
+ 467 0004 034B     		ldr	r3, .L37
+ 468 0006 0422     		movs	r2, #4
+ 469 0008 1A60     		str	r2, [r3]
+ 362:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 470              		.loc 1 362 0
+ 471 000a BD46     		mov	sp, r7
+ 472              		@ sp needed
+ 473 000c 5DF8047B 		ldr	r7, [sp], #4
+ 474 0010 7047     		bx	lr
+ 475              	.L38:
+ 476 0012 00BF     		.align	2
+ 477              	.L37:
+ 478 0014 80E100E0 		.word	-536813184
+ 479              		.cfi_endproc
+ 480              	.LFE10:
+ 481              		.size	isr_F2F_edge_Disable, .-isr_F2F_edge_Disable
+ 482              		.section	.text.isr_F2F_edge_SetPending,"ax",%progbits
+ 483              		.align	2
+ 484              		.global	isr_F2F_edge_SetPending
+ 485              		.thumb
+ 486              		.thumb_func
+ 487              		.type	isr_F2F_edge_SetPending, %function
+ 488              	isr_F2F_edge_SetPending:
+ 489              	.LFB11:
+ 363:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 364:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 365:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 366:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_SetPending
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 16
+
+
+ 367:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 368:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 369:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 370:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Causes the Interrupt to enter the pending state, a software method of
+ 371:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   generating the interrupt.
+ 372:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 373:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 374:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 375:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 376:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 377:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 378:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 379:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Side Effects:
+ 380:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   If interrupts are enabled and the interrupt is set up properly, the ISR is
+ 381:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   entered (depending on the priority of this interrupt and other pending 
+ 382:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   interrupts).
+ 383:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 384:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 385:.\Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_SetPending(void)
+ 386:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 490              		.loc 1 386 0
+ 491              		.cfi_startproc
+ 492              		@ args = 0, pretend = 0, frame = 0
+ 493              		@ frame_needed = 1, uses_anonymous_args = 0
+ 494              		@ link register save eliminated.
+ 495 0000 80B4     		push	{r7}
+ 496              		.cfi_def_cfa_offset 4
+ 497              		.cfi_offset 7, -4
+ 498 0002 00AF     		add	r7, sp, #0
+ 499              		.cfi_def_cfa_register 7
+ 387:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     *isr_F2F_edge_INTC_SET_PD = isr_F2F_edge__INTC_MASK;
+ 500              		.loc 1 387 0
+ 501 0004 034B     		ldr	r3, .L40
+ 502 0006 0422     		movs	r2, #4
+ 503 0008 1A60     		str	r2, [r3]
+ 388:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 504              		.loc 1 388 0
+ 505 000a BD46     		mov	sp, r7
+ 506              		@ sp needed
+ 507 000c 5DF8047B 		ldr	r7, [sp], #4
+ 508 0010 7047     		bx	lr
+ 509              	.L41:
+ 510 0012 00BF     		.align	2
+ 511              	.L40:
+ 512 0014 00E200E0 		.word	-536813056
+ 513              		.cfi_endproc
+ 514              	.LFE11:
+ 515              		.size	isr_F2F_edge_SetPending, .-isr_F2F_edge_SetPending
+ 516              		.section	.text.isr_F2F_edge_ClearPending,"ax",%progbits
+ 517              		.align	2
+ 518              		.global	isr_F2F_edge_ClearPending
+ 519              		.thumb
+ 520              		.thumb_func
+ 521              		.type	isr_F2F_edge_ClearPending, %function
+ 522              	isr_F2F_edge_ClearPending:
+ 523              	.LFB12:
+ 389:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 17
+
+
+ 390:.\Generated_Source\PSoC5/isr_F2F_edge.c **** 
+ 391:.\Generated_Source\PSoC5/isr_F2F_edge.c **** /*******************************************************************************
+ 392:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Function Name: isr_F2F_edge_ClearPending
+ 393:.\Generated_Source\PSoC5/isr_F2F_edge.c **** ********************************************************************************
+ 394:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 395:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Summary:
+ 396:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Clears a pending interrupt in the interrupt controller.
+ 397:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 398:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   Note Some interrupt sources are clear-on-read and require the block 
+ 399:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   interrupt/status register to be read/cleared with the appropriate block API 
+ 400:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   (GPIO, UART, and so on). Otherwise the ISR will continue to remain in 
+ 401:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   pending state even though the interrupt itself is cleared using this API.
+ 402:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 403:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Parameters:
+ 404:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 405:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 406:.\Generated_Source\PSoC5/isr_F2F_edge.c **** * Return:
+ 407:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *   None
+ 408:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *
+ 409:.\Generated_Source\PSoC5/isr_F2F_edge.c **** *******************************************************************************/
+ 410:.\Generated_Source\PSoC5/isr_F2F_edge.c **** void isr_F2F_edge_ClearPending(void)
+ 411:.\Generated_Source\PSoC5/isr_F2F_edge.c **** {
+ 524              		.loc 1 411 0
+ 525              		.cfi_startproc
+ 526              		@ args = 0, pretend = 0, frame = 0
+ 527              		@ frame_needed = 1, uses_anonymous_args = 0
+ 528              		@ link register save eliminated.
+ 529 0000 80B4     		push	{r7}
+ 530              		.cfi_def_cfa_offset 4
+ 531              		.cfi_offset 7, -4
+ 532 0002 00AF     		add	r7, sp, #0
+ 533              		.cfi_def_cfa_register 7
+ 412:.\Generated_Source\PSoC5/isr_F2F_edge.c ****     *isr_F2F_edge_INTC_CLR_PD = isr_F2F_edge__INTC_MASK;
+ 534              		.loc 1 412 0
+ 535 0004 034B     		ldr	r3, .L43
+ 536 0006 0422     		movs	r2, #4
+ 537 0008 1A60     		str	r2, [r3]
+ 413:.\Generated_Source\PSoC5/isr_F2F_edge.c **** }
+ 538              		.loc 1 413 0
+ 539 000a BD46     		mov	sp, r7
+ 540              		@ sp needed
+ 541 000c 5DF8047B 		ldr	r7, [sp], #4
+ 542 0010 7047     		bx	lr
+ 543              	.L44:
+ 544 0012 00BF     		.align	2
+ 545              	.L43:
+ 546 0014 80E200E0 		.word	-536812928
+ 547              		.cfi_endproc
+ 548              	.LFE12:
+ 549              		.size	isr_F2F_edge_ClearPending, .-isr_F2F_edge_ClearPending
+ 550              		.text
+ 551              	.Letext0:
+ 552              		.file 2 "Generated_Source\\PSoC5/cytypes.h"
+ 553              		.file 3 "./softuart.h"
+ 554              		.file 4 "./system.h"
+ 555              		.section	.debug_info,"",%progbits
+ 556              	.Ldebug_info0:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 18
+
+
+ 557 0000 95030000 		.4byte	0x395
+ 558 0004 0400     		.2byte	0x4
+ 559 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 560 000a 04       		.byte	0x4
+ 561 000b 01       		.uleb128 0x1
+ 562 000c 91020000 		.4byte	.LASF55
+ 563 0010 01       		.byte	0x1
+ 564 0011 75010000 		.4byte	.LASF56
+ 565 0015 CA000000 		.4byte	.LASF57
+ 566 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 567 001d 00000000 		.4byte	0
+ 568 0021 00000000 		.4byte	.Ldebug_line0
+ 569 0025 02       		.uleb128 0x2
+ 570 0026 04       		.byte	0x4
+ 571 0027 05       		.byte	0x5
+ 572 0028 696E7400 		.ascii	"int\000"
+ 573 002c 03       		.uleb128 0x3
+ 574 002d 04       		.byte	0x4
+ 575 002e 07       		.byte	0x7
+ 576 002f 66000000 		.4byte	.LASF0
+ 577 0033 03       		.uleb128 0x3
+ 578 0034 01       		.byte	0x1
+ 579 0035 06       		.byte	0x6
+ 580 0036 AE030000 		.4byte	.LASF1
+ 581 003a 03       		.uleb128 0x3
+ 582 003b 01       		.byte	0x1
+ 583 003c 08       		.byte	0x8
+ 584 003d B7000000 		.4byte	.LASF2
+ 585 0041 03       		.uleb128 0x3
+ 586 0042 02       		.byte	0x2
+ 587 0043 05       		.byte	0x5
+ 588 0044 83030000 		.4byte	.LASF3
+ 589 0048 03       		.uleb128 0x3
+ 590 0049 02       		.byte	0x2
+ 591 004a 07       		.byte	0x7
+ 592 004b 53000000 		.4byte	.LASF4
+ 593 004f 03       		.uleb128 0x3
+ 594 0050 04       		.byte	0x4
+ 595 0051 05       		.byte	0x5
+ 596 0052 93030000 		.4byte	.LASF5
+ 597 0056 03       		.uleb128 0x3
+ 598 0057 04       		.byte	0x4
+ 599 0058 07       		.byte	0x7
+ 600 0059 23010000 		.4byte	.LASF6
+ 601 005d 03       		.uleb128 0x3
+ 602 005e 08       		.byte	0x8
+ 603 005f 05       		.byte	0x5
+ 604 0060 1F030000 		.4byte	.LASF7
+ 605 0064 03       		.uleb128 0x3
+ 606 0065 08       		.byte	0x8
+ 607 0066 07       		.byte	0x7
+ 608 0067 59020000 		.4byte	.LASF8
+ 609 006b 03       		.uleb128 0x3
+ 610 006c 04       		.byte	0x4
+ 611 006d 07       		.byte	0x7
+ 612 006e 16030000 		.4byte	.LASF9
+ 613 0072 04       		.uleb128 0x4
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 19
+
+
+ 614 0073 04       		.byte	0x4
+ 615 0074 78000000 		.4byte	0x78
+ 616 0078 05       		.uleb128 0x5
+ 617 0079 03       		.uleb128 0x3
+ 618 007a 01       		.byte	0x1
+ 619 007b 08       		.byte	0x8
+ 620 007c 44030000 		.4byte	.LASF10
+ 621 0080 06       		.uleb128 0x6
+ 622 0081 4C010000 		.4byte	.LASF11
+ 623 0085 02       		.byte	0x2
+ 624 0086 B3       		.byte	0xb3
+ 625 0087 3A000000 		.4byte	0x3a
+ 626 008b 06       		.uleb128 0x6
+ 627 008c EA010000 		.4byte	.LASF12
+ 628 0090 02       		.byte	0x2
+ 629 0091 B4       		.byte	0xb4
+ 630 0092 48000000 		.4byte	0x48
+ 631 0096 06       		.uleb128 0x6
+ 632 0097 FD010000 		.4byte	.LASF13
+ 633 009b 02       		.byte	0x2
+ 634 009c B5       		.byte	0xb5
+ 635 009d 56000000 		.4byte	0x56
+ 636 00a1 03       		.uleb128 0x3
+ 637 00a2 04       		.byte	0x4
+ 638 00a3 04       		.byte	0x4
+ 639 00a4 9C000000 		.4byte	.LASF14
+ 640 00a8 03       		.uleb128 0x3
+ 641 00a9 08       		.byte	0x8
+ 642 00aa 04       		.byte	0x4
+ 643 00ab 9D010000 		.4byte	.LASF15
+ 644 00af 07       		.uleb128 0x7
+ 645 00b0 C5000000 		.4byte	.LASF16
+ 646 00b4 02       		.byte	0x2
+ 647 00b5 5D01     		.2byte	0x15d
+ 648 00b7 BB000000 		.4byte	0xbb
+ 649 00bb 08       		.uleb128 0x8
+ 650 00bc 80000000 		.4byte	0x80
+ 651 00c0 08       		.uleb128 0x8
+ 652 00c1 8B000000 		.4byte	0x8b
+ 653 00c5 07       		.uleb128 0x7
+ 654 00c6 08000000 		.4byte	.LASF17
+ 655 00ca 02       		.byte	0x2
+ 656 00cb 5F01     		.2byte	0x15f
+ 657 00cd D1000000 		.4byte	0xd1
+ 658 00d1 08       		.uleb128 0x8
+ 659 00d2 96000000 		.4byte	0x96
+ 660 00d6 07       		.uleb128 0x7
+ 661 00d7 70020000 		.4byte	.LASF18
+ 662 00db 02       		.byte	0x2
+ 663 00dc 6F01     		.2byte	0x16f
+ 664 00de 72000000 		.4byte	0x72
+ 665 00e2 09       		.uleb128 0x9
+ 666 00e3 28       		.byte	0x28
+ 667 00e4 03       		.byte	0x3
+ 668 00e5 0D       		.byte	0xd
+ 669 00e6 7B010000 		.4byte	0x17b
+ 670 00ea 0A       		.uleb128 0xa
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 20
+
+
+ 671 00eb 52010000 		.4byte	.LASF19
+ 672 00ef 03       		.byte	0x3
+ 673 00f0 0F       		.byte	0xf
+ 674 00f1 25000000 		.4byte	0x25
+ 675 00f5 00       		.byte	0
+ 676 00f6 0A       		.uleb128 0xa
+ 677 00f7 BA030000 		.4byte	.LASF20
+ 678 00fb 03       		.byte	0x3
+ 679 00fc 10       		.byte	0x10
+ 680 00fd 25000000 		.4byte	0x25
+ 681 0101 04       		.byte	0x4
+ 682 0102 0A       		.uleb128 0xa
+ 683 0103 1F000000 		.4byte	.LASF21
+ 684 0107 03       		.byte	0x3
+ 685 0108 11       		.byte	0x11
+ 686 0109 25000000 		.4byte	0x25
+ 687 010d 08       		.byte	0x8
+ 688 010e 0A       		.uleb128 0xa
+ 689 010f 6F030000 		.4byte	.LASF22
+ 690 0113 03       		.byte	0x3
+ 691 0114 12       		.byte	0x12
+ 692 0115 25000000 		.4byte	0x25
+ 693 0119 0C       		.byte	0xc
+ 694 011a 0A       		.uleb128 0xa
+ 695 011b 00000000 		.4byte	.LASF23
+ 696 011f 03       		.byte	0x3
+ 697 0120 13       		.byte	0x13
+ 698 0121 8B000000 		.4byte	0x8b
+ 699 0125 10       		.byte	0x10
+ 700 0126 0A       		.uleb128 0xa
+ 701 0127 73000000 		.4byte	.LASF24
+ 702 012b 03       		.byte	0x3
+ 703 012c 14       		.byte	0x14
+ 704 012d C0000000 		.4byte	0xc0
+ 705 0131 12       		.byte	0x12
+ 706 0132 0A       		.uleb128 0xa
+ 707 0133 94000000 		.4byte	.LASF25
+ 708 0137 03       		.byte	0x3
+ 709 0138 15       		.byte	0x15
+ 710 0139 C0000000 		.4byte	0xc0
+ 711 013d 14       		.byte	0x14
+ 712 013e 0A       		.uleb128 0xa
+ 713 013f 23020000 		.4byte	.LASF26
+ 714 0143 03       		.byte	0x3
+ 715 0144 16       		.byte	0x16
+ 716 0145 8B000000 		.4byte	0x8b
+ 717 0149 16       		.byte	0x16
+ 718 014a 0A       		.uleb128 0xa
+ 719 014b 8D030000 		.4byte	.LASF27
+ 720 014f 03       		.byte	0x3
+ 721 0150 17       		.byte	0x17
+ 722 0151 7B010000 		.4byte	0x17b
+ 723 0155 18       		.byte	0x18
+ 724 0156 0A       		.uleb128 0xa
+ 725 0157 16020000 		.4byte	.LASF28
+ 726 015b 03       		.byte	0x3
+ 727 015c 18       		.byte	0x18
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 21
+
+
+ 728 015d 7B010000 		.4byte	0x17b
+ 729 0161 1C       		.byte	0x1c
+ 730 0162 0A       		.uleb128 0xa
+ 731 0163 C1030000 		.4byte	.LASF29
+ 732 0167 03       		.byte	0x3
+ 733 0168 19       		.byte	0x19
+ 734 0169 7B010000 		.4byte	0x17b
+ 735 016d 20       		.byte	0x20
+ 736 016e 0A       		.uleb128 0xa
+ 737 016f 7D020000 		.4byte	.LASF30
+ 738 0173 03       		.byte	0x3
+ 739 0174 1A       		.byte	0x1a
+ 740 0175 7B010000 		.4byte	0x17b
+ 741 0179 24       		.byte	0x24
+ 742 017a 00       		.byte	0
+ 743 017b 08       		.uleb128 0x8
+ 744 017c 25000000 		.4byte	0x25
+ 745 0180 06       		.uleb128 0x6
+ 746 0181 0E000000 		.4byte	.LASF31
+ 747 0185 03       		.byte	0x3
+ 748 0186 1B       		.byte	0x1b
+ 749 0187 E2000000 		.4byte	0xe2
+ 750 018b 0B       		.uleb128 0xb
+ 751 018c D7010000 		.4byte	.LASF32
+ 752 0190 01       		.byte	0x1
+ 753 0191 3E       		.byte	0x3e
+ 754 0192 00000000 		.4byte	.LFB0
+ 755 0196 20000000 		.4byte	.LFE0-.LFB0
+ 756 019a 01       		.uleb128 0x1
+ 757 019b 9C       		.byte	0x9c
+ 758 019c 0C       		.uleb128 0xc
+ 759 019d A2000000 		.4byte	.LASF35
+ 760 01a1 01       		.byte	0x1
+ 761 01a2 69       		.byte	0x69
+ 762 01a3 00000000 		.4byte	.LFB1
+ 763 01a7 22000000 		.4byte	.LFE1-.LFB1
+ 764 01ab 01       		.uleb128 0x1
+ 765 01ac 9C       		.byte	0x9c
+ 766 01ad C0010000 		.4byte	0x1c0
+ 767 01b1 0D       		.uleb128 0xd
+ 768 01b2 51020000 		.4byte	.LASF37
+ 769 01b6 01       		.byte	0x1
+ 770 01b7 69       		.byte	0x69
+ 771 01b8 D6000000 		.4byte	0xd6
+ 772 01bc 02       		.uleb128 0x2
+ 773 01bd 91       		.byte	0x91
+ 774 01be 74       		.sleb128 -12
+ 775 01bf 00       		.byte	0
+ 776 01c0 0B       		.uleb128 0xb
+ 777 01c1 04020000 		.4byte	.LASF33
+ 778 01c5 01       		.byte	0x1
+ 779 01c6 87       		.byte	0x87
+ 780 01c7 00000000 		.4byte	.LFB2
+ 781 01cb 14000000 		.4byte	.LFE2-.LFB2
+ 782 01cf 01       		.uleb128 0x1
+ 783 01d0 9C       		.byte	0x9c
+ 784 01d1 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 22
+
+
+ 785 01d2 58030000 		.4byte	.LASF34
+ 786 01d6 01       		.byte	0x1
+ 787 01d7 A1       		.byte	0xa1
+ 788 01d8 00000000 		.4byte	.LFB3
+ 789 01dc 50000000 		.4byte	.LFE3-.LFB3
+ 790 01e0 01       		.uleb128 0x1
+ 791 01e1 9C       		.byte	0x9c
+ 792 01e2 0E       		.uleb128 0xe
+ 793 01e3 35010000 		.4byte	.LASF36
+ 794 01e7 01       		.byte	0x1
+ 795 01e8 D1       		.byte	0xd1
+ 796 01e9 00000000 		.4byte	.LFB4
+ 797 01ed 24000000 		.4byte	.LFE4-.LFB4
+ 798 01f1 01       		.uleb128 0x1
+ 799 01f2 9C       		.byte	0x9c
+ 800 01f3 14020000 		.4byte	0x214
+ 801 01f7 0D       		.uleb128 0xd
+ 802 01f8 51020000 		.4byte	.LASF37
+ 803 01fc 01       		.byte	0x1
+ 804 01fd D1       		.byte	0xd1
+ 805 01fe D6000000 		.4byte	0xd6
+ 806 0202 02       		.uleb128 0x2
+ 807 0203 91       		.byte	0x91
+ 808 0204 6C       		.sleb128 -20
+ 809 0205 0F       		.uleb128 0xf
+ 810 0206 49030000 		.4byte	.LASF38
+ 811 020a 01       		.byte	0x1
+ 812 020b D3       		.byte	0xd3
+ 813 020c 14020000 		.4byte	0x214
+ 814 0210 02       		.uleb128 0x2
+ 815 0211 91       		.byte	0x91
+ 816 0212 74       		.sleb128 -12
+ 817 0213 00       		.byte	0
+ 818 0214 04       		.uleb128 0x4
+ 819 0215 04       		.byte	0x4
+ 820 0216 D6000000 		.4byte	0xd6
+ 821 021a 10       		.uleb128 0x10
+ 822 021b 2D030000 		.4byte	.LASF41
+ 823 021f 01       		.byte	0x1
+ 824 0220 E9       		.byte	0xe9
+ 825 0221 D6000000 		.4byte	0xd6
+ 826 0225 00000000 		.4byte	.LFB5
+ 827 0229 20000000 		.4byte	.LFE5-.LFB5
+ 828 022d 01       		.uleb128 0x1
+ 829 022e 9C       		.byte	0x9c
+ 830 022f 42020000 		.4byte	0x242
+ 831 0233 0F       		.uleb128 0xf
+ 832 0234 49030000 		.4byte	.LASF38
+ 833 0238 01       		.byte	0x1
+ 834 0239 EB       		.byte	0xeb
+ 835 023a 14020000 		.4byte	0x214
+ 836 023e 02       		.uleb128 0x2
+ 837 023f 91       		.byte	0x91
+ 838 0240 74       		.sleb128 -12
+ 839 0241 00       		.byte	0
+ 840 0242 11       		.uleb128 0x11
+ 841 0243 BE010000 		.4byte	.LASF39
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 23
+
+
+ 842 0247 01       		.byte	0x1
+ 843 0248 0B01     		.2byte	0x10b
+ 844 024a 00000000 		.4byte	.LFB6
+ 845 024e 24000000 		.4byte	.LFE6-.LFB6
+ 846 0252 01       		.uleb128 0x1
+ 847 0253 9C       		.byte	0x9c
+ 848 0254 68020000 		.4byte	0x268
+ 849 0258 12       		.uleb128 0x12
+ 850 0259 57010000 		.4byte	.LASF40
+ 851 025d 01       		.byte	0x1
+ 852 025e 0B01     		.2byte	0x10b
+ 853 0260 80000000 		.4byte	0x80
+ 854 0264 02       		.uleb128 0x2
+ 855 0265 91       		.byte	0x91
+ 856 0266 77       		.sleb128 -9
+ 857 0267 00       		.byte	0
+ 858 0268 13       		.uleb128 0x13
+ 859 0269 7B000000 		.4byte	.LASF42
+ 860 026d 01       		.byte	0x1
+ 861 026e 2101     		.2byte	0x121
+ 862 0270 80000000 		.4byte	0x80
+ 863 0274 00000000 		.4byte	.LFB7
+ 864 0278 24000000 		.4byte	.LFE7-.LFB7
+ 865 027c 01       		.uleb128 0x1
+ 866 027d 9C       		.byte	0x9c
+ 867 027e 92020000 		.4byte	0x292
+ 868 0282 14       		.uleb128 0x14
+ 869 0283 57010000 		.4byte	.LASF40
+ 870 0287 01       		.byte	0x1
+ 871 0288 2301     		.2byte	0x123
+ 872 028a 80000000 		.4byte	0x80
+ 873 028e 02       		.uleb128 0x2
+ 874 028f 91       		.byte	0x91
+ 875 0290 77       		.sleb128 -9
+ 876 0291 00       		.byte	0
+ 877 0292 15       		.uleb128 0x15
+ 878 0293 3D020000 		.4byte	.LASF43
+ 879 0297 01       		.byte	0x1
+ 880 0298 3C01     		.2byte	0x13c
+ 881 029a 00000000 		.4byte	.LFB8
+ 882 029e 18000000 		.4byte	.LFE8-.LFB8
+ 883 02a2 01       		.uleb128 0x1
+ 884 02a3 9C       		.byte	0x9c
+ 885 02a4 16       		.uleb128 0x16
+ 886 02a5 CE030000 		.4byte	.LASF58
+ 887 02a9 01       		.byte	0x1
+ 888 02aa 5101     		.2byte	0x151
+ 889 02ac 80000000 		.4byte	0x80
+ 890 02b0 00000000 		.4byte	.LFB9
+ 891 02b4 24000000 		.4byte	.LFE9-.LFB9
+ 892 02b8 01       		.uleb128 0x1
+ 893 02b9 9C       		.byte	0x9c
+ 894 02ba 15       		.uleb128 0x15
+ 895 02bb 60010000 		.4byte	.LASF44
+ 896 02bf 01       		.byte	0x1
+ 897 02c0 6601     		.2byte	0x166
+ 898 02c2 00000000 		.4byte	.LFB10
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 24
+
+
+ 899 02c6 18000000 		.4byte	.LFE10-.LFB10
+ 900 02ca 01       		.uleb128 0x1
+ 901 02cb 9C       		.byte	0x9c
+ 902 02cc 15       		.uleb128 0x15
+ 903 02cd 29000000 		.4byte	.LASF45
+ 904 02d1 01       		.byte	0x1
+ 905 02d2 8101     		.2byte	0x181
+ 906 02d4 00000000 		.4byte	.LFB11
+ 907 02d8 18000000 		.4byte	.LFE11-.LFB11
+ 908 02dc 01       		.uleb128 0x1
+ 909 02dd 9C       		.byte	0x9c
+ 910 02de 15       		.uleb128 0x15
+ 911 02df A4010000 		.4byte	.LASF46
+ 912 02e3 01       		.byte	0x1
+ 913 02e4 9A01     		.2byte	0x19a
+ 914 02e6 00000000 		.4byte	.LFB12
+ 915 02ea 18000000 		.4byte	.LFE12-.LFB12
+ 916 02ee 01       		.uleb128 0x1
+ 917 02ef 9C       		.byte	0x9c
+ 918 02f0 17       		.uleb128 0x17
+ 919 02f1 7300     		.ascii	"s\000"
+ 920 02f3 04       		.byte	0x4
+ 921 02f4 30       		.byte	0x30
+ 922 02f5 80010000 		.4byte	0x180
+ 923 02f9 05       		.uleb128 0x5
+ 924 02fa 03       		.byte	0x3
+ 925 02fb 00000000 		.4byte	s
+ 926 02ff 18       		.uleb128 0x18
+ 927 0300 9C030000 		.4byte	.LASF47
+ 928 0304 04       		.byte	0x4
+ 929 0305 33       		.byte	0x33
+ 930 0306 79000000 		.4byte	0x79
+ 931 030a 05       		.uleb128 0x5
+ 932 030b 03       		.byte	0x3
+ 933 030c 00000000 		.4byte	currentAccessType
+ 934 0310 17       		.uleb128 0x17
+ 935 0311 6F6C6400 		.ascii	"old\000"
+ 936 0315 04       		.byte	0x4
+ 937 0316 34       		.byte	0x34
+ 938 0317 79000000 		.4byte	0x79
+ 939 031b 05       		.uleb128 0x5
+ 940 031c 03       		.byte	0x3
+ 941 031d 00000000 		.4byte	old
+ 942 0321 18       		.uleb128 0x18
+ 943 0322 2B020000 		.4byte	.LASF48
+ 944 0326 04       		.byte	0x4
+ 945 0327 35       		.byte	0x35
+ 946 0328 25000000 		.4byte	0x25
+ 947 032c 05       		.uleb128 0x5
+ 948 032d 03       		.byte	0x3
+ 949 032e 00000000 		.4byte	TAMPERCR_POLARITY
+ 950 0332 18       		.uleb128 0x18
+ 951 0333 0D030000 		.4byte	.LASF49
+ 952 0337 04       		.byte	0x4
+ 953 0338 38       		.byte	0x38
+ 954 0339 25000000 		.4byte	0x25
+ 955 033d 05       		.uleb128 0x5
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 25
+
+
+ 956 033e 03       		.byte	0x3
+ 957 033f 00000000 		.4byte	card_ack
+ 958 0343 18       		.uleb128 0x18
+ 959 0344 85020000 		.4byte	.LASF50
+ 960 0348 04       		.byte	0x4
+ 961 0349 39       		.byte	0x39
+ 962 034a 25000000 		.4byte	0x25
+ 963 034e 05       		.uleb128 0x5
+ 964 034f 03       		.byte	0x3
+ 965 0350 00000000 		.4byte	card_in_buf
+ 966 0354 18       		.uleb128 0x18
+ 967 0355 E4030000 		.4byte	.LASF51
+ 968 0359 04       		.byte	0x4
+ 969 035a 3C       		.byte	0x3c
+ 970 035b 79000000 		.4byte	0x79
+ 971 035f 05       		.uleb128 0x5
+ 972 0360 03       		.byte	0x3
+ 973 0361 00000000 		.4byte	got_pulse
+ 974 0365 18       		.uleb128 0x18
+ 975 0366 74030000 		.4byte	.LASF52
+ 976 036a 04       		.byte	0x4
+ 977 036b 3D       		.byte	0x3d
+ 978 036c 25000000 		.4byte	0x25
+ 979 0370 05       		.uleb128 0x5
+ 980 0371 03       		.byte	0x3
+ 981 0372 00000000 		.4byte	f2f_pulsewidth
+ 982 0376 18       		.uleb128 0x18
+ 983 0377 F1010000 		.4byte	.LASF53
+ 984 037b 04       		.byte	0x4
+ 985 037c 3E       		.byte	0x3e
+ 986 037d 25000000 		.4byte	0x25
+ 987 0381 05       		.uleb128 0x5
+ 988 0382 03       		.byte	0x3
+ 989 0383 00000000 		.4byte	timeout_cnt
+ 990 0387 18       		.uleb128 0x18
+ 991 0388 41000000 		.4byte	.LASF54
+ 992 038c 04       		.byte	0x4
+ 993 038d 3F       		.byte	0x3f
+ 994 038e 79000000 		.4byte	0x79
+ 995 0392 05       		.uleb128 0x5
+ 996 0393 03       		.byte	0x3
+ 997 0394 00000000 		.4byte	activate_f2ftimer
+ 998 0398 00       		.byte	0
+ 999              		.section	.debug_abbrev,"",%progbits
+ 1000              	.Ldebug_abbrev0:
+ 1001 0000 01       		.uleb128 0x1
+ 1002 0001 11       		.uleb128 0x11
+ 1003 0002 01       		.byte	0x1
+ 1004 0003 25       		.uleb128 0x25
+ 1005 0004 0E       		.uleb128 0xe
+ 1006 0005 13       		.uleb128 0x13
+ 1007 0006 0B       		.uleb128 0xb
+ 1008 0007 03       		.uleb128 0x3
+ 1009 0008 0E       		.uleb128 0xe
+ 1010 0009 1B       		.uleb128 0x1b
+ 1011 000a 0E       		.uleb128 0xe
+ 1012 000b 55       		.uleb128 0x55
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 26
+
+
+ 1013 000c 17       		.uleb128 0x17
+ 1014 000d 11       		.uleb128 0x11
+ 1015 000e 01       		.uleb128 0x1
+ 1016 000f 10       		.uleb128 0x10
+ 1017 0010 17       		.uleb128 0x17
+ 1018 0011 00       		.byte	0
+ 1019 0012 00       		.byte	0
+ 1020 0013 02       		.uleb128 0x2
+ 1021 0014 24       		.uleb128 0x24
+ 1022 0015 00       		.byte	0
+ 1023 0016 0B       		.uleb128 0xb
+ 1024 0017 0B       		.uleb128 0xb
+ 1025 0018 3E       		.uleb128 0x3e
+ 1026 0019 0B       		.uleb128 0xb
+ 1027 001a 03       		.uleb128 0x3
+ 1028 001b 08       		.uleb128 0x8
+ 1029 001c 00       		.byte	0
+ 1030 001d 00       		.byte	0
+ 1031 001e 03       		.uleb128 0x3
+ 1032 001f 24       		.uleb128 0x24
+ 1033 0020 00       		.byte	0
+ 1034 0021 0B       		.uleb128 0xb
+ 1035 0022 0B       		.uleb128 0xb
+ 1036 0023 3E       		.uleb128 0x3e
+ 1037 0024 0B       		.uleb128 0xb
+ 1038 0025 03       		.uleb128 0x3
+ 1039 0026 0E       		.uleb128 0xe
+ 1040 0027 00       		.byte	0
+ 1041 0028 00       		.byte	0
+ 1042 0029 04       		.uleb128 0x4
+ 1043 002a 0F       		.uleb128 0xf
+ 1044 002b 00       		.byte	0
+ 1045 002c 0B       		.uleb128 0xb
+ 1046 002d 0B       		.uleb128 0xb
+ 1047 002e 49       		.uleb128 0x49
+ 1048 002f 13       		.uleb128 0x13
+ 1049 0030 00       		.byte	0
+ 1050 0031 00       		.byte	0
+ 1051 0032 05       		.uleb128 0x5
+ 1052 0033 15       		.uleb128 0x15
+ 1053 0034 00       		.byte	0
+ 1054 0035 27       		.uleb128 0x27
+ 1055 0036 19       		.uleb128 0x19
+ 1056 0037 00       		.byte	0
+ 1057 0038 00       		.byte	0
+ 1058 0039 06       		.uleb128 0x6
+ 1059 003a 16       		.uleb128 0x16
+ 1060 003b 00       		.byte	0
+ 1061 003c 03       		.uleb128 0x3
+ 1062 003d 0E       		.uleb128 0xe
+ 1063 003e 3A       		.uleb128 0x3a
+ 1064 003f 0B       		.uleb128 0xb
+ 1065 0040 3B       		.uleb128 0x3b
+ 1066 0041 0B       		.uleb128 0xb
+ 1067 0042 49       		.uleb128 0x49
+ 1068 0043 13       		.uleb128 0x13
+ 1069 0044 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 27
+
+
+ 1070 0045 00       		.byte	0
+ 1071 0046 07       		.uleb128 0x7
+ 1072 0047 16       		.uleb128 0x16
+ 1073 0048 00       		.byte	0
+ 1074 0049 03       		.uleb128 0x3
+ 1075 004a 0E       		.uleb128 0xe
+ 1076 004b 3A       		.uleb128 0x3a
+ 1077 004c 0B       		.uleb128 0xb
+ 1078 004d 3B       		.uleb128 0x3b
+ 1079 004e 05       		.uleb128 0x5
+ 1080 004f 49       		.uleb128 0x49
+ 1081 0050 13       		.uleb128 0x13
+ 1082 0051 00       		.byte	0
+ 1083 0052 00       		.byte	0
+ 1084 0053 08       		.uleb128 0x8
+ 1085 0054 35       		.uleb128 0x35
+ 1086 0055 00       		.byte	0
+ 1087 0056 49       		.uleb128 0x49
+ 1088 0057 13       		.uleb128 0x13
+ 1089 0058 00       		.byte	0
+ 1090 0059 00       		.byte	0
+ 1091 005a 09       		.uleb128 0x9
+ 1092 005b 13       		.uleb128 0x13
+ 1093 005c 01       		.byte	0x1
+ 1094 005d 0B       		.uleb128 0xb
+ 1095 005e 0B       		.uleb128 0xb
+ 1096 005f 3A       		.uleb128 0x3a
+ 1097 0060 0B       		.uleb128 0xb
+ 1098 0061 3B       		.uleb128 0x3b
+ 1099 0062 0B       		.uleb128 0xb
+ 1100 0063 01       		.uleb128 0x1
+ 1101 0064 13       		.uleb128 0x13
+ 1102 0065 00       		.byte	0
+ 1103 0066 00       		.byte	0
+ 1104 0067 0A       		.uleb128 0xa
+ 1105 0068 0D       		.uleb128 0xd
+ 1106 0069 00       		.byte	0
+ 1107 006a 03       		.uleb128 0x3
+ 1108 006b 0E       		.uleb128 0xe
+ 1109 006c 3A       		.uleb128 0x3a
+ 1110 006d 0B       		.uleb128 0xb
+ 1111 006e 3B       		.uleb128 0x3b
+ 1112 006f 0B       		.uleb128 0xb
+ 1113 0070 49       		.uleb128 0x49
+ 1114 0071 13       		.uleb128 0x13
+ 1115 0072 38       		.uleb128 0x38
+ 1116 0073 0B       		.uleb128 0xb
+ 1117 0074 00       		.byte	0
+ 1118 0075 00       		.byte	0
+ 1119 0076 0B       		.uleb128 0xb
+ 1120 0077 2E       		.uleb128 0x2e
+ 1121 0078 00       		.byte	0
+ 1122 0079 3F       		.uleb128 0x3f
+ 1123 007a 19       		.uleb128 0x19
+ 1124 007b 03       		.uleb128 0x3
+ 1125 007c 0E       		.uleb128 0xe
+ 1126 007d 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 28
+
+
+ 1127 007e 0B       		.uleb128 0xb
+ 1128 007f 3B       		.uleb128 0x3b
+ 1129 0080 0B       		.uleb128 0xb
+ 1130 0081 27       		.uleb128 0x27
+ 1131 0082 19       		.uleb128 0x19
+ 1132 0083 11       		.uleb128 0x11
+ 1133 0084 01       		.uleb128 0x1
+ 1134 0085 12       		.uleb128 0x12
+ 1135 0086 06       		.uleb128 0x6
+ 1136 0087 40       		.uleb128 0x40
+ 1137 0088 18       		.uleb128 0x18
+ 1138 0089 9642     		.uleb128 0x2116
+ 1139 008b 19       		.uleb128 0x19
+ 1140 008c 00       		.byte	0
+ 1141 008d 00       		.byte	0
+ 1142 008e 0C       		.uleb128 0xc
+ 1143 008f 2E       		.uleb128 0x2e
+ 1144 0090 01       		.byte	0x1
+ 1145 0091 3F       		.uleb128 0x3f
+ 1146 0092 19       		.uleb128 0x19
+ 1147 0093 03       		.uleb128 0x3
+ 1148 0094 0E       		.uleb128 0xe
+ 1149 0095 3A       		.uleb128 0x3a
+ 1150 0096 0B       		.uleb128 0xb
+ 1151 0097 3B       		.uleb128 0x3b
+ 1152 0098 0B       		.uleb128 0xb
+ 1153 0099 27       		.uleb128 0x27
+ 1154 009a 19       		.uleb128 0x19
+ 1155 009b 11       		.uleb128 0x11
+ 1156 009c 01       		.uleb128 0x1
+ 1157 009d 12       		.uleb128 0x12
+ 1158 009e 06       		.uleb128 0x6
+ 1159 009f 40       		.uleb128 0x40
+ 1160 00a0 18       		.uleb128 0x18
+ 1161 00a1 9642     		.uleb128 0x2116
+ 1162 00a3 19       		.uleb128 0x19
+ 1163 00a4 01       		.uleb128 0x1
+ 1164 00a5 13       		.uleb128 0x13
+ 1165 00a6 00       		.byte	0
+ 1166 00a7 00       		.byte	0
+ 1167 00a8 0D       		.uleb128 0xd
+ 1168 00a9 05       		.uleb128 0x5
+ 1169 00aa 00       		.byte	0
+ 1170 00ab 03       		.uleb128 0x3
+ 1171 00ac 0E       		.uleb128 0xe
+ 1172 00ad 3A       		.uleb128 0x3a
+ 1173 00ae 0B       		.uleb128 0xb
+ 1174 00af 3B       		.uleb128 0x3b
+ 1175 00b0 0B       		.uleb128 0xb
+ 1176 00b1 49       		.uleb128 0x49
+ 1177 00b2 13       		.uleb128 0x13
+ 1178 00b3 02       		.uleb128 0x2
+ 1179 00b4 18       		.uleb128 0x18
+ 1180 00b5 00       		.byte	0
+ 1181 00b6 00       		.byte	0
+ 1182 00b7 0E       		.uleb128 0xe
+ 1183 00b8 2E       		.uleb128 0x2e
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 29
+
+
+ 1184 00b9 01       		.byte	0x1
+ 1185 00ba 3F       		.uleb128 0x3f
+ 1186 00bb 19       		.uleb128 0x19
+ 1187 00bc 03       		.uleb128 0x3
+ 1188 00bd 0E       		.uleb128 0xe
+ 1189 00be 3A       		.uleb128 0x3a
+ 1190 00bf 0B       		.uleb128 0xb
+ 1191 00c0 3B       		.uleb128 0x3b
+ 1192 00c1 0B       		.uleb128 0xb
+ 1193 00c2 27       		.uleb128 0x27
+ 1194 00c3 19       		.uleb128 0x19
+ 1195 00c4 11       		.uleb128 0x11
+ 1196 00c5 01       		.uleb128 0x1
+ 1197 00c6 12       		.uleb128 0x12
+ 1198 00c7 06       		.uleb128 0x6
+ 1199 00c8 40       		.uleb128 0x40
+ 1200 00c9 18       		.uleb128 0x18
+ 1201 00ca 9742     		.uleb128 0x2117
+ 1202 00cc 19       		.uleb128 0x19
+ 1203 00cd 01       		.uleb128 0x1
+ 1204 00ce 13       		.uleb128 0x13
+ 1205 00cf 00       		.byte	0
+ 1206 00d0 00       		.byte	0
+ 1207 00d1 0F       		.uleb128 0xf
+ 1208 00d2 34       		.uleb128 0x34
+ 1209 00d3 00       		.byte	0
+ 1210 00d4 03       		.uleb128 0x3
+ 1211 00d5 0E       		.uleb128 0xe
+ 1212 00d6 3A       		.uleb128 0x3a
+ 1213 00d7 0B       		.uleb128 0xb
+ 1214 00d8 3B       		.uleb128 0x3b
+ 1215 00d9 0B       		.uleb128 0xb
+ 1216 00da 49       		.uleb128 0x49
+ 1217 00db 13       		.uleb128 0x13
+ 1218 00dc 02       		.uleb128 0x2
+ 1219 00dd 18       		.uleb128 0x18
+ 1220 00de 00       		.byte	0
+ 1221 00df 00       		.byte	0
+ 1222 00e0 10       		.uleb128 0x10
+ 1223 00e1 2E       		.uleb128 0x2e
+ 1224 00e2 01       		.byte	0x1
+ 1225 00e3 3F       		.uleb128 0x3f
+ 1226 00e4 19       		.uleb128 0x19
+ 1227 00e5 03       		.uleb128 0x3
+ 1228 00e6 0E       		.uleb128 0xe
+ 1229 00e7 3A       		.uleb128 0x3a
+ 1230 00e8 0B       		.uleb128 0xb
+ 1231 00e9 3B       		.uleb128 0x3b
+ 1232 00ea 0B       		.uleb128 0xb
+ 1233 00eb 27       		.uleb128 0x27
+ 1234 00ec 19       		.uleb128 0x19
+ 1235 00ed 49       		.uleb128 0x49
+ 1236 00ee 13       		.uleb128 0x13
+ 1237 00ef 11       		.uleb128 0x11
+ 1238 00f0 01       		.uleb128 0x1
+ 1239 00f1 12       		.uleb128 0x12
+ 1240 00f2 06       		.uleb128 0x6
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 30
+
+
+ 1241 00f3 40       		.uleb128 0x40
+ 1242 00f4 18       		.uleb128 0x18
+ 1243 00f5 9742     		.uleb128 0x2117
+ 1244 00f7 19       		.uleb128 0x19
+ 1245 00f8 01       		.uleb128 0x1
+ 1246 00f9 13       		.uleb128 0x13
+ 1247 00fa 00       		.byte	0
+ 1248 00fb 00       		.byte	0
+ 1249 00fc 11       		.uleb128 0x11
+ 1250 00fd 2E       		.uleb128 0x2e
+ 1251 00fe 01       		.byte	0x1
+ 1252 00ff 3F       		.uleb128 0x3f
+ 1253 0100 19       		.uleb128 0x19
+ 1254 0101 03       		.uleb128 0x3
+ 1255 0102 0E       		.uleb128 0xe
+ 1256 0103 3A       		.uleb128 0x3a
+ 1257 0104 0B       		.uleb128 0xb
+ 1258 0105 3B       		.uleb128 0x3b
+ 1259 0106 05       		.uleb128 0x5
+ 1260 0107 27       		.uleb128 0x27
+ 1261 0108 19       		.uleb128 0x19
+ 1262 0109 11       		.uleb128 0x11
+ 1263 010a 01       		.uleb128 0x1
+ 1264 010b 12       		.uleb128 0x12
+ 1265 010c 06       		.uleb128 0x6
+ 1266 010d 40       		.uleb128 0x40
+ 1267 010e 18       		.uleb128 0x18
+ 1268 010f 9742     		.uleb128 0x2117
+ 1269 0111 19       		.uleb128 0x19
+ 1270 0112 01       		.uleb128 0x1
+ 1271 0113 13       		.uleb128 0x13
+ 1272 0114 00       		.byte	0
+ 1273 0115 00       		.byte	0
+ 1274 0116 12       		.uleb128 0x12
+ 1275 0117 05       		.uleb128 0x5
+ 1276 0118 00       		.byte	0
+ 1277 0119 03       		.uleb128 0x3
+ 1278 011a 0E       		.uleb128 0xe
+ 1279 011b 3A       		.uleb128 0x3a
+ 1280 011c 0B       		.uleb128 0xb
+ 1281 011d 3B       		.uleb128 0x3b
+ 1282 011e 05       		.uleb128 0x5
+ 1283 011f 49       		.uleb128 0x49
+ 1284 0120 13       		.uleb128 0x13
+ 1285 0121 02       		.uleb128 0x2
+ 1286 0122 18       		.uleb128 0x18
+ 1287 0123 00       		.byte	0
+ 1288 0124 00       		.byte	0
+ 1289 0125 13       		.uleb128 0x13
+ 1290 0126 2E       		.uleb128 0x2e
+ 1291 0127 01       		.byte	0x1
+ 1292 0128 3F       		.uleb128 0x3f
+ 1293 0129 19       		.uleb128 0x19
+ 1294 012a 03       		.uleb128 0x3
+ 1295 012b 0E       		.uleb128 0xe
+ 1296 012c 3A       		.uleb128 0x3a
+ 1297 012d 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 31
+
+
+ 1298 012e 3B       		.uleb128 0x3b
+ 1299 012f 05       		.uleb128 0x5
+ 1300 0130 27       		.uleb128 0x27
+ 1301 0131 19       		.uleb128 0x19
+ 1302 0132 49       		.uleb128 0x49
+ 1303 0133 13       		.uleb128 0x13
+ 1304 0134 11       		.uleb128 0x11
+ 1305 0135 01       		.uleb128 0x1
+ 1306 0136 12       		.uleb128 0x12
+ 1307 0137 06       		.uleb128 0x6
+ 1308 0138 40       		.uleb128 0x40
+ 1309 0139 18       		.uleb128 0x18
+ 1310 013a 9742     		.uleb128 0x2117
+ 1311 013c 19       		.uleb128 0x19
+ 1312 013d 01       		.uleb128 0x1
+ 1313 013e 13       		.uleb128 0x13
+ 1314 013f 00       		.byte	0
+ 1315 0140 00       		.byte	0
+ 1316 0141 14       		.uleb128 0x14
+ 1317 0142 34       		.uleb128 0x34
+ 1318 0143 00       		.byte	0
+ 1319 0144 03       		.uleb128 0x3
+ 1320 0145 0E       		.uleb128 0xe
+ 1321 0146 3A       		.uleb128 0x3a
+ 1322 0147 0B       		.uleb128 0xb
+ 1323 0148 3B       		.uleb128 0x3b
+ 1324 0149 05       		.uleb128 0x5
+ 1325 014a 49       		.uleb128 0x49
+ 1326 014b 13       		.uleb128 0x13
+ 1327 014c 02       		.uleb128 0x2
+ 1328 014d 18       		.uleb128 0x18
+ 1329 014e 00       		.byte	0
+ 1330 014f 00       		.byte	0
+ 1331 0150 15       		.uleb128 0x15
+ 1332 0151 2E       		.uleb128 0x2e
+ 1333 0152 00       		.byte	0
+ 1334 0153 3F       		.uleb128 0x3f
+ 1335 0154 19       		.uleb128 0x19
+ 1336 0155 03       		.uleb128 0x3
+ 1337 0156 0E       		.uleb128 0xe
+ 1338 0157 3A       		.uleb128 0x3a
+ 1339 0158 0B       		.uleb128 0xb
+ 1340 0159 3B       		.uleb128 0x3b
+ 1341 015a 05       		.uleb128 0x5
+ 1342 015b 27       		.uleb128 0x27
+ 1343 015c 19       		.uleb128 0x19
+ 1344 015d 11       		.uleb128 0x11
+ 1345 015e 01       		.uleb128 0x1
+ 1346 015f 12       		.uleb128 0x12
+ 1347 0160 06       		.uleb128 0x6
+ 1348 0161 40       		.uleb128 0x40
+ 1349 0162 18       		.uleb128 0x18
+ 1350 0163 9742     		.uleb128 0x2117
+ 1351 0165 19       		.uleb128 0x19
+ 1352 0166 00       		.byte	0
+ 1353 0167 00       		.byte	0
+ 1354 0168 16       		.uleb128 0x16
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 32
+
+
+ 1355 0169 2E       		.uleb128 0x2e
+ 1356 016a 00       		.byte	0
+ 1357 016b 3F       		.uleb128 0x3f
+ 1358 016c 19       		.uleb128 0x19
+ 1359 016d 03       		.uleb128 0x3
+ 1360 016e 0E       		.uleb128 0xe
+ 1361 016f 3A       		.uleb128 0x3a
+ 1362 0170 0B       		.uleb128 0xb
+ 1363 0171 3B       		.uleb128 0x3b
+ 1364 0172 05       		.uleb128 0x5
+ 1365 0173 27       		.uleb128 0x27
+ 1366 0174 19       		.uleb128 0x19
+ 1367 0175 49       		.uleb128 0x49
+ 1368 0176 13       		.uleb128 0x13
+ 1369 0177 11       		.uleb128 0x11
+ 1370 0178 01       		.uleb128 0x1
+ 1371 0179 12       		.uleb128 0x12
+ 1372 017a 06       		.uleb128 0x6
+ 1373 017b 40       		.uleb128 0x40
+ 1374 017c 18       		.uleb128 0x18
+ 1375 017d 9742     		.uleb128 0x2117
+ 1376 017f 19       		.uleb128 0x19
+ 1377 0180 00       		.byte	0
+ 1378 0181 00       		.byte	0
+ 1379 0182 17       		.uleb128 0x17
+ 1380 0183 34       		.uleb128 0x34
+ 1381 0184 00       		.byte	0
+ 1382 0185 03       		.uleb128 0x3
+ 1383 0186 08       		.uleb128 0x8
+ 1384 0187 3A       		.uleb128 0x3a
+ 1385 0188 0B       		.uleb128 0xb
+ 1386 0189 3B       		.uleb128 0x3b
+ 1387 018a 0B       		.uleb128 0xb
+ 1388 018b 49       		.uleb128 0x49
+ 1389 018c 13       		.uleb128 0x13
+ 1390 018d 3F       		.uleb128 0x3f
+ 1391 018e 19       		.uleb128 0x19
+ 1392 018f 02       		.uleb128 0x2
+ 1393 0190 18       		.uleb128 0x18
+ 1394 0191 00       		.byte	0
+ 1395 0192 00       		.byte	0
+ 1396 0193 18       		.uleb128 0x18
+ 1397 0194 34       		.uleb128 0x34
+ 1398 0195 00       		.byte	0
+ 1399 0196 03       		.uleb128 0x3
+ 1400 0197 0E       		.uleb128 0xe
+ 1401 0198 3A       		.uleb128 0x3a
+ 1402 0199 0B       		.uleb128 0xb
+ 1403 019a 3B       		.uleb128 0x3b
+ 1404 019b 0B       		.uleb128 0xb
+ 1405 019c 49       		.uleb128 0x49
+ 1406 019d 13       		.uleb128 0x13
+ 1407 019e 3F       		.uleb128 0x3f
+ 1408 019f 19       		.uleb128 0x19
+ 1409 01a0 02       		.uleb128 0x2
+ 1410 01a1 18       		.uleb128 0x18
+ 1411 01a2 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 33
+
+
+ 1412 01a3 00       		.byte	0
+ 1413 01a4 00       		.byte	0
+ 1414              		.section	.debug_aranges,"",%progbits
+ 1415 0000 7C000000 		.4byte	0x7c
+ 1416 0004 0200     		.2byte	0x2
+ 1417 0006 00000000 		.4byte	.Ldebug_info0
+ 1418 000a 04       		.byte	0x4
+ 1419 000b 00       		.byte	0
+ 1420 000c 0000     		.2byte	0
+ 1421 000e 0000     		.2byte	0
+ 1422 0010 00000000 		.4byte	.LFB0
+ 1423 0014 20000000 		.4byte	.LFE0-.LFB0
+ 1424 0018 00000000 		.4byte	.LFB1
+ 1425 001c 22000000 		.4byte	.LFE1-.LFB1
+ 1426 0020 00000000 		.4byte	.LFB2
+ 1427 0024 14000000 		.4byte	.LFE2-.LFB2
+ 1428 0028 00000000 		.4byte	.LFB3
+ 1429 002c 50000000 		.4byte	.LFE3-.LFB3
+ 1430 0030 00000000 		.4byte	.LFB4
+ 1431 0034 24000000 		.4byte	.LFE4-.LFB4
+ 1432 0038 00000000 		.4byte	.LFB5
+ 1433 003c 20000000 		.4byte	.LFE5-.LFB5
+ 1434 0040 00000000 		.4byte	.LFB6
+ 1435 0044 24000000 		.4byte	.LFE6-.LFB6
+ 1436 0048 00000000 		.4byte	.LFB7
+ 1437 004c 24000000 		.4byte	.LFE7-.LFB7
+ 1438 0050 00000000 		.4byte	.LFB8
+ 1439 0054 18000000 		.4byte	.LFE8-.LFB8
+ 1440 0058 00000000 		.4byte	.LFB9
+ 1441 005c 24000000 		.4byte	.LFE9-.LFB9
+ 1442 0060 00000000 		.4byte	.LFB10
+ 1443 0064 18000000 		.4byte	.LFE10-.LFB10
+ 1444 0068 00000000 		.4byte	.LFB11
+ 1445 006c 18000000 		.4byte	.LFE11-.LFB11
+ 1446 0070 00000000 		.4byte	.LFB12
+ 1447 0074 18000000 		.4byte	.LFE12-.LFB12
+ 1448 0078 00000000 		.4byte	0
+ 1449 007c 00000000 		.4byte	0
+ 1450              		.section	.debug_ranges,"",%progbits
+ 1451              	.Ldebug_ranges0:
+ 1452 0000 00000000 		.4byte	.LFB0
+ 1453 0004 20000000 		.4byte	.LFE0
+ 1454 0008 00000000 		.4byte	.LFB1
+ 1455 000c 22000000 		.4byte	.LFE1
+ 1456 0010 00000000 		.4byte	.LFB2
+ 1457 0014 14000000 		.4byte	.LFE2
+ 1458 0018 00000000 		.4byte	.LFB3
+ 1459 001c 50000000 		.4byte	.LFE3
+ 1460 0020 00000000 		.4byte	.LFB4
+ 1461 0024 24000000 		.4byte	.LFE4
+ 1462 0028 00000000 		.4byte	.LFB5
+ 1463 002c 20000000 		.4byte	.LFE5
+ 1464 0030 00000000 		.4byte	.LFB6
+ 1465 0034 24000000 		.4byte	.LFE6
+ 1466 0038 00000000 		.4byte	.LFB7
+ 1467 003c 24000000 		.4byte	.LFE7
+ 1468 0040 00000000 		.4byte	.LFB8
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 34
+
+
+ 1469 0044 18000000 		.4byte	.LFE8
+ 1470 0048 00000000 		.4byte	.LFB9
+ 1471 004c 24000000 		.4byte	.LFE9
+ 1472 0050 00000000 		.4byte	.LFB10
+ 1473 0054 18000000 		.4byte	.LFE10
+ 1474 0058 00000000 		.4byte	.LFB11
+ 1475 005c 18000000 		.4byte	.LFE11
+ 1476 0060 00000000 		.4byte	.LFB12
+ 1477 0064 18000000 		.4byte	.LFE12
+ 1478 0068 00000000 		.4byte	0
+ 1479 006c 00000000 		.4byte	0
+ 1480              		.section	.debug_line,"",%progbits
+ 1481              	.Ldebug_line0:
+ 1482 0000 97010000 		.section	.debug_str,"MS",%progbits,1
+ 1482      02008000 
+ 1482      00000201 
+ 1482      FB0E0D00 
+ 1482      01010101 
+ 1483              	.LASF23:
+ 1484 0000 72785F62 		.ascii	"rx_byte\000"
+ 1484      79746500 
+ 1485              	.LASF17:
+ 1486 0008 72656733 		.ascii	"reg32\000"
+ 1486      3200
+ 1487              	.LASF31:
+ 1488 000e 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 1488      5F554152 
+ 1488      545F5354 
+ 1488      52554354 
+ 1488      00
+ 1489              	.LASF21:
+ 1490 001f 73746F70 		.ascii	"stop_bits\000"
+ 1490      5F626974 
+ 1490      7300
+ 1491              	.LASF45:
+ 1492 0029 6973725F 		.ascii	"isr_F2F_edge_SetPending\000"
+ 1492      4632465F 
+ 1492      65646765 
+ 1492      5F536574 
+ 1492      50656E64 
+ 1493              	.LASF54:
+ 1494 0041 61637469 		.ascii	"activate_f2ftimer\000"
+ 1494      76617465 
+ 1494      5F663266 
+ 1494      74696D65 
+ 1494      7200
+ 1495              	.LASF4:
+ 1496 0053 73686F72 		.ascii	"short unsigned int\000"
+ 1496      7420756E 
+ 1496      7369676E 
+ 1496      65642069 
+ 1496      6E7400
+ 1497              	.LASF0:
+ 1498 0066 756E7369 		.ascii	"unsigned int\000"
+ 1498      676E6564 
+ 1498      20696E74 
+ 1498      00
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 35
+
+
+ 1499              	.LASF24:
+ 1500 0073 74785F62 		.ascii	"tx_byte\000"
+ 1500      79746500 
+ 1501              	.LASF42:
+ 1502 007b 6973725F 		.ascii	"isr_F2F_edge_GetPriority\000"
+ 1502      4632465F 
+ 1502      65646765 
+ 1502      5F476574 
+ 1502      5072696F 
+ 1503              	.LASF25:
+ 1504 0094 74785F62 		.ascii	"tx_bits\000"
+ 1504      69747300 
+ 1505              	.LASF14:
+ 1506 009c 666C6F61 		.ascii	"float\000"
+ 1506      7400
+ 1507              	.LASF35:
+ 1508 00a2 6973725F 		.ascii	"isr_F2F_edge_StartEx\000"
+ 1508      4632465F 
+ 1508      65646765 
+ 1508      5F537461 
+ 1508      72744578 
+ 1509              	.LASF2:
+ 1510 00b7 756E7369 		.ascii	"unsigned char\000"
+ 1510      676E6564 
+ 1510      20636861 
+ 1510      7200
+ 1511              	.LASF16:
+ 1512 00c5 72656738 		.ascii	"reg8\000"
+ 1512      00
+ 1513              	.LASF57:
+ 1514 00ca 433A5C55 		.ascii	"C:\\Users\\Yiquing\\Documents\\works\\NanoNXT\\osdp"
+ 1514      73657273 
+ 1514      5C596971 
+ 1514      75696E67 
+ 1514      5C446F63 
+ 1515 00f7 20746573 		.ascii	" testing\\YQ\\nanoNxt_ICM3\\nanoNxt_ICM3.cydsn\000"
+ 1515      74696E67 
+ 1515      5C59515C 
+ 1515      6E616E6F 
+ 1515      4E78745F 
+ 1516              	.LASF6:
+ 1517 0123 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1517      20756E73 
+ 1517      69676E65 
+ 1517      6420696E 
+ 1517      7400
+ 1518              	.LASF36:
+ 1519 0135 6973725F 		.ascii	"isr_F2F_edge_SetVector\000"
+ 1519      4632465F 
+ 1519      65646765 
+ 1519      5F536574 
+ 1519      56656374 
+ 1520              	.LASF11:
+ 1521 014c 75696E74 		.ascii	"uint8\000"
+ 1521      3800
+ 1522              	.LASF19:
+ 1523 0152 62617564 		.ascii	"baud\000"
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 36
+
+
+ 1523      00
+ 1524              	.LASF40:
+ 1525 0157 7072696F 		.ascii	"priority\000"
+ 1525      72697479 
+ 1525      00
+ 1526              	.LASF44:
+ 1527 0160 6973725F 		.ascii	"isr_F2F_edge_Disable\000"
+ 1527      4632465F 
+ 1527      65646765 
+ 1527      5F446973 
+ 1527      61626C65 
+ 1528              	.LASF56:
+ 1529 0175 2E5C4765 		.ascii	".\\Generated_Source\\PSoC5\\isr_F2F_edge.c\000"
+ 1529      6E657261 
+ 1529      7465645F 
+ 1529      536F7572 
+ 1529      63655C50 
+ 1530              	.LASF15:
+ 1531 019d 646F7562 		.ascii	"double\000"
+ 1531      6C6500
+ 1532              	.LASF46:
+ 1533 01a4 6973725F 		.ascii	"isr_F2F_edge_ClearPending\000"
+ 1533      4632465F 
+ 1533      65646765 
+ 1533      5F436C65 
+ 1533      61725065 
+ 1534              	.LASF39:
+ 1535 01be 6973725F 		.ascii	"isr_F2F_edge_SetPriority\000"
+ 1535      4632465F 
+ 1535      65646765 
+ 1535      5F536574 
+ 1535      5072696F 
+ 1536              	.LASF32:
+ 1537 01d7 6973725F 		.ascii	"isr_F2F_edge_Start\000"
+ 1537      4632465F 
+ 1537      65646765 
+ 1537      5F537461 
+ 1537      727400
+ 1538              	.LASF12:
+ 1539 01ea 75696E74 		.ascii	"uint16\000"
+ 1539      313600
+ 1540              	.LASF53:
+ 1541 01f1 74696D65 		.ascii	"timeout_cnt\000"
+ 1541      6F75745F 
+ 1541      636E7400 
+ 1542              	.LASF13:
+ 1543 01fd 75696E74 		.ascii	"uint32\000"
+ 1543      333200
+ 1544              	.LASF33:
+ 1545 0204 6973725F 		.ascii	"isr_F2F_edge_Stop\000"
+ 1545      4632465F 
+ 1545      65646765 
+ 1545      5F53746F 
+ 1545      7000
+ 1546              	.LASF28:
+ 1547 0216 74696D65 		.ascii	"timer_tx_ctr\000"
+ 1547      725F7478 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 37
+
+
+ 1547      5F637472 
+ 1547      00
+ 1548              	.LASF26:
+ 1549 0223 72785F62 		.ascii	"rx_bits\000"
+ 1549      69747300 
+ 1550              	.LASF48:
+ 1551 022b 54414D50 		.ascii	"TAMPERCR_POLARITY\000"
+ 1551      45524352 
+ 1551      5F504F4C 
+ 1551      41524954 
+ 1551      5900
+ 1552              	.LASF43:
+ 1553 023d 6973725F 		.ascii	"isr_F2F_edge_Enable\000"
+ 1553      4632465F 
+ 1553      65646765 
+ 1553      5F456E61 
+ 1553      626C6500 
+ 1554              	.LASF37:
+ 1555 0251 61646472 		.ascii	"address\000"
+ 1555      65737300 
+ 1556              	.LASF8:
+ 1557 0259 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1557      206C6F6E 
+ 1557      6720756E 
+ 1557      7369676E 
+ 1557      65642069 
+ 1558              	.LASF18:
+ 1559 0270 63796973 		.ascii	"cyisraddress\000"
+ 1559      72616464 
+ 1559      72657373 
+ 1559      00
+ 1560              	.LASF30:
+ 1561 027d 72785F72 		.ascii	"rx_recv\000"
+ 1561      65637600 
+ 1562              	.LASF50:
+ 1563 0285 63617264 		.ascii	"card_in_buf\000"
+ 1563      5F696E5F 
+ 1563      62756600 
+ 1564              	.LASF55:
+ 1565 0291 474E5520 		.ascii	"GNU C 4.8.4 20140526 (release) [ARM/embedded-4_8-br"
+ 1565      4320342E 
+ 1565      382E3420 
+ 1565      32303134 
+ 1565      30353236 
+ 1566 02c4 616E6368 		.ascii	"anch revision 211358] -mcpu=cortex-m3 -mthumb -g -O"
+ 1566      20726576 
+ 1566      6973696F 
+ 1566      6E203231 
+ 1566      31333538 
+ 1567 02f7 30202D66 		.ascii	"0 -ffunction-sections\000"
+ 1567      66756E63 
+ 1567      74696F6E 
+ 1567      2D736563 
+ 1567      74696F6E 
+ 1568              	.LASF49:
+ 1569 030d 63617264 		.ascii	"card_ack\000"
+ 1569      5F61636B 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 38
+
+
+ 1569      00
+ 1570              	.LASF9:
+ 1571 0316 73697A65 		.ascii	"sizetype\000"
+ 1571      74797065 
+ 1571      00
+ 1572              	.LASF7:
+ 1573 031f 6C6F6E67 		.ascii	"long long int\000"
+ 1573      206C6F6E 
+ 1573      6720696E 
+ 1573      7400
+ 1574              	.LASF41:
+ 1575 032d 6973725F 		.ascii	"isr_F2F_edge_GetVector\000"
+ 1575      4632465F 
+ 1575      65646765 
+ 1575      5F476574 
+ 1575      56656374 
+ 1576              	.LASF10:
+ 1577 0344 63686172 		.ascii	"char\000"
+ 1577      00
+ 1578              	.LASF38:
+ 1579 0349 72616D56 		.ascii	"ramVectorTable\000"
+ 1579      6563746F 
+ 1579      72546162 
+ 1579      6C6500
+ 1580              	.LASF34:
+ 1581 0358 6973725F 		.ascii	"isr_F2F_edge_Interrupt\000"
+ 1581      4632465F 
+ 1581      65646765 
+ 1581      5F496E74 
+ 1581      65727275 
+ 1582              	.LASF22:
+ 1583 036f 62697473 		.ascii	"bits\000"
+ 1583      00
+ 1584              	.LASF52:
+ 1585 0374 6632665F 		.ascii	"f2f_pulsewidth\000"
+ 1585      70756C73 
+ 1585      65776964 
+ 1585      746800
+ 1586              	.LASF3:
+ 1587 0383 73686F72 		.ascii	"short int\000"
+ 1587      7420696E 
+ 1587      7400
+ 1588              	.LASF27:
+ 1589 038d 666C6167 		.ascii	"flags\000"
+ 1589      7300
+ 1590              	.LASF5:
+ 1591 0393 6C6F6E67 		.ascii	"long int\000"
+ 1591      20696E74 
+ 1591      00
+ 1592              	.LASF47:
+ 1593 039c 63757272 		.ascii	"currentAccessType\000"
+ 1593      656E7441 
+ 1593      63636573 
+ 1593      73547970 
+ 1593      6500
+ 1594              	.LASF1:
+ 1595 03ae 7369676E 		.ascii	"signed char\000"
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cchQmg9g.s 			page 39
+
+
+ 1595      65642063 
+ 1595      68617200 
+ 1596              	.LASF20:
+ 1597 03ba 70617269 		.ascii	"parity\000"
+ 1597      747900
+ 1598              	.LASF29:
+ 1599 03c1 74696D65 		.ascii	"timer_rx_ctr\000"
+ 1599      725F7278 
+ 1599      5F637472 
+ 1599      00
+ 1600              	.LASF58:
+ 1601 03ce 6973725F 		.ascii	"isr_F2F_edge_GetState\000"
+ 1601      4632465F 
+ 1601      65646765 
+ 1601      5F476574 
+ 1601      53746174 
+ 1602              	.LASF51:
+ 1603 03e4 676F745F 		.ascii	"got_pulse\000"
+ 1603      70756C73 
+ 1603      6500
+ 1604              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.8.4 20140526 (release) [ARM/embedded-4_8-br

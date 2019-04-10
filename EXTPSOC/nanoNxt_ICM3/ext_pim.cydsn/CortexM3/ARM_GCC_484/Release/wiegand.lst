@@ -1,0 +1,3885 @@
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"wiegand.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.section	.text.SendWeigand,"ax",%progbits
+  19              		.align	1
+  20              		.global	SendWeigand
+  21              		.thumb
+  22              		.thumb_func
+  23              		.type	SendWeigand, %function
+  24              	SendWeigand:
+  25              	.LFB63:
+  26              		.file 1 ".\\wiegand.c"
+   1:.\wiegand.c   **** /* ========================================
+   2:.\wiegand.c   ****  *
+   3:.\wiegand.c   ****  * Copyright YOUR COMPANY, THE YEAR
+   4:.\wiegand.c   ****  * All Rights Reserved
+   5:.\wiegand.c   ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:.\wiegand.c   ****  *
+   7:.\wiegand.c   ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:.\wiegand.c   ****  * WHICH IS THE PROPERTY OF your company.
+   9:.\wiegand.c   ****  *
+  10:.\wiegand.c   ****  * ========================================
+  11:.\wiegand.c   **** */
+  12:.\wiegand.c   **** 
+  13:.\wiegand.c   **** // GRI 2-2-15: Modified ReadWiegand.
+  14:.\wiegand.c   **** 
+  15:.\wiegand.c   **** #include <project.h>
+  16:.\wiegand.c   **** #include "system.h"
+  17:.\wiegand.c   **** 
+  18:.\wiegand.c   **** 
+  19:.\wiegand.c   **** 
+  20:.\wiegand.c   **** void SendWeigand(int nBits)  //Function to send Wiegand Data
+  21:.\wiegand.c   **** {
+  27              		.loc 1 21 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              	.LVL0:
+  32 0000 2DE9F843 		push	{r3, r4, r5, r6, r7, r8, r9, lr}
+  33              		.cfi_def_cfa_offset 32
+  34              		.cfi_offset 3, -32
+  35              		.cfi_offset 4, -28
+  36              		.cfi_offset 5, -24
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 2
+
+
+  37              		.cfi_offset 6, -20
+  38              		.cfi_offset 7, -16
+  39              		.cfi_offset 8, -12
+  40              		.cfi_offset 9, -8
+  41              		.cfi_offset 14, -4
+  22:.\wiegand.c   **** 	int x,y;
+  23:.\wiegand.c   **** 	char  d1;
+  24:.\wiegand.c   ****     char count = 0;
+  42              		.loc 1 24 0
+  43 0004 0026     		movs	r6, #0
+  21:.\wiegand.c   **** {
+  44              		.loc 1 21 0
+  45 0006 8146     		mov	r9, r0
+  25:.\wiegand.c   **** 
+  26:.\wiegand.c   ****     
+  27:.\wiegand.c   **** 	/*                        Wiegand protocol
+  28:.\wiegand.c   **** 	    A pulse width of 50us to define data
+  29:.\wiegand.c   **** 	    A wait period of 2ms after transmitting the above defined pulse
+  30:.\wiegand.c   ****     */
+  31:.\wiegand.c   **** 	
+  32:.\wiegand.c   **** 
+  33:.\wiegand.c   **** 	for (x=0; x< 20; x++) // Loop over data written from the OMAP
+  46              		.loc 1 33 0
+  47 0008 3446     		mov	r4, r6
+  48              	.LVL1:
+  49              	.L8:
+  50 000a 1B4B     		ldr	r3, .L11
+  34:.\wiegand.c   **** 	{
+  35:.\wiegand.c   ****         d1 = MyI2C_Regs.buffer[x];
+  51              		.loc 1 35 0
+  52 000c 0125     		movs	r5, #1
+  53 000e 2344     		add	r3, r3, r4
+  54 0010 9F79     		ldrb	r7, [r3, #6]	@ zero_extendqisi2
+  55              	.LVL2:
+  56              	.L6:
+  57 0012 06EB0508 		add	r8, r6, r5
+  58 0016 5FFA88F8 		uxtb	r8, r8
+  59              	.LVL3:
+  36:.\wiegand.c   **** 		for (y=0; y <8; y++)  //Transmit each bit at a time
+  37:.\wiegand.c   **** 		{	
+  38:.\wiegand.c   **** 			count = count + 1;
+  39:.\wiegand.c   ****             if (count > nBits) //26 bit Wiegand; so terminate at 26 bits
+  60              		.loc 1 39 0
+  61 001a C845     		cmp	r8, r9
+  62 001c 07DD     		ble	.L2
+  40:.\wiegand.c   **** 			{
+  41:.\wiegand.c   ****                 OptSelect_Write(2);
+  63              		.loc 1 41 0
+  64 001e 0220     		movs	r0, #2
+  65 0020 FFF7FEFF 		bl	OptSelect_Write
+  66              	.LVL4:
+  42:.\wiegand.c   **** 			    PS_D1_Write(0);
+  43:.\wiegand.c   **** 				return;
+  44:.\wiegand.c   **** 			}
+  45:.\wiegand.c   **** 
+  46:.\wiegand.c   **** 		    if ((d1&0x80)) // Check if it a 1 or a 0
+  47:.\wiegand.c   **** 			{
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 3
+
+
+  48:.\wiegand.c   ****                 OptSelect_Write(2); //10 for select & D0
+  49:.\wiegand.c   **** 				PS_D1_Write(1);
+  50:.\wiegand.c   **** 			}
+  51:.\wiegand.c   **** 			else
+  52:.\wiegand.c   **** 			{
+  53:.\wiegand.c   ****                 OptSelect_Write(3); //10 for select & D0
+  54:.\wiegand.c   **** 				PS_D1_Write(0);
+  55:.\wiegand.c   **** 			}			    
+  56:.\wiegand.c   **** 
+  57:.\wiegand.c   ****             
+  58:.\wiegand.c   ****             CyDelayUs(50);
+  59:.\wiegand.c   ****             
+  60:.\wiegand.c   ****             OptSelect_Write(2);
+  61:.\wiegand.c   **** 			PS_D1_Write(0);
+  62:.\wiegand.c   **** 			d1=d1<<1;
+  63:.\wiegand.c   ****             
+  64:.\wiegand.c   ****            
+  65:.\wiegand.c   ****              CyDelay(2);
+  66:.\wiegand.c   **** 
+  67:.\wiegand.c   **** 		}
+  68:.\wiegand.c   ****         
+  69:.\wiegand.c   **** 	}
+  70:.\wiegand.c   ****   
+  71:.\wiegand.c   **** }
+  67              		.loc 1 71 0
+  68 0024 BDE8F843 		pop	{r3, r4, r5, r6, r7, r8, r9, lr}
+  69              	.LVL5:
+  42:.\wiegand.c   **** 			    PS_D1_Write(0);
+  70              		.loc 1 42 0
+  71 0028 0020     		movs	r0, #0
+  72 002a FFF7FEBF 		b	PS_D1_Write
+  73              	.LVL6:
+  74              	.L2:
+  46:.\wiegand.c   **** 		    if ((d1&0x80)) // Check if it a 1 or a 0
+  75              		.loc 1 46 0
+  76 002e 3B06     		lsls	r3, r7, #24
+  77 0030 04D5     		bpl	.L3
+  48:.\wiegand.c   ****                 OptSelect_Write(2); //10 for select & D0
+  78              		.loc 1 48 0
+  79 0032 0220     		movs	r0, #2
+  80 0034 FFF7FEFF 		bl	OptSelect_Write
+  81              	.LVL7:
+  49:.\wiegand.c   **** 				PS_D1_Write(1);
+  82              		.loc 1 49 0
+  83 0038 0120     		movs	r0, #1
+  84 003a 03E0     		b	.L9
+  85              	.L3:
+  53:.\wiegand.c   ****                 OptSelect_Write(3); //10 for select & D0
+  86              		.loc 1 53 0
+  87 003c 0320     		movs	r0, #3
+  88 003e FFF7FEFF 		bl	OptSelect_Write
+  89              	.LVL8:
+  54:.\wiegand.c   **** 				PS_D1_Write(0);
+  90              		.loc 1 54 0
+  91 0042 0020     		movs	r0, #0
+  92              	.L9:
+  93 0044 FFF7FEFF 		bl	PS_D1_Write
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 4
+
+
+  94              	.LVL9:
+  58:.\wiegand.c   ****             CyDelayUs(50);
+  95              		.loc 1 58 0
+  96 0048 3220     		movs	r0, #50
+  97 004a FFF7FEFF 		bl	CyDelayUs
+  98              	.LVL10:
+  60:.\wiegand.c   ****             OptSelect_Write(2);
+  99              		.loc 1 60 0
+ 100 004e 0220     		movs	r0, #2
+ 101 0050 FFF7FEFF 		bl	OptSelect_Write
+ 102              	.LVL11:
+  61:.\wiegand.c   **** 			PS_D1_Write(0);
+ 103              		.loc 1 61 0
+ 104 0054 0020     		movs	r0, #0
+ 105 0056 FFF7FEFF 		bl	PS_D1_Write
+ 106              	.LVL12:
+ 107 005a 0135     		adds	r5, r5, #1
+ 108              	.LVL13:
+  65:.\wiegand.c   ****              CyDelay(2);
+ 109              		.loc 1 65 0
+ 110 005c 0220     		movs	r0, #2
+  62:.\wiegand.c   **** 			d1=d1<<1;
+ 111              		.loc 1 62 0
+ 112 005e 7F00     		lsls	r7, r7, #1
+ 113              	.LVL14:
+  65:.\wiegand.c   ****              CyDelay(2);
+ 114              		.loc 1 65 0
+ 115 0060 FFF7FEFF 		bl	CyDelay
+ 116              	.LVL15:
+  36:.\wiegand.c   **** 		for (y=0; y <8; y++)  //Transmit each bit at a time
+ 117              		.loc 1 36 0
+ 118 0064 092D     		cmp	r5, #9
+  62:.\wiegand.c   **** 			d1=d1<<1;
+ 119              		.loc 1 62 0
+ 120 0066 FFB2     		uxtb	r7, r7
+ 121              	.LVL16:
+  36:.\wiegand.c   **** 		for (y=0; y <8; y++)  //Transmit each bit at a time
+ 122              		.loc 1 36 0
+ 123 0068 D3D1     		bne	.L6
+  33:.\wiegand.c   **** 	for (x=0; x< 20; x++) // Loop over data written from the OMAP
+ 124              		.loc 1 33 0
+ 125 006a 0134     		adds	r4, r4, #1
+ 126              	.LVL17:
+ 127 006c 142C     		cmp	r4, #20
+ 128 006e 01D0     		beq	.L1
+  38:.\wiegand.c   **** 			count = count + 1;
+ 129              		.loc 1 38 0
+ 130 0070 4646     		mov	r6, r8
+ 131 0072 CAE7     		b	.L8
+ 132              	.L1:
+ 133 0074 BDE8F883 		pop	{r3, r4, r5, r6, r7, r8, r9, pc}
+ 134              	.LVL18:
+ 135              	.L12:
+ 136              		.align	2
+ 137              	.L11:
+ 138 0078 00000000 		.word	MyI2C_Regs
+ 139              		.cfi_endproc
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 5
+
+
+ 140              	.LFE63:
+ 141              		.size	SendWeigand, .-SendWeigand
+ 142              		.section	.text.ReadWeigand,"ax",%progbits
+ 143              		.align	1
+ 144              		.global	ReadWeigand
+ 145              		.thumb
+ 146              		.thumb_func
+ 147              		.type	ReadWeigand, %function
+ 148              	ReadWeigand:
+ 149              	.LFB64:
+  72:.\wiegand.c   **** 
+  73:.\wiegand.c   **** 
+  74:.\wiegand.c   **** int ReadWeigand(int nBits)
+  75:.\wiegand.c   **** {
+ 150              		.loc 1 75 0
+ 151              		.cfi_startproc
+ 152              		@ args = 0, pretend = 0, frame = 0
+ 153              		@ frame_needed = 0, uses_anonymous_args = 0
+ 154              	.LVL19:
+ 155 0000 2DE9F041 		push	{r4, r5, r6, r7, r8, lr}
+ 156              		.cfi_def_cfa_offset 24
+ 157              		.cfi_offset 4, -24
+ 158              		.cfi_offset 5, -20
+ 159              		.cfi_offset 6, -16
+ 160              		.cfi_offset 7, -12
+ 161              		.cfi_offset 8, -8
+ 162              		.cfi_offset 14, -4
+ 163              		.loc 1 75 0
+ 164 0004 0746     		mov	r7, r0
+  76:.\wiegand.c   ****     int bitCount=0;
+  77:.\wiegand.c   ****     int byteCount=0;
+  78:.\wiegand.c   ****    
+  79:.\wiegand.c   ****     char WD0 = Pin_WD0_Read() ;
+ 165              		.loc 1 79 0
+ 166 0006 FFF7FEFF 		bl	Pin_WD0_Read
+ 167              	.LVL20:
+ 168 000a 0446     		mov	r4, r0
+ 169              	.LVL21:
+  80:.\wiegand.c   ****     char WD1 = Pin_WD1_Read();
+ 170              		.loc 1 80 0
+ 171 000c FFF7FEFF 		bl	Pin_WD1_Read
+ 172              	.LVL22:
+  81:.\wiegand.c   ****     card_in_buf = 0;
+ 173              		.loc 1 81 0
+ 174 0010 1D4A     		ldr	r2, .L31
+ 175 0012 0023     		movs	r3, #0
+ 176 0014 1360     		str	r3, [r2]
+ 177 0016 1646     		mov	r6, r2
+  82:.\wiegand.c   ****     
+  83:.\wiegand.c   ****     if( WD0 == 0 || WD1 == 0)
+ 178              		.loc 1 83 0
+ 179 0018 04B1     		cbz	r4, .L14
+ 180              		.loc 1 83 0 is_stmt 0 discriminator 1
+ 181 001a 88BB     		cbnz	r0, .L25
+ 182              	.L14:
+  84:.\wiegand.c   ****     {
+  85:.\wiegand.c   ****         while(byteCount*8+bitCount < nBits)
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 6
+
+
+  86:.\wiegand.c   ****         {
+  87:.\wiegand.c   ****            //Read D0 line for input, if yes wait for 50 usec for data to end
+  88:.\wiegand.c   ****            WD0 = Pin_WD0_Read();
+  89:.\wiegand.c   ****            WD1 = Pin_WD1_Read();
+  90:.\wiegand.c   ****            if(WD0 == 0)
+  91:.\wiegand.c   ****            {
+  92:.\wiegand.c   ****              while(WD0 != 1){WD0 = Pin_WD0_Read();}
+  93:.\wiegand.c   ****              
+  94:.\wiegand.c   ****              bitCount++;
+  95:.\wiegand.c   **** 
+  96:.\wiegand.c   ****            }
+  97:.\wiegand.c   ****         
+  98:.\wiegand.c   ****             //Read D1 line for input, if yes wait for 50 usec for data to end
+  99:.\wiegand.c   ****             //and write 1 to the bit in the buffer at the right position.            
+ 100:.\wiegand.c   ****            else if(WD1 == 0)
+ 101:.\wiegand.c   ****            {
+ 102:.\wiegand.c   ****              while(WD1 != 1){WD1 = Pin_WD1_Read();}
+ 103:.\wiegand.c   ****              MyI2C_Regs.buffer[byteCount] |= (0x01 << (7-bitCount));  //write a 1 to current buffer
+ 104:.\wiegand.c   ****              bitCount++;
+ 105:.\wiegand.c   **** 
+ 106:.\wiegand.c   ****            }
+ 107:.\wiegand.c   ****         
+ 108:.\wiegand.c   ****             //Reset bitCount
+ 109:.\wiegand.c   ****             if (bitCount > 7)
+ 110:.\wiegand.c   **** 			{
+ 111:.\wiegand.c   **** 				bitCount = 0;
+ 183              		.loc 1 111 0 is_stmt 1 discriminator 1
+ 184 001c 0025     		movs	r5, #0
+ 185 001e 2C46     		mov	r4, r5
+ 186              	.LVL23:
+ 187              	.L16:
+  85:.\wiegand.c   ****         while(byteCount*8+bitCount < nBits)
+ 188              		.loc 1 85 0 discriminator 1
+ 189 0020 04EBC503 		add	r3, r4, r5, lsl #3
+ 190 0024 BB42     		cmp	r3, r7
+ 191 0026 20DA     		bge	.L30
+  88:.\wiegand.c   ****            WD0 = Pin_WD0_Read();
+ 192              		.loc 1 88 0
+ 193 0028 FFF7FEFF 		bl	Pin_WD0_Read
+ 194              	.LVL24:
+ 195 002c 8046     		mov	r8, r0
+ 196              	.LVL25:
+  89:.\wiegand.c   ****            WD1 = Pin_WD1_Read();
+ 197              		.loc 1 89 0
+ 198 002e FFF7FEFF 		bl	Pin_WD1_Read
+ 199              	.LVL26:
+  90:.\wiegand.c   ****            if(WD0 == 0)
+ 200              		.loc 1 90 0
+ 201 0032 B8F1000F 		cmp	r8, #0
+ 202 0036 04D1     		bne	.L17
+ 203              	.LVL27:
+ 204              	.L19:
+  92:.\wiegand.c   ****              while(WD0 != 1){WD0 = Pin_WD0_Read();}
+ 205              		.loc 1 92 0
+ 206 0038 FFF7FEFF 		bl	Pin_WD0_Read
+ 207              	.LVL28:
+ 208 003c 0128     		cmp	r0, #1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 7
+
+
+ 209 003e FBD1     		bne	.L19
+ 210 0040 0DE0     		b	.L29
+ 211              	.LVL29:
+ 212              	.L17:
+ 100:.\wiegand.c   ****            else if(WD1 == 0)
+ 213              		.loc 1 100 0
+ 214 0042 68B9     		cbnz	r0, .L20
+ 215              	.LVL30:
+ 216              	.L22:
+ 102:.\wiegand.c   ****              while(WD1 != 1){WD1 = Pin_WD1_Read();}
+ 217              		.loc 1 102 0
+ 218 0044 FFF7FEFF 		bl	Pin_WD1_Read
+ 219              	.LVL31:
+ 220 0048 0128     		cmp	r0, #1
+ 221 004a FBD1     		bne	.L22
+ 103:.\wiegand.c   ****              MyI2C_Regs.buffer[byteCount] |= (0x01 << (7-bitCount));  //write a 1 to current buffer
+ 222              		.loc 1 103 0
+ 223 004c C4F10701 		rsb	r1, r4, #7
+ 224 0050 00FA01F2 		lsl	r2, r0, r1
+ 225 0054 0D4B     		ldr	r3, .L31+4
+ 226 0056 2B44     		add	r3, r3, r5
+ 227 0058 9979     		ldrb	r1, [r3, #6]	@ zero_extendqisi2
+ 228 005a 0A43     		orrs	r2, r2, r1
+ 229 005c 9A71     		strb	r2, [r3, #6]
+ 230              	.LVL32:
+ 231              	.L29:
+ 104:.\wiegand.c   ****              bitCount++;
+ 232              		.loc 1 104 0
+ 233 005e 0134     		adds	r4, r4, #1
+ 234              	.LVL33:
+ 235              	.L20:
+ 109:.\wiegand.c   ****             if (bitCount > 7)
+ 236              		.loc 1 109 0
+ 237 0060 072C     		cmp	r4, #7
+ 238              	.LVL34:
+ 112:.\wiegand.c   **** 				byteCount++;
+ 239              		.loc 1 112 0
+ 240 0062 C4BF     		itt	gt
+ 241 0064 0135     		addgt	r5, r5, #1
+ 242              	.LVL35:
+ 111:.\wiegand.c   **** 				bitCount = 0;
+ 243              		.loc 1 111 0
+ 244 0066 0024     		movgt	r4, #0
+ 245 0068 DAE7     		b	.L16
+ 246              	.LVL36:
+ 247              	.L30:
+ 113:.\wiegand.c   **** 			}
+ 114:.\wiegand.c   ****             
+ 115:.\wiegand.c   ****         }
+ 116:.\wiegand.c   ****         MyI2C_Regs.cmd = 0;
+ 248              		.loc 1 116 0
+ 249 006a 084B     		ldr	r3, .L31+4
+ 250 006c 0022     		movs	r2, #0
+ 251 006e 9A70     		strb	r2, [r3, #2]
+ 117:.\wiegand.c   ****         card_in_buf = 1;
+ 118:.\wiegand.c   ****         MyI2C_Regs.status |= STAT_CHANGE | STAT_CARD_IN ;
+ 252              		.loc 1 118 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 8
+
+
+ 253 0070 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 117:.\wiegand.c   ****         card_in_buf = 1;
+ 254              		.loc 1 117 0
+ 255 0072 0120     		movs	r0, #1
+ 256              		.loc 1 118 0
+ 257 0074 42F00302 		orr	r2, r2, #3
+ 258 0078 1A70     		strb	r2, [r3]
+ 117:.\wiegand.c   ****         card_in_buf = 1;
+ 259              		.loc 1 117 0
+ 260 007a 3060     		str	r0, [r6]
+ 119:.\wiegand.c   ****         
+ 120:.\wiegand.c   ****         return 1;
+ 261              		.loc 1 120 0
+ 262 007c BDE8F081 		pop	{r4, r5, r6, r7, r8, pc}
+ 263              	.LVL37:
+ 264              	.L25:
+ 121:.\wiegand.c   ****     }
+ 122:.\wiegand.c   ****     card_in_buf = 0;
+ 123:.\wiegand.c   ****     return 0;
+ 265              		.loc 1 123 0
+ 266 0080 1846     		mov	r0, r3
+ 267              	.LVL38:
+ 124:.\wiegand.c   **** }
+ 268              		.loc 1 124 0
+ 269 0082 BDE8F081 		pop	{r4, r5, r6, r7, r8, pc}
+ 270              	.LVL39:
+ 271              	.L32:
+ 272 0086 00BF     		.align	2
+ 273              	.L31:
+ 274 0088 00000000 		.word	card_in_buf
+ 275 008c 00000000 		.word	MyI2C_Regs
+ 276              		.cfi_endproc
+ 277              	.LFE64:
+ 278              		.size	ReadWeigand, .-ReadWeigand
+ 279              		.section	.text.SendF2F,"ax",%progbits
+ 280              		.align	1
+ 281              		.global	SendF2F
+ 282              		.thumb
+ 283              		.thumb_func
+ 284              		.type	SendF2F, %function
+ 285              	SendF2F:
+ 286              	.LFB65:
+ 125:.\wiegand.c   **** 
+ 126:.\wiegand.c   **** void SendF2F()
+ 127:.\wiegand.c   **** {
+ 287              		.loc 1 127 0
+ 288              		.cfi_startproc
+ 289              		@ args = 0, pretend = 0, frame = 32
+ 290              		@ frame_needed = 0, uses_anonymous_args = 0
+ 291              	.LVL40:
+ 292 0000 2DE9F041 		push	{r4, r5, r6, r7, r8, lr}
+ 293              		.cfi_def_cfa_offset 24
+ 294              		.cfi_offset 4, -24
+ 295              		.cfi_offset 5, -20
+ 296              		.cfi_offset 6, -16
+ 297              		.cfi_offset 7, -12
+ 298              		.cfi_offset 8, -8
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 9
+
+
+ 299              		.cfi_offset 14, -4
+ 128:.\wiegand.c   **** 	int x,b,z,len;
+ 129:.\wiegand.c   **** 	char  d0;
+ 130:.\wiegand.c   **** 	char aPRT0DRa;
+ 131:.\wiegand.c   **** 	unsigned char f2f[28];
+ 132:.\wiegand.c   ****     char flag=0;
+ 133:.\wiegand.c   **** /*	//debug code	
+ 134:.\wiegand.c   ****     MyI2C_Regs.buffer[0] = 0;
+ 135:.\wiegand.c   ****     MyI2C_Regs.buffer[1] = 0xD1;
+ 136:.\wiegand.c   ****     MyI2C_Regs.buffer[2] = 0xE1;
+ 137:.\wiegand.c   ****     MyI2C_Regs.buffer[3] = 0xF9;
+ 138:.\wiegand.c   ****     MyI2C_Regs.buffer[4] = 0x80;
+ 139:.\wiegand.c   ****     MyI2C_Regs.data_length = 5;
+ 140:.\wiegand.c   **** */    
+ 141:.\wiegand.c   ****     
+ 142:.\wiegand.c   ****     len = MyI2C_Regs.data_length + 3;
+ 300              		.loc 1 142 0
+ 301 0004 3E4B     		ldr	r3, .L66
+ 302 0006 0021     		movs	r1, #0
+ 303 0008 DF78     		ldrb	r7, [r3, #3]	@ zero_extendqisi2
+ 127:.\wiegand.c   **** {
+ 304              		.loc 1 127 0
+ 305 000a 88B0     		sub	sp, sp, #32
+ 306              		.cfi_def_cfa_offset 56
+ 307              		.loc 1 142 0
+ 308 000c 0337     		adds	r7, r7, #3
+ 309              	.LVL41:
+ 132:.\wiegand.c   ****     char flag=0;
+ 310              		.loc 1 132 0
+ 311 000e 0A46     		mov	r2, r1
+ 143:.\wiegand.c   **** 	//Loop over data written by OMAP, 40 bit no facility card
+ 144:.\wiegand.c   **** 	//Zeros are transmitted as two transitions, with a pulse width of 1.1 ms
+ 145:.\wiegand.c   **** 	//Ones are transmitted as four transitions, with a pulse width of 0.55 ms
+ 146:.\wiegand.c   **** 	for (x=0; x< len; x++)
+ 312              		.loc 1 146 0
+ 313 0010 0C46     		mov	r4, r1
+ 314 0012 9C46     		mov	ip, r3
+ 315              	.LVL42:
+ 316              	.L48:
+ 317 0014 0CEB0403 		add	r3, ip, r4
+ 147:.\wiegand.c   **** 	{   	
+ 148:.\wiegand.c   **** 		d0 = MyI2C_Regs.buffer[x];	
+ 149:.\wiegand.c   ****         aPRT0DRa = 0;
+ 150:.\wiegand.c   **** 		f2f[2*x] = 0;
+ 318              		.loc 1 150 0
+ 319 0018 01AD     		add	r5, sp, #4
+ 148:.\wiegand.c   **** 		d0 = MyI2C_Regs.buffer[x];	
+ 320              		.loc 1 148 0
+ 321 001a 9879     		ldrb	r0, [r3, #6]	@ zero_extendqisi2
+ 322              	.LVL43:
+ 323 001c 05EB010E 		add	lr, r5, r1
+ 324              		.loc 1 150 0
+ 325 0020 0023     		movs	r3, #0
+ 326 0022 4B55     		strb	r3, [r1, r5]
+ 151:.\wiegand.c   **** 		f2f[2*x + 1] = 0;		 
+ 152:.\wiegand.c   **** 		for (b=0; b <4; b++)    //higher 4 bits
+ 327              		.loc 1 152 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 10
+
+
+ 328 0024 1E46     		mov	r6, r3
+ 151:.\wiegand.c   **** 		f2f[2*x + 1] = 0;		 
+ 329              		.loc 1 151 0
+ 330 0026 8EF80130 		strb	r3, [lr, #1]
+ 331              	.LVL44:
+ 332              	.L39:
+ 153:.\wiegand.c   **** 		{	   	  
+ 154:.\wiegand.c   **** 			if (d0&0x80)    //it is a 1
+ 333              		.loc 1 154 0
+ 334 002a 10F0800F 		tst	r0, #128
+ 335 002e 06D0     		beq	.L34
+ 155:.\wiegand.c   **** 			{      
+ 156:.\wiegand.c   **** 				if (flag == 0)  //previous level is 0
+ 336              		.loc 1 156 0
+ 337 0030 12B9     		cbnz	r2, .L35
+ 338              	.LVL45:
+ 157:.\wiegand.c   **** 				{	   	
+ 158:.\wiegand.c   **** 					flag = 0;
+ 159:.\wiegand.c   **** 					aPRT0DRa |= 0x02;	   	   		   
+ 339              		.loc 1 159 0
+ 340 0032 43F00203 		orr	r3, r3, #2
+ 341              	.LVL46:
+ 342 0036 08E0     		b	.L36
+ 343              	.LVL47:
+ 344              	.L35:
+ 160:.\wiegand.c   **** 				}
+ 161:.\wiegand.c   **** 				else            //previous level is 1
+ 162:.\wiegand.c   **** 				{
+ 163:.\wiegand.c   **** 					aPRT0DRa |= 0x01;
+ 345              		.loc 1 163 0
+ 346 0038 43F00103 		orr	r3, r3, #1
+ 347              	.LVL48:
+ 348 003c 02E0     		b	.L64
+ 349              	.LVL49:
+ 350              	.L34:
+ 164:.\wiegand.c   **** 					flag = 1;
+ 165:.\wiegand.c   **** 				}
+ 166:.\wiegand.c   **** 			}
+ 167:.\wiegand.c   **** 			else    //it is a 0
+ 168:.\wiegand.c   **** 			{
+ 169:.\wiegand.c   **** 				if (flag == 0)  //previous level is 0
+ 351              		.loc 1 169 0
+ 352 003e 1AB9     		cbnz	r2, .L54
+ 170:.\wiegand.c   **** 				{
+ 171:.\wiegand.c   **** 					aPRT0DRa |= 0x03;
+ 353              		.loc 1 171 0
+ 354 0040 43F00303 		orr	r3, r3, #3
+ 355              	.LVL50:
+ 356              	.L64:
+ 172:.\wiegand.c   **** 					flag = 1;
+ 357              		.loc 1 172 0
+ 358 0044 0122     		movs	r2, #1
+ 359 0046 00E0     		b	.L36
+ 360              	.LVL51:
+ 361              	.L54:
+ 173:.\wiegand.c   **** 				}
+ 174:.\wiegand.c   **** 				else    //previous level is 1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 11
+
+
+ 175:.\wiegand.c   **** 				{
+ 176:.\wiegand.c   **** 					flag = 0;
+ 362              		.loc 1 176 0
+ 363 0048 0022     		movs	r2, #0
+ 364              	.LVL52:
+ 365              	.L36:
+ 177:.\wiegand.c   **** 				}		   
+ 178:.\wiegand.c   **** 			}
+ 179:.\wiegand.c   **** 
+ 180:.\wiegand.c   **** 			if (b < 3)
+ 366              		.loc 1 180 0
+ 367 004a 032E     		cmp	r6, #3
+ 181:.\wiegand.c   **** 				aPRT0DRa <<= 2; //go next bit
+ 368              		.loc 1 181 0
+ 369 004c 18BF     		it	ne
+ 370 004e 9B00     		lslne	r3, r3, #2
+ 371              	.LVL53:
+ 152:.\wiegand.c   **** 		for (b=0; b <4; b++)    //higher 4 bits
+ 372              		.loc 1 152 0
+ 373 0050 06F10106 		add	r6, r6, #1
+ 374              	.LVL54:
+ 375              		.loc 1 181 0
+ 376 0054 18BF     		it	ne
+ 377 0056 DBB2     		uxtbne	r3, r3
+ 378              	.LVL55:
+ 182:.\wiegand.c   **** 
+ 183:.\wiegand.c   **** 			d0 <<= 1;   //go next bit
+ 379              		.loc 1 183 0
+ 380 0058 4000     		lsls	r0, r0, #1
+ 381              	.LVL56:
+ 152:.\wiegand.c   **** 		for (b=0; b <4; b++)    //higher 4 bits
+ 382              		.loc 1 152 0
+ 383 005a 042E     		cmp	r6, #4
+ 384              		.loc 1 183 0
+ 385 005c C0B2     		uxtb	r0, r0
+ 386              	.LVL57:
+ 152:.\wiegand.c   **** 		for (b=0; b <4; b++)    //higher 4 bits
+ 387              		.loc 1 152 0
+ 388 005e E4D1     		bne	.L39
+ 389              	.LVL58:
+ 184:.\wiegand.c   **** 		}
+ 185:.\wiegand.c   **** 		f2f[2*x] = aPRT0DRa;
+ 390              		.loc 1 185 0
+ 391 0060 6B54     		strb	r3, [r5, r1]
+ 392              	.LVL59:
+ 186:.\wiegand.c   **** 
+ 187:.\wiegand.c   **** 		aPRT0DRa = 0;	
+ 393              		.loc 1 187 0
+ 394 0062 0023     		movs	r3, #0
+ 188:.\wiegand.c   **** 		for (b=0; b <4; b++)    //lower 4 bits
+ 395              		.loc 1 188 0
+ 396 0064 1E46     		mov	r6, r3
+ 397              	.LVL60:
+ 398              	.L45:
+ 189:.\wiegand.c   **** 		{	   	  
+ 190:.\wiegand.c   **** 			if (d0&0x80)
+ 399              		.loc 1 190 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 12
+
+
+ 400 0066 10F0800F 		tst	r0, #128
+ 401 006a 06D0     		beq	.L40
+ 191:.\wiegand.c   **** 			{      
+ 192:.\wiegand.c   **** 				if (flag == 0)
+ 402              		.loc 1 192 0
+ 403 006c 12B9     		cbnz	r2, .L41
+ 404              	.LVL61:
+ 193:.\wiegand.c   **** 				{	   	
+ 194:.\wiegand.c   **** 					flag = 0;
+ 195:.\wiegand.c   **** 					aPRT0DRa |= 0x02;	   	   		   
+ 405              		.loc 1 195 0
+ 406 006e 43F00203 		orr	r3, r3, #2
+ 407              	.LVL62:
+ 408 0072 08E0     		b	.L42
+ 409              	.LVL63:
+ 410              	.L41:
+ 196:.\wiegand.c   **** 				}
+ 197:.\wiegand.c   **** 				else
+ 198:.\wiegand.c   **** 				{
+ 199:.\wiegand.c   **** 					aPRT0DRa |= 0x01;
+ 411              		.loc 1 199 0
+ 412 0074 43F00103 		orr	r3, r3, #1
+ 413              	.LVL64:
+ 414 0078 02E0     		b	.L65
+ 415              	.LVL65:
+ 416              	.L40:
+ 200:.\wiegand.c   **** 					flag = 1;
+ 201:.\wiegand.c   **** 				}
+ 202:.\wiegand.c   **** 			}
+ 203:.\wiegand.c   **** 			else
+ 204:.\wiegand.c   **** 			{
+ 205:.\wiegand.c   **** 				if (flag == 0)
+ 417              		.loc 1 205 0
+ 418 007a 1AB9     		cbnz	r2, .L55
+ 206:.\wiegand.c   **** 				{
+ 207:.\wiegand.c   **** 					aPRT0DRa |=0x03;
+ 419              		.loc 1 207 0
+ 420 007c 43F00303 		orr	r3, r3, #3
+ 421              	.LVL66:
+ 422              	.L65:
+ 208:.\wiegand.c   **** 					flag = 1;
+ 423              		.loc 1 208 0
+ 424 0080 0122     		movs	r2, #1
+ 425 0082 00E0     		b	.L42
+ 426              	.LVL67:
+ 427              	.L55:
+ 209:.\wiegand.c   **** 				}
+ 210:.\wiegand.c   **** 				else
+ 211:.\wiegand.c   **** 				{
+ 212:.\wiegand.c   **** 					flag = 0;
+ 428              		.loc 1 212 0
+ 429 0084 0022     		movs	r2, #0
+ 430              	.LVL68:
+ 431              	.L42:
+ 213:.\wiegand.c   **** 				}		   
+ 214:.\wiegand.c   **** 			}
+ 215:.\wiegand.c   **** 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 13
+
+
+ 216:.\wiegand.c   **** 			if (b < 3)
+ 432              		.loc 1 216 0
+ 433 0086 032E     		cmp	r6, #3
+ 217:.\wiegand.c   **** 				aPRT0DRa<<=2;
+ 434              		.loc 1 217 0
+ 435 0088 18BF     		it	ne
+ 436 008a 9B00     		lslne	r3, r3, #2
+ 437              	.LVL69:
+ 188:.\wiegand.c   **** 		for (b=0; b <4; b++)    //lower 4 bits
+ 438              		.loc 1 188 0
+ 439 008c 06F10106 		add	r6, r6, #1
+ 440              	.LVL70:
+ 441              		.loc 1 217 0
+ 442 0090 18BF     		it	ne
+ 443 0092 DBB2     		uxtbne	r3, r3
+ 444              	.LVL71:
+ 218:.\wiegand.c   **** 
+ 219:.\wiegand.c   **** 			d0<<=1;
+ 445              		.loc 1 219 0
+ 446 0094 4000     		lsls	r0, r0, #1
+ 447              	.LVL72:
+ 188:.\wiegand.c   **** 		for (b=0; b <4; b++)    //lower 4 bits
+ 448              		.loc 1 188 0
+ 449 0096 042E     		cmp	r6, #4
+ 450              		.loc 1 219 0
+ 451 0098 C0B2     		uxtb	r0, r0
+ 452              	.LVL73:
+ 188:.\wiegand.c   **** 		for (b=0; b <4; b++)    //lower 4 bits
+ 453              		.loc 1 188 0
+ 454 009a E4D1     		bne	.L45
+ 455              	.LVL74:
+ 146:.\wiegand.c   **** 	for (x=0; x< len; x++)
+ 456              		.loc 1 146 0
+ 457 009c 0134     		adds	r4, r4, #1
+ 458              	.LVL75:
+ 459 009e BC42     		cmp	r4, r7
+ 220:.\wiegand.c   **** 		}
+ 221:.\wiegand.c   **** 		f2f[2*x + 1] = aPRT0DRa;
+ 460              		.loc 1 221 0
+ 461 00a0 8EF80130 		strb	r3, [lr, #1]
+ 462 00a4 01F10201 		add	r1, r1, #2
+ 146:.\wiegand.c   **** 	for (x=0; x< len; x++)
+ 463              		.loc 1 146 0
+ 464 00a8 B4DB     		blt	.L48
+ 222:.\wiegand.c   **** 	}
+ 223:.\wiegand.c   **** 
+ 224:.\wiegand.c   **** 	//Use 8-bit timer to set up the pulse widths
+ 225:.\wiegand.c   **** 	//Use the buffered data from above where we already set up the data specific pulses and send them 
+ 226:.\wiegand.c   **** 	aPRT0DRa = 0;
+ 227:.\wiegand.c   **** 	for (z=0;z<2*len;z++)      //24
+ 465              		.loc 1 227 0
+ 466 00aa 4FEA4708 		lsl	r8, r7, #1
+ 467              	.LVL76:
+ 468 00ae 0024     		movs	r4, #0
+ 469              	.LVL77:
+ 470              	.L47:
+ 228:.\wiegand.c   **** 	{
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 14
+
+
+ 229:.\wiegand.c   **** 		d0 = f2f[z];
+ 230:.\wiegand.c   **** 		f2f[z]=0;
+ 471              		.loc 1 230 0
+ 472 00b0 0023     		movs	r3, #0
+ 229:.\wiegand.c   **** 		d0 = f2f[z];
+ 473              		.loc 1 229 0
+ 474 00b2 2F5D     		ldrb	r7, [r5, r4]	@ zero_extendqisi2
+ 475              	.LVL78:
+ 476              		.loc 1 230 0
+ 477 00b4 0826     		movs	r6, #8
+ 478 00b6 2B55     		strb	r3, [r5, r4]
+ 479              	.LVL79:
+ 480              	.L52:
+ 231:.\wiegand.c   **** 		for (b=0; b <8; b++)
+ 232:.\wiegand.c   **** 		{
+ 233:.\wiegand.c   **** 			if (d0&0x80)
+ 481              		.loc 1 233 0
+ 482 00b8 3B06     		lsls	r3, r7, #24
+ 483 00ba 06D5     		bpl	.L49
+ 234:.\wiegand.c   ****             {
+ 235:.\wiegand.c   ****                 PS_D0_Write(1);
+ 484              		.loc 1 235 0
+ 485 00bc 0120     		movs	r0, #1
+ 486 00be FFF7FEFF 		bl	PS_D0_Write
+ 487              	.LVL80:
+ 236:.\wiegand.c   ****                 OptSelect_Write(2); 
+ 488              		.loc 1 236 0
+ 489 00c2 0220     		movs	r0, #2
+ 490 00c4 FFF7FEFF 		bl	OptSelect_Write
+ 491              	.LVL81:
+ 492 00c8 05E0     		b	.L50
+ 493              	.L49:
+ 237:.\wiegand.c   **** 			}
+ 238:.\wiegand.c   ****             else
+ 239:.\wiegand.c   ****             {
+ 240:.\wiegand.c   ****                 OptSelect_Write(3);
+ 494              		.loc 1 240 0
+ 495 00ca 0320     		movs	r0, #3
+ 496 00cc FFF7FEFF 		bl	OptSelect_Write
+ 497              	.LVL82:
+ 241:.\wiegand.c   ****                 PS_D0_Write(0);
+ 498              		.loc 1 241 0
+ 499 00d0 0020     		movs	r0, #0
+ 500 00d2 FFF7FEFF 		bl	PS_D0_Write
+ 501              	.LVL83:
+ 502              	.L50:
+ 242:.\wiegand.c   ****              }   
+ 243:.\wiegand.c   **** //            CyDelayUs(1000);
+ 244:.\wiegand.c   ****             CyDelayUs(400);
+ 503              		.loc 1 244 0
+ 504 00d6 4FF4C870 		mov	r0, #400
+ 505 00da FFF7FEFF 		bl	CyDelayUs
+ 506              	.LVL84:
+ 245:.\wiegand.c   **** 			d0<<=1;
+ 507              		.loc 1 245 0
+ 508 00de 7F00     		lsls	r7, r7, #1
+ 509              	.LVL85:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 15
+
+
+ 231:.\wiegand.c   **** 		for (b=0; b <8; b++)
+ 510              		.loc 1 231 0
+ 511 00e0 013E     		subs	r6, r6, #1
+ 512              	.LVL86:
+ 513              		.loc 1 245 0
+ 514 00e2 FFB2     		uxtb	r7, r7
+ 515              	.LVL87:
+ 231:.\wiegand.c   **** 		for (b=0; b <8; b++)
+ 516              		.loc 1 231 0
+ 517 00e4 E8D1     		bne	.L52
+ 227:.\wiegand.c   **** 	for (z=0;z<2*len;z++)      //24
+ 518              		.loc 1 227 0
+ 519 00e6 0134     		adds	r4, r4, #1
+ 520              	.LVL88:
+ 521 00e8 4445     		cmp	r4, r8
+ 522 00ea E1DB     		blt	.L47
+ 246:.\wiegand.c   **** 		}
+ 247:.\wiegand.c   **** 	}
+ 248:.\wiegand.c   ****     OptSelect_Write(2);
+ 523              		.loc 1 248 0
+ 524 00ec 0220     		movs	r0, #2
+ 525 00ee FFF7FEFF 		bl	OptSelect_Write
+ 526              	.LVL89:
+ 249:.\wiegand.c   ****     PS_D0_Write(0);    //set output to high after done
+ 527              		.loc 1 249 0
+ 528 00f2 3046     		mov	r0, r6
+ 250:.\wiegand.c   **** }
+ 529              		.loc 1 250 0
+ 530 00f4 08B0     		add	sp, sp, #32
+ 531              		@ sp needed
+ 532 00f6 BDE8F041 		pop	{r4, r5, r6, r7, r8, lr}
+ 533              	.LVL90:
+ 249:.\wiegand.c   ****     PS_D0_Write(0);    //set output to high after done
+ 534              		.loc 1 249 0
+ 535 00fa FFF7FEBF 		b	PS_D0_Write
+ 536              	.LVL91:
+ 537              	.L67:
+ 538 00fe 00BF     		.align	2
+ 539              	.L66:
+ 540 0100 00000000 		.word	MyI2C_Regs
+ 541              		.cfi_endproc
+ 542              	.LFE65:
+ 543              		.size	SendF2F, .-SendF2F
+ 544              		.global	__aeabi_i2d
+ 545              		.global	__aeabi_dmul
+ 546              		.global	__aeabi_d2iz
+ 547              		.section	.text.ReadF2F,"ax",%progbits
+ 548              		.align	1
+ 549              		.global	ReadF2F
+ 550              		.thumb
+ 551              		.thumb_func
+ 552              		.type	ReadF2F, %function
+ 553              	ReadF2F:
+ 554              	.LFB66:
+ 251:.\wiegand.c   **** 
+ 252:.\wiegand.c   **** 
+ 253:.\wiegand.c   **** /* F2F card read variables */
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 16
+
+
+ 254:.\wiegand.c   **** uint8 f2fdebugled=1;
+ 255:.\wiegand.c   **** 
+ 256:.\wiegand.c   **** /* F2F reader acknowledgement */
+ 257:.\wiegand.c   **** char f2f_acknowledge_active;
+ 258:.\wiegand.c   **** char f2f_ack_delay_cnt;
+ 259:.\wiegand.c   **** 
+ 260:.\wiegand.c   **** int ReadF2F()
+ 261:.\wiegand.c   **** {
+ 555              		.loc 1 261 0
+ 556              		.cfi_startproc
+ 557              		@ args = 0, pretend = 0, frame = 8
+ 558              		@ frame_needed = 0, uses_anonymous_args = 0
+ 559 0000 2DE9F74F 		push	{r0, r1, r2, r4, r5, r6, r7, r8, r9, r10, fp, lr}
+ 560              		.cfi_def_cfa_offset 48
+ 561              		.cfi_offset 0, -48
+ 562              		.cfi_offset 1, -44
+ 563              		.cfi_offset 2, -40
+ 564              		.cfi_offset 4, -36
+ 565              		.cfi_offset 5, -32
+ 566              		.cfi_offset 6, -28
+ 567              		.cfi_offset 7, -24
+ 568              		.cfi_offset 8, -20
+ 569              		.cfi_offset 9, -16
+ 570              		.cfi_offset 10, -12
+ 571              		.cfi_offset 11, -8
+ 572              		.cfi_offset 14, -4
+ 262:.\wiegand.c   ****     int bitCount;
+ 263:.\wiegand.c   ****     int byteCount;
+ 264:.\wiegand.c   ****     int hp;
+ 265:.\wiegand.c   ****     char nbit;
+ 266:.\wiegand.c   ****     int i;
+ 267:.\wiegand.c   ****     unsigned char started;
+ 268:.\wiegand.c   ****     int width;
+ 269:.\wiegand.c   ****     
+ 270:.\wiegand.c   ****     // enable ack line
+ 271:.\wiegand.c   ****     PS_D1_Write(0);
+ 573              		.loc 1 271 0
+ 574 0004 0020     		movs	r0, #0
+ 575 0006 FFF7FEFF 		bl	PS_D1_Write
+ 576              	.LVL92:
+ 272:.\wiegand.c   **** 
+ 273:.\wiegand.c   ****     for(i =0; i < 20; i++)
+ 577              		.loc 1 273 0
+ 578 000a 0020     		movs	r0, #0
+ 579              	.LVL93:
+ 580              	.L70:
+ 581 000c 3B4E     		ldr	r6, .L86
+ 274:.\wiegand.c   ****             MyI2C_Regs.buffer[i] = 0;
+ 582              		.loc 1 274 0 discriminator 2
+ 583 000e 0024     		movs	r4, #0
+ 584 0010 8319     		adds	r3, r0, r6
+ 273:.\wiegand.c   ****     for(i =0; i < 20; i++)
+ 585              		.loc 1 273 0 discriminator 2
+ 586 0012 0130     		adds	r0, r0, #1
+ 587              	.LVL94:
+ 588 0014 1428     		cmp	r0, #20
+ 589              		.loc 1 274 0 discriminator 2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 17
+
+
+ 590 0016 9C71     		strb	r4, [r3, #6]
+ 273:.\wiegand.c   ****     for(i =0; i < 20; i++)
+ 591              		.loc 1 273 0 discriminator 2
+ 592 0018 F8D1     		bne	.L70
+ 593              	.LVL95:
+ 275:.\wiegand.c   ****             
+ 276:.\wiegand.c   ****     hp = 20;
+ 277:.\wiegand.c   ****     byteCount = 0;  
+ 278:.\wiegand.c   ****     nbit = 0;
+ 279:.\wiegand.c   ****     bitCount = 1;
+ 280:.\wiegand.c   ****     started = 0;
+ 281:.\wiegand.c   ****     card_in_buf = 0;
+ 594              		.loc 1 281 0
+ 595 001a 394B     		ldr	r3, .L86+4
+ 282:.\wiegand.c   ****            
+ 283:.\wiegand.c   ****     timeout_cnt = 0;
+ 596              		.loc 1 283 0
+ 597 001c 394A     		ldr	r2, .L86+8
+ 281:.\wiegand.c   ****     card_in_buf = 0;
+ 598              		.loc 1 281 0
+ 599 001e 1C60     		str	r4, [r3]
+ 600              		.loc 1 283 0
+ 601 0020 1460     		str	r4, [r2]
+ 280:.\wiegand.c   ****     started = 0;
+ 602              		.loc 1 280 0
+ 603 0022 A146     		mov	r9, r4
+ 276:.\wiegand.c   ****     hp = 20;
+ 604              		.loc 1 276 0
+ 605 0024 8246     		mov	r10, r0
+ 277:.\wiegand.c   ****     byteCount = 0;  
+ 606              		.loc 1 277 0
+ 607 0026 2746     		mov	r7, r4
+ 279:.\wiegand.c   ****     bitCount = 1;
+ 608              		.loc 1 279 0
+ 609 0028 0125     		movs	r5, #1
+ 610              	.LVL96:
+ 611              	.L71:
+ 284:.\wiegand.c   ****     while( byteCount <  11)
+ 285:.\wiegand.c   ****     {
+ 286:.\wiegand.c   ****         width = f2f_pulsewidth;             
+ 612              		.loc 1 286 0
+ 613 002a 374B     		ldr	r3, .L86+12
+ 614 002c D3F80080 		ldr	r8, [r3]
+ 615              	.LVL97:
+ 616 0030 9B46     		mov	fp, r3
+ 287:.\wiegand.c   ****         if(width != 0)
+ 617              		.loc 1 287 0
+ 618 0032 B8F1000F 		cmp	r8, #0
+ 619 0036 00D1     		bne	.L72
+ 620              	.LVL98:
+ 621              	.L81:
+ 622 0038 FEE7     		b	.L81
+ 623              	.LVL99:
+ 624              	.L72:
+ 288:.\wiegand.c   ****         {
+ 289:.\wiegand.c   ****             LED_GRN_Write(1);
+ 625              		.loc 1 289 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 18
+
+
+ 626 003a 0120     		movs	r0, #1
+ 627 003c 0193     		str	r3, [sp, #4]
+ 628 003e FFF7FEFF 		bl	LED_GRN_Write
+ 629              	.LVL100:
+ 290:.\wiegand.c   ****             isr_F2F_edge_Disable();
+ 630              		.loc 1 290 0
+ 631 0042 FFF7FEFF 		bl	isr_F2F_edge_Disable
+ 632              	.LVL101:
+ 291:.\wiegand.c   ****             f2f_pulsewidth = 0;
+ 633              		.loc 1 291 0
+ 634 0046 019B     		ldr	r3, [sp, #4]
+ 635 0048 0022     		movs	r2, #0
+ 636 004a 1A60     		str	r2, [r3]
+ 292:.\wiegand.c   ****             isr_F2F_edge_Enable();
+ 637              		.loc 1 292 0
+ 638 004c 0192     		str	r2, [sp, #4]
+ 639 004e FFF7FEFF 		bl	isr_F2F_edge_Enable
+ 640              	.LVL102:
+ 293:.\wiegand.c   ****             if (bitCount > 7)
+ 641              		.loc 1 293 0
+ 642 0052 019A     		ldr	r2, [sp, #4]
+ 643              	.LVL103:
+ 644 0054 072D     		cmp	r5, #7
+ 294:.\wiegand.c   ****             {
+ 295:.\wiegand.c   ****                 bitCount = 0;
+ 296:.\wiegand.c   ****                 byteCount++;
+ 645              		.loc 1 296 0
+ 646 0056 C4BF     		itt	gt
+ 647 0058 0137     		addgt	r7, r7, #1
+ 648              	.LVL104:
+ 295:.\wiegand.c   ****                 bitCount = 0;
+ 649              		.loc 1 295 0
+ 650 005a 1546     		movgt	r5, r2
+ 297:.\wiegand.c   ****             }
+ 298:.\wiegand.c   ****             if(started == 0 && width > 7 && width < 0x40)
+ 651              		.loc 1 298 0
+ 652 005c B9F1000F 		cmp	r9, #0
+ 653 0060 07D1     		bne	.L75
+ 654              		.loc 1 298 0 is_stmt 0 discriminator 1
+ 655 0062 A8F10803 		sub	r3, r8, #8
+ 656 0066 372B     		cmp	r3, #55
+ 299:.\wiegand.c   ****             {
+ 300:.\wiegand.c   ****                 hp = (width + hp)>>1;  //average out
+ 657              		.loc 1 300 0 is_stmt 1 discriminator 1
+ 658 0068 9CBF     		itt	ls
+ 659 006a 08EB0A0C 		addls	ip, r8, r10
+ 660              	.LVL105:
+ 661 006e 4FEA6C0A 		asrls	r10, ip, #1
+ 662              	.LVL106:
+ 663              	.L75:
+ 301:.\wiegand.c   ****             }
+ 302:.\wiegand.c   ****             /* A pulse width of 1msec is considered a 0 && two pulse widths of 0.5 msec is consdier
+ 303:.\wiegand.c   ****                Timeout timer is configured to update timeoutcnt every 50 usecs      */
+ 304:.\wiegand.c   ****             if( width < ((int)(0.75*hp)))
+ 664              		.loc 1 304 0
+ 665 0072 5046     		mov	r0, r10
+ 666 0074 FFF7FEFF 		bl	__aeabi_i2d
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 19
+
+
+ 667              	.LVL107:
+ 668 0078 0022     		movs	r2, #0
+ 669 007a 244B     		ldr	r3, .L86+16
+ 670 007c FFF7FEFF 		bl	__aeabi_dmul
+ 671              	.LVL108:
+ 672 0080 FFF7FEFF 		bl	__aeabi_d2iz
+ 673              	.LVL109:
+ 674 0084 8045     		cmp	r8, r0
+ 675 0086 0BDA     		bge	.L76
+ 305:.\wiegand.c   ****             {
+ 306:.\wiegand.c   ****                 nbit++;
+ 307:.\wiegand.c   ****                 if(nbit > 1)
+ 676              		.loc 1 307 0
+ 677 0088 9CB1     		cbz	r4, .L82
+ 308:.\wiegand.c   ****                 {
+ 309:.\wiegand.c   ****                   MyI2C_Regs.buffer[byteCount] |= (0x01 << (7-bitCount));   
+ 678              		.loc 1 309 0
+ 679 008a C5F10702 		rsb	r2, r5, #7
+ 680 008e 04FA02F2 		lsl	r2, r4, r2
+ 681 0092 F319     		adds	r3, r6, r7
+ 682 0094 9979     		ldrb	r1, [r3, #6]	@ zero_extendqisi2
+ 310:.\wiegand.c   ****                   bitCount++;
+ 683              		.loc 1 310 0
+ 684 0096 0135     		adds	r5, r5, #1
+ 309:.\wiegand.c   ****                   MyI2C_Regs.buffer[byteCount] |= (0x01 << (7-bitCount));   
+ 685              		.loc 1 309 0
+ 686 0098 0A43     		orrs	r2, r2, r1
+ 687 009a 9A71     		strb	r2, [r3, #6]
+ 688              	.LVL110:
+ 311:.\wiegand.c   ****                   nbit = 0; 
+ 312:.\wiegand.c   ****                   started = 1;
+ 689              		.loc 1 312 0
+ 690 009c A146     		mov	r9, r4
+ 691 009e 06E0     		b	.L85
+ 692              	.LVL111:
+ 693              	.L76:
+ 313:.\wiegand.c   ****                 }
+ 314:.\wiegand.c   ****             } 
+ 315:.\wiegand.c   ****             else if(started == 1 && width >= ((int)(0.75*hp)) && width < 0x40 ) {
+ 694              		.loc 1 315 0
+ 695 00a0 B9F1010F 		cmp	r9, #1
+ 696 00a4 06D1     		bne	.L77
+ 697              		.loc 1 315 0 is_stmt 0 discriminator 1
+ 698 00a6 B8F13F0F 		cmp	r8, #63
+ 699 00aa 03DC     		bgt	.L77
+ 700              	.LVL112:
+ 316:.\wiegand.c   ****                 nbit = 0;
+ 317:.\wiegand.c   ****                 bitCount++;
+ 701              		.loc 1 317 0 is_stmt 1
+ 702 00ac 0135     		adds	r5, r5, #1
+ 703              	.LVL113:
+ 704              	.L85:
+ 316:.\wiegand.c   ****                 nbit = 0;
+ 705              		.loc 1 316 0
+ 706 00ae 0024     		movs	r4, #0
+ 707 00b0 00E0     		b	.L77
+ 708              	.LVL114:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 20
+
+
+ 709              	.L82:
+ 710 00b2 0124     		movs	r4, #1
+ 711              	.LVL115:
+ 712              	.L77:
+ 284:.\wiegand.c   ****     while( byteCount <  11)
+ 713              		.loc 1 284 0 discriminator 1
+ 714 00b4 0A2F     		cmp	r7, #10
+ 715 00b6 B8DD     		ble	.L71
+ 318:.\wiegand.c   ****             }
+ 319:.\wiegand.c   ****         } //got pulse
+ 320:.\wiegand.c   ****     }  //while
+ 321:.\wiegand.c   ****                      LED_GRN_Write(1);
+ 716              		.loc 1 321 0
+ 717 00b8 0120     		movs	r0, #1
+ 718 00ba FFF7FEFF 		bl	LED_GRN_Write
+ 719              	.LVL116:
+ 322:.\wiegand.c   ****     
+ 323:.\wiegand.c   ****     MyI2C_Regs.osdp_reader_data_length = byteCount;  //debug
+ 720              		.loc 1 323 0
+ 721 00be 86F8CE70 		strb	r7, [r6, #206]
+ 324:.\wiegand.c   ****     
+ 325:.\wiegand.c   ****     Timeout_Timer_Stop();
+ 722              		.loc 1 325 0
+ 723 00c2 FFF7FEFF 		bl	Timeout_Timer_Stop
+ 724              	.LVL117:
+ 326:.\wiegand.c   ****     f2f_pulsewidth = 0;
+ 725              		.loc 1 326 0
+ 726 00c6 0023     		movs	r3, #0
+ 727 00c8 CBF80030 		str	r3, [fp]
+ 728              	.LVL118:
+ 729 00cc 104B     		ldr	r3, .L86+20
+ 730 00ce 03F11402 		add	r2, r3, #20
+ 731              	.LVL119:
+ 732              	.L80:
+ 733 00d2 0133     		adds	r3, r3, #1
+ 734              	.LVL120:
+ 327:.\wiegand.c   ****     
+ 328:.\wiegand.c   ****     for(i =0; i < 20; i++)  //debugging, yqh remove later
+ 329:.\wiegand.c   ****             MyI2C_Regs.osdp_reader_buffer[i] = MyI2C_Regs.buffer[i];
+ 735              		.loc 1 329 0 discriminator 2
+ 736 00d4 9979     		ldrb	r1, [r3, #6]	@ zero_extendqisi2
+ 328:.\wiegand.c   ****     for(i =0; i < 20; i++)  //debugging, yqh remove later
+ 737              		.loc 1 328 0 discriminator 2
+ 738 00d6 9342     		cmp	r3, r2
+ 739              		.loc 1 329 0 discriminator 2
+ 740 00d8 83F8D010 		strb	r1, [r3, #208]
+ 741              	.LVL121:
+ 328:.\wiegand.c   ****     for(i =0; i < 20; i++)  //debugging, yqh remove later
+ 742              		.loc 1 328 0 discriminator 2
+ 743 00dc F9D1     		bne	.L80
+ 330:.\wiegand.c   **** 
+ 331:.\wiegand.c   ****     if(byteCount < 9)
+ 332:.\wiegand.c   ****     {
+ 333:.\wiegand.c   ****         MyI2C_Regs.data_length = 0;  //stay at the f2f mode
+ 334:.\wiegand.c   ****         return 0;
+ 335:.\wiegand.c   ****     }
+ 336:.\wiegand.c   ****     else
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 21
+
+
+ 337:.\wiegand.c   ****     {
+ 338:.\wiegand.c   ****         MyI2C_Regs.data_length = 10;
+ 744              		.loc 1 338 0
+ 745 00de 0A23     		movs	r3, #10
+ 746              	.LVL122:
+ 747 00e0 F370     		strb	r3, [r6, #3]
+ 339:.\wiegand.c   ****         MyI2C_Regs.cmd = 0;  //to prevent send again
+ 748              		.loc 1 339 0
+ 749 00e2 0023     		movs	r3, #0
+ 750 00e4 B370     		strb	r3, [r6, #2]
+ 340:.\wiegand.c   ****         MyI2C_Regs.status |= STAT_CHANGE | STAT_CARD_IN ;
+ 751              		.loc 1 340 0
+ 752 00e6 3378     		ldrb	r3, [r6]	@ zero_extendqisi2
+ 341:.\wiegand.c   ****         card_in_buf = 1;
+ 753              		.loc 1 341 0
+ 754 00e8 0120     		movs	r0, #1
+ 340:.\wiegand.c   ****         MyI2C_Regs.status |= STAT_CHANGE | STAT_CARD_IN ;
+ 755              		.loc 1 340 0
+ 756 00ea 43F00303 		orr	r3, r3, #3
+ 757 00ee 3370     		strb	r3, [r6]
+ 758              		.loc 1 341 0
+ 759 00f0 034B     		ldr	r3, .L86+4
+ 760 00f2 1860     		str	r0, [r3]
+ 342:.\wiegand.c   ****         return 1;
+ 343:.\wiegand.c   ****     }
+ 344:.\wiegand.c   **** }
+ 761              		.loc 1 344 0
+ 762 00f4 03B0     		add	sp, sp, #12
+ 763              		@ sp needed
+ 764 00f6 BDE8F08F 		pop	{r4, r5, r6, r7, r8, r9, r10, fp, pc}
+ 765              	.LVL123:
+ 766              	.L87:
+ 767 00fa 00BF     		.align	2
+ 768              	.L86:
+ 769 00fc 00000000 		.word	MyI2C_Regs
+ 770 0100 00000000 		.word	card_in_buf
+ 771 0104 00000000 		.word	timeout_cnt
+ 772 0108 00000000 		.word	f2f_pulsewidth
+ 773 010c 0000E83F 		.word	1072168960
+ 774 0110 FFFFFFFF 		.word	MyI2C_Regs-1
+ 775              		.cfi_endproc
+ 776              	.LFE66:
+ 777              		.size	ReadF2F, .-ReadF2F
+ 778              		.comm	f2f_ack_delay_cnt,1,1
+ 779              		.comm	f2f_acknowledge_active,1,1
+ 780              		.global	f2fdebugled
+ 781              		.comm	card_in_buf,4,4
+ 782              		.comm	card_ack,4,4
+ 783              		.comm	TAMPERCR_POLARITY,4,4
+ 784              		.comm	old,1,1
+ 785              		.comm	currentAccessType,1,1
+ 786              		.comm	s,40,4
+ 787              		.data
+ 788              		.type	f2fdebugled, %object
+ 789              		.size	f2fdebugled, 1
+ 790              	f2fdebugled:
+ 791 0000 01       		.byte	1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 22
+
+
+ 792              		.text
+ 793              	.Letext0:
+ 794              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 795              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 796              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 797              		.file 5 ".\\softuart.h"
+ 798              		.file 6 ".\\system.h"
+ 799              		.file 7 "Generated_Source\\PSoC5/core_cm3.h"
+ 800              		.file 8 "Generated_Source\\PSoC5/OptSelect.h"
+ 801              		.file 9 "Generated_Source\\PSoC5/PS_D1.h"
+ 802              		.file 10 "Generated_Source\\PSoC5/CyLib.h"
+ 803              		.file 11 "Generated_Source\\PSoC5/Pin_WD0.h"
+ 804              		.file 12 "Generated_Source\\PSoC5/Pin_WD1.h"
+ 805              		.file 13 "Generated_Source\\PSoC5/PS_D0.h"
+ 806              		.file 14 "Generated_Source\\PSoC5/LED_GRN.h"
+ 807              		.file 15 "Generated_Source\\PSoC5/isr_F2F_edge.h"
+ 808              		.file 16 "Generated_Source\\PSoC5/Timeout_Timer.h"
+ 809              		.section	.debug_info,"",%progbits
+ 810              	.Ldebug_info0:
+ 811 0000 A2070000 		.4byte	0x7a2
+ 812 0004 0400     		.2byte	0x4
+ 813 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 814 000a 04       		.byte	0x4
+ 815 000b 01       		.uleb128 0x1
+ 816 000c 7E010000 		.4byte	.LASF84
+ 817 0010 01       		.byte	0x1
+ 818 0011 31010000 		.4byte	.LASF85
+ 819 0015 7A020000 		.4byte	.LASF86
+ 820 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 821 001d 00000000 		.4byte	0
+ 822 0021 00000000 		.4byte	.Ldebug_line0
+ 823 0025 02       		.uleb128 0x2
+ 824 0026 01       		.byte	0x1
+ 825 0027 06       		.byte	0x6
+ 826 0028 5A010000 		.4byte	.LASF0
+ 827 002c 02       		.uleb128 0x2
+ 828 002d 01       		.byte	0x1
+ 829 002e 08       		.byte	0x8
+ 830 002f 19030000 		.4byte	.LASF1
+ 831 0033 02       		.uleb128 0x2
+ 832 0034 02       		.byte	0x2
+ 833 0035 05       		.byte	0x5
+ 834 0036 E6000000 		.4byte	.LASF2
+ 835 003a 02       		.uleb128 0x2
+ 836 003b 02       		.byte	0x2
+ 837 003c 07       		.byte	0x7
+ 838 003d D1030000 		.4byte	.LASF3
+ 839 0041 03       		.uleb128 0x3
+ 840 0042 49040000 		.4byte	.LASF9
+ 841 0046 02       		.byte	0x2
+ 842 0047 37       		.byte	0x37
+ 843 0048 4C000000 		.4byte	0x4c
+ 844 004c 02       		.uleb128 0x2
+ 845 004d 04       		.byte	0x4
+ 846 004e 05       		.byte	0x5
+ 847 004f B1030000 		.4byte	.LASF4
+ 848 0053 02       		.uleb128 0x2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 23
+
+
+ 849 0054 04       		.byte	0x4
+ 850 0055 07       		.byte	0x7
+ 851 0056 58030000 		.4byte	.LASF5
+ 852 005a 02       		.uleb128 0x2
+ 853 005b 08       		.byte	0x8
+ 854 005c 05       		.byte	0x5
+ 855 005d B8000000 		.4byte	.LASF6
+ 856 0061 02       		.uleb128 0x2
+ 857 0062 08       		.byte	0x8
+ 858 0063 07       		.byte	0x7
+ 859 0064 06020000 		.4byte	.LASF7
+ 860 0068 04       		.uleb128 0x4
+ 861 0069 04       		.byte	0x4
+ 862 006a 05       		.byte	0x5
+ 863 006b 696E7400 		.ascii	"int\000"
+ 864 006f 02       		.uleb128 0x2
+ 865 0070 04       		.byte	0x4
+ 866 0071 07       		.byte	0x7
+ 867 0072 41030000 		.4byte	.LASF8
+ 868 0076 03       		.uleb128 0x3
+ 869 0077 BA030000 		.4byte	.LASF10
+ 870 007b 03       		.byte	0x3
+ 871 007c 41       		.byte	0x41
+ 872 007d 41000000 		.4byte	0x41
+ 873 0081 03       		.uleb128 0x3
+ 874 0082 FD020000 		.4byte	.LASF11
+ 875 0086 04       		.byte	0x4
+ 876 0087 B3       		.byte	0xb3
+ 877 0088 2C000000 		.4byte	0x2c
+ 878 008c 03       		.uleb128 0x3
+ 879 008d 18010000 		.4byte	.LASF12
+ 880 0091 04       		.byte	0x4
+ 881 0092 B4       		.byte	0xb4
+ 882 0093 3A000000 		.4byte	0x3a
+ 883 0097 03       		.uleb128 0x3
+ 884 0098 FF030000 		.4byte	.LASF13
+ 885 009c 04       		.byte	0x4
+ 886 009d B5       		.byte	0xb5
+ 887 009e 53000000 		.4byte	0x53
+ 888 00a2 02       		.uleb128 0x2
+ 889 00a3 04       		.byte	0x4
+ 890 00a4 04       		.byte	0x4
+ 891 00a5 6C010000 		.4byte	.LASF14
+ 892 00a9 02       		.uleb128 0x2
+ 893 00aa 08       		.byte	0x8
+ 894 00ab 04       		.byte	0x4
+ 895 00ac 6A040000 		.4byte	.LASF15
+ 896 00b0 02       		.uleb128 0x2
+ 897 00b1 01       		.byte	0x1
+ 898 00b2 08       		.byte	0x8
+ 899 00b3 AC030000 		.4byte	.LASF16
+ 900 00b7 05       		.uleb128 0x5
+ 901 00b8 8C000000 		.4byte	0x8c
+ 902 00bc 02       		.uleb128 0x2
+ 903 00bd 04       		.byte	0x4
+ 904 00be 07       		.byte	0x7
+ 905 00bf 5D000000 		.4byte	.LASF17
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 24
+
+
+ 906 00c3 06       		.uleb128 0x6
+ 907 00c4 28       		.byte	0x28
+ 908 00c5 05       		.byte	0x5
+ 909 00c6 0D       		.byte	0xd
+ 910 00c7 5C010000 		.4byte	0x15c
+ 911 00cb 07       		.uleb128 0x7
+ 912 00cc 03030000 		.4byte	.LASF18
+ 913 00d0 05       		.byte	0x5
+ 914 00d1 0F       		.byte	0xf
+ 915 00d2 68000000 		.4byte	0x68
+ 916 00d6 00       		.byte	0
+ 917 00d7 07       		.uleb128 0x7
+ 918 00d8 73020000 		.4byte	.LASF19
+ 919 00dc 05       		.byte	0x5
+ 920 00dd 10       		.byte	0x10
+ 921 00de 68000000 		.4byte	0x68
+ 922 00e2 04       		.byte	0x4
+ 923 00e3 07       		.uleb128 0x7
+ 924 00e4 4E030000 		.4byte	.LASF20
+ 925 00e8 05       		.byte	0x5
+ 926 00e9 11       		.byte	0x11
+ 927 00ea 68000000 		.4byte	0x68
+ 928 00ee 08       		.byte	0x8
+ 929 00ef 07       		.uleb128 0x7
+ 930 00f0 1D020000 		.4byte	.LASF21
+ 931 00f4 05       		.byte	0x5
+ 932 00f5 12       		.byte	0x12
+ 933 00f6 68000000 		.4byte	0x68
+ 934 00fa 0C       		.byte	0xc
+ 935 00fb 07       		.uleb128 0x7
+ 936 00fc F0030000 		.4byte	.LASF22
+ 937 0100 05       		.byte	0x5
+ 938 0101 13       		.byte	0x13
+ 939 0102 8C000000 		.4byte	0x8c
+ 940 0106 10       		.byte	0x10
+ 941 0107 07       		.uleb128 0x7
+ 942 0108 5E020000 		.4byte	.LASF23
+ 943 010c 05       		.byte	0x5
+ 944 010d 14       		.byte	0x14
+ 945 010e B7000000 		.4byte	0xb7
+ 946 0112 12       		.byte	0x12
+ 947 0113 07       		.uleb128 0x7
+ 948 0114 29000000 		.4byte	.LASF24
+ 949 0118 05       		.byte	0x5
+ 950 0119 15       		.byte	0x15
+ 951 011a B7000000 		.4byte	0xb7
+ 952 011e 14       		.byte	0x14
+ 953 011f 07       		.uleb128 0x7
+ 954 0120 10010000 		.4byte	.LASF25
+ 955 0124 05       		.byte	0x5
+ 956 0125 16       		.byte	0x16
+ 957 0126 8C000000 		.4byte	0x8c
+ 958 012a 16       		.byte	0x16
+ 959 012b 07       		.uleb128 0x7
+ 960 012c 31030000 		.4byte	.LASF26
+ 961 0130 05       		.byte	0x5
+ 962 0131 17       		.byte	0x17
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 25
+
+
+ 963 0132 5C010000 		.4byte	0x15c
+ 964 0136 18       		.byte	0x18
+ 965 0137 07       		.uleb128 0x7
+ 966 0138 9F040000 		.4byte	.LASF27
+ 967 013c 05       		.byte	0x5
+ 968 013d 18       		.byte	0x18
+ 969 013e 5C010000 		.4byte	0x15c
+ 970 0142 1C       		.byte	0x1c
+ 971 0143 07       		.uleb128 0x7
+ 972 0144 4B020000 		.4byte	.LASF28
+ 973 0148 05       		.byte	0x5
+ 974 0149 19       		.byte	0x19
+ 975 014a 5C010000 		.4byte	0x15c
+ 976 014e 20       		.byte	0x20
+ 977 014f 07       		.uleb128 0x7
+ 978 0150 90030000 		.4byte	.LASF29
+ 979 0154 05       		.byte	0x5
+ 980 0155 1A       		.byte	0x1a
+ 981 0156 5C010000 		.4byte	0x15c
+ 982 015a 24       		.byte	0x24
+ 983 015b 00       		.byte	0
+ 984 015c 05       		.uleb128 0x5
+ 985 015d 68000000 		.4byte	0x68
+ 986 0161 03       		.uleb128 0x3
+ 987 0162 EC020000 		.4byte	.LASF30
+ 988 0166 05       		.byte	0x5
+ 989 0167 1B       		.byte	0x1b
+ 990 0168 C3000000 		.4byte	0xc3
+ 991 016c 08       		.uleb128 0x8
+ 992 016d 06000000 		.4byte	.LASF50
+ 993 0171 0001     		.2byte	0x100
+ 994 0173 06       		.byte	0x6
+ 995 0174 18       		.byte	0x18
+ 996 0175 6A020000 		.4byte	0x26a
+ 997 0179 07       		.uleb128 0x7
+ 998 017a A5030000 		.4byte	.LASF31
+ 999 017e 06       		.byte	0x6
+ 1000 017f 19       		.byte	0x19
+ 1001 0180 B0000000 		.4byte	0xb0
+ 1002 0184 00       		.byte	0
+ 1003 0185 07       		.uleb128 0x7
+ 1004 0186 12040000 		.4byte	.LASF32
+ 1005 018a 06       		.byte	0x6
+ 1006 018b 1A       		.byte	0x1a
+ 1007 018c B0000000 		.4byte	0xb0
+ 1008 0190 01       		.byte	0x1
+ 1009 0191 09       		.uleb128 0x9
+ 1010 0192 636D6400 		.ascii	"cmd\000"
+ 1011 0196 06       		.byte	0x6
+ 1012 0197 1B       		.byte	0x1b
+ 1013 0198 B0000000 		.4byte	0xb0
+ 1014 019c 02       		.byte	0x2
+ 1015 019d 07       		.uleb128 0x7
+ 1016 019e A0000000 		.4byte	.LASF33
+ 1017 01a2 06       		.byte	0x6
+ 1018 01a3 1C       		.byte	0x1c
+ 1019 01a4 2C000000 		.4byte	0x2c
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 26
+
+
+ 1020 01a8 03       		.byte	0x3
+ 1021 01a9 07       		.uleb128 0x7
+ 1022 01aa FA010000 		.4byte	.LASF34
+ 1023 01ae 06       		.byte	0x6
+ 1024 01af 1D       		.byte	0x1d
+ 1025 01b0 B0000000 		.4byte	0xb0
+ 1026 01b4 04       		.byte	0x4
+ 1027 01b5 07       		.uleb128 0x7
+ 1028 01b6 6A030000 		.4byte	.LASF35
+ 1029 01ba 06       		.byte	0x6
+ 1030 01bb 1E       		.byte	0x1e
+ 1031 01bc B0000000 		.4byte	0xb0
+ 1032 01c0 05       		.byte	0x5
+ 1033 01c1 07       		.uleb128 0x7
+ 1034 01c2 F8030000 		.4byte	.LASF36
+ 1035 01c6 06       		.byte	0x6
+ 1036 01c7 1F       		.byte	0x1f
+ 1037 01c8 6A020000 		.4byte	0x26a
+ 1038 01cc 06       		.byte	0x6
+ 1039 01cd 07       		.uleb128 0x7
+ 1040 01ce 58020000 		.4byte	.LASF37
+ 1041 01d2 06       		.byte	0x6
+ 1042 01d3 20       		.byte	0x20
+ 1043 01d4 7A020000 		.4byte	0x27a
+ 1044 01d8 1A       		.byte	0x1a
+ 1045 01d9 07       		.uleb128 0x7
+ 1046 01da 92000000 		.4byte	.LASF38
+ 1047 01de 06       		.byte	0x6
+ 1048 01df 21       		.byte	0x21
+ 1049 01e0 B0000000 		.4byte	0xb0
+ 1050 01e4 42       		.byte	0x42
+ 1051 01e5 07       		.uleb128 0x7
+ 1052 01e6 5F040000 		.4byte	.LASF39
+ 1053 01ea 06       		.byte	0x6
+ 1054 01eb 22       		.byte	0x22
+ 1055 01ec 8A020000 		.4byte	0x28a
+ 1056 01f0 43       		.byte	0x43
+ 1057 01f1 07       		.uleb128 0x7
+ 1058 01f2 8B040000 		.4byte	.LASF40
+ 1059 01f6 06       		.byte	0x6
+ 1060 01f7 23       		.byte	0x23
+ 1061 01f8 8A020000 		.4byte	0x28a
+ 1062 01fc 46       		.byte	0x46
+ 1063 01fd 07       		.uleb128 0x7
+ 1064 01fe 96040000 		.4byte	.LASF41
+ 1065 0202 06       		.byte	0x6
+ 1066 0203 24       		.byte	0x24
+ 1067 0204 2C000000 		.4byte	0x2c
+ 1068 0208 49       		.byte	0x49
+ 1069 0209 07       		.uleb128 0x7
+ 1070 020a 0F000000 		.4byte	.LASF42
+ 1071 020e 06       		.byte	0x6
+ 1072 020f 25       		.byte	0x25
+ 1073 0210 2C000000 		.4byte	0x2c
+ 1074 0214 4A       		.byte	0x4a
+ 1075 0215 07       		.uleb128 0x7
+ 1076 0216 08030000 		.4byte	.LASF43
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 27
+
+
+ 1077 021a 06       		.byte	0x6
+ 1078 021b 26       		.byte	0x26
+ 1079 021c 2C000000 		.4byte	0x2c
+ 1080 0220 4B       		.byte	0x4b
+ 1081 0221 07       		.uleb128 0x7
+ 1082 0222 78000000 		.4byte	.LASF44
+ 1083 0226 06       		.byte	0x6
+ 1084 0227 27       		.byte	0x27
+ 1085 0228 2C000000 		.4byte	0x2c
+ 1086 022c 4C       		.byte	0x4c
+ 1087 022d 07       		.uleb128 0x7
+ 1088 022e AC000000 		.4byte	.LASF45
+ 1089 0232 06       		.byte	0x6
+ 1090 0233 28       		.byte	0x28
+ 1091 0234 9A020000 		.4byte	0x29a
+ 1092 0238 4D       		.byte	0x4d
+ 1093 0239 07       		.uleb128 0x7
+ 1094 023a 82000000 		.4byte	.LASF46
+ 1095 023e 06       		.byte	0x6
+ 1096 023f 29       		.byte	0x29
+ 1097 0240 2C000000 		.4byte	0x2c
+ 1098 0244 CD       		.byte	0xcd
+ 1099 0245 07       		.uleb128 0x7
+ 1100 0246 22020000 		.4byte	.LASF47
+ 1101 024a 06       		.byte	0x6
+ 1102 024b 2A       		.byte	0x2a
+ 1103 024c 2C000000 		.4byte	0x2c
+ 1104 0250 CE       		.byte	0xce
+ 1105 0251 07       		.uleb128 0x7
+ 1106 0252 C8020000 		.4byte	.LASF48
+ 1107 0256 06       		.byte	0x6
+ 1108 0257 2B       		.byte	0x2b
+ 1109 0258 2C000000 		.4byte	0x2c
+ 1110 025c CF       		.byte	0xcf
+ 1111 025d 07       		.uleb128 0x7
+ 1112 025e D9020000 		.4byte	.LASF49
+ 1113 0262 06       		.byte	0x6
+ 1114 0263 2C       		.byte	0x2c
+ 1115 0264 AA020000 		.4byte	0x2aa
+ 1116 0268 D0       		.byte	0xd0
+ 1117 0269 00       		.byte	0
+ 1118 026a 0A       		.uleb128 0xa
+ 1119 026b 2C000000 		.4byte	0x2c
+ 1120 026f 7A020000 		.4byte	0x27a
+ 1121 0273 0B       		.uleb128 0xb
+ 1122 0274 BC000000 		.4byte	0xbc
+ 1123 0278 13       		.byte	0x13
+ 1124 0279 00       		.byte	0
+ 1125 027a 0A       		.uleb128 0xa
+ 1126 027b B0000000 		.4byte	0xb0
+ 1127 027f 8A020000 		.4byte	0x28a
+ 1128 0283 0B       		.uleb128 0xb
+ 1129 0284 BC000000 		.4byte	0xbc
+ 1130 0288 27       		.byte	0x27
+ 1131 0289 00       		.byte	0
+ 1132 028a 0A       		.uleb128 0xa
+ 1133 028b B0000000 		.4byte	0xb0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 28
+
+
+ 1134 028f 9A020000 		.4byte	0x29a
+ 1135 0293 0B       		.uleb128 0xb
+ 1136 0294 BC000000 		.4byte	0xbc
+ 1137 0298 02       		.byte	0x2
+ 1138 0299 00       		.byte	0
+ 1139 029a 0A       		.uleb128 0xa
+ 1140 029b 2C000000 		.4byte	0x2c
+ 1141 029f AA020000 		.4byte	0x2aa
+ 1142 02a3 0B       		.uleb128 0xb
+ 1143 02a4 BC000000 		.4byte	0xbc
+ 1144 02a8 7F       		.byte	0x7f
+ 1145 02a9 00       		.byte	0
+ 1146 02aa 0A       		.uleb128 0xa
+ 1147 02ab 2C000000 		.4byte	0x2c
+ 1148 02af BA020000 		.4byte	0x2ba
+ 1149 02b3 0B       		.uleb128 0xb
+ 1150 02b4 BC000000 		.4byte	0xbc
+ 1151 02b8 2F       		.byte	0x2f
+ 1152 02b9 00       		.byte	0
+ 1153 02ba 03       		.uleb128 0x3
+ 1154 02bb 06000000 		.4byte	.LASF50
+ 1155 02bf 06       		.byte	0x6
+ 1156 02c0 2D       		.byte	0x2d
+ 1157 02c1 6C010000 		.4byte	0x16c
+ 1158 02c5 0C       		.uleb128 0xc
+ 1159 02c6 31000000 		.4byte	.LASF57
+ 1160 02ca 01       		.byte	0x1
+ 1161 02cb 14       		.byte	0x14
+ 1162 02cc 00000000 		.4byte	.LFB63
+ 1163 02d0 7C000000 		.4byte	.LFE63-.LFB63
+ 1164 02d4 01       		.uleb128 0x1
+ 1165 02d5 9C       		.byte	0x9c
+ 1166 02d6 BF030000 		.4byte	0x3bf
+ 1167 02da 0D       		.uleb128 0xd
+ 1168 02db 00000000 		.4byte	.LASF52
+ 1169 02df 01       		.byte	0x1
+ 1170 02e0 14       		.byte	0x14
+ 1171 02e1 68000000 		.4byte	0x68
+ 1172 02e5 00000000 		.4byte	.LLST0
+ 1173 02e9 0E       		.uleb128 0xe
+ 1174 02ea 7800     		.ascii	"x\000"
+ 1175 02ec 01       		.byte	0x1
+ 1176 02ed 16       		.byte	0x16
+ 1177 02ee 68000000 		.4byte	0x68
+ 1178 02f2 45000000 		.4byte	.LLST1
+ 1179 02f6 0E       		.uleb128 0xe
+ 1180 02f7 7900     		.ascii	"y\000"
+ 1181 02f9 01       		.byte	0x1
+ 1182 02fa 16       		.byte	0x16
+ 1183 02fb 68000000 		.4byte	0x68
+ 1184 02ff 6F000000 		.4byte	.LLST2
+ 1185 0303 0E       		.uleb128 0xe
+ 1186 0304 643100   		.ascii	"d1\000"
+ 1187 0307 01       		.byte	0x1
+ 1188 0308 17       		.byte	0x17
+ 1189 0309 B0000000 		.4byte	0xb0
+ 1190 030d 9E000000 		.4byte	.LLST3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 29
+
+
+ 1191 0311 0F       		.uleb128 0xf
+ 1192 0312 43040000 		.4byte	.LASF51
+ 1193 0316 01       		.byte	0x1
+ 1194 0317 18       		.byte	0x18
+ 1195 0318 B0000000 		.4byte	0xb0
+ 1196 031c C7000000 		.4byte	.LLST4
+ 1197 0320 10       		.uleb128 0x10
+ 1198 0321 24000000 		.4byte	.LVL4
+ 1199 0325 14070000 		.4byte	0x714
+ 1200 0329 33030000 		.4byte	0x333
+ 1201 032d 11       		.uleb128 0x11
+ 1202 032e 01       		.uleb128 0x1
+ 1203 032f 50       		.byte	0x50
+ 1204 0330 01       		.uleb128 0x1
+ 1205 0331 32       		.byte	0x32
+ 1206 0332 00       		.byte	0
+ 1207 0333 12       		.uleb128 0x12
+ 1208 0334 2E000000 		.4byte	.LVL6
+ 1209 0338 25070000 		.4byte	0x725
+ 1210 033c 46030000 		.4byte	0x346
+ 1211 0340 11       		.uleb128 0x11
+ 1212 0341 01       		.uleb128 0x1
+ 1213 0342 50       		.byte	0x50
+ 1214 0343 01       		.uleb128 0x1
+ 1215 0344 30       		.byte	0x30
+ 1216 0345 00       		.byte	0
+ 1217 0346 10       		.uleb128 0x10
+ 1218 0347 38000000 		.4byte	.LVL7
+ 1219 034b 14070000 		.4byte	0x714
+ 1220 034f 59030000 		.4byte	0x359
+ 1221 0353 11       		.uleb128 0x11
+ 1222 0354 01       		.uleb128 0x1
+ 1223 0355 50       		.byte	0x50
+ 1224 0356 01       		.uleb128 0x1
+ 1225 0357 32       		.byte	0x32
+ 1226 0358 00       		.byte	0
+ 1227 0359 10       		.uleb128 0x10
+ 1228 035a 42000000 		.4byte	.LVL8
+ 1229 035e 14070000 		.4byte	0x714
+ 1230 0362 6C030000 		.4byte	0x36c
+ 1231 0366 11       		.uleb128 0x11
+ 1232 0367 01       		.uleb128 0x1
+ 1233 0368 50       		.byte	0x50
+ 1234 0369 01       		.uleb128 0x1
+ 1235 036a 33       		.byte	0x33
+ 1236 036b 00       		.byte	0
+ 1237 036c 13       		.uleb128 0x13
+ 1238 036d 48000000 		.4byte	.LVL9
+ 1239 0371 25070000 		.4byte	0x725
+ 1240 0375 10       		.uleb128 0x10
+ 1241 0376 4E000000 		.4byte	.LVL10
+ 1242 037a 36070000 		.4byte	0x736
+ 1243 037e 89030000 		.4byte	0x389
+ 1244 0382 11       		.uleb128 0x11
+ 1245 0383 01       		.uleb128 0x1
+ 1246 0384 50       		.byte	0x50
+ 1247 0385 02       		.uleb128 0x2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 30
+
+
+ 1248 0386 08       		.byte	0x8
+ 1249 0387 32       		.byte	0x32
+ 1250 0388 00       		.byte	0
+ 1251 0389 10       		.uleb128 0x10
+ 1252 038a 54000000 		.4byte	.LVL11
+ 1253 038e 14070000 		.4byte	0x714
+ 1254 0392 9C030000 		.4byte	0x39c
+ 1255 0396 11       		.uleb128 0x11
+ 1256 0397 01       		.uleb128 0x1
+ 1257 0398 50       		.byte	0x50
+ 1258 0399 01       		.uleb128 0x1
+ 1259 039a 32       		.byte	0x32
+ 1260 039b 00       		.byte	0
+ 1261 039c 10       		.uleb128 0x10
+ 1262 039d 5A000000 		.4byte	.LVL12
+ 1263 03a1 25070000 		.4byte	0x725
+ 1264 03a5 AF030000 		.4byte	0x3af
+ 1265 03a9 11       		.uleb128 0x11
+ 1266 03aa 01       		.uleb128 0x1
+ 1267 03ab 50       		.byte	0x50
+ 1268 03ac 01       		.uleb128 0x1
+ 1269 03ad 30       		.byte	0x30
+ 1270 03ae 00       		.byte	0
+ 1271 03af 14       		.uleb128 0x14
+ 1272 03b0 64000000 		.4byte	.LVL15
+ 1273 03b4 47070000 		.4byte	0x747
+ 1274 03b8 11       		.uleb128 0x11
+ 1275 03b9 01       		.uleb128 0x1
+ 1276 03ba 50       		.byte	0x50
+ 1277 03bb 01       		.uleb128 0x1
+ 1278 03bc 32       		.byte	0x32
+ 1279 03bd 00       		.byte	0
+ 1280 03be 00       		.byte	0
+ 1281 03bf 15       		.uleb128 0x15
+ 1282 03c0 E4030000 		.4byte	.LASF87
+ 1283 03c4 01       		.byte	0x1
+ 1284 03c5 4A       		.byte	0x4a
+ 1285 03c6 68000000 		.4byte	0x68
+ 1286 03ca 00000000 		.4byte	.LFB64
+ 1287 03ce 90000000 		.4byte	.LFE64-.LFB64
+ 1288 03d2 01       		.uleb128 0x1
+ 1289 03d3 9C       		.byte	0x9c
+ 1290 03d4 5A040000 		.4byte	0x45a
+ 1291 03d8 0D       		.uleb128 0xd
+ 1292 03d9 00000000 		.4byte	.LASF52
+ 1293 03dd 01       		.byte	0x1
+ 1294 03de 4A       		.byte	0x4a
+ 1295 03df 68000000 		.4byte	0x68
+ 1296 03e3 19010000 		.4byte	.LLST5
+ 1297 03e7 0F       		.uleb128 0xf
+ 1298 03e8 3D000000 		.4byte	.LASF53
+ 1299 03ec 01       		.byte	0x1
+ 1300 03ed 4C       		.byte	0x4c
+ 1301 03ee 68000000 		.4byte	0x68
+ 1302 03f2 45010000 		.4byte	.LLST6
+ 1303 03f6 0F       		.uleb128 0xf
+ 1304 03f7 27030000 		.4byte	.LASF54
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 31
+
+
+ 1305 03fb 01       		.byte	0x1
+ 1306 03fc 4D       		.byte	0x4d
+ 1307 03fd 68000000 		.4byte	0x68
+ 1308 0401 87010000 		.4byte	.LLST7
+ 1309 0405 0E       		.uleb128 0xe
+ 1310 0406 57443000 		.ascii	"WD0\000"
+ 1311 040a 01       		.byte	0x1
+ 1312 040b 4F       		.byte	0x4f
+ 1313 040c B0000000 		.4byte	0xb0
+ 1314 0410 B2010000 		.4byte	.LLST8
+ 1315 0414 0E       		.uleb128 0xe
+ 1316 0415 57443100 		.ascii	"WD1\000"
+ 1317 0419 01       		.byte	0x1
+ 1318 041a 50       		.byte	0x50
+ 1319 041b B0000000 		.4byte	0xb0
+ 1320 041f 13020000 		.4byte	.LLST9
+ 1321 0423 13       		.uleb128 0x13
+ 1322 0424 0A000000 		.4byte	.LVL20
+ 1323 0428 58070000 		.4byte	0x758
+ 1324 042c 13       		.uleb128 0x13
+ 1325 042d 10000000 		.4byte	.LVL22
+ 1326 0431 63070000 		.4byte	0x763
+ 1327 0435 13       		.uleb128 0x13
+ 1328 0436 2C000000 		.4byte	.LVL24
+ 1329 043a 58070000 		.4byte	0x758
+ 1330 043e 13       		.uleb128 0x13
+ 1331 043f 32000000 		.4byte	.LVL26
+ 1332 0443 63070000 		.4byte	0x763
+ 1333 0447 13       		.uleb128 0x13
+ 1334 0448 3C000000 		.4byte	.LVL28
+ 1335 044c 58070000 		.4byte	0x758
+ 1336 0450 13       		.uleb128 0x13
+ 1337 0451 48000000 		.4byte	.LVL31
+ 1338 0455 63070000 		.4byte	0x763
+ 1339 0459 00       		.byte	0
+ 1340 045a 16       		.uleb128 0x16
+ 1341 045b 43020000 		.4byte	.LASF88
+ 1342 045f 01       		.byte	0x1
+ 1343 0460 7E       		.byte	0x7e
+ 1344 0461 00000000 		.4byte	.LFB65
+ 1345 0465 04010000 		.4byte	.LFE65-.LFB65
+ 1346 0469 01       		.uleb128 0x1
+ 1347 046a 9C       		.byte	0x9c
+ 1348 046b 5D050000 		.4byte	0x55d
+ 1349 046f 0E       		.uleb128 0xe
+ 1350 0470 7800     		.ascii	"x\000"
+ 1351 0472 01       		.byte	0x1
+ 1352 0473 80       		.byte	0x80
+ 1353 0474 68000000 		.4byte	0x68
+ 1354 0478 5E020000 		.4byte	.LLST10
+ 1355 047c 0E       		.uleb128 0xe
+ 1356 047d 6200     		.ascii	"b\000"
+ 1357 047f 01       		.byte	0x1
+ 1358 0480 80       		.byte	0x80
+ 1359 0481 68000000 		.4byte	0x68
+ 1360 0485 7D020000 		.4byte	.LLST11
+ 1361 0489 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 32
+
+
+ 1362 048a 7A00     		.ascii	"z\000"
+ 1363 048c 01       		.byte	0x1
+ 1364 048d 80       		.byte	0x80
+ 1365 048e 68000000 		.4byte	0x68
+ 1366 0492 0D030000 		.4byte	.LLST12
+ 1367 0496 0E       		.uleb128 0xe
+ 1368 0497 6C656E00 		.ascii	"len\000"
+ 1369 049b 01       		.byte	0x1
+ 1370 049c 80       		.byte	0x80
+ 1371 049d 68000000 		.4byte	0x68
+ 1372 04a1 2C030000 		.4byte	.LLST13
+ 1373 04a5 0E       		.uleb128 0xe
+ 1374 04a6 643000   		.ascii	"d0\000"
+ 1375 04a9 01       		.byte	0x1
+ 1376 04aa 81       		.byte	0x81
+ 1377 04ab B0000000 		.4byte	0xb0
+ 1378 04af 3F030000 		.4byte	.LLST14
+ 1379 04b3 0F       		.uleb128 0xf
+ 1380 04b4 C6000000 		.4byte	.LASF55
+ 1381 04b8 01       		.byte	0x1
+ 1382 04b9 82       		.byte	0x82
+ 1383 04ba B0000000 		.4byte	0xb0
+ 1384 04be 8D030000 		.4byte	.LLST15
+ 1385 04c2 17       		.uleb128 0x17
+ 1386 04c3 66326600 		.ascii	"f2f\000"
+ 1387 04c7 01       		.byte	0x1
+ 1388 04c8 83       		.byte	0x83
+ 1389 04c9 5D050000 		.4byte	0x55d
+ 1390 04cd 02       		.uleb128 0x2
+ 1391 04ce 91       		.byte	0x91
+ 1392 04cf 4C       		.sleb128 -52
+ 1393 04d0 0F       		.uleb128 0xf
+ 1394 04d1 71040000 		.4byte	.LASF56
+ 1395 04d5 01       		.byte	0x1
+ 1396 04d6 84       		.byte	0x84
+ 1397 04d7 B0000000 		.4byte	0xb0
+ 1398 04db D9030000 		.4byte	.LLST16
+ 1399 04df 10       		.uleb128 0x10
+ 1400 04e0 C2000000 		.4byte	.LVL80
+ 1401 04e4 6E070000 		.4byte	0x76e
+ 1402 04e8 F2040000 		.4byte	0x4f2
+ 1403 04ec 11       		.uleb128 0x11
+ 1404 04ed 01       		.uleb128 0x1
+ 1405 04ee 50       		.byte	0x50
+ 1406 04ef 01       		.uleb128 0x1
+ 1407 04f0 31       		.byte	0x31
+ 1408 04f1 00       		.byte	0
+ 1409 04f2 10       		.uleb128 0x10
+ 1410 04f3 C8000000 		.4byte	.LVL81
+ 1411 04f7 14070000 		.4byte	0x714
+ 1412 04fb 05050000 		.4byte	0x505
+ 1413 04ff 11       		.uleb128 0x11
+ 1414 0500 01       		.uleb128 0x1
+ 1415 0501 50       		.byte	0x50
+ 1416 0502 01       		.uleb128 0x1
+ 1417 0503 32       		.byte	0x32
+ 1418 0504 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 33
+
+
+ 1419 0505 10       		.uleb128 0x10
+ 1420 0506 D0000000 		.4byte	.LVL82
+ 1421 050a 14070000 		.4byte	0x714
+ 1422 050e 18050000 		.4byte	0x518
+ 1423 0512 11       		.uleb128 0x11
+ 1424 0513 01       		.uleb128 0x1
+ 1425 0514 50       		.byte	0x50
+ 1426 0515 01       		.uleb128 0x1
+ 1427 0516 33       		.byte	0x33
+ 1428 0517 00       		.byte	0
+ 1429 0518 10       		.uleb128 0x10
+ 1430 0519 D6000000 		.4byte	.LVL83
+ 1431 051d 6E070000 		.4byte	0x76e
+ 1432 0521 2B050000 		.4byte	0x52b
+ 1433 0525 11       		.uleb128 0x11
+ 1434 0526 01       		.uleb128 0x1
+ 1435 0527 50       		.byte	0x50
+ 1436 0528 01       		.uleb128 0x1
+ 1437 0529 30       		.byte	0x30
+ 1438 052a 00       		.byte	0
+ 1439 052b 10       		.uleb128 0x10
+ 1440 052c DE000000 		.4byte	.LVL84
+ 1441 0530 36070000 		.4byte	0x736
+ 1442 0534 40050000 		.4byte	0x540
+ 1443 0538 11       		.uleb128 0x11
+ 1444 0539 01       		.uleb128 0x1
+ 1445 053a 50       		.byte	0x50
+ 1446 053b 03       		.uleb128 0x3
+ 1447 053c 0A       		.byte	0xa
+ 1448 053d 9001     		.2byte	0x190
+ 1449 053f 00       		.byte	0
+ 1450 0540 10       		.uleb128 0x10
+ 1451 0541 F2000000 		.4byte	.LVL89
+ 1452 0545 14070000 		.4byte	0x714
+ 1453 0549 53050000 		.4byte	0x553
+ 1454 054d 11       		.uleb128 0x11
+ 1455 054e 01       		.uleb128 0x1
+ 1456 054f 50       		.byte	0x50
+ 1457 0550 01       		.uleb128 0x1
+ 1458 0551 32       		.byte	0x32
+ 1459 0552 00       		.byte	0
+ 1460 0553 18       		.uleb128 0x18
+ 1461 0554 FE000000 		.4byte	.LVL91
+ 1462 0558 6E070000 		.4byte	0x76e
+ 1463 055c 00       		.byte	0
+ 1464 055d 0A       		.uleb128 0xa
+ 1465 055e 2C000000 		.4byte	0x2c
+ 1466 0562 6D050000 		.4byte	0x56d
+ 1467 0566 0B       		.uleb128 0xb
+ 1468 0567 BC000000 		.4byte	0xbc
+ 1469 056b 1B       		.byte	0x1b
+ 1470 056c 00       		.byte	0
+ 1471 056d 19       		.uleb128 0x19
+ 1472 056e 52010000 		.4byte	.LASF58
+ 1473 0572 01       		.byte	0x1
+ 1474 0573 0401     		.2byte	0x104
+ 1475 0575 68000000 		.4byte	0x68
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 34
+
+
+ 1476 0579 00000000 		.4byte	.LFB66
+ 1477 057d 14010000 		.4byte	.LFE66-.LFB66
+ 1478 0581 01       		.uleb128 0x1
+ 1479 0582 9C       		.byte	0x9c
+ 1480 0583 49060000 		.4byte	0x649
+ 1481 0587 1A       		.uleb128 0x1a
+ 1482 0588 3D000000 		.4byte	.LASF53
+ 1483 058c 01       		.byte	0x1
+ 1484 058d 0601     		.2byte	0x106
+ 1485 058f 68000000 		.4byte	0x68
+ 1486 0593 82040000 		.4byte	.LLST17
+ 1487 0597 1A       		.uleb128 0x1a
+ 1488 0598 27030000 		.4byte	.LASF54
+ 1489 059c 01       		.byte	0x1
+ 1490 059d 0701     		.2byte	0x107
+ 1491 059f 68000000 		.4byte	0x68
+ 1492 05a3 C7040000 		.4byte	.LLST18
+ 1493 05a7 1B       		.uleb128 0x1b
+ 1494 05a8 687000   		.ascii	"hp\000"
+ 1495 05ab 01       		.byte	0x1
+ 1496 05ac 0801     		.2byte	0x108
+ 1497 05ae 68000000 		.4byte	0x68
+ 1498 05b2 E8040000 		.4byte	.LLST19
+ 1499 05b6 1A       		.uleb128 0x1a
+ 1500 05b7 E1000000 		.4byte	.LASF59
+ 1501 05bb 01       		.byte	0x1
+ 1502 05bc 0901     		.2byte	0x109
+ 1503 05be B0000000 		.4byte	0xb0
+ 1504 05c2 0B050000 		.4byte	.LLST20
+ 1505 05c6 1B       		.uleb128 0x1b
+ 1506 05c7 6900     		.ascii	"i\000"
+ 1507 05c9 01       		.byte	0x1
+ 1508 05ca 0A01     		.2byte	0x10a
+ 1509 05cc 68000000 		.4byte	0x68
+ 1510 05d0 43050000 		.4byte	.LLST21
+ 1511 05d4 1A       		.uleb128 0x1a
+ 1512 05d5 88030000 		.4byte	.LASF60
+ 1513 05d9 01       		.byte	0x1
+ 1514 05da 0B01     		.2byte	0x10b
+ 1515 05dc 2C000000 		.4byte	0x2c
+ 1516 05e0 6E050000 		.4byte	.LLST22
+ 1517 05e4 1A       		.uleb128 0x1a
+ 1518 05e5 66010000 		.4byte	.LASF61
+ 1519 05e9 01       		.byte	0x1
+ 1520 05ea 0C01     		.2byte	0x10c
+ 1521 05ec 68000000 		.4byte	0x68
+ 1522 05f0 8E050000 		.4byte	.LLST23
+ 1523 05f4 10       		.uleb128 0x10
+ 1524 05f5 0A000000 		.4byte	.LVL92
+ 1525 05f9 25070000 		.4byte	0x725
+ 1526 05fd 07060000 		.4byte	0x607
+ 1527 0601 11       		.uleb128 0x11
+ 1528 0602 01       		.uleb128 0x1
+ 1529 0603 50       		.byte	0x50
+ 1530 0604 01       		.uleb128 0x1
+ 1531 0605 30       		.byte	0x30
+ 1532 0606 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 35
+
+
+ 1533 0607 10       		.uleb128 0x10
+ 1534 0608 42000000 		.4byte	.LVL100
+ 1535 060c 7F070000 		.4byte	0x77f
+ 1536 0610 1A060000 		.4byte	0x61a
+ 1537 0614 11       		.uleb128 0x11
+ 1538 0615 01       		.uleb128 0x1
+ 1539 0616 50       		.byte	0x50
+ 1540 0617 01       		.uleb128 0x1
+ 1541 0618 31       		.byte	0x31
+ 1542 0619 00       		.byte	0
+ 1543 061a 13       		.uleb128 0x13
+ 1544 061b 46000000 		.4byte	.LVL101
+ 1545 061f 90070000 		.4byte	0x790
+ 1546 0623 13       		.uleb128 0x13
+ 1547 0624 52000000 		.4byte	.LVL102
+ 1548 0628 97070000 		.4byte	0x797
+ 1549 062c 10       		.uleb128 0x10
+ 1550 062d BE000000 		.4byte	.LVL116
+ 1551 0631 7F070000 		.4byte	0x77f
+ 1552 0635 3F060000 		.4byte	0x63f
+ 1553 0639 11       		.uleb128 0x11
+ 1554 063a 01       		.uleb128 0x1
+ 1555 063b 50       		.byte	0x50
+ 1556 063c 01       		.uleb128 0x1
+ 1557 063d 31       		.byte	0x31
+ 1558 063e 00       		.byte	0
+ 1559 063f 13       		.uleb128 0x13
+ 1560 0640 C6000000 		.4byte	.LVL117
+ 1561 0644 9E070000 		.4byte	0x79e
+ 1562 0648 00       		.byte	0
+ 1563 0649 1C       		.uleb128 0x1c
+ 1564 064a 76040000 		.4byte	.LASF62
+ 1565 064e 07       		.byte	0x7
+ 1566 064f 2A06     		.2byte	0x62a
+ 1567 0651 55060000 		.4byte	0x655
+ 1568 0655 05       		.uleb128 0x5
+ 1569 0656 76000000 		.4byte	0x76
+ 1570 065a 1D       		.uleb128 0x1d
+ 1571 065b 52000000 		.4byte	.LASF63
+ 1572 065f 06       		.byte	0x6
+ 1573 0660 2F       		.byte	0x2f
+ 1574 0661 BA020000 		.4byte	0x2ba
+ 1575 0665 1E       		.uleb128 0x1e
+ 1576 0666 7300     		.ascii	"s\000"
+ 1577 0668 06       		.byte	0x6
+ 1578 0669 30       		.byte	0x30
+ 1579 066a 61010000 		.4byte	0x161
+ 1580 066e 05       		.uleb128 0x5
+ 1581 066f 03       		.byte	0x3
+ 1582 0670 00000000 		.4byte	s
+ 1583 0674 1F       		.uleb128 0x1f
+ 1584 0675 1F010000 		.4byte	.LASF64
+ 1585 0679 06       		.byte	0x6
+ 1586 067a 33       		.byte	0x33
+ 1587 067b B0000000 		.4byte	0xb0
+ 1588 067f 05       		.uleb128 0x5
+ 1589 0680 03       		.byte	0x3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 36
+
+
+ 1590 0681 00000000 		.4byte	currentAccessType
+ 1591 0685 1E       		.uleb128 0x1e
+ 1592 0686 6F6C6400 		.ascii	"old\000"
+ 1593 068a 06       		.byte	0x6
+ 1594 068b 34       		.byte	0x34
+ 1595 068c B0000000 		.4byte	0xb0
+ 1596 0690 05       		.uleb128 0x5
+ 1597 0691 03       		.byte	0x3
+ 1598 0692 00000000 		.4byte	old
+ 1599 0696 1F       		.uleb128 0x1f
+ 1600 0697 66000000 		.4byte	.LASF65
+ 1601 069b 06       		.byte	0x6
+ 1602 069c 35       		.byte	0x35
+ 1603 069d 68000000 		.4byte	0x68
+ 1604 06a1 05       		.uleb128 0x5
+ 1605 06a2 03       		.byte	0x3
+ 1606 06a3 00000000 		.4byte	TAMPERCR_POLARITY
+ 1607 06a7 1F       		.uleb128 0x1f
+ 1608 06a8 3A020000 		.4byte	.LASF66
+ 1609 06ac 06       		.byte	0x6
+ 1610 06ad 38       		.byte	0x38
+ 1611 06ae 68000000 		.4byte	0x68
+ 1612 06b2 05       		.uleb128 0x5
+ 1613 06b3 03       		.byte	0x3
+ 1614 06b4 00000000 		.4byte	card_ack
+ 1615 06b8 1F       		.uleb128 0x1f
+ 1616 06b9 72010000 		.4byte	.LASF67
+ 1617 06bd 06       		.byte	0x6
+ 1618 06be 39       		.byte	0x39
+ 1619 06bf 68000000 		.4byte	0x68
+ 1620 06c3 05       		.uleb128 0x5
+ 1621 06c4 03       		.byte	0x3
+ 1622 06c5 00000000 		.4byte	card_in_buf
+ 1623 06c9 1D       		.uleb128 0x1d
+ 1624 06ca C2030000 		.4byte	.LASF68
+ 1625 06ce 06       		.byte	0x6
+ 1626 06cf 3C       		.byte	0x3c
+ 1627 06d0 68000000 		.4byte	0x68
+ 1628 06d4 1D       		.uleb128 0x1d
+ 1629 06d5 53040000 		.4byte	.LASF69
+ 1630 06d9 06       		.byte	0x6
+ 1631 06da 3D       		.byte	0x3d
+ 1632 06db 68000000 		.4byte	0x68
+ 1633 06df 20       		.uleb128 0x20
+ 1634 06e0 1C040000 		.4byte	.LASF70
+ 1635 06e4 01       		.byte	0x1
+ 1636 06e5 0101     		.2byte	0x101
+ 1637 06e7 B0000000 		.4byte	0xb0
+ 1638 06eb 05       		.uleb128 0x5
+ 1639 06ec 03       		.byte	0x3
+ 1640 06ed 00000000 		.4byte	f2f_acknowledge_active
+ 1641 06f1 20       		.uleb128 0x20
+ 1642 06f2 CF000000 		.4byte	.LASF71
+ 1643 06f6 01       		.byte	0x1
+ 1644 06f7 0201     		.2byte	0x102
+ 1645 06f9 B0000000 		.4byte	0xb0
+ 1646 06fd 05       		.uleb128 0x5
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 37
+
+
+ 1647 06fe 03       		.byte	0x3
+ 1648 06ff 00000000 		.4byte	f2f_ack_delay_cnt
+ 1649 0703 1F       		.uleb128 0x1f
+ 1650 0704 46000000 		.4byte	.LASF72
+ 1651 0708 01       		.byte	0x1
+ 1652 0709 FE       		.byte	0xfe
+ 1653 070a 81000000 		.4byte	0x81
+ 1654 070e 05       		.uleb128 0x5
+ 1655 070f 03       		.byte	0x3
+ 1656 0710 00000000 		.4byte	f2fdebugled
+ 1657 0714 21       		.uleb128 0x21
+ 1658 0715 33040000 		.4byte	.LASF73
+ 1659 0719 08       		.byte	0x8
+ 1660 071a 27       		.byte	0x27
+ 1661 071b 25070000 		.4byte	0x725
+ 1662 071f 22       		.uleb128 0x22
+ 1663 0720 81000000 		.4byte	0x81
+ 1664 0724 00       		.byte	0
+ 1665 0725 21       		.uleb128 0x21
+ 1666 0726 06040000 		.4byte	.LASF74
+ 1667 072a 09       		.byte	0x9
+ 1668 072b 28       		.byte	0x28
+ 1669 072c 36070000 		.4byte	0x736
+ 1670 0730 22       		.uleb128 0x22
+ 1671 0731 81000000 		.4byte	0x81
+ 1672 0735 00       		.byte	0
+ 1673 0736 21       		.uleb128 0x21
+ 1674 0737 37030000 		.4byte	.LASF75
+ 1675 073b 0A       		.byte	0xa
+ 1676 073c 78       		.byte	0x78
+ 1677 073d 47070000 		.4byte	0x747
+ 1678 0741 22       		.uleb128 0x22
+ 1679 0742 8C000000 		.4byte	0x8c
+ 1680 0746 00       		.byte	0
+ 1681 0747 21       		.uleb128 0x21
+ 1682 0748 83040000 		.4byte	.LASF76
+ 1683 074c 0A       		.byte	0xa
+ 1684 074d 77       		.byte	0x77
+ 1685 074e 58070000 		.4byte	0x758
+ 1686 0752 22       		.uleb128 0x22
+ 1687 0753 97000000 		.4byte	0x97
+ 1688 0757 00       		.byte	0
+ 1689 0758 23       		.uleb128 0x23
+ 1690 0759 66020000 		.4byte	.LASF77
+ 1691 075d 0B       		.byte	0xb
+ 1692 075e 2B       		.byte	0x2b
+ 1693 075f 81000000 		.4byte	0x81
+ 1694 0763 23       		.uleb128 0x23
+ 1695 0764 98030000 		.4byte	.LASF78
+ 1696 0768 0C       		.byte	0xc
+ 1697 0769 2B       		.byte	0x2b
+ 1698 076a 81000000 		.4byte	0x81
+ 1699 076e 21       		.uleb128 0x21
+ 1700 076f 04010000 		.4byte	.LASF79
+ 1701 0773 0D       		.byte	0xd
+ 1702 0774 28       		.byte	0x28
+ 1703 0775 7F070000 		.4byte	0x77f
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 38
+
+
+ 1704 0779 22       		.uleb128 0x22
+ 1705 077a 81000000 		.4byte	0x81
+ 1706 077e 00       		.byte	0
+ 1707 077f 21       		.uleb128 0x21
+ 1708 0780 1B000000 		.4byte	.LASF80
+ 1709 0784 0E       		.byte	0xe
+ 1710 0785 28       		.byte	0x28
+ 1711 0786 90070000 		.4byte	0x790
+ 1712 078a 22       		.uleb128 0x22
+ 1713 078b 81000000 		.4byte	0x81
+ 1714 078f 00       		.byte	0
+ 1715 0790 24       		.uleb128 0x24
+ 1716 0791 3D010000 		.4byte	.LASF81
+ 1717 0795 0F       		.byte	0xf
+ 1718 0796 25       		.byte	0x25
+ 1719 0797 24       		.uleb128 0x24
+ 1720 0798 F0000000 		.4byte	.LASF82
+ 1721 079c 0F       		.byte	0xf
+ 1722 079d 23       		.byte	0x23
+ 1723 079e 24       		.uleb128 0x24
+ 1724 079f 75030000 		.4byte	.LASF83
+ 1725 07a3 10       		.byte	0x10
+ 1726 07a4 5B       		.byte	0x5b
+ 1727 07a5 00       		.byte	0
+ 1728              		.section	.debug_abbrev,"",%progbits
+ 1729              	.Ldebug_abbrev0:
+ 1730 0000 01       		.uleb128 0x1
+ 1731 0001 11       		.uleb128 0x11
+ 1732 0002 01       		.byte	0x1
+ 1733 0003 25       		.uleb128 0x25
+ 1734 0004 0E       		.uleb128 0xe
+ 1735 0005 13       		.uleb128 0x13
+ 1736 0006 0B       		.uleb128 0xb
+ 1737 0007 03       		.uleb128 0x3
+ 1738 0008 0E       		.uleb128 0xe
+ 1739 0009 1B       		.uleb128 0x1b
+ 1740 000a 0E       		.uleb128 0xe
+ 1741 000b 55       		.uleb128 0x55
+ 1742 000c 17       		.uleb128 0x17
+ 1743 000d 11       		.uleb128 0x11
+ 1744 000e 01       		.uleb128 0x1
+ 1745 000f 10       		.uleb128 0x10
+ 1746 0010 17       		.uleb128 0x17
+ 1747 0011 00       		.byte	0
+ 1748 0012 00       		.byte	0
+ 1749 0013 02       		.uleb128 0x2
+ 1750 0014 24       		.uleb128 0x24
+ 1751 0015 00       		.byte	0
+ 1752 0016 0B       		.uleb128 0xb
+ 1753 0017 0B       		.uleb128 0xb
+ 1754 0018 3E       		.uleb128 0x3e
+ 1755 0019 0B       		.uleb128 0xb
+ 1756 001a 03       		.uleb128 0x3
+ 1757 001b 0E       		.uleb128 0xe
+ 1758 001c 00       		.byte	0
+ 1759 001d 00       		.byte	0
+ 1760 001e 03       		.uleb128 0x3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 39
+
+
+ 1761 001f 16       		.uleb128 0x16
+ 1762 0020 00       		.byte	0
+ 1763 0021 03       		.uleb128 0x3
+ 1764 0022 0E       		.uleb128 0xe
+ 1765 0023 3A       		.uleb128 0x3a
+ 1766 0024 0B       		.uleb128 0xb
+ 1767 0025 3B       		.uleb128 0x3b
+ 1768 0026 0B       		.uleb128 0xb
+ 1769 0027 49       		.uleb128 0x49
+ 1770 0028 13       		.uleb128 0x13
+ 1771 0029 00       		.byte	0
+ 1772 002a 00       		.byte	0
+ 1773 002b 04       		.uleb128 0x4
+ 1774 002c 24       		.uleb128 0x24
+ 1775 002d 00       		.byte	0
+ 1776 002e 0B       		.uleb128 0xb
+ 1777 002f 0B       		.uleb128 0xb
+ 1778 0030 3E       		.uleb128 0x3e
+ 1779 0031 0B       		.uleb128 0xb
+ 1780 0032 03       		.uleb128 0x3
+ 1781 0033 08       		.uleb128 0x8
+ 1782 0034 00       		.byte	0
+ 1783 0035 00       		.byte	0
+ 1784 0036 05       		.uleb128 0x5
+ 1785 0037 35       		.uleb128 0x35
+ 1786 0038 00       		.byte	0
+ 1787 0039 49       		.uleb128 0x49
+ 1788 003a 13       		.uleb128 0x13
+ 1789 003b 00       		.byte	0
+ 1790 003c 00       		.byte	0
+ 1791 003d 06       		.uleb128 0x6
+ 1792 003e 13       		.uleb128 0x13
+ 1793 003f 01       		.byte	0x1
+ 1794 0040 0B       		.uleb128 0xb
+ 1795 0041 0B       		.uleb128 0xb
+ 1796 0042 3A       		.uleb128 0x3a
+ 1797 0043 0B       		.uleb128 0xb
+ 1798 0044 3B       		.uleb128 0x3b
+ 1799 0045 0B       		.uleb128 0xb
+ 1800 0046 01       		.uleb128 0x1
+ 1801 0047 13       		.uleb128 0x13
+ 1802 0048 00       		.byte	0
+ 1803 0049 00       		.byte	0
+ 1804 004a 07       		.uleb128 0x7
+ 1805 004b 0D       		.uleb128 0xd
+ 1806 004c 00       		.byte	0
+ 1807 004d 03       		.uleb128 0x3
+ 1808 004e 0E       		.uleb128 0xe
+ 1809 004f 3A       		.uleb128 0x3a
+ 1810 0050 0B       		.uleb128 0xb
+ 1811 0051 3B       		.uleb128 0x3b
+ 1812 0052 0B       		.uleb128 0xb
+ 1813 0053 49       		.uleb128 0x49
+ 1814 0054 13       		.uleb128 0x13
+ 1815 0055 38       		.uleb128 0x38
+ 1816 0056 0B       		.uleb128 0xb
+ 1817 0057 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 40
+
+
+ 1818 0058 00       		.byte	0
+ 1819 0059 08       		.uleb128 0x8
+ 1820 005a 13       		.uleb128 0x13
+ 1821 005b 01       		.byte	0x1
+ 1822 005c 03       		.uleb128 0x3
+ 1823 005d 0E       		.uleb128 0xe
+ 1824 005e 0B       		.uleb128 0xb
+ 1825 005f 05       		.uleb128 0x5
+ 1826 0060 3A       		.uleb128 0x3a
+ 1827 0061 0B       		.uleb128 0xb
+ 1828 0062 3B       		.uleb128 0x3b
+ 1829 0063 0B       		.uleb128 0xb
+ 1830 0064 01       		.uleb128 0x1
+ 1831 0065 13       		.uleb128 0x13
+ 1832 0066 00       		.byte	0
+ 1833 0067 00       		.byte	0
+ 1834 0068 09       		.uleb128 0x9
+ 1835 0069 0D       		.uleb128 0xd
+ 1836 006a 00       		.byte	0
+ 1837 006b 03       		.uleb128 0x3
+ 1838 006c 08       		.uleb128 0x8
+ 1839 006d 3A       		.uleb128 0x3a
+ 1840 006e 0B       		.uleb128 0xb
+ 1841 006f 3B       		.uleb128 0x3b
+ 1842 0070 0B       		.uleb128 0xb
+ 1843 0071 49       		.uleb128 0x49
+ 1844 0072 13       		.uleb128 0x13
+ 1845 0073 38       		.uleb128 0x38
+ 1846 0074 0B       		.uleb128 0xb
+ 1847 0075 00       		.byte	0
+ 1848 0076 00       		.byte	0
+ 1849 0077 0A       		.uleb128 0xa
+ 1850 0078 01       		.uleb128 0x1
+ 1851 0079 01       		.byte	0x1
+ 1852 007a 49       		.uleb128 0x49
+ 1853 007b 13       		.uleb128 0x13
+ 1854 007c 01       		.uleb128 0x1
+ 1855 007d 13       		.uleb128 0x13
+ 1856 007e 00       		.byte	0
+ 1857 007f 00       		.byte	0
+ 1858 0080 0B       		.uleb128 0xb
+ 1859 0081 21       		.uleb128 0x21
+ 1860 0082 00       		.byte	0
+ 1861 0083 49       		.uleb128 0x49
+ 1862 0084 13       		.uleb128 0x13
+ 1863 0085 2F       		.uleb128 0x2f
+ 1864 0086 0B       		.uleb128 0xb
+ 1865 0087 00       		.byte	0
+ 1866 0088 00       		.byte	0
+ 1867 0089 0C       		.uleb128 0xc
+ 1868 008a 2E       		.uleb128 0x2e
+ 1869 008b 01       		.byte	0x1
+ 1870 008c 3F       		.uleb128 0x3f
+ 1871 008d 19       		.uleb128 0x19
+ 1872 008e 03       		.uleb128 0x3
+ 1873 008f 0E       		.uleb128 0xe
+ 1874 0090 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 41
+
+
+ 1875 0091 0B       		.uleb128 0xb
+ 1876 0092 3B       		.uleb128 0x3b
+ 1877 0093 0B       		.uleb128 0xb
+ 1878 0094 27       		.uleb128 0x27
+ 1879 0095 19       		.uleb128 0x19
+ 1880 0096 11       		.uleb128 0x11
+ 1881 0097 01       		.uleb128 0x1
+ 1882 0098 12       		.uleb128 0x12
+ 1883 0099 06       		.uleb128 0x6
+ 1884 009a 40       		.uleb128 0x40
+ 1885 009b 18       		.uleb128 0x18
+ 1886 009c 9742     		.uleb128 0x2117
+ 1887 009e 19       		.uleb128 0x19
+ 1888 009f 01       		.uleb128 0x1
+ 1889 00a0 13       		.uleb128 0x13
+ 1890 00a1 00       		.byte	0
+ 1891 00a2 00       		.byte	0
+ 1892 00a3 0D       		.uleb128 0xd
+ 1893 00a4 05       		.uleb128 0x5
+ 1894 00a5 00       		.byte	0
+ 1895 00a6 03       		.uleb128 0x3
+ 1896 00a7 0E       		.uleb128 0xe
+ 1897 00a8 3A       		.uleb128 0x3a
+ 1898 00a9 0B       		.uleb128 0xb
+ 1899 00aa 3B       		.uleb128 0x3b
+ 1900 00ab 0B       		.uleb128 0xb
+ 1901 00ac 49       		.uleb128 0x49
+ 1902 00ad 13       		.uleb128 0x13
+ 1903 00ae 02       		.uleb128 0x2
+ 1904 00af 17       		.uleb128 0x17
+ 1905 00b0 00       		.byte	0
+ 1906 00b1 00       		.byte	0
+ 1907 00b2 0E       		.uleb128 0xe
+ 1908 00b3 34       		.uleb128 0x34
+ 1909 00b4 00       		.byte	0
+ 1910 00b5 03       		.uleb128 0x3
+ 1911 00b6 08       		.uleb128 0x8
+ 1912 00b7 3A       		.uleb128 0x3a
+ 1913 00b8 0B       		.uleb128 0xb
+ 1914 00b9 3B       		.uleb128 0x3b
+ 1915 00ba 0B       		.uleb128 0xb
+ 1916 00bb 49       		.uleb128 0x49
+ 1917 00bc 13       		.uleb128 0x13
+ 1918 00bd 02       		.uleb128 0x2
+ 1919 00be 17       		.uleb128 0x17
+ 1920 00bf 00       		.byte	0
+ 1921 00c0 00       		.byte	0
+ 1922 00c1 0F       		.uleb128 0xf
+ 1923 00c2 34       		.uleb128 0x34
+ 1924 00c3 00       		.byte	0
+ 1925 00c4 03       		.uleb128 0x3
+ 1926 00c5 0E       		.uleb128 0xe
+ 1927 00c6 3A       		.uleb128 0x3a
+ 1928 00c7 0B       		.uleb128 0xb
+ 1929 00c8 3B       		.uleb128 0x3b
+ 1930 00c9 0B       		.uleb128 0xb
+ 1931 00ca 49       		.uleb128 0x49
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 42
+
+
+ 1932 00cb 13       		.uleb128 0x13
+ 1933 00cc 02       		.uleb128 0x2
+ 1934 00cd 17       		.uleb128 0x17
+ 1935 00ce 00       		.byte	0
+ 1936 00cf 00       		.byte	0
+ 1937 00d0 10       		.uleb128 0x10
+ 1938 00d1 898201   		.uleb128 0x4109
+ 1939 00d4 01       		.byte	0x1
+ 1940 00d5 11       		.uleb128 0x11
+ 1941 00d6 01       		.uleb128 0x1
+ 1942 00d7 31       		.uleb128 0x31
+ 1943 00d8 13       		.uleb128 0x13
+ 1944 00d9 01       		.uleb128 0x1
+ 1945 00da 13       		.uleb128 0x13
+ 1946 00db 00       		.byte	0
+ 1947 00dc 00       		.byte	0
+ 1948 00dd 11       		.uleb128 0x11
+ 1949 00de 8A8201   		.uleb128 0x410a
+ 1950 00e1 00       		.byte	0
+ 1951 00e2 02       		.uleb128 0x2
+ 1952 00e3 18       		.uleb128 0x18
+ 1953 00e4 9142     		.uleb128 0x2111
+ 1954 00e6 18       		.uleb128 0x18
+ 1955 00e7 00       		.byte	0
+ 1956 00e8 00       		.byte	0
+ 1957 00e9 12       		.uleb128 0x12
+ 1958 00ea 898201   		.uleb128 0x4109
+ 1959 00ed 01       		.byte	0x1
+ 1960 00ee 11       		.uleb128 0x11
+ 1961 00ef 01       		.uleb128 0x1
+ 1962 00f0 9542     		.uleb128 0x2115
+ 1963 00f2 19       		.uleb128 0x19
+ 1964 00f3 31       		.uleb128 0x31
+ 1965 00f4 13       		.uleb128 0x13
+ 1966 00f5 01       		.uleb128 0x1
+ 1967 00f6 13       		.uleb128 0x13
+ 1968 00f7 00       		.byte	0
+ 1969 00f8 00       		.byte	0
+ 1970 00f9 13       		.uleb128 0x13
+ 1971 00fa 898201   		.uleb128 0x4109
+ 1972 00fd 00       		.byte	0
+ 1973 00fe 11       		.uleb128 0x11
+ 1974 00ff 01       		.uleb128 0x1
+ 1975 0100 31       		.uleb128 0x31
+ 1976 0101 13       		.uleb128 0x13
+ 1977 0102 00       		.byte	0
+ 1978 0103 00       		.byte	0
+ 1979 0104 14       		.uleb128 0x14
+ 1980 0105 898201   		.uleb128 0x4109
+ 1981 0108 01       		.byte	0x1
+ 1982 0109 11       		.uleb128 0x11
+ 1983 010a 01       		.uleb128 0x1
+ 1984 010b 31       		.uleb128 0x31
+ 1985 010c 13       		.uleb128 0x13
+ 1986 010d 00       		.byte	0
+ 1987 010e 00       		.byte	0
+ 1988 010f 15       		.uleb128 0x15
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 43
+
+
+ 1989 0110 2E       		.uleb128 0x2e
+ 1990 0111 01       		.byte	0x1
+ 1991 0112 3F       		.uleb128 0x3f
+ 1992 0113 19       		.uleb128 0x19
+ 1993 0114 03       		.uleb128 0x3
+ 1994 0115 0E       		.uleb128 0xe
+ 1995 0116 3A       		.uleb128 0x3a
+ 1996 0117 0B       		.uleb128 0xb
+ 1997 0118 3B       		.uleb128 0x3b
+ 1998 0119 0B       		.uleb128 0xb
+ 1999 011a 27       		.uleb128 0x27
+ 2000 011b 19       		.uleb128 0x19
+ 2001 011c 49       		.uleb128 0x49
+ 2002 011d 13       		.uleb128 0x13
+ 2003 011e 11       		.uleb128 0x11
+ 2004 011f 01       		.uleb128 0x1
+ 2005 0120 12       		.uleb128 0x12
+ 2006 0121 06       		.uleb128 0x6
+ 2007 0122 40       		.uleb128 0x40
+ 2008 0123 18       		.uleb128 0x18
+ 2009 0124 9742     		.uleb128 0x2117
+ 2010 0126 19       		.uleb128 0x19
+ 2011 0127 01       		.uleb128 0x1
+ 2012 0128 13       		.uleb128 0x13
+ 2013 0129 00       		.byte	0
+ 2014 012a 00       		.byte	0
+ 2015 012b 16       		.uleb128 0x16
+ 2016 012c 2E       		.uleb128 0x2e
+ 2017 012d 01       		.byte	0x1
+ 2018 012e 3F       		.uleb128 0x3f
+ 2019 012f 19       		.uleb128 0x19
+ 2020 0130 03       		.uleb128 0x3
+ 2021 0131 0E       		.uleb128 0xe
+ 2022 0132 3A       		.uleb128 0x3a
+ 2023 0133 0B       		.uleb128 0xb
+ 2024 0134 3B       		.uleb128 0x3b
+ 2025 0135 0B       		.uleb128 0xb
+ 2026 0136 11       		.uleb128 0x11
+ 2027 0137 01       		.uleb128 0x1
+ 2028 0138 12       		.uleb128 0x12
+ 2029 0139 06       		.uleb128 0x6
+ 2030 013a 40       		.uleb128 0x40
+ 2031 013b 18       		.uleb128 0x18
+ 2032 013c 9742     		.uleb128 0x2117
+ 2033 013e 19       		.uleb128 0x19
+ 2034 013f 01       		.uleb128 0x1
+ 2035 0140 13       		.uleb128 0x13
+ 2036 0141 00       		.byte	0
+ 2037 0142 00       		.byte	0
+ 2038 0143 17       		.uleb128 0x17
+ 2039 0144 34       		.uleb128 0x34
+ 2040 0145 00       		.byte	0
+ 2041 0146 03       		.uleb128 0x3
+ 2042 0147 08       		.uleb128 0x8
+ 2043 0148 3A       		.uleb128 0x3a
+ 2044 0149 0B       		.uleb128 0xb
+ 2045 014a 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 44
+
+
+ 2046 014b 0B       		.uleb128 0xb
+ 2047 014c 49       		.uleb128 0x49
+ 2048 014d 13       		.uleb128 0x13
+ 2049 014e 02       		.uleb128 0x2
+ 2050 014f 18       		.uleb128 0x18
+ 2051 0150 00       		.byte	0
+ 2052 0151 00       		.byte	0
+ 2053 0152 18       		.uleb128 0x18
+ 2054 0153 898201   		.uleb128 0x4109
+ 2055 0156 00       		.byte	0
+ 2056 0157 11       		.uleb128 0x11
+ 2057 0158 01       		.uleb128 0x1
+ 2058 0159 9542     		.uleb128 0x2115
+ 2059 015b 19       		.uleb128 0x19
+ 2060 015c 31       		.uleb128 0x31
+ 2061 015d 13       		.uleb128 0x13
+ 2062 015e 00       		.byte	0
+ 2063 015f 00       		.byte	0
+ 2064 0160 19       		.uleb128 0x19
+ 2065 0161 2E       		.uleb128 0x2e
+ 2066 0162 01       		.byte	0x1
+ 2067 0163 3F       		.uleb128 0x3f
+ 2068 0164 19       		.uleb128 0x19
+ 2069 0165 03       		.uleb128 0x3
+ 2070 0166 0E       		.uleb128 0xe
+ 2071 0167 3A       		.uleb128 0x3a
+ 2072 0168 0B       		.uleb128 0xb
+ 2073 0169 3B       		.uleb128 0x3b
+ 2074 016a 05       		.uleb128 0x5
+ 2075 016b 49       		.uleb128 0x49
+ 2076 016c 13       		.uleb128 0x13
+ 2077 016d 11       		.uleb128 0x11
+ 2078 016e 01       		.uleb128 0x1
+ 2079 016f 12       		.uleb128 0x12
+ 2080 0170 06       		.uleb128 0x6
+ 2081 0171 40       		.uleb128 0x40
+ 2082 0172 18       		.uleb128 0x18
+ 2083 0173 9642     		.uleb128 0x2116
+ 2084 0175 19       		.uleb128 0x19
+ 2085 0176 01       		.uleb128 0x1
+ 2086 0177 13       		.uleb128 0x13
+ 2087 0178 00       		.byte	0
+ 2088 0179 00       		.byte	0
+ 2089 017a 1A       		.uleb128 0x1a
+ 2090 017b 34       		.uleb128 0x34
+ 2091 017c 00       		.byte	0
+ 2092 017d 03       		.uleb128 0x3
+ 2093 017e 0E       		.uleb128 0xe
+ 2094 017f 3A       		.uleb128 0x3a
+ 2095 0180 0B       		.uleb128 0xb
+ 2096 0181 3B       		.uleb128 0x3b
+ 2097 0182 05       		.uleb128 0x5
+ 2098 0183 49       		.uleb128 0x49
+ 2099 0184 13       		.uleb128 0x13
+ 2100 0185 02       		.uleb128 0x2
+ 2101 0186 17       		.uleb128 0x17
+ 2102 0187 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 45
+
+
+ 2103 0188 00       		.byte	0
+ 2104 0189 1B       		.uleb128 0x1b
+ 2105 018a 34       		.uleb128 0x34
+ 2106 018b 00       		.byte	0
+ 2107 018c 03       		.uleb128 0x3
+ 2108 018d 08       		.uleb128 0x8
+ 2109 018e 3A       		.uleb128 0x3a
+ 2110 018f 0B       		.uleb128 0xb
+ 2111 0190 3B       		.uleb128 0x3b
+ 2112 0191 05       		.uleb128 0x5
+ 2113 0192 49       		.uleb128 0x49
+ 2114 0193 13       		.uleb128 0x13
+ 2115 0194 02       		.uleb128 0x2
+ 2116 0195 17       		.uleb128 0x17
+ 2117 0196 00       		.byte	0
+ 2118 0197 00       		.byte	0
+ 2119 0198 1C       		.uleb128 0x1c
+ 2120 0199 34       		.uleb128 0x34
+ 2121 019a 00       		.byte	0
+ 2122 019b 03       		.uleb128 0x3
+ 2123 019c 0E       		.uleb128 0xe
+ 2124 019d 3A       		.uleb128 0x3a
+ 2125 019e 0B       		.uleb128 0xb
+ 2126 019f 3B       		.uleb128 0x3b
+ 2127 01a0 05       		.uleb128 0x5
+ 2128 01a1 49       		.uleb128 0x49
+ 2129 01a2 13       		.uleb128 0x13
+ 2130 01a3 3F       		.uleb128 0x3f
+ 2131 01a4 19       		.uleb128 0x19
+ 2132 01a5 3C       		.uleb128 0x3c
+ 2133 01a6 19       		.uleb128 0x19
+ 2134 01a7 00       		.byte	0
+ 2135 01a8 00       		.byte	0
+ 2136 01a9 1D       		.uleb128 0x1d
+ 2137 01aa 34       		.uleb128 0x34
+ 2138 01ab 00       		.byte	0
+ 2139 01ac 03       		.uleb128 0x3
+ 2140 01ad 0E       		.uleb128 0xe
+ 2141 01ae 3A       		.uleb128 0x3a
+ 2142 01af 0B       		.uleb128 0xb
+ 2143 01b0 3B       		.uleb128 0x3b
+ 2144 01b1 0B       		.uleb128 0xb
+ 2145 01b2 49       		.uleb128 0x49
+ 2146 01b3 13       		.uleb128 0x13
+ 2147 01b4 3F       		.uleb128 0x3f
+ 2148 01b5 19       		.uleb128 0x19
+ 2149 01b6 3C       		.uleb128 0x3c
+ 2150 01b7 19       		.uleb128 0x19
+ 2151 01b8 00       		.byte	0
+ 2152 01b9 00       		.byte	0
+ 2153 01ba 1E       		.uleb128 0x1e
+ 2154 01bb 34       		.uleb128 0x34
+ 2155 01bc 00       		.byte	0
+ 2156 01bd 03       		.uleb128 0x3
+ 2157 01be 08       		.uleb128 0x8
+ 2158 01bf 3A       		.uleb128 0x3a
+ 2159 01c0 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 46
+
+
+ 2160 01c1 3B       		.uleb128 0x3b
+ 2161 01c2 0B       		.uleb128 0xb
+ 2162 01c3 49       		.uleb128 0x49
+ 2163 01c4 13       		.uleb128 0x13
+ 2164 01c5 3F       		.uleb128 0x3f
+ 2165 01c6 19       		.uleb128 0x19
+ 2166 01c7 02       		.uleb128 0x2
+ 2167 01c8 18       		.uleb128 0x18
+ 2168 01c9 00       		.byte	0
+ 2169 01ca 00       		.byte	0
+ 2170 01cb 1F       		.uleb128 0x1f
+ 2171 01cc 34       		.uleb128 0x34
+ 2172 01cd 00       		.byte	0
+ 2173 01ce 03       		.uleb128 0x3
+ 2174 01cf 0E       		.uleb128 0xe
+ 2175 01d0 3A       		.uleb128 0x3a
+ 2176 01d1 0B       		.uleb128 0xb
+ 2177 01d2 3B       		.uleb128 0x3b
+ 2178 01d3 0B       		.uleb128 0xb
+ 2179 01d4 49       		.uleb128 0x49
+ 2180 01d5 13       		.uleb128 0x13
+ 2181 01d6 3F       		.uleb128 0x3f
+ 2182 01d7 19       		.uleb128 0x19
+ 2183 01d8 02       		.uleb128 0x2
+ 2184 01d9 18       		.uleb128 0x18
+ 2185 01da 00       		.byte	0
+ 2186 01db 00       		.byte	0
+ 2187 01dc 20       		.uleb128 0x20
+ 2188 01dd 34       		.uleb128 0x34
+ 2189 01de 00       		.byte	0
+ 2190 01df 03       		.uleb128 0x3
+ 2191 01e0 0E       		.uleb128 0xe
+ 2192 01e1 3A       		.uleb128 0x3a
+ 2193 01e2 0B       		.uleb128 0xb
+ 2194 01e3 3B       		.uleb128 0x3b
+ 2195 01e4 05       		.uleb128 0x5
+ 2196 01e5 49       		.uleb128 0x49
+ 2197 01e6 13       		.uleb128 0x13
+ 2198 01e7 3F       		.uleb128 0x3f
+ 2199 01e8 19       		.uleb128 0x19
+ 2200 01e9 02       		.uleb128 0x2
+ 2201 01ea 18       		.uleb128 0x18
+ 2202 01eb 00       		.byte	0
+ 2203 01ec 00       		.byte	0
+ 2204 01ed 21       		.uleb128 0x21
+ 2205 01ee 2E       		.uleb128 0x2e
+ 2206 01ef 01       		.byte	0x1
+ 2207 01f0 3F       		.uleb128 0x3f
+ 2208 01f1 19       		.uleb128 0x19
+ 2209 01f2 03       		.uleb128 0x3
+ 2210 01f3 0E       		.uleb128 0xe
+ 2211 01f4 3A       		.uleb128 0x3a
+ 2212 01f5 0B       		.uleb128 0xb
+ 2213 01f6 3B       		.uleb128 0x3b
+ 2214 01f7 0B       		.uleb128 0xb
+ 2215 01f8 27       		.uleb128 0x27
+ 2216 01f9 19       		.uleb128 0x19
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 47
+
+
+ 2217 01fa 3C       		.uleb128 0x3c
+ 2218 01fb 19       		.uleb128 0x19
+ 2219 01fc 01       		.uleb128 0x1
+ 2220 01fd 13       		.uleb128 0x13
+ 2221 01fe 00       		.byte	0
+ 2222 01ff 00       		.byte	0
+ 2223 0200 22       		.uleb128 0x22
+ 2224 0201 05       		.uleb128 0x5
+ 2225 0202 00       		.byte	0
+ 2226 0203 49       		.uleb128 0x49
+ 2227 0204 13       		.uleb128 0x13
+ 2228 0205 00       		.byte	0
+ 2229 0206 00       		.byte	0
+ 2230 0207 23       		.uleb128 0x23
+ 2231 0208 2E       		.uleb128 0x2e
+ 2232 0209 00       		.byte	0
+ 2233 020a 3F       		.uleb128 0x3f
+ 2234 020b 19       		.uleb128 0x19
+ 2235 020c 03       		.uleb128 0x3
+ 2236 020d 0E       		.uleb128 0xe
+ 2237 020e 3A       		.uleb128 0x3a
+ 2238 020f 0B       		.uleb128 0xb
+ 2239 0210 3B       		.uleb128 0x3b
+ 2240 0211 0B       		.uleb128 0xb
+ 2241 0212 27       		.uleb128 0x27
+ 2242 0213 19       		.uleb128 0x19
+ 2243 0214 49       		.uleb128 0x49
+ 2244 0215 13       		.uleb128 0x13
+ 2245 0216 3C       		.uleb128 0x3c
+ 2246 0217 19       		.uleb128 0x19
+ 2247 0218 00       		.byte	0
+ 2248 0219 00       		.byte	0
+ 2249 021a 24       		.uleb128 0x24
+ 2250 021b 2E       		.uleb128 0x2e
+ 2251 021c 00       		.byte	0
+ 2252 021d 3F       		.uleb128 0x3f
+ 2253 021e 19       		.uleb128 0x19
+ 2254 021f 03       		.uleb128 0x3
+ 2255 0220 0E       		.uleb128 0xe
+ 2256 0221 3A       		.uleb128 0x3a
+ 2257 0222 0B       		.uleb128 0xb
+ 2258 0223 3B       		.uleb128 0x3b
+ 2259 0224 0B       		.uleb128 0xb
+ 2260 0225 27       		.uleb128 0x27
+ 2261 0226 19       		.uleb128 0x19
+ 2262 0227 3C       		.uleb128 0x3c
+ 2263 0228 19       		.uleb128 0x19
+ 2264 0229 00       		.byte	0
+ 2265 022a 00       		.byte	0
+ 2266 022b 00       		.byte	0
+ 2267              		.section	.debug_loc,"",%progbits
+ 2268              	.Ldebug_loc0:
+ 2269              	.LLST0:
+ 2270 0000 00000000 		.4byte	.LVL0
+ 2271 0004 0A000000 		.4byte	.LVL1
+ 2272 0008 0100     		.2byte	0x1
+ 2273 000a 50       		.byte	0x50
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 48
+
+
+ 2274 000b 0A000000 		.4byte	.LVL1
+ 2275 000f 28000000 		.4byte	.LVL5
+ 2276 0013 0100     		.2byte	0x1
+ 2277 0015 59       		.byte	0x59
+ 2278 0016 28000000 		.4byte	.LVL5
+ 2279 001a 2E000000 		.4byte	.LVL6
+ 2280 001e 0400     		.2byte	0x4
+ 2281 0020 F3       		.byte	0xf3
+ 2282 0021 01       		.uleb128 0x1
+ 2283 0022 50       		.byte	0x50
+ 2284 0023 9F       		.byte	0x9f
+ 2285 0024 2E000000 		.4byte	.LVL6
+ 2286 0028 78000000 		.4byte	.LVL18
+ 2287 002c 0100     		.2byte	0x1
+ 2288 002e 59       		.byte	0x59
+ 2289 002f 78000000 		.4byte	.LVL18
+ 2290 0033 7C000000 		.4byte	.LFE63
+ 2291 0037 0400     		.2byte	0x4
+ 2292 0039 F3       		.byte	0xf3
+ 2293 003a 01       		.uleb128 0x1
+ 2294 003b 50       		.byte	0x50
+ 2295 003c 9F       		.byte	0x9f
+ 2296 003d 00000000 		.4byte	0
+ 2297 0041 00000000 		.4byte	0
+ 2298              	.LLST1:
+ 2299 0045 00000000 		.4byte	.LVL0
+ 2300 0049 0A000000 		.4byte	.LVL1
+ 2301 004d 0200     		.2byte	0x2
+ 2302 004f 30       		.byte	0x30
+ 2303 0050 9F       		.byte	0x9f
+ 2304 0051 0A000000 		.4byte	.LVL1
+ 2305 0055 28000000 		.4byte	.LVL5
+ 2306 0059 0100     		.2byte	0x1
+ 2307 005b 54       		.byte	0x54
+ 2308 005c 2E000000 		.4byte	.LVL6
+ 2309 0060 78000000 		.4byte	.LVL18
+ 2310 0064 0100     		.2byte	0x1
+ 2311 0066 54       		.byte	0x54
+ 2312 0067 00000000 		.4byte	0
+ 2313 006b 00000000 		.4byte	0
+ 2314              	.LLST2:
+ 2315 006f 12000000 		.4byte	.LVL2
+ 2316 0073 28000000 		.4byte	.LVL5
+ 2317 0077 0300     		.2byte	0x3
+ 2318 0079 75       		.byte	0x75
+ 2319 007a 7F       		.sleb128 -1
+ 2320 007b 9F       		.byte	0x9f
+ 2321 007c 2E000000 		.4byte	.LVL6
+ 2322 0080 5C000000 		.4byte	.LVL13
+ 2323 0084 0300     		.2byte	0x3
+ 2324 0086 75       		.byte	0x75
+ 2325 0087 7F       		.sleb128 -1
+ 2326 0088 9F       		.byte	0x9f
+ 2327 0089 5C000000 		.4byte	.LVL13
+ 2328 008d 68000000 		.4byte	.LVL16
+ 2329 0091 0300     		.2byte	0x3
+ 2330 0093 75       		.byte	0x75
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 49
+
+
+ 2331 0094 7E       		.sleb128 -2
+ 2332 0095 9F       		.byte	0x9f
+ 2333 0096 00000000 		.4byte	0
+ 2334 009a 00000000 		.4byte	0
+ 2335              	.LLST3:
+ 2336 009e 12000000 		.4byte	.LVL2
+ 2337 00a2 28000000 		.4byte	.LVL5
+ 2338 00a6 0100     		.2byte	0x1
+ 2339 00a8 57       		.byte	0x57
+ 2340 00a9 2E000000 		.4byte	.LVL6
+ 2341 00ad 60000000 		.4byte	.LVL14
+ 2342 00b1 0100     		.2byte	0x1
+ 2343 00b3 57       		.byte	0x57
+ 2344 00b4 68000000 		.4byte	.LVL16
+ 2345 00b8 78000000 		.4byte	.LVL18
+ 2346 00bc 0100     		.2byte	0x1
+ 2347 00be 57       		.byte	0x57
+ 2348 00bf 00000000 		.4byte	0
+ 2349 00c3 00000000 		.4byte	0
+ 2350              	.LLST4:
+ 2351 00c7 00000000 		.4byte	.LVL0
+ 2352 00cb 0A000000 		.4byte	.LVL1
+ 2353 00cf 0200     		.2byte	0x2
+ 2354 00d1 30       		.byte	0x30
+ 2355 00d2 9F       		.byte	0x9f
+ 2356 00d3 0A000000 		.4byte	.LVL1
+ 2357 00d7 12000000 		.4byte	.LVL2
+ 2358 00db 0100     		.2byte	0x1
+ 2359 00dd 56       		.byte	0x56
+ 2360 00de 12000000 		.4byte	.LVL2
+ 2361 00e2 1A000000 		.4byte	.LVL3
+ 2362 00e6 0800     		.2byte	0x8
+ 2363 00e8 75       		.byte	0x75
+ 2364 00e9 00       		.sleb128 0
+ 2365 00ea 76       		.byte	0x76
+ 2366 00eb 00       		.sleb128 0
+ 2367 00ec 22       		.byte	0x22
+ 2368 00ed 31       		.byte	0x31
+ 2369 00ee 1C       		.byte	0x1c
+ 2370 00ef 9F       		.byte	0x9f
+ 2371 00f0 1A000000 		.4byte	.LVL3
+ 2372 00f4 28000000 		.4byte	.LVL5
+ 2373 00f8 0100     		.2byte	0x1
+ 2374 00fa 58       		.byte	0x58
+ 2375 00fb 2E000000 		.4byte	.LVL6
+ 2376 00ff 68000000 		.4byte	.LVL16
+ 2377 0103 0100     		.2byte	0x1
+ 2378 0105 58       		.byte	0x58
+ 2379 0106 6C000000 		.4byte	.LVL17
+ 2380 010a 78000000 		.4byte	.LVL18
+ 2381 010e 0100     		.2byte	0x1
+ 2382 0110 58       		.byte	0x58
+ 2383 0111 00000000 		.4byte	0
+ 2384 0115 00000000 		.4byte	0
+ 2385              	.LLST5:
+ 2386 0119 00000000 		.4byte	.LVL19
+ 2387 011d 09000000 		.4byte	.LVL20-1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 50
+
+
+ 2388 0121 0100     		.2byte	0x1
+ 2389 0123 50       		.byte	0x50
+ 2390 0124 09000000 		.4byte	.LVL20-1
+ 2391 0128 86000000 		.4byte	.LVL39
+ 2392 012c 0100     		.2byte	0x1
+ 2393 012e 57       		.byte	0x57
+ 2394 012f 86000000 		.4byte	.LVL39
+ 2395 0133 90000000 		.4byte	.LFE64
+ 2396 0137 0400     		.2byte	0x4
+ 2397 0139 F3       		.byte	0xf3
+ 2398 013a 01       		.uleb128 0x1
+ 2399 013b 50       		.byte	0x50
+ 2400 013c 9F       		.byte	0x9f
+ 2401 013d 00000000 		.4byte	0
+ 2402 0141 00000000 		.4byte	0
+ 2403              	.LLST6:
+ 2404 0145 00000000 		.4byte	.LVL19
+ 2405 0149 20000000 		.4byte	.LVL23
+ 2406 014d 0200     		.2byte	0x2
+ 2407 014f 30       		.byte	0x30
+ 2408 0150 9F       		.byte	0x9f
+ 2409 0151 20000000 		.4byte	.LVL23
+ 2410 0155 62000000 		.4byte	.LVL34
+ 2411 0159 0100     		.2byte	0x1
+ 2412 015b 54       		.byte	0x54
+ 2413 015c 62000000 		.4byte	.LVL34
+ 2414 0160 6A000000 		.4byte	.LVL36
+ 2415 0164 0200     		.2byte	0x2
+ 2416 0166 30       		.byte	0x30
+ 2417 0167 9F       		.byte	0x9f
+ 2418 0168 6A000000 		.4byte	.LVL36
+ 2419 016c 80000000 		.4byte	.LVL37
+ 2420 0170 0100     		.2byte	0x1
+ 2421 0172 54       		.byte	0x54
+ 2422 0173 80000000 		.4byte	.LVL37
+ 2423 0177 90000000 		.4byte	.LFE64
+ 2424 017b 0200     		.2byte	0x2
+ 2425 017d 30       		.byte	0x30
+ 2426 017e 9F       		.byte	0x9f
+ 2427 017f 00000000 		.4byte	0
+ 2428 0183 00000000 		.4byte	0
+ 2429              	.LLST7:
+ 2430 0187 00000000 		.4byte	.LVL19
+ 2431 018b 20000000 		.4byte	.LVL23
+ 2432 018f 0200     		.2byte	0x2
+ 2433 0191 30       		.byte	0x30
+ 2434 0192 9F       		.byte	0x9f
+ 2435 0193 20000000 		.4byte	.LVL23
+ 2436 0197 80000000 		.4byte	.LVL37
+ 2437 019b 0100     		.2byte	0x1
+ 2438 019d 55       		.byte	0x55
+ 2439 019e 80000000 		.4byte	.LVL37
+ 2440 01a2 90000000 		.4byte	.LFE64
+ 2441 01a6 0200     		.2byte	0x2
+ 2442 01a8 30       		.byte	0x30
+ 2443 01a9 9F       		.byte	0x9f
+ 2444 01aa 00000000 		.4byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 51
+
+
+ 2445 01ae 00000000 		.4byte	0
+ 2446              	.LLST8:
+ 2447 01b2 0C000000 		.4byte	.LVL21
+ 2448 01b6 0F000000 		.4byte	.LVL22-1
+ 2449 01ba 0100     		.2byte	0x1
+ 2450 01bc 50       		.byte	0x50
+ 2451 01bd 0F000000 		.4byte	.LVL22-1
+ 2452 01c1 20000000 		.4byte	.LVL23
+ 2453 01c5 0100     		.2byte	0x1
+ 2454 01c7 54       		.byte	0x54
+ 2455 01c8 2E000000 		.4byte	.LVL25
+ 2456 01cc 31000000 		.4byte	.LVL26-1
+ 2457 01d0 0100     		.2byte	0x1
+ 2458 01d2 50       		.byte	0x50
+ 2459 01d3 31000000 		.4byte	.LVL26-1
+ 2460 01d7 38000000 		.4byte	.LVL27
+ 2461 01db 0100     		.2byte	0x1
+ 2462 01dd 58       		.byte	0x58
+ 2463 01de 38000000 		.4byte	.LVL27
+ 2464 01e2 3C000000 		.4byte	.LVL28
+ 2465 01e6 0200     		.2byte	0x2
+ 2466 01e8 30       		.byte	0x30
+ 2467 01e9 9F       		.byte	0x9f
+ 2468 01ea 3C000000 		.4byte	.LVL28
+ 2469 01ee 42000000 		.4byte	.LVL29
+ 2470 01f2 0100     		.2byte	0x1
+ 2471 01f4 50       		.byte	0x50
+ 2472 01f5 42000000 		.4byte	.LVL29
+ 2473 01f9 5E000000 		.4byte	.LVL32
+ 2474 01fd 0100     		.2byte	0x1
+ 2475 01ff 58       		.byte	0x58
+ 2476 0200 80000000 		.4byte	.LVL37
+ 2477 0204 86000000 		.4byte	.LVL39
+ 2478 0208 0100     		.2byte	0x1
+ 2479 020a 54       		.byte	0x54
+ 2480 020b 00000000 		.4byte	0
+ 2481 020f 00000000 		.4byte	0
+ 2482              	.LLST9:
+ 2483 0213 10000000 		.4byte	.LVL22
+ 2484 0217 20000000 		.4byte	.LVL23
+ 2485 021b 0100     		.2byte	0x1
+ 2486 021d 50       		.byte	0x50
+ 2487 021e 32000000 		.4byte	.LVL26
+ 2488 0222 38000000 		.4byte	.LVL27
+ 2489 0226 0100     		.2byte	0x1
+ 2490 0228 50       		.byte	0x50
+ 2491 0229 42000000 		.4byte	.LVL29
+ 2492 022d 44000000 		.4byte	.LVL30
+ 2493 0231 0100     		.2byte	0x1
+ 2494 0233 50       		.byte	0x50
+ 2495 0234 44000000 		.4byte	.LVL30
+ 2496 0238 48000000 		.4byte	.LVL31
+ 2497 023c 0200     		.2byte	0x2
+ 2498 023e 30       		.byte	0x30
+ 2499 023f 9F       		.byte	0x9f
+ 2500 0240 48000000 		.4byte	.LVL31
+ 2501 0244 5E000000 		.4byte	.LVL32
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 52
+
+
+ 2502 0248 0100     		.2byte	0x1
+ 2503 024a 50       		.byte	0x50
+ 2504 024b 80000000 		.4byte	.LVL37
+ 2505 024f 82000000 		.4byte	.LVL38
+ 2506 0253 0100     		.2byte	0x1
+ 2507 0255 50       		.byte	0x50
+ 2508 0256 00000000 		.4byte	0
+ 2509 025a 00000000 		.4byte	0
+ 2510              	.LLST10:
+ 2511 025e 0E000000 		.4byte	.LVL41
+ 2512 0262 14000000 		.4byte	.LVL42
+ 2513 0266 0200     		.2byte	0x2
+ 2514 0268 30       		.byte	0x30
+ 2515 0269 9F       		.byte	0x9f
+ 2516 026a 14000000 		.4byte	.LVL42
+ 2517 026e B0000000 		.4byte	.LVL77
+ 2518 0272 0100     		.2byte	0x1
+ 2519 0274 54       		.byte	0x54
+ 2520 0275 00000000 		.4byte	0
+ 2521 0279 00000000 		.4byte	0
+ 2522              	.LLST11:
+ 2523 027d 2A000000 		.4byte	.LVL44
+ 2524 0281 54000000 		.4byte	.LVL54
+ 2525 0285 0100     		.2byte	0x1
+ 2526 0287 56       		.byte	0x56
+ 2527 0288 54000000 		.4byte	.LVL54
+ 2528 028c 5E000000 		.4byte	.LVL57
+ 2529 0290 0300     		.2byte	0x3
+ 2530 0292 76       		.byte	0x76
+ 2531 0293 7F       		.sleb128 -1
+ 2532 0294 9F       		.byte	0x9f
+ 2533 0295 5E000000 		.4byte	.LVL57
+ 2534 0299 60000000 		.4byte	.LVL58
+ 2535 029d 0100     		.2byte	0x1
+ 2536 029f 56       		.byte	0x56
+ 2537 02a0 60000000 		.4byte	.LVL58
+ 2538 02a4 62000000 		.4byte	.LVL59
+ 2539 02a8 0200     		.2byte	0x2
+ 2540 02aa 34       		.byte	0x34
+ 2541 02ab 9F       		.byte	0x9f
+ 2542 02ac 62000000 		.4byte	.LVL59
+ 2543 02b0 66000000 		.4byte	.LVL60
+ 2544 02b4 0200     		.2byte	0x2
+ 2545 02b6 30       		.byte	0x30
+ 2546 02b7 9F       		.byte	0x9f
+ 2547 02b8 66000000 		.4byte	.LVL60
+ 2548 02bc 90000000 		.4byte	.LVL70
+ 2549 02c0 0100     		.2byte	0x1
+ 2550 02c2 56       		.byte	0x56
+ 2551 02c3 90000000 		.4byte	.LVL70
+ 2552 02c7 9A000000 		.4byte	.LVL73
+ 2553 02cb 0300     		.2byte	0x3
+ 2554 02cd 76       		.byte	0x76
+ 2555 02ce 7F       		.sleb128 -1
+ 2556 02cf 9F       		.byte	0x9f
+ 2557 02d0 9A000000 		.4byte	.LVL73
+ 2558 02d4 9C000000 		.4byte	.LVL74
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 53
+
+
+ 2559 02d8 0100     		.2byte	0x1
+ 2560 02da 56       		.byte	0x56
+ 2561 02db 9C000000 		.4byte	.LVL74
+ 2562 02df B0000000 		.4byte	.LVL77
+ 2563 02e3 0200     		.2byte	0x2
+ 2564 02e5 34       		.byte	0x34
+ 2565 02e6 9F       		.byte	0x9f
+ 2566 02e7 B8000000 		.4byte	.LVL79
+ 2567 02eb E2000000 		.4byte	.LVL86
+ 2568 02ef 0500     		.2byte	0x5
+ 2569 02f1 38       		.byte	0x38
+ 2570 02f2 76       		.byte	0x76
+ 2571 02f3 00       		.sleb128 0
+ 2572 02f4 1C       		.byte	0x1c
+ 2573 02f5 9F       		.byte	0x9f
+ 2574 02f6 E2000000 		.4byte	.LVL86
+ 2575 02fa E4000000 		.4byte	.LVL87
+ 2576 02fe 0500     		.2byte	0x5
+ 2577 0300 37       		.byte	0x37
+ 2578 0301 76       		.byte	0x76
+ 2579 0302 00       		.sleb128 0
+ 2580 0303 1C       		.byte	0x1c
+ 2581 0304 9F       		.byte	0x9f
+ 2582 0305 00000000 		.4byte	0
+ 2583 0309 00000000 		.4byte	0
+ 2584              	.LLST12:
+ 2585 030d AE000000 		.4byte	.LVL76
+ 2586 0311 B0000000 		.4byte	.LVL77
+ 2587 0315 0200     		.2byte	0x2
+ 2588 0317 30       		.byte	0x30
+ 2589 0318 9F       		.byte	0x9f
+ 2590 0319 B0000000 		.4byte	.LVL77
+ 2591 031d FA000000 		.4byte	.LVL90
+ 2592 0321 0100     		.2byte	0x1
+ 2593 0323 54       		.byte	0x54
+ 2594 0324 00000000 		.4byte	0
+ 2595 0328 00000000 		.4byte	0
+ 2596              	.LLST13:
+ 2597 032c 0E000000 		.4byte	.LVL41
+ 2598 0330 B0000000 		.4byte	.LVL77
+ 2599 0334 0100     		.2byte	0x1
+ 2600 0336 57       		.byte	0x57
+ 2601 0337 00000000 		.4byte	0
+ 2602 033b 00000000 		.4byte	0
+ 2603              	.LLST14:
+ 2604 033f 1C000000 		.4byte	.LVL43
+ 2605 0343 2A000000 		.4byte	.LVL44
+ 2606 0347 0100     		.2byte	0x1
+ 2607 0349 50       		.byte	0x50
+ 2608 034a 5A000000 		.4byte	.LVL56
+ 2609 034e 5E000000 		.4byte	.LVL57
+ 2610 0352 0100     		.2byte	0x1
+ 2611 0354 50       		.byte	0x50
+ 2612 0355 96000000 		.4byte	.LVL72
+ 2613 0359 9A000000 		.4byte	.LVL73
+ 2614 035d 0100     		.2byte	0x1
+ 2615 035f 50       		.byte	0x50
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 54
+
+
+ 2616 0360 B4000000 		.4byte	.LVL78
+ 2617 0364 B8000000 		.4byte	.LVL79
+ 2618 0368 0500     		.2byte	0x5
+ 2619 036a 75       		.byte	0x75
+ 2620 036b 00       		.sleb128 0
+ 2621 036c 74       		.byte	0x74
+ 2622 036d 00       		.sleb128 0
+ 2623 036e 22       		.byte	0x22
+ 2624 036f B8000000 		.4byte	.LVL79
+ 2625 0373 E0000000 		.4byte	.LVL85
+ 2626 0377 0100     		.2byte	0x1
+ 2627 0379 57       		.byte	0x57
+ 2628 037a E4000000 		.4byte	.LVL87
+ 2629 037e FA000000 		.4byte	.LVL90
+ 2630 0382 0100     		.2byte	0x1
+ 2631 0384 57       		.byte	0x57
+ 2632 0385 00000000 		.4byte	0
+ 2633 0389 00000000 		.4byte	0
+ 2634              	.LLST15:
+ 2635 038d 1C000000 		.4byte	.LVL43
+ 2636 0391 2A000000 		.4byte	.LVL44
+ 2637 0395 0200     		.2byte	0x2
+ 2638 0397 30       		.byte	0x30
+ 2639 0398 9F       		.byte	0x9f
+ 2640 0399 2A000000 		.4byte	.LVL44
+ 2641 039d 50000000 		.4byte	.LVL53
+ 2642 03a1 0100     		.2byte	0x1
+ 2643 03a3 53       		.byte	0x53
+ 2644 03a4 58000000 		.4byte	.LVL55
+ 2645 03a8 62000000 		.4byte	.LVL59
+ 2646 03ac 0100     		.2byte	0x1
+ 2647 03ae 53       		.byte	0x53
+ 2648 03af 62000000 		.4byte	.LVL59
+ 2649 03b3 66000000 		.4byte	.LVL60
+ 2650 03b7 0200     		.2byte	0x2
+ 2651 03b9 30       		.byte	0x30
+ 2652 03ba 9F       		.byte	0x9f
+ 2653 03bb 66000000 		.4byte	.LVL60
+ 2654 03bf 8C000000 		.4byte	.LVL69
+ 2655 03c3 0100     		.2byte	0x1
+ 2656 03c5 53       		.byte	0x53
+ 2657 03c6 94000000 		.4byte	.LVL71
+ 2658 03ca B0000000 		.4byte	.LVL77
+ 2659 03ce 0100     		.2byte	0x1
+ 2660 03d0 53       		.byte	0x53
+ 2661 03d1 00000000 		.4byte	0
+ 2662 03d5 00000000 		.4byte	0
+ 2663              	.LLST16:
+ 2664 03d9 00000000 		.4byte	.LVL40
+ 2665 03dd 14000000 		.4byte	.LVL42
+ 2666 03e1 0200     		.2byte	0x2
+ 2667 03e3 30       		.byte	0x30
+ 2668 03e4 9F       		.byte	0x9f
+ 2669 03e5 14000000 		.4byte	.LVL42
+ 2670 03e9 32000000 		.4byte	.LVL45
+ 2671 03ed 0100     		.2byte	0x1
+ 2672 03ef 52       		.byte	0x52
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 55
+
+
+ 2673 03f0 32000000 		.4byte	.LVL45
+ 2674 03f4 38000000 		.4byte	.LVL47
+ 2675 03f8 0200     		.2byte	0x2
+ 2676 03fa 30       		.byte	0x30
+ 2677 03fb 9F       		.byte	0x9f
+ 2678 03fc 38000000 		.4byte	.LVL47
+ 2679 0400 3C000000 		.4byte	.LVL48
+ 2680 0404 0100     		.2byte	0x1
+ 2681 0406 52       		.byte	0x52
+ 2682 0407 3C000000 		.4byte	.LVL48
+ 2683 040b 3E000000 		.4byte	.LVL49
+ 2684 040f 0200     		.2byte	0x2
+ 2685 0411 31       		.byte	0x31
+ 2686 0412 9F       		.byte	0x9f
+ 2687 0413 3E000000 		.4byte	.LVL49
+ 2688 0417 44000000 		.4byte	.LVL50
+ 2689 041b 0100     		.2byte	0x1
+ 2690 041d 52       		.byte	0x52
+ 2691 041e 44000000 		.4byte	.LVL50
+ 2692 0422 48000000 		.4byte	.LVL51
+ 2693 0426 0200     		.2byte	0x2
+ 2694 0428 31       		.byte	0x31
+ 2695 0429 9F       		.byte	0x9f
+ 2696 042a 48000000 		.4byte	.LVL51
+ 2697 042e 6E000000 		.4byte	.LVL61
+ 2698 0432 0100     		.2byte	0x1
+ 2699 0434 52       		.byte	0x52
+ 2700 0435 6E000000 		.4byte	.LVL61
+ 2701 0439 74000000 		.4byte	.LVL63
+ 2702 043d 0200     		.2byte	0x2
+ 2703 043f 30       		.byte	0x30
+ 2704 0440 9F       		.byte	0x9f
+ 2705 0441 74000000 		.4byte	.LVL63
+ 2706 0445 78000000 		.4byte	.LVL64
+ 2707 0449 0100     		.2byte	0x1
+ 2708 044b 52       		.byte	0x52
+ 2709 044c 78000000 		.4byte	.LVL64
+ 2710 0450 7A000000 		.4byte	.LVL65
+ 2711 0454 0200     		.2byte	0x2
+ 2712 0456 31       		.byte	0x31
+ 2713 0457 9F       		.byte	0x9f
+ 2714 0458 7A000000 		.4byte	.LVL65
+ 2715 045c 80000000 		.4byte	.LVL66
+ 2716 0460 0100     		.2byte	0x1
+ 2717 0462 52       		.byte	0x52
+ 2718 0463 80000000 		.4byte	.LVL66
+ 2719 0467 84000000 		.4byte	.LVL67
+ 2720 046b 0200     		.2byte	0x2
+ 2721 046d 31       		.byte	0x31
+ 2722 046e 9F       		.byte	0x9f
+ 2723 046f 84000000 		.4byte	.LVL67
+ 2724 0473 B0000000 		.4byte	.LVL77
+ 2725 0477 0100     		.2byte	0x1
+ 2726 0479 52       		.byte	0x52
+ 2727 047a 00000000 		.4byte	0
+ 2728 047e 00000000 		.4byte	0
+ 2729              	.LLST17:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 56
+
+
+ 2730 0482 1A000000 		.4byte	.LVL95
+ 2731 0486 2A000000 		.4byte	.LVL96
+ 2732 048a 0200     		.2byte	0x2
+ 2733 048c 31       		.byte	0x31
+ 2734 048d 9F       		.byte	0x9f
+ 2735 048e 54000000 		.4byte	.LVL103
+ 2736 0492 9C000000 		.4byte	.LVL110
+ 2737 0496 0200     		.2byte	0x2
+ 2738 0498 30       		.byte	0x30
+ 2739 0499 9F       		.byte	0x9f
+ 2740 049a A0000000 		.4byte	.LVL111
+ 2741 049e AC000000 		.4byte	.LVL112
+ 2742 04a2 0200     		.2byte	0x2
+ 2743 04a4 30       		.byte	0x30
+ 2744 04a5 9F       		.byte	0x9f
+ 2745 04a6 AC000000 		.4byte	.LVL112
+ 2746 04aa AE000000 		.4byte	.LVL113
+ 2747 04ae 0300     		.2byte	0x3
+ 2748 04b0 75       		.byte	0x75
+ 2749 04b1 01       		.sleb128 1
+ 2750 04b2 9F       		.byte	0x9f
+ 2751 04b3 B2000000 		.4byte	.LVL114
+ 2752 04b7 B4000000 		.4byte	.LVL115
+ 2753 04bb 0200     		.2byte	0x2
+ 2754 04bd 30       		.byte	0x30
+ 2755 04be 9F       		.byte	0x9f
+ 2756 04bf 00000000 		.4byte	0
+ 2757 04c3 00000000 		.4byte	0
+ 2758              	.LLST18:
+ 2759 04c7 1A000000 		.4byte	.LVL95
+ 2760 04cb 2A000000 		.4byte	.LVL96
+ 2761 04cf 0200     		.2byte	0x2
+ 2762 04d1 30       		.byte	0x30
+ 2763 04d2 9F       		.byte	0x9f
+ 2764 04d3 54000000 		.4byte	.LVL103
+ 2765 04d7 5A000000 		.4byte	.LVL104
+ 2766 04db 0300     		.2byte	0x3
+ 2767 04dd 77       		.byte	0x77
+ 2768 04de 01       		.sleb128 1
+ 2769 04df 9F       		.byte	0x9f
+ 2770 04e0 00000000 		.4byte	0
+ 2771 04e4 00000000 		.4byte	0
+ 2772              	.LLST19:
+ 2773 04e8 1A000000 		.4byte	.LVL95
+ 2774 04ec 2A000000 		.4byte	.LVL96
+ 2775 04f0 0200     		.2byte	0x2
+ 2776 04f2 44       		.byte	0x44
+ 2777 04f3 9F       		.byte	0x9f
+ 2778 04f4 6E000000 		.4byte	.LVL105
+ 2779 04f8 72000000 		.4byte	.LVL106
+ 2780 04fc 0500     		.2byte	0x5
+ 2781 04fe 7C       		.byte	0x7c
+ 2782 04ff 00       		.sleb128 0
+ 2783 0500 31       		.byte	0x31
+ 2784 0501 26       		.byte	0x26
+ 2785 0502 9F       		.byte	0x9f
+ 2786 0503 00000000 		.4byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 57
+
+
+ 2787 0507 00000000 		.4byte	0
+ 2788              	.LLST20:
+ 2789 050b 1A000000 		.4byte	.LVL95
+ 2790 050f 2A000000 		.4byte	.LVL96
+ 2791 0513 0200     		.2byte	0x2
+ 2792 0515 30       		.byte	0x30
+ 2793 0516 9F       		.byte	0x9f
+ 2794 0517 9C000000 		.4byte	.LVL110
+ 2795 051b A0000000 		.4byte	.LVL111
+ 2796 051f 0200     		.2byte	0x2
+ 2797 0521 30       		.byte	0x30
+ 2798 0522 9F       		.byte	0x9f
+ 2799 0523 AC000000 		.4byte	.LVL112
+ 2800 0527 B2000000 		.4byte	.LVL114
+ 2801 052b 0200     		.2byte	0x2
+ 2802 052d 30       		.byte	0x30
+ 2803 052e 9F       		.byte	0x9f
+ 2804 052f B2000000 		.4byte	.LVL114
+ 2805 0533 B4000000 		.4byte	.LVL115
+ 2806 0537 0200     		.2byte	0x2
+ 2807 0539 32       		.byte	0x32
+ 2808 053a 9F       		.byte	0x9f
+ 2809 053b 00000000 		.4byte	0
+ 2810 053f 00000000 		.4byte	0
+ 2811              	.LLST21:
+ 2812 0543 0A000000 		.4byte	.LVL92
+ 2813 0547 0C000000 		.4byte	.LVL93
+ 2814 054b 0200     		.2byte	0x2
+ 2815 054d 30       		.byte	0x30
+ 2816 054e 9F       		.byte	0x9f
+ 2817 054f 0C000000 		.4byte	.LVL93
+ 2818 0553 2A000000 		.4byte	.LVL96
+ 2819 0557 0100     		.2byte	0x1
+ 2820 0559 50       		.byte	0x50
+ 2821 055a CC000000 		.4byte	.LVL118
+ 2822 055e D2000000 		.4byte	.LVL119
+ 2823 0562 0200     		.2byte	0x2
+ 2824 0564 30       		.byte	0x30
+ 2825 0565 9F       		.byte	0x9f
+ 2826 0566 00000000 		.4byte	0
+ 2827 056a 00000000 		.4byte	0
+ 2828              	.LLST22:
+ 2829 056e 1A000000 		.4byte	.LVL95
+ 2830 0572 2A000000 		.4byte	.LVL96
+ 2831 0576 0200     		.2byte	0x2
+ 2832 0578 30       		.byte	0x30
+ 2833 0579 9F       		.byte	0x9f
+ 2834 057a 9C000000 		.4byte	.LVL110
+ 2835 057e A0000000 		.4byte	.LVL111
+ 2836 0582 0200     		.2byte	0x2
+ 2837 0584 31       		.byte	0x31
+ 2838 0585 9F       		.byte	0x9f
+ 2839 0586 00000000 		.4byte	0
+ 2840 058a 00000000 		.4byte	0
+ 2841              	.LLST23:
+ 2842 058e 30000000 		.4byte	.LVL97
+ 2843 0592 38000000 		.4byte	.LVL98
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 58
+
+
+ 2844 0596 0100     		.2byte	0x1
+ 2845 0598 58       		.byte	0x58
+ 2846 0599 38000000 		.4byte	.LVL98
+ 2847 059d 3A000000 		.4byte	.LVL99
+ 2848 05a1 0200     		.2byte	0x2
+ 2849 05a3 73       		.byte	0x73
+ 2850 05a4 00       		.sleb128 0
+ 2851 05a5 3A000000 		.4byte	.LVL99
+ 2852 05a9 FA000000 		.4byte	.LVL123
+ 2853 05ad 0100     		.2byte	0x1
+ 2854 05af 58       		.byte	0x58
+ 2855 05b0 00000000 		.4byte	0
+ 2856 05b4 00000000 		.4byte	0
+ 2857              		.section	.debug_aranges,"",%progbits
+ 2858 0000 34000000 		.4byte	0x34
+ 2859 0004 0200     		.2byte	0x2
+ 2860 0006 00000000 		.4byte	.Ldebug_info0
+ 2861 000a 04       		.byte	0x4
+ 2862 000b 00       		.byte	0
+ 2863 000c 0000     		.2byte	0
+ 2864 000e 0000     		.2byte	0
+ 2865 0010 00000000 		.4byte	.LFB63
+ 2866 0014 7C000000 		.4byte	.LFE63-.LFB63
+ 2867 0018 00000000 		.4byte	.LFB64
+ 2868 001c 90000000 		.4byte	.LFE64-.LFB64
+ 2869 0020 00000000 		.4byte	.LFB65
+ 2870 0024 04010000 		.4byte	.LFE65-.LFB65
+ 2871 0028 00000000 		.4byte	.LFB66
+ 2872 002c 14010000 		.4byte	.LFE66-.LFB66
+ 2873 0030 00000000 		.4byte	0
+ 2874 0034 00000000 		.4byte	0
+ 2875              		.section	.debug_ranges,"",%progbits
+ 2876              	.Ldebug_ranges0:
+ 2877 0000 00000000 		.4byte	.LFB63
+ 2878 0004 7C000000 		.4byte	.LFE63
+ 2879 0008 00000000 		.4byte	.LFB64
+ 2880 000c 90000000 		.4byte	.LFE64
+ 2881 0010 00000000 		.4byte	.LFB65
+ 2882 0014 04010000 		.4byte	.LFE65
+ 2883 0018 00000000 		.4byte	.LFB66
+ 2884 001c 14010000 		.4byte	.LFE66
+ 2885 0020 00000000 		.4byte	0
+ 2886 0024 00000000 		.4byte	0
+ 2887              		.section	.debug_line,"",%progbits
+ 2888              	.Ldebug_line0:
+ 2889 0000 62030000 		.section	.debug_str,"MS",%progbits,1
+ 2889      0200E601 
+ 2889      00000201 
+ 2889      FB0E0D00 
+ 2889      01010101 
+ 2890              	.LASF52:
+ 2891 0000 6E426974 		.ascii	"nBits\000"
+ 2891      7300
+ 2892              	.LASF50:
+ 2893 0006 4932435F 		.ascii	"I2C_Regs\000"
+ 2893      52656773 
+ 2893      00
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 59
+
+
+ 2894              	.LASF42:
+ 2895 000f 6F736470 		.ascii	"osdp_status\000"
+ 2895      5F737461 
+ 2895      74757300 
+ 2896              	.LASF80:
+ 2897 001b 4C45445F 		.ascii	"LED_GRN_Write\000"
+ 2897      47524E5F 
+ 2897      57726974 
+ 2897      6500
+ 2898              	.LASF24:
+ 2899 0029 74785F62 		.ascii	"tx_bits\000"
+ 2899      69747300 
+ 2900              	.LASF57:
+ 2901 0031 53656E64 		.ascii	"SendWeigand\000"
+ 2901      57656967 
+ 2901      616E6400 
+ 2902              	.LASF53:
+ 2903 003d 62697443 		.ascii	"bitCount\000"
+ 2903      6F756E74 
+ 2903      00
+ 2904              	.LASF72:
+ 2905 0046 66326664 		.ascii	"f2fdebugled\000"
+ 2905      65627567 
+ 2905      6C656400 
+ 2906              	.LASF63:
+ 2907 0052 4D794932 		.ascii	"MyI2C_Regs\000"
+ 2907      435F5265 
+ 2907      677300
+ 2908              	.LASF17:
+ 2909 005d 73697A65 		.ascii	"sizetype\000"
+ 2909      74797065 
+ 2909      00
+ 2910              	.LASF65:
+ 2911 0066 54414D50 		.ascii	"TAMPERCR_POLARITY\000"
+ 2911      45524352 
+ 2911      5F504F4C 
+ 2911      41524954 
+ 2911      5900
+ 2912              	.LASF44:
+ 2913 0078 6F736470 		.ascii	"osdp_rate\000"
+ 2913      5F726174 
+ 2913      6500
+ 2914              	.LASF46:
+ 2915 0082 6F736470 		.ascii	"osdp_reader_cmd\000"
+ 2915      5F726561 
+ 2915      6465725F 
+ 2915      636D6400 
+ 2916              	.LASF38:
+ 2917 0092 66616374 		.ascii	"factory_reset\000"
+ 2917      6F72795F 
+ 2917      72657365 
+ 2917      7400
+ 2918              	.LASF33:
+ 2919 00a0 64617461 		.ascii	"data_length\000"
+ 2919      5F6C656E 
+ 2919      67746800 
+ 2920              	.LASF45:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 60
+
+
+ 2921 00ac 6F736470 		.ascii	"osdp_buffer\000"
+ 2921      5F627566 
+ 2921      66657200 
+ 2922              	.LASF6:
+ 2923 00b8 6C6F6E67 		.ascii	"long long int\000"
+ 2923      206C6F6E 
+ 2923      6720696E 
+ 2923      7400
+ 2924              	.LASF55:
+ 2925 00c6 61505254 		.ascii	"aPRT0DRa\000"
+ 2925      30445261 
+ 2925      00
+ 2926              	.LASF71:
+ 2927 00cf 6632665F 		.ascii	"f2f_ack_delay_cnt\000"
+ 2927      61636B5F 
+ 2927      64656C61 
+ 2927      795F636E 
+ 2927      7400
+ 2928              	.LASF59:
+ 2929 00e1 6E626974 		.ascii	"nbit\000"
+ 2929      00
+ 2930              	.LASF2:
+ 2931 00e6 73686F72 		.ascii	"short int\000"
+ 2931      7420696E 
+ 2931      7400
+ 2932              	.LASF82:
+ 2933 00f0 6973725F 		.ascii	"isr_F2F_edge_Enable\000"
+ 2933      4632465F 
+ 2933      65646765 
+ 2933      5F456E61 
+ 2933      626C6500 
+ 2934              	.LASF79:
+ 2935 0104 50535F44 		.ascii	"PS_D0_Write\000"
+ 2935      305F5772 
+ 2935      69746500 
+ 2936              	.LASF25:
+ 2937 0110 72785F62 		.ascii	"rx_bits\000"
+ 2937      69747300 
+ 2938              	.LASF12:
+ 2939 0118 75696E74 		.ascii	"uint16\000"
+ 2939      313600
+ 2940              	.LASF64:
+ 2941 011f 63757272 		.ascii	"currentAccessType\000"
+ 2941      656E7441 
+ 2941      63636573 
+ 2941      73547970 
+ 2941      6500
+ 2942              	.LASF85:
+ 2943 0131 2E5C7769 		.ascii	".\\wiegand.c\000"
+ 2943      6567616E 
+ 2943      642E6300 
+ 2944              	.LASF81:
+ 2945 013d 6973725F 		.ascii	"isr_F2F_edge_Disable\000"
+ 2945      4632465F 
+ 2945      65646765 
+ 2945      5F446973 
+ 2945      61626C65 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 61
+
+
+ 2946              	.LASF58:
+ 2947 0152 52656164 		.ascii	"ReadF2F\000"
+ 2947      46324600 
+ 2948              	.LASF0:
+ 2949 015a 7369676E 		.ascii	"signed char\000"
+ 2949      65642063 
+ 2949      68617200 
+ 2950              	.LASF61:
+ 2951 0166 77696474 		.ascii	"width\000"
+ 2951      6800
+ 2952              	.LASF14:
+ 2953 016c 666C6F61 		.ascii	"float\000"
+ 2953      7400
+ 2954              	.LASF67:
+ 2955 0172 63617264 		.ascii	"card_in_buf\000"
+ 2955      5F696E5F 
+ 2955      62756600 
+ 2956              	.LASF84:
+ 2957 017e 474E5520 		.ascii	"GNU C 4.8.4 20140526 (release) [ARM/embedded-4_8-br"
+ 2957      4320342E 
+ 2957      382E3420 
+ 2957      32303134 
+ 2957      30353236 
+ 2958 01b1 616E6368 		.ascii	"anch revision 211358] -mcpu=cortex-m3 -mthumb -g -O"
+ 2958      20726576 
+ 2958      6973696F 
+ 2958      6E203231 
+ 2958      31333538 
+ 2959 01e4 73202D66 		.ascii	"s -ffunction-sections\000"
+ 2959      66756E63 
+ 2959      74696F6E 
+ 2959      2D736563 
+ 2959      74696F6E 
+ 2960              	.LASF34:
+ 2961 01fa 6163735F 		.ascii	"acs_outputs\000"
+ 2961      6F757470 
+ 2961      75747300 
+ 2962              	.LASF7:
+ 2963 0206 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 2963      206C6F6E 
+ 2963      6720756E 
+ 2963      7369676E 
+ 2963      65642069 
+ 2964              	.LASF21:
+ 2965 021d 62697473 		.ascii	"bits\000"
+ 2965      00
+ 2966              	.LASF47:
+ 2967 0222 6F736470 		.ascii	"osdp_reader_data_length\000"
+ 2967      5F726561 
+ 2967      6465725F 
+ 2967      64617461 
+ 2967      5F6C656E 
+ 2968              	.LASF66:
+ 2969 023a 63617264 		.ascii	"card_ack\000"
+ 2969      5F61636B 
+ 2969      00
+ 2970              	.LASF88:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 62
+
+
+ 2971 0243 53656E64 		.ascii	"SendF2F\000"
+ 2971      46324600 
+ 2972              	.LASF28:
+ 2973 024b 74696D65 		.ascii	"timer_rx_ctr\000"
+ 2973      725F7278 
+ 2973      5F637472 
+ 2973      00
+ 2974              	.LASF37:
+ 2975 0258 64756D6D 		.ascii	"dummy\000"
+ 2975      7900
+ 2976              	.LASF23:
+ 2977 025e 74785F62 		.ascii	"tx_byte\000"
+ 2977      79746500 
+ 2978              	.LASF77:
+ 2979 0266 50696E5F 		.ascii	"Pin_WD0_Read\000"
+ 2979      5744305F 
+ 2979      52656164 
+ 2979      00
+ 2980              	.LASF19:
+ 2981 0273 70617269 		.ascii	"parity\000"
+ 2981      747900
+ 2982              	.LASF86:
+ 2983 027a 433A5C55 		.ascii	"C:\\Users\\Yiquing\\Documents\\works\\NanoNXT\\f2f "
+ 2983      73657273 
+ 2983      5C596971 
+ 2983      75696E67 
+ 2983      5C446F63 
+ 2984 02a7 74657374 		.ascii	"testing\\3.2.0\\nanoNxt_ICM3.cydsn\000"
+ 2984      696E675C 
+ 2984      332E322E 
+ 2984      305C6E61 
+ 2984      6E6F4E78 
+ 2985              	.LASF48:
+ 2986 02c8 6F736470 		.ascii	"osdp_reader_rate\000"
+ 2986      5F726561 
+ 2986      6465725F 
+ 2986      72617465 
+ 2986      00
+ 2987              	.LASF49:
+ 2988 02d9 6F736470 		.ascii	"osdp_reader_buffer\000"
+ 2988      5F726561 
+ 2988      6465725F 
+ 2988      62756666 
+ 2988      657200
+ 2989              	.LASF30:
+ 2990 02ec 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 2990      5F554152 
+ 2990      545F5354 
+ 2990      52554354 
+ 2990      00
+ 2991              	.LASF11:
+ 2992 02fd 75696E74 		.ascii	"uint8\000"
+ 2992      3800
+ 2993              	.LASF18:
+ 2994 0303 62617564 		.ascii	"baud\000"
+ 2994      00
+ 2995              	.LASF43:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 63
+
+
+ 2996 0308 6F736470 		.ascii	"osdp_data_length\000"
+ 2996      5F646174 
+ 2996      615F6C65 
+ 2996      6E677468 
+ 2996      00
+ 2997              	.LASF1:
+ 2998 0319 756E7369 		.ascii	"unsigned char\000"
+ 2998      676E6564 
+ 2998      20636861 
+ 2998      7200
+ 2999              	.LASF54:
+ 3000 0327 62797465 		.ascii	"byteCount\000"
+ 3000      436F756E 
+ 3000      7400
+ 3001              	.LASF26:
+ 3002 0331 666C6167 		.ascii	"flags\000"
+ 3002      7300
+ 3003              	.LASF75:
+ 3004 0337 43794465 		.ascii	"CyDelayUs\000"
+ 3004      6C617955 
+ 3004      7300
+ 3005              	.LASF8:
+ 3006 0341 756E7369 		.ascii	"unsigned int\000"
+ 3006      676E6564 
+ 3006      20696E74 
+ 3006      00
+ 3007              	.LASF20:
+ 3008 034e 73746F70 		.ascii	"stop_bits\000"
+ 3008      5F626974 
+ 3008      7300
+ 3009              	.LASF5:
+ 3010 0358 6C6F6E67 		.ascii	"long unsigned int\000"
+ 3010      20756E73 
+ 3010      69676E65 
+ 3010      6420696E 
+ 3010      7400
+ 3011              	.LASF35:
+ 3012 036a 6163735F 		.ascii	"acs_inputs\000"
+ 3012      696E7075 
+ 3012      747300
+ 3013              	.LASF83:
+ 3014 0375 54696D65 		.ascii	"Timeout_Timer_Stop\000"
+ 3014      6F75745F 
+ 3014      54696D65 
+ 3014      725F5374 
+ 3014      6F7000
+ 3015              	.LASF60:
+ 3016 0388 73746172 		.ascii	"started\000"
+ 3016      74656400 
+ 3017              	.LASF29:
+ 3018 0390 72785F72 		.ascii	"rx_recv\000"
+ 3018      65637600 
+ 3019              	.LASF78:
+ 3020 0398 50696E5F 		.ascii	"Pin_WD1_Read\000"
+ 3020      5744315F 
+ 3020      52656164 
+ 3020      00
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 64
+
+
+ 3021              	.LASF31:
+ 3022 03a5 73746174 		.ascii	"status\000"
+ 3022      757300
+ 3023              	.LASF16:
+ 3024 03ac 63686172 		.ascii	"char\000"
+ 3024      00
+ 3025              	.LASF4:
+ 3026 03b1 6C6F6E67 		.ascii	"long int\000"
+ 3026      20696E74 
+ 3026      00
+ 3027              	.LASF10:
+ 3028 03ba 696E7433 		.ascii	"int32_t\000"
+ 3028      325F7400 
+ 3029              	.LASF68:
+ 3030 03c2 6632665F 		.ascii	"f2f_pulsewidth\000"
+ 3030      70756C73 
+ 3030      65776964 
+ 3030      746800
+ 3031              	.LASF3:
+ 3032 03d1 73686F72 		.ascii	"short unsigned int\000"
+ 3032      7420756E 
+ 3032      7369676E 
+ 3032      65642069 
+ 3032      6E7400
+ 3033              	.LASF87:
+ 3034 03e4 52656164 		.ascii	"ReadWeigand\000"
+ 3034      57656967 
+ 3034      616E6400 
+ 3035              	.LASF22:
+ 3036 03f0 72785F62 		.ascii	"rx_byte\000"
+ 3036      79746500 
+ 3037              	.LASF36:
+ 3038 03f8 62756666 		.ascii	"buffer\000"
+ 3038      657200
+ 3039              	.LASF13:
+ 3040 03ff 75696E74 		.ascii	"uint32\000"
+ 3040      333200
+ 3041              	.LASF74:
+ 3042 0406 50535F44 		.ascii	"PS_D1_Write\000"
+ 3042      315F5772 
+ 3042      69746500 
+ 3043              	.LASF32:
+ 3044 0412 73746174 		.ascii	"status_in\000"
+ 3044      75735F69 
+ 3044      6E00
+ 3045              	.LASF70:
+ 3046 041c 6632665F 		.ascii	"f2f_acknowledge_active\000"
+ 3046      61636B6E 
+ 3046      6F776C65 
+ 3046      6467655F 
+ 3046      61637469 
+ 3047              	.LASF73:
+ 3048 0433 4F707453 		.ascii	"OptSelect_Write\000"
+ 3048      656C6563 
+ 3048      745F5772 
+ 3048      69746500 
+ 3049              	.LASF51:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccENgnC0.s 			page 65
+
+
+ 3050 0443 636F756E 		.ascii	"count\000"
+ 3050      7400
+ 3051              	.LASF9:
+ 3052 0449 5F5F696E 		.ascii	"__int32_t\000"
+ 3052      7433325F 
+ 3052      7400
+ 3053              	.LASF69:
+ 3054 0453 74696D65 		.ascii	"timeout_cnt\000"
+ 3054      6F75745F 
+ 3054      636E7400 
+ 3055              	.LASF39:
+ 3056 045f 73775F76 		.ascii	"sw_version\000"
+ 3056      65727369 
+ 3056      6F6E00
+ 3057              	.LASF15:
+ 3058 046a 646F7562 		.ascii	"double\000"
+ 3058      6C6500
+ 3059              	.LASF56:
+ 3060 0471 666C6167 		.ascii	"flag\000"
+ 3060      00
+ 3061              	.LASF62:
+ 3062 0476 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 3062      52784275 
+ 3062      66666572 
+ 3062      00
+ 3063              	.LASF76:
+ 3064 0483 43794465 		.ascii	"CyDelay\000"
+ 3064      6C617900 
+ 3065              	.LASF40:
+ 3066 048b 68775F76 		.ascii	"hw_version\000"
+ 3066      65727369 
+ 3066      6F6E00
+ 3067              	.LASF41:
+ 3068 0496 6F736470 		.ascii	"osdp_cmd\000"
+ 3068      5F636D64 
+ 3068      00
+ 3069              	.LASF27:
+ 3070 049f 74696D65 		.ascii	"timer_tx_ctr\000"
+ 3070      725F7478 
+ 3070      5F637472 
+ 3070      00
+ 3071              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.8.4 20140526 (release) [ARM/embedded-4_8-br

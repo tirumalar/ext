@@ -1,0 +1,2824 @@
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"toc.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	s,40,4
+  20              		.comm	currentAccessType,1,1
+  21              		.comm	hw_old,1,1
+  22              		.comm	tp_old,1,1
+  23              		.comm	tamperCR_polarity,4,4
+  24              		.comm	tamper_out_polarity,4,4
+  25              		.comm	card_ack,4,4
+  26              		.comm	card_in_buf,4,4
+  27              		.comm	osdp_timeout,4,4
+  28              		.comm	tlv_ready,1,1
+  29              		.comm	readerbootloading,1,1
+  30              		.section	.text.ReadImageCard,"ax",%progbits
+  31              		.align	2
+  32              		.global	ReadImageCard
+  33              		.thumb
+  34              		.thumb_func
+  35              		.type	ReadImageCard, %function
+  36              	ReadImageCard:
+  37              	.LFB63:
+  38              		.file 1 "toc.c"
+   1:toc.c         **** /* ========================================
+   2:toc.c         ****  *
+   3:toc.c         ****  * Copyright YOUR COMPANY, THE YEAR
+   4:toc.c         ****  * All Rights Reserved
+   5:toc.c         ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:toc.c         ****  *
+   7:toc.c         ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:toc.c         ****  * WHICH IS THE PROPERTY OF your company.
+   9:toc.c         ****  *
+  10:toc.c         ****  * ========================================
+  11:toc.c         **** */
+  12:toc.c         **** #include <project.h>
+  13:toc.c         **** #include "toc.h"
+  14:toc.c         **** #include "osdp.h"
+  15:toc.c         **** #include "wavelynx.h"
+  16:toc.c         **** 
+  17:toc.c         **** uint8 tlv_ready;
+  18:toc.c         **** uint8 readerbootloading;
+  19:toc.c         **** 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 2
+
+
+  20:toc.c         **** 
+  21:toc.c         **** 
+  22:toc.c         **** 
+  23:toc.c         **** void ReadImageCard()
+  24:toc.c         **** {
+  39              		.loc 1 24 0
+  40              		.cfi_startproc
+  41              		@ args = 0, pretend = 0, frame = 8
+  42              		@ frame_needed = 1, uses_anonymous_args = 0
+  43 0000 80B5     		push	{r7, lr}
+  44              		.cfi_def_cfa_offset 8
+  45              		.cfi_offset 7, -8
+  46              		.cfi_offset 14, -4
+  47 0002 82B0     		sub	sp, sp, #8
+  48              		.cfi_def_cfa_offset 16
+  49 0004 00AF     		add	r7, sp, #0
+  50              		.cfi_def_cfa_register 7
+  25:toc.c         ****     int k;
+  26:toc.c         ****     if(tlv_ready == 1)
+  51              		.loc 1 26 0
+  52 0006 304B     		ldr	r3, .L8
+  53 0008 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  54 000a 012B     		cmp	r3, #1
+  55 000c 58D1     		bne	.L1
+  27:toc.c         ****     {
+  28:toc.c         ****         tlv_ready = 0;
+  56              		.loc 1 28 0
+  57 000e 2E4B     		ldr	r3, .L8
+  58 0010 0022     		movs	r2, #0
+  59 0012 1A70     		strb	r2, [r3]
+  29:toc.c         ****         if (rxi == 0) return; //wrong size
+  60              		.loc 1 29 0
+  61 0014 2D4B     		ldr	r3, .L8+4
+  62 0016 1B68     		ldr	r3, [r3]
+  63 0018 002B     		cmp	r3, #0
+  64 001a 50D0     		beq	.L7
+  30:toc.c         ****         if (rxi <= IMAGE_TEMP_SIZE )
+  65              		.loc 1 30 0
+  66 001c 2B4B     		ldr	r3, .L8+4
+  67 001e 1B68     		ldr	r3, [r3]
+  68 0020 41F2F442 		movw	r2, #5364
+  69 0024 9342     		cmp	r3, r2
+  70 0026 46DC     		bgt	.L4
+  31:toc.c         ****         {
+  32:toc.c         ****             for (k=0; k<rxi; k++)
+  71              		.loc 1 32 0
+  72 0028 0023     		movs	r3, #0
+  73 002a 7B60     		str	r3, [r7, #4]
+  74 002c 10E0     		b	.L5
+  75              	.L6:
+  33:toc.c         ****             {
+  34:toc.c         ****                 MyI2C_Regs.buffer[k] = ReaderRxBuffer[k];
+  76              		.loc 1 34 0 discriminator 3
+  77 002e 284A     		ldr	r2, .L8+8
+  78 0030 7B68     		ldr	r3, [r7, #4]
+  79 0032 1344     		add	r3, r3, r2
+  80 0034 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 3
+
+
+  81 0036 274A     		ldr	r2, .L8+12
+  82 0038 7B68     		ldr	r3, [r7, #4]
+  83 003a 1344     		add	r3, r3, r2
+  84 003c 03F5B273 		add	r3, r3, #356
+  85 0040 0A46     		mov	r2, r1
+  86 0042 1A70     		strb	r2, [r3]
+  35:toc.c         ****                 CyDelayUs(1);   //needed for Release Codes
+  87              		.loc 1 35 0 discriminator 3
+  88 0044 0120     		movs	r0, #1
+  89 0046 FFF7FEFF 		bl	CyDelayUs
+  32:toc.c         ****             {
+  90              		.loc 1 32 0 discriminator 3
+  91 004a 7B68     		ldr	r3, [r7, #4]
+  92 004c 0133     		adds	r3, r3, #1
+  93 004e 7B60     		str	r3, [r7, #4]
+  94              	.L5:
+  32:toc.c         ****             {
+  95              		.loc 1 32 0 is_stmt 0 discriminator 1
+  96 0050 1E4B     		ldr	r3, .L8+4
+  97 0052 1B68     		ldr	r3, [r3]
+  98 0054 7A68     		ldr	r2, [r7, #4]
+  99 0056 9A42     		cmp	r2, r3
+ 100 0058 E9DB     		blt	.L6
+  36:toc.c         ****             }
+  37:toc.c         ****             rxi = 0;  //ready for next image
+ 101              		.loc 1 37 0 is_stmt 1
+ 102 005a 1C4B     		ldr	r3, .L8+4
+ 103 005c 0022     		movs	r2, #0
+ 104 005e 1A60     		str	r2, [r3]
+  38:toc.c         ****             MyI2C_Regs.data_length[0]= k>>8;   //higher 8 bits
+ 105              		.loc 1 38 0
+ 106 0060 7B68     		ldr	r3, [r7, #4]
+ 107 0062 1B12     		asrs	r3, r3, #8
+ 108 0064 DAB2     		uxtb	r2, r3
+ 109 0066 1B4B     		ldr	r3, .L8+12
+ 110 0068 DA71     		strb	r2, [r3, #7]
+  39:toc.c         ****             MyI2C_Regs.data_length[1]= k;        //lower 8 bits.
+ 111              		.loc 1 39 0
+ 112 006a 7B68     		ldr	r3, [r7, #4]
+ 113 006c DAB2     		uxtb	r2, r3
+ 114 006e 194B     		ldr	r3, .L8+12
+ 115 0070 1A72     		strb	r2, [r3, #8]
+  40:toc.c         ****             MyI2C_Regs.dummy0[0]= (k>>8) & 0xFF;   //higher 8 bits
+ 116              		.loc 1 40 0
+ 117 0072 7B68     		ldr	r3, [r7, #4]
+ 118 0074 1B12     		asrs	r3, r3, #8
+ 119 0076 DAB2     		uxtb	r2, r3
+ 120 0078 164B     		ldr	r3, .L8+12
+ 121 007a 9A73     		strb	r2, [r3, #14]
+  41:toc.c         ****             MyI2C_Regs.dummy0[1]= k & 0xFF;        //lower 8 bits.
+ 122              		.loc 1 41 0
+ 123 007c 7B68     		ldr	r3, [r7, #4]
+ 124 007e DAB2     		uxtb	r2, r3
+ 125 0080 144B     		ldr	r3, .L8+12
+ 126 0082 DA73     		strb	r2, [r3, #15]
+  42:toc.c         ****             card_ack = 0;
+ 127              		.loc 1 42 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 4
+
+
+ 128 0084 144B     		ldr	r3, .L8+16
+ 129 0086 0022     		movs	r2, #0
+ 130 0088 1A60     		str	r2, [r3]
+  43:toc.c         ****             card_in_buf = 1;
+ 131              		.loc 1 43 0
+ 132 008a 144B     		ldr	r3, .L8+20
+ 133 008c 0122     		movs	r2, #1
+ 134 008e 1A60     		str	r2, [r3]
+  44:toc.c         ****             MyI2C_Regs.status_out |= STAT_CHANGE | STAT_CARD_IN;
+ 135              		.loc 1 44 0
+ 136 0090 104B     		ldr	r3, .L8+12
+ 137 0092 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 138 0094 43F00303 		orr	r3, r3, #3
+ 139 0098 DAB2     		uxtb	r2, r3
+ 140 009a 0E4B     		ldr	r3, .L8+12
+ 141 009c 1A70     		strb	r2, [r3]
+  45:toc.c         ****             MyI2C_Regs.cmd = CMD_NONE; //prevent to read it again
+ 142              		.loc 1 45 0
+ 143 009e 0D4B     		ldr	r3, .L8+12
+ 144 00a0 0022     		movs	r2, #0
+ 145 00a2 9A70     		strb	r2, [r3, #2]
+  46:toc.c         ****             MyI2C_Regs.buffer1[10] ++;
+ 146              		.loc 1 46 0
+ 147 00a4 0B4B     		ldr	r3, .L8+12
+ 148 00a6 93F85330 		ldrb	r3, [r3, #83]	@ zero_extendqisi2
+ 149 00aa 0133     		adds	r3, r3, #1
+ 150 00ac DAB2     		uxtb	r2, r3
+ 151 00ae 094B     		ldr	r3, .L8+12
+ 152 00b0 83F85320 		strb	r2, [r3, #83]
+ 153 00b4 04E0     		b	.L1
+ 154              	.L4:
+  47:toc.c         ****         }
+  48:toc.c         ****         else
+  49:toc.c         ****         {
+  50:toc.c         ****             rxi = 0; //data is too big, read again
+ 155              		.loc 1 50 0
+ 156 00b6 054B     		ldr	r3, .L8+4
+ 157 00b8 0022     		movs	r2, #0
+ 158 00ba 1A60     		str	r2, [r3]
+ 159 00bc 00E0     		b	.L1
+ 160              	.L7:
+  29:toc.c         ****         if (rxi <= IMAGE_TEMP_SIZE )
+ 161              		.loc 1 29 0
+ 162 00be 00BF     		nop
+ 163              	.L1:
+  51:toc.c         ****         }
+  52:toc.c         ****     } //if
+  53:toc.c         **** }
+ 164              		.loc 1 53 0
+ 165 00c0 0837     		adds	r7, r7, #8
+ 166              		.cfi_def_cfa_offset 8
+ 167 00c2 BD46     		mov	sp, r7
+ 168              		.cfi_def_cfa_register 13
+ 169              		@ sp needed
+ 170 00c4 80BD     		pop	{r7, pc}
+ 171              	.L9:
+ 172 00c6 00BF     		.align	2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 5
+
+
+ 173              	.L8:
+ 174 00c8 00000000 		.word	tlv_ready
+ 175 00cc 00000000 		.word	rxi
+ 176 00d0 00000000 		.word	ReaderRxBuffer
+ 177 00d4 00000000 		.word	MyI2C_Regs
+ 178 00d8 00000000 		.word	card_ack
+ 179 00dc 00000000 		.word	card_in_buf
+ 180              		.cfi_endproc
+ 181              	.LFE63:
+ 182              		.size	ReadImageCard, .-ReadImageCard
+ 183              		.section	.text.initTocReaderUART,"ax",%progbits
+ 184              		.align	2
+ 185              		.global	initTocReaderUART
+ 186              		.thumb
+ 187              		.thumb_func
+ 188              		.type	initTocReaderUART, %function
+ 189              	initTocReaderUART:
+ 190              	.LFB64:
+  54:toc.c         **** 
+  55:toc.c         **** 
+  56:toc.c         **** void initTocReaderUART()
+  57:toc.c         **** {
+ 191              		.loc 1 57 0
+ 192              		.cfi_startproc
+ 193              		@ args = 0, pretend = 0, frame = 0
+ 194              		@ frame_needed = 1, uses_anonymous_args = 0
+ 195 0000 80B5     		push	{r7, lr}
+ 196              		.cfi_def_cfa_offset 8
+ 197              		.cfi_offset 7, -8
+ 198              		.cfi_offset 14, -4
+ 199 0002 00AF     		add	r7, sp, #0
+ 200              		.cfi_def_cfa_register 7
+  58:toc.c         ****     rxi = 0;
+ 201              		.loc 1 58 0
+ 202 0004 0D4B     		ldr	r3, .L11
+ 203 0006 0022     		movs	r2, #0
+ 204 0008 1A60     		str	r2, [r3]
+  59:toc.c         ****     isr_READER_rx_SetVector(ImgRxInt);
+ 205              		.loc 1 59 0
+ 206 000a 0D48     		ldr	r0, .L11+4
+ 207 000c FFF7FEFF 		bl	isr_READER_rx_SetVector
+  60:toc.c         ****     isr_READER_rx_StartEx(ImgRxInt);
+ 208              		.loc 1 60 0
+ 209 0010 0B48     		ldr	r0, .L11+4
+ 210 0012 FFF7FEFF 		bl	isr_READER_rx_StartEx
+  61:toc.c         ****     SetReaderSpeed(BAUD_460800);
+ 211              		.loc 1 61 0
+ 212 0016 0620     		movs	r0, #6
+ 213 0018 FFF7FEFF 		bl	SetReaderSpeed
+  62:toc.c         ****     UART_READER_Start();
+ 214              		.loc 1 62 0
+ 215 001c FFF7FEFF 		bl	UART_READER_Start
+  63:toc.c         ****     UART_READER_LoadRxConfig();  //set to receiving mode
+ 216              		.loc 1 63 0
+ 217 0020 FFF7FEFF 		bl	UART_READER_LoadRxConfig
+  64:toc.c         ****     CR_DE_Write(0);
+ 218              		.loc 1 64 0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 6
+
+
+ 219 0024 0020     		movs	r0, #0
+ 220 0026 FFF7FEFF 		bl	CR_DE_Write
+  65:toc.c         ****     Mode_Sel_CR_Write(1); //set the chip to RS485 mode
+ 221              		.loc 1 65 0
+ 222 002a 0120     		movs	r0, #1
+ 223 002c FFF7FEFF 		bl	Mode_Sel_CR_Write
+  66:toc.c         ****     tlv_ready = 0;
+ 224              		.loc 1 66 0
+ 225 0030 044B     		ldr	r3, .L11+8
+ 226 0032 0022     		movs	r2, #0
+ 227 0034 1A70     		strb	r2, [r3]
+  67:toc.c         **** }
+ 228              		.loc 1 67 0
+ 229 0036 00BF     		nop
+ 230 0038 80BD     		pop	{r7, pc}
+ 231              	.L12:
+ 232 003a 00BF     		.align	2
+ 233              	.L11:
+ 234 003c 00000000 		.word	rxi
+ 235 0040 00000000 		.word	ImgRxInt
+ 236 0044 00000000 		.word	tlv_ready
+ 237              		.cfi_endproc
+ 238              	.LFE64:
+ 239              		.size	initTocReaderUART, .-initTocReaderUART
+ 240              		.comm	ReaderRxBuffer,6000,4
+ 241              		.comm	rxi,4,4
+ 242              		.comm	tlv_head_len,4,4
+ 243              		.comm	tlv_data_len,4,4
+ 244              		.comm	tlv_len,4,4
+ 245              		.comm	multi_byte_len,1,1
+ 246              		.comm	tocTag,1,1
+ 247              		.section	.text.ImgRxInt,"ax",%progbits
+ 248              		.align	2
+ 249              		.global	ImgRxInt
+ 250              		.thumb
+ 251              		.thumb_func
+ 252              		.type	ImgRxInt, %function
+ 253              	ImgRxInt:
+ 254              	.LFB65:
+  68:toc.c         **** 
+  69:toc.c         **** unsigned char	ReaderRxBuffer[IMAGE_BUFFER_SIZE];     // Rx circular buffer to hold all incoming com
+  70:toc.c         **** int rxi; //received index
+  71:toc.c         **** int tlv_head_len;
+  72:toc.c         **** int tlv_data_len;
+  73:toc.c         **** int tlv_len;
+  74:toc.c         **** unsigned char multi_byte_len;
+  75:toc.c         **** unsigned char tocTag;
+  76:toc.c         **** CY_ISR(ImgRxInt) //interrupt on Rx byte received
+  77:toc.c         **** {   
+ 255              		.loc 1 77 0
+ 256              		.cfi_startproc
+ 257              		@ args = 0, pretend = 0, frame = 8
+ 258              		@ frame_needed = 1, uses_anonymous_args = 0
+ 259 0000 80B5     		push	{r7, lr}
+ 260              		.cfi_def_cfa_offset 8
+ 261              		.cfi_offset 7, -8
+ 262              		.cfi_offset 14, -4
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 7
+
+
+ 263 0002 82B0     		sub	sp, sp, #8
+ 264              		.cfi_def_cfa_offset 16
+ 265 0004 00AF     		add	r7, sp, #0
+ 266              		.cfi_def_cfa_register 7
+  78:toc.c         ****     unsigned char uch;
+  79:toc.c         ****     //move all available characters from Rx queue to RxBuffer
+  80:toc.c         ****     while(UART_READER_ReadRxStatus() & UART_READER_RX_STS_FIFO_NOTEMPTY)
+ 267              		.loc 1 80 0
+ 268 0006 B6E0     		b	.L14
+ 269              	.L26:
+  81:toc.c         **** 	{
+  82:toc.c         ****         uch = UART_READER_ReadRxData(); //get serial port
+ 270              		.loc 1 82 0
+ 271 0008 FFF7FEFF 		bl	UART_READER_ReadRxData
+ 272 000c 0346     		mov	r3, r0
+ 273 000e FB71     		strb	r3, [r7, #7]
+  83:toc.c         ****         if (rxi < IMAGE_TEMP_SIZE) ReaderRxBuffer[rxi] = uch; //put into the buffer
+ 274              		.loc 1 83 0
+ 275 0010 5F4B     		ldr	r3, .L29
+ 276 0012 1B68     		ldr	r3, [r3]
+ 277 0014 41F2F342 		movw	r2, #5363
+ 278 0018 9342     		cmp	r3, r2
+ 279 001a 04DC     		bgt	.L15
+ 280              		.loc 1 83 0 is_stmt 0 discriminator 1
+ 281 001c 5C4B     		ldr	r3, .L29
+ 282 001e 1B68     		ldr	r3, [r3]
+ 283 0020 5C49     		ldr	r1, .L29+4
+ 284 0022 FA79     		ldrb	r2, [r7, #7]
+ 285 0024 CA54     		strb	r2, [r1, r3]
+ 286              	.L15:
+  84:toc.c         ****         if (rxi == 0){
+ 287              		.loc 1 84 0 is_stmt 1
+ 288 0026 5A4B     		ldr	r3, .L29
+ 289 0028 1B68     		ldr	r3, [r3]
+ 290 002a 002B     		cmp	r3, #0
+ 291 002c 17D1     		bne	.L16
+  85:toc.c         ****             tocTag = ReaderRxBuffer[0];
+ 292              		.loc 1 85 0
+ 293 002e 594B     		ldr	r3, .L29+4
+ 294 0030 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 295 0032 594B     		ldr	r3, .L29+8
+ 296 0034 1A70     		strb	r2, [r3]
+  86:toc.c         ****             switch (tocTag)
+ 297              		.loc 1 86 0
+ 298 0036 584B     		ldr	r3, .L29+8
+ 299 0038 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 300 003a 202B     		cmp	r3, #32
+ 301 003c 0ED0     		beq	.L27
+ 302 003e 202B     		cmp	r3, #32
+ 303 0040 04DC     		bgt	.L19
+ 304 0042 0C2B     		cmp	r3, #12
+ 305 0044 0AD0     		beq	.L27
+ 306 0046 0E2B     		cmp	r3, #14
+ 307 0048 08D0     		beq	.L27
+  87:toc.c         ****             {
+  88:toc.c         ****                 case SP_ENVELOPE:
+  89:toc.c         ****                 case SP_ENVELOPE_CRC:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 8
+
+
+  90:toc.c         ****                 case RSP_MESSAGE:
+  91:toc.c         ****                 case DATA_DEVICE_INFO:
+  92:toc.c         ****                 case DATA_EYELOCK_TEMPLATE:
+  93:toc.c         ****                 case DATA_PACKET:
+  94:toc.c         ****                 case CMD_PING:
+  95:toc.c         ****                 break;
+  96:toc.c         **** //                default: return; //comment off for bad respond of bootloading
+  97:toc.c         ****                 default: return;
+ 308              		.loc 1 97 0
+ 309 004a 9DE0     		b	.L28
+ 310              	.L19:
+  86:toc.c         ****             switch (tocTag)
+ 311              		.loc 1 86 0
+ 312 004c 382B     		cmp	r3, #56
+ 313 004e C0F29B80 		blt	.L28
+ 314 0052 3A2B     		cmp	r3, #58
+ 315 0054 02DD     		ble	.L27
+ 316 0056 5C2B     		cmp	r3, #92
+ 317 0058 00D0     		beq	.L27
+ 318              		.loc 1 97 0
+ 319 005a 95E0     		b	.L28
+ 320              	.L27:
+  95:toc.c         **** //                default: return; //comment off for bad respond of bootloading
+ 321              		.loc 1 95 0
+ 322 005c 00BF     		nop
+ 323              	.L16:
+  98:toc.c         ****             }
+  99:toc.c         **** 
+ 100:toc.c         ****         }
+ 101:toc.c         ****         /*  If the Length field is greater than or equal to 128 bytes, 
+ 102:toc.c         ****             then a multi byte format is needed to represent the Length of the Value field. 
+ 103:toc.c         ****             In this case the most significant bit of the first byte in the Length field
+ 104:toc.c         ****             is always set to 1. 
+ 105:toc.c         ****             Length = 8180 indicates a length of 128 (0x80) bytes
+ 106:toc.c         ****             Length = 820200 indicates a length of 512 (0x0200) bytes.
+ 107:toc.c         ****             Length = 8303C102 indicates a length of 246,018 (0x03C102) bytes  */
+ 108:toc.c         ****         if (rxi == 1){
+ 324              		.loc 1 108 0
+ 325 005e 4C4B     		ldr	r3, .L29
+ 326 0060 1B68     		ldr	r3, [r3]
+ 327 0062 012B     		cmp	r3, #1
+ 328 0064 35D1     		bne	.L21
+ 109:toc.c         ****             if (ReaderRxBuffer[rxi] & 0x80){ //check if the len is more than 127
+ 329              		.loc 1 109 0
+ 330 0066 4A4B     		ldr	r3, .L29
+ 331 0068 1B68     		ldr	r3, [r3]
+ 332 006a 4A4A     		ldr	r2, .L29+4
+ 333 006c D35C     		ldrb	r3, [r2, r3]	@ zero_extendqisi2
+ 334 006e 5BB2     		sxtb	r3, r3
+ 335 0070 002B     		cmp	r3, #0
+ 336 0072 18DA     		bge	.L22
+ 110:toc.c         ****                 multi_byte_len = 1;
+ 337              		.loc 1 110 0
+ 338 0074 494B     		ldr	r3, .L29+12
+ 339 0076 0122     		movs	r2, #1
+ 340 0078 1A70     		strb	r2, [r3]
+ 111:toc.c         ****                 tlv_data_len = ReaderRxBuffer[rxi] & 0x7F; //get the tlv data length
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 9
+
+
+ 341              		.loc 1 111 0
+ 342 007a 454B     		ldr	r3, .L29
+ 343 007c 1B68     		ldr	r3, [r3]
+ 344 007e 454A     		ldr	r2, .L29+4
+ 345 0080 D35C     		ldrb	r3, [r2, r3]	@ zero_extendqisi2
+ 346 0082 03F07F03 		and	r3, r3, #127
+ 347 0086 464A     		ldr	r2, .L29+16
+ 348 0088 1360     		str	r3, [r2]
+ 112:toc.c         ****                 tlv_len = 0;
+ 349              		.loc 1 112 0
+ 350 008a 464B     		ldr	r3, .L29+20
+ 351 008c 0022     		movs	r2, #0
+ 352 008e 1A60     		str	r2, [r3]
+ 113:toc.c         ****                 tlv_head_len = 2 + tlv_data_len; //head length = tag_id + length field length
+ 353              		.loc 1 113 0
+ 354 0090 434B     		ldr	r3, .L29+16
+ 355 0092 1B68     		ldr	r3, [r3]
+ 356 0094 0233     		adds	r3, r3, #2
+ 357 0096 444A     		ldr	r2, .L29+24
+ 358 0098 1360     		str	r3, [r2]
+ 114:toc.c         ****                 rxi++;
+ 359              		.loc 1 114 0
+ 360 009a 3D4B     		ldr	r3, .L29
+ 361 009c 1B68     		ldr	r3, [r3]
+ 362 009e 0133     		adds	r3, r3, #1
+ 363 00a0 3B4A     		ldr	r2, .L29
+ 364 00a2 1360     		str	r3, [r2]
+ 115:toc.c         ****                 return;
+ 365              		.loc 1 115 0
+ 366 00a4 71E0     		b	.L13
+ 367              	.L22:
+ 116:toc.c         ****             }else{
+ 117:toc.c         ****                 multi_byte_len = 0;
+ 368              		.loc 1 117 0
+ 369 00a6 3D4B     		ldr	r3, .L29+12
+ 370 00a8 0022     		movs	r2, #0
+ 371 00aa 1A70     		strb	r2, [r3]
+ 118:toc.c         ****                 tlv_len = ReaderRxBuffer[rxi] & 0x7F; //get the tlv data length
+ 372              		.loc 1 118 0
+ 373 00ac 384B     		ldr	r3, .L29
+ 374 00ae 1B68     		ldr	r3, [r3]
+ 375 00b0 384A     		ldr	r2, .L29+4
+ 376 00b2 D35C     		ldrb	r3, [r2, r3]	@ zero_extendqisi2
+ 377 00b4 03F07F03 		and	r3, r3, #127
+ 378 00b8 3A4A     		ldr	r2, .L29+20
+ 379 00ba 1360     		str	r3, [r2]
+ 119:toc.c         ****                 tlv_len = 2 + tlv_len; //length = tag_id + length field length
+ 380              		.loc 1 119 0
+ 381 00bc 394B     		ldr	r3, .L29+20
+ 382 00be 1B68     		ldr	r3, [r3]
+ 383 00c0 0233     		adds	r3, r3, #2
+ 384 00c2 384A     		ldr	r2, .L29+20
+ 385 00c4 1360     		str	r3, [r2]
+ 120:toc.c         ****                 rxi++;
+ 386              		.loc 1 120 0
+ 387 00c6 324B     		ldr	r3, .L29
+ 388 00c8 1B68     		ldr	r3, [r3]
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 10
+
+
+ 389 00ca 0133     		adds	r3, r3, #1
+ 390 00cc 304A     		ldr	r2, .L29
+ 391 00ce 1360     		str	r3, [r2]
+ 121:toc.c         ****                 return;
+ 392              		.loc 1 121 0
+ 393 00d0 5BE0     		b	.L13
+ 394              	.L21:
+ 122:toc.c         ****             }
+ 123:toc.c         ****         }
+ 124:toc.c         ****         if (multi_byte_len == 1 && tlv_data_len > 0 && rxi > 1){        //get the package length
+ 395              		.loc 1 124 0
+ 396 00d2 324B     		ldr	r3, .L29+12
+ 397 00d4 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 398 00d6 012B     		cmp	r3, #1
+ 399 00d8 29D1     		bne	.L23
+ 400              		.loc 1 124 0 is_stmt 0 discriminator 1
+ 401 00da 314B     		ldr	r3, .L29+16
+ 402 00dc 1B68     		ldr	r3, [r3]
+ 403 00de 002B     		cmp	r3, #0
+ 404 00e0 25DD     		ble	.L23
+ 405              		.loc 1 124 0 discriminator 2
+ 406 00e2 2B4B     		ldr	r3, .L29
+ 407 00e4 1B68     		ldr	r3, [r3]
+ 408 00e6 012B     		cmp	r3, #1
+ 409 00e8 21DD     		ble	.L23
+ 125:toc.c         ****             tlv_len = (tlv_len << 8) + ReaderRxBuffer[rxi]; //2 bytes
+ 410              		.loc 1 125 0 is_stmt 1
+ 411 00ea 2E4B     		ldr	r3, .L29+20
+ 412 00ec 1B68     		ldr	r3, [r3]
+ 413 00ee 1B02     		lsls	r3, r3, #8
+ 414 00f0 274A     		ldr	r2, .L29
+ 415 00f2 1268     		ldr	r2, [r2]
+ 416 00f4 2749     		ldr	r1, .L29+4
+ 417 00f6 8A5C     		ldrb	r2, [r1, r2]	@ zero_extendqisi2
+ 418 00f8 1344     		add	r3, r3, r2
+ 419 00fa 2A4A     		ldr	r2, .L29+20
+ 420 00fc 1360     		str	r3, [r2]
+ 126:toc.c         ****             tlv_data_len--;                      //remaining counter
+ 421              		.loc 1 126 0
+ 422 00fe 284B     		ldr	r3, .L29+16
+ 423 0100 1B68     		ldr	r3, [r3]
+ 424 0102 013B     		subs	r3, r3, #1
+ 425 0104 264A     		ldr	r2, .L29+16
+ 426 0106 1360     		str	r3, [r2]
+ 127:toc.c         ****             if (tlv_data_len == 0){              //no more length bytes
+ 427              		.loc 1 127 0
+ 428 0108 254B     		ldr	r3, .L29+16
+ 429 010a 1B68     		ldr	r3, [r3]
+ 430 010c 002B     		cmp	r3, #0
+ 431 010e 0ED1     		bne	.L23
+ 128:toc.c         ****                 tlv_len += tlv_head_len;
+ 432              		.loc 1 128 0
+ 433 0110 244B     		ldr	r3, .L29+20
+ 434 0112 1A68     		ldr	r2, [r3]
+ 435 0114 244B     		ldr	r3, .L29+24
+ 436 0116 1B68     		ldr	r3, [r3]
+ 437 0118 1344     		add	r3, r3, r2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 11
+
+
+ 438 011a 224A     		ldr	r2, .L29+20
+ 439 011c 1360     		str	r3, [r2]
+ 129:toc.c         ****                 if ( tlv_len == 0)             //package is too short 1
+ 440              		.loc 1 129 0
+ 441 011e 214B     		ldr	r3, .L29+20
+ 442 0120 1B68     		ldr	r3, [r3]
+ 443 0122 002B     		cmp	r3, #0
+ 444 0124 03D1     		bne	.L23
+ 130:toc.c         ****                 {
+ 131:toc.c         ****                     rxi = 0; //bad data, read again.
+ 445              		.loc 1 131 0
+ 446 0126 1A4B     		ldr	r3, .L29
+ 447 0128 0022     		movs	r2, #0
+ 448 012a 1A60     		str	r2, [r3]
+ 132:toc.c         ****                     return;
+ 449              		.loc 1 132 0
+ 450 012c 2DE0     		b	.L13
+ 451              	.L23:
+ 133:toc.c         ****                 }
+ 134:toc.c         ****             }
+ 135:toc.c         ****         }
+ 136:toc.c         ****         if (rxi <= tlv_len && rxi <= IMAGE_TEMP_SIZE)
+ 452              		.loc 1 136 0
+ 453 012e 184B     		ldr	r3, .L29
+ 454 0130 1A68     		ldr	r2, [r3]
+ 455 0132 1C4B     		ldr	r3, .L29+20
+ 456 0134 1B68     		ldr	r3, [r3]
+ 457 0136 9A42     		cmp	r2, r3
+ 458 0138 0ADC     		bgt	.L24
+ 459              		.loc 1 136 0 is_stmt 0 discriminator 1
+ 460 013a 154B     		ldr	r3, .L29
+ 461 013c 1B68     		ldr	r3, [r3]
+ 462 013e 41F2F442 		movw	r2, #5364
+ 463 0142 9342     		cmp	r3, r2
+ 464 0144 04DC     		bgt	.L24
+ 137:toc.c         ****         {
+ 138:toc.c         ****             rxi++;
+ 465              		.loc 1 138 0 is_stmt 1
+ 466 0146 124B     		ldr	r3, .L29
+ 467 0148 1B68     		ldr	r3, [r3]
+ 468 014a 0133     		adds	r3, r3, #1
+ 469 014c 104A     		ldr	r2, .L29
+ 470 014e 1360     		str	r3, [r2]
+ 471              	.L24:
+ 139:toc.c         ****         }
+ 140:toc.c         **** 		if (tlv_len !=0 && (rxi >= tlv_len || rxi >= IMAGE_TEMP_SIZE))
+ 472              		.loc 1 140 0
+ 473 0150 144B     		ldr	r3, .L29+20
+ 474 0152 1B68     		ldr	r3, [r3]
+ 475 0154 002B     		cmp	r3, #0
+ 476 0156 0ED0     		beq	.L14
+ 477              		.loc 1 140 0 is_stmt 0 discriminator 1
+ 478 0158 0D4B     		ldr	r3, .L29
+ 479 015a 1A68     		ldr	r2, [r3]
+ 480 015c 114B     		ldr	r3, .L29+20
+ 481 015e 1B68     		ldr	r3, [r3]
+ 482 0160 9A42     		cmp	r2, r3
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 12
+
+
+ 483 0162 05DA     		bge	.L25
+ 484              		.loc 1 140 0 discriminator 2
+ 485 0164 0A4B     		ldr	r3, .L29
+ 486 0166 1B68     		ldr	r3, [r3]
+ 487 0168 41F2F342 		movw	r2, #5363
+ 488 016c 9342     		cmp	r3, r2
+ 489 016e 02DD     		ble	.L14
+ 490              	.L25:
+ 141:toc.c         ****         {
+ 142:toc.c         ****             tlv_ready = 1;
+ 491              		.loc 1 142 0 is_stmt 1
+ 492 0170 0E4B     		ldr	r3, .L29+28
+ 493 0172 0122     		movs	r2, #1
+ 494 0174 1A70     		strb	r2, [r3]
+ 495              	.L14:
+  80:toc.c         **** 	{
+ 496              		.loc 1 80 0
+ 497 0176 FFF7FEFF 		bl	UART_READER_ReadRxStatus
+ 498 017a 0346     		mov	r3, r0
+ 499 017c 03F02003 		and	r3, r3, #32
+ 500 0180 002B     		cmp	r3, #0
+ 501 0182 7FF441AF 		bne	.L26
+ 502 0186 00E0     		b	.L13
+ 503              	.L28:
+  97:toc.c         ****             }
+ 504              		.loc 1 97 0
+ 505 0188 00BF     		nop
+ 506              	.L13:
+ 143:toc.c         ****         }
+ 144:toc.c         **** 	}   
+ 145:toc.c         **** }
+ 507              		.loc 1 145 0
+ 508 018a 0837     		adds	r7, r7, #8
+ 509              		.cfi_def_cfa_offset 8
+ 510 018c BD46     		mov	sp, r7
+ 511              		.cfi_def_cfa_register 13
+ 512              		@ sp needed
+ 513 018e 80BD     		pop	{r7, pc}
+ 514              	.L30:
+ 515              		.align	2
+ 516              	.L29:
+ 517 0190 00000000 		.word	rxi
+ 518 0194 00000000 		.word	ReaderRxBuffer
+ 519 0198 00000000 		.word	tocTag
+ 520 019c 00000000 		.word	multi_byte_len
+ 521 01a0 00000000 		.word	tlv_data_len
+ 522 01a4 00000000 		.word	tlv_len
+ 523 01a8 00000000 		.word	tlv_head_len
+ 524 01ac 00000000 		.word	tlv_ready
+ 525              		.cfi_endproc
+ 526              	.LFE65:
+ 527              		.size	ImgRxInt, .-ImgRxInt
+ 528              		.section	.text.resetImgBuf,"ax",%progbits
+ 529              		.align	2
+ 530              		.global	resetImgBuf
+ 531              		.thumb
+ 532              		.thumb_func
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 13
+
+
+ 533              		.type	resetImgBuf, %function
+ 534              	resetImgBuf:
+ 535              	.LFB66:
+ 146:toc.c         **** 
+ 147:toc.c         **** void resetImgBuf()
+ 148:toc.c         **** {
+ 536              		.loc 1 148 0
+ 537              		.cfi_startproc
+ 538              		@ args = 0, pretend = 0, frame = 0
+ 539              		@ frame_needed = 1, uses_anonymous_args = 0
+ 540              		@ link register save eliminated.
+ 541 0000 80B4     		push	{r7}
+ 542              		.cfi_def_cfa_offset 4
+ 543              		.cfi_offset 7, -4
+ 544 0002 00AF     		add	r7, sp, #0
+ 545              		.cfi_def_cfa_register 7
+ 149:toc.c         ****     rxi = 0; //clear old card after ack
+ 546              		.loc 1 149 0
+ 547 0004 074B     		ldr	r3, .L32
+ 548 0006 0022     		movs	r2, #0
+ 549 0008 1A60     		str	r2, [r3]
+ 150:toc.c         ****     tlv_ready = 0; //ready for new cards
+ 550              		.loc 1 150 0
+ 551 000a 074B     		ldr	r3, .L32+4
+ 552 000c 0022     		movs	r2, #0
+ 553 000e 1A70     		strb	r2, [r3]
+ 151:toc.c         ****     card_in_buf = 0; //release the current card
+ 554              		.loc 1 151 0
+ 555 0010 064B     		ldr	r3, .L32+8
+ 556 0012 0022     		movs	r2, #0
+ 557 0014 1A60     		str	r2, [r3]
+ 152:toc.c         ****     tlv_len = 0; //reset last card length
+ 558              		.loc 1 152 0
+ 559 0016 064B     		ldr	r3, .L32+12
+ 560 0018 0022     		movs	r2, #0
+ 561 001a 1A60     		str	r2, [r3]
+ 153:toc.c         **** }
+ 562              		.loc 1 153 0
+ 563 001c 00BF     		nop
+ 564 001e BD46     		mov	sp, r7
+ 565              		.cfi_def_cfa_register 13
+ 566              		@ sp needed
+ 567 0020 80BC     		pop	{r7}
+ 568              		.cfi_restore 7
+ 569              		.cfi_def_cfa_offset 0
+ 570 0022 7047     		bx	lr
+ 571              	.L33:
+ 572              		.align	2
+ 573              	.L32:
+ 574 0024 00000000 		.word	rxi
+ 575 0028 00000000 		.word	tlv_ready
+ 576 002c 00000000 		.word	card_in_buf
+ 577 0030 00000000 		.word	tlv_len
+ 578              		.cfi_endproc
+ 579              	.LFE66:
+ 580              		.size	resetImgBuf, .-resetImgBuf
+ 581              		.section	.text.SendWaveLynxReader,"ax",%progbits
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 14
+
+
+ 582              		.align	2
+ 583              		.global	SendWaveLynxReader
+ 584              		.thumb
+ 585              		.thumb_func
+ 586              		.type	SendWaveLynxReader, %function
+ 587              	SendWaveLynxReader:
+ 588              	.LFB67:
+ 154:toc.c         **** 
+ 155:toc.c         **** void SendWaveLynxReader(unsigned char *buffer, int len)
+ 156:toc.c         **** {
+ 589              		.loc 1 156 0
+ 590              		.cfi_startproc
+ 591              		@ args = 0, pretend = 0, frame = 8
+ 592              		@ frame_needed = 1, uses_anonymous_args = 0
+ 593 0000 80B5     		push	{r7, lr}
+ 594              		.cfi_def_cfa_offset 8
+ 595              		.cfi_offset 7, -8
+ 596              		.cfi_offset 14, -4
+ 597 0002 82B0     		sub	sp, sp, #8
+ 598              		.cfi_def_cfa_offset 16
+ 599 0004 00AF     		add	r7, sp, #0
+ 600              		.cfi_def_cfa_register 7
+ 601 0006 7860     		str	r0, [r7, #4]
+ 602 0008 3960     		str	r1, [r7]
+ 157:toc.c         **** //    CyDelay(50); //add some delay before sending 40. 
+ 158:toc.c         **** //    Mode_Sel_CR_Write(1); //set the SP335e chip to RS485
+ 159:toc.c         ****     CR_DE_Write(1);
+ 603              		.loc 1 159 0
+ 604 000a 0120     		movs	r0, #1
+ 605 000c FFF7FEFF 		bl	CR_DE_Write
+ 160:toc.c         ****     UART_READER_ClearTxBuffer();
+ 606              		.loc 1 160 0
+ 607 0010 FFF7FEFF 		bl	UART_READER_ClearTxBuffer
+ 161:toc.c         ****     UART_READER_LoadTxConfig();
+ 608              		.loc 1 161 0
+ 609 0014 FFF7FEFF 		bl	UART_READER_LoadTxConfig
+ 162:toc.c         ****     CyDelayUs(20); //20us Driver Output Enable Time, do not reduce. 
+ 610              		.loc 1 162 0
+ 611 0018 1420     		movs	r0, #20
+ 612 001a FFF7FEFF 		bl	CyDelayUs
+ 163:toc.c         ****     UART_READER_PutArray(buffer,len); 
+ 613              		.loc 1 163 0
+ 614 001e 3B68     		ldr	r3, [r7]
+ 615 0020 DBB2     		uxtb	r3, r3
+ 616 0022 1946     		mov	r1, r3
+ 617 0024 7868     		ldr	r0, [r7, #4]
+ 618 0026 FFF7FEFF 		bl	UART_READER_PutArray
+ 164:toc.c         ****     CyDelayUs(120); //minmum 4ms 120us
+ 619              		.loc 1 164 0
+ 620 002a 7820     		movs	r0, #120
+ 621 002c FFF7FEFF 		bl	CyDelayUs
+ 165:toc.c         ****     UART_READER_LoadRxConfig();  //set to receiving mode
+ 622              		.loc 1 165 0
+ 623 0030 FFF7FEFF 		bl	UART_READER_LoadRxConfig
+ 166:toc.c         ****     CR_DE_Write(0);
+ 624              		.loc 1 166 0
+ 625 0034 0020     		movs	r0, #0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 15
+
+
+ 626 0036 FFF7FEFF 		bl	CR_DE_Write
+ 167:toc.c         **** //    Mode_Sel_CR_Write(1); //set the chip to RS485 mode
+ 168:toc.c         ****     resetImgBuf();  //clear everything before receive the reply
+ 627              		.loc 1 168 0
+ 628 003a FFF7FEFF 		bl	resetImgBuf
+ 169:toc.c         ****     UART_READER_ClearRxBuffer();
+ 629              		.loc 1 169 0
+ 630 003e FFF7FEFF 		bl	UART_READER_ClearRxBuffer
+ 170:toc.c         **** }
+ 631              		.loc 1 170 0
+ 632 0042 00BF     		nop
+ 633 0044 0837     		adds	r7, r7, #8
+ 634              		.cfi_def_cfa_offset 8
+ 635 0046 BD46     		mov	sp, r7
+ 636              		.cfi_def_cfa_register 13
+ 637              		@ sp needed
+ 638 0048 80BD     		pop	{r7, pc}
+ 639              		.cfi_endproc
+ 640              	.LFE67:
+ 641              		.size	SendWaveLynxReader, .-SendWaveLynxReader
+ 642 004a 00BF     		.section	.text.CalculateCrc16,"ax",%progbits
+ 643              		.align	2
+ 644              		.global	CalculateCrc16
+ 645              		.thumb
+ 646              		.thumb_func
+ 647              		.type	CalculateCrc16, %function
+ 648              	CalculateCrc16:
+ 649              	.LFB68:
+ 171:toc.c         **** 
+ 172:toc.c         **** /**********************************************************************
+ 173:toc.c         **** *
+ 174:toc.c         **** *  Function Name: CalculateCrc16
+ 175:toc.c         **** *
+ 176:toc.c         **** *  Inputs:
+ 177:toc.c         **** *    pData – Points to the data to perform the CRC on
+ 178:toc.c         **** *    numBytes – Number of valid bytes in pData[].
+ 179:toc.c         **** *    startValue – Initialization value (always 0x6363)
+ 180:toc.c         **** *
+ 181:toc.c         **** *  Outputs
+ 182:toc.c         **** *    None
+ 183:toc.c         **** *
+ 184:toc.c         **** *  Return Values
+ 185:toc.c         **** *    The 16 bit value representing the CCITT CRC resulting from 
+ 186:toc.c         **** *    performing the algorithm on the data in pData[].
+ 187:toc.c         **** *
+ 188:toc.c         **** *  Description:  This function performs a 16 bit CCITT CRC on the data 
+ 189:toc.c         **** *                pointed to by pData.
+ 190:toc.c         **** *
+ 191:toc.c         **** **********************************************************************/
+ 192:toc.c         **** uint16_t CalculateCrc16(uint8_t *pData, uint16_t numBytes, uint16_t startValue)
+ 193:toc.c         **** {
+ 650              		.loc 1 193 0
+ 651              		.cfi_startproc
+ 652              		@ args = 0, pretend = 0, frame = 16
+ 653              		@ frame_needed = 1, uses_anonymous_args = 0
+ 654 0000 80B5     		push	{r7, lr}
+ 655              		.cfi_def_cfa_offset 8
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 16
+
+
+ 656              		.cfi_offset 7, -8
+ 657              		.cfi_offset 14, -4
+ 658 0002 84B0     		sub	sp, sp, #16
+ 659              		.cfi_def_cfa_offset 24
+ 660 0004 00AF     		add	r7, sp, #0
+ 661              		.cfi_def_cfa_register 7
+ 662 0006 7860     		str	r0, [r7, #4]
+ 663 0008 0B46     		mov	r3, r1
+ 664 000a 7B80     		strh	r3, [r7, #2]	@ movhi
+ 665 000c 1346     		mov	r3, r2	@ movhi
+ 666 000e 3B80     		strh	r3, [r7]	@ movhi
+ 194:toc.c         **** uint16_t i;
+ 195:toc.c         **** 	uint16_t crcVal;
+ 196:toc.c         **** 
+ 197:toc.c         ****     	crcVal = startValue;
+ 667              		.loc 1 197 0
+ 668 0010 3B88     		ldrh	r3, [r7]	@ movhi
+ 669 0012 BB81     		strh	r3, [r7, #12]	@ movhi
+ 198:toc.c         **** 	for (i=0; i<numBytes; i++)
+ 670              		.loc 1 198 0
+ 671 0014 0023     		movs	r3, #0
+ 672 0016 FB81     		strh	r3, [r7, #14]	@ movhi
+ 673 0018 0DE0     		b	.L36
+ 674              	.L37:
+ 199:toc.c         **** 	{
+ 200:toc.c         ****         crcVal = UpdateCrc16Ccitt(crcVal, pData[i]);
+ 675              		.loc 1 200 0 discriminator 3
+ 676 001a FB89     		ldrh	r3, [r7, #14]
+ 677 001c 7A68     		ldr	r2, [r7, #4]
+ 678 001e 1344     		add	r3, r3, r2
+ 679 0020 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 680 0022 BB89     		ldrh	r3, [r7, #12]
+ 681 0024 1146     		mov	r1, r2
+ 682 0026 1846     		mov	r0, r3
+ 683 0028 FFF7FEFF 		bl	UpdateCrc16Ccitt
+ 684 002c 0346     		mov	r3, r0
+ 685 002e BB81     		strh	r3, [r7, #12]	@ movhi
+ 198:toc.c         **** 	for (i=0; i<numBytes; i++)
+ 686              		.loc 1 198 0 discriminator 3
+ 687 0030 FB89     		ldrh	r3, [r7, #14]
+ 688 0032 0133     		adds	r3, r3, #1
+ 689 0034 FB81     		strh	r3, [r7, #14]	@ movhi
+ 690              	.L36:
+ 198:toc.c         **** 	for (i=0; i<numBytes; i++)
+ 691              		.loc 1 198 0 is_stmt 0 discriminator 1
+ 692 0036 FA89     		ldrh	r2, [r7, #14]
+ 693 0038 7B88     		ldrh	r3, [r7, #2]
+ 694 003a 9A42     		cmp	r2, r3
+ 695 003c EDD3     		bcc	.L37
+ 201:toc.c         **** 	}
+ 202:toc.c         **** 	return (crcVal);
+ 696              		.loc 1 202 0 is_stmt 1
+ 697 003e BB89     		ldrh	r3, [r7, #12]
+ 203:toc.c         **** }
+ 698              		.loc 1 203 0
+ 699 0040 1846     		mov	r0, r3
+ 700 0042 1037     		adds	r7, r7, #16
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 17
+
+
+ 701              		.cfi_def_cfa_offset 8
+ 702 0044 BD46     		mov	sp, r7
+ 703              		.cfi_def_cfa_register 13
+ 704              		@ sp needed
+ 705 0046 80BD     		pop	{r7, pc}
+ 706              		.cfi_endproc
+ 707              	.LFE68:
+ 708              		.size	CalculateCrc16, .-CalculateCrc16
+ 709              		.section	.text.UpdateCrc16Ccitt,"ax",%progbits
+ 710              		.align	2
+ 711              		.global	UpdateCrc16Ccitt
+ 712              		.thumb
+ 713              		.thumb_func
+ 714              		.type	UpdateCrc16Ccitt, %function
+ 715              	UpdateCrc16Ccitt:
+ 716              	.LFB69:
+ 204:toc.c         **** 
+ 205:toc.c         **** uint16_t UpdateCrc16Ccitt (uint16_t crc, uint8_t data)
+ 206:toc.c         **** {
+ 717              		.loc 1 206 0
+ 718              		.cfi_startproc
+ 719              		@ args = 0, pretend = 0, frame = 8
+ 720              		@ frame_needed = 1, uses_anonymous_args = 0
+ 721              		@ link register save eliminated.
+ 722 0000 80B4     		push	{r7}
+ 723              		.cfi_def_cfa_offset 4
+ 724              		.cfi_offset 7, -4
+ 725 0002 83B0     		sub	sp, sp, #12
+ 726              		.cfi_def_cfa_offset 16
+ 727 0004 00AF     		add	r7, sp, #0
+ 728              		.cfi_def_cfa_register 7
+ 729 0006 0346     		mov	r3, r0
+ 730 0008 0A46     		mov	r2, r1
+ 731 000a FB80     		strh	r3, [r7, #6]	@ movhi
+ 732 000c 1346     		mov	r3, r2
+ 733 000e 7B71     		strb	r3, [r7, #5]
+ 207:toc.c         ****     data ^= (crc & 0xFF);
+ 734              		.loc 1 207 0
+ 735 0010 FB88     		ldrh	r3, [r7, #6]	@ movhi
+ 736 0012 5AB2     		sxtb	r2, r3
+ 737 0014 97F90530 		ldrsb	r3, [r7, #5]
+ 738 0018 5340     		eors	r3, r3, r2
+ 739 001a 5BB2     		sxtb	r3, r3
+ 740 001c 7B71     		strb	r3, [r7, #5]
+ 208:toc.c         ****     data ^= data << 4;
+ 741              		.loc 1 208 0
+ 742 001e 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ 743 0020 1B01     		lsls	r3, r3, #4
+ 744 0022 5AB2     		sxtb	r2, r3
+ 745 0024 97F90530 		ldrsb	r3, [r7, #5]
+ 746 0028 5340     		eors	r3, r3, r2
+ 747 002a 5BB2     		sxtb	r3, r3
+ 748 002c 7B71     		strb	r3, [r7, #5]
+ 209:toc.c         **** 
+ 210:toc.c         ****     return ((((uint16_t)data << 8) | ((crc >> 8) & 0xFF )) ^ (uint8_t)(data >> 4) 
+ 749              		.loc 1 210 0
+ 750 002e 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 18
+
+
+ 751 0030 1B02     		lsls	r3, r3, #8
+ 752 0032 1AB2     		sxth	r2, r3
+ 753 0034 FB88     		ldrh	r3, [r7, #6]
+ 754 0036 1B0A     		lsrs	r3, r3, #8
+ 755 0038 9BB2     		uxth	r3, r3
+ 756 003a 1BB2     		sxth	r3, r3
+ 757 003c 1343     		orrs	r3, r3, r2
+ 758 003e 1AB2     		sxth	r2, r3
+ 759 0040 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ 760 0042 1B09     		lsrs	r3, r3, #4
+ 761 0044 DBB2     		uxtb	r3, r3
+ 762 0046 1BB2     		sxth	r3, r3
+ 763 0048 5340     		eors	r3, r3, r2
+ 764 004a 1AB2     		sxth	r2, r3
+ 211:toc.c         ****           ^ ((uint16_t)data << 3));
+ 765              		.loc 1 211 0
+ 766 004c 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ 767 004e DB00     		lsls	r3, r3, #3
+ 210:toc.c         ****           ^ ((uint16_t)data << 3));
+ 768              		.loc 1 210 0
+ 769 0050 1BB2     		sxth	r3, r3
+ 770 0052 5340     		eors	r3, r3, r2
+ 771 0054 1BB2     		sxth	r3, r3
+ 772 0056 9BB2     		uxth	r3, r3
+ 212:toc.c         **** }
+ 773              		.loc 1 212 0
+ 774 0058 1846     		mov	r0, r3
+ 775 005a 0C37     		adds	r7, r7, #12
+ 776              		.cfi_def_cfa_offset 4
+ 777 005c BD46     		mov	sp, r7
+ 778              		.cfi_def_cfa_register 13
+ 779              		@ sp needed
+ 780 005e 80BC     		pop	{r7}
+ 781              		.cfi_restore 7
+ 782              		.cfi_def_cfa_offset 0
+ 783 0060 7047     		bx	lr
+ 784              		.cfi_endproc
+ 785              	.LFE69:
+ 786              		.size	UpdateCrc16Ccitt, .-UpdateCrc16Ccitt
+ 787 0062 00BF     		.text
+ 788              	.Letext0:
+ 789              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 790              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.2\\psoc creator\\import\\gnu\\arm\\5.4.
+ 791              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 792              		.file 5 "softuart.h"
+ 793              		.file 6 "system.h"
+ 794              		.file 7 "Generated_Source\\PSoC5/core_cm3.h"
+ 795              		.file 8 "osdp.h"
+ 796              		.section	.debug_info,"",%progbits
+ 797              	.Ldebug_info0:
+ 798 0000 E9050000 		.4byte	0x5e9
+ 799 0004 0400     		.2byte	0x4
+ 800 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 801 000a 04       		.byte	0x4
+ 802 000b 01       		.uleb128 0x1
+ 803 000c A9000000 		.4byte	.LASF90
+ 804 0010 0C       		.byte	0xc
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 19
+
+
+ 805 0011 82040000 		.4byte	.LASF91
+ 806 0015 85020000 		.4byte	.LASF92
+ 807 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 808 001d 00000000 		.4byte	0
+ 809 0021 00000000 		.4byte	.Ldebug_line0
+ 810 0025 02       		.uleb128 0x2
+ 811 0026 01       		.byte	0x1
+ 812 0027 06       		.byte	0x6
+ 813 0028 B7010000 		.4byte	.LASF0
+ 814 002c 03       		.uleb128 0x3
+ 815 002d 45020000 		.4byte	.LASF3
+ 816 0031 02       		.byte	0x2
+ 817 0032 1D       		.byte	0x1d
+ 818 0033 37000000 		.4byte	0x37
+ 819 0037 02       		.uleb128 0x2
+ 820 0038 01       		.byte	0x1
+ 821 0039 08       		.byte	0x8
+ 822 003a EB020000 		.4byte	.LASF1
+ 823 003e 02       		.uleb128 0x2
+ 824 003f 02       		.byte	0x2
+ 825 0040 05       		.byte	0x5
+ 826 0041 76010000 		.4byte	.LASF2
+ 827 0045 03       		.uleb128 0x3
+ 828 0046 64010000 		.4byte	.LASF4
+ 829 004a 02       		.byte	0x2
+ 830 004b 2B       		.byte	0x2b
+ 831 004c 50000000 		.4byte	0x50
+ 832 0050 02       		.uleb128 0x2
+ 833 0051 02       		.byte	0x2
+ 834 0052 07       		.byte	0x7
+ 835 0053 F6030000 		.4byte	.LASF5
+ 836 0057 03       		.uleb128 0x3
+ 837 0058 D1030000 		.4byte	.LASF6
+ 838 005c 02       		.byte	0x2
+ 839 005d 3F       		.byte	0x3f
+ 840 005e 62000000 		.4byte	0x62
+ 841 0062 02       		.uleb128 0x2
+ 842 0063 04       		.byte	0x4
+ 843 0064 05       		.byte	0x5
+ 844 0065 27020000 		.4byte	.LASF7
+ 845 0069 02       		.uleb128 0x2
+ 846 006a 04       		.byte	0x4
+ 847 006b 07       		.byte	0x7
+ 848 006c 5B030000 		.4byte	.LASF8
+ 849 0070 02       		.uleb128 0x2
+ 850 0071 08       		.byte	0x8
+ 851 0072 05       		.byte	0x5
+ 852 0073 43010000 		.4byte	.LASF9
+ 853 0077 02       		.uleb128 0x2
+ 854 0078 08       		.byte	0x8
+ 855 0079 07       		.byte	0x7
+ 856 007a 24030000 		.4byte	.LASF10
+ 857 007e 04       		.uleb128 0x4
+ 858 007f 04       		.byte	0x4
+ 859 0080 05       		.byte	0x5
+ 860 0081 696E7400 		.ascii	"int\000"
+ 861 0085 02       		.uleb128 0x2
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 20
+
+
+ 862 0086 04       		.byte	0x4
+ 863 0087 07       		.byte	0x7
+ 864 0088 3B030000 		.4byte	.LASF11
+ 865 008c 03       		.uleb128 0x3
+ 866 008d 91010000 		.4byte	.LASF12
+ 867 0091 03       		.byte	0x3
+ 868 0092 18       		.byte	0x18
+ 869 0093 2C000000 		.4byte	0x2c
+ 870 0097 03       		.uleb128 0x3
+ 871 0098 52030000 		.4byte	.LASF13
+ 872 009c 03       		.byte	0x3
+ 873 009d 24       		.byte	0x24
+ 874 009e 45000000 		.4byte	0x45
+ 875 00a2 03       		.uleb128 0x3
+ 876 00a3 B7030000 		.4byte	.LASF14
+ 877 00a7 03       		.byte	0x3
+ 878 00a8 2C       		.byte	0x2c
+ 879 00a9 57000000 		.4byte	0x57
+ 880 00ad 05       		.uleb128 0x5
+ 881 00ae A4010000 		.4byte	.LASF15
+ 882 00b2 04       		.byte	0x4
+ 883 00b3 9201     		.2byte	0x192
+ 884 00b5 37000000 		.4byte	0x37
+ 885 00b9 02       		.uleb128 0x2
+ 886 00ba 04       		.byte	0x4
+ 887 00bb 04       		.byte	0x4
+ 888 00bc CA010000 		.4byte	.LASF16
+ 889 00c0 02       		.uleb128 0x2
+ 890 00c1 08       		.byte	0x8
+ 891 00c2 04       		.byte	0x4
+ 892 00c3 40000000 		.4byte	.LASF17
+ 893 00c7 02       		.uleb128 0x2
+ 894 00c8 01       		.byte	0x1
+ 895 00c9 08       		.byte	0x8
+ 896 00ca B2030000 		.4byte	.LASF18
+ 897 00ce 02       		.uleb128 0x2
+ 898 00cf 08       		.byte	0x8
+ 899 00d0 04       		.byte	0x4
+ 900 00d1 00000000 		.4byte	.LASF19
+ 901 00d5 02       		.uleb128 0x2
+ 902 00d6 04       		.byte	0x4
+ 903 00d7 07       		.byte	0x7
+ 904 00d8 70000000 		.4byte	.LASF20
+ 905 00dc 06       		.uleb128 0x6
+ 906 00dd 04       		.byte	0x4
+ 907 00de 37000000 		.4byte	0x37
+ 908 00e2 07       		.uleb128 0x7
+ 909 00e3 28       		.byte	0x28
+ 910 00e4 05       		.byte	0x5
+ 911 00e5 0D       		.byte	0xd
+ 912 00e6 7B010000 		.4byte	0x17b
+ 913 00ea 08       		.uleb128 0x8
+ 914 00eb D5020000 		.4byte	.LASF21
+ 915 00ef 05       		.byte	0x5
+ 916 00f0 0F       		.byte	0xf
+ 917 00f1 7E000000 		.4byte	0x7e
+ 918 00f5 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 21
+
+
+ 919 00f6 08       		.uleb128 0x8
+ 920 00f7 4F020000 		.4byte	.LASF22
+ 921 00fb 05       		.byte	0x5
+ 922 00fc 10       		.byte	0x10
+ 923 00fd 7E000000 		.4byte	0x7e
+ 924 0101 04       		.byte	0x4
+ 925 0102 08       		.uleb128 0x8
+ 926 0103 48030000 		.4byte	.LASF23
+ 927 0107 05       		.byte	0x5
+ 928 0108 11       		.byte	0x11
+ 929 0109 7E000000 		.4byte	0x7e
+ 930 010d 08       		.byte	0x8
+ 931 010e 08       		.uleb128 0x8
+ 932 010f E8010000 		.4byte	.LASF24
+ 933 0113 05       		.byte	0x5
+ 934 0114 12       		.byte	0x12
+ 935 0115 7E000000 		.4byte	0x7e
+ 936 0119 0C       		.byte	0xc
+ 937 011a 08       		.uleb128 0x8
+ 938 011b 2A040000 		.4byte	.LASF25
+ 939 011f 05       		.byte	0x5
+ 940 0120 13       		.byte	0x13
+ 941 0121 50000000 		.4byte	0x50
+ 942 0125 10       		.byte	0x10
+ 943 0126 08       		.uleb128 0x8
+ 944 0127 3D020000 		.4byte	.LASF26
+ 945 012b 05       		.byte	0x5
+ 946 012c 14       		.byte	0x14
+ 947 012d 7B010000 		.4byte	0x17b
+ 948 0131 12       		.byte	0x12
+ 949 0132 08       		.uleb128 0x8
+ 950 0133 57000000 		.4byte	.LASF27
+ 951 0137 05       		.byte	0x5
+ 952 0138 15       		.byte	0x15
+ 953 0139 7B010000 		.4byte	0x17b
+ 954 013d 14       		.byte	0x14
+ 955 013e 08       		.uleb128 0x8
+ 956 013f 89010000 		.4byte	.LASF28
+ 957 0143 05       		.byte	0x5
+ 958 0144 16       		.byte	0x16
+ 959 0145 50000000 		.4byte	0x50
+ 960 0149 16       		.byte	0x16
+ 961 014a 08       		.uleb128 0x8
+ 962 014b 1E030000 		.4byte	.LASF29
+ 963 014f 05       		.byte	0x5
+ 964 0150 17       		.byte	0x17
+ 965 0151 80010000 		.4byte	0x180
+ 966 0155 18       		.byte	0x18
+ 967 0156 08       		.uleb128 0x8
+ 968 0157 A9040000 		.4byte	.LASF30
+ 969 015b 05       		.byte	0x5
+ 970 015c 18       		.byte	0x18
+ 971 015d 80010000 		.4byte	0x180
+ 972 0161 1C       		.byte	0x1c
+ 973 0162 08       		.uleb128 0x8
+ 974 0163 30020000 		.4byte	.LASF31
+ 975 0167 05       		.byte	0x5
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 22
+
+
+ 976 0168 19       		.byte	0x19
+ 977 0169 80010000 		.4byte	0x180
+ 978 016d 20       		.byte	0x20
+ 979 016e 08       		.uleb128 0x8
+ 980 016f 98030000 		.4byte	.LASF32
+ 981 0173 05       		.byte	0x5
+ 982 0174 1A       		.byte	0x1a
+ 983 0175 80010000 		.4byte	0x180
+ 984 0179 24       		.byte	0x24
+ 985 017a 00       		.byte	0
+ 986 017b 09       		.uleb128 0x9
+ 987 017c 50000000 		.4byte	0x50
+ 988 0180 09       		.uleb128 0x9
+ 989 0181 7E000000 		.4byte	0x7e
+ 990 0185 03       		.uleb128 0x3
+ 991 0186 C4020000 		.4byte	.LASF33
+ 992 018a 05       		.byte	0x5
+ 993 018b 1B       		.byte	0x1b
+ 994 018c E2000000 		.4byte	0xe2
+ 995 0190 0A       		.uleb128 0xa
+ 996 0191 13040000 		.4byte	.LASF60
+ 997 0195 DC01     		.2byte	0x1dc
+ 998 0197 06       		.byte	0x6
+ 999 0198 1E       		.byte	0x1e
+ 1000 0199 F0020000 		.4byte	0x2f0
+ 1001 019d 08       		.uleb128 0x8
+ 1002 019e 49040000 		.4byte	.LASF34
+ 1003 01a2 06       		.byte	0x6
+ 1004 01a3 1F       		.byte	0x1f
+ 1005 01a4 C7000000 		.4byte	0xc7
+ 1006 01a8 00       		.byte	0
+ 1007 01a9 08       		.uleb128 0x8
+ 1008 01aa 09040000 		.4byte	.LASF35
+ 1009 01ae 06       		.byte	0x6
+ 1010 01af 20       		.byte	0x20
+ 1011 01b0 C7000000 		.4byte	0xc7
+ 1012 01b4 01       		.byte	0x1
+ 1013 01b5 0B       		.uleb128 0xb
+ 1014 01b6 636D6400 		.ascii	"cmd\000"
+ 1015 01ba 06       		.byte	0x6
+ 1016 01bb 21       		.byte	0x21
+ 1017 01bc C7000000 		.4byte	0xc7
+ 1018 01c0 02       		.byte	0x2
+ 1019 01c1 08       		.uleb128 0x8
+ 1020 01c2 51010000 		.4byte	.LASF36
+ 1021 01c6 06       		.byte	0x6
+ 1022 01c7 22       		.byte	0x22
+ 1023 01c8 37000000 		.4byte	0x37
+ 1024 01cc 03       		.byte	0x3
+ 1025 01cd 08       		.uleb128 0x8
+ 1026 01ce DC010000 		.4byte	.LASF37
+ 1027 01d2 06       		.byte	0x6
+ 1028 01d3 23       		.byte	0x23
+ 1029 01d4 C7000000 		.4byte	0xc7
+ 1030 01d8 04       		.byte	0x4
+ 1031 01d9 08       		.uleb128 0x8
+ 1032 01da 6D030000 		.4byte	.LASF38
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 23
+
+
+ 1033 01de 06       		.byte	0x6
+ 1034 01df 24       		.byte	0x24
+ 1035 01e0 C7000000 		.4byte	0xc7
+ 1036 01e4 05       		.byte	0x5
+ 1037 01e5 08       		.uleb128 0x8
+ 1038 01e6 8F000000 		.4byte	.LASF39
+ 1039 01ea 06       		.byte	0x6
+ 1040 01eb 25       		.byte	0x25
+ 1041 01ec C7000000 		.4byte	0xc7
+ 1042 01f0 06       		.byte	0x6
+ 1043 01f1 08       		.uleb128 0x8
+ 1044 01f2 9D000000 		.4byte	.LASF40
+ 1045 01f6 06       		.byte	0x6
+ 1046 01f7 26       		.byte	0x26
+ 1047 01f8 F0020000 		.4byte	0x2f0
+ 1048 01fc 07       		.byte	0x7
+ 1049 01fd 08       		.uleb128 0x8
+ 1050 01fe E8010000 		.4byte	.LASF24
+ 1051 0202 06       		.byte	0x6
+ 1052 0203 27       		.byte	0x27
+ 1053 0204 37000000 		.4byte	0x37
+ 1054 0208 09       		.byte	0x9
+ 1055 0209 08       		.uleb128 0x8
+ 1056 020a 7B020000 		.4byte	.LASF41
+ 1057 020e 06       		.byte	0x6
+ 1058 020f 28       		.byte	0x28
+ 1059 0210 37000000 		.4byte	0x37
+ 1060 0214 0A       		.byte	0xa
+ 1061 0215 08       		.uleb128 0x8
+ 1062 0216 99010000 		.4byte	.LASF42
+ 1063 021a 06       		.byte	0x6
+ 1064 021b 29       		.byte	0x29
+ 1065 021c 37000000 		.4byte	0x37
+ 1066 0220 0B       		.byte	0xb
+ 1067 0221 08       		.uleb128 0x8
+ 1068 0222 12030000 		.4byte	.LASF43
+ 1069 0226 06       		.byte	0x6
+ 1070 0227 2A       		.byte	0x2a
+ 1071 0228 37000000 		.4byte	0x37
+ 1072 022c 0C       		.byte	0xc
+ 1073 022d 08       		.uleb128 0x8
+ 1074 022e 83000000 		.4byte	.LASF44
+ 1075 0232 06       		.byte	0x6
+ 1076 0233 2B       		.byte	0x2b
+ 1077 0234 37000000 		.4byte	0x37
+ 1078 0238 0D       		.byte	0xd
+ 1079 0239 08       		.uleb128 0x8
+ 1080 023a 1C040000 		.4byte	.LASF45
+ 1081 023e 06       		.byte	0x6
+ 1082 023f 2C       		.byte	0x2c
+ 1083 0240 00030000 		.4byte	0x300
+ 1084 0244 0E       		.byte	0xe
+ 1085 0245 08       		.uleb128 0x8
+ 1086 0246 61040000 		.4byte	.LASF46
+ 1087 024a 06       		.byte	0x6
+ 1088 024b 2D       		.byte	0x2d
+ 1089 024c 10030000 		.4byte	0x310
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 24
+
+
+ 1090 0250 43       		.byte	0x43
+ 1091 0251 08       		.uleb128 0x8
+ 1092 0252 95040000 		.4byte	.LASF47
+ 1093 0256 06       		.byte	0x6
+ 1094 0257 2E       		.byte	0x2e
+ 1095 0258 10030000 		.4byte	0x310
+ 1096 025c 46       		.byte	0x46
+ 1097 025d 08       		.uleb128 0x8
+ 1098 025e 32040000 		.4byte	.LASF48
+ 1099 0262 06       		.byte	0x6
+ 1100 0263 2F       		.byte	0x2f
+ 1101 0264 20030000 		.4byte	0x320
+ 1102 0268 49       		.byte	0x49
+ 1103 0269 08       		.uleb128 0x8
+ 1104 026a A0040000 		.4byte	.LASF49
+ 1105 026e 06       		.byte	0x6
+ 1106 026f 30       		.byte	0x30
+ 1107 0270 37000000 		.4byte	0x37
+ 1108 0274 5D       		.byte	0x5d
+ 1109 0275 08       		.uleb128 0x8
+ 1110 0276 34000000 		.4byte	.LASF50
+ 1111 027a 06       		.byte	0x6
+ 1112 027b 31       		.byte	0x31
+ 1113 027c 37000000 		.4byte	0x37
+ 1114 0280 5E       		.byte	0x5e
+ 1115 0281 08       		.uleb128 0x8
+ 1116 0282 DA020000 		.4byte	.LASF51
+ 1117 0286 06       		.byte	0x6
+ 1118 0287 32       		.byte	0x32
+ 1119 0288 37000000 		.4byte	0x37
+ 1120 028c 5F       		.byte	0x5f
+ 1121 028d 08       		.uleb128 0x8
+ 1122 028e 79000000 		.4byte	.LASF52
+ 1123 0292 06       		.byte	0x6
+ 1124 0293 33       		.byte	0x33
+ 1125 0294 37000000 		.4byte	0x37
+ 1126 0298 60       		.byte	0x60
+ 1127 0299 08       		.uleb128 0x8
+ 1128 029a 37010000 		.4byte	.LASF53
+ 1129 029e 06       		.byte	0x6
+ 1130 029f 34       		.byte	0x34
+ 1131 02a0 30030000 		.4byte	0x330
+ 1132 02a4 61       		.byte	0x61
+ 1133 02a5 08       		.uleb128 0x8
+ 1134 02a6 47000000 		.4byte	.LASF54
+ 1135 02aa 06       		.byte	0x6
+ 1136 02ab 35       		.byte	0x35
+ 1137 02ac 37000000 		.4byte	0x37
+ 1138 02b0 E1       		.byte	0xe1
+ 1139 02b1 08       		.uleb128 0x8
+ 1140 02b2 ED010000 		.4byte	.LASF55
+ 1141 02b6 06       		.byte	0x6
+ 1142 02b7 36       		.byte	0x36
+ 1143 02b8 37000000 		.4byte	0x37
+ 1144 02bc E2       		.byte	0xe2
+ 1145 02bd 08       		.uleb128 0x8
+ 1146 02be 6A020000 		.4byte	.LASF56
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 25
+
+
+ 1147 02c2 06       		.byte	0x6
+ 1148 02c3 37       		.byte	0x37
+ 1149 02c4 37000000 		.4byte	0x37
+ 1150 02c8 E3       		.byte	0xe3
+ 1151 02c9 08       		.uleb128 0x8
+ 1152 02ca B1020000 		.4byte	.LASF57
+ 1153 02ce 06       		.byte	0x6
+ 1154 02cf 38       		.byte	0x38
+ 1155 02d0 30030000 		.4byte	0x330
+ 1156 02d4 E4       		.byte	0xe4
+ 1157 02d5 0C       		.uleb128 0xc
+ 1158 02d6 EF030000 		.4byte	.LASF58
+ 1159 02da 06       		.byte	0x6
+ 1160 02db 39       		.byte	0x39
+ 1161 02dc 40030000 		.4byte	0x340
+ 1162 02e0 6401     		.2byte	0x164
+ 1163 02e2 0C       		.uleb128 0xc
+ 1164 02e3 23040000 		.4byte	.LASF59
+ 1165 02e7 06       		.byte	0x6
+ 1166 02e8 3A       		.byte	0x3a
+ 1167 02e9 20030000 		.4byte	0x320
+ 1168 02ed C801     		.2byte	0x1c8
+ 1169 02ef 00       		.byte	0
+ 1170 02f0 0D       		.uleb128 0xd
+ 1171 02f1 37000000 		.4byte	0x37
+ 1172 02f5 00030000 		.4byte	0x300
+ 1173 02f9 0E       		.uleb128 0xe
+ 1174 02fa D5000000 		.4byte	0xd5
+ 1175 02fe 01       		.byte	0x1
+ 1176 02ff 00       		.byte	0
+ 1177 0300 0D       		.uleb128 0xd
+ 1178 0301 37000000 		.4byte	0x37
+ 1179 0305 10030000 		.4byte	0x310
+ 1180 0309 0E       		.uleb128 0xe
+ 1181 030a D5000000 		.4byte	0xd5
+ 1182 030e 34       		.byte	0x34
+ 1183 030f 00       		.byte	0
+ 1184 0310 0D       		.uleb128 0xd
+ 1185 0311 C7000000 		.4byte	0xc7
+ 1186 0315 20030000 		.4byte	0x320
+ 1187 0319 0E       		.uleb128 0xe
+ 1188 031a D5000000 		.4byte	0xd5
+ 1189 031e 02       		.byte	0x2
+ 1190 031f 00       		.byte	0
+ 1191 0320 0D       		.uleb128 0xd
+ 1192 0321 37000000 		.4byte	0x37
+ 1193 0325 30030000 		.4byte	0x330
+ 1194 0329 0E       		.uleb128 0xe
+ 1195 032a D5000000 		.4byte	0xd5
+ 1196 032e 13       		.byte	0x13
+ 1197 032f 00       		.byte	0
+ 1198 0330 0D       		.uleb128 0xd
+ 1199 0331 37000000 		.4byte	0x37
+ 1200 0335 40030000 		.4byte	0x340
+ 1201 0339 0E       		.uleb128 0xe
+ 1202 033a D5000000 		.4byte	0xd5
+ 1203 033e 7F       		.byte	0x7f
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 26
+
+
+ 1204 033f 00       		.byte	0
+ 1205 0340 0D       		.uleb128 0xd
+ 1206 0341 37000000 		.4byte	0x37
+ 1207 0345 50030000 		.4byte	0x350
+ 1208 0349 0E       		.uleb128 0xe
+ 1209 034a D5000000 		.4byte	0xd5
+ 1210 034e 63       		.byte	0x63
+ 1211 034f 00       		.byte	0
+ 1212 0350 03       		.uleb128 0x3
+ 1213 0351 13040000 		.4byte	.LASF60
+ 1214 0355 06       		.byte	0x6
+ 1215 0356 3B       		.byte	0x3b
+ 1216 0357 90010000 		.4byte	0x190
+ 1217 035b 0F       		.uleb128 0xf
+ 1218 035c 56010000 		.4byte	.LASF93
+ 1219 0360 01       		.byte	0x1
+ 1220 0361 17       		.byte	0x17
+ 1221 0362 00000000 		.4byte	.LFB63
+ 1222 0366 E0000000 		.4byte	.LFE63-.LFB63
+ 1223 036a 01       		.uleb128 0x1
+ 1224 036b 9C       		.byte	0x9c
+ 1225 036c 7D030000 		.4byte	0x37d
+ 1226 0370 10       		.uleb128 0x10
+ 1227 0371 6B00     		.ascii	"k\000"
+ 1228 0373 01       		.byte	0x1
+ 1229 0374 19       		.byte	0x19
+ 1230 0375 7E000000 		.4byte	0x7e
+ 1231 0379 02       		.uleb128 0x2
+ 1232 037a 91       		.byte	0x91
+ 1233 037b 74       		.sleb128 -12
+ 1234 037c 00       		.byte	0
+ 1235 037d 11       		.uleb128 0x11
+ 1236 037e 0C020000 		.4byte	.LASF61
+ 1237 0382 01       		.byte	0x1
+ 1238 0383 38       		.byte	0x38
+ 1239 0384 00000000 		.4byte	.LFB64
+ 1240 0388 48000000 		.4byte	.LFE64-.LFB64
+ 1241 038c 01       		.uleb128 0x1
+ 1242 038d 9C       		.byte	0x9c
+ 1243 038e 12       		.uleb128 0x12
+ 1244 038f 61020000 		.4byte	.LASF63
+ 1245 0393 01       		.byte	0x1
+ 1246 0394 4C       		.byte	0x4c
+ 1247 0395 00000000 		.4byte	.LFB65
+ 1248 0399 B0010000 		.4byte	.LFE65-.LFB65
+ 1249 039d 01       		.uleb128 0x1
+ 1250 039e 9C       		.byte	0x9c
+ 1251 039f B2030000 		.4byte	0x3b2
+ 1252 03a3 10       		.uleb128 0x10
+ 1253 03a4 75636800 		.ascii	"uch\000"
+ 1254 03a8 01       		.byte	0x1
+ 1255 03a9 4E       		.byte	0x4e
+ 1256 03aa 37000000 		.4byte	0x37
+ 1257 03ae 02       		.uleb128 0x2
+ 1258 03af 91       		.byte	0x91
+ 1259 03b0 77       		.sleb128 -9
+ 1260 03b1 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 27
+
+
+ 1261 03b2 13       		.uleb128 0x13
+ 1262 03b3 76040000 		.4byte	.LASF62
+ 1263 03b7 01       		.byte	0x1
+ 1264 03b8 93       		.byte	0x93
+ 1265 03b9 00000000 		.4byte	.LFB66
+ 1266 03bd 34000000 		.4byte	.LFE66-.LFB66
+ 1267 03c1 01       		.uleb128 0x1
+ 1268 03c2 9C       		.byte	0x9c
+ 1269 03c3 12       		.uleb128 0x12
+ 1270 03c4 85030000 		.4byte	.LASF64
+ 1271 03c8 01       		.byte	0x1
+ 1272 03c9 9B       		.byte	0x9b
+ 1273 03ca 00000000 		.4byte	.LFB67
+ 1274 03ce 4A000000 		.4byte	.LFE67-.LFB67
+ 1275 03d2 01       		.uleb128 0x1
+ 1276 03d3 9C       		.byte	0x9c
+ 1277 03d4 F5030000 		.4byte	0x3f5
+ 1278 03d8 14       		.uleb128 0x14
+ 1279 03d9 EF030000 		.4byte	.LASF58
+ 1280 03dd 01       		.byte	0x1
+ 1281 03de 9B       		.byte	0x9b
+ 1282 03df DC000000 		.4byte	0xdc
+ 1283 03e3 02       		.uleb128 0x2
+ 1284 03e4 91       		.byte	0x91
+ 1285 03e5 74       		.sleb128 -12
+ 1286 03e6 15       		.uleb128 0x15
+ 1287 03e7 6C656E00 		.ascii	"len\000"
+ 1288 03eb 01       		.byte	0x1
+ 1289 03ec 9B       		.byte	0x9b
+ 1290 03ed 7E000000 		.4byte	0x7e
+ 1291 03f1 02       		.uleb128 0x2
+ 1292 03f2 91       		.byte	0x91
+ 1293 03f3 70       		.sleb128 -16
+ 1294 03f4 00       		.byte	0
+ 1295 03f5 16       		.uleb128 0x16
+ 1296 03f6 DB030000 		.4byte	.LASF69
+ 1297 03fa 01       		.byte	0x1
+ 1298 03fb C0       		.byte	0xc0
+ 1299 03fc 97000000 		.4byte	0x97
+ 1300 0400 00000000 		.4byte	.LFB68
+ 1301 0404 48000000 		.4byte	.LFE68-.LFB68
+ 1302 0408 01       		.uleb128 0x1
+ 1303 0409 9C       		.byte	0x9c
+ 1304 040a 53040000 		.4byte	0x453
+ 1305 040e 14       		.uleb128 0x14
+ 1306 040f 5F000000 		.4byte	.LASF65
+ 1307 0413 01       		.byte	0x1
+ 1308 0414 C0       		.byte	0xc0
+ 1309 0415 53040000 		.4byte	0x453
+ 1310 0419 02       		.uleb128 0x2
+ 1311 041a 91       		.byte	0x91
+ 1312 041b 6C       		.sleb128 -20
+ 1313 041c 14       		.uleb128 0x14
+ 1314 041d 80010000 		.4byte	.LASF66
+ 1315 0421 01       		.byte	0x1
+ 1316 0422 C0       		.byte	0xc0
+ 1317 0423 97000000 		.4byte	0x97
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 28
+
+
+ 1318 0427 02       		.uleb128 0x2
+ 1319 0428 91       		.byte	0x91
+ 1320 0429 6A       		.sleb128 -22
+ 1321 042a 14       		.uleb128 0x14
+ 1322 042b 56020000 		.4byte	.LASF67
+ 1323 042f 01       		.byte	0x1
+ 1324 0430 C0       		.byte	0xc0
+ 1325 0431 97000000 		.4byte	0x97
+ 1326 0435 02       		.uleb128 0x2
+ 1327 0436 91       		.byte	0x91
+ 1328 0437 68       		.sleb128 -24
+ 1329 0438 10       		.uleb128 0x10
+ 1330 0439 6900     		.ascii	"i\000"
+ 1331 043b 01       		.byte	0x1
+ 1332 043c C2       		.byte	0xc2
+ 1333 043d 97000000 		.4byte	0x97
+ 1334 0441 02       		.uleb128 0x2
+ 1335 0442 91       		.byte	0x91
+ 1336 0443 76       		.sleb128 -10
+ 1337 0444 17       		.uleb128 0x17
+ 1338 0445 0B030000 		.4byte	.LASF68
+ 1339 0449 01       		.byte	0x1
+ 1340 044a C3       		.byte	0xc3
+ 1341 044b 97000000 		.4byte	0x97
+ 1342 044f 02       		.uleb128 0x2
+ 1343 0450 91       		.byte	0x91
+ 1344 0451 74       		.sleb128 -12
+ 1345 0452 00       		.byte	0
+ 1346 0453 06       		.uleb128 0x6
+ 1347 0454 04       		.byte	0x4
+ 1348 0455 8C000000 		.4byte	0x8c
+ 1349 0459 18       		.uleb128 0x18
+ 1350 045a 1B000000 		.4byte	.LASF70
+ 1351 045e 01       		.byte	0x1
+ 1352 045f CD       		.byte	0xcd
+ 1353 0460 97000000 		.4byte	0x97
+ 1354 0464 00000000 		.4byte	.LFB69
+ 1355 0468 62000000 		.4byte	.LFE69-.LFB69
+ 1356 046c 01       		.uleb128 0x1
+ 1357 046d 9C       		.byte	0x9c
+ 1358 046e 8F040000 		.4byte	0x48f
+ 1359 0472 15       		.uleb128 0x15
+ 1360 0473 63726300 		.ascii	"crc\000"
+ 1361 0477 01       		.byte	0x1
+ 1362 0478 CD       		.byte	0xcd
+ 1363 0479 97000000 		.4byte	0x97
+ 1364 047d 02       		.uleb128 0x2
+ 1365 047e 91       		.byte	0x91
+ 1366 047f 76       		.sleb128 -10
+ 1367 0480 14       		.uleb128 0x14
+ 1368 0481 EA030000 		.4byte	.LASF71
+ 1369 0485 01       		.byte	0x1
+ 1370 0486 CD       		.byte	0xcd
+ 1371 0487 8C000000 		.4byte	0x8c
+ 1372 048b 02       		.uleb128 0x2
+ 1373 048c 91       		.byte	0x91
+ 1374 048d 75       		.sleb128 -11
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 29
+
+
+ 1375 048e 00       		.byte	0
+ 1376 048f 19       		.uleb128 0x19
+ 1377 0490 88040000 		.4byte	.LASF72
+ 1378 0494 07       		.byte	0x7
+ 1379 0495 1207     		.2byte	0x712
+ 1380 0497 9B040000 		.4byte	0x49b
+ 1381 049b 09       		.uleb128 0x9
+ 1382 049c A2000000 		.4byte	0xa2
+ 1383 04a0 0D       		.uleb128 0xd
+ 1384 04a1 37000000 		.4byte	0x37
+ 1385 04a5 B1040000 		.4byte	0x4b1
+ 1386 04a9 1A       		.uleb128 0x1a
+ 1387 04aa D5000000 		.4byte	0xd5
+ 1388 04ae 6F17     		.2byte	0x176f
+ 1389 04b0 00       		.byte	0
+ 1390 04b1 1B       		.uleb128 0x1b
+ 1391 04b2 3A040000 		.4byte	.LASF73
+ 1392 04b6 01       		.byte	0x1
+ 1393 04b7 45       		.byte	0x45
+ 1394 04b8 A0040000 		.4byte	0x4a0
+ 1395 04bc 05       		.uleb128 0x5
+ 1396 04bd 03       		.byte	0x3
+ 1397 04be 00000000 		.4byte	ReaderRxBuffer
+ 1398 04c2 1C       		.uleb128 0x1c
+ 1399 04c3 65000000 		.4byte	.LASF74
+ 1400 04c7 06       		.byte	0x6
+ 1401 04c8 3D       		.byte	0x3d
+ 1402 04c9 50030000 		.4byte	0x350
+ 1403 04cd 1D       		.uleb128 0x1d
+ 1404 04ce 7300     		.ascii	"s\000"
+ 1405 04d0 06       		.byte	0x6
+ 1406 04d1 3E       		.byte	0x3e
+ 1407 04d2 85010000 		.4byte	0x185
+ 1408 04d6 05       		.uleb128 0x5
+ 1409 04d7 03       		.byte	0x3
+ 1410 04d8 00000000 		.4byte	s
+ 1411 04dc 1D       		.uleb128 0x1d
+ 1412 04dd 72786900 		.ascii	"rxi\000"
+ 1413 04e1 01       		.byte	0x1
+ 1414 04e2 46       		.byte	0x46
+ 1415 04e3 7E000000 		.4byte	0x7e
+ 1416 04e7 05       		.uleb128 0x5
+ 1417 04e8 03       		.byte	0x3
+ 1418 04e9 00000000 		.4byte	rxi
+ 1419 04ed 1B       		.uleb128 0x1b
+ 1420 04ee A0030000 		.4byte	.LASF75
+ 1421 04f2 01       		.byte	0x1
+ 1422 04f3 12       		.byte	0x12
+ 1423 04f4 AD000000 		.4byte	0xad
+ 1424 04f8 05       		.uleb128 0x5
+ 1425 04f9 03       		.byte	0x3
+ 1426 04fa 00000000 		.4byte	readerbootloading
+ 1427 04fe 1B       		.uleb128 0x1b
+ 1428 04ff BF030000 		.4byte	.LASF76
+ 1429 0503 06       		.byte	0x6
+ 1430 0504 47       		.byte	0x47
+ 1431 0505 C7000000 		.4byte	0xc7
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 30
+
+
+ 1432 0509 05       		.uleb128 0x5
+ 1433 050a 03       		.byte	0x3
+ 1434 050b 00000000 		.4byte	currentAccessType
+ 1435 050f 1B       		.uleb128 0x1b
+ 1436 0510 05020000 		.4byte	.LASF77
+ 1437 0514 06       		.byte	0x6
+ 1438 0515 48       		.byte	0x48
+ 1439 0516 C7000000 		.4byte	0xc7
+ 1440 051a 05       		.uleb128 0x5
+ 1441 051b 03       		.byte	0x3
+ 1442 051c 00000000 		.4byte	hw_old
+ 1443 0520 1B       		.uleb128 0x1b
+ 1444 0521 C3010000 		.4byte	.LASF78
+ 1445 0525 06       		.byte	0x6
+ 1446 0526 49       		.byte	0x49
+ 1447 0527 C7000000 		.4byte	0xc7
+ 1448 052b 05       		.uleb128 0x5
+ 1449 052c 03       		.byte	0x3
+ 1450 052d 00000000 		.4byte	tp_old
+ 1451 0531 1B       		.uleb128 0x1b
+ 1452 0532 F9020000 		.4byte	.LASF79
+ 1453 0536 06       		.byte	0x6
+ 1454 0537 4A       		.byte	0x4a
+ 1455 0538 7E000000 		.4byte	0x7e
+ 1456 053c 05       		.uleb128 0x5
+ 1457 053d 03       		.byte	0x3
+ 1458 053e 00000000 		.4byte	tamperCR_polarity
+ 1459 0542 1B       		.uleb128 0x1b
+ 1460 0543 B6040000 		.4byte	.LASF80
+ 1461 0547 06       		.byte	0x6
+ 1462 0548 4B       		.byte	0x4b
+ 1463 0549 7E000000 		.4byte	0x7e
+ 1464 054d 05       		.uleb128 0x5
+ 1465 054e 03       		.byte	0x3
+ 1466 054f 00000000 		.4byte	tamper_out_polarity
+ 1467 0553 1B       		.uleb128 0x1b
+ 1468 0554 1E020000 		.4byte	.LASF81
+ 1469 0558 06       		.byte	0x6
+ 1470 0559 4E       		.byte	0x4e
+ 1471 055a 7E000000 		.4byte	0x7e
+ 1472 055e 05       		.uleb128 0x5
+ 1473 055f 03       		.byte	0x3
+ 1474 0560 00000000 		.4byte	card_ack
+ 1475 0564 1B       		.uleb128 0x1b
+ 1476 0565 D0010000 		.4byte	.LASF82
+ 1477 0569 06       		.byte	0x6
+ 1478 056a 4F       		.byte	0x4f
+ 1479 056b 7E000000 		.4byte	0x7e
+ 1480 056f 05       		.uleb128 0x5
+ 1481 0570 03       		.byte	0x3
+ 1482 0571 00000000 		.4byte	card_in_buf
+ 1483 0575 1B       		.uleb128 0x1b
+ 1484 0576 AA010000 		.4byte	.LASF83
+ 1485 057a 08       		.byte	0x8
+ 1486 057b 38       		.byte	0x38
+ 1487 057c 7E000000 		.4byte	0x7e
+ 1488 0580 05       		.uleb128 0x5
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 31
+
+
+ 1489 0581 03       		.byte	0x3
+ 1490 0582 00000000 		.4byte	osdp_timeout
+ 1491 0586 1B       		.uleb128 0x1b
+ 1492 0587 6C040000 		.4byte	.LASF84
+ 1493 058b 01       		.byte	0x1
+ 1494 058c 11       		.byte	0x11
+ 1495 058d AD000000 		.4byte	0xad
+ 1496 0591 05       		.uleb128 0x5
+ 1497 0592 03       		.byte	0x3
+ 1498 0593 00000000 		.4byte	tlv_ready
+ 1499 0597 1B       		.uleb128 0x1b
+ 1500 0598 78030000 		.4byte	.LASF85
+ 1501 059c 01       		.byte	0x1
+ 1502 059d 47       		.byte	0x47
+ 1503 059e 7E000000 		.4byte	0x7e
+ 1504 05a2 05       		.uleb128 0x5
+ 1505 05a3 03       		.byte	0x3
+ 1506 05a4 00000000 		.4byte	tlv_head_len
+ 1507 05a8 1B       		.uleb128 0x1b
+ 1508 05a9 54040000 		.4byte	.LASF86
+ 1509 05ad 01       		.byte	0x1
+ 1510 05ae 48       		.byte	0x48
+ 1511 05af 7E000000 		.4byte	0x7e
+ 1512 05b3 05       		.uleb128 0x5
+ 1513 05b4 03       		.byte	0x3
+ 1514 05b5 00000000 		.4byte	tlv_data_len
+ 1515 05b9 1B       		.uleb128 0x1b
+ 1516 05ba 2C000000 		.4byte	.LASF87
+ 1517 05be 01       		.byte	0x1
+ 1518 05bf 49       		.byte	0x49
+ 1519 05c0 7E000000 		.4byte	0x7e
+ 1520 05c4 05       		.uleb128 0x5
+ 1521 05c5 03       		.byte	0x3
+ 1522 05c6 00000000 		.4byte	tlv_len
+ 1523 05ca 1B       		.uleb128 0x1b
+ 1524 05cb 0C000000 		.4byte	.LASF88
+ 1525 05cf 01       		.byte	0x1
+ 1526 05d0 4A       		.byte	0x4a
+ 1527 05d1 37000000 		.4byte	0x37
+ 1528 05d5 05       		.uleb128 0x5
+ 1529 05d6 03       		.byte	0x3
+ 1530 05d7 00000000 		.4byte	multi_byte_len
+ 1531 05db 1B       		.uleb128 0x1b
+ 1532 05dc 6F010000 		.4byte	.LASF89
+ 1533 05e0 01       		.byte	0x1
+ 1534 05e1 4B       		.byte	0x4b
+ 1535 05e2 37000000 		.4byte	0x37
+ 1536 05e6 05       		.uleb128 0x5
+ 1537 05e7 03       		.byte	0x3
+ 1538 05e8 00000000 		.4byte	tocTag
+ 1539 05ec 00       		.byte	0
+ 1540              		.section	.debug_abbrev,"",%progbits
+ 1541              	.Ldebug_abbrev0:
+ 1542 0000 01       		.uleb128 0x1
+ 1543 0001 11       		.uleb128 0x11
+ 1544 0002 01       		.byte	0x1
+ 1545 0003 25       		.uleb128 0x25
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 32
+
+
+ 1546 0004 0E       		.uleb128 0xe
+ 1547 0005 13       		.uleb128 0x13
+ 1548 0006 0B       		.uleb128 0xb
+ 1549 0007 03       		.uleb128 0x3
+ 1550 0008 0E       		.uleb128 0xe
+ 1551 0009 1B       		.uleb128 0x1b
+ 1552 000a 0E       		.uleb128 0xe
+ 1553 000b 55       		.uleb128 0x55
+ 1554 000c 17       		.uleb128 0x17
+ 1555 000d 11       		.uleb128 0x11
+ 1556 000e 01       		.uleb128 0x1
+ 1557 000f 10       		.uleb128 0x10
+ 1558 0010 17       		.uleb128 0x17
+ 1559 0011 00       		.byte	0
+ 1560 0012 00       		.byte	0
+ 1561 0013 02       		.uleb128 0x2
+ 1562 0014 24       		.uleb128 0x24
+ 1563 0015 00       		.byte	0
+ 1564 0016 0B       		.uleb128 0xb
+ 1565 0017 0B       		.uleb128 0xb
+ 1566 0018 3E       		.uleb128 0x3e
+ 1567 0019 0B       		.uleb128 0xb
+ 1568 001a 03       		.uleb128 0x3
+ 1569 001b 0E       		.uleb128 0xe
+ 1570 001c 00       		.byte	0
+ 1571 001d 00       		.byte	0
+ 1572 001e 03       		.uleb128 0x3
+ 1573 001f 16       		.uleb128 0x16
+ 1574 0020 00       		.byte	0
+ 1575 0021 03       		.uleb128 0x3
+ 1576 0022 0E       		.uleb128 0xe
+ 1577 0023 3A       		.uleb128 0x3a
+ 1578 0024 0B       		.uleb128 0xb
+ 1579 0025 3B       		.uleb128 0x3b
+ 1580 0026 0B       		.uleb128 0xb
+ 1581 0027 49       		.uleb128 0x49
+ 1582 0028 13       		.uleb128 0x13
+ 1583 0029 00       		.byte	0
+ 1584 002a 00       		.byte	0
+ 1585 002b 04       		.uleb128 0x4
+ 1586 002c 24       		.uleb128 0x24
+ 1587 002d 00       		.byte	0
+ 1588 002e 0B       		.uleb128 0xb
+ 1589 002f 0B       		.uleb128 0xb
+ 1590 0030 3E       		.uleb128 0x3e
+ 1591 0031 0B       		.uleb128 0xb
+ 1592 0032 03       		.uleb128 0x3
+ 1593 0033 08       		.uleb128 0x8
+ 1594 0034 00       		.byte	0
+ 1595 0035 00       		.byte	0
+ 1596 0036 05       		.uleb128 0x5
+ 1597 0037 16       		.uleb128 0x16
+ 1598 0038 00       		.byte	0
+ 1599 0039 03       		.uleb128 0x3
+ 1600 003a 0E       		.uleb128 0xe
+ 1601 003b 3A       		.uleb128 0x3a
+ 1602 003c 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 33
+
+
+ 1603 003d 3B       		.uleb128 0x3b
+ 1604 003e 05       		.uleb128 0x5
+ 1605 003f 49       		.uleb128 0x49
+ 1606 0040 13       		.uleb128 0x13
+ 1607 0041 00       		.byte	0
+ 1608 0042 00       		.byte	0
+ 1609 0043 06       		.uleb128 0x6
+ 1610 0044 0F       		.uleb128 0xf
+ 1611 0045 00       		.byte	0
+ 1612 0046 0B       		.uleb128 0xb
+ 1613 0047 0B       		.uleb128 0xb
+ 1614 0048 49       		.uleb128 0x49
+ 1615 0049 13       		.uleb128 0x13
+ 1616 004a 00       		.byte	0
+ 1617 004b 00       		.byte	0
+ 1618 004c 07       		.uleb128 0x7
+ 1619 004d 13       		.uleb128 0x13
+ 1620 004e 01       		.byte	0x1
+ 1621 004f 0B       		.uleb128 0xb
+ 1622 0050 0B       		.uleb128 0xb
+ 1623 0051 3A       		.uleb128 0x3a
+ 1624 0052 0B       		.uleb128 0xb
+ 1625 0053 3B       		.uleb128 0x3b
+ 1626 0054 0B       		.uleb128 0xb
+ 1627 0055 01       		.uleb128 0x1
+ 1628 0056 13       		.uleb128 0x13
+ 1629 0057 00       		.byte	0
+ 1630 0058 00       		.byte	0
+ 1631 0059 08       		.uleb128 0x8
+ 1632 005a 0D       		.uleb128 0xd
+ 1633 005b 00       		.byte	0
+ 1634 005c 03       		.uleb128 0x3
+ 1635 005d 0E       		.uleb128 0xe
+ 1636 005e 3A       		.uleb128 0x3a
+ 1637 005f 0B       		.uleb128 0xb
+ 1638 0060 3B       		.uleb128 0x3b
+ 1639 0061 0B       		.uleb128 0xb
+ 1640 0062 49       		.uleb128 0x49
+ 1641 0063 13       		.uleb128 0x13
+ 1642 0064 38       		.uleb128 0x38
+ 1643 0065 0B       		.uleb128 0xb
+ 1644 0066 00       		.byte	0
+ 1645 0067 00       		.byte	0
+ 1646 0068 09       		.uleb128 0x9
+ 1647 0069 35       		.uleb128 0x35
+ 1648 006a 00       		.byte	0
+ 1649 006b 49       		.uleb128 0x49
+ 1650 006c 13       		.uleb128 0x13
+ 1651 006d 00       		.byte	0
+ 1652 006e 00       		.byte	0
+ 1653 006f 0A       		.uleb128 0xa
+ 1654 0070 13       		.uleb128 0x13
+ 1655 0071 01       		.byte	0x1
+ 1656 0072 03       		.uleb128 0x3
+ 1657 0073 0E       		.uleb128 0xe
+ 1658 0074 0B       		.uleb128 0xb
+ 1659 0075 05       		.uleb128 0x5
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 34
+
+
+ 1660 0076 3A       		.uleb128 0x3a
+ 1661 0077 0B       		.uleb128 0xb
+ 1662 0078 3B       		.uleb128 0x3b
+ 1663 0079 0B       		.uleb128 0xb
+ 1664 007a 01       		.uleb128 0x1
+ 1665 007b 13       		.uleb128 0x13
+ 1666 007c 00       		.byte	0
+ 1667 007d 00       		.byte	0
+ 1668 007e 0B       		.uleb128 0xb
+ 1669 007f 0D       		.uleb128 0xd
+ 1670 0080 00       		.byte	0
+ 1671 0081 03       		.uleb128 0x3
+ 1672 0082 08       		.uleb128 0x8
+ 1673 0083 3A       		.uleb128 0x3a
+ 1674 0084 0B       		.uleb128 0xb
+ 1675 0085 3B       		.uleb128 0x3b
+ 1676 0086 0B       		.uleb128 0xb
+ 1677 0087 49       		.uleb128 0x49
+ 1678 0088 13       		.uleb128 0x13
+ 1679 0089 38       		.uleb128 0x38
+ 1680 008a 0B       		.uleb128 0xb
+ 1681 008b 00       		.byte	0
+ 1682 008c 00       		.byte	0
+ 1683 008d 0C       		.uleb128 0xc
+ 1684 008e 0D       		.uleb128 0xd
+ 1685 008f 00       		.byte	0
+ 1686 0090 03       		.uleb128 0x3
+ 1687 0091 0E       		.uleb128 0xe
+ 1688 0092 3A       		.uleb128 0x3a
+ 1689 0093 0B       		.uleb128 0xb
+ 1690 0094 3B       		.uleb128 0x3b
+ 1691 0095 0B       		.uleb128 0xb
+ 1692 0096 49       		.uleb128 0x49
+ 1693 0097 13       		.uleb128 0x13
+ 1694 0098 38       		.uleb128 0x38
+ 1695 0099 05       		.uleb128 0x5
+ 1696 009a 00       		.byte	0
+ 1697 009b 00       		.byte	0
+ 1698 009c 0D       		.uleb128 0xd
+ 1699 009d 01       		.uleb128 0x1
+ 1700 009e 01       		.byte	0x1
+ 1701 009f 49       		.uleb128 0x49
+ 1702 00a0 13       		.uleb128 0x13
+ 1703 00a1 01       		.uleb128 0x1
+ 1704 00a2 13       		.uleb128 0x13
+ 1705 00a3 00       		.byte	0
+ 1706 00a4 00       		.byte	0
+ 1707 00a5 0E       		.uleb128 0xe
+ 1708 00a6 21       		.uleb128 0x21
+ 1709 00a7 00       		.byte	0
+ 1710 00a8 49       		.uleb128 0x49
+ 1711 00a9 13       		.uleb128 0x13
+ 1712 00aa 2F       		.uleb128 0x2f
+ 1713 00ab 0B       		.uleb128 0xb
+ 1714 00ac 00       		.byte	0
+ 1715 00ad 00       		.byte	0
+ 1716 00ae 0F       		.uleb128 0xf
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 35
+
+
+ 1717 00af 2E       		.uleb128 0x2e
+ 1718 00b0 01       		.byte	0x1
+ 1719 00b1 3F       		.uleb128 0x3f
+ 1720 00b2 19       		.uleb128 0x19
+ 1721 00b3 03       		.uleb128 0x3
+ 1722 00b4 0E       		.uleb128 0xe
+ 1723 00b5 3A       		.uleb128 0x3a
+ 1724 00b6 0B       		.uleb128 0xb
+ 1725 00b7 3B       		.uleb128 0x3b
+ 1726 00b8 0B       		.uleb128 0xb
+ 1727 00b9 11       		.uleb128 0x11
+ 1728 00ba 01       		.uleb128 0x1
+ 1729 00bb 12       		.uleb128 0x12
+ 1730 00bc 06       		.uleb128 0x6
+ 1731 00bd 40       		.uleb128 0x40
+ 1732 00be 18       		.uleb128 0x18
+ 1733 00bf 9642     		.uleb128 0x2116
+ 1734 00c1 19       		.uleb128 0x19
+ 1735 00c2 01       		.uleb128 0x1
+ 1736 00c3 13       		.uleb128 0x13
+ 1737 00c4 00       		.byte	0
+ 1738 00c5 00       		.byte	0
+ 1739 00c6 10       		.uleb128 0x10
+ 1740 00c7 34       		.uleb128 0x34
+ 1741 00c8 00       		.byte	0
+ 1742 00c9 03       		.uleb128 0x3
+ 1743 00ca 08       		.uleb128 0x8
+ 1744 00cb 3A       		.uleb128 0x3a
+ 1745 00cc 0B       		.uleb128 0xb
+ 1746 00cd 3B       		.uleb128 0x3b
+ 1747 00ce 0B       		.uleb128 0xb
+ 1748 00cf 49       		.uleb128 0x49
+ 1749 00d0 13       		.uleb128 0x13
+ 1750 00d1 02       		.uleb128 0x2
+ 1751 00d2 18       		.uleb128 0x18
+ 1752 00d3 00       		.byte	0
+ 1753 00d4 00       		.byte	0
+ 1754 00d5 11       		.uleb128 0x11
+ 1755 00d6 2E       		.uleb128 0x2e
+ 1756 00d7 00       		.byte	0
+ 1757 00d8 3F       		.uleb128 0x3f
+ 1758 00d9 19       		.uleb128 0x19
+ 1759 00da 03       		.uleb128 0x3
+ 1760 00db 0E       		.uleb128 0xe
+ 1761 00dc 3A       		.uleb128 0x3a
+ 1762 00dd 0B       		.uleb128 0xb
+ 1763 00de 3B       		.uleb128 0x3b
+ 1764 00df 0B       		.uleb128 0xb
+ 1765 00e0 27       		.uleb128 0x27
+ 1766 00e1 19       		.uleb128 0x19
+ 1767 00e2 11       		.uleb128 0x11
+ 1768 00e3 01       		.uleb128 0x1
+ 1769 00e4 12       		.uleb128 0x12
+ 1770 00e5 06       		.uleb128 0x6
+ 1771 00e6 40       		.uleb128 0x40
+ 1772 00e7 18       		.uleb128 0x18
+ 1773 00e8 9642     		.uleb128 0x2116
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 36
+
+
+ 1774 00ea 19       		.uleb128 0x19
+ 1775 00eb 00       		.byte	0
+ 1776 00ec 00       		.byte	0
+ 1777 00ed 12       		.uleb128 0x12
+ 1778 00ee 2E       		.uleb128 0x2e
+ 1779 00ef 01       		.byte	0x1
+ 1780 00f0 3F       		.uleb128 0x3f
+ 1781 00f1 19       		.uleb128 0x19
+ 1782 00f2 03       		.uleb128 0x3
+ 1783 00f3 0E       		.uleb128 0xe
+ 1784 00f4 3A       		.uleb128 0x3a
+ 1785 00f5 0B       		.uleb128 0xb
+ 1786 00f6 3B       		.uleb128 0x3b
+ 1787 00f7 0B       		.uleb128 0xb
+ 1788 00f8 27       		.uleb128 0x27
+ 1789 00f9 19       		.uleb128 0x19
+ 1790 00fa 11       		.uleb128 0x11
+ 1791 00fb 01       		.uleb128 0x1
+ 1792 00fc 12       		.uleb128 0x12
+ 1793 00fd 06       		.uleb128 0x6
+ 1794 00fe 40       		.uleb128 0x40
+ 1795 00ff 18       		.uleb128 0x18
+ 1796 0100 9642     		.uleb128 0x2116
+ 1797 0102 19       		.uleb128 0x19
+ 1798 0103 01       		.uleb128 0x1
+ 1799 0104 13       		.uleb128 0x13
+ 1800 0105 00       		.byte	0
+ 1801 0106 00       		.byte	0
+ 1802 0107 13       		.uleb128 0x13
+ 1803 0108 2E       		.uleb128 0x2e
+ 1804 0109 00       		.byte	0
+ 1805 010a 3F       		.uleb128 0x3f
+ 1806 010b 19       		.uleb128 0x19
+ 1807 010c 03       		.uleb128 0x3
+ 1808 010d 0E       		.uleb128 0xe
+ 1809 010e 3A       		.uleb128 0x3a
+ 1810 010f 0B       		.uleb128 0xb
+ 1811 0110 3B       		.uleb128 0x3b
+ 1812 0111 0B       		.uleb128 0xb
+ 1813 0112 27       		.uleb128 0x27
+ 1814 0113 19       		.uleb128 0x19
+ 1815 0114 11       		.uleb128 0x11
+ 1816 0115 01       		.uleb128 0x1
+ 1817 0116 12       		.uleb128 0x12
+ 1818 0117 06       		.uleb128 0x6
+ 1819 0118 40       		.uleb128 0x40
+ 1820 0119 18       		.uleb128 0x18
+ 1821 011a 9742     		.uleb128 0x2117
+ 1822 011c 19       		.uleb128 0x19
+ 1823 011d 00       		.byte	0
+ 1824 011e 00       		.byte	0
+ 1825 011f 14       		.uleb128 0x14
+ 1826 0120 05       		.uleb128 0x5
+ 1827 0121 00       		.byte	0
+ 1828 0122 03       		.uleb128 0x3
+ 1829 0123 0E       		.uleb128 0xe
+ 1830 0124 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 37
+
+
+ 1831 0125 0B       		.uleb128 0xb
+ 1832 0126 3B       		.uleb128 0x3b
+ 1833 0127 0B       		.uleb128 0xb
+ 1834 0128 49       		.uleb128 0x49
+ 1835 0129 13       		.uleb128 0x13
+ 1836 012a 02       		.uleb128 0x2
+ 1837 012b 18       		.uleb128 0x18
+ 1838 012c 00       		.byte	0
+ 1839 012d 00       		.byte	0
+ 1840 012e 15       		.uleb128 0x15
+ 1841 012f 05       		.uleb128 0x5
+ 1842 0130 00       		.byte	0
+ 1843 0131 03       		.uleb128 0x3
+ 1844 0132 08       		.uleb128 0x8
+ 1845 0133 3A       		.uleb128 0x3a
+ 1846 0134 0B       		.uleb128 0xb
+ 1847 0135 3B       		.uleb128 0x3b
+ 1848 0136 0B       		.uleb128 0xb
+ 1849 0137 49       		.uleb128 0x49
+ 1850 0138 13       		.uleb128 0x13
+ 1851 0139 02       		.uleb128 0x2
+ 1852 013a 18       		.uleb128 0x18
+ 1853 013b 00       		.byte	0
+ 1854 013c 00       		.byte	0
+ 1855 013d 16       		.uleb128 0x16
+ 1856 013e 2E       		.uleb128 0x2e
+ 1857 013f 01       		.byte	0x1
+ 1858 0140 3F       		.uleb128 0x3f
+ 1859 0141 19       		.uleb128 0x19
+ 1860 0142 03       		.uleb128 0x3
+ 1861 0143 0E       		.uleb128 0xe
+ 1862 0144 3A       		.uleb128 0x3a
+ 1863 0145 0B       		.uleb128 0xb
+ 1864 0146 3B       		.uleb128 0x3b
+ 1865 0147 0B       		.uleb128 0xb
+ 1866 0148 27       		.uleb128 0x27
+ 1867 0149 19       		.uleb128 0x19
+ 1868 014a 49       		.uleb128 0x49
+ 1869 014b 13       		.uleb128 0x13
+ 1870 014c 11       		.uleb128 0x11
+ 1871 014d 01       		.uleb128 0x1
+ 1872 014e 12       		.uleb128 0x12
+ 1873 014f 06       		.uleb128 0x6
+ 1874 0150 40       		.uleb128 0x40
+ 1875 0151 18       		.uleb128 0x18
+ 1876 0152 9642     		.uleb128 0x2116
+ 1877 0154 19       		.uleb128 0x19
+ 1878 0155 01       		.uleb128 0x1
+ 1879 0156 13       		.uleb128 0x13
+ 1880 0157 00       		.byte	0
+ 1881 0158 00       		.byte	0
+ 1882 0159 17       		.uleb128 0x17
+ 1883 015a 34       		.uleb128 0x34
+ 1884 015b 00       		.byte	0
+ 1885 015c 03       		.uleb128 0x3
+ 1886 015d 0E       		.uleb128 0xe
+ 1887 015e 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 38
+
+
+ 1888 015f 0B       		.uleb128 0xb
+ 1889 0160 3B       		.uleb128 0x3b
+ 1890 0161 0B       		.uleb128 0xb
+ 1891 0162 49       		.uleb128 0x49
+ 1892 0163 13       		.uleb128 0x13
+ 1893 0164 02       		.uleb128 0x2
+ 1894 0165 18       		.uleb128 0x18
+ 1895 0166 00       		.byte	0
+ 1896 0167 00       		.byte	0
+ 1897 0168 18       		.uleb128 0x18
+ 1898 0169 2E       		.uleb128 0x2e
+ 1899 016a 01       		.byte	0x1
+ 1900 016b 3F       		.uleb128 0x3f
+ 1901 016c 19       		.uleb128 0x19
+ 1902 016d 03       		.uleb128 0x3
+ 1903 016e 0E       		.uleb128 0xe
+ 1904 016f 3A       		.uleb128 0x3a
+ 1905 0170 0B       		.uleb128 0xb
+ 1906 0171 3B       		.uleb128 0x3b
+ 1907 0172 0B       		.uleb128 0xb
+ 1908 0173 27       		.uleb128 0x27
+ 1909 0174 19       		.uleb128 0x19
+ 1910 0175 49       		.uleb128 0x49
+ 1911 0176 13       		.uleb128 0x13
+ 1912 0177 11       		.uleb128 0x11
+ 1913 0178 01       		.uleb128 0x1
+ 1914 0179 12       		.uleb128 0x12
+ 1915 017a 06       		.uleb128 0x6
+ 1916 017b 40       		.uleb128 0x40
+ 1917 017c 18       		.uleb128 0x18
+ 1918 017d 9742     		.uleb128 0x2117
+ 1919 017f 19       		.uleb128 0x19
+ 1920 0180 01       		.uleb128 0x1
+ 1921 0181 13       		.uleb128 0x13
+ 1922 0182 00       		.byte	0
+ 1923 0183 00       		.byte	0
+ 1924 0184 19       		.uleb128 0x19
+ 1925 0185 34       		.uleb128 0x34
+ 1926 0186 00       		.byte	0
+ 1927 0187 03       		.uleb128 0x3
+ 1928 0188 0E       		.uleb128 0xe
+ 1929 0189 3A       		.uleb128 0x3a
+ 1930 018a 0B       		.uleb128 0xb
+ 1931 018b 3B       		.uleb128 0x3b
+ 1932 018c 05       		.uleb128 0x5
+ 1933 018d 49       		.uleb128 0x49
+ 1934 018e 13       		.uleb128 0x13
+ 1935 018f 3F       		.uleb128 0x3f
+ 1936 0190 19       		.uleb128 0x19
+ 1937 0191 3C       		.uleb128 0x3c
+ 1938 0192 19       		.uleb128 0x19
+ 1939 0193 00       		.byte	0
+ 1940 0194 00       		.byte	0
+ 1941 0195 1A       		.uleb128 0x1a
+ 1942 0196 21       		.uleb128 0x21
+ 1943 0197 00       		.byte	0
+ 1944 0198 49       		.uleb128 0x49
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 39
+
+
+ 1945 0199 13       		.uleb128 0x13
+ 1946 019a 2F       		.uleb128 0x2f
+ 1947 019b 05       		.uleb128 0x5
+ 1948 019c 00       		.byte	0
+ 1949 019d 00       		.byte	0
+ 1950 019e 1B       		.uleb128 0x1b
+ 1951 019f 34       		.uleb128 0x34
+ 1952 01a0 00       		.byte	0
+ 1953 01a1 03       		.uleb128 0x3
+ 1954 01a2 0E       		.uleb128 0xe
+ 1955 01a3 3A       		.uleb128 0x3a
+ 1956 01a4 0B       		.uleb128 0xb
+ 1957 01a5 3B       		.uleb128 0x3b
+ 1958 01a6 0B       		.uleb128 0xb
+ 1959 01a7 49       		.uleb128 0x49
+ 1960 01a8 13       		.uleb128 0x13
+ 1961 01a9 3F       		.uleb128 0x3f
+ 1962 01aa 19       		.uleb128 0x19
+ 1963 01ab 02       		.uleb128 0x2
+ 1964 01ac 18       		.uleb128 0x18
+ 1965 01ad 00       		.byte	0
+ 1966 01ae 00       		.byte	0
+ 1967 01af 1C       		.uleb128 0x1c
+ 1968 01b0 34       		.uleb128 0x34
+ 1969 01b1 00       		.byte	0
+ 1970 01b2 03       		.uleb128 0x3
+ 1971 01b3 0E       		.uleb128 0xe
+ 1972 01b4 3A       		.uleb128 0x3a
+ 1973 01b5 0B       		.uleb128 0xb
+ 1974 01b6 3B       		.uleb128 0x3b
+ 1975 01b7 0B       		.uleb128 0xb
+ 1976 01b8 49       		.uleb128 0x49
+ 1977 01b9 13       		.uleb128 0x13
+ 1978 01ba 3F       		.uleb128 0x3f
+ 1979 01bb 19       		.uleb128 0x19
+ 1980 01bc 3C       		.uleb128 0x3c
+ 1981 01bd 19       		.uleb128 0x19
+ 1982 01be 00       		.byte	0
+ 1983 01bf 00       		.byte	0
+ 1984 01c0 1D       		.uleb128 0x1d
+ 1985 01c1 34       		.uleb128 0x34
+ 1986 01c2 00       		.byte	0
+ 1987 01c3 03       		.uleb128 0x3
+ 1988 01c4 08       		.uleb128 0x8
+ 1989 01c5 3A       		.uleb128 0x3a
+ 1990 01c6 0B       		.uleb128 0xb
+ 1991 01c7 3B       		.uleb128 0x3b
+ 1992 01c8 0B       		.uleb128 0xb
+ 1993 01c9 49       		.uleb128 0x49
+ 1994 01ca 13       		.uleb128 0x13
+ 1995 01cb 3F       		.uleb128 0x3f
+ 1996 01cc 19       		.uleb128 0x19
+ 1997 01cd 02       		.uleb128 0x2
+ 1998 01ce 18       		.uleb128 0x18
+ 1999 01cf 00       		.byte	0
+ 2000 01d0 00       		.byte	0
+ 2001 01d1 00       		.byte	0
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 40
+
+
+ 2002              		.section	.debug_aranges,"",%progbits
+ 2003 0000 4C000000 		.4byte	0x4c
+ 2004 0004 0200     		.2byte	0x2
+ 2005 0006 00000000 		.4byte	.Ldebug_info0
+ 2006 000a 04       		.byte	0x4
+ 2007 000b 00       		.byte	0
+ 2008 000c 0000     		.2byte	0
+ 2009 000e 0000     		.2byte	0
+ 2010 0010 00000000 		.4byte	.LFB63
+ 2011 0014 E0000000 		.4byte	.LFE63-.LFB63
+ 2012 0018 00000000 		.4byte	.LFB64
+ 2013 001c 48000000 		.4byte	.LFE64-.LFB64
+ 2014 0020 00000000 		.4byte	.LFB65
+ 2015 0024 B0010000 		.4byte	.LFE65-.LFB65
+ 2016 0028 00000000 		.4byte	.LFB66
+ 2017 002c 34000000 		.4byte	.LFE66-.LFB66
+ 2018 0030 00000000 		.4byte	.LFB67
+ 2019 0034 4A000000 		.4byte	.LFE67-.LFB67
+ 2020 0038 00000000 		.4byte	.LFB68
+ 2021 003c 48000000 		.4byte	.LFE68-.LFB68
+ 2022 0040 00000000 		.4byte	.LFB69
+ 2023 0044 62000000 		.4byte	.LFE69-.LFB69
+ 2024 0048 00000000 		.4byte	0
+ 2025 004c 00000000 		.4byte	0
+ 2026              		.section	.debug_ranges,"",%progbits
+ 2027              	.Ldebug_ranges0:
+ 2028 0000 00000000 		.4byte	.LFB63
+ 2029 0004 E0000000 		.4byte	.LFE63
+ 2030 0008 00000000 		.4byte	.LFB64
+ 2031 000c 48000000 		.4byte	.LFE64
+ 2032 0010 00000000 		.4byte	.LFB65
+ 2033 0014 B0010000 		.4byte	.LFE65
+ 2034 0018 00000000 		.4byte	.LFB66
+ 2035 001c 34000000 		.4byte	.LFE66
+ 2036 0020 00000000 		.4byte	.LFB67
+ 2037 0024 4A000000 		.4byte	.LFE67
+ 2038 0028 00000000 		.4byte	.LFB68
+ 2039 002c 48000000 		.4byte	.LFE68
+ 2040 0030 00000000 		.4byte	.LFB69
+ 2041 0034 62000000 		.4byte	.LFE69
+ 2042 0038 00000000 		.4byte	0
+ 2043 003c 00000000 		.4byte	0
+ 2044              		.section	.debug_line,"",%progbits
+ 2045              	.Ldebug_line0:
+ 2046 0000 9E020000 		.section	.debug_str,"MS",%progbits,1
+ 2046      02006F01 
+ 2046      00000201 
+ 2046      FB0E0D00 
+ 2046      01010101 
+ 2047              	.LASF19:
+ 2048 0000 6C6F6E67 		.ascii	"long double\000"
+ 2048      20646F75 
+ 2048      626C6500 
+ 2049              	.LASF88:
+ 2050 000c 6D756C74 		.ascii	"multi_byte_len\000"
+ 2050      695F6279 
+ 2050      74655F6C 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 41
+
+
+ 2050      656E00
+ 2051              	.LASF70:
+ 2052 001b 55706461 		.ascii	"UpdateCrc16Ccitt\000"
+ 2052      74654372 
+ 2052      63313643 
+ 2052      63697474 
+ 2052      00
+ 2053              	.LASF87:
+ 2054 002c 746C765F 		.ascii	"tlv_len\000"
+ 2054      6C656E00 
+ 2055              	.LASF50:
+ 2056 0034 6F736470 		.ascii	"osdp_status\000"
+ 2056      5F737461 
+ 2056      74757300 
+ 2057              	.LASF17:
+ 2058 0040 646F7562 		.ascii	"double\000"
+ 2058      6C6500
+ 2059              	.LASF54:
+ 2060 0047 6F736470 		.ascii	"osdp_reader_cmd\000"
+ 2060      5F726561 
+ 2060      6465725F 
+ 2060      636D6400 
+ 2061              	.LASF27:
+ 2062 0057 74785F62 		.ascii	"tx_bits\000"
+ 2062      69747300 
+ 2063              	.LASF65:
+ 2064 005f 70446174 		.ascii	"pData\000"
+ 2064      6100
+ 2065              	.LASF74:
+ 2066 0065 4D794932 		.ascii	"MyI2C_Regs\000"
+ 2066      435F5265 
+ 2066      677300
+ 2067              	.LASF20:
+ 2068 0070 73697A65 		.ascii	"sizetype\000"
+ 2068      74797065 
+ 2068      00
+ 2069              	.LASF52:
+ 2070 0079 6F736470 		.ascii	"osdp_rate\000"
+ 2070      5F726174 
+ 2070      6500
+ 2071              	.LASF44:
+ 2072 0083 73656E64 		.ascii	"send_mobile\000"
+ 2072      5F6D6F62 
+ 2072      696C6500 
+ 2073              	.LASF39:
+ 2074 008f 66616374 		.ascii	"factory_reset\000"
+ 2074      6F72795F 
+ 2074      72657365 
+ 2074      7400
+ 2075              	.LASF40:
+ 2076 009d 64617461 		.ascii	"data_length\000"
+ 2076      5F6C656E 
+ 2076      67746800 
+ 2077              	.LASF90:
+ 2078 00a9 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 2078      43313120 
+ 2078      352E342E 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 42
+
+
+ 2078      31203230 
+ 2078      31363036 
+ 2079 00dc 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 2079      20726576 
+ 2079      6973696F 
+ 2079      6E203233 
+ 2079      37373135 
+ 2080 010f 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 2080      66756E63 
+ 2080      74696F6E 
+ 2080      2D736563 
+ 2080      74696F6E 
+ 2081              	.LASF53:
+ 2082 0137 6F736470 		.ascii	"osdp_buffer\000"
+ 2082      5F627566 
+ 2082      66657200 
+ 2083              	.LASF9:
+ 2084 0143 6C6F6E67 		.ascii	"long long int\000"
+ 2084      206C6F6E 
+ 2084      6720696E 
+ 2084      7400
+ 2085              	.LASF36:
+ 2086 0151 6D6F6465 		.ascii	"mode\000"
+ 2086      00
+ 2087              	.LASF93:
+ 2088 0156 52656164 		.ascii	"ReadImageCard\000"
+ 2088      496D6167 
+ 2088      65436172 
+ 2088      6400
+ 2089              	.LASF4:
+ 2090 0164 5F5F7569 		.ascii	"__uint16_t\000"
+ 2090      6E743136 
+ 2090      5F7400
+ 2091              	.LASF89:
+ 2092 016f 746F6354 		.ascii	"tocTag\000"
+ 2092      616700
+ 2093              	.LASF2:
+ 2094 0176 73686F72 		.ascii	"short int\000"
+ 2094      7420696E 
+ 2094      7400
+ 2095              	.LASF66:
+ 2096 0180 6E756D42 		.ascii	"numBytes\000"
+ 2096      79746573 
+ 2096      00
+ 2097              	.LASF28:
+ 2098 0189 72785F62 		.ascii	"rx_bits\000"
+ 2098      69747300 
+ 2099              	.LASF12:
+ 2100 0191 75696E74 		.ascii	"uint8_t\000"
+ 2100      385F7400 
+ 2101              	.LASF42:
+ 2102 0199 70757368 		.ascii	"pushbtn_in\000"
+ 2102      62746E5F 
+ 2102      696E00
+ 2103              	.LASF15:
+ 2104 01a4 75696E74 		.ascii	"uint8\000"
+ 2104      3800
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 43
+
+
+ 2105              	.LASF83:
+ 2106 01aa 6F736470 		.ascii	"osdp_timeout\000"
+ 2106      5F74696D 
+ 2106      656F7574 
+ 2106      00
+ 2107              	.LASF0:
+ 2108 01b7 7369676E 		.ascii	"signed char\000"
+ 2108      65642063 
+ 2108      68617200 
+ 2109              	.LASF78:
+ 2110 01c3 74705F6F 		.ascii	"tp_old\000"
+ 2110      6C6400
+ 2111              	.LASF16:
+ 2112 01ca 666C6F61 		.ascii	"float\000"
+ 2112      7400
+ 2113              	.LASF82:
+ 2114 01d0 63617264 		.ascii	"card_in_buf\000"
+ 2114      5F696E5F 
+ 2114      62756600 
+ 2115              	.LASF37:
+ 2116 01dc 6163735F 		.ascii	"acs_outputs\000"
+ 2116      6F757470 
+ 2116      75747300 
+ 2117              	.LASF24:
+ 2118 01e8 62697473 		.ascii	"bits\000"
+ 2118      00
+ 2119              	.LASF55:
+ 2120 01ed 6F736470 		.ascii	"osdp_reader_data_length\000"
+ 2120      5F726561 
+ 2120      6465725F 
+ 2120      64617461 
+ 2120      5F6C656E 
+ 2121              	.LASF77:
+ 2122 0205 68775F6F 		.ascii	"hw_old\000"
+ 2122      6C6400
+ 2123              	.LASF61:
+ 2124 020c 696E6974 		.ascii	"initTocReaderUART\000"
+ 2124      546F6352 
+ 2124      65616465 
+ 2124      72554152 
+ 2124      5400
+ 2125              	.LASF81:
+ 2126 021e 63617264 		.ascii	"card_ack\000"
+ 2126      5F61636B 
+ 2126      00
+ 2127              	.LASF7:
+ 2128 0227 6C6F6E67 		.ascii	"long int\000"
+ 2128      20696E74 
+ 2128      00
+ 2129              	.LASF31:
+ 2130 0230 74696D65 		.ascii	"timer_rx_ctr\000"
+ 2130      725F7278 
+ 2130      5F637472 
+ 2130      00
+ 2131              	.LASF26:
+ 2132 023d 74785F62 		.ascii	"tx_byte\000"
+ 2132      79746500 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 44
+
+
+ 2133              	.LASF3:
+ 2134 0245 5F5F7569 		.ascii	"__uint8_t\000"
+ 2134      6E74385F 
+ 2134      7400
+ 2135              	.LASF22:
+ 2136 024f 70617269 		.ascii	"parity\000"
+ 2136      747900
+ 2137              	.LASF67:
+ 2138 0256 73746172 		.ascii	"startValue\000"
+ 2138      7456616C 
+ 2138      756500
+ 2139              	.LASF63:
+ 2140 0261 496D6752 		.ascii	"ImgRxInt\000"
+ 2140      78496E74 
+ 2140      00
+ 2141              	.LASF56:
+ 2142 026a 6F736470 		.ascii	"osdp_reader_rate\000"
+ 2142      5F726561 
+ 2142      6465725F 
+ 2142      72617465 
+ 2142      00
+ 2143              	.LASF41:
+ 2144 027b 74616D70 		.ascii	"tamper_in\000"
+ 2144      65725F69 
+ 2144      6E00
+ 2145              	.LASF92:
+ 2146 0285 443A5C65 		.ascii	"D:\\ext\\psoc_dual\\nanoNxt_ICM3\\ext_pim.cydsn\000"
+ 2146      78745C70 
+ 2146      736F635F 
+ 2146      6475616C 
+ 2146      5C6E616E 
+ 2147              	.LASF57:
+ 2148 02b1 6F736470 		.ascii	"osdp_reader_buffer\000"
+ 2148      5F726561 
+ 2148      6465725F 
+ 2148      62756666 
+ 2148      657200
+ 2149              	.LASF33:
+ 2150 02c4 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 2150      5F554152 
+ 2150      545F5354 
+ 2150      52554354 
+ 2150      00
+ 2151              	.LASF21:
+ 2152 02d5 62617564 		.ascii	"baud\000"
+ 2152      00
+ 2153              	.LASF51:
+ 2154 02da 6F736470 		.ascii	"osdp_data_length\000"
+ 2154      5F646174 
+ 2154      615F6C65 
+ 2154      6E677468 
+ 2154      00
+ 2155              	.LASF1:
+ 2156 02eb 756E7369 		.ascii	"unsigned char\000"
+ 2156      676E6564 
+ 2156      20636861 
+ 2156      7200
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 45
+
+
+ 2157              	.LASF79:
+ 2158 02f9 74616D70 		.ascii	"tamperCR_polarity\000"
+ 2158      65724352 
+ 2158      5F706F6C 
+ 2158      61726974 
+ 2158      7900
+ 2159              	.LASF68:
+ 2160 030b 63726356 		.ascii	"crcVal\000"
+ 2160      616C00
+ 2161              	.LASF43:
+ 2162 0312 6D6F6269 		.ascii	"mobile_mode\000"
+ 2162      6C655F6D 
+ 2162      6F646500 
+ 2163              	.LASF29:
+ 2164 031e 666C6167 		.ascii	"flags\000"
+ 2164      7300
+ 2165              	.LASF10:
+ 2166 0324 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 2166      206C6F6E 
+ 2166      6720756E 
+ 2166      7369676E 
+ 2166      65642069 
+ 2167              	.LASF11:
+ 2168 033b 756E7369 		.ascii	"unsigned int\000"
+ 2168      676E6564 
+ 2168      20696E74 
+ 2168      00
+ 2169              	.LASF23:
+ 2170 0348 73746F70 		.ascii	"stop_bits\000"
+ 2170      5F626974 
+ 2170      7300
+ 2171              	.LASF13:
+ 2172 0352 75696E74 		.ascii	"uint16_t\000"
+ 2172      31365F74 
+ 2172      00
+ 2173              	.LASF8:
+ 2174 035b 6C6F6E67 		.ascii	"long unsigned int\000"
+ 2174      20756E73 
+ 2174      69676E65 
+ 2174      6420696E 
+ 2174      7400
+ 2175              	.LASF38:
+ 2176 036d 6163735F 		.ascii	"acs_inputs\000"
+ 2176      696E7075 
+ 2176      747300
+ 2177              	.LASF85:
+ 2178 0378 746C765F 		.ascii	"tlv_head_len\000"
+ 2178      68656164 
+ 2178      5F6C656E 
+ 2178      00
+ 2179              	.LASF64:
+ 2180 0385 53656E64 		.ascii	"SendWaveLynxReader\000"
+ 2180      57617665 
+ 2180      4C796E78 
+ 2180      52656164 
+ 2180      657200
+ 2181              	.LASF32:
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 46
+
+
+ 2182 0398 72785F72 		.ascii	"rx_recv\000"
+ 2182      65637600 
+ 2183              	.LASF75:
+ 2184 03a0 72656164 		.ascii	"readerbootloading\000"
+ 2184      6572626F 
+ 2184      6F746C6F 
+ 2184      6164696E 
+ 2184      6700
+ 2185              	.LASF18:
+ 2186 03b2 63686172 		.ascii	"char\000"
+ 2186      00
+ 2187              	.LASF14:
+ 2188 03b7 696E7433 		.ascii	"int32_t\000"
+ 2188      325F7400 
+ 2189              	.LASF76:
+ 2190 03bf 63757272 		.ascii	"currentAccessType\000"
+ 2190      656E7441 
+ 2190      63636573 
+ 2190      73547970 
+ 2190      6500
+ 2191              	.LASF6:
+ 2192 03d1 5F5F696E 		.ascii	"__int32_t\000"
+ 2192      7433325F 
+ 2192      7400
+ 2193              	.LASF69:
+ 2194 03db 43616C63 		.ascii	"CalculateCrc16\000"
+ 2194      756C6174 
+ 2194      65437263 
+ 2194      313600
+ 2195              	.LASF71:
+ 2196 03ea 64617461 		.ascii	"data\000"
+ 2196      00
+ 2197              	.LASF58:
+ 2198 03ef 62756666 		.ascii	"buffer\000"
+ 2198      657200
+ 2199              	.LASF5:
+ 2200 03f6 73686F72 		.ascii	"short unsigned int\000"
+ 2200      7420756E 
+ 2200      7369676E 
+ 2200      65642069 
+ 2200      6E7400
+ 2201              	.LASF35:
+ 2202 0409 73746174 		.ascii	"status_in\000"
+ 2202      75735F69 
+ 2202      6E00
+ 2203              	.LASF60:
+ 2204 0413 4932435F 		.ascii	"I2C_Regs\000"
+ 2204      52656773 
+ 2204      00
+ 2205              	.LASF45:
+ 2206 041c 64756D6D 		.ascii	"dummy0\000"
+ 2206      793000
+ 2207              	.LASF59:
+ 2208 0423 64756D6D 		.ascii	"dummy1\000"
+ 2208      793100
+ 2209              	.LASF25:
+ 2210 042a 72785F62 		.ascii	"rx_byte\000"
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 47
+
+
+ 2210      79746500 
+ 2211              	.LASF48:
+ 2212 0432 62756666 		.ascii	"buffer1\000"
+ 2212      65723100 
+ 2213              	.LASF73:
+ 2214 043a 52656164 		.ascii	"ReaderRxBuffer\000"
+ 2214      65725278 
+ 2214      42756666 
+ 2214      657200
+ 2215              	.LASF34:
+ 2216 0449 73746174 		.ascii	"status_out\000"
+ 2216      75735F6F 
+ 2216      757400
+ 2217              	.LASF86:
+ 2218 0454 746C765F 		.ascii	"tlv_data_len\000"
+ 2218      64617461 
+ 2218      5F6C656E 
+ 2218      00
+ 2219              	.LASF46:
+ 2220 0461 73775F76 		.ascii	"sw_version\000"
+ 2220      65727369 
+ 2220      6F6E00
+ 2221              	.LASF84:
+ 2222 046c 746C765F 		.ascii	"tlv_ready\000"
+ 2222      72656164 
+ 2222      7900
+ 2223              	.LASF62:
+ 2224 0476 72657365 		.ascii	"resetImgBuf\000"
+ 2224      74496D67 
+ 2224      42756600 
+ 2225              	.LASF91:
+ 2226 0482 746F632E 		.ascii	"toc.c\000"
+ 2226      6300
+ 2227              	.LASF72:
+ 2228 0488 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 2228      52784275 
+ 2228      66666572 
+ 2228      00
+ 2229              	.LASF47:
+ 2230 0495 68775F76 		.ascii	"hw_version\000"
+ 2230      65727369 
+ 2230      6F6E00
+ 2231              	.LASF49:
+ 2232 04a0 6F736470 		.ascii	"osdp_cmd\000"
+ 2232      5F636D64 
+ 2232      00
+ 2233              	.LASF30:
+ 2234 04a9 74696D65 		.ascii	"timer_tx_ctr\000"
+ 2234      725F7478 
+ 2234      5F637472 
+ 2234      00
+ 2235              	.LASF80:
+ 2236 04b6 74616D70 		.ascii	"tamper_out_polarity\000"
+ 2236      65725F6F 
+ 2236      75745F70 
+ 2236      6F6C6172 
+ 2236      69747900 
+ARM GAS  C:\Users\Rajesh\AppData\Local\Temp\cc6SH9wE.s 			page 48
+
+
+ 2237              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

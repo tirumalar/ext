@@ -1,0 +1,2758 @@
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"Timeout_Timer_Isr.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.section	.text.Timeout_Timer_Isr_Interrupt,"ax",%progbits
+  19              		.align	1
+  20              		.global	Timeout_Timer_Isr_Interrupt
+  21              		.thumb
+  22              		.thumb_func
+  23              		.type	Timeout_Timer_Isr_Interrupt, %function
+  24              	Timeout_Timer_Isr_Interrupt:
+  25              	.LFB66:
+  26              		.file 1 "Generated_Source\\PSoC5\\Timeout_Timer_Isr.c"
+   1:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+   2:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * File Name: Timeout_Timer_Isr.c  
+   3:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Version 1.70
+   4:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+   5:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  Description:
+   6:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   API for controlling the state of an interrupt.
+   7:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+   8:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+   9:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  Note:
+  10:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+  11:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+  12:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Copyright 2008-2015, Cypress Semiconductor Corporation.  All rights reserved.
+  13:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * You may use this file only in accordance with the license, terms, conditions, 
+  14:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * disclaimers, and limitations in the end user license agreement accompanying 
+  15:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * the software package with which this file was provided.
+  16:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+  17:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  18:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  19:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #include <cydevice_trm.h>
+  20:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #include <CyLib.h>
+  21:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #include <Timeout_Timer_Isr.h>
+  22:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  23:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  24:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #if !defined(Timeout_Timer_Isr__REMOVED) /* Check for removal by optimization */
+  25:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  26:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+  27:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  Place your includes, defines and code here 
+  28:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************/
+  29:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /* `#START Timeout_Timer_Isr_intc` */
+  30:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  31:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #include "Timeout_Timer.h"
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 2
+
+
+  32:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #include "system.h"      
+  33:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** //#include "LED_GRN.h"
+  34:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** //#include "LEDR_OUT.h" //debug
+  35:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** uint8 ledr_on;    
+  36:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /* `#END` */
+  37:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  38:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #ifndef CYINT_IRQ_BASE
+  39:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #define CYINT_IRQ_BASE      16
+  40:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #endif /* CYINT_IRQ_BASE */
+  41:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #ifndef CYINT_VECT_TABLE
+  42:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #define CYINT_VECT_TABLE    ((cyisraddress **) CYREG_NVIC_VECT_OFFSET)
+  43:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** #endif /* CYINT_VECT_TABLE */
+  44:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  45:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /* Declared in startup, used to set unused interrupts to. */
+  46:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** CY_ISR_PROTO(IntDefaultHandler);
+  47:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  48:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  49:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+  50:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_Start
+  51:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+  52:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+  53:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+  54:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  Set up the interrupt and enable it. This function disables the interrupt, 
+  55:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  sets the default interrupt vector, sets the priority from the value in the
+  56:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  Design Wide Resources Interrupt Editor, then enables the interrupt to the 
+  57:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  interrupt controller.
+  58:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+  59:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:  
+  60:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+  61:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+  62:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+  63:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+  64:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+  65:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+  66:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** void Timeout_Timer_Isr_Start(void)
+  67:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+  68:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* For all we know the interrupt is active. */
+  69:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     Timeout_Timer_Isr_Disable();
+  70:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  71:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Set the ISR to point to the Timeout_Timer_Isr Interrupt. */
+  72:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     Timeout_Timer_Isr_SetVector(&Timeout_Timer_Isr_Interrupt);
+  73:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  74:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Set the priority. */
+  75:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     Timeout_Timer_Isr_SetPriority((uint8)Timeout_Timer_Isr_INTC_PRIOR_NUMBER);
+  76:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  77:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Enable it. */
+  78:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     Timeout_Timer_Isr_Enable();
+  79:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+  80:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  81:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  82:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+  83:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_StartEx
+  84:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+  85:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+  86:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+  87:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  Sets up the interrupt and enables it. This function disables the interrupt,
+  88:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  sets the interrupt vector based on the address passed in, sets the priority 
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 3
+
+
+  89:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  from the value in the Design Wide Resources Interrupt Editor, then enables 
+  90:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  the interrupt to the interrupt controller.
+  91:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  
+  92:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
+  93:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  used to provide consistent definition across compilers:
+  94:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  
+  95:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *  Function definition example:
+  96:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   CY_ISR(MyISR)
+  97:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   {
+  98:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   }
+  99:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Function prototype example:
+ 100:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   CY_ISR_PROTO(MyISR);
+ 101:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 102:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:  
+ 103:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   address: Address of the ISR to set in the interrupt vector table.
+ 104:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 105:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 106:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 107:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 108:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 109:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** void Timeout_Timer_Isr_StartEx(cyisraddress address)
+ 110:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+ 111:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* For all we know the interrupt is active. */
+ 112:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     Timeout_Timer_Isr_Disable();
+ 113:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 114:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Set the ISR to point to the Timeout_Timer_Isr Interrupt. */
+ 115:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     Timeout_Timer_Isr_SetVector(address);
+ 116:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 117:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Set the priority. */
+ 118:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     Timeout_Timer_Isr_SetPriority((uint8)Timeout_Timer_Isr_INTC_PRIOR_NUMBER);
+ 119:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 120:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Enable it. */
+ 121:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     Timeout_Timer_Isr_Enable();
+ 122:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 123:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 124:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 125:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+ 126:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_Stop
+ 127:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+ 128:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 129:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+ 130:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Disables and removes the interrupt.
+ 131:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 132:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:  
+ 133:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 134:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 135:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 136:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 137:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 138:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 139:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** void Timeout_Timer_Isr_Stop(void)
+ 140:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+ 141:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Disable this interrupt. */
+ 142:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     Timeout_Timer_Isr_Disable();
+ 143:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 144:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Set the ISR to point to the passive one. */
+ 145:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     Timeout_Timer_Isr_SetVector(&IntDefaultHandler);
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 4
+
+
+ 146:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 147:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 148:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 149:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+ 150:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_Interrupt
+ 151:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+ 152:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 153:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+ 154:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   The default Interrupt Service Routine for Timeout_Timer_Isr.
+ 155:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 156:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Add custom code between the coments to keep the next version of this file
+ 157:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   from over writting your code.
+ 158:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 159:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:  
+ 160:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 161:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 162:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 163:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 164:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 165:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** CY_ISR(Timeout_Timer_Isr_Interrupt)
+ 166:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+  27              		.loc 1 166 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31 0000 08B5     		push	{r3, lr}
+  32              		.cfi_def_cfa_offset 8
+  33              		.cfi_offset 3, -8
+  34              		.cfi_offset 14, -4
+ 167:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     #ifdef Timeout_Timer_Isr_INTERRUPT_INTERRUPT_CALLBACK
+ 168:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****         Timeout_Timer_Isr_Interrupt_InterruptCallback();
+ 169:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     #endif /* Timeout_Timer_Isr_INTERRUPT_INTERRUPT_CALLBACK */ 
+ 170:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 171:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /*  Place your Interrupt code here. */
+ 172:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* `#START Timeout_Timer_Isr_Interrupt` */
+ 173:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     //50us interrupt
+ 174:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     Timeout_Timer_ReadStatusRegister(); 
+  35              		.loc 1 174 0
+  36 0002 FFF7FEFF 		bl	Timeout_Timer_ReadStatusRegister
+  37              	.LVL0:
+ 175:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     f2f_timeout++;
+  38              		.loc 1 175 0
+  39 0006 044A     		ldr	r2, .L2
+  40 0008 1368     		ldr	r3, [r2]
+  41 000a 0133     		adds	r3, r3, #1
+  42 000c 1360     		str	r3, [r2]
+ 176:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     passmode_timeout++;
+  43              		.loc 1 176 0
+  44 000e 034A     		ldr	r2, .L2+4
+  45 0010 1368     		ldr	r3, [r2]
+  46 0012 0133     		adds	r3, r3, #1
+  47 0014 1360     		str	r3, [r2]
+  48 0016 08BD     		pop	{r3, pc}
+  49              	.L3:
+  50              		.align	2
+  51              	.L2:
+  52 0018 00000000 		.word	f2f_timeout
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 5
+
+
+  53 001c 00000000 		.word	passmode_timeout
+  54              		.cfi_endproc
+  55              	.LFE66:
+  56              		.size	Timeout_Timer_Isr_Interrupt, .-Timeout_Timer_Isr_Interrupt
+  57              		.section	.text.Timeout_Timer_Isr_Start,"ax",%progbits
+  58              		.align	1
+  59              		.global	Timeout_Timer_Isr_Start
+  60              		.thumb
+  61              		.thumb_func
+  62              		.type	Timeout_Timer_Isr_Start, %function
+  63              	Timeout_Timer_Isr_Start:
+  64              	.LFB63:
+  67:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* For all we know the interrupt is active. */
+  65              		.loc 1 67 0
+  66              		.cfi_startproc
+  67              		@ args = 0, pretend = 0, frame = 0
+  68              		@ frame_needed = 0, uses_anonymous_args = 0
+  69              		@ link register save eliminated.
+  70              	.LBB22:
+  71              	.LBB23:
+ 177:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* `#END` */
+ 178:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 179:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 180:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 181:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+ 182:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_SetVector
+ 183:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+ 184:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 185:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+ 186:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Change the ISR vector for the Interrupt. Note calling Timeout_Timer_Isr_Start
+ 187:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   will override any effect this method would have had. To set the vector 
+ 188:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   before the component has been started use Timeout_Timer_Isr_StartEx instead.
+ 189:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * 
+ 190:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
+ 191:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   used to provide consistent definition across compilers:
+ 192:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 193:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Function definition example:
+ 194:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   CY_ISR(MyISR)
+ 195:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   {
+ 196:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   }
+ 197:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 198:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Function prototype example:
+ 199:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *     CY_ISR_PROTO(MyISR);
+ 200:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 201:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:
+ 202:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   address: Address of the ISR to set in the interrupt vector table.
+ 203:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 204:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 205:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 206:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 207:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 208:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** void Timeout_Timer_Isr_SetVector(cyisraddress address)
+ 209:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+ 210:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     cyisraddress * ramVectorTable;
+ 211:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 212:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
+ 213:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 6
+
+
+ 214:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     ramVectorTable[CYINT_IRQ_BASE + (uint32)Timeout_Timer_Isr__INTC_NUMBER] = address;
+ 215:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 216:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 217:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 218:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+ 219:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_GetVector
+ 220:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+ 221:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 222:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+ 223:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Gets the "address" of the current ISR vector for the Interrupt.
+ 224:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 225:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:
+ 226:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 227:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 228:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 229:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Address of the ISR in the interrupt vector table.
+ 230:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 231:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 232:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** cyisraddress Timeout_Timer_Isr_GetVector(void)
+ 233:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+ 234:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     cyisraddress * ramVectorTable;
+ 235:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 236:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
+ 237:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 238:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     return ramVectorTable[CYINT_IRQ_BASE + (uint32)Timeout_Timer_Isr__INTC_NUMBER];
+ 239:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 240:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 241:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 242:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+ 243:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_SetPriority
+ 244:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+ 245:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 246:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+ 247:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Sets the Priority of the Interrupt. 
+ 248:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 249:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Note calling Timeout_Timer_Isr_Start or Timeout_Timer_Isr_StartEx will 
+ 250:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   override any effect this API would have had. This API should only be called
+ 251:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   after Timeout_Timer_Isr_Start or Timeout_Timer_Isr_StartEx has been called. 
+ 252:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   To set the initial priority for the component, use the Design-Wide Resources
+ 253:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Interrupt Editor.
+ 254:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 255:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Note This API has no effect on Non-maskable interrupt NMI).
+ 256:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 257:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:
+ 258:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   priority: Priority of the interrupt, 0 being the highest priority
+ 259:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *             PSoC 3 and PSoC 5LP: Priority is from 0 to 7.
+ 260:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *             PSoC 4: Priority is from 0 to 3.
+ 261:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 262:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 263:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 264:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 265:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 266:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** void Timeout_Timer_Isr_SetPriority(uint8 priority)
+ 267:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+ 268:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     *Timeout_Timer_Isr_INTC_PRIOR = priority << 5;
+ 269:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 270:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 7
+
+
+ 271:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 272:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+ 273:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_GetPriority
+ 274:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+ 275:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 276:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+ 277:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Gets the Priority of the Interrupt.
+ 278:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 279:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:
+ 280:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 281:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 282:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 283:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Priority of the interrupt, 0 being the highest priority
+ 284:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *    PSoC 3 and PSoC 5LP: Priority is from 0 to 7.
+ 285:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *    PSoC 4: Priority is from 0 to 3.
+ 286:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 287:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 288:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** uint8 Timeout_Timer_Isr_GetPriority(void)
+ 289:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+ 290:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     uint8 priority;
+ 291:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 292:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 293:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     priority = *Timeout_Timer_Isr_INTC_PRIOR >> 5;
+ 294:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 295:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     return priority;
+ 296:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 297:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 298:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 299:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+ 300:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_Enable
+ 301:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+ 302:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 303:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+ 304:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Enables the interrupt to the interrupt controller. Do not call this function
+ 305:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   unless ISR_Start() has been called or the functionality of the ISR_Start() 
+ 306:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   function, which sets the vector and the priority, has been called.
+ 307:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 308:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:
+ 309:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 310:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 311:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 312:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 313:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 314:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 315:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** void Timeout_Timer_Isr_Enable(void)
+ 316:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+ 317:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Enable the general interrupt. */
+ 318:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     *Timeout_Timer_Isr_INTC_SET_EN = Timeout_Timer_Isr__INTC_MASK;
+ 319:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 320:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 321:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 322:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+ 323:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_GetState
+ 324:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+ 325:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 326:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+ 327:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Gets the state (enabled, disabled) of the Interrupt.
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 8
+
+
+ 328:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 329:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:
+ 330:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 331:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 332:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 333:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   1 if enabled, 0 if disabled.
+ 334:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 335:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 336:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** uint8 Timeout_Timer_Isr_GetState(void)
+ 337:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+ 338:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Get the state of the general interrupt. */
+ 339:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     return ((*Timeout_Timer_Isr_INTC_SET_EN & (uint32)Timeout_Timer_Isr__INTC_MASK) != 0u) ? 1u:0u;
+ 340:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 341:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 342:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 343:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+ 344:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_Disable
+ 345:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+ 346:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 347:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+ 348:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Disables the Interrupt in the interrupt controller.
+ 349:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 350:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:
+ 351:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 352:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 353:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 354:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 355:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 356:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 357:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** void Timeout_Timer_Isr_Disable(void)
+ 358:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+ 359:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Disable the general interrupt. */
+ 360:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     *Timeout_Timer_Isr_INTC_CLR_EN = Timeout_Timer_Isr__INTC_MASK;
+  72              		.loc 1 360 0
+  73 0000 084A     		ldr	r2, .L5
+  74 0002 4FF48023 		mov	r3, #262144
+  75 0006 1360     		str	r3, [r2]
+  76              	.LVL1:
+  77              	.LBE23:
+  78              	.LBE22:
+  79              	.LBB24:
+  80              	.LBB25:
+ 212:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+  81              		.loc 1 212 0
+  82 0008 02F68832 		addw	r2, r2, #2952
+  83 000c 1268     		ldr	r2, [r2]
+  84              	.LVL2:
+ 214:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+  85              		.loc 1 214 0
+  86 000e 0649     		ldr	r1, .L5+4
+  87 0010 C2F88810 		str	r1, [r2, #136]
+  88              	.LVL3:
+  89              	.LBE25:
+  90              	.LBE24:
+  91              	.LBB26:
+  92              	.LBB27:
+ 268:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 9
+
+
+  93              		.loc 1 268 0
+  94 0014 054A     		ldr	r2, .L5+8
+  95              	.LVL4:
+  96 0016 E021     		movs	r1, #224
+  97 0018 1170     		strb	r1, [r2]
+  98              	.LBE27:
+  99              	.LBE26:
+ 100              	.LBB28:
+ 101              	.LBB29:
+ 318:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 102              		.loc 1 318 0
+ 103 001a A2F21232 		subw	r2, r2, #786
+ 104 001e 1360     		str	r3, [r2]
+ 105 0020 7047     		bx	lr
+ 106              	.L6:
+ 107 0022 00BF     		.align	2
+ 108              	.L5:
+ 109 0024 80E100E0 		.word	-536813184
+ 110 0028 00000000 		.word	Timeout_Timer_Isr_Interrupt
+ 111 002c 12E400E0 		.word	-536812526
+ 112              	.LBE29:
+ 113              	.LBE28:
+ 114              		.cfi_endproc
+ 115              	.LFE63:
+ 116              		.size	Timeout_Timer_Isr_Start, .-Timeout_Timer_Isr_Start
+ 117              		.section	.text.Timeout_Timer_Isr_StartEx,"ax",%progbits
+ 118              		.align	1
+ 119              		.global	Timeout_Timer_Isr_StartEx
+ 120              		.thumb
+ 121              		.thumb_func
+ 122              		.type	Timeout_Timer_Isr_StartEx, %function
+ 123              	Timeout_Timer_Isr_StartEx:
+ 124              	.LFB64:
+ 110:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* For all we know the interrupt is active. */
+ 125              		.loc 1 110 0
+ 126              		.cfi_startproc
+ 127              		@ args = 0, pretend = 0, frame = 0
+ 128              		@ frame_needed = 0, uses_anonymous_args = 0
+ 129              		@ link register save eliminated.
+ 130              	.LVL5:
+ 131              	.LBB30:
+ 132              	.LBB31:
+ 133              		.loc 1 360 0
+ 134 0000 074A     		ldr	r2, .L8
+ 135 0002 4FF48023 		mov	r3, #262144
+ 136 0006 1360     		str	r3, [r2]
+ 137              	.LVL6:
+ 138              	.LBE31:
+ 139              	.LBE30:
+ 140              	.LBB32:
+ 141              	.LBB33:
+ 212:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 142              		.loc 1 212 0
+ 143 0008 02F68832 		addw	r2, r2, #2952
+ 144 000c 1268     		ldr	r2, [r2]
+ 145              	.LVL7:
+ 146              	.LBE33:
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 10
+
+
+ 147              	.LBE32:
+ 148              	.LBB35:
+ 149              	.LBB36:
+ 268:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 150              		.loc 1 268 0
+ 151 000e E021     		movs	r1, #224
+ 152              	.LBE36:
+ 153              	.LBE35:
+ 154              	.LBB38:
+ 155              	.LBB34:
+ 214:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 156              		.loc 1 214 0
+ 157 0010 C2F88800 		str	r0, [r2, #136]
+ 158              	.LVL8:
+ 159              	.LBE34:
+ 160              	.LBE38:
+ 161              	.LBB39:
+ 162              	.LBB37:
+ 268:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 163              		.loc 1 268 0
+ 164 0014 034A     		ldr	r2, .L8+4
+ 165              	.LVL9:
+ 166 0016 1170     		strb	r1, [r2]
+ 167              	.LBE37:
+ 168              	.LBE39:
+ 169              	.LBB40:
+ 170              	.LBB41:
+ 318:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 171              		.loc 1 318 0
+ 172 0018 A2F21232 		subw	r2, r2, #786
+ 173 001c 1360     		str	r3, [r2]
+ 174 001e 7047     		bx	lr
+ 175              	.L9:
+ 176              		.align	2
+ 177              	.L8:
+ 178 0020 80E100E0 		.word	-536813184
+ 179 0024 12E400E0 		.word	-536812526
+ 180              	.LBE41:
+ 181              	.LBE40:
+ 182              		.cfi_endproc
+ 183              	.LFE64:
+ 184              		.size	Timeout_Timer_Isr_StartEx, .-Timeout_Timer_Isr_StartEx
+ 185              		.section	.text.Timeout_Timer_Isr_Stop,"ax",%progbits
+ 186              		.align	1
+ 187              		.global	Timeout_Timer_Isr_Stop
+ 188              		.thumb
+ 189              		.thumb_func
+ 190              		.type	Timeout_Timer_Isr_Stop, %function
+ 191              	Timeout_Timer_Isr_Stop:
+ 192              	.LFB65:
+ 140:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Disable this interrupt. */
+ 193              		.loc 1 140 0
+ 194              		.cfi_startproc
+ 195              		@ args = 0, pretend = 0, frame = 0
+ 196              		@ frame_needed = 0, uses_anonymous_args = 0
+ 197              		@ link register save eliminated.
+ 198              	.LBB42:
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 11
+
+
+ 199              	.LBB43:
+ 200              		.loc 1 360 0
+ 201 0000 054B     		ldr	r3, .L11
+ 202 0002 4FF48022 		mov	r2, #262144
+ 203 0006 1A60     		str	r2, [r3]
+ 204              	.LVL10:
+ 205              	.LBE43:
+ 206              	.LBE42:
+ 207              	.LBB44:
+ 208              	.LBB45:
+ 212:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 209              		.loc 1 212 0
+ 210 0008 03F68833 		addw	r3, r3, #2952
+ 211 000c 1B68     		ldr	r3, [r3]
+ 212              	.LVL11:
+ 214:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 213              		.loc 1 214 0
+ 214 000e 034A     		ldr	r2, .L11+4
+ 215 0010 C3F88820 		str	r2, [r3, #136]
+ 216 0014 7047     		bx	lr
+ 217              	.L12:
+ 218 0016 00BF     		.align	2
+ 219              	.L11:
+ 220 0018 80E100E0 		.word	-536813184
+ 221 001c 00000000 		.word	IntDefaultHandler
+ 222              	.LBE45:
+ 223              	.LBE44:
+ 224              		.cfi_endproc
+ 225              	.LFE65:
+ 226              		.size	Timeout_Timer_Isr_Stop, .-Timeout_Timer_Isr_Stop
+ 227              		.section	.text.Timeout_Timer_Isr_SetVector,"ax",%progbits
+ 228              		.align	1
+ 229              		.global	Timeout_Timer_Isr_SetVector
+ 230              		.thumb
+ 231              		.thumb_func
+ 232              		.type	Timeout_Timer_Isr_SetVector, %function
+ 233              	Timeout_Timer_Isr_SetVector:
+ 234              	.LFB67:
+ 209:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     cyisraddress * ramVectorTable;
+ 235              		.loc 1 209 0
+ 236              		.cfi_startproc
+ 237              		@ args = 0, pretend = 0, frame = 0
+ 238              		@ frame_needed = 0, uses_anonymous_args = 0
+ 239              		@ link register save eliminated.
+ 240              	.LVL12:
+ 212:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 241              		.loc 1 212 0
+ 242 0000 024B     		ldr	r3, .L14
+ 243 0002 1B68     		ldr	r3, [r3]
+ 244              	.LVL13:
+ 214:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 245              		.loc 1 214 0
+ 246 0004 C3F88800 		str	r0, [r3, #136]
+ 247 0008 7047     		bx	lr
+ 248              	.L15:
+ 249 000a 00BF     		.align	2
+ 250              	.L14:
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 12
+
+
+ 251 000c 08ED00E0 		.word	-536810232
+ 252              		.cfi_endproc
+ 253              	.LFE67:
+ 254              		.size	Timeout_Timer_Isr_SetVector, .-Timeout_Timer_Isr_SetVector
+ 255              		.section	.text.Timeout_Timer_Isr_GetVector,"ax",%progbits
+ 256              		.align	1
+ 257              		.global	Timeout_Timer_Isr_GetVector
+ 258              		.thumb
+ 259              		.thumb_func
+ 260              		.type	Timeout_Timer_Isr_GetVector, %function
+ 261              	Timeout_Timer_Isr_GetVector:
+ 262              	.LFB68:
+ 233:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     cyisraddress * ramVectorTable;
+ 263              		.loc 1 233 0
+ 264              		.cfi_startproc
+ 265              		@ args = 0, pretend = 0, frame = 0
+ 266              		@ frame_needed = 0, uses_anonymous_args = 0
+ 267              		@ link register save eliminated.
+ 268              	.LVL14:
+ 236:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 269              		.loc 1 236 0
+ 270 0000 024B     		ldr	r3, .L17
+ 271              	.LVL15:
+ 238:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 272              		.loc 1 238 0
+ 273 0002 1B68     		ldr	r3, [r3]
+ 274              	.LVL16:
+ 239:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 275              		.loc 1 239 0
+ 276 0004 D3F88800 		ldr	r0, [r3, #136]
+ 277 0008 7047     		bx	lr
+ 278              	.L18:
+ 279 000a 00BF     		.align	2
+ 280              	.L17:
+ 281 000c 08ED00E0 		.word	-536810232
+ 282              		.cfi_endproc
+ 283              	.LFE68:
+ 284              		.size	Timeout_Timer_Isr_GetVector, .-Timeout_Timer_Isr_GetVector
+ 285              		.section	.text.Timeout_Timer_Isr_SetPriority,"ax",%progbits
+ 286              		.align	1
+ 287              		.global	Timeout_Timer_Isr_SetPriority
+ 288              		.thumb
+ 289              		.thumb_func
+ 290              		.type	Timeout_Timer_Isr_SetPriority, %function
+ 291              	Timeout_Timer_Isr_SetPriority:
+ 292              	.LFB69:
+ 267:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     *Timeout_Timer_Isr_INTC_PRIOR = priority << 5;
+ 293              		.loc 1 267 0
+ 294              		.cfi_startproc
+ 295              		@ args = 0, pretend = 0, frame = 0
+ 296              		@ frame_needed = 0, uses_anonymous_args = 0
+ 297              		@ link register save eliminated.
+ 298              	.LVL17:
+ 268:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 299              		.loc 1 268 0
+ 300 0000 4001     		lsls	r0, r0, #5
+ 301              	.LVL18:
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 13
+
+
+ 302 0002 024B     		ldr	r3, .L20
+ 303 0004 C0B2     		uxtb	r0, r0
+ 304 0006 1870     		strb	r0, [r3]
+ 305 0008 7047     		bx	lr
+ 306              	.L21:
+ 307 000a 00BF     		.align	2
+ 308              	.L20:
+ 309 000c 12E400E0 		.word	-536812526
+ 310              		.cfi_endproc
+ 311              	.LFE69:
+ 312              		.size	Timeout_Timer_Isr_SetPriority, .-Timeout_Timer_Isr_SetPriority
+ 313              		.section	.text.Timeout_Timer_Isr_GetPriority,"ax",%progbits
+ 314              		.align	1
+ 315              		.global	Timeout_Timer_Isr_GetPriority
+ 316              		.thumb
+ 317              		.thumb_func
+ 318              		.type	Timeout_Timer_Isr_GetPriority, %function
+ 319              	Timeout_Timer_Isr_GetPriority:
+ 320              	.LFB70:
+ 289:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     uint8 priority;
+ 321              		.loc 1 289 0
+ 322              		.cfi_startproc
+ 323              		@ args = 0, pretend = 0, frame = 0
+ 324              		@ frame_needed = 0, uses_anonymous_args = 0
+ 325              		@ link register save eliminated.
+ 293:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 326              		.loc 1 293 0
+ 327 0000 014B     		ldr	r3, .L23
+ 328 0002 1878     		ldrb	r0, [r3]	@ zero_extendqisi2
+ 329              	.LVL19:
+ 296:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 330              		.loc 1 296 0
+ 331 0004 4009     		lsrs	r0, r0, #5
+ 332              	.LVL20:
+ 333 0006 7047     		bx	lr
+ 334              	.L24:
+ 335              		.align	2
+ 336              	.L23:
+ 337 0008 12E400E0 		.word	-536812526
+ 338              		.cfi_endproc
+ 339              	.LFE70:
+ 340              		.size	Timeout_Timer_Isr_GetPriority, .-Timeout_Timer_Isr_GetPriority
+ 341              		.section	.text.Timeout_Timer_Isr_Enable,"ax",%progbits
+ 342              		.align	1
+ 343              		.global	Timeout_Timer_Isr_Enable
+ 344              		.thumb
+ 345              		.thumb_func
+ 346              		.type	Timeout_Timer_Isr_Enable, %function
+ 347              	Timeout_Timer_Isr_Enable:
+ 348              	.LFB71:
+ 316:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Enable the general interrupt. */
+ 349              		.loc 1 316 0
+ 350              		.cfi_startproc
+ 351              		@ args = 0, pretend = 0, frame = 0
+ 352              		@ frame_needed = 0, uses_anonymous_args = 0
+ 353              		@ link register save eliminated.
+ 318:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 14
+
+
+ 354              		.loc 1 318 0
+ 355 0000 024B     		ldr	r3, .L26
+ 356 0002 4FF48022 		mov	r2, #262144
+ 357 0006 1A60     		str	r2, [r3]
+ 358 0008 7047     		bx	lr
+ 359              	.L27:
+ 360 000a 00BF     		.align	2
+ 361              	.L26:
+ 362 000c 00E100E0 		.word	-536813312
+ 363              		.cfi_endproc
+ 364              	.LFE71:
+ 365              		.size	Timeout_Timer_Isr_Enable, .-Timeout_Timer_Isr_Enable
+ 366              		.section	.text.Timeout_Timer_Isr_GetState,"ax",%progbits
+ 367              		.align	1
+ 368              		.global	Timeout_Timer_Isr_GetState
+ 369              		.thumb
+ 370              		.thumb_func
+ 371              		.type	Timeout_Timer_Isr_GetState, %function
+ 372              	Timeout_Timer_Isr_GetState:
+ 373              	.LFB72:
+ 337:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Get the state of the general interrupt. */
+ 374              		.loc 1 337 0
+ 375              		.cfi_startproc
+ 376              		@ args = 0, pretend = 0, frame = 0
+ 377              		@ frame_needed = 0, uses_anonymous_args = 0
+ 378              		@ link register save eliminated.
+ 339:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 379              		.loc 1 339 0
+ 380 0000 024B     		ldr	r3, .L29
+ 381 0002 1868     		ldr	r0, [r3]
+ 340:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 382              		.loc 1 340 0
+ 383 0004 C0F38040 		ubfx	r0, r0, #18, #1
+ 384 0008 7047     		bx	lr
+ 385              	.L30:
+ 386 000a 00BF     		.align	2
+ 387              	.L29:
+ 388 000c 00E100E0 		.word	-536813312
+ 389              		.cfi_endproc
+ 390              	.LFE72:
+ 391              		.size	Timeout_Timer_Isr_GetState, .-Timeout_Timer_Isr_GetState
+ 392              		.section	.text.Timeout_Timer_Isr_Disable,"ax",%progbits
+ 393              		.align	1
+ 394              		.global	Timeout_Timer_Isr_Disable
+ 395              		.thumb
+ 396              		.thumb_func
+ 397              		.type	Timeout_Timer_Isr_Disable, %function
+ 398              	Timeout_Timer_Isr_Disable:
+ 399              	.LFB73:
+ 358:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     /* Disable the general interrupt. */
+ 400              		.loc 1 358 0
+ 401              		.cfi_startproc
+ 402              		@ args = 0, pretend = 0, frame = 0
+ 403              		@ frame_needed = 0, uses_anonymous_args = 0
+ 404              		@ link register save eliminated.
+ 405              		.loc 1 360 0
+ 406 0000 024B     		ldr	r3, .L32
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 15
+
+
+ 407 0002 4FF48022 		mov	r2, #262144
+ 408 0006 1A60     		str	r2, [r3]
+ 409 0008 7047     		bx	lr
+ 410              	.L33:
+ 411 000a 00BF     		.align	2
+ 412              	.L32:
+ 413 000c 80E100E0 		.word	-536813184
+ 414              		.cfi_endproc
+ 415              	.LFE73:
+ 416              		.size	Timeout_Timer_Isr_Disable, .-Timeout_Timer_Isr_Disable
+ 417              		.section	.text.Timeout_Timer_Isr_SetPending,"ax",%progbits
+ 418              		.align	1
+ 419              		.global	Timeout_Timer_Isr_SetPending
+ 420              		.thumb
+ 421              		.thumb_func
+ 422              		.type	Timeout_Timer_Isr_SetPending, %function
+ 423              	Timeout_Timer_Isr_SetPending:
+ 424              	.LFB74:
+ 361:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 362:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 363:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 364:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+ 365:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_SetPending
+ 366:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+ 367:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 368:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+ 369:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Causes the Interrupt to enter the pending state, a software method of
+ 370:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   generating the interrupt.
+ 371:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 372:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:
+ 373:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 374:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 375:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 376:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 377:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 378:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Side Effects:
+ 379:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   If interrupts are enabled and the interrupt is set up properly, the ISR is
+ 380:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   entered (depending on the priority of this interrupt and other pending 
+ 381:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   interrupts).
+ 382:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 383:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 384:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** void Timeout_Timer_Isr_SetPending(void)
+ 385:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+ 425              		.loc 1 385 0
+ 426              		.cfi_startproc
+ 427              		@ args = 0, pretend = 0, frame = 0
+ 428              		@ frame_needed = 0, uses_anonymous_args = 0
+ 429              		@ link register save eliminated.
+ 386:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     *Timeout_Timer_Isr_INTC_SET_PD = Timeout_Timer_Isr__INTC_MASK;
+ 430              		.loc 1 386 0
+ 431 0000 024B     		ldr	r3, .L35
+ 432 0002 4FF48022 		mov	r2, #262144
+ 433 0006 1A60     		str	r2, [r3]
+ 434 0008 7047     		bx	lr
+ 435              	.L36:
+ 436 000a 00BF     		.align	2
+ 437              	.L35:
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 16
+
+
+ 438 000c 00E200E0 		.word	-536813056
+ 439              		.cfi_endproc
+ 440              	.LFE74:
+ 441              		.size	Timeout_Timer_Isr_SetPending, .-Timeout_Timer_Isr_SetPending
+ 442              		.section	.text.Timeout_Timer_Isr_ClearPending,"ax",%progbits
+ 443              		.align	1
+ 444              		.global	Timeout_Timer_Isr_ClearPending
+ 445              		.thumb
+ 446              		.thumb_func
+ 447              		.type	Timeout_Timer_Isr_ClearPending, %function
+ 448              	Timeout_Timer_Isr_ClearPending:
+ 449              	.LFB75:
+ 387:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** }
+ 388:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 389:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** 
+ 390:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** /*******************************************************************************
+ 391:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Function Name: Timeout_Timer_Isr_ClearPending
+ 392:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** ********************************************************************************
+ 393:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 394:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Summary:
+ 395:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Clears a pending interrupt in the interrupt controller.
+ 396:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 397:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   Note Some interrupt sources are clear-on-read and require the block 
+ 398:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   interrupt/status register to be read/cleared with the appropriate block API 
+ 399:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   (GPIO, UART, and so on). Otherwise the ISR will continue to remain in 
+ 400:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   pending state even though the interrupt itself is cleared using this API.
+ 401:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 402:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Parameters:
+ 403:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 404:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 405:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** * Return:
+ 406:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *   None
+ 407:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *
+ 408:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** *******************************************************************************/
+ 409:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** void Timeout_Timer_Isr_ClearPending(void)
+ 410:Generated_Source\PSoC5/Timeout_Timer_Isr.c **** {
+ 450              		.loc 1 410 0
+ 451              		.cfi_startproc
+ 452              		@ args = 0, pretend = 0, frame = 0
+ 453              		@ frame_needed = 0, uses_anonymous_args = 0
+ 454              		@ link register save eliminated.
+ 411:Generated_Source\PSoC5/Timeout_Timer_Isr.c ****     *Timeout_Timer_Isr_INTC_CLR_PD = Timeout_Timer_Isr__INTC_MASK;
+ 455              		.loc 1 411 0
+ 456 0000 024B     		ldr	r3, .L38
+ 457 0002 4FF48022 		mov	r2, #262144
+ 458 0006 1A60     		str	r2, [r3]
+ 459 0008 7047     		bx	lr
+ 460              	.L39:
+ 461 000a 00BF     		.align	2
+ 462              	.L38:
+ 463 000c 80E200E0 		.word	-536812928
+ 464              		.cfi_endproc
+ 465              	.LFE75:
+ 466              		.size	Timeout_Timer_Isr_ClearPending, .-Timeout_Timer_Isr_ClearPending
+ 467              		.comm	ledr_on,1,1
+ 468              		.comm	card_in_buf,4,4
+ 469              		.comm	card_ack,4,4
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 17
+
+
+ 470              		.comm	tamper_out_polarity,4,4
+ 471              		.comm	tamperCR_polarity,4,4
+ 472              		.comm	tp_old,1,1
+ 473              		.comm	hw_old,1,1
+ 474              		.comm	currentAccessType,1,1
+ 475              		.comm	s,40,4
+ 476              		.text
+ 477              	.Letext0:
+ 478              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.0\\psoc creator\\import\\gnu\\arm\\4.9.
+ 479              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.0\\psoc creator\\import\\gnu\\arm\\4.9.
+ 480              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 481              		.file 5 "./softuart.h"
+ 482              		.file 6 "Generated_Source\\PSoC5/core_cm3.h"
+ 483              		.file 7 "./system.h"
+ 484              		.file 8 "Generated_Source\\PSoC5\\Timeout_Timer.h"
+ 485              		.section	.debug_info,"",%progbits
+ 486              	.Ldebug_info0:
+ 487 0000 0E050000 		.4byte	0x50e
+ 488 0004 0400     		.2byte	0x4
+ 489 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 490 000a 04       		.byte	0x4
+ 491 000b 01       		.uleb128 0x1
+ 492 000c 80000000 		.4byte	.LASF59
+ 493 0010 01       		.byte	0x1
+ 494 0011 C9030000 		.4byte	.LASF60
+ 495 0015 3A010000 		.4byte	.LASF61
+ 496 0019 30000000 		.4byte	.Ldebug_ranges0+0x30
+ 497 001d 00000000 		.4byte	0
+ 498 0021 00000000 		.4byte	.Ldebug_line0
+ 499 0025 02       		.uleb128 0x2
+ 500 0026 04       		.byte	0x4
+ 501 0027 05       		.byte	0x5
+ 502 0028 696E7400 		.ascii	"int\000"
+ 503 002c 03       		.uleb128 0x3
+ 504 002d 04       		.byte	0x4
+ 505 002e 07       		.byte	0x7
+ 506 002f 97020000 		.4byte	.LASF0
+ 507 0033 03       		.uleb128 0x3
+ 508 0034 01       		.byte	0x1
+ 509 0035 06       		.byte	0x6
+ 510 0036 50020000 		.4byte	.LASF1
+ 511 003a 03       		.uleb128 0x3
+ 512 003b 01       		.byte	0x1
+ 513 003c 08       		.byte	0x8
+ 514 003d F9010000 		.4byte	.LASF2
+ 515 0041 03       		.uleb128 0x3
+ 516 0042 02       		.byte	0x2
+ 517 0043 05       		.byte	0x5
+ 518 0044 09000000 		.4byte	.LASF3
+ 519 0048 03       		.uleb128 0x3
+ 520 0049 02       		.byte	0x2
+ 521 004a 07       		.byte	0x7
+ 522 004b 19030000 		.4byte	.LASF4
+ 523 004f 04       		.uleb128 0x4
+ 524 0050 77030000 		.4byte	.LASF11
+ 525 0054 02       		.byte	0x2
+ 526 0055 3F       		.byte	0x3f
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 18
+
+
+ 527 0056 5A000000 		.4byte	0x5a
+ 528 005a 03       		.uleb128 0x3
+ 529 005b 04       		.byte	0x4
+ 530 005c 05       		.byte	0x5
+ 531 005d 91010000 		.4byte	.LASF5
+ 532 0061 03       		.uleb128 0x3
+ 533 0062 04       		.byte	0x4
+ 534 0063 07       		.byte	0x7
+ 535 0064 5E030000 		.4byte	.LASF6
+ 536 0068 03       		.uleb128 0x3
+ 537 0069 08       		.byte	0x8
+ 538 006a 05       		.byte	0x5
+ 539 006b 27010000 		.4byte	.LASF7
+ 540 006f 03       		.uleb128 0x3
+ 541 0070 08       		.byte	0x8
+ 542 0071 07       		.byte	0x7
+ 543 0072 62020000 		.4byte	.LASF8
+ 544 0076 03       		.uleb128 0x3
+ 545 0077 04       		.byte	0x4
+ 546 0078 07       		.byte	0x7
+ 547 0079 13000000 		.4byte	.LASF9
+ 548 007d 05       		.uleb128 0x5
+ 549 007e 04       		.byte	0x4
+ 550 007f 83000000 		.4byte	0x83
+ 551 0083 06       		.uleb128 0x6
+ 552 0084 03       		.uleb128 0x3
+ 553 0085 01       		.byte	0x1
+ 554 0086 08       		.byte	0x8
+ 555 0087 FA020000 		.4byte	.LASF10
+ 556 008b 04       		.uleb128 0x4
+ 557 008c FF020000 		.4byte	.LASF12
+ 558 0090 03       		.byte	0x3
+ 559 0091 2C       		.byte	0x2c
+ 560 0092 4F000000 		.4byte	0x4f
+ 561 0096 07       		.uleb128 0x7
+ 562 0097 69000000 		.4byte	.LASF13
+ 563 009b 04       		.byte	0x4
+ 564 009c 9201     		.2byte	0x192
+ 565 009e 3A000000 		.4byte	0x3a
+ 566 00a2 07       		.uleb128 0x7
+ 567 00a3 52030000 		.4byte	.LASF14
+ 568 00a7 04       		.byte	0x4
+ 569 00a8 9401     		.2byte	0x194
+ 570 00aa 61000000 		.4byte	0x61
+ 571 00ae 03       		.uleb128 0x3
+ 572 00af 04       		.byte	0x4
+ 573 00b0 04       		.byte	0x4
+ 574 00b1 15010000 		.4byte	.LASF15
+ 575 00b5 03       		.uleb128 0x3
+ 576 00b6 08       		.byte	0x8
+ 577 00b7 04       		.byte	0x4
+ 578 00b8 70030000 		.4byte	.LASF16
+ 579 00bc 07       		.uleb128 0x7
+ 580 00bd 59030000 		.4byte	.LASF17
+ 581 00c1 04       		.byte	0x4
+ 582 00c2 3C02     		.2byte	0x23c
+ 583 00c4 C8000000 		.4byte	0xc8
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 19
+
+
+ 584 00c8 08       		.uleb128 0x8
+ 585 00c9 96000000 		.4byte	0x96
+ 586 00cd 07       		.uleb128 0x7
+ 587 00ce CA020000 		.4byte	.LASF18
+ 588 00d2 04       		.byte	0x4
+ 589 00d3 3E02     		.2byte	0x23e
+ 590 00d5 D9000000 		.4byte	0xd9
+ 591 00d9 08       		.uleb128 0x8
+ 592 00da A2000000 		.4byte	0xa2
+ 593 00de 07       		.uleb128 0x7
+ 594 00df 24020000 		.4byte	.LASF19
+ 595 00e3 04       		.byte	0x4
+ 596 00e4 4E02     		.2byte	0x24e
+ 597 00e6 7D000000 		.4byte	0x7d
+ 598 00ea 09       		.uleb128 0x9
+ 599 00eb 28       		.byte	0x28
+ 600 00ec 05       		.byte	0x5
+ 601 00ed 0D       		.byte	0xd
+ 602 00ee 83010000 		.4byte	0x183
+ 603 00f2 0A       		.uleb128 0xa
+ 604 00f3 07020000 		.4byte	.LASF20
+ 605 00f7 05       		.byte	0x5
+ 606 00f8 0F       		.byte	0xf
+ 607 00f9 25000000 		.4byte	0x25
+ 608 00fd 00       		.byte	0
+ 609 00fe 0A       		.uleb128 0xa
+ 610 00ff 52000000 		.4byte	.LASF21
+ 611 0103 05       		.byte	0x5
+ 612 0104 10       		.byte	0x10
+ 613 0105 25000000 		.4byte	0x25
+ 614 0109 04       		.byte	0x4
+ 615 010a 0A       		.uleb128 0xa
+ 616 010b A4020000 		.4byte	.LASF22
+ 617 010f 05       		.byte	0x5
+ 618 0110 11       		.byte	0x11
+ 619 0111 25000000 		.4byte	0x25
+ 620 0115 08       		.byte	0x8
+ 621 0116 0A       		.uleb128 0xa
+ 622 0117 35010000 		.4byte	.LASF23
+ 623 011b 05       		.byte	0x5
+ 624 011c 12       		.byte	0x12
+ 625 011d 25000000 		.4byte	0x25
+ 626 0121 0C       		.byte	0xc
+ 627 0122 0A       		.uleb128 0xa
+ 628 0123 4A030000 		.4byte	.LASF24
+ 629 0127 05       		.byte	0x5
+ 630 0128 13       		.byte	0x13
+ 631 0129 48000000 		.4byte	0x48
+ 632 012d 10       		.byte	0x10
+ 633 012e 0A       		.uleb128 0xa
+ 634 012f 61000000 		.4byte	.LASF25
+ 635 0133 05       		.byte	0x5
+ 636 0134 14       		.byte	0x14
+ 637 0135 83010000 		.4byte	0x183
+ 638 0139 12       		.byte	0x12
+ 639 013a 0A       		.uleb128 0xa
+ 640 013b D8020000 		.4byte	.LASF26
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 20
+
+
+ 641 013f 05       		.byte	0x5
+ 642 0140 15       		.byte	0x15
+ 643 0141 83010000 		.4byte	0x183
+ 644 0145 14       		.byte	0x14
+ 645 0146 0A       		.uleb128 0xa
+ 646 0147 59000000 		.4byte	.LASF27
+ 647 014b 05       		.byte	0x5
+ 648 014c 16       		.byte	0x16
+ 649 014d 48000000 		.4byte	0x48
+ 650 0151 16       		.byte	0x16
+ 651 0152 0A       		.uleb128 0xa
+ 652 0153 5C020000 		.4byte	.LASF28
+ 653 0157 05       		.byte	0x5
+ 654 0158 17       		.byte	0x17
+ 655 0159 88010000 		.4byte	0x188
+ 656 015d 18       		.byte	0x18
+ 657 015e 0A       		.uleb128 0xa
+ 658 015f 5A040000 		.4byte	.LASF29
+ 659 0163 05       		.byte	0x5
+ 660 0164 18       		.byte	0x18
+ 661 0165 88010000 		.4byte	0x188
+ 662 0169 1C       		.byte	0x1c
+ 663 016a 0A       		.uleb128 0xa
+ 664 016b 1C000000 		.4byte	.LASF30
+ 665 016f 05       		.byte	0x5
+ 666 0170 19       		.byte	0x19
+ 667 0171 88010000 		.4byte	0x188
+ 668 0175 20       		.byte	0x20
+ 669 0176 0A       		.uleb128 0xa
+ 670 0177 D0020000 		.4byte	.LASF31
+ 671 017b 05       		.byte	0x5
+ 672 017c 1A       		.byte	0x1a
+ 673 017d 88010000 		.4byte	0x188
+ 674 0181 24       		.byte	0x24
+ 675 0182 00       		.byte	0
+ 676 0183 08       		.uleb128 0x8
+ 677 0184 48000000 		.4byte	0x48
+ 678 0188 08       		.uleb128 0x8
+ 679 0189 25000000 		.4byte	0x25
+ 680 018d 04       		.uleb128 0x4
+ 681 018e E8010000 		.4byte	.LASF32
+ 682 0192 05       		.byte	0x5
+ 683 0193 1B       		.byte	0x1b
+ 684 0194 EA000000 		.4byte	0xea
+ 685 0198 0B       		.uleb128 0xb
+ 686 0199 E0020000 		.4byte	.LASF37
+ 687 019d 01       		.byte	0x1
+ 688 019e 6501     		.2byte	0x165
+ 689 01a0 01       		.byte	0x1
+ 690 01a1 0C       		.uleb128 0xc
+ 691 01a2 81030000 		.4byte	.LASF33
+ 692 01a6 01       		.byte	0x1
+ 693 01a7 D0       		.byte	0xd0
+ 694 01a8 01       		.byte	0x1
+ 695 01a9 C4010000 		.4byte	0x1c4
+ 696 01ad 0D       		.uleb128 0xd
+ 697 01ae 9A010000 		.4byte	.LASF35
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 21
+
+
+ 698 01b2 01       		.byte	0x1
+ 699 01b3 D0       		.byte	0xd0
+ 700 01b4 DE000000 		.4byte	0xde
+ 701 01b8 0E       		.uleb128 0xe
+ 702 01b9 BD010000 		.4byte	.LASF45
+ 703 01bd 01       		.byte	0x1
+ 704 01be D2       		.byte	0xd2
+ 705 01bf C4010000 		.4byte	0x1c4
+ 706 01c3 00       		.byte	0
+ 707 01c4 05       		.uleb128 0x5
+ 708 01c5 04       		.byte	0x4
+ 709 01c6 DE000000 		.4byte	0xde
+ 710 01ca 0F       		.uleb128 0xf
+ 711 01cb 79020000 		.4byte	.LASF34
+ 712 01cf 01       		.byte	0x1
+ 713 01d0 0A01     		.2byte	0x10a
+ 714 01d2 01       		.byte	0x1
+ 715 01d3 E4010000 		.4byte	0x1e4
+ 716 01d7 10       		.uleb128 0x10
+ 717 01d8 00000000 		.4byte	.LASF36
+ 718 01dc 01       		.byte	0x1
+ 719 01dd 0A01     		.2byte	0x10a
+ 720 01df 96000000 		.4byte	0x96
+ 721 01e3 00       		.byte	0
+ 722 01e4 0B       		.uleb128 0xb
+ 723 01e5 20040000 		.4byte	.LASF38
+ 724 01e9 01       		.byte	0x1
+ 725 01ea 3B01     		.2byte	0x13b
+ 726 01ec 01       		.byte	0x1
+ 727 01ed 11       		.uleb128 0x11
+ 728 01ee AE020000 		.4byte	.LASF39
+ 729 01f2 01       		.byte	0x1
+ 730 01f3 A5       		.byte	0xa5
+ 731 01f4 00000000 		.4byte	.LFB66
+ 732 01f8 20000000 		.4byte	.LFE66-.LFB66
+ 733 01fc 01       		.uleb128 0x1
+ 734 01fd 9C       		.byte	0x9c
+ 735 01fe 0C020000 		.4byte	0x20c
+ 736 0202 12       		.uleb128 0x12
+ 737 0203 06000000 		.4byte	.LVL0
+ 738 0207 06050000 		.4byte	0x506
+ 739 020b 00       		.byte	0
+ 740 020c 11       		.uleb128 0x11
+ 741 020d 0C020000 		.4byte	.LASF40
+ 742 0211 01       		.byte	0x1
+ 743 0212 42       		.byte	0x42
+ 744 0213 00000000 		.4byte	.LFB63
+ 745 0217 30000000 		.4byte	.LFE63-.LFB63
+ 746 021b 01       		.uleb128 0x1
+ 747 021c 9C       		.byte	0x9c
+ 748 021d 8D020000 		.4byte	0x28d
+ 749 0221 13       		.uleb128 0x13
+ 750 0222 98010000 		.4byte	0x198
+ 751 0226 00000000 		.4byte	.LBB22
+ 752 022a 08000000 		.4byte	.LBE22-.LBB22
+ 753 022e 01       		.byte	0x1
+ 754 022f 45       		.byte	0x45
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 22
+
+
+ 755 0230 14       		.uleb128 0x14
+ 756 0231 A1010000 		.4byte	0x1a1
+ 757 0235 08000000 		.4byte	.LBB24
+ 758 0239 0C000000 		.4byte	.LBE24-.LBB24
+ 759 023d 01       		.byte	0x1
+ 760 023e 48       		.byte	0x48
+ 761 023f 63020000 		.4byte	0x263
+ 762 0243 15       		.uleb128 0x15
+ 763 0244 AD010000 		.4byte	0x1ad
+ 764 0248 06       		.uleb128 0x6
+ 765 0249 03       		.byte	0x3
+ 766 024a 00000000 		.4byte	Timeout_Timer_Isr_Interrupt
+ 767 024e 9F       		.byte	0x9f
+ 768 024f 16       		.uleb128 0x16
+ 769 0250 08000000 		.4byte	.LBB25
+ 770 0254 0C000000 		.4byte	.LBE25-.LBB25
+ 771 0258 17       		.uleb128 0x17
+ 772 0259 B8010000 		.4byte	0x1b8
+ 773 025d 00000000 		.4byte	.LLST0
+ 774 0261 00       		.byte	0
+ 775 0262 00       		.byte	0
+ 776 0263 14       		.uleb128 0x14
+ 777 0264 CA010000 		.4byte	0x1ca
+ 778 0268 14000000 		.4byte	.LBB26
+ 779 026c 06000000 		.4byte	.LBE26-.LBB26
+ 780 0270 01       		.byte	0x1
+ 781 0271 4B       		.byte	0x4b
+ 782 0272 7D020000 		.4byte	0x27d
+ 783 0276 18       		.uleb128 0x18
+ 784 0277 D7010000 		.4byte	0x1d7
+ 785 027b 07       		.byte	0x7
+ 786 027c 00       		.byte	0
+ 787 027d 13       		.uleb128 0x13
+ 788 027e E4010000 		.4byte	0x1e4
+ 789 0282 1A000000 		.4byte	.LBB28
+ 790 0286 16000000 		.4byte	.LBE28-.LBB28
+ 791 028a 01       		.byte	0x1
+ 792 028b 4E       		.byte	0x4e
+ 793 028c 00       		.byte	0
+ 794 028d 11       		.uleb128 0x11
+ 795 028e AF030000 		.4byte	.LASF41
+ 796 0292 01       		.byte	0x1
+ 797 0293 6D       		.byte	0x6d
+ 798 0294 00000000 		.4byte	.LFB64
+ 799 0298 28000000 		.4byte	.LFE64-.LFB64
+ 800 029c 01       		.uleb128 0x1
+ 801 029d 9C       		.byte	0x9c
+ 802 029e 12030000 		.4byte	0x312
+ 803 02a2 19       		.uleb128 0x19
+ 804 02a3 9A010000 		.4byte	.LASF35
+ 805 02a7 01       		.byte	0x1
+ 806 02a8 6D       		.byte	0x6d
+ 807 02a9 DE000000 		.4byte	0xde
+ 808 02ad 01       		.uleb128 0x1
+ 809 02ae 50       		.byte	0x50
+ 810 02af 13       		.uleb128 0x13
+ 811 02b0 98010000 		.4byte	0x198
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 23
+
+
+ 812 02b4 00000000 		.4byte	.LBB30
+ 813 02b8 08000000 		.4byte	.LBE30-.LBB30
+ 814 02bc 01       		.byte	0x1
+ 815 02bd 70       		.byte	0x70
+ 816 02be 1A       		.uleb128 0x1a
+ 817 02bf A1010000 		.4byte	0x1a1
+ 818 02c3 08000000 		.4byte	.LBB32
+ 819 02c7 00000000 		.4byte	.Ldebug_ranges0+0
+ 820 02cb 01       		.byte	0x1
+ 821 02cc 73       		.byte	0x73
+ 822 02cd E8020000 		.4byte	0x2e8
+ 823 02d1 15       		.uleb128 0x15
+ 824 02d2 AD010000 		.4byte	0x1ad
+ 825 02d6 01       		.uleb128 0x1
+ 826 02d7 50       		.byte	0x50
+ 827 02d8 1B       		.uleb128 0x1b
+ 828 02d9 00000000 		.4byte	.Ldebug_ranges0+0
+ 829 02dd 17       		.uleb128 0x17
+ 830 02de B8010000 		.4byte	0x1b8
+ 831 02e2 13000000 		.4byte	.LLST1
+ 832 02e6 00       		.byte	0
+ 833 02e7 00       		.byte	0
+ 834 02e8 1A       		.uleb128 0x1a
+ 835 02e9 CA010000 		.4byte	0x1ca
+ 836 02ed 0E000000 		.4byte	.LBB35
+ 837 02f1 18000000 		.4byte	.Ldebug_ranges0+0x18
+ 838 02f5 01       		.byte	0x1
+ 839 02f6 76       		.byte	0x76
+ 840 02f7 02030000 		.4byte	0x302
+ 841 02fb 18       		.uleb128 0x18
+ 842 02fc D7010000 		.4byte	0x1d7
+ 843 0300 07       		.byte	0x7
+ 844 0301 00       		.byte	0
+ 845 0302 13       		.uleb128 0x13
+ 846 0303 E4010000 		.4byte	0x1e4
+ 847 0307 18000000 		.4byte	.LBB40
+ 848 030b 10000000 		.4byte	.LBE40-.LBB40
+ 849 030f 01       		.byte	0x1
+ 850 0310 79       		.byte	0x79
+ 851 0311 00       		.byte	0
+ 852 0312 11       		.uleb128 0x11
+ 853 0313 F4030000 		.4byte	.LASF42
+ 854 0317 01       		.byte	0x1
+ 855 0318 8B       		.byte	0x8b
+ 856 0319 00000000 		.4byte	.LFB65
+ 857 031d 20000000 		.4byte	.LFE65-.LFB65
+ 858 0321 01       		.uleb128 0x1
+ 859 0322 9C       		.byte	0x9c
+ 860 0323 5D030000 		.4byte	0x35d
+ 861 0327 13       		.uleb128 0x13
+ 862 0328 98010000 		.4byte	0x198
+ 863 032c 00000000 		.4byte	.LBB42
+ 864 0330 08000000 		.4byte	.LBE42-.LBB42
+ 865 0334 01       		.byte	0x1
+ 866 0335 8E       		.byte	0x8e
+ 867 0336 1C       		.uleb128 0x1c
+ 868 0337 A1010000 		.4byte	0x1a1
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 24
+
+
+ 869 033b 08000000 		.4byte	.LBB44
+ 870 033f 18000000 		.4byte	.LBE44-.LBB44
+ 871 0343 01       		.byte	0x1
+ 872 0344 91       		.byte	0x91
+ 873 0345 1D       		.uleb128 0x1d
+ 874 0346 AD010000 		.4byte	0x1ad
+ 875 034a 16       		.uleb128 0x16
+ 876 034b 08000000 		.4byte	.LBB45
+ 877 034f 18000000 		.4byte	.LBE45-.LBB45
+ 878 0353 1E       		.uleb128 0x1e
+ 879 0354 B8010000 		.4byte	0x1b8
+ 880 0358 01       		.uleb128 0x1
+ 881 0359 53       		.byte	0x53
+ 882 035a 00       		.byte	0
+ 883 035b 00       		.byte	0
+ 884 035c 00       		.byte	0
+ 885 035d 1F       		.uleb128 0x1f
+ 886 035e A1010000 		.4byte	0x1a1
+ 887 0362 00000000 		.4byte	.LFB67
+ 888 0366 10000000 		.4byte	.LFE67-.LFB67
+ 889 036a 01       		.uleb128 0x1
+ 890 036b 9C       		.byte	0x9c
+ 891 036c 7F030000 		.4byte	0x37f
+ 892 0370 15       		.uleb128 0x15
+ 893 0371 AD010000 		.4byte	0x1ad
+ 894 0375 01       		.uleb128 0x1
+ 895 0376 50       		.byte	0x50
+ 896 0377 1E       		.uleb128 0x1e
+ 897 0378 B8010000 		.4byte	0x1b8
+ 898 037c 01       		.uleb128 0x1
+ 899 037d 53       		.byte	0x53
+ 900 037e 00       		.byte	0
+ 901 037f 20       		.uleb128 0x20
+ 902 0380 CC010000 		.4byte	.LASF43
+ 903 0384 01       		.byte	0x1
+ 904 0385 E8       		.byte	0xe8
+ 905 0386 DE000000 		.4byte	0xde
+ 906 038a 00000000 		.4byte	.LFB68
+ 907 038e 10000000 		.4byte	.LFE68-.LFB68
+ 908 0392 01       		.uleb128 0x1
+ 909 0393 9C       		.byte	0x9c
+ 910 0394 A8030000 		.4byte	0x3a8
+ 911 0398 21       		.uleb128 0x21
+ 912 0399 BD010000 		.4byte	.LASF45
+ 913 039d 01       		.byte	0x1
+ 914 039e EA       		.byte	0xea
+ 915 039f C4010000 		.4byte	0x1c4
+ 916 03a3 26000000 		.4byte	.LLST2
+ 917 03a7 00       		.byte	0
+ 918 03a8 1F       		.uleb128 0x1f
+ 919 03a9 CA010000 		.4byte	0x1ca
+ 920 03ad 00000000 		.4byte	.LFB69
+ 921 03b1 10000000 		.4byte	.LFE69-.LFB69
+ 922 03b5 01       		.uleb128 0x1
+ 923 03b6 9C       		.byte	0x9c
+ 924 03b7 C5030000 		.4byte	0x3c5
+ 925 03bb 22       		.uleb128 0x22
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 25
+
+
+ 926 03bc D7010000 		.4byte	0x1d7
+ 927 03c0 55000000 		.4byte	.LLST3
+ 928 03c4 00       		.byte	0
+ 929 03c5 23       		.uleb128 0x23
+ 930 03c6 2C030000 		.4byte	.LASF44
+ 931 03ca 01       		.byte	0x1
+ 932 03cb 2001     		.2byte	0x120
+ 933 03cd 96000000 		.4byte	0x96
+ 934 03d1 00000000 		.4byte	.LFB70
+ 935 03d5 0C000000 		.4byte	.LFE70-.LFB70
+ 936 03d9 01       		.uleb128 0x1
+ 937 03da 9C       		.byte	0x9c
+ 938 03db F0030000 		.4byte	0x3f0
+ 939 03df 24       		.uleb128 0x24
+ 940 03e0 00000000 		.4byte	.LASF36
+ 941 03e4 01       		.byte	0x1
+ 942 03e5 2201     		.2byte	0x122
+ 943 03e7 96000000 		.4byte	0x96
+ 944 03eb 76000000 		.4byte	.LLST4
+ 945 03ef 00       		.byte	0
+ 946 03f0 25       		.uleb128 0x25
+ 947 03f1 E4010000 		.4byte	0x1e4
+ 948 03f5 00000000 		.4byte	.LFB71
+ 949 03f9 10000000 		.4byte	.LFE71-.LFB71
+ 950 03fd 01       		.uleb128 0x1
+ 951 03fe 9C       		.byte	0x9c
+ 952 03ff 26       		.uleb128 0x26
+ 953 0400 A2010000 		.4byte	.LASF62
+ 954 0404 01       		.byte	0x1
+ 955 0405 5001     		.2byte	0x150
+ 956 0407 96000000 		.4byte	0x96
+ 957 040b 00000000 		.4byte	.LFB72
+ 958 040f 10000000 		.4byte	.LFE72-.LFB72
+ 959 0413 01       		.uleb128 0x1
+ 960 0414 9C       		.byte	0x9c
+ 961 0415 25       		.uleb128 0x25
+ 962 0416 98010000 		.4byte	0x198
+ 963 041a 00000000 		.4byte	.LFB73
+ 964 041e 10000000 		.4byte	.LFE73-.LFB73
+ 965 0422 01       		.uleb128 0x1
+ 966 0423 9C       		.byte	0x9c
+ 967 0424 27       		.uleb128 0x27
+ 968 0425 29000000 		.4byte	.LASF46
+ 969 0429 01       		.byte	0x1
+ 970 042a 8001     		.2byte	0x180
+ 971 042c 00000000 		.4byte	.LFB74
+ 972 0430 10000000 		.4byte	.LFE74-.LFB74
+ 973 0434 01       		.uleb128 0x1
+ 974 0435 9C       		.byte	0x9c
+ 975 0436 27       		.uleb128 0x27
+ 976 0437 31020000 		.4byte	.LASF47
+ 977 043b 01       		.byte	0x1
+ 978 043c 9901     		.2byte	0x199
+ 979 043e 00000000 		.4byte	.LFB75
+ 980 0442 10000000 		.4byte	.LFE75-.LFB75
+ 981 0446 01       		.uleb128 0x1
+ 982 0447 9C       		.byte	0x9c
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 26
+
+
+ 983 0448 28       		.uleb128 0x28
+ 984 0449 0B040000 		.4byte	.LASF48
+ 985 044d 06       		.byte	0x6
+ 986 044e 9606     		.2byte	0x696
+ 987 0450 54040000 		.4byte	0x454
+ 988 0454 08       		.uleb128 0x8
+ 989 0455 8B000000 		.4byte	0x8b
+ 990 0459 29       		.uleb128 0x29
+ 991 045a 7300     		.ascii	"s\000"
+ 992 045c 07       		.byte	0x7
+ 993 045d 3D       		.byte	0x3d
+ 994 045e 8D010000 		.4byte	0x18d
+ 995 0462 05       		.uleb128 0x5
+ 996 0463 03       		.byte	0x3
+ 997 0464 00000000 		.4byte	s
+ 998 0468 2A       		.uleb128 0x2a
+ 999 0469 07030000 		.4byte	.LASF49
+ 1000 046d 07       		.byte	0x7
+ 1001 046e 46       		.byte	0x46
+ 1002 046f 84000000 		.4byte	0x84
+ 1003 0473 05       		.uleb128 0x5
+ 1004 0474 03       		.byte	0x3
+ 1005 0475 00000000 		.4byte	currentAccessType
+ 1006 0479 2A       		.uleb128 0x2a
+ 1007 047a 81010000 		.4byte	.LASF50
+ 1008 047e 07       		.byte	0x7
+ 1009 047f 47       		.byte	0x47
+ 1010 0480 84000000 		.4byte	0x84
+ 1011 0484 05       		.uleb128 0x5
+ 1012 0485 03       		.byte	0x3
+ 1013 0486 00000000 		.4byte	hw_old
+ 1014 048a 2A       		.uleb128 0x2a
+ 1015 048b 0E010000 		.4byte	.LASF51
+ 1016 048f 07       		.byte	0x7
+ 1017 0490 48       		.byte	0x48
+ 1018 0491 84000000 		.4byte	0x84
+ 1019 0495 05       		.uleb128 0x5
+ 1020 0496 03       		.byte	0x3
+ 1021 0497 00000000 		.4byte	tp_old
+ 1022 049b 2A       		.uleb128 0x2a
+ 1023 049c 9D030000 		.4byte	.LASF52
+ 1024 04a0 07       		.byte	0x7
+ 1025 04a1 49       		.byte	0x49
+ 1026 04a2 25000000 		.4byte	0x25
+ 1027 04a6 05       		.uleb128 0x5
+ 1028 04a7 03       		.byte	0x3
+ 1029 04a8 00000000 		.4byte	tamperCR_polarity
+ 1030 04ac 2A       		.uleb128 0x2a
+ 1031 04ad 67040000 		.4byte	.LASF53
+ 1032 04b1 07       		.byte	0x7
+ 1033 04b2 4A       		.byte	0x4a
+ 1034 04b3 25000000 		.4byte	0x25
+ 1035 04b7 05       		.uleb128 0x5
+ 1036 04b8 03       		.byte	0x3
+ 1037 04b9 00000000 		.4byte	tamper_out_polarity
+ 1038 04bd 2A       		.uleb128 0x2a
+ 1039 04be 88010000 		.4byte	.LASF54
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 27
+
+
+ 1040 04c2 07       		.byte	0x7
+ 1041 04c3 4D       		.byte	0x4d
+ 1042 04c4 25000000 		.4byte	0x25
+ 1043 04c8 05       		.uleb128 0x5
+ 1044 04c9 03       		.byte	0x3
+ 1045 04ca 00000000 		.4byte	card_ack
+ 1046 04ce 2A       		.uleb128 0x2a
+ 1047 04cf 1B010000 		.4byte	.LASF55
+ 1048 04d3 07       		.byte	0x7
+ 1049 04d4 4E       		.byte	0x4e
+ 1050 04d5 25000000 		.4byte	0x25
+ 1051 04d9 05       		.uleb128 0x5
+ 1052 04da 03       		.byte	0x3
+ 1053 04db 00000000 		.4byte	card_in_buf
+ 1054 04df 2B       		.uleb128 0x2b
+ 1055 04e0 46000000 		.4byte	.LASF56
+ 1056 04e4 07       		.byte	0x7
+ 1057 04e5 52       		.byte	0x52
+ 1058 04e6 25000000 		.4byte	0x25
+ 1059 04ea 2B       		.uleb128 0x2b
+ 1060 04eb 6F000000 		.4byte	.LASF57
+ 1061 04ef 07       		.byte	0x7
+ 1062 04f0 61       		.byte	0x61
+ 1063 04f1 25000000 		.4byte	0x25
+ 1064 04f5 2A       		.uleb128 0x2a
+ 1065 04f6 18040000 		.4byte	.LASF58
+ 1066 04fa 01       		.byte	0x1
+ 1067 04fb 23       		.byte	0x23
+ 1068 04fc 96000000 		.4byte	0x96
+ 1069 0500 05       		.uleb128 0x5
+ 1070 0501 03       		.byte	0x3
+ 1071 0502 00000000 		.4byte	ledr_on
+ 1072 0506 2C       		.uleb128 0x2c
+ 1073 0507 39040000 		.4byte	.LASF63
+ 1074 050b 08       		.byte	0x8
+ 1075 050c 5E       		.byte	0x5e
+ 1076 050d 96000000 		.4byte	0x96
+ 1077 0511 00       		.byte	0
+ 1078              		.section	.debug_abbrev,"",%progbits
+ 1079              	.Ldebug_abbrev0:
+ 1080 0000 01       		.uleb128 0x1
+ 1081 0001 11       		.uleb128 0x11
+ 1082 0002 01       		.byte	0x1
+ 1083 0003 25       		.uleb128 0x25
+ 1084 0004 0E       		.uleb128 0xe
+ 1085 0005 13       		.uleb128 0x13
+ 1086 0006 0B       		.uleb128 0xb
+ 1087 0007 03       		.uleb128 0x3
+ 1088 0008 0E       		.uleb128 0xe
+ 1089 0009 1B       		.uleb128 0x1b
+ 1090 000a 0E       		.uleb128 0xe
+ 1091 000b 55       		.uleb128 0x55
+ 1092 000c 17       		.uleb128 0x17
+ 1093 000d 11       		.uleb128 0x11
+ 1094 000e 01       		.uleb128 0x1
+ 1095 000f 10       		.uleb128 0x10
+ 1096 0010 17       		.uleb128 0x17
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 28
+
+
+ 1097 0011 00       		.byte	0
+ 1098 0012 00       		.byte	0
+ 1099 0013 02       		.uleb128 0x2
+ 1100 0014 24       		.uleb128 0x24
+ 1101 0015 00       		.byte	0
+ 1102 0016 0B       		.uleb128 0xb
+ 1103 0017 0B       		.uleb128 0xb
+ 1104 0018 3E       		.uleb128 0x3e
+ 1105 0019 0B       		.uleb128 0xb
+ 1106 001a 03       		.uleb128 0x3
+ 1107 001b 08       		.uleb128 0x8
+ 1108 001c 00       		.byte	0
+ 1109 001d 00       		.byte	0
+ 1110 001e 03       		.uleb128 0x3
+ 1111 001f 24       		.uleb128 0x24
+ 1112 0020 00       		.byte	0
+ 1113 0021 0B       		.uleb128 0xb
+ 1114 0022 0B       		.uleb128 0xb
+ 1115 0023 3E       		.uleb128 0x3e
+ 1116 0024 0B       		.uleb128 0xb
+ 1117 0025 03       		.uleb128 0x3
+ 1118 0026 0E       		.uleb128 0xe
+ 1119 0027 00       		.byte	0
+ 1120 0028 00       		.byte	0
+ 1121 0029 04       		.uleb128 0x4
+ 1122 002a 16       		.uleb128 0x16
+ 1123 002b 00       		.byte	0
+ 1124 002c 03       		.uleb128 0x3
+ 1125 002d 0E       		.uleb128 0xe
+ 1126 002e 3A       		.uleb128 0x3a
+ 1127 002f 0B       		.uleb128 0xb
+ 1128 0030 3B       		.uleb128 0x3b
+ 1129 0031 0B       		.uleb128 0xb
+ 1130 0032 49       		.uleb128 0x49
+ 1131 0033 13       		.uleb128 0x13
+ 1132 0034 00       		.byte	0
+ 1133 0035 00       		.byte	0
+ 1134 0036 05       		.uleb128 0x5
+ 1135 0037 0F       		.uleb128 0xf
+ 1136 0038 00       		.byte	0
+ 1137 0039 0B       		.uleb128 0xb
+ 1138 003a 0B       		.uleb128 0xb
+ 1139 003b 49       		.uleb128 0x49
+ 1140 003c 13       		.uleb128 0x13
+ 1141 003d 00       		.byte	0
+ 1142 003e 00       		.byte	0
+ 1143 003f 06       		.uleb128 0x6
+ 1144 0040 15       		.uleb128 0x15
+ 1145 0041 00       		.byte	0
+ 1146 0042 27       		.uleb128 0x27
+ 1147 0043 19       		.uleb128 0x19
+ 1148 0044 00       		.byte	0
+ 1149 0045 00       		.byte	0
+ 1150 0046 07       		.uleb128 0x7
+ 1151 0047 16       		.uleb128 0x16
+ 1152 0048 00       		.byte	0
+ 1153 0049 03       		.uleb128 0x3
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 29
+
+
+ 1154 004a 0E       		.uleb128 0xe
+ 1155 004b 3A       		.uleb128 0x3a
+ 1156 004c 0B       		.uleb128 0xb
+ 1157 004d 3B       		.uleb128 0x3b
+ 1158 004e 05       		.uleb128 0x5
+ 1159 004f 49       		.uleb128 0x49
+ 1160 0050 13       		.uleb128 0x13
+ 1161 0051 00       		.byte	0
+ 1162 0052 00       		.byte	0
+ 1163 0053 08       		.uleb128 0x8
+ 1164 0054 35       		.uleb128 0x35
+ 1165 0055 00       		.byte	0
+ 1166 0056 49       		.uleb128 0x49
+ 1167 0057 13       		.uleb128 0x13
+ 1168 0058 00       		.byte	0
+ 1169 0059 00       		.byte	0
+ 1170 005a 09       		.uleb128 0x9
+ 1171 005b 13       		.uleb128 0x13
+ 1172 005c 01       		.byte	0x1
+ 1173 005d 0B       		.uleb128 0xb
+ 1174 005e 0B       		.uleb128 0xb
+ 1175 005f 3A       		.uleb128 0x3a
+ 1176 0060 0B       		.uleb128 0xb
+ 1177 0061 3B       		.uleb128 0x3b
+ 1178 0062 0B       		.uleb128 0xb
+ 1179 0063 01       		.uleb128 0x1
+ 1180 0064 13       		.uleb128 0x13
+ 1181 0065 00       		.byte	0
+ 1182 0066 00       		.byte	0
+ 1183 0067 0A       		.uleb128 0xa
+ 1184 0068 0D       		.uleb128 0xd
+ 1185 0069 00       		.byte	0
+ 1186 006a 03       		.uleb128 0x3
+ 1187 006b 0E       		.uleb128 0xe
+ 1188 006c 3A       		.uleb128 0x3a
+ 1189 006d 0B       		.uleb128 0xb
+ 1190 006e 3B       		.uleb128 0x3b
+ 1191 006f 0B       		.uleb128 0xb
+ 1192 0070 49       		.uleb128 0x49
+ 1193 0071 13       		.uleb128 0x13
+ 1194 0072 38       		.uleb128 0x38
+ 1195 0073 0B       		.uleb128 0xb
+ 1196 0074 00       		.byte	0
+ 1197 0075 00       		.byte	0
+ 1198 0076 0B       		.uleb128 0xb
+ 1199 0077 2E       		.uleb128 0x2e
+ 1200 0078 00       		.byte	0
+ 1201 0079 3F       		.uleb128 0x3f
+ 1202 007a 19       		.uleb128 0x19
+ 1203 007b 03       		.uleb128 0x3
+ 1204 007c 0E       		.uleb128 0xe
+ 1205 007d 3A       		.uleb128 0x3a
+ 1206 007e 0B       		.uleb128 0xb
+ 1207 007f 3B       		.uleb128 0x3b
+ 1208 0080 05       		.uleb128 0x5
+ 1209 0081 27       		.uleb128 0x27
+ 1210 0082 19       		.uleb128 0x19
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 30
+
+
+ 1211 0083 20       		.uleb128 0x20
+ 1212 0084 0B       		.uleb128 0xb
+ 1213 0085 00       		.byte	0
+ 1214 0086 00       		.byte	0
+ 1215 0087 0C       		.uleb128 0xc
+ 1216 0088 2E       		.uleb128 0x2e
+ 1217 0089 01       		.byte	0x1
+ 1218 008a 3F       		.uleb128 0x3f
+ 1219 008b 19       		.uleb128 0x19
+ 1220 008c 03       		.uleb128 0x3
+ 1221 008d 0E       		.uleb128 0xe
+ 1222 008e 3A       		.uleb128 0x3a
+ 1223 008f 0B       		.uleb128 0xb
+ 1224 0090 3B       		.uleb128 0x3b
+ 1225 0091 0B       		.uleb128 0xb
+ 1226 0092 27       		.uleb128 0x27
+ 1227 0093 19       		.uleb128 0x19
+ 1228 0094 20       		.uleb128 0x20
+ 1229 0095 0B       		.uleb128 0xb
+ 1230 0096 01       		.uleb128 0x1
+ 1231 0097 13       		.uleb128 0x13
+ 1232 0098 00       		.byte	0
+ 1233 0099 00       		.byte	0
+ 1234 009a 0D       		.uleb128 0xd
+ 1235 009b 05       		.uleb128 0x5
+ 1236 009c 00       		.byte	0
+ 1237 009d 03       		.uleb128 0x3
+ 1238 009e 0E       		.uleb128 0xe
+ 1239 009f 3A       		.uleb128 0x3a
+ 1240 00a0 0B       		.uleb128 0xb
+ 1241 00a1 3B       		.uleb128 0x3b
+ 1242 00a2 0B       		.uleb128 0xb
+ 1243 00a3 49       		.uleb128 0x49
+ 1244 00a4 13       		.uleb128 0x13
+ 1245 00a5 00       		.byte	0
+ 1246 00a6 00       		.byte	0
+ 1247 00a7 0E       		.uleb128 0xe
+ 1248 00a8 34       		.uleb128 0x34
+ 1249 00a9 00       		.byte	0
+ 1250 00aa 03       		.uleb128 0x3
+ 1251 00ab 0E       		.uleb128 0xe
+ 1252 00ac 3A       		.uleb128 0x3a
+ 1253 00ad 0B       		.uleb128 0xb
+ 1254 00ae 3B       		.uleb128 0x3b
+ 1255 00af 0B       		.uleb128 0xb
+ 1256 00b0 49       		.uleb128 0x49
+ 1257 00b1 13       		.uleb128 0x13
+ 1258 00b2 00       		.byte	0
+ 1259 00b3 00       		.byte	0
+ 1260 00b4 0F       		.uleb128 0xf
+ 1261 00b5 2E       		.uleb128 0x2e
+ 1262 00b6 01       		.byte	0x1
+ 1263 00b7 3F       		.uleb128 0x3f
+ 1264 00b8 19       		.uleb128 0x19
+ 1265 00b9 03       		.uleb128 0x3
+ 1266 00ba 0E       		.uleb128 0xe
+ 1267 00bb 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 31
+
+
+ 1268 00bc 0B       		.uleb128 0xb
+ 1269 00bd 3B       		.uleb128 0x3b
+ 1270 00be 05       		.uleb128 0x5
+ 1271 00bf 27       		.uleb128 0x27
+ 1272 00c0 19       		.uleb128 0x19
+ 1273 00c1 20       		.uleb128 0x20
+ 1274 00c2 0B       		.uleb128 0xb
+ 1275 00c3 01       		.uleb128 0x1
+ 1276 00c4 13       		.uleb128 0x13
+ 1277 00c5 00       		.byte	0
+ 1278 00c6 00       		.byte	0
+ 1279 00c7 10       		.uleb128 0x10
+ 1280 00c8 05       		.uleb128 0x5
+ 1281 00c9 00       		.byte	0
+ 1282 00ca 03       		.uleb128 0x3
+ 1283 00cb 0E       		.uleb128 0xe
+ 1284 00cc 3A       		.uleb128 0x3a
+ 1285 00cd 0B       		.uleb128 0xb
+ 1286 00ce 3B       		.uleb128 0x3b
+ 1287 00cf 05       		.uleb128 0x5
+ 1288 00d0 49       		.uleb128 0x49
+ 1289 00d1 13       		.uleb128 0x13
+ 1290 00d2 00       		.byte	0
+ 1291 00d3 00       		.byte	0
+ 1292 00d4 11       		.uleb128 0x11
+ 1293 00d5 2E       		.uleb128 0x2e
+ 1294 00d6 01       		.byte	0x1
+ 1295 00d7 3F       		.uleb128 0x3f
+ 1296 00d8 19       		.uleb128 0x19
+ 1297 00d9 03       		.uleb128 0x3
+ 1298 00da 0E       		.uleb128 0xe
+ 1299 00db 3A       		.uleb128 0x3a
+ 1300 00dc 0B       		.uleb128 0xb
+ 1301 00dd 3B       		.uleb128 0x3b
+ 1302 00de 0B       		.uleb128 0xb
+ 1303 00df 27       		.uleb128 0x27
+ 1304 00e0 19       		.uleb128 0x19
+ 1305 00e1 11       		.uleb128 0x11
+ 1306 00e2 01       		.uleb128 0x1
+ 1307 00e3 12       		.uleb128 0x12
+ 1308 00e4 06       		.uleb128 0x6
+ 1309 00e5 40       		.uleb128 0x40
+ 1310 00e6 18       		.uleb128 0x18
+ 1311 00e7 9742     		.uleb128 0x2117
+ 1312 00e9 19       		.uleb128 0x19
+ 1313 00ea 01       		.uleb128 0x1
+ 1314 00eb 13       		.uleb128 0x13
+ 1315 00ec 00       		.byte	0
+ 1316 00ed 00       		.byte	0
+ 1317 00ee 12       		.uleb128 0x12
+ 1318 00ef 898201   		.uleb128 0x4109
+ 1319 00f2 00       		.byte	0
+ 1320 00f3 11       		.uleb128 0x11
+ 1321 00f4 01       		.uleb128 0x1
+ 1322 00f5 31       		.uleb128 0x31
+ 1323 00f6 13       		.uleb128 0x13
+ 1324 00f7 00       		.byte	0
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 32
+
+
+ 1325 00f8 00       		.byte	0
+ 1326 00f9 13       		.uleb128 0x13
+ 1327 00fa 1D       		.uleb128 0x1d
+ 1328 00fb 00       		.byte	0
+ 1329 00fc 31       		.uleb128 0x31
+ 1330 00fd 13       		.uleb128 0x13
+ 1331 00fe 11       		.uleb128 0x11
+ 1332 00ff 01       		.uleb128 0x1
+ 1333 0100 12       		.uleb128 0x12
+ 1334 0101 06       		.uleb128 0x6
+ 1335 0102 58       		.uleb128 0x58
+ 1336 0103 0B       		.uleb128 0xb
+ 1337 0104 59       		.uleb128 0x59
+ 1338 0105 0B       		.uleb128 0xb
+ 1339 0106 00       		.byte	0
+ 1340 0107 00       		.byte	0
+ 1341 0108 14       		.uleb128 0x14
+ 1342 0109 1D       		.uleb128 0x1d
+ 1343 010a 01       		.byte	0x1
+ 1344 010b 31       		.uleb128 0x31
+ 1345 010c 13       		.uleb128 0x13
+ 1346 010d 11       		.uleb128 0x11
+ 1347 010e 01       		.uleb128 0x1
+ 1348 010f 12       		.uleb128 0x12
+ 1349 0110 06       		.uleb128 0x6
+ 1350 0111 58       		.uleb128 0x58
+ 1351 0112 0B       		.uleb128 0xb
+ 1352 0113 59       		.uleb128 0x59
+ 1353 0114 0B       		.uleb128 0xb
+ 1354 0115 01       		.uleb128 0x1
+ 1355 0116 13       		.uleb128 0x13
+ 1356 0117 00       		.byte	0
+ 1357 0118 00       		.byte	0
+ 1358 0119 15       		.uleb128 0x15
+ 1359 011a 05       		.uleb128 0x5
+ 1360 011b 00       		.byte	0
+ 1361 011c 31       		.uleb128 0x31
+ 1362 011d 13       		.uleb128 0x13
+ 1363 011e 02       		.uleb128 0x2
+ 1364 011f 18       		.uleb128 0x18
+ 1365 0120 00       		.byte	0
+ 1366 0121 00       		.byte	0
+ 1367 0122 16       		.uleb128 0x16
+ 1368 0123 0B       		.uleb128 0xb
+ 1369 0124 01       		.byte	0x1
+ 1370 0125 11       		.uleb128 0x11
+ 1371 0126 01       		.uleb128 0x1
+ 1372 0127 12       		.uleb128 0x12
+ 1373 0128 06       		.uleb128 0x6
+ 1374 0129 00       		.byte	0
+ 1375 012a 00       		.byte	0
+ 1376 012b 17       		.uleb128 0x17
+ 1377 012c 34       		.uleb128 0x34
+ 1378 012d 00       		.byte	0
+ 1379 012e 31       		.uleb128 0x31
+ 1380 012f 13       		.uleb128 0x13
+ 1381 0130 02       		.uleb128 0x2
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 33
+
+
+ 1382 0131 17       		.uleb128 0x17
+ 1383 0132 00       		.byte	0
+ 1384 0133 00       		.byte	0
+ 1385 0134 18       		.uleb128 0x18
+ 1386 0135 05       		.uleb128 0x5
+ 1387 0136 00       		.byte	0
+ 1388 0137 31       		.uleb128 0x31
+ 1389 0138 13       		.uleb128 0x13
+ 1390 0139 1C       		.uleb128 0x1c
+ 1391 013a 0B       		.uleb128 0xb
+ 1392 013b 00       		.byte	0
+ 1393 013c 00       		.byte	0
+ 1394 013d 19       		.uleb128 0x19
+ 1395 013e 05       		.uleb128 0x5
+ 1396 013f 00       		.byte	0
+ 1397 0140 03       		.uleb128 0x3
+ 1398 0141 0E       		.uleb128 0xe
+ 1399 0142 3A       		.uleb128 0x3a
+ 1400 0143 0B       		.uleb128 0xb
+ 1401 0144 3B       		.uleb128 0x3b
+ 1402 0145 0B       		.uleb128 0xb
+ 1403 0146 49       		.uleb128 0x49
+ 1404 0147 13       		.uleb128 0x13
+ 1405 0148 02       		.uleb128 0x2
+ 1406 0149 18       		.uleb128 0x18
+ 1407 014a 00       		.byte	0
+ 1408 014b 00       		.byte	0
+ 1409 014c 1A       		.uleb128 0x1a
+ 1410 014d 1D       		.uleb128 0x1d
+ 1411 014e 01       		.byte	0x1
+ 1412 014f 31       		.uleb128 0x31
+ 1413 0150 13       		.uleb128 0x13
+ 1414 0151 52       		.uleb128 0x52
+ 1415 0152 01       		.uleb128 0x1
+ 1416 0153 55       		.uleb128 0x55
+ 1417 0154 17       		.uleb128 0x17
+ 1418 0155 58       		.uleb128 0x58
+ 1419 0156 0B       		.uleb128 0xb
+ 1420 0157 59       		.uleb128 0x59
+ 1421 0158 0B       		.uleb128 0xb
+ 1422 0159 01       		.uleb128 0x1
+ 1423 015a 13       		.uleb128 0x13
+ 1424 015b 00       		.byte	0
+ 1425 015c 00       		.byte	0
+ 1426 015d 1B       		.uleb128 0x1b
+ 1427 015e 0B       		.uleb128 0xb
+ 1428 015f 01       		.byte	0x1
+ 1429 0160 55       		.uleb128 0x55
+ 1430 0161 17       		.uleb128 0x17
+ 1431 0162 00       		.byte	0
+ 1432 0163 00       		.byte	0
+ 1433 0164 1C       		.uleb128 0x1c
+ 1434 0165 1D       		.uleb128 0x1d
+ 1435 0166 01       		.byte	0x1
+ 1436 0167 31       		.uleb128 0x31
+ 1437 0168 13       		.uleb128 0x13
+ 1438 0169 11       		.uleb128 0x11
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 34
+
+
+ 1439 016a 01       		.uleb128 0x1
+ 1440 016b 12       		.uleb128 0x12
+ 1441 016c 06       		.uleb128 0x6
+ 1442 016d 58       		.uleb128 0x58
+ 1443 016e 0B       		.uleb128 0xb
+ 1444 016f 59       		.uleb128 0x59
+ 1445 0170 0B       		.uleb128 0xb
+ 1446 0171 00       		.byte	0
+ 1447 0172 00       		.byte	0
+ 1448 0173 1D       		.uleb128 0x1d
+ 1449 0174 05       		.uleb128 0x5
+ 1450 0175 00       		.byte	0
+ 1451 0176 31       		.uleb128 0x31
+ 1452 0177 13       		.uleb128 0x13
+ 1453 0178 00       		.byte	0
+ 1454 0179 00       		.byte	0
+ 1455 017a 1E       		.uleb128 0x1e
+ 1456 017b 34       		.uleb128 0x34
+ 1457 017c 00       		.byte	0
+ 1458 017d 31       		.uleb128 0x31
+ 1459 017e 13       		.uleb128 0x13
+ 1460 017f 02       		.uleb128 0x2
+ 1461 0180 18       		.uleb128 0x18
+ 1462 0181 00       		.byte	0
+ 1463 0182 00       		.byte	0
+ 1464 0183 1F       		.uleb128 0x1f
+ 1465 0184 2E       		.uleb128 0x2e
+ 1466 0185 01       		.byte	0x1
+ 1467 0186 31       		.uleb128 0x31
+ 1468 0187 13       		.uleb128 0x13
+ 1469 0188 11       		.uleb128 0x11
+ 1470 0189 01       		.uleb128 0x1
+ 1471 018a 12       		.uleb128 0x12
+ 1472 018b 06       		.uleb128 0x6
+ 1473 018c 40       		.uleb128 0x40
+ 1474 018d 18       		.uleb128 0x18
+ 1475 018e 9742     		.uleb128 0x2117
+ 1476 0190 19       		.uleb128 0x19
+ 1477 0191 01       		.uleb128 0x1
+ 1478 0192 13       		.uleb128 0x13
+ 1479 0193 00       		.byte	0
+ 1480 0194 00       		.byte	0
+ 1481 0195 20       		.uleb128 0x20
+ 1482 0196 2E       		.uleb128 0x2e
+ 1483 0197 01       		.byte	0x1
+ 1484 0198 3F       		.uleb128 0x3f
+ 1485 0199 19       		.uleb128 0x19
+ 1486 019a 03       		.uleb128 0x3
+ 1487 019b 0E       		.uleb128 0xe
+ 1488 019c 3A       		.uleb128 0x3a
+ 1489 019d 0B       		.uleb128 0xb
+ 1490 019e 3B       		.uleb128 0x3b
+ 1491 019f 0B       		.uleb128 0xb
+ 1492 01a0 27       		.uleb128 0x27
+ 1493 01a1 19       		.uleb128 0x19
+ 1494 01a2 49       		.uleb128 0x49
+ 1495 01a3 13       		.uleb128 0x13
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 35
+
+
+ 1496 01a4 11       		.uleb128 0x11
+ 1497 01a5 01       		.uleb128 0x1
+ 1498 01a6 12       		.uleb128 0x12
+ 1499 01a7 06       		.uleb128 0x6
+ 1500 01a8 40       		.uleb128 0x40
+ 1501 01a9 18       		.uleb128 0x18
+ 1502 01aa 9742     		.uleb128 0x2117
+ 1503 01ac 19       		.uleb128 0x19
+ 1504 01ad 01       		.uleb128 0x1
+ 1505 01ae 13       		.uleb128 0x13
+ 1506 01af 00       		.byte	0
+ 1507 01b0 00       		.byte	0
+ 1508 01b1 21       		.uleb128 0x21
+ 1509 01b2 34       		.uleb128 0x34
+ 1510 01b3 00       		.byte	0
+ 1511 01b4 03       		.uleb128 0x3
+ 1512 01b5 0E       		.uleb128 0xe
+ 1513 01b6 3A       		.uleb128 0x3a
+ 1514 01b7 0B       		.uleb128 0xb
+ 1515 01b8 3B       		.uleb128 0x3b
+ 1516 01b9 0B       		.uleb128 0xb
+ 1517 01ba 49       		.uleb128 0x49
+ 1518 01bb 13       		.uleb128 0x13
+ 1519 01bc 02       		.uleb128 0x2
+ 1520 01bd 17       		.uleb128 0x17
+ 1521 01be 00       		.byte	0
+ 1522 01bf 00       		.byte	0
+ 1523 01c0 22       		.uleb128 0x22
+ 1524 01c1 05       		.uleb128 0x5
+ 1525 01c2 00       		.byte	0
+ 1526 01c3 31       		.uleb128 0x31
+ 1527 01c4 13       		.uleb128 0x13
+ 1528 01c5 02       		.uleb128 0x2
+ 1529 01c6 17       		.uleb128 0x17
+ 1530 01c7 00       		.byte	0
+ 1531 01c8 00       		.byte	0
+ 1532 01c9 23       		.uleb128 0x23
+ 1533 01ca 2E       		.uleb128 0x2e
+ 1534 01cb 01       		.byte	0x1
+ 1535 01cc 3F       		.uleb128 0x3f
+ 1536 01cd 19       		.uleb128 0x19
+ 1537 01ce 03       		.uleb128 0x3
+ 1538 01cf 0E       		.uleb128 0xe
+ 1539 01d0 3A       		.uleb128 0x3a
+ 1540 01d1 0B       		.uleb128 0xb
+ 1541 01d2 3B       		.uleb128 0x3b
+ 1542 01d3 05       		.uleb128 0x5
+ 1543 01d4 27       		.uleb128 0x27
+ 1544 01d5 19       		.uleb128 0x19
+ 1545 01d6 49       		.uleb128 0x49
+ 1546 01d7 13       		.uleb128 0x13
+ 1547 01d8 11       		.uleb128 0x11
+ 1548 01d9 01       		.uleb128 0x1
+ 1549 01da 12       		.uleb128 0x12
+ 1550 01db 06       		.uleb128 0x6
+ 1551 01dc 40       		.uleb128 0x40
+ 1552 01dd 18       		.uleb128 0x18
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 36
+
+
+ 1553 01de 9742     		.uleb128 0x2117
+ 1554 01e0 19       		.uleb128 0x19
+ 1555 01e1 01       		.uleb128 0x1
+ 1556 01e2 13       		.uleb128 0x13
+ 1557 01e3 00       		.byte	0
+ 1558 01e4 00       		.byte	0
+ 1559 01e5 24       		.uleb128 0x24
+ 1560 01e6 34       		.uleb128 0x34
+ 1561 01e7 00       		.byte	0
+ 1562 01e8 03       		.uleb128 0x3
+ 1563 01e9 0E       		.uleb128 0xe
+ 1564 01ea 3A       		.uleb128 0x3a
+ 1565 01eb 0B       		.uleb128 0xb
+ 1566 01ec 3B       		.uleb128 0x3b
+ 1567 01ed 05       		.uleb128 0x5
+ 1568 01ee 49       		.uleb128 0x49
+ 1569 01ef 13       		.uleb128 0x13
+ 1570 01f0 02       		.uleb128 0x2
+ 1571 01f1 17       		.uleb128 0x17
+ 1572 01f2 00       		.byte	0
+ 1573 01f3 00       		.byte	0
+ 1574 01f4 25       		.uleb128 0x25
+ 1575 01f5 2E       		.uleb128 0x2e
+ 1576 01f6 00       		.byte	0
+ 1577 01f7 31       		.uleb128 0x31
+ 1578 01f8 13       		.uleb128 0x13
+ 1579 01f9 11       		.uleb128 0x11
+ 1580 01fa 01       		.uleb128 0x1
+ 1581 01fb 12       		.uleb128 0x12
+ 1582 01fc 06       		.uleb128 0x6
+ 1583 01fd 40       		.uleb128 0x40
+ 1584 01fe 18       		.uleb128 0x18
+ 1585 01ff 9742     		.uleb128 0x2117
+ 1586 0201 19       		.uleb128 0x19
+ 1587 0202 00       		.byte	0
+ 1588 0203 00       		.byte	0
+ 1589 0204 26       		.uleb128 0x26
+ 1590 0205 2E       		.uleb128 0x2e
+ 1591 0206 00       		.byte	0
+ 1592 0207 3F       		.uleb128 0x3f
+ 1593 0208 19       		.uleb128 0x19
+ 1594 0209 03       		.uleb128 0x3
+ 1595 020a 0E       		.uleb128 0xe
+ 1596 020b 3A       		.uleb128 0x3a
+ 1597 020c 0B       		.uleb128 0xb
+ 1598 020d 3B       		.uleb128 0x3b
+ 1599 020e 05       		.uleb128 0x5
+ 1600 020f 27       		.uleb128 0x27
+ 1601 0210 19       		.uleb128 0x19
+ 1602 0211 49       		.uleb128 0x49
+ 1603 0212 13       		.uleb128 0x13
+ 1604 0213 11       		.uleb128 0x11
+ 1605 0214 01       		.uleb128 0x1
+ 1606 0215 12       		.uleb128 0x12
+ 1607 0216 06       		.uleb128 0x6
+ 1608 0217 40       		.uleb128 0x40
+ 1609 0218 18       		.uleb128 0x18
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 37
+
+
+ 1610 0219 9742     		.uleb128 0x2117
+ 1611 021b 19       		.uleb128 0x19
+ 1612 021c 00       		.byte	0
+ 1613 021d 00       		.byte	0
+ 1614 021e 27       		.uleb128 0x27
+ 1615 021f 2E       		.uleb128 0x2e
+ 1616 0220 00       		.byte	0
+ 1617 0221 3F       		.uleb128 0x3f
+ 1618 0222 19       		.uleb128 0x19
+ 1619 0223 03       		.uleb128 0x3
+ 1620 0224 0E       		.uleb128 0xe
+ 1621 0225 3A       		.uleb128 0x3a
+ 1622 0226 0B       		.uleb128 0xb
+ 1623 0227 3B       		.uleb128 0x3b
+ 1624 0228 05       		.uleb128 0x5
+ 1625 0229 27       		.uleb128 0x27
+ 1626 022a 19       		.uleb128 0x19
+ 1627 022b 11       		.uleb128 0x11
+ 1628 022c 01       		.uleb128 0x1
+ 1629 022d 12       		.uleb128 0x12
+ 1630 022e 06       		.uleb128 0x6
+ 1631 022f 40       		.uleb128 0x40
+ 1632 0230 18       		.uleb128 0x18
+ 1633 0231 9742     		.uleb128 0x2117
+ 1634 0233 19       		.uleb128 0x19
+ 1635 0234 00       		.byte	0
+ 1636 0235 00       		.byte	0
+ 1637 0236 28       		.uleb128 0x28
+ 1638 0237 34       		.uleb128 0x34
+ 1639 0238 00       		.byte	0
+ 1640 0239 03       		.uleb128 0x3
+ 1641 023a 0E       		.uleb128 0xe
+ 1642 023b 3A       		.uleb128 0x3a
+ 1643 023c 0B       		.uleb128 0xb
+ 1644 023d 3B       		.uleb128 0x3b
+ 1645 023e 05       		.uleb128 0x5
+ 1646 023f 49       		.uleb128 0x49
+ 1647 0240 13       		.uleb128 0x13
+ 1648 0241 3F       		.uleb128 0x3f
+ 1649 0242 19       		.uleb128 0x19
+ 1650 0243 3C       		.uleb128 0x3c
+ 1651 0244 19       		.uleb128 0x19
+ 1652 0245 00       		.byte	0
+ 1653 0246 00       		.byte	0
+ 1654 0247 29       		.uleb128 0x29
+ 1655 0248 34       		.uleb128 0x34
+ 1656 0249 00       		.byte	0
+ 1657 024a 03       		.uleb128 0x3
+ 1658 024b 08       		.uleb128 0x8
+ 1659 024c 3A       		.uleb128 0x3a
+ 1660 024d 0B       		.uleb128 0xb
+ 1661 024e 3B       		.uleb128 0x3b
+ 1662 024f 0B       		.uleb128 0xb
+ 1663 0250 49       		.uleb128 0x49
+ 1664 0251 13       		.uleb128 0x13
+ 1665 0252 3F       		.uleb128 0x3f
+ 1666 0253 19       		.uleb128 0x19
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 38
+
+
+ 1667 0254 02       		.uleb128 0x2
+ 1668 0255 18       		.uleb128 0x18
+ 1669 0256 00       		.byte	0
+ 1670 0257 00       		.byte	0
+ 1671 0258 2A       		.uleb128 0x2a
+ 1672 0259 34       		.uleb128 0x34
+ 1673 025a 00       		.byte	0
+ 1674 025b 03       		.uleb128 0x3
+ 1675 025c 0E       		.uleb128 0xe
+ 1676 025d 3A       		.uleb128 0x3a
+ 1677 025e 0B       		.uleb128 0xb
+ 1678 025f 3B       		.uleb128 0x3b
+ 1679 0260 0B       		.uleb128 0xb
+ 1680 0261 49       		.uleb128 0x49
+ 1681 0262 13       		.uleb128 0x13
+ 1682 0263 3F       		.uleb128 0x3f
+ 1683 0264 19       		.uleb128 0x19
+ 1684 0265 02       		.uleb128 0x2
+ 1685 0266 18       		.uleb128 0x18
+ 1686 0267 00       		.byte	0
+ 1687 0268 00       		.byte	0
+ 1688 0269 2B       		.uleb128 0x2b
+ 1689 026a 34       		.uleb128 0x34
+ 1690 026b 00       		.byte	0
+ 1691 026c 03       		.uleb128 0x3
+ 1692 026d 0E       		.uleb128 0xe
+ 1693 026e 3A       		.uleb128 0x3a
+ 1694 026f 0B       		.uleb128 0xb
+ 1695 0270 3B       		.uleb128 0x3b
+ 1696 0271 0B       		.uleb128 0xb
+ 1697 0272 49       		.uleb128 0x49
+ 1698 0273 13       		.uleb128 0x13
+ 1699 0274 3F       		.uleb128 0x3f
+ 1700 0275 19       		.uleb128 0x19
+ 1701 0276 3C       		.uleb128 0x3c
+ 1702 0277 19       		.uleb128 0x19
+ 1703 0278 00       		.byte	0
+ 1704 0279 00       		.byte	0
+ 1705 027a 2C       		.uleb128 0x2c
+ 1706 027b 2E       		.uleb128 0x2e
+ 1707 027c 00       		.byte	0
+ 1708 027d 3F       		.uleb128 0x3f
+ 1709 027e 19       		.uleb128 0x19
+ 1710 027f 03       		.uleb128 0x3
+ 1711 0280 0E       		.uleb128 0xe
+ 1712 0281 3A       		.uleb128 0x3a
+ 1713 0282 0B       		.uleb128 0xb
+ 1714 0283 3B       		.uleb128 0x3b
+ 1715 0284 0B       		.uleb128 0xb
+ 1716 0285 27       		.uleb128 0x27
+ 1717 0286 19       		.uleb128 0x19
+ 1718 0287 49       		.uleb128 0x49
+ 1719 0288 13       		.uleb128 0x13
+ 1720 0289 3C       		.uleb128 0x3c
+ 1721 028a 19       		.uleb128 0x19
+ 1722 028b 00       		.byte	0
+ 1723 028c 00       		.byte	0
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 39
+
+
+ 1724 028d 00       		.byte	0
+ 1725              		.section	.debug_loc,"",%progbits
+ 1726              	.Ldebug_loc0:
+ 1727              	.LLST0:
+ 1728 0000 0E000000 		.4byte	.LVL2
+ 1729 0004 16000000 		.4byte	.LVL4
+ 1730 0008 0100     		.2byte	0x1
+ 1731 000a 52       		.byte	0x52
+ 1732 000b 00000000 		.4byte	0
+ 1733 000f 00000000 		.4byte	0
+ 1734              	.LLST1:
+ 1735 0013 0E000000 		.4byte	.LVL7
+ 1736 0017 16000000 		.4byte	.LVL9
+ 1737 001b 0100     		.2byte	0x1
+ 1738 001d 52       		.byte	0x52
+ 1739 001e 00000000 		.4byte	0
+ 1740 0022 00000000 		.4byte	0
+ 1741              	.LLST2:
+ 1742 0026 00000000 		.4byte	.LVL14
+ 1743 002a 02000000 		.4byte	.LVL15
+ 1744 002e 0600     		.2byte	0x6
+ 1745 0030 11       		.byte	0x11
+ 1746 0031 88DA8380 		.sleb128 -536810232
+ 1746      7E
+ 1747 0036 02000000 		.4byte	.LVL15
+ 1748 003a 04000000 		.4byte	.LVL16
+ 1749 003e 0200     		.2byte	0x2
+ 1750 0040 73       		.byte	0x73
+ 1751 0041 00       		.sleb128 0
+ 1752 0042 04000000 		.4byte	.LVL16
+ 1753 0046 10000000 		.4byte	.LFE68
+ 1754 004a 0100     		.2byte	0x1
+ 1755 004c 53       		.byte	0x53
+ 1756 004d 00000000 		.4byte	0
+ 1757 0051 00000000 		.4byte	0
+ 1758              	.LLST3:
+ 1759 0055 00000000 		.4byte	.LVL17
+ 1760 0059 02000000 		.4byte	.LVL18
+ 1761 005d 0100     		.2byte	0x1
+ 1762 005f 50       		.byte	0x50
+ 1763 0060 02000000 		.4byte	.LVL18
+ 1764 0064 10000000 		.4byte	.LFE69
+ 1765 0068 0400     		.2byte	0x4
+ 1766 006a F3       		.byte	0xf3
+ 1767 006b 01       		.uleb128 0x1
+ 1768 006c 50       		.byte	0x50
+ 1769 006d 9F       		.byte	0x9f
+ 1770 006e 00000000 		.4byte	0
+ 1771 0072 00000000 		.4byte	0
+ 1772              	.LLST4:
+ 1773 0076 04000000 		.4byte	.LVL19
+ 1774 007a 06000000 		.4byte	.LVL20
+ 1775 007e 0500     		.2byte	0x5
+ 1776 0080 70       		.byte	0x70
+ 1777 0081 00       		.sleb128 0
+ 1778 0082 35       		.byte	0x35
+ 1779 0083 25       		.byte	0x25
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 40
+
+
+ 1780 0084 9F       		.byte	0x9f
+ 1781 0085 00000000 		.4byte	0
+ 1782 0089 00000000 		.4byte	0
+ 1783              		.section	.debug_aranges,"",%progbits
+ 1784 0000 7C000000 		.4byte	0x7c
+ 1785 0004 0200     		.2byte	0x2
+ 1786 0006 00000000 		.4byte	.Ldebug_info0
+ 1787 000a 04       		.byte	0x4
+ 1788 000b 00       		.byte	0
+ 1789 000c 0000     		.2byte	0
+ 1790 000e 0000     		.2byte	0
+ 1791 0010 00000000 		.4byte	.LFB66
+ 1792 0014 20000000 		.4byte	.LFE66-.LFB66
+ 1793 0018 00000000 		.4byte	.LFB63
+ 1794 001c 30000000 		.4byte	.LFE63-.LFB63
+ 1795 0020 00000000 		.4byte	.LFB64
+ 1796 0024 28000000 		.4byte	.LFE64-.LFB64
+ 1797 0028 00000000 		.4byte	.LFB65
+ 1798 002c 20000000 		.4byte	.LFE65-.LFB65
+ 1799 0030 00000000 		.4byte	.LFB67
+ 1800 0034 10000000 		.4byte	.LFE67-.LFB67
+ 1801 0038 00000000 		.4byte	.LFB68
+ 1802 003c 10000000 		.4byte	.LFE68-.LFB68
+ 1803 0040 00000000 		.4byte	.LFB69
+ 1804 0044 10000000 		.4byte	.LFE69-.LFB69
+ 1805 0048 00000000 		.4byte	.LFB70
+ 1806 004c 0C000000 		.4byte	.LFE70-.LFB70
+ 1807 0050 00000000 		.4byte	.LFB71
+ 1808 0054 10000000 		.4byte	.LFE71-.LFB71
+ 1809 0058 00000000 		.4byte	.LFB72
+ 1810 005c 10000000 		.4byte	.LFE72-.LFB72
+ 1811 0060 00000000 		.4byte	.LFB73
+ 1812 0064 10000000 		.4byte	.LFE73-.LFB73
+ 1813 0068 00000000 		.4byte	.LFB74
+ 1814 006c 10000000 		.4byte	.LFE74-.LFB74
+ 1815 0070 00000000 		.4byte	.LFB75
+ 1816 0074 10000000 		.4byte	.LFE75-.LFB75
+ 1817 0078 00000000 		.4byte	0
+ 1818 007c 00000000 		.4byte	0
+ 1819              		.section	.debug_ranges,"",%progbits
+ 1820              	.Ldebug_ranges0:
+ 1821 0000 08000000 		.4byte	.LBB32
+ 1822 0004 0E000000 		.4byte	.LBE32
+ 1823 0008 10000000 		.4byte	.LBB38
+ 1824 000c 14000000 		.4byte	.LBE38
+ 1825 0010 00000000 		.4byte	0
+ 1826 0014 00000000 		.4byte	0
+ 1827 0018 0E000000 		.4byte	.LBB35
+ 1828 001c 10000000 		.4byte	.LBE35
+ 1829 0020 14000000 		.4byte	.LBB39
+ 1830 0024 18000000 		.4byte	.LBE39
+ 1831 0028 00000000 		.4byte	0
+ 1832 002c 00000000 		.4byte	0
+ 1833 0030 00000000 		.4byte	.LFB66
+ 1834 0034 20000000 		.4byte	.LFE66
+ 1835 0038 00000000 		.4byte	.LFB63
+ 1836 003c 30000000 		.4byte	.LFE63
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 41
+
+
+ 1837 0040 00000000 		.4byte	.LFB64
+ 1838 0044 28000000 		.4byte	.LFE64
+ 1839 0048 00000000 		.4byte	.LFB65
+ 1840 004c 20000000 		.4byte	.LFE65
+ 1841 0050 00000000 		.4byte	.LFB67
+ 1842 0054 10000000 		.4byte	.LFE67
+ 1843 0058 00000000 		.4byte	.LFB68
+ 1844 005c 10000000 		.4byte	.LFE68
+ 1845 0060 00000000 		.4byte	.LFB69
+ 1846 0064 10000000 		.4byte	.LFE69
+ 1847 0068 00000000 		.4byte	.LFB70
+ 1848 006c 0C000000 		.4byte	.LFE70
+ 1849 0070 00000000 		.4byte	.LFB71
+ 1850 0074 10000000 		.4byte	.LFE71
+ 1851 0078 00000000 		.4byte	.LFB72
+ 1852 007c 10000000 		.4byte	.LFE72
+ 1853 0080 00000000 		.4byte	.LFB73
+ 1854 0084 10000000 		.4byte	.LFE73
+ 1855 0088 00000000 		.4byte	.LFB74
+ 1856 008c 10000000 		.4byte	.LFE74
+ 1857 0090 00000000 		.4byte	.LFB75
+ 1858 0094 10000000 		.4byte	.LFE75
+ 1859 0098 00000000 		.4byte	0
+ 1860 009c 00000000 		.4byte	0
+ 1861              		.section	.debug_line,"",%progbits
+ 1862              	.Ldebug_line0:
+ 1863 0000 98020000 		.section	.debug_str,"MS",%progbits,1
+ 1863      02008501 
+ 1863      00000201 
+ 1863      FB0E0D00 
+ 1863      01010101 
+ 1864              	.LASF36:
+ 1865 0000 7072696F 		.ascii	"priority\000"
+ 1865      72697479 
+ 1865      00
+ 1866              	.LASF3:
+ 1867 0009 73686F72 		.ascii	"short int\000"
+ 1867      7420696E 
+ 1867      7400
+ 1868              	.LASF9:
+ 1869 0013 73697A65 		.ascii	"sizetype\000"
+ 1869      74797065 
+ 1869      00
+ 1870              	.LASF30:
+ 1871 001c 74696D65 		.ascii	"timer_rx_ctr\000"
+ 1871      725F7278 
+ 1871      5F637472 
+ 1871      00
+ 1872              	.LASF46:
+ 1873 0029 54696D65 		.ascii	"Timeout_Timer_Isr_SetPending\000"
+ 1873      6F75745F 
+ 1873      54696D65 
+ 1873      725F4973 
+ 1873      725F5365 
+ 1874              	.LASF56:
+ 1875 0046 6632665F 		.ascii	"f2f_timeout\000"
+ 1875      74696D65 
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 42
+
+
+ 1875      6F757400 
+ 1876              	.LASF21:
+ 1877 0052 70617269 		.ascii	"parity\000"
+ 1877      747900
+ 1878              	.LASF27:
+ 1879 0059 72785F62 		.ascii	"rx_bits\000"
+ 1879      69747300 
+ 1880              	.LASF25:
+ 1881 0061 74785F62 		.ascii	"tx_byte\000"
+ 1881      79746500 
+ 1882              	.LASF13:
+ 1883 0069 75696E74 		.ascii	"uint8\000"
+ 1883      3800
+ 1884              	.LASF57:
+ 1885 006f 70617373 		.ascii	"passmode_timeout\000"
+ 1885      6D6F6465 
+ 1885      5F74696D 
+ 1885      656F7574 
+ 1885      00
+ 1886              	.LASF59:
+ 1887 0080 474E5520 		.ascii	"GNU C 4.9.3 20150303 (release) [ARM/embedded-4_9-br"
+ 1887      4320342E 
+ 1887      392E3320 
+ 1887      32303135 
+ 1887      30333033 
+ 1888 00b3 616E6368 		.ascii	"anch revision 221220] -mcpu=cortex-m3 -mthumb -g -O"
+ 1888      20726576 
+ 1888      6973696F 
+ 1888      6E203232 
+ 1888      31323230 
+ 1889 00e6 73202D66 		.ascii	"s -ffunction-sections -ffat-lto-objects\000"
+ 1889      66756E63 
+ 1889      74696F6E 
+ 1889      2D736563 
+ 1889      74696F6E 
+ 1890              	.LASF51:
+ 1891 010e 74705F6F 		.ascii	"tp_old\000"
+ 1891      6C6400
+ 1892              	.LASF15:
+ 1893 0115 666C6F61 		.ascii	"float\000"
+ 1893      7400
+ 1894              	.LASF55:
+ 1895 011b 63617264 		.ascii	"card_in_buf\000"
+ 1895      5F696E5F 
+ 1895      62756600 
+ 1896              	.LASF7:
+ 1897 0127 6C6F6E67 		.ascii	"long long int\000"
+ 1897      206C6F6E 
+ 1897      6720696E 
+ 1897      7400
+ 1898              	.LASF23:
+ 1899 0135 62697473 		.ascii	"bits\000"
+ 1899      00
+ 1900              	.LASF61:
+ 1901 013a 433A5C55 		.ascii	"C:\\Users\\yqh\\Documents\\works\\NanoNXT\\Pass_TOC"
+ 1901      73657273 
+ 1901      5C797168 
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 43
+
+
+ 1901      5C446F63 
+ 1901      756D656E 
+ 1902 0167 5C352E30 		.ascii	"\\5.0.3\\nanoNxt_ICM3.cydsn\000"
+ 1902      2E335C6E 
+ 1902      616E6F4E 
+ 1902      78745F49 
+ 1902      434D332E 
+ 1903              	.LASF50:
+ 1904 0181 68775F6F 		.ascii	"hw_old\000"
+ 1904      6C6400
+ 1905              	.LASF54:
+ 1906 0188 63617264 		.ascii	"card_ack\000"
+ 1906      5F61636B 
+ 1906      00
+ 1907              	.LASF5:
+ 1908 0191 6C6F6E67 		.ascii	"long int\000"
+ 1908      20696E74 
+ 1908      00
+ 1909              	.LASF35:
+ 1910 019a 61646472 		.ascii	"address\000"
+ 1910      65737300 
+ 1911              	.LASF62:
+ 1912 01a2 54696D65 		.ascii	"Timeout_Timer_Isr_GetState\000"
+ 1912      6F75745F 
+ 1912      54696D65 
+ 1912      725F4973 
+ 1912      725F4765 
+ 1913              	.LASF45:
+ 1914 01bd 72616D56 		.ascii	"ramVectorTable\000"
+ 1914      6563746F 
+ 1914      72546162 
+ 1914      6C6500
+ 1915              	.LASF43:
+ 1916 01cc 54696D65 		.ascii	"Timeout_Timer_Isr_GetVector\000"
+ 1916      6F75745F 
+ 1916      54696D65 
+ 1916      725F4973 
+ 1916      725F4765 
+ 1917              	.LASF32:
+ 1918 01e8 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 1918      5F554152 
+ 1918      545F5354 
+ 1918      52554354 
+ 1918      00
+ 1919              	.LASF2:
+ 1920 01f9 756E7369 		.ascii	"unsigned char\000"
+ 1920      676E6564 
+ 1920      20636861 
+ 1920      7200
+ 1921              	.LASF20:
+ 1922 0207 62617564 		.ascii	"baud\000"
+ 1922      00
+ 1923              	.LASF40:
+ 1924 020c 54696D65 		.ascii	"Timeout_Timer_Isr_Start\000"
+ 1924      6F75745F 
+ 1924      54696D65 
+ 1924      725F4973 
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 44
+
+
+ 1924      725F5374 
+ 1925              	.LASF19:
+ 1926 0224 63796973 		.ascii	"cyisraddress\000"
+ 1926      72616464 
+ 1926      72657373 
+ 1926      00
+ 1927              	.LASF47:
+ 1928 0231 54696D65 		.ascii	"Timeout_Timer_Isr_ClearPending\000"
+ 1928      6F75745F 
+ 1928      54696D65 
+ 1928      725F4973 
+ 1928      725F436C 
+ 1929              	.LASF1:
+ 1930 0250 7369676E 		.ascii	"signed char\000"
+ 1930      65642063 
+ 1930      68617200 
+ 1931              	.LASF28:
+ 1932 025c 666C6167 		.ascii	"flags\000"
+ 1932      7300
+ 1933              	.LASF8:
+ 1934 0262 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1934      206C6F6E 
+ 1934      6720756E 
+ 1934      7369676E 
+ 1934      65642069 
+ 1935              	.LASF34:
+ 1936 0279 54696D65 		.ascii	"Timeout_Timer_Isr_SetPriority\000"
+ 1936      6F75745F 
+ 1936      54696D65 
+ 1936      725F4973 
+ 1936      725F5365 
+ 1937              	.LASF0:
+ 1938 0297 756E7369 		.ascii	"unsigned int\000"
+ 1938      676E6564 
+ 1938      20696E74 
+ 1938      00
+ 1939              	.LASF22:
+ 1940 02a4 73746F70 		.ascii	"stop_bits\000"
+ 1940      5F626974 
+ 1940      7300
+ 1941              	.LASF39:
+ 1942 02ae 54696D65 		.ascii	"Timeout_Timer_Isr_Interrupt\000"
+ 1942      6F75745F 
+ 1942      54696D65 
+ 1942      725F4973 
+ 1942      725F496E 
+ 1943              	.LASF18:
+ 1944 02ca 72656733 		.ascii	"reg32\000"
+ 1944      3200
+ 1945              	.LASF31:
+ 1946 02d0 72785F72 		.ascii	"rx_recv\000"
+ 1946      65637600 
+ 1947              	.LASF26:
+ 1948 02d8 74785F62 		.ascii	"tx_bits\000"
+ 1948      69747300 
+ 1949              	.LASF37:
+ 1950 02e0 54696D65 		.ascii	"Timeout_Timer_Isr_Disable\000"
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 45
+
+
+ 1950      6F75745F 
+ 1950      54696D65 
+ 1950      725F4973 
+ 1950      725F4469 
+ 1951              	.LASF10:
+ 1952 02fa 63686172 		.ascii	"char\000"
+ 1952      00
+ 1953              	.LASF12:
+ 1954 02ff 696E7433 		.ascii	"int32_t\000"
+ 1954      325F7400 
+ 1955              	.LASF49:
+ 1956 0307 63757272 		.ascii	"currentAccessType\000"
+ 1956      656E7441 
+ 1956      63636573 
+ 1956      73547970 
+ 1956      6500
+ 1957              	.LASF4:
+ 1958 0319 73686F72 		.ascii	"short unsigned int\000"
+ 1958      7420756E 
+ 1958      7369676E 
+ 1958      65642069 
+ 1958      6E7400
+ 1959              	.LASF44:
+ 1960 032c 54696D65 		.ascii	"Timeout_Timer_Isr_GetPriority\000"
+ 1960      6F75745F 
+ 1960      54696D65 
+ 1960      725F4973 
+ 1960      725F4765 
+ 1961              	.LASF24:
+ 1962 034a 72785F62 		.ascii	"rx_byte\000"
+ 1962      79746500 
+ 1963              	.LASF14:
+ 1964 0352 75696E74 		.ascii	"uint32\000"
+ 1964      333200
+ 1965              	.LASF17:
+ 1966 0359 72656738 		.ascii	"reg8\000"
+ 1966      00
+ 1967              	.LASF6:
+ 1968 035e 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1968      20756E73 
+ 1968      69676E65 
+ 1968      6420696E 
+ 1968      7400
+ 1969              	.LASF16:
+ 1970 0370 646F7562 		.ascii	"double\000"
+ 1970      6C6500
+ 1971              	.LASF11:
+ 1972 0377 5F5F696E 		.ascii	"__int32_t\000"
+ 1972      7433325F 
+ 1972      7400
+ 1973              	.LASF33:
+ 1974 0381 54696D65 		.ascii	"Timeout_Timer_Isr_SetVector\000"
+ 1974      6F75745F 
+ 1974      54696D65 
+ 1974      725F4973 
+ 1974      725F5365 
+ 1975              	.LASF52:
+ARM GAS  C:\Users\yqh\AppData\Local\Temp\ccRUI3yj.s 			page 46
+
+
+ 1976 039d 74616D70 		.ascii	"tamperCR_polarity\000"
+ 1976      65724352 
+ 1976      5F706F6C 
+ 1976      61726974 
+ 1976      7900
+ 1977              	.LASF41:
+ 1978 03af 54696D65 		.ascii	"Timeout_Timer_Isr_StartEx\000"
+ 1978      6F75745F 
+ 1978      54696D65 
+ 1978      725F4973 
+ 1978      725F5374 
+ 1979              	.LASF60:
+ 1980 03c9 47656E65 		.ascii	"Generated_Source\\PSoC5\\Timeout_Timer_Isr.c\000"
+ 1980      72617465 
+ 1980      645F536F 
+ 1980      75726365 
+ 1980      5C50536F 
+ 1981              	.LASF42:
+ 1982 03f4 54696D65 		.ascii	"Timeout_Timer_Isr_Stop\000"
+ 1982      6F75745F 
+ 1982      54696D65 
+ 1982      725F4973 
+ 1982      725F5374 
+ 1983              	.LASF48:
+ 1984 040b 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 1984      52784275 
+ 1984      66666572 
+ 1984      00
+ 1985              	.LASF58:
+ 1986 0418 6C656472 		.ascii	"ledr_on\000"
+ 1986      5F6F6E00 
+ 1987              	.LASF38:
+ 1988 0420 54696D65 		.ascii	"Timeout_Timer_Isr_Enable\000"
+ 1988      6F75745F 
+ 1988      54696D65 
+ 1988      725F4973 
+ 1988      725F456E 
+ 1989              	.LASF63:
+ 1990 0439 54696D65 		.ascii	"Timeout_Timer_ReadStatusRegister\000"
+ 1990      6F75745F 
+ 1990      54696D65 
+ 1990      725F5265 
+ 1990      61645374 
+ 1991              	.LASF29:
+ 1992 045a 74696D65 		.ascii	"timer_tx_ctr\000"
+ 1992      725F7478 
+ 1992      5F637472 
+ 1992      00
+ 1993              	.LASF53:
+ 1994 0467 74616D70 		.ascii	"tamper_out_polarity\000"
+ 1994      65725F6F 
+ 1994      75745F70 
+ 1994      6F6C6172 
+ 1994      69747900 
+ 1995              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.9.3 20150303 (release) [ARM/embedded-4_9-br
