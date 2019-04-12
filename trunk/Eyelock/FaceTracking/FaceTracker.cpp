@@ -1256,6 +1256,8 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 	unsigned char FaceCameraFrameNo = (int)outImg.at<uchar>(0,3);
 
+	// printf("FaceTracking: FrameNo = %d\n", FaceCameraFrameNo);
+
 	unsigned int FaceFrameIndex=0;
 	static unsigned int FaceCtrIndex=0;
 
@@ -1325,7 +1327,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							}
 						if (eyesInDetect &&  !eyesInViewOfIriscam){
 							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							//system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
+							system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
 						}
 						break;
 	case STATE_AUX_IRIS:
@@ -1337,7 +1339,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							}
 						if (eyesInDetect &&  !eyesInViewOfIriscam){
 							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							//system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
+							system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
 						}
 						break;
 	case STATE_MOVE_MOTOR:
@@ -1527,7 +1529,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	}
 
 	// printf("PushToQueue foundEyes %d FaceFrameNo %d face x = %d  face y = %d face width = %d  face height = %d \n", foundEyes, FaceCameraQFrameNo, face.x,  face.y,  face.width, face.height);
-	 // if(system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){ // Removed for odriod by Anita
+	 if(system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){ // Removed for odriod by Anita
 
 //		if(m_ProjPtr && eyesInViewOfIriscamNoMove){ // Removed by sarvesh
 			m_LeftCameraFaceInfo.ScaledFaceCoord = FaceCoord;
@@ -1544,8 +1546,13 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 				memcpy(m_RightCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
 			}
 
+			//printf("DoRunMode_test FaceInfo.FaceFrameNo  %d\n", FaceCameraFrameNo);
+
+		//	printf("Pushing FaceFrameInfo\n");
 			g_pLeftCameraFaceQueue->TryPush(m_LeftCameraFaceInfo);
+		//	printf("Pushed 1 \n");
 			g_pRightCameraFaceQueue->TryPush(m_RightCameraFaceInfo);
+		// 	printf("Pushed 2 \n");
 
 			if(bFaceMapDebug){
 				char filename[100];
@@ -1557,7 +1564,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 				// imwrite(filename, smallImg);
 				imwrite(filename, RotatedfaceImg);
 			}
-		// }
+		}
 	// }
 	 RotatedfaceImg.release();
 	 saveRotatedImg.release();

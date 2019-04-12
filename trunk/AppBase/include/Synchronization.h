@@ -106,10 +106,10 @@ class RingBuffer
 {
 protected:
 	pthread_cond_t  m_NotFull, m_NotNull;
-	pthread_mutex_t m_Lock;
 	std::deque<T> m_Buffer;
 	int m_Max;
 public:
+	pthread_mutex_t m_Lock;
 	RingBuffer(int length) : m_Max(length)
 	{
 		pthread_mutex_init(&m_Lock, 0);
@@ -141,6 +141,13 @@ public:
 	void Clear()
 	{
 		m_Buffer.clear();
+	}
+
+	void Erase(int nIndex)
+	{
+		if(nIndex < Size())
+			m_Buffer.erase(m_Buffer.begin() + nIndex);
+
 	}
 
 void Push(T &thing)
@@ -186,8 +193,19 @@ T Pop() // wait and pop
 		{
 			status = true;
 			thing = m_Buffer.front();
-			//thing = m_Buffer.back();
 			m_Buffer.pop_front();
+			pthread_cond_signal(&m_NotFull);
+		}
+		return status;
+	}
+	bool TryPopBack(T &thing) // wait and pop
+			{
+		bool status = false;
+		ScopeLock lock(m_Lock);
+		if (m_Buffer.size()) {
+			status = true;
+			thing = m_Buffer.back();
+			m_Buffer.pop_back();
 			pthread_cond_signal(&m_NotFull);
 		}
 		return status;
