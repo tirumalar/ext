@@ -538,6 +538,7 @@ m_LedConsolidator = NULL;
 
 
 	m_bShouldSend =pConf->getValue("Eyelock.EyeMessage",true);
+	m_FaceFrameQueueSize = pConf->getValue("Eyelock.FaceQueueSize", 10);
 
 	// If we want external screen images and we are in acquisition mode...
 	// Create out window and set the initial image
@@ -547,7 +548,7 @@ m_LedConsolidator = NULL;
 		cvNamedWindow("EXT", CV_WINDOW_NORMAL);
 		cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
 		imshow("EXT", Screen);
-		cvWaitKey(100);
+		cvWaitKey(1); // cvWaitKey(100);
 	}
 }
 
@@ -1489,8 +1490,8 @@ FaceMapping ImageProcessor::GetFaceInfoFromQueueFacetoIrisMapping(int CameraId, 
 		}
 	} // End of while
 }
-
-FaceImageQueue ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char IrisFrameNo)
+#if 0
+FaceImageQueue ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char IrisFrameNo, int m_faceIndex)
 {
 	// FaceMapping m_FaceMap;
 
@@ -1528,6 +1529,69 @@ FaceImageQueue ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, uns
 			// printf("Mapping: Iris is ahead waiting for face cam_idd %d FaceFrameNo:%d IrisFrameNo:%d \n", CameraId, FaceInfo.FaceFrameNo, IrisFrameNo);
 			FaceImageQueue FaceInfo = (FaceImageQueue) g_pCameraFaceQueue->Pop();
 			continue;
+		}
+	} // End of while
+}
+#endif
+
+
+FaceImageQueue ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char IrisFrameNo, unsigned int m_faceIndex)
+{
+	FaceImageQueue FaceInfo;
+
+
+	// Select correct FaceFrameQueue based on CamId of the Image we are processing
+	if (CameraId == IRISCAM_AUX_LEFT || CameraId == IRISCAM_MAIN_LEFT)
+		g_pCameraFaceQueue = g_pLeftCameraFaceQueue;
+	else
+		g_pCameraFaceQueue = g_pRightCameraFaceQueue;
+
+
+	if (g_pCameraFaceQueue == NULL)
+		EyelockLog(logger, TRACE, "ImageProcessor::GetFaceDataMessage(): g_pRingBufferFaceQueue uninitialized!");
+
+
+	// If we have at least one element in the FaceFrameQueue...
+	if (!g_pCameraFaceQueue->Empty())
+	{
+		FaceInfo = g_pCameraFaceQueue->Peek(); // Top of the queue
+
+		// printf("GetFaceInfoForIristoFaceMapping CameraId  %d FaceInfo.FaceFrameNo  %d  IrisFrameNo %d m_faceIndex %d \n", CameraId, FaceInfo.FaceFrameNo, IrisFrameNo, m_faceIndex);
+
+		char DiffFrameNo = ( char) (FaceInfo.FaceFrameNo - IrisFrameNo);
+
+		// We found our match... Pop the FaceFrameInfo, then return
+		if (FaceInfo.FaceFrameNo == IrisFrameNo)
+		{
+			FaceInfo = g_pCameraFaceQueue->Pop();
+			return FaceInfo;
+		}
+		else if(DiffFrameNo > 0) //FaceFrameInfo is ahead of us, start looking from back of queue for a match and remove until we find it...
+		{
+			// DMO -- Need a scopeLock here to prevent FaceTrackingThread from adding stuff...while we search and delete...
+			ScopeLock(g_pCameraFaceQueue->m_Lock);
+			while (g_pCameraFaceQueue->TryPopBack(FaceInfo)) // false if queue is empty... and breaks us out of the loop
+			{
+				if (FaceInfo.FaceFrameNo < IrisFrameNo) // Already past this one, pop it off and get a newer one...
+					continue;
+				else if (FaceInfo.FaceFrameNo == IrisFrameNo)
+					break; // Found it!
+			};
+
+			// It's possible that we never found a match... in this case, we return the 'next' faceframeinfo in the queue
+			return FaceInfo;
+		}
+		else //if (DiffFrameNo < 0)
+		{ // Top of queue FaceFrameInfo is OLD...  remove them until we find a match
+			ScopeLock(g_pCameraFaceQueue->m_Lock);
+			while (g_pCameraFaceQueue->TryPop(FaceInfo)) // false if queue is empty...
+			{
+				if (FaceInfo.FaceFrameNo < IrisFrameNo)
+					continue;
+				else if (FaceInfo.FaceFrameNo == IrisFrameNo)
+					break; // Found it!
+			}
+			return FaceInfo;
 		}
 	} // End of while
 }
@@ -1828,7 +1892,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	 if(m_EyelockIrisMode == 2){
 		 ProcessImageAcquisitionMode(frame, matchmode);
 	 }else{
-		 printf("Inside Match Mode\n");
+		 // printf("Inside Match Mode\n");
 		 ProcessImageMatchMode(frame, matchmode);
 	 }
 }
@@ -1895,7 +1959,7 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 
     FaceImageQueue FaceInfo;
     if(m_IrisToFaceMapping)
-    	FaceInfo = GetFaceInfoForIristoFaceMapping(cam_idd, frame_number);
+    	FaceInfo = GetFaceInfoForIristoFaceMapping(cam_idd, frame_number, m_faceIndex);
 
    //  printf("After Detect Eyes\n");
     if(m_shouldLog){
@@ -1926,7 +1990,7 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 				centroid.m_nCenterPointY);
 
 		if (m_IrisToFaceMapping){
-			m_eyeLabel = validateLeftRightEyecrops(FaceInfo.ScaledFaceCoord, ptrI, cam_idd, FaceInfo.faceImagePtr, frame_number);
+			m_eyeLabel = validateLeftRightEyecrops(FaceInfo.ScaledFaceCoord, ptrI, cam_idd, FaceInfo.faceImagePtr, m_faceIndex);
 			// printf("eye Label Information Cam_idd %d frameidx %d eyeLabel %d projStatus %d\n", cam_idd, m_faceIndex, eyeLabel, m_projStatus);
 			EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d label %d\n", cam_idd, m_faceIndex, m_eyeLabel);
 		}
@@ -2520,7 +2584,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 	char filename[150];
 	static int p;
 	int cam_idd = 0;
-	char frame_number = 0;
+	unsigned char frame_number = 0;
 
 	bool bSentSomething = false;
 
@@ -2579,7 +2643,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 		FaceImageQueue FaceInfo;
 		if(m_IrisToFaceMapping)
-			FaceInfo = GetFaceInfoForIristoFaceMapping(cam_idd, frame_number);
+			FaceInfo = GetFaceInfoForIristoFaceMapping(cam_idd, frame_number, m_faceIndex);
 
 
 		if(m_shouldLog){
@@ -2616,7 +2680,9 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 						centroid.m_nCenterPointY);
 
 				if (m_IrisToFaceMapping){
-					m_eyeLabel = validateLeftRightEyecrops(FaceInfo.ScaledFaceCoord, ptrI, cam_idd, FaceInfo.faceImagePtr, frame_number);
+					m_eyeLabel = validateLeftRightEyecrops(FaceInfo.ScaledFaceCoord, ptrI, cam_idd, FaceInfo.faceImagePtr, m_faceIndex);
+					if(m_eyeLabel == 0)
+						return false;
 					// printf("eye Label Information Cam_idd %d frameidx %d eyeLabel %d projStatus %d\n", cam_idd, m_faceIndex, eyeLabel, m_projStatus);
 					EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d label %d\n", cam_idd, m_faceIndex, m_eyeLabel);
 				}
@@ -2993,7 +3059,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			bSentCaptureImage = true;
 		}
 
-		if (bSentCaptureImage)
+		if (!m_DHSScreens && bSentCaptureImage)
 		{
 			unsigned char buf[256];
 			buf[0] = CMX_LED_CMD;
@@ -3010,6 +3076,16 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		// DHS Screen functions
 		if(m_DHSScreens)
 		{
+			unsigned char buf[256];
+			buf[0] = CMX_LED_CMD;
+			buf[1] = 3;
+			buf[2] = 0;
+			buf[3] = 255;
+			buf[4] = 0;
+			if (m_pCMXHandler) {
+				m_pCMXHandler->HandleSendMsg((char *) buf, m_pCMXHandler->m_Randomseed);
+			}
+
 			Screen = cv::imread("/home/root/screens/Slide3.BMP", cv::IMREAD_COLOR);
 			imshow("EXT", Screen);
 
@@ -3036,6 +3112,16 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			Screen = cv::imread("/home/root/screens/Slide1.BMP", cv::IMREAD_COLOR);
 			imshow("EXT", Screen);
 			cvWaitKey(1);
+			/*
+			buf[0] = CMX_LED_CMD;
+			buf[1] = 3;
+			buf[2] = 0;
+			buf[3] = 0;
+			buf[4] = 0;
+			if (m_pCMXHandler) {
+				m_pCMXHandler->HandleSendMsg((char *) buf, m_pCMXHandler->m_Randomseed);
+			}*/
+
 			IplImage *frame1;
 			do{
 				frame1 = GetFrame();
@@ -3047,6 +3133,8 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		}
 		//clearing the eyeSorting variables
 		aquisition->clearFrameBuffer(); // Clear frame buffer
+		g_pLeftCameraFaceQueue->Clear(); // Clear FaceQueue
+		g_pRightCameraFaceQueue->Clear(); // Clear FaceQueue
 		eyeSortingWrapObj->clearAllEyes(); // Check Anita later should be uncommented
 		terminate = false; //Making terminate false to restart our sorting
 		shouldIBeginSorting = false;  //Next image we should start our sorting
@@ -3937,6 +4025,8 @@ bool ImageProcessor::process(bool matchmode) {
 		if (m_DHSScreens && (m_EyelockIrisMode == 2))
 			cvWaitKey(1);
 	} // end while
+	if (m_DHSScreens && (m_EyelockIrisMode == 2))
+		cvWaitKey(1);
     return bSentSomething;
 }
 

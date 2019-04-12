@@ -52,9 +52,9 @@ BufferBasedFrameGrabber::~BufferBasedFrameGrabber() {
 
 void BufferBasedFrameGrabber::ReleaseProcessBuffer(ImageQueueItem m)
 {
-	printf("\n\n BEFORE PUSH \n\n");
+	// printf("\n\n BEFORE PUSH \n\n");
 	m_FreeBuffer->Push(m);
-	printf("\n\n After PUSH \n\n");
+	// printf("\n\n After PUSH \n\n");
 
 }
 
@@ -79,11 +79,11 @@ ImageQueueItem BufferBasedFrameGrabber::GetFreeBuffer()
 void BufferBasedFrameGrabber::PushProcessBuffer (ImageQueueItem m)
 {
 //	printf("pushing image buffer %d\n",m.item_id);
-	static int cntr=0;
-	static int AuxLeft=0;
-	static int AuxRight=0;
-	static int MainLeft=0;
-	static int MainRight=0;
+	static unsigned int cntr=0;
+	static unsigned int AuxLeft=0;
+	static unsigned int AuxRight=0;
+	static unsigned int MainLeft=0;
+	static unsigned int MainRight=0;
 
 	m_ImageQueueItem.m_ExtCameraIndex = m.m_ptr[2]&0xff;
 
@@ -320,6 +320,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw(){
 #endif
 }
 
+#if 0 // Dave code
 char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 	//if (m_Debug)
 		//EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::getLatestFrame_raw() Start");
@@ -337,7 +338,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 
     if (!status)
     {
-		usleep(1000);
+		//usleep(1000);
     	return NULL;
     }
 
@@ -347,7 +348,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 		{
 		 if (m_ProcessBuffer->Empty())
 		 {
-			usleep(1000);
+			//usleep(1000);
 			 return NULL;
 		 }
 
@@ -356,7 +357,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 		if (status)
 			break; //something to process
 
-		usleep(1000);
+	//	usleep(1000);
 		}
 	m_ill0 = m_current_process_queue_item.m_ill0;
 	m_frameIndex = m_current_process_queue_item.m_frameIndex;
@@ -415,8 +416,89 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 #endif
 }
 
-#endif
+#else
+// Anita changed it for choppy lines in frames
+char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
+	//if (m_Debug)
+		//EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::getLatestFrame_raw() Start");
 
+	int length = (m_Width * m_Height);
+	if (m_numbits != 8)
+		length = length * 2;
+
+	// release the previously processed buffer it it is real;
+    if (m_current_process_queue_item.m_ptr!=0)
+    	 TryReleaseProcessBuffer(m_current_process_queue_item);//DMO changed to "Try" so we don't block on a full buffer.
+
+    bool status = false; // reset
+
+	while (1)
+	{
+		status = m_ProcessBuffer->TryPop(m_current_process_queue_item);
+		if (status)
+			break;
+		// usleep(1000);
+	}
+
+	m_ill0 = m_current_process_queue_item.m_ill0;
+	m_frameIndex = m_current_process_queue_item.m_frameIndex;
+	m_ts = m_current_process_queue_item.m_endTime;
+
+	EyelockLog(logger, TRACE, "get image queue m_ill0 %d, m_frameIndex %d, time %llu", m_ill0,m_frameIndex, m_ts);
+
+#if 0
+	char filename[100];
+	static int i;
+	sprintf(filename,"image_%d.bin",i++);
+	FILE *f = fopen(filename, "wb");
+	fwrite(m_current_process_queue_item.m_ptr, length, 1, f);
+	fclose(f);
+
+#endif
+	return m_current_process_queue_item.m_ptr;
+
+#if 0
+	// ImageQueue val;
+	//while(!ShouldIQuit()&&!m_pRingBuffer->TryPop(val))
+
+	bool status = false;
+
+	while(1)
+		{
+		status=m_pRingBuffer->TryPop(m_ImageQueue);
+		if (status)
+			break;
+		usleep(1000);
+		}
+
+	if (status == true) {
+#if 0
+		if (m_Debug)
+			EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::getLatestFrame_raw() get image queue");
+#endif
+		// unsigned char *ptr = m_ImageQueue.m_ptr;
+		m_ill0 = m_ImageQueue.m_ill0;
+		m_frameIndex = m_ImageQueue.m_frameIndex;
+		m_ts = m_ImageQueue.m_endTime;
+		memcpy(m_pImageBuffer, m_ImageQueue.m_ptr, length);
+		int static cntr=0;
+		cntr++;
+//		printf("popped so far .. %d\n",cntr);
+	}
+	else {
+		memset(m_pImageBuffer, 0, length);
+	}
+#if 0
+	if (m_Debug)
+		EyelockLog(logger, DEBUG, "get image queue m_ill0 %d, m_frameIndex %d, time %llu", m_ill0,m_frameIndex, m_ts);
+#endif
+	return m_pImageBuffer;
+
+#endif
+}
+
+#endif
+#endif
 void BufferBasedFrameGrabber::setLatestFrame_raw(char *ptr){
 #if 0
 	if (m_Debug)
@@ -433,7 +515,7 @@ void BufferBasedFrameGrabber::setLatestFrame_raw(char *ptr){
 		fwrite(ptr, (m_Width * m_Height), 1, f);
 #endif
 	// ImageQueue val;
-	static int cntr=0;
+	static unsigned int cntr=0;
 	int length = (m_Width * m_Height);
 	if (m_numbits != 8)
 		length = length * 2;
@@ -463,7 +545,7 @@ void BufferBasedFrameGrabber::setLatestFrame_raw(char *ptr){
 		frame_drop++;
 		//printf("Dropping Frames total %d\n",frame_drop);
 	}
-	int static cntr1=0;
+	unsigned int static cntr1=0;
 	cntr1++;
 	//printf("pushed so far .. %d and dropped %d\n",cntr1,frame_drop);
 

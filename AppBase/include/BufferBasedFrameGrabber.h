@@ -15,14 +15,14 @@ typedef struct ImageQueueItem{
 	// unsigned char m_ptr[5038848];	// image size 1152000
 	unsigned char *m_ptr;	// image size 1152000
 	int m_ill0;
-	int m_frameIndex;
+	unsigned int m_frameIndex;
 	__int64_t m_startTime,m_endTime;
 	int item_id;
-	int m_ExtCameraIndex;
-	int AuxLeftFrameIndex;
-	int AuxRightFrameIndex;
-	int MainLeftFrameIndex;
-	int MainRightFrameIndex;
+	unsigned int m_ExtCameraIndex;
+	unsigned int AuxLeftFrameIndex;
+	unsigned int AuxRightFrameIndex;
+	unsigned int MainLeftFrameIndex;
+	unsigned int MainRightFrameIndex;
 };
 
 

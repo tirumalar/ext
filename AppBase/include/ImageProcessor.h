@@ -181,7 +181,7 @@ protected:
     IplImage *m_rotationBuff;
     bool m_shouldRotate;
     Image8u m_inputImg;
-    int m_faceIndex;
+    unsigned int m_faceIndex;
     int m_id;
     bool m_shouldDetect;
     int m_testImageSendLevel;
@@ -341,7 +341,7 @@ private:
     bool ValidateEyeCropUsingFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
     void SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceIndex, unsigned int eyeLabel);
     cv::Point2i projectPoints_IristoFace(cv::Point2i ptrI, cv::Point2f constant, float ConstDiv);
-    FaceImageQueue GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char IrisFrameNo);
+    FaceImageQueue GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char IrisFrameNo, unsigned int m_faceIndex);
     unsigned int validateLeftRightEyecrops(cv::Rect FaceCoord, cv::Point2i ptrI, int CameraId, unsigned char *faceImagePtr, int m_faceIndex);
 	bool validateEyecrops_IrisToFaceMapping(cv::Rect projFace, cv::Point2i ptrI, int CameraId);
 	bool ValidateEyeCropUsingIrisToFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
@@ -350,6 +350,7 @@ private:
 	bool bIrisToFaceMapDebug;
 	bool m_DHSScreens;
 	cv::Mat Screen;
+	unsigned int m_FaceFrameQueueSize;
     SocketFactory *m_socketFactory;
 
 };

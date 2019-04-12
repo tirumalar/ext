@@ -2517,7 +2517,7 @@ void CmxHandler::SendMessage(char *outMsg, int len, unsigned short randomseed)
 		EyelockLog(logger, TRACE, "CmxHandler::SendMessage(): OIMQueue size = %d...", m_pOIMQueue->Size());
 
 
-	m_pOIMQueue->TryPush(theItem);
+	m_pOIMQueue->Push(theItem);
 
 }
 #endif
@@ -3096,6 +3096,7 @@ void *leftCServer(void *arg) {
 
 					// dont push if its a dummy buffer
 					if (databuf != dummy_buff) {
+						// printf("CMX: Pushing Frame No = %d\n", databuf[3] & 0xff);
 						pFrameGrabber->PushProcessBuffer(queueItem);
 						pkgs_missed = 0;
 						pkgs_received = 0;
