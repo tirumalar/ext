@@ -28,7 +28,8 @@ if (isset($_REQUEST['action']))
     }
 	$eyeLockINI = new INIEditor("/home/root/Eyelock.ini");
     $eyeLockINI->LoadIniSettings(true);
-    switch($_REQUEST['action'])
+    $action = $_REQUEST['action'];
+    switch($action)
     {
         case 'identifydevice':
         case 'identifydevicestop':
@@ -588,6 +589,23 @@ if (isset($_REQUEST['action']))
                 $strgds = $strgds.",nottampered";
 
             echo $strgds;
+            break;
+        }
+        
+        case 'checkipaddressduplicate':
+        {
+            $ipRegex = "/^(([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]).){3}.([1-9]?[0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/" ;
+            $duplicateFound = false;
+            $addOut = "";
+            $ipAddress = $_REQUEST['ipaddress'];
+            if (preg_match($ipRegex, $ipAddress))
+            {
+                shell_exec("ping -c 1 -w 1 ".$ipAddress);
+                $wcOut = shell_exec( "arp -a ".$ipAddress." | grep -o \"<incomplete>\" | wc -l");
+                $duplicateFound = (trim($wcOut) == "0");
+            }
+            $duplicateFound = ($duplicateFound) ? "true" : "false";
+            echo $action."|".$duplicateFound;
             break;
         }
 
