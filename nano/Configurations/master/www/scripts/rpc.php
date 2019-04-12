@@ -603,6 +603,10 @@ if (isset($_REQUEST['action']))
                 shell_exec("ping -c 1 -w 1 ".$ipAddress);
                 $wcOut = shell_exec( "arp -a ".$ipAddress." | grep -o \"<incomplete>\" | wc -l");
                 $duplicateFound = (trim($wcOut) == "0");
+                if ($duplicateFound) {
+                    $wcOut = shell_exec( "arp -a ".$ipAddress." | grep -o \"no match found\" | wc -l");
+                    $duplicateFound = (trim($wcOut) == "0");
+                }
             }
             $duplicateFound = ($duplicateFound) ? "true" : "false";
             echo $action."|".$duplicateFound;

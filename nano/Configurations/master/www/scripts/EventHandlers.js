@@ -440,7 +440,7 @@ function submitPostIpDuplicateCheck() {
 $(document).ready(function () {
     $("#webconfig").submit(function (event) {
         event.preventDefault();
-        if (isCurrentlyStaticIP === 1 && (initialStaticIP != document.getElementById('ipofboard').value)) {
+        if (isCurrentlyStaticIP === 1 && (initialStaticIP != document.getElementById('ipofboard').value || ipTypeChanged())) {
             sndReqParams('/scripts/rpc.php', 'checkipaddressduplicate', [['ipaddress', document.getElementById('ipofboard').value]], GlobalStrings.CheckingIpAddressDuplicate, true);
         } else {
             submitPostIpDuplicateCheck();
