@@ -383,7 +383,7 @@ function submitComplete()
                     setTimeout(function () { RebootDeviceOK(); }, 5000);
                 }
                 else
-                    ShowWaitingDlg(GlobalStrings.SaveSettingsRestart, GlobalStrings.FewMoments, true, 90000);
+                    ShowWaitingDlg(GlobalStrings.SavingSettingsRestart, GlobalStrings.FewMoments, true, 90000);
             }
             else
                 ShowWaitingDlg(GlobalStrings.SavingSettings, "", true, 30000);
@@ -415,29 +415,36 @@ function verifyTimeSubmit()
 			
 		}
 }
+
+function submitPostIpDuplicateCheck() {
+    if(currentTimeServer != document.getElementById('GRI_InternetTimeAddr').value && !timeSubmitOK)
+    {
+        submitTimeSync = true;
+        timeSubmitOK = false;
+        timeSubmitComplete = false;
+        updateTime();
+        
+        intervalID = setInterval(verifyTimeSubmit, 2000); //wait for timesync to finish
+    }
+    else
+    {
+        submitComplete();
+    }
+
+    // reset some globals...
+    bDuressChanged = false;
+    bOldEnableRelay = false;
+}
+
 // SUBMIT BUTTON - give a little feedback...
 $(document).ready(function () {
     $("#webconfig").submit(function (event) {
-		   event.preventDefault();
-		if(currentTimeServer != document.getElementById('GRI_InternetTimeAddr').value && !timeSubmitOK)
-			{
-		submitTimeSync = true;
-		timeSubmitOK = false;
-		timeSubmitComplete = false;
-		updateTime();
-		
-		intervalID = setInterval(verifyTimeSubmit, 2000); //wait for timesync to finish
-			}
-		else
-			{
-				submitComplete();
-				
-			}
-
-        // reset some globals...
-        bDuressChanged = false;
-        bOldEnableRelay = false;
-
+        event.preventDefault();
+        if (isCurrentlyStaticIP === 1 && (initialStaticIP != document.getElementById('ipofboard').value)) {
+            sndReqParams('/scripts/rpc.php', 'checkipaddressduplicate', [['ipaddress', document.getElementById('ipofboard').value]], GlobalStrings.CheckingIpAddressDuplicate, true);
+        } else {
+            submitPostIpDuplicateCheck();
+        }
     });
 
     for (var i = 0; i < 9; i++) {

@@ -127,7 +127,10 @@ function defineStrings($HardwareType)
             define ("NETWORK_SETTINGS_NOCERTIFICATE", "No Certificate File Uploaded");
             define ("NETWORK_SETTINGS_NOKEY", "No Private Key Uploaded");
             define ("NETWORK_802LOG_DOWNLOAD", "Download IEEE 802.1X Log...");
-
+            
+            define ("NETWORK_CHECKING_IP_ADDRESS_DUPLICATE", "Checking for IP address duplicates");
+            define ("NETWORK_DUPLICATE_IP_ADDRESS", "IP address conflict");
+            define ("NETWORK_IP_ADDRESS_IN_USE", "Specified device IP address conflict with another system on the network.");
 
             //////////////////////////////////////////////////////
             // DEVICE TAB STRINGS
@@ -1074,6 +1077,9 @@ function defineStrings($HardwareType)
         define ("NETWORK_SETTINGS_NOCERTIFICATE", "No Certificate File Uploaded");
         define ("NETWORK_SETTINGS_NOKEY", "No Private Key Uploaded");
         define ("NETWORK_802LOG_DOWNLOAD", "Download IEEE 802.1X Log...");
+        define ("NETWORK_CHECKING_IP_ADDRESS_DUPLICATE", "Проверка уникальности IP-адреса устройства");
+        define ("NETWORK_DUPLICATE_IP_ADDRESS", "Конфликт IP-адреса устройства");
+        define ("NETWORK_IP_ADDRESS_IN_USE", "Обнаружен конфликт IP-адреса устройства с другой системой в сети.");
 		define("DEVICE_TABLABEL", "Устройство");
 		define("DEVICE_HEADING", "Настройки устройства");
 		define("DEVICE_USERFEEDBACK_GROUPTITLE", "Отзывы");
@@ -1660,6 +1666,9 @@ function defineStrings($HardwareType)
             define ("NETWORK_SETTINGS_NOCERTIFICATE", "No Certificate File Uploaded");
             define ("NETWORK_SETTINGS_NOKEY", "No Private Key Uploaded");
             define ("NETWORK_802LOG_DOWNLOAD", "Download IEEE 802.1X Log...");
+            define ("NETWORK_CHECKING_IP_ADDRESS_DUPLICATE", "Checking for IP address duplicates");
+            define ("NETWORK_DUPLICATE_IP_ADDRESS", "IP address conflict");
+            define ("NETWORK_IP_ADDRESS_IN_USE", "Specified device IP address conflict with another system on the network.");
 
 
             //////////////////////////////////////////////////////

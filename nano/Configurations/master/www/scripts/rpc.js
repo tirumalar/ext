@@ -498,6 +498,15 @@ function handleResponse(theResponse)
             $('#imageloader').attr({
                 'src': '/img/apploading.gif'
             });
+        } else if (update[0] === 'checkipaddressduplicate') {
+            HideOnlyWaitingDlg();
+            if (update[1] === 'true') {
+                ShowMessageBox(GlobalStrings.DuplicateIpAddress, GlobalStrings.IpAddressInUse, GlobalStrings.AreYouSure, "MB_ICONVALIDATEFAILED", "YESNO", function () {
+                    submitPostIpDuplicateCheck();
+                }, null);
+            } else {
+                submitPostIpDuplicateCheck();
+            }
         }
     }
 }
