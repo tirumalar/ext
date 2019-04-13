@@ -498,6 +498,28 @@ m_LedConsolidator = NULL;
 		eyeSortingWrapObj->SetPupilSearchAngles(-60, 90);
 		eyeSortingWrapObj->SetSpecularityMaskLevel(1);
 		eyeSortingWrapObj->SetEyeQualityClassifierWeights(0, 0.32f,0.38f);
+
+		// Pupil Min and Max
+		int minPupilDiameter = pConf->getValue("GRI.minPupilDiameter", 16);
+		int maxPupilDiameter = pConf->getValue("GRI.maxPupilDiameter", 85);
+		eyeSortingWrapObj->SetPupilRadiusSearchRange(minPupilDiameter, maxPupilDiameter);
+
+		//Iris Min and Max
+		int minIrisDiameter = pConf->getValue("GRI.minIrisDiameter", 70);
+		int maxIrisDiameter = pConf->getValue("GRI.maxIrisDiameter", 145);
+		eyeSortingWrapObj->SetIrisRadiusSearchRange(minIrisDiameter, maxIrisDiameter);
+
+		//Search Area ROI
+		CvRect searchArea;
+		searchArea.x = pConf->getValue("GRI.EyeLocationSearchArea.x", searchArea.x);
+		searchArea.y = pConf->getValue("GRI.EyeLocationSearchArea.y", searchArea.y);
+		searchArea.width = pConf->getValue("GRI.EyeLocationSearchArea.width",	searchArea.width);
+		searchArea.height = pConf->getValue("GRI.EyeLocationSearchArea.height", searchArea.height);
+		bool fail = eyeSortingWrapObj->SetEyeLocationSearchArea(searchArea.x, searchArea.y, searchArea.width, searchArea.height);
+		if (!fail) {
+			EyelockLog(logger, WARN, "\nWARNING :Input given for EyeLocationSearchArea is invalid. ");
+		}
+
 #if 0
 		eyeSortingWrapObj->SetIrisDiameterThresholds(70,170);
 #else

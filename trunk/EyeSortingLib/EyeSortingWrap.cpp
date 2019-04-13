@@ -111,6 +111,38 @@ void EyeSortingWrap::SetPupilSearchAngles(float minAngle, float maxAngle)
 {
 	m_pEyeSegmentationInterface->SetPupilSearchAngles(minAngle,maxAngle);
 }
+
+bool EyeSortingWrap::SetEyeLocationSearchArea(int xo, int yo, int w, int h)
+{
+	if(xo >=0 && yo >= 0 && (xo + w <= 640) && (yo + h <=480) && w >= 40 && h >= 40)
+	{
+		m_pEyeSegmentationInterface->SetEyeLocationSearchArea(xo, yo, w, h);
+		return true;
+	}
+	return false;
+}
+
+bool EyeSortingWrap::SetIrisRadiusSearchRange(int min, int max)
+{
+	if(min < max && min >= 50 && max <= 175)
+	{
+		m_pEyeSegmentationInterface->SetIrisRadiusSearchRange(min, max);
+		return true;
+	}
+
+	return false;
+}
+bool EyeSortingWrap::SetPupilRadiusSearchRange(int min, int max)
+{
+	if(min < max && min >=10 && max <= 100)
+	{
+		m_pEyeSegmentationInterface->SetPupilRadiusSearchRange(min, max);
+		return true;
+	}
+
+	return false;
+}
+
 void EyeSortingWrap::SetSpecularityMaskLevel(int level)
 {  
 	m_pEyeSegmentationInterface->SetSpecularityMaskLevel(level);
