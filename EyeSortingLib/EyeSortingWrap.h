@@ -129,6 +129,9 @@ class EyeSortingWrap
         void SetFocusBenchMark(int);
 		void SetSpoofParams(bool enableSpoof, float threshX, float threshY, int SpoofPairDepth);
 		void SetPupilSearchAngles(float minAngle, float maxAngle);
+		bool SetEyeLocationSearchArea(int xo, int yo, int w, int h);
+		bool SetIrisRadiusSearchRange(int min, int max);
+		bool SetPupilRadiusSearchRange(int min, int max);
         void SetSpecularityMaskLevel(int level);
 		void SetHaloScoreTopPoints(int noOfPixelsToConsider, float topPixelsPercentage, int intensityThreshBP, int HaloThresh );
 		void SetEyeQualityClassifierWeights(float haloRankWeight, float fvRankWeight, float cbMaskRankWeight);
