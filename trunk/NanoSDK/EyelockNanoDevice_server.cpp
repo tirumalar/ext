@@ -1739,7 +1739,8 @@ int32_t EyelockNanoDeviceHandler::SetPassword(const std::string& userName, const
 	{
 		// legacy implementation
 		stringstream cmd;
-		cmd << "echo -e \"" << newPassword << "\\n" << newPassword << "\\n\" | passwd -a MD5 " << userName << ";passwd -l " << userName;
+		cmd << "printf '%s\\n%s\\n' '" << newPassword << "' '" << newPassword << "' | passwd -a MD5 '" << userName << "';passwd -l '" << userName << "'";
+
 		EyelockLog(logger, DEBUG, "Executing passwd");
 		RunCmd(cmd.str().c_str());
 	}

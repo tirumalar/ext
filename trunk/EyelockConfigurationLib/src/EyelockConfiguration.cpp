@@ -1323,7 +1323,7 @@ namespace EyelockConfigurationNS
 
 	bool EyelockConfiguration::setEyelock_OSDPBaudRate(unsigned int newValue)
 	{
-		if (newValue != 9600 && newValue != 19200 && newValue != 38400 && newValue != 0) // 0 is added for backward compatibility
+		if (newValue != 9600 && newValue != 19200 && newValue != 38400 && newValue != 115200 && newValue != 0) // 0 is added for backward compatibility
 		{
 			return false;
 		}
