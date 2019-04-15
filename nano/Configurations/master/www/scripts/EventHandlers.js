@@ -1516,8 +1516,7 @@ $(document).ready(function () {
                     (caccessControlType.options[caccessControlType.selectedIndex].value == "PinandIrisDuress") ||
                     (caccessControlType.options[caccessControlType.selectedIndex].value == "PinCardandIrisDuress"));
 
-    var bPin =      ((caccessControlType.options[caccessControlType.selectedIndex].value == "IrisandCardPP") ||
-                    (caccessControlType.options[caccessControlType.selectedIndex].value == "PinandIris") ||
+    var bPin =      ((caccessControlType.options[caccessControlType.selectedIndex].value == "PinandIris") ||
                     (caccessControlType.options[caccessControlType.selectedIndex].value == "PinCardandIris") ||
                     (caccessControlType.options[caccessControlType.selectedIndex].value == "PinandIrisDuress") ||
                     (caccessControlType.options[caccessControlType.selectedIndex].value == "PinCardandIrisDuress"));
@@ -1785,7 +1784,7 @@ function handleProtocolSelector()
          }
 
         // Hide weigand only options...
-     // OUTUNTILPASSTHROUGHISFIXED   $('#irisandcardppoption').hide();
+        $('#irisandcardppoption').hide();
         $('#pinandirisoption').hide();
         $('#pincardandirisoroption').hide();
         $('#pinandirisoduressroption').hide();
@@ -1828,7 +1827,7 @@ function handleProtocolSelector()
             }
 
             // Hide weigand only options...
-       // OUTUNTILPASSTHROUGHISFIXED     $('#irisandcardppoption').hide();
+            $('#irisandcardppoption').hide();
             $('#pinandirisoption').hide();
             $('#pincardandirisoroption').hide();
             $('#pinandirisoduressroption').hide();
@@ -1839,7 +1838,7 @@ function handleProtocolSelector()
         else 
         {
             // Show weigand only options...
-    // OUTUNTILPASSTHROUGHISFIXED        $('#irisandcardppoption').show();
+            $('#irisandcardppoption').show();
             $('#pinandirisoption').show();
             $('#pincardandirisoroption').show();
             $('#pinandirisoduressroption').show();

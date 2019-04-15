@@ -161,6 +161,7 @@ protected:
 	bool m_sendMatchToNw,m_sendLoteringToNw,m_sendHealthToNw,m_sendConfusionToNw,m_dbReloadToNw;
 	bool m_dualAuth;
 	bool m_passThrough;
+	bool m_pinPassThrough;
 	bool m_transTOC;
 	bool m_pinAuth;
 	bool m_multiAuth;

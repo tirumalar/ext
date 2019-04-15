@@ -131,6 +131,8 @@ F2FDispatcher::F2FDispatcher(Configuration& conf):ResultDispatcher(conf), m_pMat
 	m_passThrough = false;
 	m_dualAuth = false;
 	m_pinAuth = false;
+	m_multiAuth = false;
+	m_pinPassThrough = false;
 
 	// TODO: refactor.
 	// Code duplication, same code: LEDDispatcher.cpp, NwMatchManager.cpp, OSDPMessage.cpp, F2FDispatcher.cpp
@@ -149,6 +151,7 @@ F2FDispatcher::F2FDispatcher(Configuration& conf):ResultDispatcher(conf), m_pMat
 				break;
 			case CARD_AND_IRIS_PIN_PASS:
 				m_dualAuth = true;
+				m_pinPassThrough = true;
 				break;
 			case PIN_AND_IRIS:
 			case PIN_AND_IRIS_DURESS:
@@ -629,10 +632,19 @@ void F2FDispatcher::SendToBoB(Configuration& conf)
 		acsType += BOB_ACCESS_TYPE_TOC_BASE;
 	else if (m_passThrough)
 		acsType += BOB_ACCESS_TYPE_PASS_BASE;
+	else if (m_pinPassThrough)
+		acsType += BOB_ACCESS_TYPE_PIN_PASS_BASE;
 	// support multi-factor
 	// else if (m_authMode == CARD_AND_IRIS_PIN_PASS)
 
 	BobSetACSType(acsType);
+
+	/*if (m_pinPassThrough) // Only 4 and 8 bit burst readers are going to be supported.
+	 * No other data in amounts less than 8 bits is expected to be received in Eyelock app.
+	 * Hardcoded in ICM to 8.
+	{
+		BobSetPinBurstBits(m_pinBurstBits);
+	}*/
 
 	if (!m_pinAuth)
 		BobSetACSTypeBits(m_accessDataLength);
@@ -1751,7 +1763,7 @@ void F2FDispatcher::process(MatchResult *msg)
 
 				LogMatchResult(msg);
 				if (m_dualAuth || m_transTOC) {
-					ResetReaderLED();
+					ResetReaderLED(); // TODO: refactor: ResetReaderLED calls SetDualTransCommand. It is confusing
 					m_pMatchType->clearCardData();
 					StopEyesProcessing();
 				}
