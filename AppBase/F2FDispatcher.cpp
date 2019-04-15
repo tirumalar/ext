@@ -1236,8 +1236,6 @@ void F2FDispatcher::SendData(MatchResult *msg)
 	if (m_pinAuth)
 		return;
 
-	int bytes, bitlen;
-	char *ptr = msg->getF2F(bytes,bitlen);
 	MatchResultState state = msg->getState();
 
 	if (state == FAILED || state == CONFUSION)
@@ -1245,12 +1243,13 @@ void F2FDispatcher::SendData(MatchResult *msg)
 		msg->setF2F(m_testData);
 	}
 
-	if (m_osdpACSEnabled)
-	{
+	int bytes, bitlen;
+	char *ptr = msg->getF2F(bytes,bitlen);
+
+	if (m_osdpACSEnabled) {
 		m_osdpMessage->SaveMatchData(ptr, bytes, bitlen);
 	}
-	else
-	{
+	else {
 		m_pMatched->Send(msg->getKey());
 	}
 }
@@ -1745,8 +1744,18 @@ void F2FDispatcher::process(MatchResult *msg)
 					EyelockLog(logger, DEBUG, "F2FDispatcher::process start ==> state = %d, m_dualAuth=%d, m_dualAuthMatched %d\n", state, m_dualAuth, m_pMatchType->m_dualAuthMatched);
 
 				if (m_testCode) {
-					m_pMatched->Send(msg->getKey());
 					m_testCode = false;
+
+					if (m_osdpACSEnabled) {
+						int bytes = 0;
+						int bitlen = 0 ;
+						char *ptr = msg->getF2F(bytes,bitlen);
+						m_osdpMessage->SaveMatchData(ptr, bytes, bitlen);
+					}
+					else {
+						m_pMatched->Send(msg->getKey());
+					}
+
 					if (m_dualAuth || m_transTOC)
 						SetDualTransCommand(BOB_COMMAND_READ);
 					return;
