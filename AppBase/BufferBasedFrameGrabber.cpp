@@ -332,15 +332,20 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 
     bool status = true;
 
+#if 0 // New way, non-blocking... out for now... leave out...
 	// release the previously processed buffer it it is real;
     if (m_current_process_queue_item.m_ptr!=0)
     	status = TryReleaseProcessBuffer(m_current_process_queue_item);//DMO changed to "Try" so we don't block on a full buffer.
 
     if (!status)
     {
-		//usleep(1000);
+	//	usleep(1000);
     	return NULL;
     }
+#else
+    if (m_current_process_queue_item.m_ptr!=0)
+    	ReleaseProcessBuffer(m_current_process_queue_item);
+#endif
 
     status = false; // reset
 
@@ -357,7 +362,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 		if (status)
 			break; //something to process
 
-	//	usleep(1000);
+		usleep(1000); // Leave this sleep so we don't use all CPU
 		}
 	m_ill0 = m_current_process_queue_item.m_ill0;
 	m_frameIndex = m_current_process_queue_item.m_frameIndex;
@@ -417,7 +422,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 }
 
 #else
-// Anita changed it for choppy lines in frames
+// Anita changed code for choppy lines in frames - removed ProcessBuffer Empty check
 char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 	//if (m_Debug)
 		//EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::getLatestFrame_raw() Start");
@@ -426,9 +431,14 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 	if (m_numbits != 8)
 		length = length * 2;
 
+#if 0 // New way, non-blocking... out for now... leave out...
 	// release the previously processed buffer it it is real;
     if (m_current_process_queue_item.m_ptr!=0)
-    	 TryReleaseProcessBuffer(m_current_process_queue_item);//DMO changed to "Try" so we don't block on a full buffer.
+    	status = TryReleaseProcessBuffer(m_current_process_queue_item);//DMO changed to "Try" so we don't block on a full buffer.
+#else
+    if (m_current_process_queue_item.m_ptr!=0)
+    	ReleaseProcessBuffer(m_current_process_queue_item);
+#endif
 
     bool status = false; // reset
 
@@ -437,7 +447,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 		status = m_ProcessBuffer->TryPop(m_current_process_queue_item);
 		if (status)
 			break;
-		// usleep(1000);
+		usleep(1000); // Leave this sleep so we don't use all CPU
 	}
 
 	m_ill0 = m_current_process_queue_item.m_ill0;
