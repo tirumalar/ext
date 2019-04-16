@@ -341,7 +341,7 @@ private:
     bool ValidateEyeCropUsingFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
     void SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceIndex, unsigned int eyeLabel);
     cv::Point2i projectPoints_IristoFace(cv::Point2i ptrI, cv::Point2f constant, float ConstDiv);
-    FaceImageQueue GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char IrisFrameNo, unsigned int m_faceIndex);
+    bool GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char IrisFrameNo, FaceImageQueue &FaceInfo);
     unsigned int validateLeftRightEyecrops(cv::Rect FaceCoord, cv::Point2i ptrI, int CameraId, unsigned char *faceImagePtr, int m_faceIndex);
 	bool validateEyecrops_IrisToFaceMapping(cv::Rect projFace, cv::Point2i ptrI, int CameraId);
 	bool ValidateEyeCropUsingIrisToFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);

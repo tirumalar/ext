@@ -1256,7 +1256,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 	unsigned char FaceCameraFrameNo = (int)outImg.at<uchar>(0,3);
 
-	// printf("FaceTracking: FrameNo = %d\n", FaceCameraFrameNo);
+//	printf("FaceTracking: FrameNo = %d\n", FaceCameraFrameNo);
 
 	unsigned int FaceFrameIndex=0;
 	static unsigned int FaceCtrIndex=0;
@@ -1269,6 +1269,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	if(FaceCameraFrameNo == 255){
 		FaceCtrIndex++;
 	}
+
 
 	// printf("FaceCameraFrameNo%d\n", FaceCameraFrameNo);
 
@@ -1529,8 +1530,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	}
 
 	// printf("PushToQueue foundEyes %d FaceFrameNo %d face x = %d  face y = %d face width = %d  face height = %d \n", foundEyes, FaceCameraQFrameNo, face.x,  face.y,  face.width, face.height);
-	 if(system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){ // Removed for odriod by Anita
-
+	 if (true) {//system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){ // Removed for odriod by Anita
 //		if(m_ProjPtr && eyesInViewOfIriscamNoMove){ // Removed by sarvesh
 			m_LeftCameraFaceInfo.ScaledFaceCoord = FaceCoord;
 			m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
@@ -1540,19 +1540,26 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 			m_RightCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
 			m_RightCameraFaceInfo.projPtr = m_ProjPtr;
 
+
+
 			if(bIrisToFaceMapDebug){
 				RotatedfaceImg = rotation90(outImg);
 				memcpy(m_LeftCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
 				memcpy(m_RightCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
 			}
 
-			//printf("DoRunMode_test FaceInfo.FaceFrameNo  %d\n", FaceCameraFrameNo);
-
-		//	printf("Pushing FaceFrameInfo\n");
-			g_pLeftCameraFaceQueue->TryPush(m_LeftCameraFaceInfo);
-		//	printf("Pushed 1 \n");
-			g_pRightCameraFaceQueue->TryPush(m_RightCameraFaceInfo);
-		// 	printf("Pushed 2 \n");
+   		//    printf("FaceTracking:  Pushing FaceFrame = %d\n", FaceCameraFrameNo);
+			// If we're full, the top is stale anyway, get rid of it, then add the current item
+			// Increase the size of the queues if we are dropping too many unprocessed FaceFrames here...
+   		    if (g_pLeftCameraFaceQueue->Full())
+   		    	g_pLeftCameraFaceQueue->Pop();
+			g_pLeftCameraFaceQueue->Push(m_LeftCameraFaceInfo);
+   		//    printf("FaceTracking:  Pushed LeftQueue, Size() = %d\n", g_pLeftCameraFaceQueue->Size());
+			// If we're full, the top is stale anyway, get rid of it, then add the current item
+   		    if (g_pRightCameraFaceQueue->Full())
+   		    	g_pRightCameraFaceQueue->Pop();
+			g_pRightCameraFaceQueue->Push(m_RightCameraFaceInfo);
+   	//	    printf("FaceTracking:  Pushed Pushed RightQueue, Size() = %d\n", g_pRightCameraFaceQueue->Size());
 
 			if(bFaceMapDebug){
 				char filename[100];
@@ -1586,6 +1593,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 								agc_set_gain,
 								g_MatchState
 								);
+
 
 
 		if(bShowFaceTracking){
