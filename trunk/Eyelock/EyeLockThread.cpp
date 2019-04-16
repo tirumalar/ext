@@ -440,7 +440,20 @@ EyeLockThread::EyeLockThread(Configuration& conf) :
     	m_tsDestAddrpresent = false;
     }else
     	m_tsDestAddrpresent = true;
-
+#if 0
+	// If we want external screen images and we are in acquisition mode...
+	// Create out window and set the initial image
+	// if (m_DHSScreens && (m_EyelockIrisMode == 2))
+	{
+		cv::Mat Screen = cv::imread("/home/root/screens/Slide1.BMP", cv::IMREAD_COLOR);
+		cvNamedWindow("EXT", CV_WINDOW_NORMAL);
+		cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+		imshow("EXT", Screen);
+		cvWaitKey(1); // cvWaitKey(100);
+	}
+ //   cvNamedWindow("EXT", CV_WINDOW_FULLSCREEN);
+  //  cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+#endif
 }
 
 int EyeLockThread::FormatProcessModeMessage(EyelockProcessMode mode, const char *address)

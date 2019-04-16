@@ -418,6 +418,25 @@ m_LedConsolidator = NULL;
 		rectW = CalRectConfig.getValue("FTracker.targetRectWidth",960);
 		rectH = CalRectConfig.getValue("FTracker.targetRectHeight",121);
 		//ERROR_CHECK_EYES = m_FaceConfig.getValue("FTracker.ERROR_CHECK_EYES",float(0.06));
+		magOffMainl = CalRectConfig.getValue("FTracker.magOffsetMainLeftCam",float(0.15));
+		magOffMainR = CalRectConfig.getValue("FTracker.magOffsetMainRightCam",float(0.15));
+		magOffAuxl = CalRectConfig.getValue("FTracker.magOffsetAuxLeftCam",float(0.22));
+		magOffAuxR = CalRectConfig.getValue("FTracker.magOffsetAuxRightCam",float(0.22));
+
+		magOffMainlDiv = 1.0/magOffMainl;
+		magOffMainRDiv = 1.0/magOffMainR;
+		magOffAuxlDiv = 1.0/magOffAuxl;
+		magOffAuxRDiv = 1.0/magOffAuxR;
+
+		constantMainl.x = CalRectConfig.getValue("FTracker.constantMainLeftCam_x",float(0.15));
+		constantMainl.y = CalRectConfig.getValue("FTracker.constantMainLeftCam_y",float(0.15));
+		constantMainR.x = CalRectConfig.getValue("FTracker.constantMainRightCam_x",float(0.15));
+		constantMainR.y = CalRectConfig.getValue("FTracker.constantMainRightCam_y",float(0.15));
+		constantAuxl.x = CalRectConfig.getValue("FTracker.constantAuxLeftCam_x",float(0.22));
+		constantAuxl.y = CalRectConfig.getValue("FTracker.constantAuxLeftCam_y",float(0.22));
+		constantAuxR.x = CalRectConfig.getValue("FTracker.constantAuxRightCam_x",float(0.22));
+		constantAuxR.y = CalRectConfig.getValue("FTracker.constantAuxRightCam_y",float(0.22));
+
 	}else{
 		// To support old devices which don't have cal rect file stored on OIM
 		rectX = m_FaceConfig.getValue("FTracker.targetRectX",0);
@@ -425,25 +444,25 @@ m_LedConsolidator = NULL;
 		rectW = m_FaceConfig.getValue("FTracker.targetRectWidth",960);
 		rectH = m_FaceConfig.getValue("FTracker.targetRectHeight",121);
 		//ERROR_CHECK_EYES = m_FaceConfig.getValue("FTracker.ERROR_CHECK_EYES",float(0.06));
+		magOffMainl = m_FaceConfig.getValue("FTracker.magOffsetMainLeftCam",float(0.15));
+		magOffMainR = m_FaceConfig.getValue("FTracker.magOffsetMainRightCam",float(0.15));
+		magOffAuxl = m_FaceConfig.getValue("FTracker.magOffsetAuxLeftCam",float(0.22));
+		magOffAuxR = m_FaceConfig.getValue("FTracker.magOffsetAuxRightCam",float(0.22));
+
+		magOffMainlDiv = 1.0/magOffMainl;
+		magOffMainRDiv = 1.0/magOffMainR;
+		magOffAuxlDiv = 1.0/magOffAuxl;
+		magOffAuxRDiv = 1.0/magOffAuxR;
+
+		constantMainl.x = m_FaceConfig.getValue("FTracker.constantMainLeftCam_x",float(0.15));
+		constantMainl.y = m_FaceConfig.getValue("FTracker.constantMainLeftCam_y",float(0.15));
+		constantMainR.x = m_FaceConfig.getValue("FTracker.constantMainRightCam_x",float(0.15));
+		constantMainR.y = m_FaceConfig.getValue("FTracker.constantMainRightCam_y",float(0.15));
+		constantAuxl.x = m_FaceConfig.getValue("FTracker.constantAuxLeftCam_x",float(0.22));
+		constantAuxl.y = m_FaceConfig.getValue("FTracker.constantAuxLeftCam_y",float(0.22));
+		constantAuxR.x = m_FaceConfig.getValue("FTracker.constantAuxRightCam_x",float(0.22));
+		constantAuxR.y = m_FaceConfig.getValue("FTracker.constantAuxRightCam_y",float(0.22));
 	}
-	magOffMainl = m_FaceConfig.getValue("FTracker.magOffsetMainLeftCam",float(0.15));
-	magOffMainR = m_FaceConfig.getValue("FTracker.magOffsetMainRightCam",float(0.15));
-	magOffAuxl = m_FaceConfig.getValue("FTracker.magOffsetAuxLeftCam",float(0.22));
-	magOffAuxR = m_FaceConfig.getValue("FTracker.magOffsetAuxRightCam",float(0.22));
-
-	magOffMainlDiv = 1.0/magOffMainl;
-	magOffMainRDiv = 1.0/magOffMainR;
-	magOffAuxlDiv = 1.0/magOffAuxl;
-	magOffAuxRDiv = 1.0/magOffAuxR;
-
-	constantMainl.x = m_FaceConfig.getValue("FTracker.constantMainLeftCam_x",float(0.15));
-	constantMainl.y = m_FaceConfig.getValue("FTracker.constantMainLeftCam_y",float(0.15));
-	constantMainR.x = m_FaceConfig.getValue("FTracker.constantMainRightCam_x",float(0.15));
-	constantMainR.y = m_FaceConfig.getValue("FTracker.constantMainRightCam_y",float(0.15));
-	constantAuxl.x = m_FaceConfig.getValue("FTracker.constantAuxLeftCam_x",float(0.22));
-	constantAuxl.y = m_FaceConfig.getValue("FTracker.constantAuxLeftCam_y",float(0.22));
-	constantAuxR.x = m_FaceConfig.getValue("FTracker.constantAuxRightCam_x",float(0.22));
-	constantAuxR.y = m_FaceConfig.getValue("FTracker.constantAuxRightCam_y",float(0.22));
 
 	useOffest_m = m_FaceConfig.getValue("FTracker.projectionOffsetMain",false);
 	useOffest_a = m_FaceConfig.getValue("FTracker.projectionOffsetAux",true);
@@ -488,6 +507,10 @@ m_LedConsolidator = NULL;
 	if (m_bIrisCapture)
 	{
 		m_DHSScreens = pConf->getValue("Eyelock.DHSScreens", false);
+
+		m_LEDBrightness = pConf->getValue("GRI.LEDBrightness", 80);
+		if(m_LEDBrightness == 0)
+			m_LEDBrightness = 1;
 
 		m_pHttpPostSender = new HttpPostSender(*pConf);
 		m_pHttpPostSender->init();
@@ -568,7 +591,7 @@ m_LedConsolidator = NULL;
 	{
 		Screen = cv::imread("/home/root/screens/Slide1.BMP", cv::IMREAD_COLOR);
 		cvNamedWindow("EXT", CV_WINDOW_NORMAL);
-		cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+		// cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
 		imshow("EXT", Screen);
 		cvWaitKey(1); // cvWaitKey(100);
 	}
@@ -1204,7 +1227,7 @@ unsigned int ImageProcessor::validateLeftRightEyecrops(cv::Rect FaceCoord, cv::P
 
 	cv::Rect ValidEyeRect;
 	ValidEyeRect.x = FaceCoord.x;
-	ValidEyeRect.y = FaceCoord.y;
+	ValidEyeRect.y = FaceCoord.y + (float) FaceCoord.height*0.1;
 	ValidEyeRect.height = FaceCoord.height/2.0;
 	ValidEyeRect.width = FaceCoord.width;
 
@@ -3045,17 +3068,17 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			cvWaitKey(1);
 			buf[0] = CMX_LED_CMD;
 			buf[1] = 3;
-			buf[2] = 0;
-			buf[3] = 0;
-			buf[4] = 0;
+			buf[2] = m_LEDBrightness * 8/10;
+			buf[3] = m_LEDBrightness;
+			buf[4] = m_LEDBrightness;
 			if (m_pCMXHandler) {
 				m_pCMXHandler->HandleSendMsg((char *) buf, m_pCMXHandler->m_Randomseed);
 			}
-
+			/*
 			IplImage *frame1;
 			do{
 				frame1 = GetFrame();
-			}while(frame1 != NULL);
+			}while(frame1 != NULL); */
 
 		}else
 		{
