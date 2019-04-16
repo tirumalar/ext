@@ -142,10 +142,12 @@ bool BiOmega::GetPupilAngleSearchRange(float& min, float& max)
 bool BiOmega::GetIrisCode(unsigned char *imageBuffer, int w, int h, int stride, char *irisCode,IrisPupilCircles *pCircles, float *robustFetaureVariance )
 {
 
+	int tt = clock();
 	// printf("entering BiOmega::GetIrisCode\n");
 	bool rc=m_pEyeSegmentInterface->GetIrisCode(imageBuffer, w, h, stride, (unsigned char *) irisCode, (unsigned char *) irisCode+m_pEyeSegmentInterface->GetFeatureLength(),pCircles);
 
-	bool status;
+	printf("Current time = %2.4f, ProcessingTme = %2.4f\n", (float) clock() / CLOCKS_PER_SEC, (float) (clock() - tt) / CLOCKS_PER_SEC);
+
 
 	// If Bad Segementation fix
 	if(rc){

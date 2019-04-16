@@ -349,6 +349,7 @@ private:
 	bool m_IrisToFaceMapping;
 	bool bIrisToFaceMapDebug;
 	bool m_DHSScreens;
+	int m_LEDBrightness;
 	cv::Mat Screen;
 	unsigned int m_FaceFrameQueueSize;
     SocketFactory *m_socketFactory;

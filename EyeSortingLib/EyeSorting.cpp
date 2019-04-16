@@ -1205,7 +1205,10 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 	int length = GetEyeSegmentationInterface()->GetFeatureLength();
 	unsigned char *pCode = new unsigned char[length * 2];
 	IrisPupilCircles irisPupilCircles;
+
+	int tt = clock();
 	bool valid = GetEyeSegmentationInterface()->GetIrisCode(image, 640,	480, 640, pCode, pCode + length, &irisPupilCircles); /* circles optional, last */
+	printf("Eyesorting Current time = %2.4f, ProcessingTme = %2.4f\n", (float) clock() / CLOCKS_PER_SEC, (float) (clock() - tt) / CLOCKS_PER_SEC);
 	if (m_eyeSortingLogEnable)
 		SaveOurImage(image, imageId, false, &irisPupilCircles);
 
@@ -1473,7 +1476,11 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 			int length1 = GetEyeSegmentationInterface()->GetFeatureLength();
 			unsigned char *pCode1 = new unsigned char[length * 2];
 			IrisPupilCircles irisPupilCircles1;
+
+			int tt = clock();
+
 			bool valid1 = temp_pEyeSegmentationInterface->GetIrisCode(image, 640,	480, 640, pCode1, pCode1 + length1, &irisPupilCircles1); /* circles optional, last */
+			printf("else of EyeSorting Current time = %2.4f, ProcessingTme = %2.4f\n", (float) clock() / CLOCKS_PER_SEC, (float) (clock() - tt) / CLOCKS_PER_SEC);
 			
 			int corruptBitCountMask1 = temp_pEyeSegmentationInterface->checkBitCorruption(pCode1+length1);						
 			/* If segmentation worked, then create a record and add it to our list */

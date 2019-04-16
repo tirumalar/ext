@@ -187,6 +187,7 @@ FaceTracker::FaceTracker(char* filename)
 	m_DimmingfaceExposureTime = FaceConfig.getValue("FTracker.DimmingfaceExposureTime",7);
 	m_DimmingfaceDigitalGain = FaceConfig.getValue("FTracker.DimmingfaceDigitalGain",32);
 	
+#if 0
 	m_AuxIrisCamExposureTime = FaceConfig.getValue("FTracker.AuxIrisCamExposureTime",8);
 	m_AuxIrisCamDigitalGain = FaceConfig.getValue("FTracker.AuxIrisCamDigitalGain",80);
 	m_AuxIrisCamDataPedestal = FaceConfig.getValue("FTracker.AuxIrisCamDataPedestal",0);
@@ -194,6 +195,29 @@ FaceTracker::FaceTracker(char* filename)
 	m_MainIrisCamExposureTime = FaceConfig.getValue("FTracker.MainIrisCamExposureTime",8);
 	m_MainIrisCamDigitalGain = FaceConfig.getValue("FTracker.MainIrisCamDigitalGain",128);
 	m_MainIrisCamDataPedestal = FaceConfig.getValue("FTracker.MainIrisCamDataPedestal",0);
+
+#else
+	m_AuxIrisCamDataPedestal = FaceConfig.getValue("FTracker.AuxIrisCamDataPedestal",0);
+	m_MainIrisCamDataPedestal = FaceConfig.getValue("FTracker.MainIrisCamDataPedestal",0);
+
+	// Left Aux Camera
+	m_LeftAuxIrisCamExposureTime = FaceConfig.getValue("FTracker.LeftAuxIrisCamExposureTime",8);
+	m_LeftAuxIrisCamDigitalGain = FaceConfig.getValue("FTracker.LeftAuxIrisCamDigitalGain",80);
+
+	// Right Aux Camera
+	m_RightAuxIrisCamExposureTime = FaceConfig.getValue("FTracker.RightAuxIrisCamExposureTime",8);
+	m_RightAuxIrisCamDigitalGain = FaceConfig.getValue("FTracker.RightAuxIrisCamDigitalGain",80);
+
+	// Left Main Camera
+	m_LeftMainIrisCamExposureTime = FaceConfig.getValue("FTracker.LeftMainIrisCamExposureTime",8);
+	m_LeftMainIrisCamDigitalGain = FaceConfig.getValue("FTracker.LeftMainIrisCamDigitalGain",128);
+
+	// Right Main Camera
+	m_RightMainIrisCamExposureTime = FaceConfig.getValue("FTracker.RightMainIrisCamExposureTime",8);
+	m_RightMainIrisCamDigitalGain = FaceConfig.getValue("FTracker.RightMainIrisCamDigitalGain",128);
+#endif
+
+	b_EnableFaceAGC = FaceConfig.getValue("FTracker.EnableFaceAGC", true);
 
 	m_irisAnalogGain = FaceConfig.getValue("FTracker.irisAnalogGain",144);
 	m_faceAnalogGain = FaceConfig.getValue("FTracker.faceAnalogGain",128);
@@ -226,24 +250,6 @@ FaceTracker::FaceTracker(char* filename)
 	MIN_FACE_SIZE = FaceConfig.getValue("FTracker.MIN_FACE_SIZE",10);
 	MAX_FACE_SIZE = FaceConfig.getValue("FTracker.MAX_FACE_SIZE",70);
 
-	// Calibration
-	calibVolt = FaceConfig.getValue("FTracker.calibVolt",30);
-	calibCurrent = FaceConfig.getValue("FTracker.calibCurrent",30);
-	calibTrigger = FaceConfig.getValue("FTracker.calibTrigger",1);
-	calibLEDEnable = FaceConfig.getValue("FTracker.calibLEDEnable",1);
-	calibLEDMaxTime = FaceConfig.getValue("FTracker.calibLEDMaxTime",4);
-
-	calibFaceCamExposureTime = FaceConfig.getValue("FTracker.calibFaceCamExposureTime",2);
-	calibFaceCamDigitalGain = FaceConfig.getValue("FTracker.calibFaceCamDigitalGain",48);
-	calibFaceCamDataPedestal = FaceConfig.getValue("FTracker.calibFaceCamDataPedestal",0);
-
-	calibAuxIrisCamExposureTime = FaceConfig.getValue("FTracker.calibAuxIrisCamExposureTime",3);
-	calibAuxIrisCamDigitalGain = FaceConfig.getValue("FTracker.calibAuxIrisCamDigitalGain",64);
-	calibAuxIrisCamDataPedestal = FaceConfig.getValue("FTracker.calibAuxIrisCamDataPedestal",0);
-
-	calibMainIrisCamExposureTime = FaceConfig.getValue("FTracker.calibMainIrisCamExposureTime",3);
-	calibMainIrisCamDigitalGain = FaceConfig.getValue("FTracker.calibMainIrisCamDigitalGain",64);
-	calibMainIrisCamDataPedestal = FaceConfig.getValue("FTracker.calibMainIrisCamDataPedestal",0);
 
 	bShowFaceTracking = FaceConfig.getValue("FTracker.ShowFaceTracking", false);
 
@@ -312,6 +318,21 @@ void FaceTracker::SetExp(int cam, int val)
 	EyelockLog(logger, TRACE, "Setting Gain %d\n",coarse);
 	//port_com_send(buff);
 }
+
+void FaceTracker::SetFaceGain(int cam, int val)
+{
+	EyelockLog(logger, TRACE, "SetFaceGain");
+	char buff[100];
+	int coarse = val/PIXEL_TOTAL;
+	// int fine = val - coarse*PIXEL_TOTAL;
+	//sprintf(buff,"wcr(%d,0x3012,%d) | wcr(%d,0x3014,%d)",cam,coarse,cam,fine);
+	// sprintf(buff,"wcr(%d,0x3012,%d)",cam,coarse);
+	sprintf(buff,"wcr(%d,0x305e,%d)",cam,coarse);
+	printf("%s\n", buff);
+	EyelockLog(logger, TRACE, "Setting Gain %d\n",coarse);
+	port_com_send(buff);
+}
+
 
 void FaceTracker::MoveToAngle(float a)
 {
@@ -906,6 +927,7 @@ void FaceTracker::DoStartCmd()
 	//port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xFE)");
 	//port_com_send("wcr(0x04,0x3012,12) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xF0)");	//Demo Config
 
+#if 0
 	//AUX cameras configuration
 	EyelockLog(logger, DEBUG, "Configuring AUX Iris Cameras");
 	sprintf(cmd, "wcr(0x03,0x3012,%i) | wcr(0x03,0x301e,%i) | wcr(0x03,0x305e,%i)\n", m_AuxIrisCamExposureTime, m_AuxIrisCamDataPedestal, m_AuxIrisCamDigitalGain);
@@ -922,7 +944,32 @@ void FaceTracker::DoStartCmd()
 	port_com_send(cmd);
 	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0xB0)");
 	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,128)");	//Demo Config
+#else
 
+	// Aux Left Camera Exposure and Gain
+	EyelockLog(logger, DEBUG, "Configuring AUX Left Iris Cameras");
+	sprintf(cmd, "wcr(0x01,0x3012,%i) | wcr(0x01,0x301e,%i) | wcr(0x01,0x305e,%i)\n",m_LeftAuxIrisCamExposureTime, m_AuxIrisCamDataPedestal, m_LeftAuxIrisCamDigitalGain);
+	EyelockLog(logger, DEBUG, "AuxIrisCamExposureTime:%d AuxIrisCamDataPedestal:%d AuxIrisCamDigitalGain:%d", m_LeftAuxIrisCamExposureTime, m_AuxIrisCamDataPedestal, m_LeftAuxIrisCamDigitalGain);
+	port_com_send(cmd);
+
+	// Aux Right Camera Exposure and Gain
+	EyelockLog(logger, DEBUG, "Configuring AUX Right Iris Cameras");
+	sprintf(cmd, "wcr(0x02,0x3012,%i) | wcr(0x02,0x301e,%i) | wcr(0x02,0x305e,%i)\n",m_RightAuxIrisCamExposureTime, m_AuxIrisCamDataPedestal, m_RightAuxIrisCamDigitalGain);
+	EyelockLog(logger, DEBUG, "AuxIrisCamExposureTime:%d AuxIrisCamDataPedestal:%d AuxIrisCamDigitalGain:%d", m_RightAuxIrisCamExposureTime, m_AuxIrisCamDataPedestal, m_RightAuxIrisCamDigitalGain);
+	port_com_send(cmd);
+
+	//Main Left Camera Exposure and Gain
+	EyelockLog(logger, DEBUG, "Configuring Main Left Iris Cameras");
+	sprintf(cmd, "wcr(0x08,0x3012,%i) | wcr(0x08,0x301e,%i) | wcr(0x08,0x305e,%i)\n",m_LeftMainIrisCamExposureTime, m_MainIrisCamDataPedestal, m_LeftMainIrisCamDigitalGain);
+	EyelockLog(logger, DEBUG, "MainIrisCamExposureTime:%d MainIrisCamDataPedestal:%d MainIrisCamDigitalGain:%d", m_LeftMainIrisCamExposureTime, m_MainIrisCamDataPedestal, m_LeftMainIrisCamDigitalGain);
+	port_com_send(cmd);
+
+	//Main Right Iris Cameras Configuration
+	EyelockLog(logger, DEBUG, "Configuring Main Right Iris Cameras");
+	sprintf(cmd, "wcr(0x10,0x3012,%i) | wcr(0x10,0x301e,%i) | wcr(0x10,0x305e,%i)\n",m_RightMainIrisCamExposureTime, m_MainIrisCamDataPedestal, m_RightMainIrisCamDigitalGain);
+	EyelockLog(logger, DEBUG, "MainIrisCamExposureTime:%d MainIrisCamDataPedestal:%d MainIrisCamDigitalGain:%d", m_RightMainIrisCamExposureTime, m_MainIrisCamDataPedestal, m_RightMainIrisCamDigitalGain);
+	port_com_send(cmd);
+#endif
 
 	EyelockLog(logger, DEBUG, "Setting up PLL");
 
@@ -1220,25 +1267,30 @@ char* FaceTracker::StateText(int state)
 
 void FaceTracker::DoAgc(void)
 {
+	static int AgcCntr = 0;
 	p = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),180);
 
-	if (p < FACE_GAIN_PER_GOAL - FACE_GAIN_HIST_GOAL)
-		agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
-	if (p > FACE_GAIN_PER_GOAL + FACE_GAIN_HIST_GOAL)
-		agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
+	if(AgcCntr > 10){
+		agc_val = FACE_GAIN_MIN;
+		AgcCntr = 0;
+	}
+	//if (p < FACE_GAIN_PER_GOAL - FACE_GAIN_HIST_GOAL)
+	agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
+	//if (p > FACE_GAIN_PER_GOAL + FACE_GAIN_HIST_GOAL)
+	//	agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
 	agc_val = MAX(FACE_GAIN_MIN,agc_val);
 	agc_val = MIN(agc_val,FACE_GAIN_MAX);
 
 	AGC_Counter++;
-	if (agc_set_gain != agc_val)
-		;	// && AGC_Counter%2==0)
+	AgcCntr++;
+	if (agc_set_gain != agc_val) 	;	// && AGC_Counter%2==0)
 	{
 		//	while (waitKey(10) != 'z');
 		{
 			static int agc_val_old = 0;
 			if (abs(agc_val - agc_val_old) > 300) {
-				// printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
-				SetExp(4, agc_val);		//comment out if O2 led is connected
+				//  printf("Inside condition >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
+				SetFaceGain(4, agc_val);		//comment out if O2 led is connected
 				agc_val_old = agc_val;
 			}
 		}
@@ -1315,7 +1367,8 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							//if (eyesInViewOfIriscamNoMove)			//Relax the the previous condition but still slowing down the performance
 							if (eyesInDetect)	//No strict condition but there will be no face images in pipeline
 									system_state = SelectWhichIrisCam(eye_size,system_state);
-							DoAgc();
+							if(b_EnableFaceAGC)
+								DoAgc();
 							//if (eyesInViewOfIriscam)
 							break;
 
@@ -1356,7 +1409,8 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							system_state = STATE_LOOK_FOR_FACE;
 							break;
 							}
-						DoAgc();
+						if(b_EnableFaceAGC)
+							DoAgc();
 						moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
 	}
 
@@ -1402,6 +1456,8 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						m_ProjPtr = true;		//Added by Mo
 						break;
 					}
+					if(b_EnableFaceAGC)
+						DoAgc();
 					break;
 	case STATE_AUX_IRIS:
 					switch (system_state)

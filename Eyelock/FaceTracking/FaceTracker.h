@@ -189,14 +189,32 @@ private:
 	int m_DimmingfaceExposureTime;
 	int m_DimmingfaceDigitalGain;
 
+#if 0
 	int m_AuxIrisCamExposureTime;
 	int m_AuxIrisCamDigitalGain; 
 	int m_AuxIrisCamDataPedestal;
 	
 	int m_MainIrisCamExposureTime;
-	int m_MainIrisCamDigitalGain; 
+	int m_MainIrisCamDigitalGain;
+	int m_MainIrisCamDataPedestal;
+#else
+	// Anita to set Left/Right camera exposure and gain separately
+	int m_AuxIrisCamDataPedestal;
 	int m_MainIrisCamDataPedestal;
 	
+	int m_LeftAuxIrisCamExposureTime;
+	int m_LeftAuxIrisCamDigitalGain;
+
+	int m_RightAuxIrisCamExposureTime;
+	int m_RightAuxIrisCamDigitalGain;
+
+	int m_LeftMainIrisCamExposureTime;
+	int m_LeftMainIrisCamDigitalGain;
+
+	int m_RightMainIrisCamExposureTime;
+	int m_RightMainIrisCamDigitalGain;
+#endif
+
 	int m_irisAnalogGain;
 	int m_capacitorChargeCurrent;
 	
@@ -208,25 +226,6 @@ private:
 	float motorBottom;
 	float motorTop;
 	float motorCenter;
-
-	// Calibration
-	int calibVolt;
-	int calibCurrent;
-	int calibTrigger;
-	int calibLEDEnable;
-	int calibLEDMaxTime;
-
-	int calibFaceCamExposureTime;
-	int calibFaceCamDigitalGain;
-	int calibFaceCamDataPedestal;
-
-	int calibAuxIrisCamExposureTime;
-	int calibAuxIrisCamDigitalGain;
-	int calibAuxIrisCamDataPedestal;
-
-	int calibMainIrisCamExposureTime;
-	int calibMainIrisCamDigitalGain;
-	int calibMainIrisCamDataPedestal;
 
 	int m_Motor_Bottom_Offset;
 	int m_Motor_Range;
@@ -243,6 +242,8 @@ private:
 	bool bActiveCenterPos;
 
 	bool bIrisToFaceMapDebug;
+
+	bool b_EnableFaceAGC;
 
 	void SetExp(int cam, int val);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
@@ -272,6 +273,7 @@ private:
 	
 	void DoAgc(void);
 	float AGC(int width, int height,unsigned char *dsty, int limit);
+	void SetFaceGain(int cam, int val);
 
 	// Mat rotate(Mat src, double angle);
 	Mat rotation90(Mat src);
