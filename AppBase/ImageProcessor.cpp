@@ -587,6 +587,7 @@ m_LedConsolidator = NULL;
 
 	// If we want external screen images and we are in acquisition mode...
 	// Create out window and set the initial image
+#if 0
 	if (m_DHSScreens && (m_EyelockIrisMode == 2))
 	{
 		Screen = cv::imread("/home/root/screens/Slide1.BMP", cv::IMREAD_COLOR);
@@ -595,6 +596,18 @@ m_LedConsolidator = NULL;
 		imshow("EXT", Screen);
 		cvWaitKey(1); // cvWaitKey(100);
 	}
+#else
+	if (m_DHSScreens && (m_EyelockIrisMode == 2))
+	{
+		IplImageScreen1 = cvLoadImage("/home/root/screens/Slide1.BMP", cv::IMREAD_COLOR);
+		IplImageScreen2 = cvLoadImage("/home/root/screens/Slide2.BMP", cv::IMREAD_COLOR);
+		IplImageScreen3 = cvLoadImage("/home/root/screens/Slide3.BMP", cv::IMREAD_COLOR);
+		cvNamedWindow("EXT", CV_WINDOW_NORMAL);
+		cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+		cvShowImage("EXT", IplImageScreen1);
+		cvWaitKey(5); // cvWaitKey(100);
+	}
+#endif
 }
 
 /*
@@ -781,6 +794,16 @@ ImageProcessor::~ImageProcessor() {
 			cvReleaseImageHeader(&imgHeader1);
 		if(imgHeader2)
 			cvReleaseImageHeader(&imgHeader2);
+	}
+	if (m_DHSScreens && (m_EyelockIrisMode == 2)){
+		if(IplImageScreen1)
+			cvReleaseImageHeader(&IplImageScreen1);
+
+		if(IplImageScreen2)
+			cvReleaseImageHeader(&IplImageScreen2);
+
+		if(IplImageScreen3)
+			cvReleaseImageHeader(&IplImageScreen3);
 	}
 #endif
 #endif
@@ -2742,12 +2765,21 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 								if (shouldIBeginSorting == false) // Begining a sorting
 								{
+#if 0
 									if (m_DHSScreens)
 									{
 										Screen = cv::imread("/home/root/screens/Slide2.BMP", cv::IMREAD_COLOR);
 										imshow("EXT", Screen);
 										cvWaitKey(1);
 									}
+#else
+									if (m_DHSScreens)
+									{
+										cvShowImage("EXT", IplImageScreen2);
+										cvWaitKey(1);
+									}
+
+#endif
 
 									time_newms= ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
 
@@ -3040,9 +3072,12 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				m_pCMXHandler->HandleSendMsg((char *) buf, m_pCMXHandler->m_Randomseed);
 			}
 
+#if 0
 			Screen = cv::imread("/home/root/screens/Slide3.BMP", cv::IMREAD_COLOR);
 			imshow("EXT", Screen);
-
+#else
+			cvShowImage("EXT", IplImageScreen3);
+#endif
 			int nDelay = 0;
 
 			while (nDelay < 3000)
@@ -3063,9 +3098,14 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				};
 
 			}
+#if 0
 			Screen = cv::imread("/home/root/screens/Slide1.BMP", cv::IMREAD_COLOR);
 			imshow("EXT", Screen);
 			cvWaitKey(1);
+#else
+			cvShowImage("EXT", IplImageScreen1);
+			cvWaitKey(1);
+#endif
 			buf[0] = CMX_LED_CMD;
 			buf[1] = 3;
 			buf[2] = m_LEDBrightness * 8/10;

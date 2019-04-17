@@ -328,7 +328,7 @@ void FaceTracker::SetFaceGain(int cam, int val)
 	//sprintf(buff,"wcr(%d,0x3012,%d) | wcr(%d,0x3014,%d)",cam,coarse,cam,fine);
 	// sprintf(buff,"wcr(%d,0x3012,%d)",cam,coarse);
 	sprintf(buff,"wcr(%d,0x305e,%d)",cam,coarse);
-	printf("%s\n", buff);
+	// printf("%s\n", buff);
 	EyelockLog(logger, TRACE, "Setting Gain %d\n",coarse);
 	port_com_send(buff);
 }

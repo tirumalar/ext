@@ -351,6 +351,9 @@ private:
 	bool m_DHSScreens;
 	int m_LEDBrightness;
 	cv::Mat Screen;
+	IplImage *IplImageScreen1;
+	IplImage *IplImageScreen2;
+	IplImage *IplImageScreen3;
 	unsigned int m_FaceFrameQueueSize;
     SocketFactory *m_socketFactory;
 
