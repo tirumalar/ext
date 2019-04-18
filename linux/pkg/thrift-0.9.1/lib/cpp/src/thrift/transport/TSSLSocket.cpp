@@ -79,6 +79,7 @@ SSLContext::SSLContext() {
 SSLContext::SSLContext(bool forceTLS12) {
   if (forceTLS12) {
     ctx_ = SSL_CTX_new(TLSv1_2_method());
+    SSL_CTX_set_cipher_list(ctx_, "TLSv1.2:!IDEA:!3DES:!DES:!RC4:!eNULL");
   } else {
     ctx_ = SSL_CTX_new(SSLv23_method());
     SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv3);

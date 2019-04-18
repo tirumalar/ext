@@ -1666,8 +1666,8 @@ class INIEditor
 					$temp = "";
 					
 					if(!$this->get("Eyelock.Cipher", $temp ))
-						$this->add("Eyelock.Cipher","TLSv1.2");
-					$this->set("Eyelock.Cipher","TLSv1.2");
+						$this->add("Eyelock.Cipher","TLSv1.2:!eNULL");
+					$this->set("Eyelock.Cipher","TLSv1.2:!eNULL");
                 }
                 else
 				{

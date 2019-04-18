@@ -1818,7 +1818,7 @@ namespace EyelockConfigurationNS
 	{
 		if (newValue)
 		{
-			conf.setValue("Eyelock.Cipher", "TLSv1.2");
+			conf.setValue("Eyelock.Cipher", "TLSv1.2:!eNULL");
 		}
 		else
 		{
