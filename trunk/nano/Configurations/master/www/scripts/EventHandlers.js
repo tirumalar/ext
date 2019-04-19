@@ -770,11 +770,10 @@ $(document).ready(function () {
     $('#identifydevicebutton').click(function()
     {
         $('#identifydevicebutton').blur(); // Pop focus off... (doesn't do it on it's own for some reason)
-        sndReq('/scripts/rpc.php', 'identifydevice', "", false); // Don't show this, throw up a message box instead.
+        IdentifyDevice();
         ShowMessageBox(GlobalStrings.IdentifyDeviceTitle, GlobalStrings.IdentifyDeviceMessage, GlobalStrings.IdentifyDeviceMessage2, "MB_ICONLOADING", "CANCEL", CancelIdentifyDevice, null);
     });
  });
-
 
  // FACTORY RESET BUTTON
  $(document).ready(function () {
@@ -837,11 +836,22 @@ function OsdpSecureModeOK() {
         sndReq('/scripts/rpc.php', 'osdpreset', GlobalStrings.OsdpInstallModeDefaults, true);
  }
 
+function IdentifyDevice() {
+    sndReq('/scripts/rpc.php', 'identifydevice', "", false);
+    identifyDeviceTimer = setTimeout(IdentifyDevice, 5000);
+}
+ 
 // When user 'cancels' the Idendtify device requests...
- function CancelIdentifyDevice() {
-	sndReq('/scripts/rpc.php', 'identifydevicestop', "", false);
-     HideWaitingDlg();
- }
+function CancelIdentifyDevice() {
+    sndReq('/scripts/rpc.php', 'identifydevicestop', "", false);
+    HideWaitingDlg();
+    if (identifyDeviceTimer !== undefined) {
+        try {
+            clearTimeout(identifyDeviceTimer);
+        } catch {
+        }
+    }
+}
 
 
 // REBOOT DEVICE BUTTON
