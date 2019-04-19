@@ -1499,9 +1499,11 @@ void* F2FDispatcher::LocateDeviceLoop(void *ptr)
 	LEDResult l;
 	l.setState(LED_NWSET);
 	l.setGeneratedState(eREMOTEGEN);
-	//std::vector<int> colors = {1,5,16};
+
+	// First item (int) is for usage with setNwValandSleep, the second one (uchar) - for BobSetData
+	std::vector<std::pair<int, unsigned char>> colors = {{1, 1}, {5, 4}, {16, 2}/*, {1, 1}*/};
 	unsigned char color;
-	while (1)
+	for (std::vector<std::pair<int, unsigned char>>::iterator itColors = colors.begin(); itColors != colors.end(); itColors++)
 	{
 		pthread_mutex_lock(&(f2fDispatcherPtr->locateDeviceLock));
 		bool stopRequested = f2fDispatcherPtr->stopLocateDevice;
@@ -1513,24 +1515,10 @@ void* F2FDispatcher::LocateDeviceLoop(void *ptr)
 			pthread_exit(NULL);
 		}
 
-		l.setNwValandSleep(1, timeout);
+		l.setNwValandSleep(itColors->first, timeout);
 		f2fDispatcherPtr->m_ledConsolidator->enqueMsg(l);
-		color = 1;
-		BobSetData(&color,1);
-		BobSetCommand(BOB_COMMAND_SET_LED);
-		sleep((timeout-1000)/1000);
-
-		l.setNwValandSleep(5, timeout);
-		f2fDispatcherPtr->m_ledConsolidator->enqueMsg(l);
-		color = 4;
-		BobSetData(&color,1);
-		BobSetCommand(BOB_COMMAND_SET_LED);
-		sleep((timeout-1000)/1000);
-
-		l.setNwValandSleep(16, timeout);
-		f2fDispatcherPtr->m_ledConsolidator->enqueMsg(l);
-		color = 2;
-		BobSetData(&color,1);
+		color = itColors->second;
+		BobSetData(&color, 1);
 		BobSetCommand(BOB_COMMAND_SET_LED);
 		sleep((timeout-1000)/1000);
 	}
