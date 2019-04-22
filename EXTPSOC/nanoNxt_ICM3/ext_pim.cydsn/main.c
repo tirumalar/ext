@@ -80,7 +80,7 @@ void SetVersion()
     
     MyI2C_Regs.sw_version[0] = 6;
     MyI2C_Regs.sw_version[1] = 0;
-    MyI2C_Regs.sw_version[2] = 2;
+    MyI2C_Regs.sw_version[2] = 4;
 }
 
 

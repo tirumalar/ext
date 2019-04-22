@@ -291,7 +291,8 @@ void HandleCommand()
             }
                 MyI2C_Regs.buffer1[12] ++;
                 HandleOSDP();
-            return;
+           // return; Rajesh
+            break;
         case MODE_OSDP + BASE_TOC:
             if(cmd == CMD_SEND_TOC_READER){
                 commandSendTOC(len);
@@ -304,7 +305,8 @@ void HandleCommand()
                 initOSDP();
             }
             HandleOSDP();
-            return;
+           // return; Rajesh
+            break;
         case MODE_F2F:
             if (f2f_send_alive)
             {
@@ -400,13 +402,26 @@ void HandleCommand()
             }
             break;
         case MODE_WIEGAND + PIN_PASS:
-            if(cmd == CMD_READ){
+            if(0)//cmd == CMD_READ)  -- Rajesh
+            {
                 LED_GRN_Write(OFF);
                         //ClearBuffer(); //seems better than without
-                if (ReadWeigand(MyI2C_Regs.bits,0) == 1) {
+                if (ReadWeigand(MyI2C_Regs.bits,0) == 1) 
+                {
                     LED_GRN_Write(ON);
                 }
             }
+            if(cmd == CMD_READ){
+                LED_GRN_Write(OFF);
+                while(ReadWeigand(MyI2C_Regs.bits,0) == 0)
+                {
+                    if(MyI2C_Regs.cmd !=CMD_READ ) 
+                      break;
+                    HandleUSB();
+                };
+                LED_GRN_Write(ON);
+            }
+            
             if(cmd == CMD_NONE){
                 if (ReadWeigand(MyI2C_Regs.bits,1) == 1) {
 //                   LED_GRN_Write(ON);
