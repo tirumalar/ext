@@ -187,6 +187,7 @@ class INIEditor
     public $Eyelock_J2KImageQuality = 100; // For J2K only, 100 is lossless, anything else is lossy
     public $Eyelock_HttpPostSenderDestScheme = "http"; // "http" or "https"
     public $Eyelock_IrisMode = 1; // Default is Iris Matching
+    public $GRI_UseMatcher = "true"; // Default is Iris Matching
     public $Eyelock_IrisCaptureTimeout = 5000; // 5 second default
     public $Eyelock_IrisCaptureResetDelay = 2000; // 2 second default
     public $Eyelock_IrisCaptureBestPairMax = 1; // Default is up to 3 sets of "best pairs"
@@ -1015,11 +1016,21 @@ class INIEditor
             $this->add("GRI.InternetTimeSync", $this->GRI_InternetTimeSync);
         }
 
+
+        if (!$this->get("GRI.UseMatcher", $this->GRI_UseMatcher))
+        {
+            $this->GRI_UseMatcher = "true"; // setup a default
+            $this->add("GRI.UseMatcher", $this->GRI_UseMatcher);
+        }
+
+
         if (!$this->get("Eyelock.IrisMode", $this->Eyelock_IrisMode))
         {
             $this->Eyelock_IrisMode = 1; // setup a default
+            $this->GRI_UseMatcher = "true"; // setup a default
             $this->add("Eyelock.IrisMode", $this->Eyelock_IrisMode);
         }
+
 
         if (!$this->get("Eyelock.HttpPostSenderDestAddress", $this->Eyelock_HttpPostSenderDestAddress))
         {
@@ -1740,9 +1751,15 @@ class INIEditor
             else if ($key === "irismode")
 			{
 				if (($value === "irisauthentication") )
+                {
 					$this->set("Eyelock.IrisMode", "1");
+					$this->set("GRI.UseMatcher", "true");
+                }
                 else
+                {
    					$this->set("Eyelock.IrisMode", "2");
+   					$this->set("GRI.UseMatcher", "false");
+                }
             }
             else if ($key == "Eyelock_DeviceLocation")
             {
