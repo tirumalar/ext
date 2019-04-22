@@ -284,9 +284,9 @@ function handleResponse(theResponse)
             testrunning = update[1].split(',');
 
             bMasterRunning = (testrunning[0] === 'masterrunning');
-            bSlaveRunning = (testrunning[1] === 'slaverunning');
-			bSlaveRunning = bSlaveRunning || (HardwareType != '0');
-            var bTamper = (testrunning[2] === 'tampered');
+            bSlaveRunning = (HardwareType != '0') || (testrunning[1] === 'slaverunning');
+            var tamperedStatus = (HardwareType == '0') ? testrunning[2] : testrunning[1];
+            var bTamper = tamperedStatus === 'tampered';
 
             if (bMasterRunning && bSlaveRunning) {
                 $('#atomic').show();
