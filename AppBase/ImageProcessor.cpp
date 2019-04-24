@@ -2202,10 +2202,10 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 				EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d label %d\n", cam_idd, m_faceIndex, m_eyeLabel);
 			}
 
-			if(m_eyeLabel == 3){
+			/*if(m_eyeLabel == 3){
 				printf("Not inside valid eye rect and hence don't process\n");
-				return false;
-			}
+				// return false;
+			}*/
 
 			m_sframe.GetCroppedEye(eyeIdx, eye->getEyeCrop(), left, top);
 
@@ -2659,10 +2659,11 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 					EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d label %d\n", cam_idd, m_faceIndex, m_eyeLabel);
 				}
 
+				/*
 				if (m_eyeLabel == 3){
 					printf("eyeLabel is 3 hence returning from ImageProcessor\n");
-					return false;
-				}
+					// return false;
+				}*/
 
 				m_sframe.GetCroppedEye(eyeIdx, eye->getEyeCrop(), left, top);
 
@@ -3059,10 +3060,11 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			printf("******************** sleeping for 1 sec**********\n");
 		}
 
+		unsigned char buf[256];
 		// DHS Screen functions
 		if(m_DHSScreens)
 		{
-			unsigned char buf[256];
+
 			buf[0] = CMX_LED_CMD;
 			buf[1] = 3;
 			buf[2] = 0;
@@ -3123,6 +3125,14 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		}else
 		{
 			usleep(m_IrisCaptureResetDelay *1000); // wait for next
+			buf[0] = CMX_LED_CMD;
+			buf[1] = 3;
+			buf[2] = m_LEDBrightness * 8/10;
+			buf[3] = m_LEDBrightness;
+			buf[4] = m_LEDBrightness;
+			if (m_pCMXHandler) {
+				m_pCMXHandler->HandleSendMsg((char *) buf, m_pCMXHandler->m_Randomseed);
+			}
 		}
 		//clearing the eyeSorting variables
 		aquisition->clearFrameBuffer(); // Clear frame buffer
