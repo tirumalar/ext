@@ -158,11 +158,6 @@ FaceTracker::FaceTracker(char* filename)
 
 	switchThreshold = FaceConfig.getValue("FTracker.switchThreshold",37);
 	errSwitchThreshold = FaceConfig.getValue("FTracker.errSwitchThreshold",2);
-
-	MIN_POS = FaceConfig.getValue("FTracker.minPos",0);
-	step = FaceConfig.getValue("FTracker.CalStep",15);
-	startPoint = FaceConfig.getValue("FTracker.startPoint",100);
-	MAX_POS = FaceConfig.getValue("FTracker.maxPos",350);
 	
 	m_IrisLEDVolt = FaceConfig.getValue("FTracker.IrisLEDVolt",30);
 	m_IrisLEDcurrentSet = FaceConfig.getValue("FTracker.IrisLEDcurrentSet",40);
@@ -187,16 +182,6 @@ FaceTracker::FaceTracker(char* filename)
 	m_DimmingfaceExposureTime = FaceConfig.getValue("FTracker.DimmingfaceExposureTime",7);
 	m_DimmingfaceDigitalGain = FaceConfig.getValue("FTracker.DimmingfaceDigitalGain",32);
 	
-#if 0
-	m_AuxIrisCamExposureTime = FaceConfig.getValue("FTracker.AuxIrisCamExposureTime",8);
-	m_AuxIrisCamDigitalGain = FaceConfig.getValue("FTracker.AuxIrisCamDigitalGain",80);
-	m_AuxIrisCamDataPedestal = FaceConfig.getValue("FTracker.AuxIrisCamDataPedestal",0);
-	
-	m_MainIrisCamExposureTime = FaceConfig.getValue("FTracker.MainIrisCamExposureTime",8);
-	m_MainIrisCamDigitalGain = FaceConfig.getValue("FTracker.MainIrisCamDigitalGain",128);
-	m_MainIrisCamDataPedestal = FaceConfig.getValue("FTracker.MainIrisCamDataPedestal",0);
-
-#else
 	m_AuxIrisCamDataPedestal = FaceConfig.getValue("FTracker.AuxIrisCamDataPedestal",0);
 	m_MainIrisCamDataPedestal = FaceConfig.getValue("FTracker.MainIrisCamDataPedestal",0);
 
@@ -215,7 +200,6 @@ FaceTracker::FaceTracker(char* filename)
 	// Right Main Camera
 	m_RightMainIrisCamExposureTime = FaceConfig.getValue("FTracker.RightMainIrisCamExposureTime",8);
 	m_RightMainIrisCamDigitalGain = FaceConfig.getValue("FTracker.RightMainIrisCamDigitalGain",128);
-#endif
 
 	b_EnableFaceAGC = FaceConfig.getValue("FTracker.EnableFaceAGC", true);
 
@@ -257,7 +241,7 @@ FaceTracker::FaceTracker(char* filename)
 
 	bActiveCenterPos = FaceConfig.getValue("FTracker.ActivateCenterPosTest", false);
 
-	startPoint = FaceConfig.getValue("FTracker.startPoint",100);
+
 
 	m_Motor_Bottom_Offset = FaceConfig.getValue("FTracker.MotorBottomOffset",5);
 	m_Motor_Range = FaceConfig.getValue("FTracker.MotorRange",55);
@@ -285,10 +269,11 @@ FaceTracker::FaceTracker(char* filename)
 		rectH = CalRectConfig.getValue("FTracker.targetRectHeight", 121);
 	} else {
 		// To support old devices which don't have cal rect file stored on OIM
-		rectX = FaceConfig.getValue("FTracker.targetRectX", 0);
-		rectY = FaceConfig.getValue("FTracker.targetRectY", 497);
-		rectW = FaceConfig.getValue("FTracker.targetRectWidth", 960);
-		rectH = FaceConfig.getValue("FTracker.targetRectHeight", 121);
+		FileConfiguration CalibDefaultConfig("/home/root/data/calibration/Calibration.ini");
+		rectX = CalibDefaultConfig.getValue("FTracker.targetRectX", 0);
+		rectY = CalibDefaultConfig.getValue("FTracker.targetRectY", 497);
+		rectW = CalibDefaultConfig.getValue("FTracker.targetRectWidth", 960);
+		rectH = CalibDefaultConfig.getValue("FTracker.targetRectHeight", 121);
 	}
 
 
@@ -927,25 +912,6 @@ void FaceTracker::DoStartCmd()
 	//port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xFE)");
 	//port_com_send("wcr(0x04,0x3012,12) | wcr(0x04,0x301e,0) | wcr(0x04,0x305e,0xF0)");	//Demo Config
 
-#if 0
-	//AUX cameras configuration
-	EyelockLog(logger, DEBUG, "Configuring AUX Iris Cameras");
-	sprintf(cmd, "wcr(0x03,0x3012,%i) | wcr(0x03,0x301e,%i) | wcr(0x03,0x305e,%i)\n", m_AuxIrisCamExposureTime, m_AuxIrisCamDataPedestal, m_AuxIrisCamDigitalGain);
-	EyelockLog(logger, DEBUG, "AuxIrisCamExposureTime:%d AuxIrisCamDataPedestal:%d AuxIrisCamDigitalGain:%d", m_AuxIrisCamExposureTime, m_AuxIrisCamDataPedestal, m_AuxIrisCamDigitalGain);
-	port_com_send(cmd);
-	//port_com_send("wcr(0x18,0x3012,8) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,0x80)");
-	//port_com_send("wcr(0x18,0x3012,8) | wcr(0x18,0x301e,0) | wcr(0x18,0x305e,80)"); //DEMO Config
-
-
-	//Main Iris Cameras Configuration
-	EyelockLog(logger, DEBUG, "Configuring Main Iris Cameras");
-	sprintf(cmd, "wcr(0x18,0x3012,%i) | wcr(0x18,0x301e,%i) | wcr(0x18,0x305e,%i)\n", m_MainIrisCamExposureTime, m_MainIrisCamDataPedestal, m_MainIrisCamDigitalGain);
-	EyelockLog(logger, DEBUG, "MainIrisCamExposureTime:%d MainIrisCamDataPedestal:%d MainIrisCamDigitalGain:%d", m_faceCamExposureTime, m_MainIrisCamDataPedestal, m_MainIrisCamDigitalGain);
-	port_com_send(cmd);
-	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,0xB0)");
-	//port_com_send("wcr(0x03,0x3012,8) | wcr(0x03,0x301e,0) | wcr(0x03,0x305e,128)");	//Demo Config
-#else
-
 	// Aux Left Camera Exposure and Gain
 	EyelockLog(logger, DEBUG, "Configuring AUX Left Iris Cameras");
 	sprintf(cmd, "wcr(0x01,0x3012,%i) | wcr(0x01,0x301e,%i) | wcr(0x01,0x305e,%i)\n",m_LeftAuxIrisCamExposureTime, m_AuxIrisCamDataPedestal, m_LeftAuxIrisCamDigitalGain);
@@ -969,7 +935,6 @@ void FaceTracker::DoStartCmd()
 	sprintf(cmd, "wcr(0x10,0x3012,%i) | wcr(0x10,0x301e,%i) | wcr(0x10,0x305e,%i)\n",m_RightMainIrisCamExposureTime, m_MainIrisCamDataPedestal, m_RightMainIrisCamDigitalGain);
 	EyelockLog(logger, DEBUG, "MainIrisCamExposureTime:%d MainIrisCamDataPedestal:%d MainIrisCamDigitalGain:%d", m_RightMainIrisCamExposureTime, m_MainIrisCamDataPedestal, m_RightMainIrisCamDigitalGain);
 	port_com_send(cmd);
-#endif
 
 	EyelockLog(logger, DEBUG, "Setting up PLL");
 

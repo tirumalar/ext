@@ -566,6 +566,7 @@ bool EnrollmentServer::GetBestPairOfEyes(unsigned char *image, uint64_t time, st
 // This allows the dll to be used without recompile everywhere...
 char m_UniqueFolderName[256];
 
+#if 0 // DMO
 bool EnrollmentServer::GetBestPairOfEyes(unsigned char *image, int id, int cameraId, int frameId, int imageId, int numberOfImages, float scale, int x, int y, int width, int height, int score, int maxValue, 
 	char *fileName, int diameter, uint64_t time, std::pair<Iris *, Iris *> &output, Iris *&iris, bool &firstUpdated, bool &secondUpdated
 	,float haloScore,bool illumState, int side, float laplacianScore)
@@ -744,6 +745,196 @@ bool EnrollmentServer::GetBestPairOfEyes(unsigned char *image, int id, int camer
 
 	return terminate;
 }
+#else
+bool EnrollmentServer::GetBestPairOfEyes(unsigned char *image, int id, int cameraId, int frameId, int imageId, int numberOfImages, float scale, int x, int y, int width, int height, int score, int maxValue,
+	char *fileName, int diameter, uint64_t time, std::pair<Iris *, Iris *> &output, Iris *&iris, bool &firstUpdated, bool &secondUpdated
+	,float haloScore,bool illumState, int side, float laplacianScore)
+{
+#ifdef _WIN32
+#if _MSC_VER == 1500
+	LOG4CXX_INFO(logger, "Entered GetBestPairOfEyes");
+#endif
+#endif
+	firstUpdated = false;
+	secondUpdated = false;
+
+	bool terminate = false;
+	bool hasEnrollmentAlready = (m_BestPairOfEyes.first != 0);
+
+	if (image != NULL)
+	{
+		if (!hasEnrollmentAlready)
+		{
+			m_BeginTime = time; // reset the start time
+		}
+
+		std::pair<Iris *, Iris *> result = GetBestPairOfEyesHelper(image, id, cameraId, frameId, imageId, numberOfImages, scale, x, y, width, height, score, maxValue, fileName, diameter, iris,haloScore,illumState, side, laplacianScore);
+
+		// Check for any new results
+		if (!((result.first == m_BestPairOfEyes.first) && (result.second == m_BestPairOfEyes.second)))
+		{
+
+			if (result.first)
+			{
+				if (m_BestPairOfEyes.first || m_BestPairOfEyes.second)
+				{
+					if (result.first != m_BestPairOfEyes.first && result.first != m_BestPairOfEyes.second)
+						firstUpdated = true;
+				}
+				else
+					firstUpdated = true;
+			}
+
+			if (result.second)
+			{
+				if (m_BestPairOfEyes.first || m_BestPairOfEyes.second)
+				{
+					if (result.second != m_BestPairOfEyes.first && result.second != m_BestPairOfEyes.second)
+						secondUpdated = true;
+				}
+				else
+					secondUpdated = true;
+			}
+
+			output = result;
+			m_BestPairOfEyes = result; // update our best result
+			//DMOTIMEOUT				m_LastUpdateTime = time;
+		}
+
+		//DMOTIMEOUT added new code below...
+		// If and only if we have two sorted eyes... start our earlytimeout counter...
+		// if (m_BestPairOfEyes.first && m_BestPairOfEyes.second)
+		if ((m_LastUpdateTime == 0) && m_BestPairOfEyes.first && m_BestPairOfEyes.second)
+			m_LastUpdateTime = time;
+	}
+
+	// Check for global and early timeouts
+	uint64_t elapsedGlobal = time - m_BeginTime;
+	// For acquisition mode, we want at least 'earlyTimeout' seconds of additional capture AFTER we have 2 eyes... if ever
+	// If we never get two eyes, then we globally timeout at globaltimeout (10 seconds)...
+	uint64_t elapsedEarly = time - m_LastUpdateTime;
+
+	//printf("Elapsed global: %llu (now %llu)\n", elapsedGlobal, time);
+	//fflush( stdout);
+
+//DMOTIMEOUT	if ((elapsedGlobal > m_GlobalTimeout) || (hasEnrollmentAlready && (elapsedEarly > m_EarlyTimeout)))
+	if ((elapsedGlobal > m_GlobalTimeout) || ((m_BestPairOfEyes.first && m_BestPairOfEyes.second) && (elapsedEarly > m_EarlyTimeout)))
+	{
+		terminate = true;
+
+		std::vector<Iris*> temp_Iris = getEnrollment_Eyes();
+
+		//Feedback printing (Occlusion)
+		double Ave_Occ = 0,Ave_CalibPercentile=0,Ave_CalibAve=0;
+		for (int i = 0; i < temp_Iris.size(); i++)
+		{
+			std::pair<double,double> CalibValues = temp_Iris[i]->GetCalib();
+
+			Ave_Occ = Ave_Occ + temp_Iris[i]->GetOcclusion();
+			Ave_CalibPercentile = Ave_CalibPercentile + CalibValues.first;
+			Ave_CalibAve = Ave_CalibAve + CalibValues.second;
+		}
+
+		Ave_Occ = Ave_Occ/temp_Iris.size();
+		Ave_CalibAve /= temp_Iris.size();
+		Ave_CalibPercentile /= temp_Iris.size();
+
+
+		if ((Ave_Occ > m_occlusionSoftThreshold) && (Ave_Occ < m_occlusionHardThreshold))
+			m_Feedback->softOcclusion = true;
+		else
+			m_Feedback->softOcclusion = false;
+
+		if (Ave_Occ > m_occlusionHardThreshold)
+			m_Feedback->hardOcclusion = true;
+		else
+			m_Feedback->hardOcclusion = false;
+
+		if ((Ave_CalibPercentile < m_calibrationPercentileThreshold) && (Ave_CalibAve < m_calibrationAverageThreshold))
+			m_Feedback->calibration = true;
+		else
+			m_Feedback->calibration = false;
+
+		IrisSelectorCircles circle1;
+		IrisSelectorCircles circle2;
+
+		if (m_BestPairOfEyes.first)
+			circle1 = m_BestPairOfEyes.first->GetIrisSelectorCircles();
+		if (m_BestPairOfEyes.second)
+			circle2 = m_BestPairOfEyes.second->GetIrisSelectorCircles();
+
+		if ((getnumber_BigPupil() > m_irisPupilRatioThreshold) && ((m_BestPairOfEyes.first && (circle1.IrisCircle.r / circle1.PupilCircle.r < 2.00)) || (m_BestPairOfEyes.second && (circle2.IrisCircle.r / circle2.PupilCircle.r < 2.00))))
+			m_Feedback->irisPupilRatio = true;
+		else
+			m_Feedback->irisPupilRatio = false;
+
+		if (m_eyeSortingLogEnable)
+		{
+			char buffer[200];
+			char szFullPath[256];
+			char szFullFilename[256];
+
+#ifdef _WIN32
+			sprintf(szFullPath, "%sGoodImages\\", GetLoggingBasePath());
+			sprintf(szFullFilename, "%sBestEyes.txt", szFullPath);
+#else
+			sprintf(szFullPath, GetLoggingBasePath());
+			sprintf(szFullFilename, "%sBestEyes.txt", szFullPath);
+#endif
+//			FILE *fDump = fopen(szFullFilename, "a");
+
+//			fprintf(fDump, "\n HERE!  fullpath = %s;;;; imageCount=%d;  first=%x, second=%x", szFullPath, imageCount, m_BestPairOfEyes.first, m_BestPairOfEyes.second);
+			// Write the ImageID and FrameID of the one or two BEST images...
+			// Along with the resulting Feedback information...
+			if (m_BestPairOfEyes.first)
+			{
+//						fprintf(fDump, "\n HERE first!");
+
+#if 0 //DMOREMOVE
+				IplImage *imgHeader = cvCreateImageHeader(cvSize(640, 480), IPL_DEPTH_8U, 1);
+				cvSetImageData(imgHeader, m_BestPairOfEyes.first->GetImage(), 640);
+
+				sprintf(buffer, "%sBestImage_%d_first.pgm", szFullPath, m_BestPairOfEyes.first->GetImageId());
+				if (!cvSaveImage(buffer, imgHeader)) ;//fprintf(fDump, "\n Unable to save Image:%s", buffer);
+				else // Add info to our text file...
+				{
+//					fprintf(fDump, "\nFirst Image Saved:%s", buffer);
+				}
+				cvReleaseImageHeader(&imgHeader);
+#endif //DMOREMOVE
+			}
+
+			if (m_BestPairOfEyes.second)
+			{
+				#if 0//DMOREMOVE
+//						fprintf(fDump, "\n HEREsecond!");
+
+				IplImage *imgHeader = cvCreateImageHeader(cvSize(640, 480), IPL_DEPTH_8U, 1);
+				cvSetImageData(imgHeader, m_BestPairOfEyes.second->GetImage(), 640);
+
+				sprintf(buffer, "%sBestImage_%d_second.pgm", szFullPath, m_BestPairOfEyes.second->GetImageId());
+				if (!cvSaveImage(buffer, imgHeader)) ;//fprintf(fDump, "\n Unable to save Image:%s", buffer);
+				else // Add info to our text file...
+				{
+//					fprintf(fDump, "\nSecond Image Saved:%s", buffer);
+				}
+
+				cvReleaseImageHeader(&imgHeader);
+#endif //DMOREMOVE
+			}
+
+//			fprintf(fDump, "\nDone", buffer);
+
+//			fclose(fDump);
+
+			//reset
+			imageCount=0;
+		}
+	}
+
+	return terminate;
+}
+#endif
 bool swapColumn(unsigned char *data, int width,  int height, int step)
 {   
 

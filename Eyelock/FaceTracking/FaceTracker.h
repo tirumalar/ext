@@ -113,8 +113,6 @@ private:
 
 	float eye_size;
 	float p; //AGC
-	int step;
-	int startPoint;
 
 	int agc_set_gain;
 
@@ -131,11 +129,7 @@ private:
 
 	//Reading from faceConfig.ini
 	int CENTER_POS;
-	//int CENTER_POS_TEST;
 
-	int MIN_POS;
-	int MAX_POS;
-	
 	int initialMotion, finalMotion, MotorAcceleration;	//used for increasing or decreasing motor acceleration
 
 	//Switching threshold and Hysteresis
@@ -189,15 +183,6 @@ private:
 	int m_DimmingfaceExposureTime;
 	int m_DimmingfaceDigitalGain;
 
-#if 0
-	int m_AuxIrisCamExposureTime;
-	int m_AuxIrisCamDigitalGain; 
-	int m_AuxIrisCamDataPedestal;
-	
-	int m_MainIrisCamExposureTime;
-	int m_MainIrisCamDigitalGain;
-	int m_MainIrisCamDataPedestal;
-#else
 	// Anita to set Left/Right camera exposure and gain separately
 	int m_AuxIrisCamDataPedestal;
 	int m_MainIrisCamDataPedestal;
@@ -213,7 +198,6 @@ private:
 
 	int m_RightMainIrisCamExposureTime;
 	int m_RightMainIrisCamDigitalGain;
-#endif
 
 	int m_irisAnalogGain;
 	int m_capacitorChargeCurrent;
