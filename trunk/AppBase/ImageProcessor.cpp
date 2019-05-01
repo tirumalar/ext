@@ -396,6 +396,8 @@ m_LedConsolidator = NULL;
 	m_showProjection = pConf->getValue("Eyelock.showProjection",false);
 	m_IrisToFaceMapping = pConf->getValue("Eyelock.IrisToFaceMapping",false);
 
+	m_IrisToFaceMapCorrectionVal = pConf->getValue("Eyelock.IrisToFaceMapCorrectionFactor", 20);
+
 	bIrisToFaceMapDebug = pConf->getValue("Eyelock.IrisToFaceMapDebug", false);
 	
 
@@ -437,37 +439,48 @@ m_LedConsolidator = NULL;
 		constantAuxR.x = CalRectConfig.getValue("FTracker.constantAuxRightCam_x",float(0.22));
 		constantAuxR.y = CalRectConfig.getValue("FTracker.constantAuxRightCam_y",float(0.22));
 
+		useOffest_m = CalRectConfig.getValue("FTracker.projectionOffsetMain",false);
+		useOffest_a = CalRectConfig.getValue("FTracker.projectionOffsetAux",true);
+		projOffset_m = CalRectConfig.getValue("FTracker.projectionOffsetValMain",float(50.00));
+		projOffset_a = CalRectConfig.getValue("FTracker.projectionOffsetValAux",float(200.00));
+
 	}else{
+		FileConfiguration CalibDefaultConfig("/home/root/data/calibration/Calibration.ini");
+
 		// To support old devices which don't have cal rect file stored on OIM
-		rectX = m_FaceConfig.getValue("FTracker.targetRectX",0);
-		rectY = m_FaceConfig.getValue("FTracker.targetRectY",497);
-		rectW = m_FaceConfig.getValue("FTracker.targetRectWidth",960);
-		rectH = m_FaceConfig.getValue("FTracker.targetRectHeight",121);
+		rectX = CalibDefaultConfig.getValue("FTracker.targetRectX",0);
+		rectY = CalibDefaultConfig.getValue("FTracker.targetRectY",497);
+		rectW = CalibDefaultConfig.getValue("FTracker.targetRectWidth",960);
+		rectH = CalibDefaultConfig.getValue("FTracker.targetRectHeight",121);
+
 		//ERROR_CHECK_EYES = m_FaceConfig.getValue("FTracker.ERROR_CHECK_EYES",float(0.06));
-		magOffMainl = m_FaceConfig.getValue("FTracker.magOffsetMainLeftCam",float(0.15));
-		magOffMainR = m_FaceConfig.getValue("FTracker.magOffsetMainRightCam",float(0.15));
-		magOffAuxl = m_FaceConfig.getValue("FTracker.magOffsetAuxLeftCam",float(0.22));
-		magOffAuxR = m_FaceConfig.getValue("FTracker.magOffsetAuxRightCam",float(0.22));
+		magOffMainl = CalibDefaultConfig.getValue("FTracker.magOffsetMainLeftCam",float(0.15));
+		magOffMainR = CalibDefaultConfig.getValue("FTracker.magOffsetMainRightCam",float(0.15));
+		magOffAuxl = CalibDefaultConfig.getValue("FTracker.magOffsetAuxLeftCam",float(0.22));
+		magOffAuxR = CalibDefaultConfig.getValue("FTracker.magOffsetAuxRightCam",float(0.22));
 
 		magOffMainlDiv = 1.0/magOffMainl;
 		magOffMainRDiv = 1.0/magOffMainR;
 		magOffAuxlDiv = 1.0/magOffAuxl;
 		magOffAuxRDiv = 1.0/magOffAuxR;
 
-		constantMainl.x = m_FaceConfig.getValue("FTracker.constantMainLeftCam_x",float(0.15));
-		constantMainl.y = m_FaceConfig.getValue("FTracker.constantMainLeftCam_y",float(0.15));
-		constantMainR.x = m_FaceConfig.getValue("FTracker.constantMainRightCam_x",float(0.15));
-		constantMainR.y = m_FaceConfig.getValue("FTracker.constantMainRightCam_y",float(0.15));
-		constantAuxl.x = m_FaceConfig.getValue("FTracker.constantAuxLeftCam_x",float(0.22));
-		constantAuxl.y = m_FaceConfig.getValue("FTracker.constantAuxLeftCam_y",float(0.22));
-		constantAuxR.x = m_FaceConfig.getValue("FTracker.constantAuxRightCam_x",float(0.22));
-		constantAuxR.y = m_FaceConfig.getValue("FTracker.constantAuxRightCam_y",float(0.22));
+		constantMainl.x = CalibDefaultConfig.getValue("FTracker.constantMainLeftCam_x",float(0.15));
+		constantMainl.y = CalibDefaultConfig.getValue("FTracker.constantMainLeftCam_y",float(0.15));
+		constantMainR.x = CalibDefaultConfig.getValue("FTracker.constantMainRightCam_x",float(0.15));
+		constantMainR.y = CalibDefaultConfig.getValue("FTracker.constantMainRightCam_y",float(0.15));
+		constantAuxl.x = CalibDefaultConfig.getValue("FTracker.constantAuxLeftCam_x",float(0.22));
+		constantAuxl.y = CalibDefaultConfig.getValue("FTracker.constantAuxLeftCam_y",float(0.22));
+		constantAuxR.x = CalibDefaultConfig.getValue("FTracker.constantAuxRightCam_x",float(0.22));
+		constantAuxR.y = CalibDefaultConfig.getValue("FTracker.constantAuxRightCam_y",float(0.22));
+
+		useOffest_m = CalibDefaultConfig.getValue("FTracker.projectionOffsetMain",false);
+		useOffest_a = CalibDefaultConfig.getValue("FTracker.projectionOffsetAux",true);
+		projOffset_m = CalibDefaultConfig.getValue("FTracker.projectionOffsetValMain",float(50.00));
+		projOffset_a = CalibDefaultConfig.getValue("FTracker.projectionOffsetValAux",float(200.00));
+
 	}
 
-	useOffest_m = m_FaceConfig.getValue("FTracker.projectionOffsetMain",false);
-	useOffest_a = m_FaceConfig.getValue("FTracker.projectionOffsetAux",true);
-	projOffset_m = m_FaceConfig.getValue("FTracker.projectionOffsetValMain",float(50.00));
-	projOffset_a = m_FaceConfig.getValue("FTracker.projectionOffsetValAux",float(200.00));
+
 
 	m_bFaceMapDebug = m_FaceConfig.getValue("FTracker.FaceMapDebug", false);
 
@@ -507,6 +520,8 @@ m_LedConsolidator = NULL;
 	if (m_bIrisCapture)
 	{
 		m_DHSScreens = pConf->getValue("Eyelock.DHSScreens", false);
+
+		b_SaveBestEyes = pConf->getValue("Eyelock.SaveBestEyes",false);
 
 		m_LEDBrightness = pConf->getValue("GRI.LEDBrightness", 80);
 		if(m_LEDBrightness == 0)
@@ -1222,9 +1237,13 @@ cv::Point2i ImageProcessor::projectPoints_IristoFace(cv::Point2i ptrI, cv::Point
 	ptrF.x = ptrI.x *ConstDiv + constant.x;
 	ptrF.y = ptrI.y *ConstDiv + constant.y;
 
+#if 0 // Anita made it configurable due to calibration error
 	ptrF.x-=20;
 	ptrF.y+=20;
-
+#else
+	ptrF.x-=m_IrisToFaceMapCorrectionVal;
+	ptrF.y+=m_IrisToFaceMapCorrectionVal;
+#endif
 	if(m_bFaceMapDebug)
 		EyelockLog(logger, DEBUG, "IRIS to Face Projection for left right eye ptr1.x %d ptr1.y %d\n", ptrF.x, ptrF.y);
 
@@ -2965,6 +2984,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 				char *pImage = images.first->GetImage();
 
+				IrisSelectorCircles circle1 = images.first->GetIrisSelectorCircles();
 				if (m_bIrisCaptureEnableResize)
 				{
 					// First resize
@@ -2973,12 +2993,12 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 					pImage = resizeImage->imageData;
 				}
 
-				if (m_SaveEyeCrops)
+				if (b_SaveBestEyes)
 				{
 					IplImage *imgHeader = cvCreateImageHeader(cvSize(640,480), IPL_DEPTH_8U, 1);
 					cvSetImageData(imgHeader, images.first->GetImage(), 640);
 
-					sprintf(filename, "BestEye 1 -- %f_%s.pgm", images.first->GetLaplacian(), (images.first->getSide() == 0) ? "UNKNOWN" : ((images.first->getSide() == 1) ? "LEFT" : "RIGHT"));
+					sprintf(filename, "BestEye 1 -- %f_%s_Iris_%f_%f_%f.pgm", images.first->GetLaplacian(), (images.first->getSide() == 0) ? "UNKNOWN" : ((images.first->getSide() == 1) ? "LEFT" : "RIGHT"), circle1.IrisCircle.x, circle1.IrisCircle.y, circle1.IrisCircle.r);
 					cv::Mat mateye = cv::cvarrToMat(imgHeader);
 					imwrite(filename, mateye);
 
@@ -3007,6 +3027,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 				char *pImage = images.second->GetImage();
 
+				IrisSelectorCircles circle2 = images.first->GetIrisSelectorCircles();
 				if (m_bIrisCaptureEnableResize)
 				{
 					// First resize
@@ -3015,12 +3036,14 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 					pImage = resizeImage->imageData;
 				}
 
-				if (m_SaveEyeCrops)
+				if (b_SaveBestEyes)
 				{
 					IplImage *imgHeader = cvCreateImageHeader(cvSize(640,480), IPL_DEPTH_8U, 1);
 					cvSetImageData(imgHeader, images.second->GetImage(), 640);
 
-					sprintf(filename, "BestEye 2 -- %f_%s.pgm", images.second->GetLaplacian(), (images.second->getSide() == 0) ? "UNKNOWN" : ((images.second->getSide() == 1) ? "LEFT" : "RIGHT"));
+
+
+					sprintf(filename, "BestEye 2 -- %f_%s_Iris_%f_%f_%f.pgm", images.second->GetLaplacian(), (images.second->getSide() == 0) ? "UNKNOWN" : ((images.second->getSide() == 1) ? "LEFT" : "RIGHT"), circle2.IrisCircle.x, circle2.IrisCircle.y, circle2.IrisCircle.r);
 					cv::Mat mateye = cv::cvarrToMat(imgHeader);
 					imwrite(filename, mateye);
 

@@ -298,6 +298,7 @@ public:
 	int m_nMinIrisDiameter;
 	int m_nMaxIrisDiameter;
 	bool m_bIrisCaptureEnableResize;
+	bool b_SaveBestEyes;
 	int m_expectedIrisWidth;
 	int m_actualIrisWidth;
 	bool m_bSortingLogEnable;
@@ -348,6 +349,7 @@ private:
 	bool m_activeEyeSideLabeling;
 	bool m_IrisToFaceMapping;
 	bool bIrisToFaceMapDebug;
+	unsigned int m_IrisToFaceMapCorrectionVal;
 	bool m_DHSScreens;
 	int m_LEDBrightness;
 	cv::Mat Screen;
