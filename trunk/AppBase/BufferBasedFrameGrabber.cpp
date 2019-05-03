@@ -320,7 +320,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw(){
 #endif
 }
 
-#if 0 // Dave code
+#if 1 // Dave code
 char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 	//if (m_Debug)
 		//EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::getLatestFrame_raw() Start");
@@ -332,15 +332,18 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 
     bool status = true;
 
-#if 0 // New way, non-blocking... out for now... leave out...
+#if 1 // New way, non-blocking... out for now... leave out...
 	// release the previously processed buffer it it is real;
-    if (m_current_process_queue_item.m_ptr!=0)
+    if (m_current_process_queue_item.m_ptr!=0){
     	status = TryReleaseProcessBuffer(m_current_process_queue_item);//DMO changed to "Try" so we don't block on a full buffer.
 
     if (!status)
     {
 	//	usleep(1000);
     	return NULL;
+    }
+    else
+       m_current_process_queue_item.m_ptr = 0; // Critical so that we don't push the same entry into the freebuffer twice!!!!
     }
 #else
     if (m_current_process_queue_item.m_ptr!=0)
@@ -359,8 +362,10 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 
 		 status=m_ProcessBuffer->TryPop(m_current_process_queue_item);
 
-		if (status)
+		if (status){
+			printf("Pop of process buffer successful\n");
 			break; //something to process
+		}
 
 		usleep(1000); // Leave this sleep so we don't use all CPU
 		}
