@@ -227,6 +227,8 @@ private:
 
 	bool bIrisToFaceMapDebug;
 
+	unsigned int m_EyelockIrisMode;
+
 	bool b_EnableFaceAGC;
 
 	void SetExp(int cam, int val);

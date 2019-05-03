@@ -256,6 +256,8 @@ FaceTracker::FaceTracker(char* filename)
 
 	bIrisToFaceMapDebug = EyelockConfig.getValue("Eyelock.IrisToFaceMapDebug", false);
 
+	m_EyelockIrisMode = EyelockConfig.getValue("Eyelock.IrisMode",1);
+
 	int m_ImageSize = 1200*960;
 	m_LeftCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
 	m_RightCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
@@ -1131,6 +1133,7 @@ Mat FaceTracker::preProcessingImg(Mat outImg)
 	return smallImg;
 }
 
+
 void FaceTracker::moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, bool bDebugSessions)
 {
 	if ((eye_size >= MIN_FACE_SIZE) && (eye_size <= MAX_FACE_SIZE)) {// check face size
@@ -1139,7 +1142,10 @@ void FaceTracker::moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, 
 		int MoveToLimitBound = 1;
 		//err = (no_move_area.y + no_move_area.height / 2) - eyes.y;		//Following no_move_area
 		//instead of following no_move_area we will use search_eye_area to make eyes at the center of no_move_area
-		float denum = 1.0/2.0;
+		if(m_EyelockIrisMode == 2)
+			float denum = 1.25;
+		else
+			float denum = 1.0/2.0;
 		err = (search_eye_area.y + search_eye_area.height * denum) - eyes.y;
 
 		EyelockLog(logger, DEBUG,
@@ -1176,7 +1182,6 @@ void FaceTracker::moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, 
 	}
 
 }
-
 
 void FaceTracker::faceModeState(bool bDebugSessions)
 {
