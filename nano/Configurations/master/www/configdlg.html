@@ -54,7 +54,16 @@
         var isStaticIP = '<?php echo "{$this->model->interfaceSettings->IsStatic}" ?>';
         var initialStaticIP = '<?php echo "{$this->model->interfaceSettings->IpOfBoard}" ?>';
 	var initialStaticSubNetMask = '<?php echo "{$this->model->interfaceSettings->SubNetMask}" ?>';
-	var initialStaticGateway = '<?php echo "{$this->model->interfaceSettings->Gateway}" ?>';
+    var initialStaticGateway = '<?php echo "{$this->model->interfaceSettings->Gateway}" ?>';
+        var initialIPv6 = {
+            enabled: '<?php echo $this->model->ipv6Settings->EnableIPv6 ? "1" : "0" ?>',
+            dhcpMode: '<?php echo "{$this->model->ipv6Settings->DHCPMode}" ?>',
+            address: '<?php echo "{$this->model->ipv6Settings->HostAddress}" ?>',
+            subnetPrefixLength: '<?php echo "{$this->model->ipv6Settings->SubnetPrefixLength}" ?>',
+            gateway: '<?php echo "{$this->model->ipv6Settings->DefaultGateway}" ?>',
+            dns1: '<?php echo "{$this->model->ipv6Settings->Dns1}" ?>',
+            dns2: '<?php echo "{$this->model->ipv6Settings->Dns2}" ?>',
+        };
         var isHDMatcherEnabled = "<?php if ($this->model->eyeLockINI->GRI_EnableNWHDMatcher === 'true') echo true; else echo false?>";
         var LoggedonUser = "<?php if (isset($_SESSION['UserName'])) echo $_SESSION['UserName']; else echo '<?php echo MSG_UNKNOWNUSER; ?>'; ?>";
         var MaxTemplateCount = '<?php echo "{$this->model->eyeLockINI->Eyelock_MaxTemplateCount}" ?>';
@@ -546,20 +555,16 @@
 					    <input id='dns2' name='DNS_2' type='text' class="bigedit" data-bvalidator="ip4" style='width:8em' placeholder='<?php echo DEFAULT_EMPTY_FIELD; ?>' value='<?php echo "{$this->model->interfaceSettings->dns2}"; ?>'/>   
 				    </li>   
 			    </ol>   
-			    </fieldset>
-              <fieldset class="gradientfieldset">   
-			<legend><?php echo SSL_PROTOCOL_LEGEND;?></legend>   
-			<ol>   
-				<li>
-                    <div style = "clear:both">
-                        <input id="SSLRadio" style= "float:left; margin-left:12px; margin-bottom: 1em" type='radio' class='normalradio' name ='tlsmoderadio' value ='false' <?php if ($this->model->eyeLockINI->Eyelock_TLSEnable === "false") echo 'checked'; ?>><span style="cursor:help"class ="tooltip" title="<?php echo TOOLTIP_NETWORK_SSLPROTOCOL; ?>"><?php echo SSLPROTO_DEFAULT; ?></span>
-                    </div>
-                    <div style = "clear:both">
-                        <input id="TLSRadio" style= "float:left; margin-left:12px; margin-bottom: 1em" type='radio' class='normalradio' name ='tlsmoderadio' value ='true' <?php if ($this->model->eyeLockINI->Eyelock_TLSEnable === "true") echo 'checked'; ?>><span style="cursor:help"class ="tooltip" title="<?php echo TOOLTIP_NETWORK_SSLPROTOCOL; ?>"><?php echo SSLPROTO_TLS12; ?></span>
-                    </div>
-               </li>   
-			</ol>   
-			</fieldset>
+                </fieldset>
+                
+            <div style = "clear:both">
+                <input id="ipv6checkbox" style= "float:left; margin-left:12px; margin-bottom: 1em" type='checkbox' class='normalradio' name ='ipv6_enable' value ='true'
+                    <?php if ($this->model->ipv6Settings->EnableIPv6) echo 'checked'; ?>>
+                    <span style="cursor:help"class ="tooltip" title="<?php echo TOOLTIP_IPV6_ENABLE; ?>"><?php echo NETWORK_IPV6_ENABLE;?>
+                </span>
+                <input name='action' type='button' class='submit tooltip' title="<?php echo TOOLTIP_IPV6_CONFIGURATION; ?>" value='<?php echo NETWORK_IPV6_CONFIGURATION;?>' id='ipv6settingsbutton' style="float:right; margin-top: -10px; <?php if ($this->model->eyeLockINI->HardwareType === '2') echo 'display:none'; ?>;" /> 
+            </div>
+
             <fieldset class="gradientfieldset">
                 <legend>
                     <input id="Eyelock_EnableIEEE8021X" type='checkbox' name='Eyelock_EnableIEEE8021X' value='true' style="float:left;" <?php if ($this->model->IEEE802Settings->EnableIEEE8021X === "true") echo 'checked'; ?> ><span style="background-color: #f6f6f6; cursor:help;" class ="tooltip" title="<?php echo TOOLTIP_NETWORK_ENABLEIEEE8021X; ?>"><?php echo NETWORK_SETTINGS_ENABLEIEEE8021X;?></span><br />
@@ -847,8 +852,10 @@
                 </div>
             </div>
 
+            <div style="clear: both;"></div> <!-- Using temporary clear div, it would be better to correct header area styles -->
+
             <!-- Tamper Settings -->
-			<fieldset class="gradientfieldset">
+			<fieldset class="gradientfieldsetleft">
 			    <legend><?php echo SECURITY_CARD_READER_INPUT_TAMPER_SETTINGS; ?></legend>   
    			    <ol>   
 				    <li>
@@ -860,7 +867,7 @@
 			    </ol>   
 			     
 			</fieldset> 
-              <fieldset class="gradientfieldset" style="<?php if($this->model->eyeLockINI->HardwareType === '2') echo 'display:none'; ?>;">   
+              <fieldset class="gradientfieldsetright" style="<?php if($this->model->eyeLockINI->HardwareType === '2') echo 'display:none'; ?>;">
 			    <legend><?php echo SECURITY_NXT_OUTPUT_TAMPER_SETTINGS; ?></legend>   
    			    <ol>   
 				    <li>
@@ -872,7 +879,7 @@
 			    </ol>   
 			     
 			</fieldset>   
-              <fieldset class="gradientfieldset" style="<?php if($this->model->eyeLockINI->HardwareType === '2') echo 'display:none'; ?>;"
+              <fieldset class="gradientfieldset" style="<?php if($this->model->eyeLockINI->HardwareType === '2') echo 'display:none'; ?>;">
                   <legend><?php echo SECURITY_TAMPER_MESSAGE_SETTINGS;?></legend>   
                    <ol>   
 				    <li style="clear:both; padding-top: 1em; float: left">
@@ -964,7 +971,21 @@
                         <input name='action' type='button' class="submit tooltip" title="<?php echo TOOLTIP_SECURITY_KEYMGMTBUTTON; ?>" value='<?php echo KEY_MANAGEMENT_BUTTON;?>' id='keymgmtbutton' style="float:right; margin-top:-7px;margin-right:22px;margin-bottom:16px"/>
 				    </li>   
 			    </ol>  
-		       </fieldset> 
+               </fieldset> 
+
+               <fieldset class="gradientfieldset">
+                    <legend><?php echo SSL_PROTOCOL_LEGEND;?></legend>
+                    <ol>
+                        <li>
+                            <div style = "clear:both">
+                                <input id="SSLRadio" style= "float:left; margin-left:12px; margin-bottom: 1em" type='radio' class='normalradio' name ='tlsmoderadio' value ='false' <?php if ($this->model->eyeLockINI->Eyelock_TLSEnable === "false") echo 'checked'; ?>><span style="cursor:help"class ="tooltip" title="<?php echo TOOLTIP_NETWORK_SSLPROTOCOL; ?>"><?php echo SSLPROTO_DEFAULT; ?></span>
+                            </div>
+                            <div style = "clear:both">
+                                <input id="TLSRadio" style= "float:left; margin-left:12px; margin-bottom: 1em" type='radio' class='normalradio' name ='tlsmoderadio' value ='true' <?php if ($this->model->eyeLockINI->Eyelock_TLSEnable === "true") echo 'checked'; ?>><span style="cursor:help"class ="tooltip" title="<?php echo TOOLTIP_NETWORK_SSLPROTOCOL; ?>"><?php echo SSLPROTO_TLS12; ?></span>
+                            </div>
+                        </li>
+                    </ol>
+                </fieldset>
 			</div>
         </li>
 
@@ -1876,6 +1897,51 @@
 			    </ol>
             </fieldset>
             <input name='action' type='button' class='submit' value='<?php echo NETWORK_DHCPSETTINGS_OK;?>' id='dhcpsettingsOKbutton' style="float:right; width:120px; bottom:10px; right: 10px;"/>
+        </div>
+    </div>
+
+    <!-- This is our 'fake' IPv6 Settings Modal (could have used a Javascript modal, this was actually easier -->
+    <div id="ipv6-div-container" class="popup-div-container">
+        <div class="popup-div">
+            <div class="popup-title"><p><?php echo NETWORK_IPV6CONFIGURATION_TITLE;?></p></div>
+                 <fieldset class="gradientfieldset">
+                    <legend style="margin-left:1em"><?php echo NETWORK_IPV6CONFIGURATION_GENERAL;?></legend>
+                    <div class="popup-row">
+                        <label for='ipv6_dhcpmode' class='normallabel tooltip' title="<?php echo TOOLTIP_IPV6_DHCP_MODE;?>"><?php echo NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE;?></label>
+                        <div class="select-style" style="float:left;width:150px">
+                            <select name='ipv6_dhcpmode' id='ipv6_dhcpmode' style="float:left;width:150px">
+                                <option value="information-only" <?php $select = $this->model->ipv6Settings->DHCPMode; if ($select === 'information-only') echo "selected"; ?>>
+                                    <?php echo NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION;?>
+                                </option>
+                                <option value="normal" <?php $select = $this->model->ipv6Settings->DHCPMode; if ($select === 'normal') echo "selected"; ?>>
+                                    <?php echo NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL;?>
+                                </option>
+                                <option value="none" <?php $select = $this->model->ipv6Settings->DHCPMode; if ($select === 'none') echo "selected"; ?>>
+                                    <?php echo NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE;?>
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="popup-row">
+                        <label for='ipv6_address' class='normallabel tooltip' title="<?php echo TOOLTIP_IPV6_ADDRESS;?>"><?php echo NETWORK_IPV6CONFIGURATION_GENERAL_ADDRESS_PREFIX_LENGTH;?></label>
+                        <input id='ipv6_address' class="bigedit" data-bvalidator="ip6,maxlength[39]" name='ipv6_address' type='text' value = '<?php echo "{$this->model->ipv6Settings->HostAddress}"; ?>' class ='bigedit'/>
+                        <div style="float: left; line-height: 34px;">/</div>
+                        <input id='ipv6_prefix_len' class="bigedit" style="width: 3em;" data-bvalidator="min[0],max[64]" name='ipv6_prefix_len' type='text' value = '<?php echo "{$this->model->ipv6Settings->SubnetPrefixLength}"; ?>' class ='bigedit'/>
+                    </div>
+                    <div class="popup-row">
+                        <label for='ipv6_gateway' class='normallabel tooltip' title="<?php echo TOOLTIP_IPV6_GATEWAY;?>"><?php echo NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY;?></label>
+                        <input id='ipv6_gateway' class="bigedit" data-bvalidator="ip6,maxlength[39]" name='ipv6_gateway' type='text' value = '<?php echo "{$this->model->ipv6Settings->DefaultGateway}"; ?>' class ='bigedit'/>
+                    </div>
+                    <div class="popup-row">
+                        <label for='ipv6_dns1' class='normallabel tooltip' title="<?php echo TOOLTIP_IPV6_DNS1;?>"><?php echo NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1;?></label>
+                        <input id='ipv6_dns1' class="bigedit" data-bvalidator="ip6,maxlength[39]" name='ipv6_dns1' type='text' value = '<?php echo "{$this->model->ipv6Settings->Dns1}"; ?>' class ='bigedit'/>
+                    </div>
+                    <div class="popup-row">
+                        <label for='ipv6_dns2' class='normallabel tooltip' title="<?php echo TOOLTIP_IPV6_DNS2;?>"><?php echo NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2;?></label>
+                        <input id='ipv6_dns2' class="bigedit" data-bvalidator="ip6,maxlength[39]" name='ipv6_dns2' type='text' value = '<?php echo "{$this->model->ipv6Settings->Dns2}"; ?>' class ='bigedit'/>
+                    </div>
+                </fieldset>
+                <input name='action' type='button' class='submit' value='<?php echo NETWORK_DHCPSETTINGS_OK;?>' id='ipv6settingsOKbutton' style="float:right; width:120px; bottom:10px; right: 10px;"/>
         </div>
     </div>
 

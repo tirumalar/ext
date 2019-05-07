@@ -4,6 +4,7 @@
 // Include classes that read/write settings
 include_once($_SERVER['DOCUMENT_ROOT']."/scripts/inieditor.php");
 include_once($_SERVER['DOCUMENT_ROOT']."/scripts/IEEE802Details.php");
+include_once($_SERVER['DOCUMENT_ROOT']."/scripts/IPv6Details.php");
 include_once($_SERVER['DOCUMENT_ROOT']."/scripts/interfaceeditor.php");
 include_once($_SERVER['DOCUMENT_ROOT']."/scripts/ApplicationDetails.php");
 
@@ -14,6 +15,7 @@ class Model
     private $inifile;
     public $eyeLockINI;
     public $interfaceSettings;
+    public $ipv6Settings;
     public $IEEE802Settings;
     public $applicationDetails;
     private $currLanguage = "us"; // default
@@ -27,6 +29,7 @@ class Model
          $this->eyeLockINI = new INIEditor($this->inifile);
          $this->IEEE802Settings = new IEEE802Details();
          $this->interfaceSettings = new InterfaceEditor();
+         $this->ipv6Settings = new IPv6Details();
          $this->applicationDetails = new ApplicationDetails();
     }
 
@@ -53,6 +56,7 @@ class Model
         $this->eyeLockINI->LoadIniSettings();
         $this->IEEE802Settings->LoadIEEE802Config();
         $this->interfaceSettings->LoadInterfaceSettings($this->eyeLockINI->HardwareType);
+        $this->ipv6Settings->LoadConfig();
 
         // Get the local nano time, and kickoff our clock...
 //         echo '<script> startTime(); </script>';
