@@ -119,6 +119,20 @@ function defineStrings($HardwareType)
             define ("NETWORK_STATICIP_SUBNETMASKLABEL", "Subnet Mask:");
             define ("NETWORK_STATICIP_DEFAULTGATEWAYLABEL", "Default Gateway:");
 
+            define ("NETWORK_IPV6_ENABLE", "Enable IPv6");
+            define ("NETWORK_IPV6_CONFIGURATION", "IPv6 Configuration...");
+                // IPV6 Pop-up
+                define ("NETWORK_IPV6CONFIGURATION_TITLE", "IPv6 Configuration");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL", "General");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE", "DHCP Mode:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION", "Information Only");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "Normal");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE", "None");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_ADDRESS_PREFIX_LENGTH", "IPv6 Address/Subnet Prefix Length:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Default Gateway:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "DNS Server 1:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS Server 2:");
+
             define("SSL_PROTOCOL_LEGEND", "SSL Protocol");
             define("SSLPROTO_DEFAULT", "Legacy");
             define("SSLPROTO_TLS12", "TLS 1.2 (Only)");
@@ -670,6 +684,16 @@ function defineStrings($HardwareType)
                                                 <li>Duration Range (seconds): 0 - 60.</li>
                                                 <li>Default value: 10.</li></ul>");
 
+            define ("TOOLTIP_IPV6_ENABLE", "<span class='tooltip-header'>Enable IPv6</span>");
+            define ("TOOLTIP_IPV6_CONFIGURATION", "<span class='tooltip-header'>Specify IPv6 Configuration Details</span>");
+            define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP Mode</span>
+                                                <ul class='tooltip-list'>
+                                                <li>Specifies the DHCP mode for IPv6 configuration</li>
+                                                </ul>");
+            define ("TOOLTIP_IPV6_ADDRESS", "<span class='tooltip-header'>IPv6 Network Address</span>");
+            define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
+            define ("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>IPv6 Pirmary DNS Server Address</span>");
+            define ("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>IPv6 Secondary DNS Server Address</span>");
 
             define ("TOOLTIP_DEVICE_TAB", "<b><i>Device Tab</i></b><br>Configuration of ".$NXTText."  device. (LED Brightness, Volume Control, Time Settings, Reboot and Factroy Reset)");
             define ("TOOLTIP_DEVICE_SPEAKERVOLUME", "<span style='font-size: 16px; font-style:bold'>Speaker Volume</span>
@@ -1069,7 +1093,20 @@ function defineStrings($HardwareType)
 		define("NETWORK_STATICIP_DEVICEIPLABEL", "IP-адрес устройства:");
 		define("NETWORK_STATICIP_BROADCASTNETWORKLABEL", "Ципкулярная сеть");
 		define("NETWORK_STATICIP_SUBNETMASKLABEL", "Маска подсети:");
-		define("NETWORK_STATICIP_DEFAULTGATEWAYLABEL", "Шлюз по умолчанию:");
+        define("NETWORK_STATICIP_DEFAULTGATEWAYLABEL", "Шлюз по умолчанию:");
+        define ("NETWORK_IPV6_ENABLE", "Enable IPv6");
+        define ("NETWORK_IPV6_CONFIGURATION", "IPv6 Configuration...");
+            // IPV6 Pop-up
+            define ("NETWORK_IPV6CONFIGURATION_TITLE", "IPv6 Configuration");
+            define ("NETWORK_IPV6CONFIGURATION_GENERAL", "General");
+            define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE", "DHCP Mode:");
+            define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION", "Information Only");
+            define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "Normal");
+            define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE", "None");
+            define ("NETWORK_IPV6CONFIGURATION_GENERAL_ADDRESS_PREFIX_LENGTH", "IPv6 Address/Subnet Prefix Length:");
+            define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Default Gateway:");
+            define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "DNS Server 1:");
+            define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS Server 2:");
         define("SSL_PROTOCOL_LEGEND", "SSL Protocol");
         define("SSLPROTO_DEFAULT", "Legacy");
         define("SSLPROTO_TLS12", "TLS 1.2 (Only)");
@@ -1422,7 +1459,17 @@ function defineStrings($HardwareType)
                                                 <ul style='padding-left: 1em'><li>Click to download the ".$NXTText." <i>IEEE 802.1X Log</i> as a text file.</li></ul>");
 		define("TOOLTIP_ADVDHCP_TIMEOUT", " <span style='font-size: 16px; font-style:bold'>Таймаут DHCP</span> <ul style='padding-left: 1em'><li>Устанавливает, сколько секунд клиент DCHP устройства ".$NXTText." будет пытаться разрешить  <i>имя хоста</i> прежде чем сдаться.</li> <li>Диапазон (в секундах): 10 - 120.</li> <li>По умолчанию: 10.</li></ul>");
 		define("TOOLTIP_ADVDHCP_RETRIES", " <span style='font-size: 16px; font-style:bold'>Количество попыток для DCHP.</span> <ul style='padding-left: 1em'><li>Устанавливает общее количество попыток разрешения  <i>имени хоста</i> прежде чем сдаться.</li> <li>Диапазон (в секундах): 0 - 10.</li> <li>По умолчанию: 0.</li></ul>");
-		define("TOOLTIP_ADVDHCP_RETRYDELAY", " <span style='font-size: 16px; font-style:bold'>Задержка перед повторами</span> <ul style='padding-left: 1em'><li>Устанавливает задержку в секундах между попытками клиента DHCP.</li> <li>Диапазон (в секундах): 0 - 60.</li> <li>Значение по умолчанию: 10.</li></ul>");
+        define("TOOLTIP_ADVDHCP_RETRYDELAY", " <span style='font-size: 16px; font-style:bold'>Задержка перед повторами</span> <ul style='padding-left: 1em'><li>Устанавливает задержку в секундах между попытками клиента DHCP.</li> <li>Диапазон (в секундах): 0 - 60.</li> <li>Значение по умолчанию: 10.</li></ul>");
+        define("TOOLTIP_IPV6_ENABLE", "<span class='tooltip-header'>Enable IPv6</span>");
+        define("TOOLTIP_IPV6_CONFIGURATION", "<span class='tooltip-header'>Specify IPv6 Configuration Details</span>");
+        define("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP Mode</span>
+                                            <ul class='tooltip-list'>
+                                            <li>Specifies the DHCP mode for IPv6 configuration</li>
+                                            </ul>");
+        define("TOOLTIP_IPV6_ADDRESS", "<span class='tooltip-header'>IPv6 Network Address</span>");
+        define("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
+        define("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>IPv6 Pirmary DNS Server Address</span>");
+        define("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>IPv6 Secondary DNS Server Address</span>");
 		define("TOOLTIP_DEVICE_TAB", " <b><i>Device Tab</i></b><br>Конфигурация устройства  ".$NXTText." . (Яркость светодиода, управление громкостью, настройки времени, перезагрузка и сброс до заводских настроек)");
 		define("TOOLTIP_DEVICE_SPEAKERVOLUME", " <span style='font-size: 16px; font-style:bold'>Громкость динамика</span> <ul style='padding-left: 1em'><li>Установите громкость динамика ".$NXTText.".</li> <li>Для отключения звука установите значение 0.</li> <li>Диапазон значений: 0 - 100.</li> <li>По умолчанию: 40.</li></ul>");
 		define("TOOLTIP_DEVICE_LEDBRIGHTNESS", " <span style='font-size: 16px; font-style:bold'>Яркость подсветки светодиода</span> <ul style='padding-left: 1em'><li>Установите уровень яркости подсветки светодиода устройства ".$NXTText."</li> <li>Для отключения подсветки установите значение '0'.</li> <li>Диапазон яркости: 0 - 100.</li> <li>По умолчанию: 20.</li></ul>");
@@ -1657,6 +1704,19 @@ function defineStrings($HardwareType)
             define ("NETWORK_STATICIP_BROADCASTNETWORKLABEL", "Rede Broadcast:");
             define ("NETWORK_STATICIP_SUBNETMASKLABEL", "Máscara de subrede:");
             define ("NETWORK_STATICIP_DEFAULTGATEWAYLABEL", "Gateway padrão:");
+            define ("NETWORK_IPV6_ENABLE", "Enable IPv6");
+            define ("NETWORK_IPV6_CONFIGURATION", "IPv6 Configuration...");
+                // IPV6 Pop-up
+                define ("NETWORK_IPV6CONFIGURATION_TITLE", "IPv6 Configuration");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL", "General");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE", "DHCP Mode:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION", "Information Only");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "Normal");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE", "None");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_ADDRESS_PREFIX_LENGTH", "IPv6 Address/Subnet Prefix Length:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Default Gateway:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "DNS Server 1:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS Server 2:");
 
             define("SSL_PROTOCOL_LEGEND", "SSL Protocolo");
             define("SSLPROTO_DEFAULT", "Legacy");
@@ -2211,6 +2271,16 @@ define ("TOOLTIP_NETWORK_DOWNLOADLOGBUTTON", "<span style='font-size: 16px; font
                                                 <ul style='padding-left: 1em'><li>Especifica o atraso em segundos entre cada nova tentativa do cliente DHCP.</li>
                                                 <li>Variação de duração (segundos): 0 – 60.</li>
                                                 <li>Valor padrão: 10.</li></ul>");
+            define ("TOOLTIP_IPV6_ENABLE", "<span class='tooltip-header'>Enable IPv6</span>");
+            define ("TOOLTIP_IPV6_CONFIGURATION", "<span class='tooltip-header'>Specify IPv6 Configuration Details</span>");
+            define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP Mode</span>
+                                                <ul class='tooltip-list'>
+                                                <li>Specifies the DHCP mode for IPv6 configuration</li>
+                                                </ul>");
+            define ("TOOLTIP_IPV6_ADDRESS", "<span class='tooltip-header'>IPv6 Network Address</span>");
+            define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
+            define ("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>IPv6 Pirmary DNS Server Address</span>");
+            define ("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>IPv6 Secondary DNS Server Address</span>");
 			define("TOOLTIP_DEVICE_TAB"," <b><i>Aba Dispositivo</i></b><br>Configuração de dispositivo ".$NXTText." . (Brilho de LED, Controle de Volume, Configuração de Hora, Reboot e Reset de Fábrica)");
 			define("TOOLTIP_DEVICE_SPEAKERVOLUME"," <span style='font-size: 16px; font-style:bold'>Volume Alto-falante</span>
                                                 <ul style='padding-left: 1em'><li>Ajuste de volume do alto-falante ".$NXTText.".</li>

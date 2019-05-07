@@ -373,7 +373,7 @@ function submitComplete()
             }
 
 
-            if (initialStaticIP != document.getElementById('ipofboard').value || initialStaticSubNetMask != document.getElementById('subnetmask').value || initialStaticGateway != document.getElementById('gateway').value || ipTypeChanged() || tlsModeChange || deviceNameChange || IEEEModeChange) {
+            if (initialStaticIP != document.getElementById('ipofboard').value || initialStaticSubNetMask != document.getElementById('subnetmask').value || initialStaticGateway != document.getElementById('gateway').value || ipTypeChanged() || ipv6Changed() || tlsModeChange || deviceNameChange || IEEEModeChange) {
                 bStaticIPReboot = true;
                 bRebootDevice = true;
                 ignoreTimeout = true;
@@ -1354,6 +1354,50 @@ $(document).ready(function () {
      });
  });
 
+function HandleIPv6Change(elem) {
+    if (elem === undefined) {
+        elem = $('#ipv6checkbox');
+    }
+
+    if (elem.is(':checked')) {
+        $('#ipv6settingsbutton').show();
+    } else {
+        $('#ipv6settingsbutton').hide();
+    } 
+}
+
+function ShowIPv6Dlg()
+{
+    $("#loading-div-background").show();
+    $("#ipv6-div-container").show();
+
+//    setTimeout(HideDHCPDlg, 3000);
+}
+
+
+function HideIPv6Dlg()
+{
+    $("#loading-div-background").hide();
+    $("#ipv6-div-container").hide();
+}
+
+ $(document).ready(function () {
+    $('#ipv6checkbox').click(function () {
+        HandleIPv6Change($(this));
+    });
+
+    $('#ipv6settingsbutton').click(function() {
+        $('#ipv6settingsbutton').blur(); // Pop focus off... (doesn't do it on it's own for some reason)
+        ShowIPv6Dlg();
+    });
+
+    $('#ipv6settingsOKbutton').click(function() {
+        HideIPv6Dlg();
+    });
+
+    HandleIPv6Change();
+});
+
 
  // Set enabled/disabled state of config dependant controls...
  $(document).ready(function () {
@@ -1385,6 +1429,19 @@ $(document).ready(function () {
  function ipTypeChanged()
  {
      return isStaticIP != isCurrentlyStaticIP;
+ }
+
+ function ipv6Changed()
+ {
+    var ipv6Enabled = $('#ipv6checkbox').is(':checked') ? '1' : '0';
+    return (ipv6Enabled !== initialIPv6.enabled 
+        || (ipv6Enabled === '1' 
+            && ($("#ipv6_dhcpmode").val() !== initialIPv6.dhcpMode 
+                || $("#ipv6_address").val() !== initialIPv6.address
+                || $("#ipv6_prefix_len").val() !== initialIPv6.subnetPrefixLength
+                || $("#ipv6_gateway").val() !== initialIPv6.gateway
+                || $("#ipv6_dns1").val() !== initialIPv6.dns1
+                || $("#ipv6_dns2").val() !== initialIPv6.dns2)));
  }
 
  function enableNWMSFields()

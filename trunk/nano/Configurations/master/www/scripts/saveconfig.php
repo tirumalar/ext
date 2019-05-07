@@ -15,6 +15,7 @@ include_once("inieditor.php");
 include_once("interfaceeditor.php");
 include_once("restarteyelock.php");
 include_once("IEEE802Details.php");
+include_once("IPv6Details.php");
 
 
 
@@ -25,6 +26,7 @@ include_once("IEEE802Details.php");
 $eyeLockINI = new INIEditor("/home/root/Eyelock.ini");
 $interfaceSettings = new InterfaceEditor();
 $IEEE802Settings = new IEEE802Details();
+$ipv6Settings = new IPv6Details();
 
 //error_log("saveconfig_postinclude");
 // Save everything out...
@@ -35,7 +37,9 @@ $eyeLockINI->LoadIniSettings(); // Need to load what it was, so that we can comp
 $eyeLockINI->SaveIniSettings($_POST);
 $interfaceSettings->LoadInterfaceSettings($eyeLockINI->HardwareType); // Must load the current state so we know how to process things when we write the new stuff out.
 //$IEEE802Settings->LoadIEEE802Config();
-
+$ipv6Settings->LoadConfig();
+$ipv6Settings->ParseRequest($_POST);
+$fullReboot = $ipv6Settings->SaveConfig();
 
 if (!$IEEE802Settings->SaveIEEE802Config($_POST))
 {
@@ -66,8 +70,6 @@ else
    // WriteToTempFile("postProcChangesDone\n");
         // Ok, if we switch from DHCP to Static or vice versa... OR if we changed the static IP... we need
         // To notify the client so that it can reload...
-    
-        $fullReboot = FALSE;
   
         if ($_POST['deviceipmode'] === "staticip") // changing to or staying on static...
         {
