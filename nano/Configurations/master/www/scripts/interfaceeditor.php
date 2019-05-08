@@ -789,16 +789,13 @@ class InterfaceEditor
 				$strNewInterfaces .= sprintf("broadcast %s\n", $this->BroadcastIp);
 				$strNewInterfaces .= sprintf("gateway %s\n", $this->Gateway);
 				$strNewInterfaces .= sprintf("hwaddress ether %s\n", $this->MacAddress);
+				$strNewInterfaces .= sprintf("dns-nameservers %s %s\n", $this->dns1, $this->dns2);
 				
 				$f = fopen("/home/www-internal/iftemp","w");
 				fwrite($f, $strNewInterfaces);
 				fclose($f);
 				
 				shell_exec("mv /home/www-internal/iftemp /home/www-internal/interfaces");
-				
-				$this->SaveDNSSettings($this->dns1, $this->dns2, "/home/www-internal/resolv.conf.temp");
-				
-				NXTW_shell_exec("1343");
 			}
 			else		
 			{

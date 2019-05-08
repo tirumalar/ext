@@ -79,6 +79,7 @@ then
 	mv /home/www-internal/hosts /etc/hosts
 
 	cp /home/www-internal/interfaces.default /home/www-internal/interfaces
+	cp /home/www-internal/interfaces6.default /home/www-internal/interfaces6
 
 	# uncommenting statements to force TLS
 	grep -iq "^#ssl.use-sslv2" '/home/root/lighttpd.conf' && sed -i s/'#ssl.use-sslv2'/'ssl.use-sslv2'/ '/home/root/lighttpd.conf' && sed -i s/'#ssl.use-sslv3'/'ssl.use-sslv3'/ '/home/root/lighttpd.conf'  && sed -i s/'#ssl.cipher-list'/'ssl.cipher-list'/ '/home/root/lighttpd.conf'
