@@ -673,7 +673,7 @@ unsigned int NwListener::MainLoop() {
 							// printf("m_port...%d\n", m_port);
 							// printf("Inside m_pSockSrv of NwListener\n");
 							EyelockLog(logger, INFO, "%s SocketServer Create!", name.c_str()); fflush(stdout);
-							m_pSockSrv = m_socketFactory->createSocketServer2("GRI.NwListenerSecure",m_port);
+							m_pSockSrv = m_socketFactory->createSocketServer2("GRI.NwListenerSecure",m_port, eIPv6);
 							// perror("Error in Socket creation in NwListener\n");
 						}
 

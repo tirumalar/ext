@@ -804,7 +804,7 @@ SocketServer::SocketServer(int Port, ENetwork Network, int QLen): SocketStream(N
 {
 	type = eNone;
 	task_fn = 0;
-	HostAddress Addr(0);
+	HostAddress Addr(0, Network);
 	Addr.SetPort(Port);
 	Bind(Addr);
 	if ( listen(SD, QLen) != 0 )

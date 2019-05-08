@@ -220,7 +220,7 @@ void TServerSocket::listen() {
   // into ipv6 space.
   //Mamigo
   for (res = res0; res; res = res->ai_next) {
-    if (res->ai_family == AF_INET || res->ai_next == NULL)
+    if (res->ai_family == AF_INET6 || res->ai_next == NULL)
       break;
   }
   //Mamigo
