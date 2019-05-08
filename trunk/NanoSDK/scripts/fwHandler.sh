@@ -212,7 +212,7 @@ upgradeMaster(){
 	cp /home/root/Eyelock.ini /home/upgradeTemp/root/Eyelock.ini 
 
 	# preserving FaceTracker config file, because device calibration data is stored there
-	cp /home/root/data/calibration/faceConfig.ini /home/upgradeTemp/root/data/calibration/faceConfig.ini
+	#cp /home/root/data/calibration/faceConfig.ini /home/upgradeTemp/root/data/calibration/faceConfig.ini
 	
 	cp /home/root/nxtlog.cfg /home/upgradeTemp/root/nxtlog.cfg
 	cp /home/root/SDKRegisterIPs.txt /home/upgradeTemp/root/SDKRegisterIPs.txt
