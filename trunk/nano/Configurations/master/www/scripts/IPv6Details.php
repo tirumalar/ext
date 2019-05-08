@@ -177,8 +177,8 @@ class IPv6Details
     function SetConfigParams()
     {
         $reboot = FALSE;
-        $isEnabled = $this->EnableIPv6 === "true";
         $reboot = $this->SetConfigParam("EnableIPv6", $this->EnableIPv6) || $reboot;
+        $isEnabled = $this->EnableIPv6 === "true";
         $reboot = ($this->SetConfigParam("DhcpMode", $this->DHCPMode) && $isEnabled) || $reboot;
         $reboot = ($this->SetConfigParam("Address", $this->HostAddress) && $isEnabled) || $reboot;
         $reboot = ($this->SetConfigParam("SubnetPrefixLength", $this->SubnetPrefixLength) && $isEnabled) || $reboot;
