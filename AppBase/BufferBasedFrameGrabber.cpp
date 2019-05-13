@@ -339,7 +339,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 
     if (!status)
     {
-	//	usleep(1000);
+		usleep(1000);
     	return NULL;
     }
     else
@@ -363,7 +363,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 		 status=m_ProcessBuffer->TryPop(m_current_process_queue_item);
 
 		if (status){
-			printf("Pop of process buffer successful\n");
+			// printf("Pop of process buffer successful\n");
 			break; //something to process
 		}
 
