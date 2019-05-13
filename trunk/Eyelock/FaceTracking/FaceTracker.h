@@ -231,6 +231,8 @@ private:
 
 	bool b_EnableFaceAGC;
 
+	bool bDoAESEncryption;
+
 	void SetExp(int cam, int val);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
 	void SelLedDistance(int val); // val between 0 and 100

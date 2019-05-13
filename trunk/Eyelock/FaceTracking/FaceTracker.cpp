@@ -241,7 +241,8 @@ FaceTracker::FaceTracker(char* filename)
 
 	bActiveCenterPos = FaceConfig.getValue("FTracker.ActivateCenterPosTest", false);
 
-
+	// Flag to enable/disable AES Encrption in port com
+	bDoAESEncryption = FaceConfig.getValue("FTracker.AESEncrypt", false);
 
 	m_Motor_Bottom_Offset = FaceConfig.getValue("FTracker.MotorBottomOffset",5);
 	m_Motor_Range = FaceConfig.getValue("FTracker.MotorRange",55);
@@ -1142,10 +1143,14 @@ void FaceTracker::moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, 
 		int MoveToLimitBound = 1;
 		//err = (no_move_area.y + no_move_area.height / 2) - eyes.y;		//Following no_move_area
 		//instead of following no_move_area we will use search_eye_area to make eyes at the center of no_move_area
+
+		float denum;
+
 		if(m_EyelockIrisMode == 2)
-			float denum = 1.25;
+			denum = 1.25;
 		else
-			float denum = 1.0/2.0;
+			denum = 1.0/2.0;
+
 		err = (search_eye_area.y + search_eye_area.height * denum) - eyes.y;
 
 		EyelockLog(logger, DEBUG,
@@ -1686,6 +1691,9 @@ void *init_facetracking(void *arg) {
 
 	EyelockLog(logger, TRACE, "Start FaceTracking Thread");
 
+	// Flag to enable/disable AES Encrption in port com
+	bool bDoAESEncryption = m_faceTracker.FaceConfig.getValue("FTracker.AESEncrypt", false);
+
 	int w, h;
 
 	pthread_t threadId;
@@ -1713,7 +1721,7 @@ void *init_facetracking(void *arg) {
 	face_init();
 
 	// Intialize Portcom for device control
-	portcom_start();
+	portcom_start(bDoAESEncryption);
 
 	// Load FaceTracking config... Configure all hardware
 	m_faceTracker.DoStartCmd();
