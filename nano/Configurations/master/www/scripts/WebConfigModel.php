@@ -74,7 +74,7 @@ class Model
         $this->IEEE802Settings->SaveIEEE802Config($thePost);
 
         // This function might cause a device reboot to be invoked...
-        $this->interfaceSettings->SaveInterfaceSettings($thePost, false, $eyeLockINI->HardwareType);
+        $this->interfaceSettings->SaveInterfaceSettings($thePost, false, $this->eyeLockINI->HardwareType);
     }
 
     ///////////////////////////////////////////////////////
