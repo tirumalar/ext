@@ -68,13 +68,13 @@ class IPv6Details
                     }
                     break;
                 case "ipv6_dhcpmode":
-                    if ($value === "information-only" || $value === "normal" || $value === "none")
+                    if ($value === "information-only" || $value === "normal" || $value === "auto" || $value === "none")
                     {
                         $this->DHCPMode = $value;
                     }
                     break;
                 case "ipv6_address":
-                    if ($this->IsValidIPv6Address($value))
+                    if ($this->IsEmptyOrValidIPv6Address($value))
                     {
                         $this->HostAddress = $value;
                     }
@@ -86,25 +86,30 @@ class IPv6Details
                     }
                     break;
                 case "ipv6_gateway":
-                    if ($this->IsValidIPv6Address($value))
+                    if ($this->IsEmptyOrValidIPv6Address($value))
                     {
                         $this->DefaultGateway = $value;
                     }
                     break;
                 case "ipv6_dns1":
-                    if ($this->IsValidIPv6Address($value))
+                    if ($this->IsEmptyOrValidIPv6Address($value))
                     {
                         $this->Dns1 = $value;
                     }
                     break;
                 case "ipv6_dns2":
-                    if ($this->IsValidIPv6Address($value))
+                    if ($this->IsEmptyOrValidIPv6Address($value))
                     {
                         $this->Dns2 = $value;
                     }
                     break;
             }
         }
+    }
+
+    function IsEmptyOrValidIPv6Address($address)
+    {
+        return $address === "" || $this->IsValidIPv6Address($address);
     }
 
     function IsValidIPv6Address($address)
