@@ -848,7 +848,7 @@ function CancelIdentifyDevice() {
     if (identifyDeviceTimer !== undefined) {
         try {
             clearTimeout(identifyDeviceTimer);
-        } catch {
+        } catch (err) {
         }
     }
 }
