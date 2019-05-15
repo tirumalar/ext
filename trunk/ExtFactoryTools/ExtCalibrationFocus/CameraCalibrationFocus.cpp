@@ -190,7 +190,7 @@ void setCamera(string cam, int delay){
 void setCameraStreaming(int cam){
 	int w,h;
 
-	vs = new VideoStream(cam);
+	vs = new VideoStream(cam, false);
 	vs->flush();
 	vs->get(&w,&h,(char *)outImg.data);
 	vs->get(&w,&h,(char *)outImg.data);
@@ -566,7 +566,7 @@ void streamVideoFocus(extFocus fs, int cam){
 	char fName[512];
 
 	VideoStream *vs;
-	vs = new VideoStream(cam);
+	vs = new VideoStream(cam, false);
 	vs->flush();
 	usleep(100);
 	vs->get(&w,&h,(char *)outImg.data);
@@ -636,7 +636,7 @@ void RunCamFocus(extFocus fs){
 	int faceCam = 8194;
 
 	VideoStream *vs;
-	vs = new VideoStream(leftCam);
+	vs = new VideoStream(leftCam, false);
 	vs->flush();
 	usleep(100);
 	vs->get(&w,&h,(char *)outImg.data);
@@ -656,7 +656,7 @@ void RunCamFocus(extFocus fs){
 	delete(vs);
 
 
-	vs = new VideoStream(rightCam);
+	vs = new VideoStream(rightCam, false);
 	vs->flush();
 	usleep(100);
 	vs->get(&w,&h,(char *)outImg.data);
@@ -682,7 +682,7 @@ void RunCamFocus(extFocus fs){
 
 
 	//fs = new extFocus();
-	vs = new VideoStream(leftCam);
+	vs = new VideoStream(leftCam, false);
 	vs->flush();
 	usleep(10000);
 	vs->get(&w,&h,(char *)outImg.data);
@@ -701,7 +701,7 @@ void RunCamFocus(extFocus fs){
 	}
 	delete(vs);
 
-	vs = new VideoStream(rightCam);
+	vs = new VideoStream(rightCam, false);
 	vs->flush();
 	usleep(100);
 	vs->get(&w,&h,(char *)outImg.data);
@@ -719,7 +719,7 @@ void RunCamFocus(extFocus fs){
 	}
 	delete(vs);
 
-	vs = new VideoStream(8194);
+	vs = new VideoStream(8194, false);
 	vs->flush();
 	usleep(100);
 	vs->get(&w,&h,(char *)outImg.data);
@@ -744,46 +744,41 @@ int main(int argc, char **argv)
 {
 	EyelockLog(logger, TRACE, "Inside main function");
 
-    int cal_cam_mode = 0;		//initializing camera to camera geometric calibration
-    int focusMode = 0;
+	geomtericCalibration gc("/home/root/data/calibration/faceConfig.ini");
+	bool bDoAESEncryption = gc.geoConfig.getValue("FTracker.AESEncrypt", false);
 
 	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
 
+	// Focus the cameras
+	portcom_start(bDoAESEncryption);
+	startFocusApp();
+
+	while(1){
+		char buff[512];
+		// Window prompting to enter the OIM Number on the console
+		string Msg = "Focusing of Cameras is complete";
+		string Msg1 = "Place the target for Geometric Calibration";
+		sprintf(buff, "Press 'q' to continue!");
+		// string Msg2 = ;
+		Mat MatImage(600, 900, CV_8UC3, Scalar(0,0,0));
+		cv::putText(MatImage,Msg, cvPoint(10,50), CV_FONT_HERSHEY_COMPLEX,1,cvScalar(0,0,255),2,CV_AA);
+		cv::putText(MatImage,Msg1, cvPoint(10,100), CV_FONT_HERSHEY_COMPLEX,1,cvScalar(0,0,255),2,CV_AA);
+		cv::putText(MatImage,buff, cvPoint(10,200), CV_FONT_HERSHEY_COMPLEX,1,cvScalar(0,0,255),2,CV_AA);
+		imshow(buff, MatImage);
+		char key = cv::waitKey();
+		if(key == 'q')
+			break;
+	};
+
+	sleep(2);
 
 	//Camera to camera geometric calibration
-	if (strcmp(argv[1],"calcam")==0)
-	{
-		EyelockLog(logger, DEBUG, "calcam mode is running");
-		//run_mode =1;
-		cal_cam_mode=1;
-	}
+	gc.DoStartCmd_CamCal();
+	startGeometricCalibrationApp(gc, gc.m_calDebug);
 
-	if (strcmp(argv[1],"focus")==0)
-	{
-		focusMode =1;
+	outImg.release();
+	return 0;
 
-	}
-
-	//Set environment for camera to camera calibration
-	if (cal_cam_mode){
-		geomtericCalibration gc("/home/root/data/calibration/faceConfig.ini");
-
-		portcom_start();
-		gc.DoStartCmd_CamCal();
-		startGeometricCalibrationApp(gc, gc.m_calDebug);
-
-		return 0;
-
-	}
-
-	if(focusMode){
-		portcom_start();
-		startFocusApp();
-
-		outImg.release();
-		return 0;
-
-	}
 }
 
 

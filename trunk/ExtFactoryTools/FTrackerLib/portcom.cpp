@@ -16,21 +16,38 @@
 #include <netinet/in.h>	/* needed for sockaddr_in */
 #include <time.h>
 #include "logging.h"
+#include "FileConfiguration.h"
 
 static int sockfd;
 #define SERVER_ADDR     "192.168.4.172"     /* localhost */
 
 const char logger[30] = "PortCom";
 
-pthread_mutex_t lock;
+#define ENCRYPT 1
 
-int portcom_start() {
+pthread_mutex_t lock1;
+#if ENCRYPT
+#include "aes.h"
+#define AES128
+
+/*
+ uint8_t key[] = { 0x60, 0x3d, 0xeb, 0x10, 0x15, 0xca, 0x71, 0xbe, 0x2b, 0x73, 0xae, 0xf0, 0x85, 0x7d, 0x77, 0x81,
+                      0x1f, 0x35, 0x2c, 0x07, 0x3b, 0x61, 0x08, 0xd7, 0x2d, 0x98, 0x10, 0xa3, 0x09, 0x14, 0xdf, 0xf4 };
+ */
+uint8_t key[] = { 0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6, 0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c };
+uint8_t iv[]  = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
+struct AES_ctx ctx;
+#endif
+
+int portcom_start(bool bEncrpytFlag) {
 	EyelockLog(logger, TRACE, "portcom_start");
 
-	pthread_mutex_init(&lock,NULL);
+	pthread_mutex_init(&lock1,NULL);
 
 	struct sockaddr_in dest;
-
+	if(bEncrpytFlag){
+		AES_init_ctx_iv(&ctx, key,iv);
+	}
 	// Open socket for streaming
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		EyelockLog(logger, ERROR, "portcom_start socket error");
@@ -54,17 +71,31 @@ int portcom_start() {
 		// printf("Cant Connect to server\n");
 		return (0);
 	}
+
+
+	return (0);
 }
 
 int in_send = 0;
 
-void port_com_send(char *cmd_in)
+void port_com_send(char *cmd_in, float *pr_time)
 {
 	EyelockLog(logger, TRACE, "port_com_send");
-	pthread_mutex_lock(&lock);
 
+	static bool bEncrpytFlag;
+	static int firstEntry = 1;
+	if(firstEntry){		
+		FileConfiguration FaceConfig("/home/root/data/calibration/faceConfig.ini");
+		bEncrpytFlag = FaceConfig.getValue("FTracker.AESEncrypt", false);
+		firstEntry = 0;
+	}
+
+	pthread_mutex_lock(&lock1);
+
+	char encr_sig[0] = "@";
 	char buffer[512];
 	char cmd[512];
+	char cmd_encr[512];
 	int rv;
 	FILE *file;
 
@@ -75,13 +106,29 @@ void port_com_send(char *cmd_in)
 
 	while (recv(sockfd, buffer, 512, MSG_DONTWAIT) > 0); // clearing input buffer (flush)
 	int t = clock();
-
 	sprintf(buffer, "%s\n", cmd);
-	rv = send(sockfd, buffer, strlen(buffer), 0);
-	if (rv != (int) strlen(buffer))
-		printf("rv & command length don't match %d %d\n", rv, strlen(buffer));
+	/**************Encryption********************************************/
+	if(bEncrpytFlag){
+		sprintf(cmd_encr, "%s\n", cmd);
+		printf("\n before enc: %s ",cmd_encr);
+		int enc_size = strlen(cmd_encr);
+		enc_size = (enc_size/16+1)*16;
+		AES_init_ctx_iv(&ctx, key,iv);
+		AES_CBC_encrypt_buffer(&ctx, cmd_encr,enc_size);
+		memset(buffer,0x00,512);
+		buffer[0]='@';
+		memcpy(buffer+1,cmd_encr,enc_size);
+	//	printf("sending enc: %s \n",buffer);
+		rv = send(sockfd, buffer, enc_size+1, 0);
+		if (rv != (enc_size+1))
+			printf("rv & command length don't match %d %d\n", rv, strlen(buffer));
 	//printf("%d rv send %d\n",x,rv);
-
+	}else{
+		rv = send(sockfd, buffer, strlen(buffer), 0);
+		if (rv != (int) strlen(buffer))
+			printf("rv & command length don't match %d %d\n", rv, strlen(buffer));
+		//printf("%d rv send %d\n",x,rv);
+	}
 	struct timeval tv;
 	tv.tv_sec = 5;
 	tv.tv_usec = 0;
@@ -100,22 +147,18 @@ void port_com_send(char *cmd_in)
 		{
 		}
 	}
-
-	file = fopen("port.log", "at");
-	if (file)
-	{
-		fprintf(file, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
-				(float) clock() / CLOCKS_PER_SEC,
+	PortComLog(logger, DEBUG, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n", (float) clock() / CLOCKS_PER_SEC,
 				(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
-		fclose(file);
-	}
 
-	pthread_mutex_unlock(&lock);
+	if (pr_time)
+		*pr_time=(float) (clock() - t) / CLOCKS_PER_SEC;
+
+	pthread_mutex_unlock(&lock1);
 }
 
 int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	EyelockLog(logger, TRACE, "port_com_send");
-	pthread_mutex_lock(&lock);
+	pthread_mutex_lock(&lock1);
 
 
 	// REMOVE TRAILING CRS
@@ -173,17 +216,10 @@ while (1)
 				break;
 		}
 	}
-
-	file = fopen("port.log", "at");
-	if (file)
-	{
-		fprintf(file, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
-				(float) clock() / CLOCKS_PER_SEC,
-				(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
-		fclose(file);
-	}
-
-	pthread_mutex_unlock(&lock);
+	PortComLog(logger, DEBUG, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
+					(float) clock() / CLOCKS_PER_SEC,
+					(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
+	pthread_mutex_unlock(&lock1);
 
 	return strlen(buffer);
 }

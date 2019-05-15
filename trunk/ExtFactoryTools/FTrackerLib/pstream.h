@@ -1,6 +1,7 @@
+#include "logging.h"
 
 #define BUFLEN 1500
-#define IMAGE_SIZE 1152000
+//#define IMAGE_SIZE 1152000
 #define NPACK 10
 // 8192 left camer
 // 8193 right
@@ -14,7 +15,7 @@
 
 #define IMAGE_SIZE WIDTH*HEIGHT
 
-typedef struct ImageQueueItem {
+struct ImageQueueItemF {
 	unsigned char *m_ptr;	// image size 1152000
 	int m_ill0;
 	int m_frameIndex;
@@ -22,22 +23,23 @@ typedef struct ImageQueueItem {
 	int item_id;
 };
 
-typedef RingBuffer<ImageQueueItem> RingBufferImageQueue;
+typedef RingBuffer<ImageQueueItemF> RingBufferImageQueueF;
 
 class VideoStream {
 public:
-	VideoStream(int port);
+	VideoStream(int port, bool ImageAuthFlag);
 	~VideoStream();
 	int m_port;
+	bool m_UseImageAuthentication;
 	volatile int running;
 	int cam_id;
-	RingBufferImageQueue *m_pRingBuffer;
+	RingBufferImageQueueF *m_pRingBuffer;
 
-	RingBufferImageQueue *m_FreeBuffer;
-	RingBufferImageQueue *m_ProcessBuffer;
+	RingBufferImageQueueF *m_FreeBuffer;
+	RingBufferImageQueueF *m_ProcessBuffer;
 
-	ImageQueueItem m_ImageQueueItem;
-	ImageQueueItem m_current_process_queue_item;
+	ImageQueueItemF m_ImageQueueItem;
+	ImageQueueItemF m_current_process_queue_item;
 
 	char buf[BUFLEN];
 	char offset_image[IMAGE_SIZE];
@@ -46,9 +48,9 @@ public:
 	pthread_t Thread;
 	static void *ThreadServer(void *arg);
 
-	ImageQueueItem GetFreeBuffer();
-	void ReleaseProcessBuffer(ImageQueueItem m);
-	void PushProcessBuffer(ImageQueueItem m);
+	ImageQueueItemF GetFreeBuffer();
+	void ReleaseProcessBuffer(ImageQueueItemF m);
+	void PushProcessBuffer(ImageQueueItemF m);
 
 	void flush(void);
 	int get(int *win, int *hin, char *m_pImageBuffer, char get_last=0);
@@ -58,5 +60,9 @@ public:
 
 	int frameId;
 
+	unsigned short calc_syndrome(unsigned short syndrome, unsigned short p);
+	unsigned short syndrome;
+	unsigned short seed;
+	void SetSeed(unsigned short sd);
 };
 

@@ -545,9 +545,11 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 	stringstream ssI;
 	string ssO;
 
+	FileConfiguration CalibConfig("/home/root/data/calibration/Calibration.ini");
+
 	ssI << auxRect.x;
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.targetRectX",ssO.c_str());
+	CalibConfig.setValue("FTracker.targetRectX",ssO.c_str());
 	if(m_calDebug){
 		printf("x:: %s\n", ssO.c_str());
 	}
@@ -556,7 +558,7 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 	ssI.clear();
 	ssI << auxRect.y;
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.targetRectY",ssO.c_str());
+	CalibConfig.setValue("FTracker.targetRectY",ssO.c_str());
 	if(m_calDebug){
 		printf("y:: %s\n", ssO.c_str());
 	}
@@ -565,7 +567,7 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 	ssI.clear();
 	ssI << auxRect.width;
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.targetRectWidth",ssO.c_str());
+	CalibConfig.setValue("FTracker.targetRectWidth",ssO.c_str());
 	if(m_calDebug){
 		printf("width:: %s\n", ssO.c_str());
 	}
@@ -574,7 +576,7 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 	ssI.clear();
 	ssI << auxRect.height;
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.targetRectHeight",ssO.c_str());
+	CalibConfig.setValue("FTracker.targetRectHeight",ssO.c_str());
 	if(m_calDebug){
 		printf("height:: %s\n", ssO.c_str());
 	}
@@ -584,79 +586,97 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 	ssI.clear();
 	ssI << rectRightAux[4];
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.magOffsetAuxRightCam",ssO.c_str());
+	CalibConfig.setValue("FTracker.magOffsetAuxRightCam",ssO.c_str());
 
 	ssI.clear();
 	ssI << rectLeftAux[4];
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.magOffsetAuxLeftCam",ssO.c_str());
+	CalibConfig.setValue("FTracker.magOffsetAuxLeftCam",ssO.c_str());
 
 	ssI.clear();
 	ssI << rectRightMain[4];
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.magOffsetMainRightCam",ssO.c_str());
+	CalibConfig.setValue("FTracker.magOffsetMainRightCam",ssO.c_str());
 
 	ssI.clear();
 	ssI << rectLeftMain[4];
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.magOffsetMainLeftCam",ssO.c_str());
+	CalibConfig.setValue("FTracker.magOffsetMainLeftCam",ssO.c_str());
 
 
 	//Writing reference Marker points
 	ssI.clear();
 	ssI << float(rectRightAux[5]);
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.constantAuxRightCam_x",ssO.c_str());
+	CalibConfig.setValue("FTracker.constantAuxRightCam_x",ssO.c_str());
 	//printf("constantAuxRightCam_x:: %s		%3.3f\n", ssO.c_str(), rectRightAux[5]);
 
 	ssI.clear();
 	ssI << float(rectRightAux[6]);
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.constantAuxRightCam_y",ssO.c_str());
+	CalibConfig.setValue("FTracker.constantAuxRightCam_y",ssO.c_str());
 	//printf("constantAuxRightCam_y:: %s		%3.3f\n", ssO.c_str(), rectRightAux[6]);
-
 
 	ssI.clear();
 	ssI << float(rectLeftAux[5]);
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.constantAuxLeftCam_x",ssO.c_str());
+	CalibConfig.setValue("FTracker.constantAuxLeftCam_x",ssO.c_str());
 
 	ssI.clear();
 	ssI << float(rectLeftAux[6]);
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.constantAuxLeftCam_y",ssO.c_str());
+	CalibConfig.setValue("FTracker.constantAuxLeftCam_y",ssO.c_str());
 
 	ssI.clear();
 	ssI << float(rectRightMain[5]);
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.constantMainRightCam_x",ssO.c_str());
+	CalibConfig.setValue("FTracker.constantMainRightCam_x",ssO.c_str());
 
 	ssI.clear();
 	ssI << float(rectRightMain[6]);
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.constantMainRightCam_y",ssO.c_str());
+	CalibConfig.setValue("FTracker.constantMainRightCam_y",ssO.c_str());
 
 	ssI.clear();
 	ssI << float(rectLeftMain[5]);
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.constantMainLeftCam_x",ssO.c_str());
+	CalibConfig.setValue("FTracker.constantMainLeftCam_x",ssO.c_str());
 
 	ssI.clear();
 	ssI << float(rectLeftMain[6]);
 	ssI >> ssO;
-	geoConfig.setValue("FTracker.constantMainLeftCam_y",ssO.c_str());
+	CalibConfig.setValue("FTracker.constantMainLeftCam_y",ssO.c_str());
 
 
-	geoConfig.writeIni("/home/root/data/calibration/faceConfig.ini");
+	CalibConfig.writeIni("/home/root/data/calibration/Calibration.ini");
+
 	// Creating CalRect.ini and upload to OIM ftp
 	char buf[200];
 	std::ofstream outfile("/home/root/CalRect.ini");
 
 	EyelockLog(logger, DEBUG, "Create CalRect.ini file in /home/root folder");
+
+	// CalRect Parameters
 	outfile << "FTracker.targetRectX=" << auxRect.x << std::endl;
 	outfile << "FTracker.targetRectY=" << auxRect.y << std::endl;
 	outfile << "FTracker.targetRectWidth=" << auxRect.width << std::endl;
 	outfile << "FTracker.targetRectHeight=" << auxRect.height << std::endl;
+
+	// Magnification Offsets
+	outfile << "FTracker.magOffsetAuxRightCam=" << rectRightAux[4] << std::endl;
+	outfile << "FTracker.magOffsetAuxLeftCam=" << rectLeftAux[4] << std::endl;
+	outfile << "FTracker.magOffsetMainRightCam=" << rectRightMain[4] << std::endl;
+	outfile << "FTracker.magOffsetMainLeftCam=" << rectLeftMain[4] << std::endl;
+
+	//Writing reference Marker points x,y locations
+	outfile << "FTracker.constantAuxRightCam_x=" << float(rectRightAux[5]) << std::endl;
+	outfile << "FTracker.constantAuxRightCam_y=" << float(rectRightAux[6]) << std::endl;
+	outfile << "FTracker.constantAuxLeftCam_x=" << float(rectLeftAux[5]) << std::endl;
+	outfile << "FTracker.constantAuxLeftCam_y=" << float(rectLeftAux[6]) << std::endl;
+	outfile << "FTracker.constantMainRightCam_x=" << float(rectRightMain[5]) << std::endl;
+	outfile << "FTracker.constantMainRightCam_y=" << float(rectRightMain[6]) << std::endl;
+	outfile << "FTracker.constantMainLeftCam_x=" << float(rectLeftMain[5]) << std::endl;
+	outfile << "FTracker.constantMainLeftCam_y=" << float(rectLeftMain[6]) << std::endl;
 	outfile.close();
 
 	EyelockLog(logger, DEBUG, "Finished writing Calibration Rect data to CalRect.ini file");
@@ -672,21 +692,39 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 	RunSystemCmdCal(buf);
 	EyelockLog(logger, DEBUG, "Uploading of CalRect.ini File to OIM ftp is Successful");
 
+	// Window prompting to enter the OIM Number on the console
+	string Msg = "Enter the OIM device number on the command line";
+	Mat MatImage(600, 900, CV_8UC3, Scalar(0,0,0));
+	cv::putText(MatImage,Msg, cvPoint(50,100), CV_FONT_HERSHEY_COMPLEX,1,cvScalar(0,0,255),2,CV_AA);
+	imshow("Message", MatImage);
+	/*char v = cvWaitKey();
+	if(v == 'q')
+		continue;
+	*/
+
 	// Upload the files to FTP for backup
 	int Deviceid;
 	cout << "Enter the OIM device number" << endl;
 	cin >> Deviceid;
 
-	char newCalRectFileName[100];
-	char newfaceConfigFileName[100];
+	char newCalRectFName[100];
+
 	// Rename the CalRect.ini file with DeviceId entered
-	sprintf(newCalRectFileName, "CalRect.ini.%d", Deviceid);
-	if(rename("CalRect.ini", newCalRectFileName ) == 0)
-		printf("CalRect.ini file is renamed to %s\n", newCalRectFileName);
+	sprintf(newCalRectFName, "CalRect.ini.%d", Deviceid);
+	if(rename("CalRect.ini", newCalRectFName ) == 0)
+		printf("CalRect.ini file is renamed to %s\n", newCalRectFName);
 	else
 	   perror("Error renaming CalRect.ini file" );
 
+	char FTPDetails[200];
+	sprintf(FTPDetails, "wput -B -t 2 -q %s ftp://mamigotesters:'C3$W4$gr3+'@107.22.234.115/EXTCalibrationFiles/", newCalRectFName);
+	fflush(stdout);
+	RunSystemCmdCal(FTPDetails);
+	printf("Upload of %s to ftp is Successful\n", newCalRectFName);
 
+
+#if 0
+	char newfaceConfigFileName[100];
 	// Copy the faceConfig.ini file to /home/root folder to rename and upload to ftp
 	system("cp data/calibration/faceConfig.ini .");
 
@@ -699,16 +737,11 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 	else
 		perror("Error renaming faceConfig.ini file" );
 
-	char FTPDetails[200];
-	sprintf(FTPDetails, "wput -B -t 2 -q %s ftp://mamigotesters:'C3$W4$gr3+'@107.22.234.115/EXTCalibrationFiles/", newCalRectFileName);
-	fflush(stdout);
-	RunSystemCmdCal(FTPDetails);
-	printf("Upload of %s to ftp is Successful\n", newCalRectFileName);
-
 	sprintf(FTPDetails, "wput -B -t 2 -q %s ftp://mamigotesters:'C3$W4$gr3+'@107.22.234.115/EXTCalibrationFiles/", newfaceConfigFileName);
 	fflush(stdout);
 	RunSystemCmdCal(FTPDetails);
 	printf("Upload of %s to ftp is Successful\n", newfaceConfigFileName);
+#endif
 
 }
 
