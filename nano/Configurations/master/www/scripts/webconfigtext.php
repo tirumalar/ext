@@ -125,10 +125,10 @@ function defineStrings($HardwareType)
                 define ("NETWORK_IPV6CONFIGURATION_TITLE", "IPv6 Configuration");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL", "General");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE", "DHCP Mode:");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION", "Information Only");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "Normal");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION", "Stateless");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "Stateful");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_AUTO", "Auto");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE", "None");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE", "Off");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_ADDRESS_PREFIX_LENGTH", "IPv6 Address/Subnet Prefix Length:");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Default Gateway:");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "DNS Server 1:");
@@ -687,9 +687,12 @@ function defineStrings($HardwareType)
 
             define ("TOOLTIP_IPV6_ENABLE", "<span class='tooltip-header'>Enable IPv6</span>");
             define ("TOOLTIP_IPV6_CONFIGURATION", "<span class='tooltip-header'>Specify IPv6 Configuration Details</span>");
-            define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP Mode</span>
+            define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP Mode:</span>
                                                 <ul class='tooltip-list'>
-                                                <li>Specifies the DHCP mode for IPv6 configuration</li>
+                                                <li><b>Stateless</b> – DHCPv6 is used to set DNS servers and NTP servers etc, but not to set IPv6 addresses</li>
+                                                <li><b>Stateful</b> - DHCPv6 is used to set IPv6 addresses as well as DNS servers etc.</li>
+                                                <li><b>Auto</b> – The use of DHCPv6 is determined by the router advertisements</li>
+                                                <li><b>Off</b> - DHCPv6 is disabled.</li>
                                                 </ul>");
             define ("TOOLTIP_IPV6_ADDRESS", "<span class='tooltip-header'>IPv6 Network Address</span>");
             define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
@@ -1464,9 +1467,12 @@ function defineStrings($HardwareType)
         define("TOOLTIP_ADVDHCP_RETRYDELAY", " <span style='font-size: 16px; font-style:bold'>Задержка перед повторами</span> <ul style='padding-left: 1em'><li>Устанавливает задержку в секундах между попытками клиента DHCP.</li> <li>Диапазон (в секундах): 0 - 60.</li> <li>Значение по умолчанию: 10.</li></ul>");
         define("TOOLTIP_IPV6_ENABLE", "<span class='tooltip-header'>Enable IPv6</span>");
         define("TOOLTIP_IPV6_CONFIGURATION", "<span class='tooltip-header'>Specify IPv6 Configuration Details</span>");
-        define("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP Mode</span>
+        define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP Mode:</span>
                                             <ul class='tooltip-list'>
-                                            <li>Specifies the DHCP mode for IPv6 configuration</li>
+                                            <li><b>Stateless</b> – DHCPv6 is used to set DNS servers and NTP servers etc, but not to set IPv6 addresses</li>
+                                            <li><b>Stateful</b> - DHCPv6 is used to set IPv6 addresses as well as DNS servers etc.</li>
+                                            <li><b>Auto</b> – The use of DHCPv6 is determined by the router advertisements</li>
+                                            <li><b>Off</b> - DHCPv6 is disabled.</li>
                                             </ul>");
         define("TOOLTIP_IPV6_ADDRESS", "<span class='tooltip-header'>IPv6 Network Address</span>");
         define("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
@@ -2276,9 +2282,12 @@ define ("TOOLTIP_NETWORK_DOWNLOADLOGBUTTON", "<span style='font-size: 16px; font
                                                 <li>Valor padrão: 10.</li></ul>");
             define ("TOOLTIP_IPV6_ENABLE", "<span class='tooltip-header'>Enable IPv6</span>");
             define ("TOOLTIP_IPV6_CONFIGURATION", "<span class='tooltip-header'>Specify IPv6 Configuration Details</span>");
-            define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP Mode</span>
+            define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP Mode:</span>
                                                 <ul class='tooltip-list'>
-                                                <li>Specifies the DHCP mode for IPv6 configuration</li>
+                                                <li><b>Stateless</b> – DHCPv6 is used to set DNS servers and NTP servers etc, but not to set IPv6 addresses</li>
+                                                <li><b>Stateful</b> - DHCPv6 is used to set IPv6 addresses as well as DNS servers etc.</li>
+                                                <li><b>Auto</b> – The use of DHCPv6 is determined by the router advertisements</li>
+                                                <li><b>Off</b> - DHCPv6 is disabled.</li>
                                                 </ul>");
             define ("TOOLTIP_IPV6_ADDRESS", "<span class='tooltip-header'>IPv6 Network Address</span>");
             define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
