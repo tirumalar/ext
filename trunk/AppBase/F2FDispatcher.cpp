@@ -1614,10 +1614,10 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 	msg->getFrameInfo(frameNo,eyeIdx,cam, EXTCameraIndex);
 	float MatchScore = msg->getScore();
 	if (state == PASSED) {
-			string name;
-			name.assign(msg->getName());
-			char *PersonName = strtok ((char*)name.c_str(),"|");
-			if (m_pMatchType->m_duress && m_authMode >= PIN_AND_IRIS_DURESS) {
+		string name;
+		name.assign(msg->getName());
+		char *PersonName = strtok ((char*)name.c_str(),"|");
+		if (m_pMatchType->m_duress && m_authMode >= PIN_AND_IRIS_DURESS) {
 			EyelockLog(logger, DEBUG, "Match success ID is %s CameraId:%d FrameId:%d MatchScore:%f", msg->getName().c_str(), EXTCameraIndex, frameNo, MatchScore);
 			EyelockEvent("Match success(Duress) ID is %s", msg->getName().c_str());
 			sprintf(tmp, "Match success(Duress) ID is %s", msg->getName().c_str());
@@ -1632,7 +1632,7 @@ void F2FDispatcher::LogMatchResult(MatchResult *msg)
 			{
 				EyelockEvent("Match success ID is %s", msg->getName().c_str());
 			}
-			sprintf(tmp, "Match success ID is %s", PersonName);
+			sprintf(tmp, "Match success ID is %s", msg->getName().c_str());
 			sprintf(DebugSession, "Match success ID is %s CameraId:%d FrameId:%d MatchScore:%f", PersonName, EXTCameraIndex, frameNo, MatchScore);
 		}
 		SDKCallbackMsg msg(MATCH, std::string(tmp));
