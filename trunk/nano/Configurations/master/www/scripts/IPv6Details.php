@@ -15,6 +15,12 @@ class IPv6Details
     public $DefaultGateway;
     public $Dns1;
     public $Dns2;
+    public $AssignedIPAddresses = [
+        "LinkLocal" => "",
+        "Global" => "",
+        "GlobalTemporary" => "",
+        "Static" => ""
+    ];
 
     public $ConfigFilename = "/home/www-internal/interfaces6";
     public $ConfigFileContents = "";
@@ -29,6 +35,35 @@ class IPv6Details
         "Dns1" => "",
         "Dns2" => ""
     ];
+
+    function __construct ()
+    {
+        $this->LoadAsssignedIPAddresses();
+    }
+
+    function GetAssignedIPAddress($includeGreps, $excludeGreps)
+    {
+        $greps = "";
+        foreach ($includeGreps as $grep)
+        {
+            $greps = $greps." | grep '".$grep."'";
+        }
+
+        foreach ($excludeGreps as $grep)
+        {
+            $greps = $greps." | grep -v '".$grep."'";
+        }
+
+        return trim(shell_exec("ip -6 addr show dev usbnet0 | grep inet6 ".$greps." | head -n1 | awk '{print $2}' | cut -d'/' -f1"));
+    }
+
+    function LoadAsssignedIPAddresses()
+    {
+        $this->AssignedIPAddresses["LinkLocal"] = $this->GetAssignedIPAddress(["scope link"], []);
+        $this->AssignedIPAddresses["Global"] = $this->GetAssignedIPAddress(["scope global", "dynamic"], ["temporary"]);
+        $this->AssignedIPAddresses["GlobalTemporary"] = $this->GetAssignedIPAddress(["scope global", "temporary", "dynamic"], []);
+        $this->AssignedIPAddresses["Static"] = $this->GetAssignedIPAddress(["scope global"], ["temporary", "dynamic"]);
+    }
 
     function LoadConfig()
     {
@@ -218,6 +253,37 @@ class IPv6Details
         }
 
         return $isChanged;
+    }
+
+    function HasIPAddressAssigned()
+    {
+        foreach ($this->AssignedIPAddresses as $key => $value)
+        {
+            if ($value != "")
+            {
+                return TRUE;
+            }
+        }
+
+        return FALSE;
+    }
+
+    function GetDisplayIPAddress()
+    {
+        return $this->GetFirstNonEmptyValue($this->AssignedIPAddresses, ["Static", "GlobalTemporary", "Global", "LinkLocal"]);
+    }
+
+    function GetFirstNonEmptyValue($arr, $keys)
+    {
+        foreach ($keys as $key)
+        {
+            if (array_key_exists($key, $arr) && $arr[$key] != "")
+            {
+                return $arr[$key];
+            }
+        }
+
+        return "";
     }
 } // Class
 ?>
