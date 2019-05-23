@@ -154,8 +154,9 @@ bool SDKDispatcher::SendMsg(HostAddress &add,timeval &sendtimeOut,timeval &connt
 	try{
 		SocketClient client=m_socketFactory->createSocketClient("Eyelock.SDKDispatcherSecure");
 		client.SetTimeouts(conntimeOut);
-		client.Connect(add);
+		client.ConnectAuto(add);
 		client.SetTimeouts(sendtimeOut);
+
 		if(bblock){
 			client.Send(out_msg);
 			ret = true;
@@ -175,6 +176,9 @@ bool SDKDispatcher::SendMsg(HostAddress &add,timeval &sendtimeOut,timeval &connt
 		EyelockLog(logger, ERROR, "Failed to send callback");
 		ex.PrintException();
 	}
+	catch (...)	{
+		EyelockLog(logger, ERROR, "Failed to send callback");
+	}
 	EyelockLog(logger, TRACE, "Sending message completed");
 	return ret;
 }
@@ -186,7 +190,7 @@ void SDKDispatcher::SendTamperMsg(SDKCallbackMsg& msg){
 		std::string myset = *it;
 		try
 		{
-			HostAddress haddr(myset.c_str());
+			HostAddress haddr(myset.c_str(), eIPv4, false);
 			EyelockLog(logger, DEBUG, "Sending tamper message to: %s", myset.c_str());
 			BinMessage *pBinMsg = msg.GetBinMsg();
 			SendMsg(haddr,m_timeOut,m_timeOut, *pBinMsg);
@@ -206,7 +210,7 @@ void SDKDispatcher::SendMatchMsg(SDKCallbackMsg& msg){
 		EyelockLog(logger, TRACE, "Parsing destination: %s", t.c_str());
 		try
 		{
-			HostAddress haddr(t.c_str());
+			HostAddress haddr(t.c_str(), eIPv4, false);
 			EyelockLog(logger, DEBUG, "Sending match message to: %s", t.c_str());
 			BinMessage *pBinMsg = msg.GetBinMsg();
 			SendMsg(haddr,m_timeOut,m_timeOut,*pBinMsg);

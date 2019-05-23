@@ -965,6 +965,67 @@ void SocketClient::Connect(HostAddress& Address)
 	}
 }
 
+void SocketClient::ConnectAuto(HostAddress& Address)
+{
+	struct addrinfo hints;
+	struct addrinfo *result, *rp;
+	int sfd, s, j;
+	size_t len;
+	ssize_t nread;
+
+	/* Obtain address(es) matching host/port */
+
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC; /* Allow IPv4 or IPv6 */
+	hints.ai_socktype = SOCK_STREAM; /* TCP socket */
+	hints.ai_flags = 0;
+	hints.ai_protocol = 0; /* Any protocol */
+
+	char *portDelimeter = strrchr(Address.GetOrigHostName(), ':');
+	char *portEnd = strrchr(Address.GetOrigHostName(), '.');
+
+	char adressCStr[255+1];
+	memset(adressCStr,0,sizeof(adressCStr));
+	char portCStr[5+1];
+	memset(portCStr,0,sizeof(portCStr));
+
+	strncpy(adressCStr, Address.GetOrigHostName(), MIN(sizeof(adressCStr)-1, portDelimeter-Address.GetOrigHostName()));
+	strncpy(portCStr, portDelimeter+1, MIN(sizeof(portCStr)-1, portEnd-(portDelimeter+1)));
+
+	s = getaddrinfo(adressCStr, portCStr, &hints, &result);
+	if (s != 0) {
+		char errCStr[255];
+		snprintf(errCStr, sizeof(errCStr), "getaddrinfo: %s", gai_strerror(s));
+		throw NetConnectException(errCStr);
+	}
+
+	/* getaddrinfo() returns a list of address structures.
+	 Try each address until we successfully connect(2).
+	 If socket(2) (or connect(2)) fails, we (close the socket
+	 and) try the next address. */
+
+	for (rp = result; rp != NULL; rp = rp->ai_next) {
+		close(SD);
+		SD = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+		if (SD == -1)
+			continue;
+
+		if (connect(SD, rp->ai_addr, rp->ai_addrlen) != -1)
+			break; /* Success */
+	}
+
+	freeaddrinfo(result); /* No longer needed */
+
+	if (rp == NULL) { /* No address succeeded */
+		throw NetConnectException("Could not connect");
+	}
+
+	if(mySecureTrait)
+	{
+		mySecureTrait->Connect(Address);
+	}
+}
+
 /*
  * Since HostAddress name resolution is cached, connect() may fail
  * due to a modified IP address, such as in the case of DHCP lease expiration
