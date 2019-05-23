@@ -198,6 +198,7 @@ class Socket
 		int GetSD(void){ return SD;}
 		SecureTrait* GetST(void){ return mySecureTrait;}
 		void Bind(HostAddress& Addr, bool bReuse=true);
+		int AutoConnect(HostAddress& Addr, struct timeval& val);
 
 		/**
 		 * AK: Deprecated: should not be used
@@ -312,6 +313,7 @@ class SocketClient: public SocketStream
 		virtual void SecureIt();
 		void Connect(HostAddress& Addr);
 		void ConnectByHostname(HostAddress& Addr);
+		void ConnectAuto(HostAddress& Addr);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
