@@ -60,6 +60,7 @@ function defineStrings($HardwareType)
             define ("HOME_DEVICEINFO_GROUPTITLE", "Device Information");
             define ("HOME_DEVICEINFO_DEVICENAME", $NXTText." Name:");
             define ("HOME_DEVICEINFO_IPADDR", "IP Address:");
+            define ("HOME_DEVICEINFO_IPV6ADDR", "IPv6 Address:");
 			define ("HOME_DEVICEINFO_SERIAL", "Device ID:");
             define ("HOME_DEVICEINFO_MACADDR", "MAC Address:");
             define ("HOME_DEVICEINFO_LOCALTIME", $NXTText." Time Snapshot:");
@@ -133,6 +134,12 @@ function defineStrings($HardwareType)
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Default Gateway:");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "DNS Server 1:");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS Server 2:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS", "Status");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_LINK_LOCAL", "Link-local:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_TEMPORARY", "Global temporary:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_STATIC", "Static:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "Device currently has no IPv6 addresses assigned to it");
 
             define("SSL_PROTOCOL_LEGEND", "SSL Protocol");
             define("SSLPROTO_DEFAULT", "Legacy");
@@ -1059,7 +1066,8 @@ function defineStrings($HardwareType)
 		define("HOME_HEADING", "Информация о ".$NXTText." ");
 		define("HOME_DEVICEINFO_GROUPTITLE", "Информация об устройстве");
 		define("HOME_DEVICEINFO_DEVICENAME", "Имя ".$NXTText." :");
-		define("HOME_DEVICEINFO_IPADDR", "IP-адрес:");
+        define("HOME_DEVICEINFO_IPADDR", "IP-адрес:");
+        define("HOME_DEVICEINFO_IPV6ADDR", "IPv6ddress:");
 		define("HOME_DEVICEINFO_SERIAL", "Device ID:");
 		define("HOME_DEVICEINFO_MACADDR", "MAC-адрес:");
 		define("HOME_DEVICEINFO_LOCALTIME", "Точка восстановления ".$NXTText.":");
@@ -1112,6 +1120,12 @@ function defineStrings($HardwareType)
             define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Default Gateway:");
             define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "DNS Server 1:");
             define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS Server 2:");
+            define ("NETWORK_IPV6CONFIGURATION_STATUS", "Status");
+            define ("NETWORK_IPV6CONFIGURATION_STATUS_LINK_LOCAL", "Link-local:");
+            define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
+            define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_TEMPORARY", "Global temporary:");
+            define ("NETWORK_IPV6CONFIGURATION_STATUS_STATIC", "Static:");
+            define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "Device currently has no IPv6 addresses assigned to it");
         define("SSL_PROTOCOL_LEGEND", "SSL Protocol");
         define("SSLPROTO_DEFAULT", "Legacy");
         define("SSLPROTO_TLS12", "TLS 1.2 (Only)");
@@ -1652,6 +1666,7 @@ function defineStrings($HardwareType)
             define ("HOME_DEVICEINFO_GROUPTITLE", "Informação de Dispositivo");
             define ("HOME_DEVICEINFO_DEVICENAME", "Nome ".$NXTText.":");
             define ("HOME_DEVICEINFO_IPADDR", "Endereço IP:");
+            define ("HOME_DEVICEINFO_IPV6ADDR", "IPv6 Address:");
 			define ("HOME_DEVICEINFO_SERIAL", "ID de Dispositivo:");
             define ("HOME_DEVICEINFO_MACADDR", "Endereço MAC:");
             define ("HOME_DEVICEINFO_LOCALTIME", $NXTText." Tempo Instantâneo");
@@ -1726,6 +1741,12 @@ function defineStrings($HardwareType)
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Default Gateway:");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "DNS Server 1:");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS Server 2:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS", "Status");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_LINK_LOCAL", "Link-local:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_TEMPORARY", "Global temporary:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_STATIC", "Static:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "Device currently has no IPv6 addresses assigned to it");
 
             define("SSL_PROTOCOL_LEGEND", "SSL Protocolo");
             define("SSLPROTO_DEFAULT", "Legacy");
