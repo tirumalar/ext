@@ -170,7 +170,7 @@ void AudioDispatcher::process(MatchResult *msg)
 
 	if (m_pCmxHandler)
 	{
-		printf("HandleSendMsg message\n");
+		// printf("HandleSendMsg message\n");
 
 		if(msg->getState() == PASSED){
 			m_pCmxHandler->m_Randomseed = m_pCmxHandler->GenerateSeed();

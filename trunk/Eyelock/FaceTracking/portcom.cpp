@@ -85,7 +85,7 @@ void port_com_send(char *cmd_in, float *pr_time)
 	static bool bEncrpytFlag;
 	static int firstEntry = 1;
 	if(firstEntry){		
-		FileConfiguration FaceConfig("/home/root/data/calibration/faceConfig.ini");
+		FileConfiguration FaceConfig("/home/root/data/calibration/Face.ini");
 		bEncrpytFlag = FaceConfig.getValue("FTracker.AESEncrypt", false);
 		firstEntry = 0;
 	}
@@ -110,7 +110,7 @@ void port_com_send(char *cmd_in, float *pr_time)
 	/**************Encryption********************************************/
 	if(bEncrpytFlag){
 		sprintf(cmd_encr, "%s\n", cmd);
-		printf("\n before enc: %s ",cmd_encr);
+		// printf("\n before enc: %s ",cmd_encr);
 		int enc_size = strlen(cmd_encr);
 		enc_size = (enc_size/16+1)*16;
 		AES_init_ctx_iv(&ctx, key,iv);

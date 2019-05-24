@@ -400,12 +400,13 @@ m_LedConsolidator = NULL;
 
 	bIrisToFaceMapDebug = pConf->getValue("Eyelock.IrisToFaceMapDebug", false);
 	
+	bIrisToFaceMapValid = pConf->getValue("Eyelock.IrisToFaceMapValid", true);
 
 	m_activeEyeSideLabeling = pConf->getValue("Eyelock.EyeSideLabeling",false);;
 
 	m_minIrisDiameter = pConf->getValue("Eyelock.minIrisDiameter",int(150));
 
-	FileConfiguration m_FaceConfig("/home/root/data/calibration/faceConfig.ini");
+	FileConfiguration m_FaceConfig("/home/root/data/calibration/Face.ini");
 
 	m_OIMFTPEnabled = pConf->getValue("Eyelock.OIMFTPEnable", true);
 
@@ -445,7 +446,7 @@ m_LedConsolidator = NULL;
 		projOffset_a = CalRectConfig.getValue("FTracker.projectionOffsetValAux",float(200.00));
 
 	}else{
-		FileConfiguration CalibDefaultConfig("/home/root/data/calibration/Calibration.ini");
+		FileConfiguration CalibDefaultConfig("/home/root/data/calibration/CalRect.ini");
 
 		// To support old devices which don't have cal rect file stored on OIM
 		rectX = CalibDefaultConfig.getValue("FTracker.targetRectX",0);
@@ -498,6 +499,7 @@ m_LedConsolidator = NULL;
 	m_bIrisCaptureEnableResize = pConf->getValue("Eyelock.IrisCaptureEnableResize", false); // Hidden configged
 	m_expectedIrisWidth = pConf->getValue("GRI.ExpectedIrisWidth", 200);
 	m_actualIrisWidth = pConf->getValue("GRI.ActualIrisWidth", 130); //DMOTODO may want to base on segmented iris size...
+	m_MainCameraActualIrisWidth = pConf->getValue("Eyelock.MainCameraActualIrisWidth", 130);
 
 	m_bSortingLogEnable = pConf->getValue("Eyelock.SortingLogEnable", false);
 
@@ -2205,7 +2207,7 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 			return bSentSomething;
 		}
 
-		printf("NoofHaarEyes = %d, maxEyes = %d\n", NoOfHaarEyes, maxEyes);
+		EyelockLog(logger, DEBUG, "NoofHaarEyes = %d, maxEyes = %d\n", NoOfHaarEyes, maxEyes);
 
 		for(int eyeIdx=0;eyeIdx<maxEyes;eyeIdx++){
 			CvPoint2D32f irisCentroid = cvPoint2D32f(0,0);
@@ -2218,13 +2220,18 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 			if (m_IrisToFaceMapping){
 				m_eyeLabel = validateLeftRightEyecrops(FaceInfo.ScaledFaceCoord, ptrI, cam_idd, FaceInfo.faceImagePtr, m_faceIndex);
 				// printf("eye Label Information Cam_idd %d frameidx %d eyeLabel %d projStatus %d\n", cam_idd, m_faceIndex, eyeLabel, m_projStatus);
-				EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d label %d\n", cam_idd, m_faceIndex, m_eyeLabel);
+				EyelockLog(logger, DEBUG, "Eyes detected Info CameraId:%d FrameId:%d eyeLabel:%d\n", cam_idd, m_faceIndex, m_eyeLabel);
 			}
 
-			/*if(m_eyeLabel == 3){
-				printf("Not inside valid eye rect and hence don't process\n");
-				// return false;
-			}*/
+			if(bIrisToFaceMapValid)
+			{
+				// printf("eyeLabel.......%d\n", m_eyeLabel);
+
+				if(m_eyeLabel == 3){
+					EyelockLog(logger, DEBUG, "Not inside valid eye rect and hence discard the eyecrop\n");
+					return false;
+				}
+			}
 
 			m_sframe.GetCroppedEye(eyeIdx, eye->getEyeCrop(), left, top);
 
@@ -2511,9 +2518,20 @@ IplImage *m_scaleSrcHeader; */
 //int m_expectedIrisWidth = 254; //DMOTEST//160;//conf.getValue("GRI.ExpectedIrisWidth", 200);
 //int m_actualIrisWidth = 127;//conf.getValue("GRI.ActualIrisWidth", 130);
 
-IplImage *ImageProcessor::ResizeFrame(int width, int height, unsigned char *frame)
+IplImage *ImageProcessor::ResizeFrame(int width, int height, unsigned char *frame, int CameraId)
 {
-	float ratio = (m_expectedIrisWidth * 1.0) / m_actualIrisWidth;
+
+	float ratio;
+	if (CameraId == IRISCAM_AUX_LEFT){
+		ratio = (m_expectedIrisWidth * 1.0) / m_actualIrisWidth;
+	}else if (CameraId == IRISCAM_AUX_RIGHT){
+		ratio = (m_expectedIrisWidth * 1.0) / m_actualIrisWidth;
+	}else if (CameraId == IRISCAM_MAIN_LEFT){
+		ratio = (m_expectedIrisWidth * 1.0) / m_MainCameraActualIrisWidth;
+	}else if (CameraId == IRISCAM_MAIN_RIGHT){
+		ratio = (m_expectedIrisWidth * 1.0) / m_MainCameraActualIrisWidth;
+	}
+
 	// m_scaleDest = cvCreateImage(cvSize(m_width, m_height), IPL_DEPTH_8U, 1);
 
 	cvSetZero(m_scaleDest);
@@ -2671,6 +2689,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 						centroid.m_nCenterPointY);
 
 				if (m_IrisToFaceMapping){
+
 					m_eyeLabel = validateLeftRightEyecrops(FaceInfo.ScaledFaceCoord, ptrI, cam_idd, FaceInfo.faceImagePtr, m_faceIndex);
 				//	if(m_eyeLabel == 0)
 					//	return false;
@@ -2765,7 +2784,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 							unsigned long time_elaps = 0, time_newms = 0, currTimems = 0;
 
 							// Critical... resize the image
-							tmpImage = ResizeFrame(640, 480, im->imageData);
+							tmpImage = ResizeFrame(640, 480, im->imageData, cam_idd);
 
 							if(m_EnableISOSharpness){
 								cec = m_centreEyecrop;
@@ -2989,7 +3008,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				{
 					// First resize
 					resizeImage = cvCreateImageHeader(cvSize(640, 480), 8, 1);
-					resizeImage = ResizeFrame(640, 480, images.first->GetImage());
+					resizeImage = ResizeFrame(640, 480, images.first->GetImage(), cam_idd);
 					pImage = resizeImage->imageData;
 				}
 
@@ -3032,7 +3051,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				{
 					// First resize
 					resizeImage = cvCreateImageHeader(cvSize(640, 480), 8, 1);
-					resizeImage = ResizeFrame(640, 480, images.second->GetImage());
+					resizeImage = ResizeFrame(640, 480, images.second->GetImage(), cam_idd);
 					pImage = resizeImage->imageData;
 				}
 

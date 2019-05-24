@@ -301,6 +301,7 @@ public:
 	bool b_SaveBestEyes;
 	int m_expectedIrisWidth;
 	int m_actualIrisWidth;
+	int m_MainCameraActualIrisWidth;
 	bool m_bSortingLogEnable;
 
 	int m_xPixelResolutionPerCM;
@@ -323,7 +324,7 @@ public:
 	IplImage *m_scaleSrcHeader;
 
 	//functions
-	IplImage * ResizeFrame(int width, int height, unsigned char *frame);
+	IplImage * ResizeFrame(int width, int height, unsigned char *frame, int CameraId);
 	void SetCMXHandler(CmxHandler *pCmxHandler);
 
 #endif	// IRIS_CAPTURE
@@ -349,6 +350,7 @@ private:
 	bool m_activeEyeSideLabeling;
 	bool m_IrisToFaceMapping;
 	bool bIrisToFaceMapDebug;
+	bool bIrisToFaceMapValid;
 	unsigned int m_IrisToFaceMapCorrectionVal;
 	bool m_DHSScreens;
 	int m_LEDBrightness;
