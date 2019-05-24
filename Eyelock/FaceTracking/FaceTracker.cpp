@@ -272,13 +272,12 @@ FaceTracker::FaceTracker(char* filename)
 		rectH = CalRectConfig.getValue("FTracker.targetRectHeight", 121);
 	} else {
 		// To support old devices which don't have cal rect file stored on OIM
-		FileConfiguration CalibDefaultConfig("/home/root/data/calibration/Calibration.ini");
+		FileConfiguration CalibDefaultConfig("/home/root/data/calibration/CalRect.ini");
 		rectX = CalibDefaultConfig.getValue("FTracker.targetRectX", 0);
 		rectY = CalibDefaultConfig.getValue("FTracker.targetRectY", 497);
 		rectW = CalibDefaultConfig.getValue("FTracker.targetRectWidth", 960);
 		rectH = CalibDefaultConfig.getValue("FTracker.targetRectHeight", 121);
 	}
-
 
 #ifdef DEBUG_SESSION
 	bDebugSessions = FaceConfig.getValue("FTracker.DebugSessions",false);
@@ -1687,7 +1686,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 void *init_facetracking(void *arg) {
 
 	// printf("Inside init_facetracking\n");
-	FaceTracker m_faceTracker("/home/root/data/calibration/faceConfig.ini");
+	FaceTracker m_faceTracker("/home/root/data/calibration/Face.ini");
 
 	EyelockLog(logger, TRACE, "Start FaceTracking Thread");
 

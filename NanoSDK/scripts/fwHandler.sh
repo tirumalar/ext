@@ -213,6 +213,7 @@ upgradeMaster(){
 
 	# preserving FaceTracker config file, because device calibration data is stored there
 	#cp /home/root/data/calibration/faceConfig.ini /home/upgradeTemp/root/data/calibration/faceConfig.ini
+	cp /home/root/data/calibration/Face.ini /home/upgradeTemp/root/data/calibration/Face.ini
 	
 	cp /home/root/nxtlog.cfg /home/upgradeTemp/root/nxtlog.cfg
 	cp /home/root/SDKRegisterIPs.txt /home/upgradeTemp/root/SDKRegisterIPs.txt
@@ -224,7 +225,7 @@ upgradeMaster(){
 	mv /home/root/interfaces /home/upgradeTemp/root/interfaces
 	mv /home/root/interfaces.md5 /home/upgradeTemp/root/interfaces.md5
 
-	mv /home/root/Calibration.ini /home/upgradeTemp/root/Calibration.ini
+	mv /home/root/CalRect.ini /home/upgradeTemp/root/CalRect.ini
 	
 	${logger} -L"Backup done."
 
@@ -240,7 +241,7 @@ upgradeMaster(){
 		mv /home/upgradeTemp/root/*.log /home/root	
 		mv /home/upgradeTemp/root/interfaces /home/root/interfaces
 		mv /home/upgradeTemp/root/interfaces.md5 /home/root/interfaces.md5
-		mv /home/upgradeTemp/root/Calibration.ini /home/root/Calibration.ini
+		mv /home/upgradeTemp/root/CalRect.ini /home/root/CalRect.ini
 		
 		return 1
 	fi
