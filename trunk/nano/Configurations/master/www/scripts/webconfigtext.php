@@ -1727,26 +1727,26 @@ function defineStrings($HardwareType)
             define ("NETWORK_STATICIP_BROADCASTNETWORKLABEL", "Rede Broadcast:");
             define ("NETWORK_STATICIP_SUBNETMASKLABEL", "Máscara de subrede:");
             define ("NETWORK_STATICIP_DEFAULTGATEWAYLABEL", "Gateway padrão:");
-            define ("NETWORK_IPV6_ENABLE", "Enable IPv6");
-            define ("NETWORK_IPV6_CONFIGURATION", "IPv6 Configuration...");
+            define ("NETWORK_IPV6_ENABLE", "IPV6 Ativo");
+            define ("NETWORK_IPV6_CONFIGURATION", "Configuração IPv6...");
                 // IPV6 Pop-up
-                define ("NETWORK_IPV6CONFIGURATION_TITLE", "IPv6 Configuration");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL", "General");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE", "DHCP Mode:");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION", "Information Only");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "Normal");
+                define ("NETWORK_IPV6CONFIGURATION_TITLE", "Configuração IPv6");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL", "Geral");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE", "Modo DHCP:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION", "Sem estado");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "Stateful");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_AUTO", "Auto");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE", "None");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_ADDRESS_PREFIX_LENGTH", "IPv6 Address/Subnet Prefix Length:");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Default Gateway:");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "DNS Server 1:");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS Server 2:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS", "Status");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE", "Desligado");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_ADDRESS_PREFIX_LENGTH", "Endereço IPv6/Comprimento do prefixo de sub-rede:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Gateway padrão:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "Servidor DNS 1:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "Servidor DNS 2:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS", "Estado");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_LINK_LOCAL", "Link-local:");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_TEMPORARY", "Global temporary:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_STATIC", "Static:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "Device currently has no IPv6 addresses assigned to it");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_TEMPORARY", "Global temporária:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_STATIC", "Estático:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "O dispositivo atualmente não tem endereços IPv6 atribuídos a ele");
 
             define("SSL_PROTOCOL_LEGEND", "SSL Protocolo");
             define("SSLPROTO_DEFAULT", "Legacy");
@@ -2301,19 +2301,19 @@ define ("TOOLTIP_NETWORK_DOWNLOADLOGBUTTON", "<span style='font-size: 16px; font
                                                 <ul style='padding-left: 1em'><li>Especifica o atraso em segundos entre cada nova tentativa do cliente DHCP.</li>
                                                 <li>Variação de duração (segundos): 0 – 60.</li>
                                                 <li>Valor padrão: 10.</li></ul>");
-            define ("TOOLTIP_IPV6_ENABLE", "<span class='tooltip-header'>Enable IPv6</span>");
-            define ("TOOLTIP_IPV6_CONFIGURATION", "<span class='tooltip-header'>Specify IPv6 Configuration Details</span>");
-            define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP Mode:</span>
+            define ("TOOLTIP_IPV6_ENABLE", "<span class='tooltip-header'>IPV6 Ativo</span>");
+            define ("TOOLTIP_IPV6_CONFIGURATION", "<span class='tooltip-header'>Especificar detalhes da configuração do IPv6</span>");
+            define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>Modo DHCP IPv6:</span>
                                                 <ul class='tooltip-list'>
-                                                <li><b>Stateless</b> – DHCPv6 is used to set DNS servers and NTP servers etc, but not to set IPv6 addresses</li>
-                                                <li><b>Stateful</b> - DHCPv6 is used to set IPv6 addresses as well as DNS servers etc.</li>
-                                                <li><b>Auto</b> – The use of DHCPv6 is determined by the router advertisements</li>
-                                                <li><b>Off</b> - DHCPv6 is disabled.</li>
+                                                <li><b>Sem estado</b> – O DHCPv6 é usado para definir servidores DNS e servidores NTP, etc., mas não para definir endereços IPv6</li>
+                                                <li><b>Stateful</b> - O DHCPv6 é usado para definir endereços IPv6, servidores DNS, etc.</li>
+                                                <li><b>Auto</b> – O uso de DHCPv6 é determinado pelos anúncios do roteador</li>
+                                                <li><b>Off</b> - O DHCPv6 está desativado.</li>
                                                 </ul>");
-            define ("TOOLTIP_IPV6_ADDRESS", "<span class='tooltip-header'>IPv6 Network Address</span>");
-            define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
-            define ("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>IPv6 Pirmary DNS Server Address</span>");
-            define ("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>IPv6 Secondary DNS Server Address</span>");
+            define ("TOOLTIP_IPV6_ADDRESS", "<span class='tooltip-header'>Endereço de rede IPv6</span>");
+            define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>Endereço de gateway padrão do IPv6</span>");
+            define ("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>Endereço do servidor DNS primário IPv6</span>");
+            define ("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>Endereço do servidor DNS IPv6 secundário</span>");
 			define("TOOLTIP_DEVICE_TAB"," <b><i>Aba Dispositivo</i></b><br>Configuração de dispositivo ".$NXTText." . (Brilho de LED, Controle de Volume, Configuração de Hora, Reboot e Reset de Fábrica)");
 			define("TOOLTIP_DEVICE_SPEAKERVOLUME"," <span style='font-size: 16px; font-style:bold'>Volume Alto-falante</span>
                                                 <ul style='padding-left: 1em'><li>Ajuste de volume do alto-falante ".$NXTText.".</li>
