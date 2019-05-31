@@ -79,13 +79,23 @@ void  SetHardwareVals(char val)
     // TAMPER_POL is incoming webconfig polarity bit for CR tamper.
 } 
 */
-
+#if 0
 uint8 GetHardwareVals()
 {
     uint8 val = ~(0x07 & (~Status_Reg_HwPort_Read()));
     return val;
 }
+#endif
 
+uint8 GetHardwareVals()
+{
+uint8 val = 0;// = (0x07 & (Status_Reg_HwPort_Read()));
+   // val = (0x07 & ((LEDR_IN_Read()? 0:1) | (LEDG_IN_Read()? 0:2))) ;
+    val = ~(0x07 & ((LEDR_IN_Read()? 0:1) | (LEDG_IN_Read()? 0:2))) ;
+  // val = (LEDR_IN_Read()? 1:0) | (LEDG_IN_Read()? 2:0) ;
+
+    return val;
+}
 
 uint8 GetResetButton()
 {
