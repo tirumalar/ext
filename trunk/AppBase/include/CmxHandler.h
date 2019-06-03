@@ -50,6 +50,7 @@ using namespace std;
 class Configuration;
 class SocketFactory;
 class ImageProcessor;
+class F2FDispatcher;
 struct PortServerInfo;
 
 class CmxHandler: public HThread, public ProcessorChain{
@@ -89,6 +90,8 @@ public:
 
 	ImageProcessor *pImageProcessor;
 	OIMQueue *m_pOIMQueue;
+
+	F2FDispatcher *pF2FDispatcher;
 
 	bool m_ImageAuthentication;
 	unsigned short int m_Randomseed;

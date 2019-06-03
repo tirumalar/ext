@@ -17,7 +17,7 @@
 #include <unistd.h>
 //#include "DBReceive.h"
 //#include "LEDConsolidator.h"
-//#include "F2FDispatcher.h"
+#include "F2FDispatcher.h"
 //#include "NwMatchManager.h"
 //#include "Synchronization.h"
 #include "SocketFactory.h"
@@ -2583,8 +2583,12 @@ void CmxHandler::HandleSendMsg(char *msg, unsigned short randomseed){
 					}
 					else
 					{
-						SendMessage(buf, len, randomseed);
+						if (pF2FDispatcher != NULL && pF2FDispatcher->m_lastAuthState == PASSED)
+						{
+							SendMessage(buf, len, randomseed);
+						}
 					}
+					pF2FDispatcher->m_lastAuthState = CONFUSION;
 			}
 			if ((msg[2] != 0) && (msg[3] == 0) && (msg[4] == 0)) {
 				regs[0] = Red;
