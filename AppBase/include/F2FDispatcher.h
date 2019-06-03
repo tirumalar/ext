@@ -99,6 +99,8 @@ public:
 	pthread_mutex_t locateDeviceLock;
 	bool stopLocateDevice;
 
+	MatchResultState m_lastAuthState;
+
 protected:
 	bool checkToBeSendToNw( MatchResultState val);
 	bool checkToBeSendToBOB( MatchResultState val);

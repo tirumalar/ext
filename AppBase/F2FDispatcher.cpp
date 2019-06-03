@@ -51,7 +51,7 @@ enum EyelockProcessMode {
 
 // Relay iff wiegand
 F2FDispatcher::F2FDispatcher(Configuration& conf):ResultDispatcher(conf), m_pMatched(0), m_RelayTimeInMs(RELAY_TIME_IN_MS),m_Debug(false),m_ledConsolidator(NULL),pHTTPPostMessageHandler(NULL),
-		m_socketFactory(NULL),m_socketFactoryTamper(NULL),m_tamperDestAddr(NULL),m_resultDestAddr(NULL), m_pMatchType(NULL), m_pinNumberRcvd(0)
+		m_socketFactory(NULL),m_socketFactoryTamper(NULL),m_tamperDestAddr(NULL),m_resultDestAddr(NULL), m_pMatchType(NULL), m_pinNumberRcvd(0),m_lastAuthState(CONFUSION)
 {
 #ifdef DEBUG_SESSION
 	m_DebugTesting = conf.getValue("Eyelock.TestSystemPerformance",false);
@@ -1751,6 +1751,8 @@ void F2FDispatcher::process(MatchResult *msg)
 
 				m_pMatchType->UpdateMatchResult(msg);
 				state = msg->getState();
+
+				m_lastAuthState = state;
 
 				callNext(*msg);
 
