@@ -77,7 +77,7 @@ VideoStream::~VideoStream()
 	delete m_ProcessBuffer;
 }
 
-int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, char get_last)
+int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, bool bDebugFlag, char get_last)
 {
 	//printf("entering vid_stream_get\n");
 
@@ -100,11 +100,20 @@ int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, char get_last)
     	ReleaseProcessBuffer(m_current_process_queue_item);
     }
 
-	while((m_ProcessBuffer->TryPop(m_current_process_queue_item)) != true)
-	{
-		usleep(1000);
-	}
-
+    if(bDebugFlag){
+    	int nwaitCount = 0;
+    	while((m_ProcessBuffer->TryPop(m_current_process_queue_item)) != true)
+		{
+			usleep(1000);
+			if((nwaitCount++) > 2000) // If we don't get an image within 2 seconds return false
+				return false;
+		}
+    }else{
+		while((m_ProcessBuffer->TryPop(m_current_process_queue_item)) != true)
+		{
+			usleep(1000);
+		}
+    }
 	if (offset_sub_enable)
 	{
 		if (offset_image_loaded==0)
@@ -288,9 +297,10 @@ void *VideoStream::ThreadServer(void *arg)
 		while (vs->running) {
 			length = recvfrom(leftCSock, &databuf[rx_idx], min(1500, bytes_to_read),
 					0, (struct sockaddr *) &from, &fromlen);
-			if (length < 0)
-				printf("recvfrom error in leftCServer()");
-			else {
+			if (length < 0){
+				EyelockLog(loggerp, ERROR, "socket error in receiving face images! %s %d\n", strerror(length), vs->m_port);
+				 printf("recvfrom error in leftCServer()");
+			}else {
 				pkgs_received++;
 				if (!b_syncReceived && ((short *) databuf)[0] == 0x5555) {
 					datalen = 0;

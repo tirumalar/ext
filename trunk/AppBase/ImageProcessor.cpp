@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include "UtilityFunctions.h"
 #include "ISOBiometric.h"
-
+#include <chrono>
 
 #ifdef IRIS_CAPTURE
 #define NEW_LAPLACIAN_METHOD
@@ -172,7 +172,8 @@ m_LedConsolidator = NULL;
 
     if(m_shouldDetect)
     {
-        m_pSrv = new EyeDetectAndMatchServer(w, h,m_eyeDetectionLevel,m_LogFileName);
+    	// printf("###ImageWidth = %d, ImageHeight = %d\n", w, h);
+        m_pSrv = new EyeDetectAndMatchServer(w, h, m_eyeDetectionLevel,m_LogFileName);
         configureDetector();
         char *adbfilename = (char*)pConf->getValue("GRI.ClassifierFilename","data/adaboostClassifier.txt");
         printf("Loading Classifier file %s \n",adbfilename);
@@ -484,6 +485,7 @@ m_LedConsolidator = NULL;
 
 
 	m_bFaceMapDebug = m_FaceConfig.getValue("FTracker.FaceMapDebug", false);
+	n_bDebugFrameBuffer = m_FaceConfig.getValue("FTracker.DebugFrameBuffer", false);
 
 #ifdef IRIS_CAPTURE
 	// bool bIrisMode = pConf->getValue("Eyelock.IrisMode", 1) == 2; // DMOTODO default to capture for now...
@@ -557,7 +559,7 @@ m_LedConsolidator = NULL;
 		searchArea.height = pConf->getValue("GRI.EyeLocationSearchArea.height", searchArea.height);
 		bool fail = eyeSortingWrapObj->SetEyeLocationSearchArea(searchArea.x, searchArea.y, searchArea.width, searchArea.height);
 		if (!fail) {
-			EyelockLog(logger, WARN, "\nWARNING :Input given for EyeLocationSearchArea is invalid. ");
+		EyelockLog(logger, WARN, "\nWARNING :Input given for EyeLocationSearchArea is invalid. ");
 		}
 
 #if 0
@@ -619,6 +621,7 @@ m_LedConsolidator = NULL;
 		IplImageScreen1 = cvLoadImage("/home/root/screens/Slide1.BMP", cv::IMREAD_COLOR);
 		IplImageScreen2 = cvLoadImage("/home/root/screens/Slide2.BMP", cv::IMREAD_COLOR);
 		IplImageScreen3 = cvLoadImage("/home/root/screens/Slide3.BMP", cv::IMREAD_COLOR);
+		//  MatImgScreen3 = cv::cvarrToMat(IplImageScreen3);
 		cvNamedWindow("EXT", CV_WINDOW_NORMAL);
 		cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
 		cvShowImage("EXT", IplImageScreen1);
@@ -1078,12 +1081,19 @@ void ImageProcessor::clearFrameBuffer(){
 IplImage * ImageProcessor::GetFrame(){
 	// printf("ImageProcessor.....GetFrame\n");
 	IplImage *frame = NULL;
+	auto start = std::chrono::high_resolution_clock::now();
 	if(m_EyelockIrisMode == 2){
 		frame = aquisition->getFrame_nowait();
 		if (NULL == frame)
 			return NULL;
 	}else{
 		frame = aquisition->getFrame();
+	}
+	if(n_bDebugFrameBuffer){
+		auto finish = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsed = finish - start;
+		if(elapsed.count() > 2)
+			EyelockLog(logger, ERROR, "No Iris Image for 2 seconds %d\n", elapsed.count());
 	}
 	__int64_t ts;
 	int il0,frindx;
@@ -1729,19 +1739,22 @@ bool ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char
 	{
 		FaceInfo = g_pCameraFaceQueue->Peek(); // Top of the queue
 
+		// printf(">> [%d] FaceFrameNo = %d, IrisFrameNo = %d, Size = %d\n", CameraId, FaceInfo.FaceFrameNo, IrisFrameNo, g_pCameraFaceQueue->Size());
+
 		char DiffFrameNo = ( char) (FaceInfo.FaceFrameNo - IrisFrameNo);
 
 		// We found our match... Pop the FaceFrameInfo, then return
 		if (FaceInfo.FaceFrameNo == IrisFrameNo)
 		{
-			//printf("Found Frame returning true\n");
+			// printf("Found Frame returning true\n");
 			// It's a match!  Pop the entry and use it...  success!
 			FaceInfo = g_pCameraFaceQueue->Pop();
 			return true;
 		}
-		else if ((DiffFrameNo > 0) && (DiffFrameNo < 10))
+//DMOCHANGESATURDAY		else if ((DiffFrameNo > 0) && (DiffFrameNo < 10))
+		else if ((DiffFrameNo > 10) && (FaceInfo.FaceFrameNo > 245)) // FaceFrames are way ahead of us... we only have a queue of 5... so no point waiting...
 		{
-			//printf("DiffFrame > 0 returning false\n");
+			// printf("DiffFrame > 10 && FaceFrame > 245 returning false\n");
 			// If the difference is greater than 10 we are way out of sync or we are rolled over...
 			// In either case we execute the else case below and don't return here...
 
@@ -1749,7 +1762,22 @@ bool ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char
 			// FaceFrame info is AHEAD of us... we already missed the FaceFrame info we needed, just throw this Image away...
 			return false; //  Flat out ignore, we do not have a matching frame...in our queue
 		}
-		else
+		else if ((DiffFrameNo < -10) && (IrisFrameNo > 245)) // FaceFrames are way ahead of us... we only have a queue of 5... so no point waiting...
+		{
+			// printf("DiffFrame < -10 && IrisFrameNo > 245 returning false\n");
+			return false; // we rolled over but we're too far away to try to wait and match...
+		}
+		else if (DiffFrameNo == 1) // Special case... if Face is only 1 ahead... we use it because it should be  close... but don't delete the face...
+		{
+			// printf("DiffFrameNo == 1 returning true\n");
+			return true; // we don't delete because the next iris will be a perfect match possibly...
+		}
+		else if (DiffFrameNo > 0) // Except for rollover case, we can't process if Face is aheado Iris...
+		{
+			// printf("DiffFrameNo > 0 returning false\n");
+			return false; //  Flat out ignore, we do not have a matching frame...in our queue
+		}
+		else  // Our IrisFrame is ahead of our FaceFrame by less than 10  wait up to 1 second for the faceframe to catch up...
 		{
 			// We check the FaceFrame queue here and start removing items until we find our match (or closest match)
 			// We also wait for a bit if the queue gets emptied before we've found what we are looking for...
@@ -1761,24 +1789,24 @@ bool ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char
 			{
 				// If the lowest entry in the queue, is still lower than our image
 				// Pop entries off the top (we missed them already)
-				//printf("--< [%d-%ld] Looping Waiting = %d, Size = %d\n", CameraId, time_newms,FaceInfo.FaceFrameNo, g_pCameraFaceQueue->Size());
+				// printf("--< [%d-%ld] Looping Waiting = %d, Size = %d\n", CameraId, time_newms,FaceInfo.FaceFrameNo, g_pCameraFaceQueue->Size());
 
 				while (g_pCameraFaceQueue->Size()) // false if queue is empty...
 				{
 					FaceInfo = g_pCameraFaceQueue->Peek(); // Peek top of the queue
 
-					//printf("--< [%d] TryPop Success FrameNo = %d\n", CameraId, FaceInfo.FaceFrameNo);
+					// printf("--< [%d] TryPop Success FrameNo = %d\n", CameraId, FaceInfo.FaceFrameNo);
 
 					if (FaceInfo.FaceFrameNo < IrisFrameNo)
 					{
-					//	printf("--< [%d] Popping FrameNo = %d\n", CameraId, FaceInfo.FaceFrameNo);
+						// printf("--< [%d] Popping FrameNo = %d\n", CameraId, FaceInfo.FaceFrameNo);
 						g_pCameraFaceQueue->Pop();
 
 						continue;
 					}
 					else if (FaceInfo.FaceFrameNo > IrisFrameNo) // Our exact match was skipped...
 					{
-						//printf("--< [%d] Missed Frame!  Looking for close Match!  faceFrame = %d\n", CameraId, FaceInfo.FaceFrameNo);
+						// printf("--< [%d] Missed Frame!  Looking for close Match!  faceFrame = %d\n", CameraId, FaceInfo.FaceFrameNo);
 
 						if (FaceInfo.FaceFrameNo - IrisFrameNo < 3) // If we are within 2 frames of matching, use it but don't pop it...
 						{
@@ -1790,19 +1818,19 @@ bool ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char
 					}
 					else // its an exact match...  Pop it and return
 					{
-					//	printf("--< [%d] Exact Match Found!  %d\n", CameraId, FaceInfo.FaceFrameNo);
+						// printf("--< [%d] Exact Match Found!  %d\n", CameraId, FaceInfo.FaceFrameNo);
 
 						g_pCameraFaceQueue->Pop();
 						return true;
 					}
 				};
-			//	printf("--< [%d] TryPop failed, Size = %d\n", CameraId, g_pCameraFaceQueue->Size());
+				// printf("--< [%d] TryPop failed, Size = %d\n", CameraId, g_pCameraFaceQueue->Size());
 
-				usleep(10000); // Queue is empty... was 10ms then check again...
+				usleep(10000); // Queue is empty... wait 10ms then check again...
 			}while (ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time()) < time_newms);
 
-		//	printf("--< [%d-%ld] Looping Timed out\n", CameraId, time_newms);
-		//	printf("--< [%d] No Match Found in Entire QUEUE\n", CameraId);
+			// printf("--< [%d-%ld] Looping Timed out\n", CameraId, time_newms);
+			// printf("--< [%d] No Match Found in Entire QUEUE\n", CameraId);
 			return false;
 		}
 	} // End of while
@@ -2630,6 +2658,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 		bool detect;
 		int NoOfHaarEyes = 0;
+		int NoOfSpecularityEyes = 0;
 		int left, top;
 		std::map<int,EyeInfo> eyeMap;
 		int maxEyes = 0;
@@ -2653,6 +2682,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			);
 
 			NoOfHaarEyes = m_sframe.GetNumberOfHaarEyes();
+			NoOfSpecularityEyes = m_sframe.GetNumberOfSpecularityEyes();
 
 			if(m_shouldLog){
 				logResults(m_faceIndex);
@@ -2673,9 +2703,10 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				return bSentSomething;
 			}
 
+			printf("NoofHaarEyes = %d, NoOfSpecularityEyes = %d, maxEyes = %d\n", NoOfHaarEyes, NoOfSpecularityEyes, maxEyes);
+
 		}// !bSkipProcessing
 
-		printf("NoofHaarEyes = %d, maxEyes = %d\n", NoOfHaarEyes, maxEyes);
 
 		if ((maxEyes > 0) && !bSkipProcessingImage)
 		{

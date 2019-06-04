@@ -53,7 +53,7 @@ public:
 	void PushProcessBuffer(ImageQueueItemF m);
 
 	void flush(void);
-	int get(int *win, int *hin, char *m_pImageBuffer, char get_last=0);
+	int get(int *win, int *hin, char *m_pImageBuffer, bool bDebugFlag, char get_last=0);
 	//bool HandleReceiveImage(unsigned char *ptr, int length);
 	int GetCamId(void);
 	int length;
