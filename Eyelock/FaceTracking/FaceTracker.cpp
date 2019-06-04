@@ -1694,6 +1694,7 @@ void *init_facetracking(void *arg) {
 	bool bDoAESEncryption = m_faceTracker.FaceConfig.getValue("FTracker.AESEncrypt", false);
 
 	bool bDebugFrameBuffer = m_faceTracker.FaceConfig.getValue("FTracker.DebugFrameBuffer", false);
+
 	int w, h;
 
 	pthread_t threadId;
@@ -1740,8 +1741,8 @@ void *init_facetracking(void *arg) {
 		clock_t end = clock();
 
 		if(status == false){
-			EyelockLog(logger, ERROR, "No Face Image for 2 seconds");
-			exit(0);
+			EyelockLog(logger, ERROR, "No Face Image for 10 seconds");
+			// exit(0);
 		}else{
 			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			EyelockLog(logger, DEBUG, "time_spent in receiving a frame..%ld\n", time_spent);

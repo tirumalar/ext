@@ -1092,8 +1092,8 @@ IplImage * ImageProcessor::GetFrame(){
 	if(n_bDebugFrameBuffer){
 		auto finish = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double> elapsed = finish - start;
-		if(elapsed.count() > 2)
-			EyelockLog(logger, ERROR, "No Iris Image for 2 seconds %d\n", elapsed.count());
+		if(elapsed.count() > 10)
+			EyelockLog(logger, ERROR, "No Iris Image for 10 seconds %d\n", elapsed.count());
 	}
 	__int64_t ts;
 	int il0,frindx;
@@ -1739,42 +1739,24 @@ bool ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char
 	{
 		FaceInfo = g_pCameraFaceQueue->Peek(); // Top of the queue
 
-		// printf(">> [%d] FaceFrameNo = %d, IrisFrameNo = %d, Size = %d\n", CameraId, FaceInfo.FaceFrameNo, IrisFrameNo, g_pCameraFaceQueue->Size());
-
 		char DiffFrameNo = ( char) (FaceInfo.FaceFrameNo - IrisFrameNo);
 
 		// We found our match... Pop the FaceFrameInfo, then return
 		if (FaceInfo.FaceFrameNo == IrisFrameNo)
 		{
-			// printf("Found Frame returning true\n");
+			//printf("Found Frame returning true\n");
 			// It's a match!  Pop the entry and use it...  success!
 			FaceInfo = g_pCameraFaceQueue->Pop();
 			return true;
 		}
-//DMOCHANGESATURDAY		else if ((DiffFrameNo > 0) && (DiffFrameNo < 10))
-		else if ((DiffFrameNo > 10) && (FaceInfo.FaceFrameNo > 245)) // FaceFrames are way ahead of us... we only have a queue of 5... so no point waiting...
+		else if ((DiffFrameNo > 0) && (DiffFrameNo < 10))
 		{
-			// printf("DiffFrame > 10 && FaceFrame > 245 returning false\n");
+			//printf("DiffFrame > 0 returning false\n");
 			// If the difference is greater than 10 we are way out of sync or we are rolled over...
 			// In either case we execute the else case below and don't return here...
 
 			// If not rolling over and not totally out of sync...
 			// FaceFrame info is AHEAD of us... we already missed the FaceFrame info we needed, just throw this Image away...
-			return false; //  Flat out ignore, we do not have a matching frame...in our queue
-		}
-		else if ((DiffFrameNo < -10) && (IrisFrameNo > 245)) // FaceFrames are way ahead of us... we only have a queue of 5... so no point waiting...
-		{
-			// printf("DiffFrame < -10 && IrisFrameNo > 245 returning false\n");
-			return false; // we rolled over but we're too far away to try to wait and match...
-		}
-		else if (DiffFrameNo == 1) // Special case... if Face is only 1 ahead... we use it because it should be  close... but don't delete the face...
-		{
-			// printf("DiffFrameNo == 1 returning true\n");
-			return true; // we don't delete because the next iris will be a perfect match possibly...
-		}
-		else if (DiffFrameNo > 0) // Except for rollover case, we can't process if Face is aheado Iris...
-		{
-			// printf("DiffFrameNo > 0 returning false\n");
 			return false; //  Flat out ignore, we do not have a matching frame...in our queue
 		}
 		else  // Our IrisFrame is ahead of our FaceFrame by less than 10  wait up to 1 second for the faceframe to catch up...
