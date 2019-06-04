@@ -227,6 +227,12 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 			if (pNwDispatcher)
 				pF2FDispatcher->addProcessor(pNwDispatcher);
 				// pF2FDispatcher->SetNwDispatcher(pNwDispatcher);
+#ifdef CMX_C1
+			if (pCMXHandle)
+			{
+				pCMXHandle->pF2FDispatcher = pF2FDispatcher;
+			}
+#endif
 		}
 
 		if(NULL == m_matchDispatcher){
