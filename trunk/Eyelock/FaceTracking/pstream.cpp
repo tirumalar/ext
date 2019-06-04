@@ -23,6 +23,7 @@
 #include "Synchronization.h"
 #include "pstream.h"
 #include <signal.h>
+// #include "logging.h"
 
 const char loggerp[30] = "pstream";
 void diep(char *s)
@@ -105,7 +106,7 @@ int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, bool bDebugFlag, ch
     	while((m_ProcessBuffer->TryPop(m_current_process_queue_item)) != true)
 		{
 			usleep(1000);
-			if((nwaitCount++) > 2000) // If we don't get an image within 2 seconds return false
+			if((nwaitCount++) > 10000) // If we don't get an image within 10 seconds return false
 				return false;
 		}
     }else{
