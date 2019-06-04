@@ -2918,9 +2918,10 @@ void *leftCServer(void *arg) {
 			length = recvfrom(leftCSock, &databuf[rx_idx],
 					min(1500, bytes_to_read), 0, (struct sockaddr *) &from,
 					&fromlen);
-			if (length < 0)
+			if (length < 0){
 				printf("recvfrom error in leftCServer()");
-			else {
+				EyelockLog(logger, DEBUG, "socket error in receiving iris images! %s %d\n", strerror(length), ps->port);
+			}else {
 				pkgs_received++;
 
 				if (!b_syncReceived && ((short *) databuf)[0] == 0x5555) {

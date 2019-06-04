@@ -360,7 +360,7 @@ private:
 	IplImage *IplImageScreen3;
 	unsigned int m_FaceFrameQueueSize;
     SocketFactory *m_socketFactory;
-
+    bool n_bDebugFrameBuffer;
 };
 
 #endif /* IMAGEPROCESSOR_H_ */

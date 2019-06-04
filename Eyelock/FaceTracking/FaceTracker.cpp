@@ -1693,6 +1693,7 @@ void *init_facetracking(void *arg) {
 	// Flag to enable/disable AES Encrption in port com
 	bool bDoAESEncryption = m_faceTracker.FaceConfig.getValue("FTracker.AESEncrypt", false);
 
+	bool bDebugFrameBuffer = m_faceTracker.FaceConfig.getValue("FTracker.DebugFrameBuffer", false);
 	int w, h;
 
 	pthread_t threadId;
@@ -1731,7 +1732,20 @@ void *init_facetracking(void *arg) {
 	while (1)
 	{
 		// printf("Inside while of face tracking\n");
-		vs->get(&w, &h, (char *) outImg.data);
+
+		clock_t begin = clock();
+
+		bool status = vs->get(&w, &h, (char *) outImg.data, bDebugFrameBuffer);
+
+		clock_t end = clock();
+
+		if(status == false){
+			EyelockLog(logger, ERROR, "No Face Image for 2 seconds");
+			exit(0);
+		}else{
+			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+			EyelockLog(logger, DEBUG, "time_spent in receiving a frame..%ld\n", time_spent);
+		}
 
 		//Main Face tracking operation
 		m_faceTracker.DoRunMode_test(m_faceTracker.bShowFaceTracking, m_faceTracker.bDebugSessions);
