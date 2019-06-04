@@ -1666,7 +1666,7 @@ function defineStrings($HardwareType)
             define ("HOME_DEVICEINFO_GROUPTITLE", "Informação de Dispositivo");
             define ("HOME_DEVICEINFO_DEVICENAME", "Nome ".$NXTText.":");
             define ("HOME_DEVICEINFO_IPADDR", "Endereço IP:");
-            define ("HOME_DEVICEINFO_IPV6ADDR", "IPv6 Address:");
+            define ("HOME_DEVICEINFO_IPV6ADDR", "Endereço IPv6:");
 			define ("HOME_DEVICEINFO_SERIAL", "ID de Dispositivo:");
             define ("HOME_DEVICEINFO_MACADDR", "Endereço MAC:");
             define ("HOME_DEVICEINFO_LOCALTIME", $NXTText." Tempo Instantâneo");
