@@ -59,7 +59,7 @@ if (isset($model))
 switch($currLang)
 {
     case "us":
-        define("CHARSET","ISO-8859-1"); 
+        define("CHARSET","UTF-8");
         define("LANGCODE", "en");
 		setLanguageFile("us");
         break;
