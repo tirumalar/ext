@@ -99,6 +99,10 @@ public:
 	pthread_mutex_t locateDeviceLock;
 	bool stopLocateDevice;
 
+	int m_currentBobCommand;
+	void SaveBobCommand();
+	void RestoreBobCommand();
+
 	MatchResultState m_lastAuthState;
 
 protected:
