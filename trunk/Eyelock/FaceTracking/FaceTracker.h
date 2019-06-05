@@ -136,6 +136,8 @@ private:
 	int switchThreshold;		// 37
 	int errSwitchThreshold;		//6
 	
+	cv::Mat m_CroppedFaceImageForAGC; // For AGC
+	bool foundFace;
 	//AGC parameters
 	int PIXEL_TOTAL;
 	int FACE_GAIN_DEFAULT;
@@ -144,6 +146,7 @@ private:
 	int FACE_GAIN_PER_GOAL;
 	float FACE_GAIN_HIST_GOAL;
 	float FACE_CONTROL_GAIN;
+	int FACE_GAIN_STEP;
 	//#define FACE_CONTROL_GAIN   1000.0
 	
 	float ERROR_LOOP_GAIN;	// used for error cal during face tracking and motor movement
@@ -233,6 +236,8 @@ private:
 
 	bool bDoAESEncryption;
 
+	int m_nCalculatedBrightness;
+
 	void SetExp(int cam, int val);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
 	void SelLedDistance(int val); // val between 0 and 100
@@ -260,8 +265,9 @@ private:
 	char * StateText(int state);
 	
 	void DoAgc(void);
-	float AGC(int width, int height,unsigned char *dsty, int limit);
-	void SetFaceGain(int cam, int val);
+	void SweepFaceBrightness();
+	float CalcExposureLevel(int width, int height,unsigned char *dsty, int limit);
+	void SetFaceExposure(int val);
 
 	// Mat rotate(Mat src, double angle);
 	Mat rotation90(Mat src);

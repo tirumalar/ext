@@ -134,19 +134,37 @@ void port_com_send(char *cmd_in, float *pr_time)
 	tv.tv_usec = 0;
 	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const void*) &tv, sizeof(tv));
 
-	rv = recv(sockfd, buffer, 512, 0);
-
-	if (rv <= 0)
-	{
-		EyelockLog(logger, ERROR, "cannot receive data");
-	}
-	else
-	{
-		buffer[rv] = 0;
-		if (!strchr(buffer, 'K'))
+#if 1
+	while(1){
+		rv = recv(sockfd, buffer, 512, 0);
+		if (rv <= 0)
 		{
+			EyelockLog(logger, ERROR, "cannot receive data");
+			break;
+		}
+		else
+		{
+			buffer[rv] = 0;
+			if (strstr(buffer, "OK"))
+			{
+				break;
+			}
 		}
 	}
+#else
+	rv = recv(sockfd, buffer, 512, 0);
+	if (rv <= 0)
+		{
+			EyelockLog(logger, ERROR, "cannot receive data");
+		}
+		else
+		{
+			buffer[rv] = 0;
+			if (!strchr(buffer, 'K'))
+			{
+			}
+		}
+#endif
 	PortComLog(logger, DEBUG, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n", (float) clock() / CLOCKS_PER_SEC,
 				(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
 
