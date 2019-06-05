@@ -51,7 +51,7 @@ enum EyelockProcessMode {
 
 // Relay iff wiegand
 F2FDispatcher::F2FDispatcher(Configuration& conf):ResultDispatcher(conf), m_pMatched(0), m_RelayTimeInMs(RELAY_TIME_IN_MS),m_Debug(false),m_ledConsolidator(NULL),pHTTPPostMessageHandler(NULL),
-		m_socketFactory(NULL),m_socketFactoryTamper(NULL),m_tamperDestAddr(NULL),m_resultDestAddr(NULL), m_pMatchType(NULL), m_pinNumberRcvd(0),m_lastAuthState(CONFUSION)
+		m_socketFactory(NULL),m_socketFactoryTamper(NULL),m_tamperDestAddr(NULL),m_resultDestAddr(NULL), m_pMatchType(NULL), m_pinNumberRcvd(0),m_lastAuthState(CONFUSION), m_currentBobCommand(BOB_COMMAND_NONE)
 {
 #ifdef DEBUG_SESSION
 	m_DebugTesting = conf.getValue("Eyelock.TestSystemPerformance",false);
@@ -548,11 +548,6 @@ void F2FDispatcher::ProcessBoBAcsChange()
 		else if (!m_transTOC)
 			EyelockLog(logger, INFO, "Ready for Eyes");
 		EyelockEvent("System Ready for Authentication");
-		EyelockLog(logger, DEBUG, "Setting PIM LED white");
-		unsigned char regs[1];
-		regs[0] = 7;
-		BobSetData(regs,1);
-		BobSetCommand(BOB_COMMAND_SET_LED);
 		// testSend(); // Anita
 	}
 }
@@ -650,6 +645,12 @@ void F2FDispatcher::SendToBoB(Configuration& conf)
 		BobSetACSTypeBits(m_accessDataLength);
 	else
 		BobSetACSTypeBits(m_pinBurstBits);
+
+	EyelockLog(logger, DEBUG, "Setting PIM LED white");
+	unsigned char regs[1];
+	regs[0] = 7;
+	BobSetData(regs,1);
+	BobSetCommand(BOB_COMMAND_SET_LED);
 
 	if (m_dualAuth)
 	{	// set dual authentication
@@ -1280,8 +1281,13 @@ int F2FDispatcher::settime()
 		regs[7] = bin2bcd(tm1->tm_year - 100);
 		printf("setting time to 0x%0x: 0x%0x: 0x%0x,0x%0x: 0x%0x,0x%0x: 0x%0x...\n",regs[1],regs[2],regs[3],regs[4],regs[5],regs[6],regs[7]);
 
+		this->SaveBobCommand();
+
 		char time_data_out[8];
 		int result = BobSetRtc(regs,(void*)&time_data_out,10);
+
+		this->RestoreBobCommand();
+
 		if (result != 0)
 		{
 			return -1;
@@ -1479,8 +1485,10 @@ void F2FDispatcher::StopLocateDevice()
 	pthread_mutex_unlock(&locateDeviceLock);
 	sleep(2);
 	unsigned char color = 7;
+	this->SaveBobCommand();
 	BobSetData(&color,1);
 	BobSetCommand(BOB_COMMAND_SET_LED);
+	this->RestoreBobCommand();
 }
 
 
@@ -1518,9 +1526,32 @@ void* F2FDispatcher::LocateDeviceLoop(void *ptr)
 		l.setNwValandSleep(itColors->first, timeout);
 		f2fDispatcherPtr->m_ledConsolidator->enqueMsg(l);
 		color = itColors->second;
+		f2fDispatcherPtr->SaveBobCommand();
 		BobSetData(&color, 1);
 		BobSetCommand(BOB_COMMAND_SET_LED);
+		f2fDispatcherPtr->RestoreBobCommand();
 		sleep((timeout-1000)/1000);
+	}
+}
+
+void F2FDispatcher::SaveBobCommand()
+{
+	m_currentBobCommand = BoBGetCommand();
+	if (m_currentBobCommand < 0)
+	{
+		EyelockLog(logger, ERROR, "SaveBobCommand: cannot retrieve current command from BoB, identifying basing on the Eyelock app mode");
+		m_currentBobCommand = (m_dualAuth || m_transTOC) ? BOB_COMMAND_READ : BOB_COMMAND_NONE;
+
+		EyelockLog(logger, DEBUG, "SaveBobCommand: saved %d", m_currentBobCommand);
+	}
+}
+
+void F2FDispatcher::RestoreBobCommand()
+{
+	EyelockLog(logger, DEBUG, "RestoreBobCommand: restoring %d", m_currentBobCommand);
+	if (BobSetCommand(m_currentBobCommand) < 0)
+	{
+		EyelockLog(logger, ERROR, "RestoreBobCommand: cannot restore command");
 	}
 }
 
