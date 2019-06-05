@@ -140,6 +140,7 @@ FaceTracker::FaceTracker(char* filename)
 ,bFaceMapDebug(false)
 ,bActiveCenterPos(false)
 ,bIrisToFaceMapDebug(false)
+,m_nCalculatedBrightness(0)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -216,6 +217,8 @@ FaceTracker::FaceTracker(char* filename)
 
 	agc_val = FACE_GAIN_DEFAULT;
 
+	FACE_GAIN_STEP = FaceConfig.getValue("FTracker.FACE_GAIN_STEP", 20);
+	FACE_GAIN_STEP = FACE_GAIN_STEP * PIXEL_TOTAL;
 	FACE_GAIN_MAX = FaceConfig.getValue("FTracker.FACE_GAIN_MAX",80);
 	FACE_GAIN_MAX = FACE_GAIN_MAX * PIXEL_TOTAL;
 	FACE_GAIN_MIN = FaceConfig.getValue("FTracker.FACE_GAIN_MIN",8);
@@ -306,17 +309,17 @@ void FaceTracker::SetExp(int cam, int val)
 	//port_com_send(buff);
 }
 
-void FaceTracker::SetFaceGain(int cam, int val)
+void FaceTracker::SetFaceExposure(int val)
 {
-	EyelockLog(logger, TRACE, "SetFaceGain");
+	EyelockLog(logger, TRACE, "SetFaceExposure");
 	char buff[100];
 	int coarse = val/PIXEL_TOTAL;
 	// int fine = val - coarse*PIXEL_TOTAL;
 	//sprintf(buff,"wcr(%d,0x3012,%d) | wcr(%d,0x3014,%d)",cam,coarse,cam,fine);
 	// sprintf(buff,"wcr(%d,0x3012,%d)",cam,coarse);
-	sprintf(buff,"wcr(%d,0x305e,%d)",cam,coarse);
+	sprintf(buff,"wcr(4,0x305e,%d)", coarse);
 	// printf("%s\n", buff);
-	EyelockLog(logger, TRACE, "Setting Gain %d\n",coarse);
+	EyelockLog(logger, TRACE, "Setting Exposure %d\n",coarse);
 	port_com_send(buff);
 }
 
@@ -451,6 +454,7 @@ void FaceTracker::SwitchIrisCameras(bool mode)
 
 void FaceTracker::SetFaceMode()
 {
+	// printf("Inside setFaceMode\n");
 	EyelockLog(logger, TRACE, "SetFaceMode");
 	if (currnet_mode==MODE_FACE)
 	{
@@ -748,8 +752,6 @@ cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 		ERROR_CHECK_EYES_HT = 0.4;
 	}
 
-
-
 	float hclipT = float(no_move_area.height * ERROR_CHECK_EYES_HT);
 	float hclipB = float(no_move_area.height * ERROR_CHECK_EYES_HB);
 
@@ -970,7 +972,7 @@ void FaceTracker::DoStartCmd()
 			sprintf(cmd,"fixed_aud_set(%d)",m_FixedAudSetVal);
 			port_com_send(cmd); // port_com_send("fixed_aud_set(7)");
 		}
-		usleep(100000);
+		// usleep(100000);
 
 		// Auth.raw
 		sprintf(cmd,"f_load_snd(0, \"%s\")","auth.raw");
@@ -1020,8 +1022,12 @@ void FaceTracker::DoStartCmd()
 	sprintf(cmd,"set_cam_mode(0x04,%d)",FRAME_DELAY);		//Turn on Alternate cameras
 	port_com_send(cmd);
 
+	EyelockLog(logger, DEBUG, "set_cam_mode(0x04,%d)");
+
 	//Leave the PLL always ON
 	port_com_send("wcr(0x1f,0x301a,0x1998)");
+
+	EyelockLog(logger, DEBUG, "Leave the PLL always ON");
 
 	//Reading the calibrated Rect
 	int targetOffset = 0; // 3;		//Adding offset
@@ -1041,7 +1047,7 @@ void FaceTracker::DoStartCmd()
 
 
 
-float FaceTracker::AGC(int width, int height,unsigned char *dsty, int limit)
+float FaceTracker::CalcExposureLevel(int width, int height,unsigned char *dsty, int limit)
 {
 	EyelockLog(logger, TRACE, "AGC");
 	//Percentile and Average Calculation
@@ -1069,6 +1075,9 @@ float FaceTracker::AGC(int width, int height,unsigned char *dsty, int limit)
 	average=average/(width*height);
 
 	EyelockLog(logger, TRACE, "average : %3.1f percentile : %3.1f\n",average,percentile);
+
+	// imshow("AGC", smallImg);
+	// cvWaitKey(1);
 	return (float)percentile;
 }
 
@@ -1094,8 +1103,6 @@ int FaceTracker::IrisFramesHaveEyes()
 
 Mat FaceTracker::preProcessingImg(Mat outImg)
 {
-	float p;
-
 	EyelockLog(logger, TRACE, "preProcessing");
 	EyelockLog(logger, TRACE, "resize");
 	cv::resize(outImg, smallImgBeforeRotate, cv::Size(), (1 / scaling),
@@ -1110,8 +1117,12 @@ Mat FaceTracker::preProcessingImg(Mat outImg)
 
 	//AGC control to block wash out images
 	EyelockLog(logger, TRACE, "AGC Calculation");
+
+#if 0
+	float p;
 	p = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),180);
 
+	printf("[AGC] should not be here\n");
 	if (p < FACE_GAIN_PER_GOAL - FACE_GAIN_HIST_GOAL)
 		agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
 	if (p > FACE_GAIN_PER_GOAL + FACE_GAIN_HIST_GOAL)
@@ -1128,7 +1139,7 @@ Mat FaceTracker::preProcessingImg(Mat outImg)
 	}
 
 	agc_set_gain = agc_val;
-
+#endif
 
 	return smallImg;
 }
@@ -1239,15 +1250,35 @@ char* FaceTracker::StateText(int state)
 	return "none";
 }
 
+
+void FaceTracker::SweepFaceBrightness(void)
+{
+	// Sweep over the range step by step...
+	if (m_nCalculatedBrightness < FACE_GAIN_MIN)
+		m_nCalculatedBrightness = FACE_GAIN_MIN;
+
+	m_nCalculatedBrightness += FACE_GAIN_STEP;
+
+	if (m_nCalculatedBrightness > FACE_GAIN_MAX)
+		m_nCalculatedBrightness = FACE_GAIN_MIN;
+
+	// printf("SweepFaceBrightnessm nCurrentBrightnessLevel.%d\n", m_nCalculatedBrightness);
+
+	agc_val = m_nCalculatedBrightness;
+
+	SetFaceExposure(m_nCalculatedBrightness);
+}
+
+
+
 void FaceTracker::DoAgc(void)
 {
-	static int AgcCntr = 0;
-	p = AGC(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),180);
+	if(!foundFace)
+		p = CalcExposureLevel(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),180);
+	else
+		p = CalcExposureLevel(m_CroppedFaceImageForAGC.cols, m_CroppedFaceImageForAGC.rows, (unsigned char *) (m_CroppedFaceImageForAGC.data),180);
 
-	if(AgcCntr > 10){
-		agc_val = FACE_GAIN_MIN;
-		AgcCntr = 0;
-	}
+
 	//if (p < FACE_GAIN_PER_GOAL - FACE_GAIN_HIST_GOAL)
 	agc_val = agc_val + (FACE_GAIN_PER_GOAL - p) * FACE_CONTROL_GAIN;
 	//if (p > FACE_GAIN_PER_GOAL + FACE_GAIN_HIST_GOAL)
@@ -1255,16 +1286,17 @@ void FaceTracker::DoAgc(void)
 	agc_val = MAX(FACE_GAIN_MIN,agc_val);
 	agc_val = MIN(agc_val,FACE_GAIN_MAX);
 
+	//printf("Outside condition >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
 	AGC_Counter++;
-	AgcCntr++;
+	// AgcCntr++;
 	if (agc_set_gain != agc_val) 	;	// && AGC_Counter%2==0)
 	{
 		//	while (waitKey(10) != 'z');
 		{
 			static int agc_val_old = 0;
 			if (abs(agc_val - agc_val_old) > 300) {
-				//  printf("Inside condition >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  %3.3f Agc value = %d\n",p,agc_val);
-				SetFaceGain(4, agc_val);		//comment out if O2 led is connected
+				// printf("[AGC]  %05.6f Agc value = %d\n",p,agc_val);
+				SetFaceExposure(agc_val);		//comment out if O2 led is connected
 				agc_val_old = agc_val;
 			}
 		}
@@ -1305,9 +1337,14 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 	smallImg = preProcessingImg(outImg);
 
-	bool foundFace = FindEyeLocation(smallImg, eyes, eye_size, face, MIN_FACE_SIZE, MAX_FACE_SIZE);
+	foundFace = FindEyeLocation(smallImg, eyes, eye_size, face, MIN_FACE_SIZE, MAX_FACE_SIZE);
 
-
+	if(foundFace){
+		cv::Rect myFaceROI(face.x, face.y, face.width, face.height);
+		m_CroppedFaceImageForAGC = smallImg(myFaceROI);
+		// imshow("Cropped", m_CroppedFaceImageForAGC);
+		// cvWaitKey(1);
+	}
 
 	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
 
@@ -1342,7 +1379,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							if (eyesInDetect)	//No strict condition but there will be no face images in pipeline
 									system_state = SelectWhichIrisCam(eye_size,system_state);
 							if(b_EnableFaceAGC)
-								DoAgc();
+								SweepFaceBrightness();
 							//if (eyesInViewOfIriscam)
 							break;
 
@@ -1430,8 +1467,8 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						m_ProjPtr = true;		//Added by Mo
 						break;
 					}
-					if(b_EnableFaceAGC)
-						DoAgc();
+				//DMOOUT	if(b_EnableFaceAGC)
+				//DMOOUT		DoAgc();
 					break;
 	case STATE_AUX_IRIS:
 					switch (system_state)
@@ -1695,6 +1732,8 @@ void *init_facetracking(void *arg) {
 
 	bool bDebugFrameBuffer = m_faceTracker.FaceConfig.getValue("FTracker.DebugFrameBuffer", false);
 
+	// printf("bDoAESEncryption  %d bDebugFrameBuffer................%d\n", bDoAESEncryption, bDebugFrameBuffer);
+
 	int w, h;
 
 	pthread_t threadId;
@@ -1741,8 +1780,9 @@ void *init_facetracking(void *arg) {
 		clock_t end = clock();
 
 		if(status == false){
-			EyelockLog(logger, ERROR, "No Face Image for 10 seconds");
-			// exit(0);
+			// printf("No Face Image for 15 seconds....%d\n", status);
+			EyelockLog(logger, ERROR, "No Face Image for 15 seconds");
+			system("reboot");
 		}else{
 			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			EyelockLog(logger, DEBUG, "time_spent in receiving a frame..%ld\n", time_spent);

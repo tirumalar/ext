@@ -105,9 +105,10 @@ int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, bool bDebugFlag, ch
     	int nwaitCount = 0;
     	while((m_ProcessBuffer->TryPop(m_current_process_queue_item)) != true)
 		{
-			usleep(1000);
-			if((nwaitCount++) > 10000) // If we don't get an image within 10 seconds return false
+    		usleep(1000);
+			if((nwaitCount++) > 15000) // If we don't get an image within 15 seconds return false
 				return false;
+
 		}
     }else{
 		while((m_ProcessBuffer->TryPop(m_current_process_queue_item)) != true)

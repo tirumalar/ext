@@ -1707,7 +1707,7 @@ FaceImageQueue ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, uns
 }
 #endif
 
-
+#if 0
 // This function does its best to match a FaceFrame item with the Camera Image
 // It looks through the FaceFrame queues waiting if necessary for a bit to find the correct FaceFrame item
 // If it fails to find a match, it gives up and our ProcessImage function throws the camera image away...
@@ -1819,6 +1819,139 @@ bool ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char
 	else
 		return false; // FaceFrame queue is empty, no match found after patiently waiting...
 }
+#else
+
+// This function does its best to match a FaceFrame item with the Camera Image
+// It looks through the FaceFrame queues waiting if necessary for a bit to find the correct FaceFrame item
+// If it fails to find a match, it gives up and our ProcessImage function throws the camera image away...
+// If it finds a match, it cleans it off the FaceFrame queue since no other cam images will use it and the Image is fully processed...
+bool ImageProcessor::GetFaceInfoForIristoFaceMapping(int CameraId, unsigned char IrisFrameNo, FaceImageQueue &FaceInfo)
+{
+	// Select correct FaceFrameQueue based on CamId of the Image we are processing
+	if (CameraId == IRISCAM_AUX_LEFT || CameraId == IRISCAM_MAIN_LEFT)
+		g_pCameraFaceQueue = g_pLeftCameraFaceQueue;
+	else
+		g_pCameraFaceQueue = g_pRightCameraFaceQueue;
+
+
+	if (g_pCameraFaceQueue == NULL)
+		EyelockLog(logger, TRACE, "ImageProcessor::GetFaceDataMessage(): g_pRingBufferFaceQueue uninitialized!");
+
+	// Timer
+	unsigned long time_newms = ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
+
+	// If we come in here and the facequeue is empty... wait MAX 100 ms for something to show before quitting...
+	time_newms += 100;
+
+	// If FaceFrame queue is empty, we wait a bit for something to appear...
+	while (g_pCameraFaceQueue->Empty() && (ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time()) < time_newms))
+		usleep(100);
+
+	// Now, if we have at least one element in the FaceFrameQueue...
+	if (!g_pCameraFaceQueue->Empty())
+	{
+		FaceInfo = g_pCameraFaceQueue->Peek(); // Top of the queue
+
+		// printf(">> [%d] FaceFrameNo = %d, IrisFrameNo = %d, Size = %d\n", CameraId, FaceInfo.FaceFrameNo, IrisFrameNo, g_pCameraFaceQueue->Size());
+
+		int DiffFrameNo = (int) ((int)FaceInfo.FaceFrameNo - (int)IrisFrameNo);
+
+		// We found our match... Pop the FaceFrameInfo, then return
+		if (FaceInfo.FaceFrameNo == IrisFrameNo)
+		{
+			// printf("Found Frame returning true\n");
+			// It's a match!  Pop the entry and use it...  success!
+			FaceInfo = g_pCameraFaceQueue->Pop();
+			return true;
+		}
+//DMOCHANGESATURDAY		else if ((DiffFrameNo > 0) && (DiffFrameNo < 10))
+		else if ((DiffFrameNo > 10) && (FaceInfo.FaceFrameNo > 245)) // FaceFrames are way ahead of us... we only have a queue of 5... so no point waiting...
+		{
+			//printf("DiffFrame > 10 && FaceFrame > 245 returning false\n");
+			// If the difference is greater than 10 we are way out of sync or we are rolled over...
+			// In either case we execute the else case below and don't return here...
+
+			// If not rolling over and not totally out of sync...
+			// FaceFrame info is AHEAD of us... we already missed the FaceFrame info we needed, just throw this Image away...
+			return false; //  Flat out ignore, we do not have a matching frame...in our queue
+		}
+		else if ((DiffFrameNo < -10) && (IrisFrameNo > 245)) // FaceFrames are way ahead of us... we only have a queue of 5... so no point waiting...
+		{
+			//printf("DiffFrame < -10 && IrisFrameNo > 245 returning false\n");
+			return false; // we rolled over but we're too far away to try to wait and match...
+		}
+		else if (DiffFrameNo == 1) // Special case... if Face is only 1 ahead... we use it because it should be  close... but don't delete the face...
+		{
+			//printf("DiffFrameNo == 1 returning true\n");
+			return true; // we don't delete because the next iris will be a perfect match possibly...
+		}
+		else if (DiffFrameNo > 0) // Except for rollover case, we can't process if Face is aheado Iris...
+		{
+			//printf("DiffFrameNo > 0 returning false\n");
+			return false; //  Flat out ignore, we do not have a matching frame...in our queue
+		}
+		else  // Our IrisFrame is ahead of our FaceFrame by less than 10  wait up to 1 second for the faceframe to catch up...
+		{
+			// We check the FaceFrame queue here and start removing items until we find our match (or closest match)
+			// We also wait for a bit if the queue gets emptied before we've found what we are looking for...
+			// ultimately if we don't find it, we will have emptied the FaceFrame queue and we skip processing this image...
+			time_newms = ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
+			time_newms += 100;  // wait 100 ms before giving up
+
+			do
+			{
+				// If the lowest entry in the queue, is still lower than our image
+				// Pop entries off the top (we missed them already)
+				//printf("--< [%d-%ld] Looping Waiting = %d, Size = %d\n", CameraId, time_newms,FaceInfo.FaceFrameNo, g_pCameraFaceQueue->Size());
+
+				while (g_pCameraFaceQueue->Size()) // false if queue is empty...
+				{
+					FaceInfo = g_pCameraFaceQueue->Peek(); // Peek top of the queue
+
+					//printf("--< [%d] TryPop Success FrameNo = %d\n", CameraId, FaceInfo.FaceFrameNo);
+
+					if (FaceInfo.FaceFrameNo < IrisFrameNo)
+					{
+						//printf("--< [%d] Popping FrameNo = %d\n", CameraId, FaceInfo.FaceFrameNo);
+						g_pCameraFaceQueue->Pop();
+
+						continue;
+					}
+					else if (FaceInfo.FaceFrameNo > IrisFrameNo) // Our exact match was skipped...
+					{
+						//printf("--< [%d] Missed Frame!  Looking for close Match!  faceFrame = %d\n", CameraId, FaceInfo.FaceFrameNo);
+
+						if (FaceInfo.FaceFrameNo - IrisFrameNo < 3) // If we are within 2 frames of matching, use it but don't pop it...
+						{
+							//printf("--< [%d] Close Match Found!\n", CameraId);
+							return true;
+						}
+						else
+							return false;
+					}
+					else // its an exact match...  Pop it and return
+					{
+						// printf("--< [%d] Exact Match Found!  %d\n", CameraId, FaceInfo.FaceFrameNo);
+
+						g_pCameraFaceQueue->Pop();
+						return true;
+					}
+				};
+				//printf("--< [%d] TryPop failed, Size = %d\n", CameraId, g_pCameraFaceQueue->Size());
+
+				usleep(10000); // Queue is empty... wait 10ms then check again...
+			}while (ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time()) < time_newms);
+
+			//printf("--< [%d-%ld] Looping Timed out\n", CameraId, time_newms);
+			//printf("--< [%d] No Match Found in Entire QUEUE\n", CameraId);
+			return false;
+		}
+	} // End of while
+	else
+		return false; // FaceFrame queue is empty, no match found after patiently waiting...
+}
+
+#endif
 
 IplImage* ImageProcessor::OffsetImageCorrection(IplImage *frame, int cam_idd)
 {
