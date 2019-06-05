@@ -203,6 +203,9 @@ upgradeMaster(){
 	cp /home/root/rootCert/certs/nanoNXTDefault.key /home/upgradeTemp/root/rootCert/certs
 	cp /home/root/rootCert/certs/nanoNXTDefault.pem /home/upgradeTemp/root/rootCert/certs
 	
+	cp /home/root/rootCert/certs/*.crt /home/upgradeTemp/root/rootCert/certs
+	cp /home/root/rootCert/certs/*.key /home/upgradeTemp/root/rootCert/certs
+	
 	mv /home/root/*.log /home/upgradeTemp/root
 
 	cp /home/root/MAC.txt /home/upgradeTemp/root/MAC.txt
