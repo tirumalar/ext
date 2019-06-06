@@ -24,6 +24,7 @@ static int sockfd;
 const char logger[30] = "PortCom";
 
 #define ENCRYPT 1
+#define MAX_TRYS 4
 
 pthread_mutex_t lock1;
 #if ENCRYPT
@@ -130,17 +131,21 @@ void port_com_send(char *cmd_in, float *pr_time)
 		//printf("%d rv send %d\n",x,rv);
 	}
 	struct timeval tv;
-	tv.tv_sec = 5;
+	tv.tv_sec = 1;
 	tv.tv_usec = 0;
 	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const void*) &tv, sizeof(tv));
 
 #if 1
+	int trys = 0;
+	buffer[0] = 0x00;
+
 	while(1){
 		rv = recv(sockfd, buffer, 512, 0);
 		if (rv <= 0)
 		{
-			EyelockLog(logger, ERROR, "cannot receive data");
-			break;
+			PortComLog(logger, ERROR, "cannot receive data");
+			if (trys > MAX_TRYS)
+				break; // Break out even if no OK is received
 		}
 		else
 		{
@@ -149,7 +154,15 @@ void port_com_send(char *cmd_in, float *pr_time)
 			{
 				break;
 			}
+
+			if (trys > MAX_TRYS)
+			{
+				PortComLog(logger, ERROR, "timed out receiving response");
+				break; // Break out even if no OK is received
+			}
 		}
+
+		trys++;
 	}
 #else
 	rv = recv(sockfd, buffer, 512, 0);
@@ -174,6 +187,79 @@ void port_com_send(char *cmd_in, float *pr_time)
 	pthread_mutex_unlock(&lock1);
 }
 
+#if 1
+int port_com_send_return(char *cmd, char *buffer, int min_len) {
+	EyelockLog(logger, TRACE, "port_com_send");
+	pthread_mutex_lock(&lock1);
+
+
+	// REMOVE TRAILING CRS
+	while( cmd[strlen(cmd)-1]=='\n')
+		cmd[strlen(cmd)-1]=0;
+
+	int rv;
+	FILE *file;
+
+	while (recv(sockfd, buffer, 512, MSG_DONTWAIT) > 0); // clearing input buffer (flush)
+	int t = clock();
+
+	sprintf(buffer, "%s\n", cmd);
+	rv = send(sockfd, buffer, strlen(buffer), 0);
+	if (rv != (int) strlen(buffer))
+		printf("rv & command length don't match %d %d\n", rv, strlen(buffer));
+	//printf("%d rv send %d\n",x,rv);
+
+	struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const void*) &tv, sizeof(tv));
+
+
+	char rx_buffer[512];
+
+	// clear the return buffer
+	buffer[0]=0;
+	int trys = 0;
+
+while (1)
+	{
+		rv = recv(sockfd, rx_buffer, 512, 0);
+
+		if (rv <= 0)
+		{
+			PortComLog(logger, ERROR, "cannot receive data");
+
+			if (trys >= MAX_TRYS)
+				break;
+		}
+		else
+		{
+			rx_buffer[rv]=0;
+			strcat(buffer,rx_buffer);
+			if (strstr(buffer,"OK")==0)
+			{
+
+				if (trys >= MAX_TRYS)
+				{
+					PortComLog(logger, ERROR, "cannot find token");
+					break;
+				}
+			}
+			else
+				break;
+		}
+
+		trys++;
+	}
+	PortComLog(logger, DEBUG, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
+					(float) clock() / CLOCKS_PER_SEC,
+					(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
+	pthread_mutex_unlock(&lock1);
+
+	return strlen(buffer);
+}
+
+#else
 int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	EyelockLog(logger, TRACE, "port_com_send");
 	pthread_mutex_lock(&lock1);
@@ -214,7 +300,8 @@ while (1)
 
 		if (rv <= 0)
 		{
-			EyelockLog(logger, ERROR, "cannot receive data");
+			PortComLog(logger, ERROR, "cannot receive data");
+		//	break;
 		}
 		else
 		{
@@ -225,7 +312,7 @@ while (1)
 
 			if (trys++==MAX_TRYS)
 				{
-				EyelockLog(logger, ERROR, "cannot find token");
+				PortComLog(logger, ERROR, "cannot find token");
 				
 				break;
 				}
@@ -241,6 +328,7 @@ while (1)
 
 	return strlen(buffer);
 }
+#endif
 
 float read_angle(void) {
 	EyelockLog(logger, TRACE, "read_angle");
