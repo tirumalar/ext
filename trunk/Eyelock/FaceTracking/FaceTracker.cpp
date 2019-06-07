@@ -1782,7 +1782,7 @@ void *init_facetracking(void *arg) {
 		if(status == false){
 			// printf("No Face Image for 15 seconds....%d\n", status);
 			EyelockLog(logger, ERROR, "No Face Image for 15 seconds");
-			system("reboot");
+			system("/home/root/forcereboot.sh &");
 		}else{
 			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			EyelockLog(logger, DEBUG, "time_spent in receiving a frame..%ld\n", time_spent);
