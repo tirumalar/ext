@@ -13,6 +13,7 @@ EYELOCK_RUN_FILE='/home/root/Eyelock.run'
 EYELOCK_OIM_TAMPER_FILE='/home/root/OIMtamper'
 EYELOCK_TAMPER_FILE='/home/root/tamper'
 
+cd /home/root/
 rm "${FLAG}"
 
 rm "${FACETRACKER_RUN_FILE}"
@@ -62,6 +63,7 @@ do
 				then
 					EyelockLog "killing Eyelock, PID: $ELK_PID" 'DEBUG'
 					kill -9 "${ELK_PID}"
+					killall -KILL Eyelock
 				fi
 
 				sleep 1
