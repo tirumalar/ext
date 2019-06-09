@@ -14,19 +14,58 @@ TAMPERFILE="tamper1.raw"
 CALRECTFILE="CalRect.ini"
 FACECONFIGFILE="Face.ini"
 
+#OIM ftp supports only passive mode
+
 ftp -n -v $host << EOT
 quote USER $USER
 quote PASS $PASSWD
 prompt
+passive
 ls
+get $AUTHFILE auth.$$
+get $REJFILE rej.$$
+get $TAMPERFILE tamper.$$
 quit
 EOT
 
+if [ -f auth.$$ ]
+	then
+		echo "The file auth.raw exists";
+		rm -f auth.$$
+		rm -rf auth.raw
+	else
+		echo "The file auth.raw doesn't exist";
+		cd /home/root/tones
+		wput -B -t 2 $AUTHFILE ftp://$USER:$PASSWD@$host
+fi
+
+if [ -f rej.$$ ]
+	then	
+		echo "The file rej.raw exists";
+		rm -f rej.$$
+		rm -rf rej.raw
+	else
+		echo "The file rej.raw doesn't exist";
+		cd /home/root/tones
+		wput -B -t 2 $REJFILE ftp://$USER:$PASSWD@$host
+fi
+
+if [ -f tamper1.$$ ]
+	then
+		echo "The file tamper1.raw exists";
+		rm -f tamper1.$$
+		rm -rf tamper1.raw
+	else
+		echo "The file tamper1.raw doesn't exist";
+		cd /home/root/tones
+		wput -B -t 2 $TAMPERFILE ftp://$USER:$PASSWD@$host
+fi
+
 #Upload Audio Files to ftp
-cd /home/root/tones
-wput -B -t 2 $AUTHFILE ftp://$USER:$PASSWD@$host
-wput -B -t 2 $REJFILE ftp://$USER:$PASSWD@$host
-wput -B -t 2 $TAMPERFILE ftp://$USER:$PASSWD@$host
+#cd /home/root/tones
+#wput -B -t 2 $AUTHFILE ftp://$USER:$PASSWD@$host
+#wput -B -t 2 $REJFILE ftp://$USER:$PASSWD@$host
+#wput -B -t 2 $TAMPERFILE ftp://$USER:$PASSWD@$host
 
 #Download CalRect File from ftp
 # Go to /home/root folder
@@ -47,6 +86,7 @@ then
     exit
 else
     echo "CalRect.ini file download Successful"
+	cp CalRect.ini /home/root/data/calibration
 fi
 
 #Download Face.ini File from ftp

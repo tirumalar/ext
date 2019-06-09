@@ -17,6 +17,8 @@
 #include <time.h>
 #include "logging.h"
 #include "FileConfiguration.h"
+#include <errno.h>
+
 
 static int sockfd;
 #define SERVER_ADDR     "192.168.4.172"     /* localhost */
@@ -123,12 +125,12 @@ void port_com_send(char *cmd_in, float *pr_time)
 	//	printf("sending enc: %s \n",buffer);
 		rv = send(sockfd, buffer, enc_size+1, 0);
 		if (rv != (enc_size+1))
-			PortComLog(logger, ERROR, "rv & command length don't match %d %d\n", rv, strlen(buffer));
+			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)\n", rv, strlen(buffer), strerror(errno));
 	//printf("%d rv send %d\n",x,rv);
 	}else{
 		rv = send(sockfd, buffer, strlen(buffer), 0);
 		if (rv != (int) strlen(buffer))
-			PortComLog(logger, ERROR, "rv & command length don't match %d %d\n", rv, strlen(buffer));
+			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)\n", rv, strlen(buffer), strerror(errno));
 		//printf("%d rv send %d\n",x,rv);
 	}
 	struct timeval tv;
@@ -144,7 +146,7 @@ void port_com_send(char *cmd_in, float *pr_time)
 		rv = recv(sockfd, buffer, 512, 0);
 		if (rv <= 0)
 		{
-			PortComLog(logger, ERROR, "port_com_send(): cannot receive data");
+			PortComLog(logger, ERROR, "port_com_send(): cannot receive data (errno=(%s)", strerror(errno));
 			if (trys > MAX_TRYS)
 			{
 				nFailCount++;
@@ -162,7 +164,7 @@ void port_com_send(char *cmd_in, float *pr_time)
 
 			if (trys > MAX_TRYS)
 			{
-				PortComLog(logger, ERROR, "port_com_send(): timed out receiving response");
+				PortComLog(logger, ERROR, "port_com_send(): timed out receiving response (errno=(%s)", strerror(errno));
 				nFailCount++;
 				break; // Break out even if no OK is received
 			}
@@ -173,7 +175,7 @@ void port_com_send(char *cmd_in, float *pr_time)
 
 	if (nFailCount >= 5)
 	{
-		PortComLog(logger, ERROR, "port_com_send(): 5 failures, rebooting!");
+		PortComLog(logger, ERROR, "port_com_send(): 5 failures, rebooting! (errno=(%s)", strerror(errno));
 		system("/home/root/forcereboot.sh &");
 	}
 
@@ -220,7 +222,7 @@ int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	sprintf(buffer, "%s\n", cmd);
 	rv = send(sockfd, buffer, strlen(buffer), 0);
 	if (rv != (int) strlen(buffer))
-		PortComLog(logger, ERROR, "rv & command length don't match %d %d\n", rv, strlen(buffer));
+		PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)\n", rv, strlen(buffer), strerror(errno));
 	//printf("%d rv send %d\n",x,rv);
 
 	struct timeval tv;
@@ -241,7 +243,7 @@ while (1)
 
 		if (rv <= 0)
 		{
-			PortComLog(logger, ERROR, "port_com_send_return(): cannot receive data");
+			PortComLog(logger, ERROR, "port_com_send_return(): cannot receive data (errno=(%s)", strerror(errno));
 
 			if (trys >= MAX_TRYS)
 			{
@@ -259,7 +261,7 @@ while (1)
 				if (trys >= MAX_TRYS)
 				{
 					nFailCount++;
-					PortComLog(logger, ERROR, "port_com_send_return(): cannot find token");
+					PortComLog(logger, ERROR, "port_com_send_return(): cannot find token (errno=%s)", strerror(errno));
 					break;
 				}
 			}
@@ -274,7 +276,7 @@ while (1)
 
 	if (nFailCount >= 5)
 	{
-		PortComLog(logger, ERROR, "port_com_send_return(): 5 failures, rebooting!");
+		PortComLog(logger, ERROR, "port_com_send_return(): 5 failures, rebooting!(errno=(%s)", strerror(errno));
 		system("/home/root/forcereboot.sh &");
 	}
 
