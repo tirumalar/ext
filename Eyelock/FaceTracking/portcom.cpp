@@ -189,7 +189,7 @@ void port_com_send(char *cmd_in, float *pr_time)
 			{
 				PortComLog(logger, ERROR, "port_com_send(%s): rv = %d, trys = %d, Failcount = %d, ErroNo = %d, cannot receive data (errno=(%s)", cmd, rv, trys, nFailCount, errno, strerror(errno));
 
-				exit(0);
+				// exit(0);
 				if (trys > MAX_TRYS)
 				{
 
@@ -331,7 +331,7 @@ int port_com_send_return(char *cmd, char *buffer, int min_len) {
 			{
 				PortComLog(logger, ERROR, "port_com_send_return(%s): rv = %d, trys = %d, Failcount = %d, ErroNo = %d, cannot receive data (errno=(%s)", cmd, rv, trys, nFailCount, errno, strerror(errno));
 
-				exit(0);
+				// exit(0);
 				if (trys > MAX_TRYS)
 				{
 

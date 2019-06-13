@@ -2325,6 +2325,8 @@ unsigned int CmxHandler::MainLoop() {
 	if (pthread_create (&leftCThread, NULL, leftCServer, leftCServerInfo)) {
 		EyelockLog(logger, ERROR, "MainLoop(): Error creating thread leftCServer");
 	}
+	pthread_setname_np(leftCThread, "leftCThread");
+
 #ifdef HBOX_PG
 #if 0 //// Anita 21Feb
 	// create a new thread to get Middle Camera images
@@ -2341,6 +2343,8 @@ unsigned int CmxHandler::MainLoop() {
 	if (pthread_create (&rightCThread, NULL, leftCServer, rightCServerInfo)) {
 		EyelockLog(logger, ERROR, "MainLoop(): Error creating thread rightCServer");
 	}
+	pthread_setname_np(rightCThread, "rightCThread");
+
 	// create a new thread to get Face Camera images
 	//if (pthread_create (&faceThread, NULL, faceServer, this)) {
 	//	EyelockLog(logger, ERROR, "MainLoop(): Error creating thread faceServer");
