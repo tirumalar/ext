@@ -380,7 +380,14 @@ void deallocateOIMQueue()
 		delete [] g_pRightCameraFaceQueue;
 }
 
-
+unsigned short GenerateSeed()
+{
+	srand(time(NULL)); /* seed random number generator */
+	// unsigned short seed = (1 + (rand() % 32767));
+	unsigned short seed = (1 + (rand() % 65535));
+	// printf("GenerateSeed seed seed seed seed seed...%d\n", seed);
+	return seed;
+}
 
 void *init_ec(void * arg) {
 	EyelockLog(logger, TRACE, "init_ec");
@@ -391,7 +398,29 @@ void *init_ec(void * arg) {
 
 	VideoStream *vs = (VideoStream*) arg;
 	// Create Queue for communicating with Eyelock CMXHandler
-//	g_pOIMQueue = new OIMQueue(10); //DMO pull from config later...
+//	g_pOIMQueue = new OIMQueue(10); //DMO pull fromconfig later...
+#if 0
+	if(vs->m_UseImageAuthentication)
+	{
+		int count = 0;
+		char buf[256];
+		buf[0] = 0x00;
+		char cmd[100];
+
+		unsigned short randomSeed = GenerateSeed();
+		sprintf(cmd,"cam_set_seed(%i)", randomSeed);		//Set the seed
+		while(count++ < 5)
+		{
+			port_com_send_return(cmd, buf, 256);
+			if(strstr(buf, "OK"))
+			{
+				vs->seed = randomSeed;
+				break;
+			}
+		}
+	}
+#endif
+
 	// Wait until a message arrives in the queue...
 	while (1)
 	{
@@ -399,10 +428,30 @@ void *init_ec(void * arg) {
 		OIMQueueItem theItem = (OIMQueueItem)g_pOIMQueue->Pop();
 
 		if(vs->m_UseImageAuthentication){
-			char cmd[100];
-			sprintf(cmd,"cam_set_seed(%i)", theItem.m_RandomSeed);		//Set the seed
-			port_com_send(cmd);
-			vs->seed = theItem.m_RandomSeed;
+			// Create rgb led command
+			char GreenRGBLEDCmd[100];
+			sprintf(GreenRGBLEDCmd,"fixed_set_rgb(0,%i,0)", vs->rgbLEDBrightness);
+
+			char RedRGBLEDCmd[100];
+			sprintf(RedRGBLEDCmd,"fixed_set_rgb(%i,0,0)", (vs->rgbLEDBrightness * 8/10)); // "fixed_set_rgb(80,0,0)
+
+			if (strstr(theItem.m_Message, GreenRGBLEDCmd) || strstr(theItem.m_Message, RedRGBLEDCmd))
+			{
+				int count = 0;
+				char buf[256];
+				buf[0] = 0x00;
+				char cmd[100];
+				sprintf(cmd,"cam_set_seed(%i)", theItem.m_RandomSeed);		//Set the seed
+				while(count++ < 5){
+					port_com_send_return(cmd, buf, 256);
+					if(strstr(buf, "OK")){
+						vs->seed = theItem.m_RandomSeed;
+						break;
+					}
+
+				}
+
+			}
 		}
 		//Process the item returned from the queue...
 		ec_read_from_client(theItem);

@@ -27,6 +27,9 @@ const char logger[30] = "PortCom";
 
 #define ENCRYPT 1
 #define MAX_TRYS 4
+#define ERROR_TIMEOUT_SECONDS	5
+
+#define ERROR_TIMEOUT_SECONDS_SND 10
 
 pthread_mutex_t lock1;
 #if ENCRYPT
@@ -83,18 +86,17 @@ int in_send = 0;
 
 void port_com_send(char *cmd_in, float *pr_time)
 {
-	PortComLog(logger, TRACE, "Entering > port_com_send");
-
 	static bool bEncrpytFlag;
 	static int firstEntry = 1;
 	static int nFailCount = 0;
+
+	pthread_mutex_lock(&lock1);
+
 	if(firstEntry){		
 		FileConfiguration FaceConfig("/home/root/data/calibration/Face.ini");
 		bEncrpytFlag = FaceConfig.getValue("FTracker.AESEncrypt", false);
 		firstEntry = 0;
 	}
-
-	pthread_mutex_lock(&lock1);
 
 	char encr_sig[0] = "@";
 	char buffer[512];
@@ -108,9 +110,20 @@ void port_com_send(char *cmd_in, float *pr_time)
 	while( cmd[strlen(cmd)-1]=='\n')
 		cmd[strlen(cmd)-1]=0;
 
+	PortComLog(logger, TRACE, "Entering > port_com_send()%s ", cmd);
+
 	while (recv(sockfd, buffer, 512, MSG_DONTWAIT) > 0); // clearing input buffer (flush)
+
 	int t = clock();
 	sprintf(buffer, "%s\n", cmd);
+
+	int nReceiveTimeOut = 0;
+
+	if (strstr(cmd, "play_snd"))
+		nReceiveTimeOut = ERROR_TIMEOUT_SECONDS_SND;
+	else
+		nReceiveTimeOut = ERROR_TIMEOUT_SECONDS;
+
 	/**************Encryption********************************************/
 	if(bEncrpytFlag){
 		sprintf(cmd_encr, "%s\n", cmd);
@@ -138,20 +151,57 @@ void port_com_send(char *cmd_in, float *pr_time)
 	tv.tv_usec = 0;
 	setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const void*) &tv, sizeof(tv));
 
-#if 1
 	int trys = 0;
 	buffer[0] = 0x00;
+	// snapshot of time for timeout on recv
+	struct timespec ts;
+	struct timespec tsTimeout;
+	clock_gettime(CLOCK_REALTIME, &tsTimeout);
 
-	while(1){
-		rv = recv(sockfd, buffer, 512, 0);
-		if (rv <= 0)
+
+	tsTimeout.tv_sec += nReceiveTimeOut;
+
+
+	while (true)
+	{
+
+		clock_gettime(CLOCK_REALTIME, &ts);
+
+
+		if (ts.tv_sec >= tsTimeout.tv_sec)
 		{
-			PortComLog(logger, ERROR, "port_com_send(): cannot receive data (errno=(%s)", strerror(errno));
-			if (trys > MAX_TRYS)
+
+			PortComLog(logger, ERROR, "port_com_send(%s): trys = %d, nFailCount = %d, Timed out waiting for response...", cmd, trys, nFailCount);
+			break;
+		}
+
+		rv = recv(sockfd, buffer, 512, 0);
+
+		// If the response is EAGAIN, it's not a failure, we sleep for 1 second then try recv again
+		if (rv == 0)
+		{
+			PortComLog(logger, DEBUG, "port_com_send(%s): trys = %d, Failcount = %d, 0 bytes received, waiting...", cmd, trys, nFailCount);
+			sleep(1); //No bytes there? but no error?  Just sleep then try again
+		}
+		else if (rv < 0)
+		{
+			if (errno != EAGAIN)
 			{
-				nFailCount++;
-				break; // Break out even if no OK is received
+				PortComLog(logger, ERROR, "port_com_send(%s): rv = %d, trys = %d, Failcount = %d, ErroNo = %d, cannot receive data (errno=(%s)", cmd, rv, trys, nFailCount, errno, strerror(errno));
+
+				exit(0);
+				if (trys > MAX_TRYS)
+				{
+
+					nFailCount++;
+					break; // Break out even if no OK is received
+				}
+
+				usleep(50);
+				trys++;
 			}
+			else
+				sleep(1);
 		}
 		else
 		{
@@ -164,37 +214,25 @@ void port_com_send(char *cmd_in, float *pr_time)
 
 			if (trys > MAX_TRYS)
 			{
-				PortComLog(logger, ERROR, "port_com_send(): timed out receiving response (errno=(%s)", strerror(errno));
+				PortComLog(logger, ERROR, "port_com_send(%s): trys = %d, FailCount = %d, timed out receiving response (errno=(%s)", cmd, trys, nFailCount, strerror(errno));
 				nFailCount++;
+
 				break; // Break out even if no OK is received
 			}
 		}
-
-		trys++;
 	}
 
 	if (nFailCount >= 5)
 	{
-		PortComLog(logger, ERROR, "port_com_send(): 5 failures, rebooting! (errno=(%s)", strerror(errno));
+
+		PortComLog(logger, ERROR, "port_com_send(%s): 5 failures, rebooting! (errno=(%s)", cmd, strerror(errno));
 		system("/home/root/forcereboot.sh &");
 	}
 
-#else
-	rv = recv(sockfd, buffer, 512, 0);
-	if (rv <= 0)
-		{
-			EyelockLog(logger, ERROR, "cannot receive data");
-		}
-		else
-		{
-			buffer[rv] = 0;
-			if (!strchr(buffer, 'K'))
-			{
-			}
-		}
-#endif
-	PortComLog(logger, DEBUG, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n", (float) clock() / CLOCKS_PER_SEC,
-				(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
+
+	PortComLog(logger, TRACE, "Leaving port_com_send() %s -- recv Trys = %d, Current time = %2.4f, ProcessingTme = %2.4f \n", cmd, trys, (float) clock() / CLOCKS_PER_SEC,
+				(float) (clock() - t) / CLOCKS_PER_SEC);
+
 
 	if (pr_time)
 		*pr_time=(float) (clock() - t) / CLOCKS_PER_SEC;
@@ -204,13 +242,22 @@ void port_com_send(char *cmd_in, float *pr_time)
 
 #if 1
 int port_com_send_return(char *cmd, char *buffer, int min_len) {
-	PortComLog(logger, TRACE, "Entering > port_com_send_return");
 	pthread_mutex_lock(&lock1);
 
+	static bool bEncrpytFlag;
+	static int firstEntry = 1;
 
+	char cmd_encr[512];
+	if(firstEntry){
+		FileConfiguration FaceConfig("/home/root/data/calibration/Face.ini");
+		bEncrpytFlag = FaceConfig.getValue("FTracker.AESEncrypt", false);
+		firstEntry = 0;
+	}
 	// REMOVE TRAILING CRS
 	while( cmd[strlen(cmd)-1]=='\n')
 		cmd[strlen(cmd)-1]=0;
+
+	PortComLog(logger, TRACE, "Entering > port_com_send_return(%s)", cmd);
 
 	int rv;
 	FILE *file;
@@ -220,9 +267,26 @@ int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	int t = clock();
 
 	sprintf(buffer, "%s\n", cmd);
-	rv = send(sockfd, buffer, strlen(buffer), 0);
-	if (rv != (int) strlen(buffer))
-		PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)\n", rv, strlen(buffer), strerror(errno));
+	if(bEncrpytFlag){
+		sprintf(cmd_encr, "%s\n", cmd);
+		// printf("\n before enc: %s ",cmd_encr);
+		int enc_size = strlen(cmd_encr);
+		enc_size = (enc_size/16+1)*16;
+		AES_init_ctx_iv(&ctx, key,iv);
+		AES_CBC_encrypt_buffer(&ctx, cmd_encr,enc_size);
+		memset(buffer,0x00,512);
+		buffer[0]='@';
+		memcpy(buffer+1,cmd_encr,enc_size);
+	//	printf("sending enc: %s \n",buffer);
+		rv = send(sockfd, buffer, enc_size+1, 0);
+		if (rv != (enc_size+1))
+			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)\n", rv, strlen(buffer), strerror(errno));
+	//printf("%d rv send %d\n",x,rv);
+	}else{
+		rv = send(sockfd, buffer, strlen(buffer), 0);
+		if (rv != (int) strlen(buffer))
+			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)\n", rv, strlen(buffer), strerror(errno));
+	}
 	//printf("%d rv send %d\n",x,rv);
 
 	struct timeval tv;
@@ -236,20 +300,50 @@ int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	// clear the return buffer
 	buffer[0]=0;
 	int trys = 0;
+	// snapshot of time for timeout on recv
+	struct timespec ts;
+	struct timespec tsTimeout;
+	clock_gettime(CLOCK_REALTIME, &tsTimeout);
 
-while (1)
+	tsTimeout.tv_sec += ERROR_TIMEOUT_SECONDS;
+
+	while (1)
 	{
+		clock_gettime(CLOCK_REALTIME, &ts);
+
+		if (ts.tv_sec >= tsTimeout.tv_sec)
+		{
+			PortComLog(logger, ERROR, "port_com_send_return(%s): trys = %d, nFailCount = %d, Timed out waiting for response...", cmd, trys, nFailCount);
+			break;
+		}
+
 		rv = recv(sockfd, rx_buffer, 512, 0);
 
-		if (rv <= 0)
+		// If the response is EAGAIN, it's not a failure, we sleep for 1 second then try recv again
+		if (rv == 0)
 		{
-			PortComLog(logger, ERROR, "port_com_send_return(): cannot receive data (errno=(%s)", strerror(errno));
-
-			if (trys >= MAX_TRYS)
+			PortComLog(logger, DEBUG, "port_com_send_return(%s): trys = %d, Failcount = %d, 0 bytes received, waiting...", cmd, trys, nFailCount);
+			sleep(1); //No bytes there? but no error?  Just sleep then try again
+		}
+		else if (rv < 0)
+		{
+			if (errno != EAGAIN)
 			{
-				nFailCount++;
-				break;
+				PortComLog(logger, ERROR, "port_com_send_return(%s): rv = %d, trys = %d, Failcount = %d, ErroNo = %d, cannot receive data (errno=(%s)", cmd, rv, trys, nFailCount, errno, strerror(errno));
+
+				exit(0);
+				if (trys > MAX_TRYS)
+				{
+
+					nFailCount++;
+					break; // Break out even if no OK is received
+				}
+
+				usleep(50);
+				trys++;
 			}
+			else
+				sleep(1);
 		}
 		else
 		{
@@ -261,7 +355,7 @@ while (1)
 				if (trys >= MAX_TRYS)
 				{
 					nFailCount++;
-					PortComLog(logger, ERROR, "port_com_send_return(): cannot find token (errno=%s)", strerror(errno));
+					PortComLog(logger, ERROR, "port_com_send_return(%s): trys = %d, FailCount = %d, timed out receiving response (errno=(%s)", cmd, trys, nFailCount, strerror(errno));
 					break;
 				}
 			}
@@ -271,19 +365,17 @@ while (1)
 				break;
 			}
 		}
-		trys++;
 	}
 
 	if (nFailCount >= 5)
 	{
-		PortComLog(logger, ERROR, "port_com_send_return(): 5 failures, rebooting!(errno=(%s)", strerror(errno));
+		PortComLog(logger, ERROR, "port_com_send_return(%s): 5 failures, rebooting!(errno=(%s)", cmd, strerror(errno));
 		system("/home/root/forcereboot.sh &");
 	}
 
 
-	PortComLog(logger, DEBUG, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
-					(float) clock() / CLOCKS_PER_SEC,
-					(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
+	PortComLog(logger, TRACE, "Leaving port_com_send_return(%s) -- recv Trys = %d, Current time = %2.4f, ProcessingTme = %2.4f \n", cmd, trys, (float) clock() / CLOCKS_PER_SEC,
+				(float) (clock() - t) / CLOCKS_PER_SEC);
 	pthread_mutex_unlock(&lock1);
 
 	return strlen(buffer);

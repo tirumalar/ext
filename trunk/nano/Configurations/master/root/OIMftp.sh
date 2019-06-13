@@ -90,23 +90,23 @@ else
 fi
 
 #Download Face.ini File from ftp
-#if [ -f $FACECONFIGFILE ]
-#then
- #   echo $FACECONFIGFILE exists
-  #  rm Face.ini
-#else
- #   echo $FACECONFIGFILE does not exist
-#fi
+if [ -f $FACECONFIGFILE ]
+then
+   echo $FACECONFIGFILE exists
+   rm Face.ini
+else
+   echo $FACECONFIGFILE does not exist
+fi
 
-#if ! wget -t 2 --user="$USER" --password="$PASSWD" "ftp://$host/$FACECONFIGFILE"
-#then
- #   echo "Error downloading file; Face.ini is not available"
-  #  exit
-#else
- #   echo "Face.ini file download Successful"
-#fi
+if ! wget -t 2 --user="$USER" --password="$PASSWD" "ftp://$host/$FACECONFIGFILE"
+then
+    echo "Error downloading file; Face.ini is not available"
+    exit
+else
+   echo "Face.ini file download Successful"
+fi
 
 #Copy the downloaded file to data calibration folder
-#mv data/calibration/Face.ini data/calibration/Face.ini.Bkup
-#cp Face.ini /home/root/data/calibration
+mv data/calibration/Face.ini data/calibration/Face.ini.Bkup
+cp Face.ini /home/root/data/calibration
 echo "*************************** Extftp script finished ***********************"

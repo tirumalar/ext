@@ -19,6 +19,9 @@
 //DMO Queue Processing
 #include "Synchronization.h"
 #include "FaceMap.h"
+#include <string.h>
+
+
 
 #define PORT    50
 #define MAXMSG  512
