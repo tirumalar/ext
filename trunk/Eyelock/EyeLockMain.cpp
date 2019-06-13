@@ -923,6 +923,7 @@ void EyeLockMain::startHDListener() {
 
 void EyeLockMain::startFaceTracking() {
 	pthread_create(&ftThread, NULL, init_facetracking, (void *) (this));
+	pthread_setname_np(ftThread, "facetThread");
 }
 
 void EyeLockMain::startTNIListener() {
