@@ -116,6 +116,7 @@ int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, bool bDebugFlag, ch
 			usleep(1000);
 		}
     }
+#if 0
 	if (offset_sub_enable)
 	{
 		if (offset_image_loaded==0)
@@ -138,7 +139,8 @@ int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, bool bDebugFlag, ch
 				m_pImageBuffer[z]= max((int)m_current_process_queue_item.m_ptr[z]-(int)offset_image[z],0);
 	}
 	else
-		memcpy(m_pImageBuffer, m_current_process_queue_item.m_ptr, length);
+#endif
+	memcpy(m_pImageBuffer, m_current_process_queue_item.m_ptr, m_ImageSize);
 
 	return 1;
 }
@@ -488,14 +490,20 @@ VideoStream ::VideoStream(int port, bool ImageAuthFlag) : frameId(0)
 	seed = 0;
 
 	m_pRingBuffer = new RingBufferImageQueueF(2);
-	length = (HEIGHT * WIDTH);
+	m_ImageSize = (HEIGHT * WIDTH);
 
 	m_current_process_queue_item.m_ptr = NULL;
 	m_FreeBuffer = new RingBufferImageQueueF(FREE_BUFF_SIZE);
 	m_ProcessBuffer = new RingBufferImageQueueF(FREE_BUFF_SIZE);
+
+	// Read RGB LED Brightness
+	FileConfiguration Config("/home/root/Eyelock.ini");
+	rgbLEDBrightness = Config.getValue("GRI.LEDBrightness", 80);
+
+
 	for (int x = 0 ; x < FREE_BUFF_SIZE; x++)
 	{
-		imageQueueItem.m_ptr = new unsigned char[length];
+		imageQueueItem.m_ptr = new unsigned char[m_ImageSize];
 		m_FreeBuffer->Push(imageQueueItem);
 	}
 
