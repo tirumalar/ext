@@ -96,12 +96,16 @@ int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, bool bDebugFlag, ch
 
 
 
+
     if (m_current_process_queue_item.m_ptr != NULL)
     {
+    	EyelockLog(loggerp, INFO, "vs->get() Before ReleaseProcessBuffer...");
     	ReleaseProcessBuffer(m_current_process_queue_item);
+    	EyelockLog(loggerp, INFO, "vs->get() After ReleaseProcessBuffer...");
     }
 
-    if(bDebugFlag){
+    if(bDebugFlag)
+    {
     	int nwaitCount = 0;
     	while((m_ProcessBuffer->TryPop(m_current_process_queue_item)) != true)
 		{
@@ -109,8 +113,11 @@ int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, bool bDebugFlag, ch
 			if((nwaitCount++) > 15000) // If we don't get an image within 15 seconds return false
 				return false;
 
+			EyelockLog(loggerp, INFO, "vs->get() TryPop failed!");
 		}
-    }else{
+    }
+    else
+    {
 		while((m_ProcessBuffer->TryPop(m_current_process_queue_item)) != true)
 		{
 			usleep(1000);
@@ -141,6 +148,8 @@ int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, bool bDebugFlag, ch
 	else
 #endif
 	memcpy(m_pImageBuffer, m_current_process_queue_item.m_ptr, m_ImageSize);
+
+	EyelockLog(loggerp, INFO, "vs->get() OK returning image");
 
 	return 1;
 }
@@ -301,9 +310,11 @@ void *VideoStream::ThreadServer(void *arg)
 		while (vs->running) {
 			length = recvfrom(leftCSock, &databuf[rx_idx], min(1500, bytes_to_read),
 					0, (struct sockaddr *) &from, &fromlen);
-			if (length < 0){
+			if (length < 0)
+			{
 				EyelockLog(loggerp, ERROR, "socket error in receiving face images! %s %d\n", strerror(length), vs->m_port);
 				 printf("recvfrom error in leftCServer()");
+				 perror;
 			}else {
 				pkgs_received++;
 				if (!b_syncReceived && ((short *) databuf)[0] == 0x5555) {
@@ -406,11 +417,17 @@ void *VideoStream::ThreadServer(void *arg)
                 return NULL;
         }
         vs->running=1;
+        unsigned int count = 0;
         while (vs->running)
         {
             length = recvfrom(leftCSock, &databuf[rx_idx], min(1500,bytes_to_read), 0, (struct sockaddr *)&from, &fromlen);
             if (length < 0)
+            {
+            	EyelockLog(loggerp, ERROR, "socket error in receiving face images! %s %d\n", strerror(length), vs->m_port);
+
                 printf("recvfrom error in leftCServer()");
+                perror;
+            }
             else
             {
             	pkgs_received++;
@@ -447,6 +464,10 @@ void *VideoStream::ThreadServer(void *arg)
                 	if (databuf != dummy_buff)
                 	{
 						vs->PushProcessBuffer(queueItem);
+						if(count % 4*5 == 0){ // Every 5 seconds
+							const cv::Mat img(cv::Size(1200, 960), CV_8U, queueItem.m_ptr);
+							cv::imwrite("InThFace.pgm",img);
+						}
 						pkgs_missed=0;
 						pkgs_received=0;
 						pckcnt = 0;
@@ -474,6 +495,7 @@ void *VideoStream::ThreadServer(void *arg)
                if(bytes_to_read<=0)
             	   bytes_to_read=IMAGE_SIZE;
           }
+            count ++;
       }
        vs->running =-1;
       close(leftCSock);
@@ -513,6 +535,8 @@ VideoStream ::VideoStream(int port, bool ImageAuthFlag) : frameId(0)
 			printf("MainLoop(): Error creating thread FaceServer\n");
 			//return 0;
 	}
+	pthread_setname_np(Thread, "ThreadServer");
+
 	//return 1;
 }
 

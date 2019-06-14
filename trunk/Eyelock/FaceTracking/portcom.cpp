@@ -23,7 +23,7 @@
 static int sockfd;
 #define SERVER_ADDR     "192.168.4.172"     /* localhost */
 
-const char logger[30] = "PortCom";
+const char logger[50] = "PortCom";
 
 #define ENCRYPT 1
 #define MAX_TRYS 4
@@ -374,8 +374,8 @@ int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	}
 
 
-	PortComLog(logger, TRACE, "Leaving port_com_send_return(%s) -- recv Trys = %d, Current time = %2.4f, ProcessingTme = %2.4f \n", cmd, trys, (float) clock() / CLOCKS_PER_SEC,
-				(float) (clock() - t) / CLOCKS_PER_SEC);
+	PortComLog(logger, TRACE, "Leaving port_com_send_return -- recv Trys = %d, Current time = %2.4f, ProcessingTme = %2.4f %s %s \n", trys, (float) clock() / CLOCKS_PER_SEC,
+				(float) (clock() - t) / CLOCKS_PER_SEC, cmd, buffer);
 	pthread_mutex_unlock(&lock1);
 
 	return strlen(buffer);

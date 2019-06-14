@@ -584,6 +584,7 @@ void FaceTracker::MoveRelAngle(float a)
 
 void FaceTracker::DimmFaceForIris()
 {
+	EyelockLog(logger, TRACE, "DimmFaceForIris");
 	char cmd[512];
 	
 	// printf("Dimming face cameras!!!");
@@ -746,7 +747,7 @@ cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 }
 #else
 cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
-
+	EyelockLog(logger, TRACE, "Entering > seacrhEyeArea()");
 	if (float(ERROR_CHECK_EYES_HT +  ERROR_CHECK_EYES_HB) >= 0.9){
 		ERROR_CHECK_EYES_HT = 0.0;
 		ERROR_CHECK_EYES_HT = 0.4;
@@ -782,6 +783,7 @@ cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 
 
 cv::Rect FaceTracker::adjustWidthDuringFaceDetection(cv::Rect face){
+	EyelockLog(logger, TRACE, "Entering > adjustWidthDuringFaceDetection()");
 	cv::Rect modFace;
      
 	if(bFaceMapDebug) 
@@ -810,6 +812,7 @@ cv::Rect FaceTracker::adjustWidthDuringFaceDetection(cv::Rect face){
 #define NUMAVG 10
 
 void FaceTracker::motorInit(){
+	EyelockLog(logger, TRACE, "Entering > motorInit()");
 	char cmd[512];
 	sprintf(cmd,"fx_home");
 	port_com_send(cmd);
@@ -826,6 +829,7 @@ void FaceTracker::motorInit(){
 }
 
 void FaceTracker::motorInitCenterPos( int v){
+	EyelockLog(logger, TRACE, "Entering > motorInitCenterPos()");
 	char cmd[512];
 	sprintf(cmd,"fx_abs(%d)", v);
 	port_com_send(cmd);
@@ -1049,7 +1053,7 @@ void FaceTracker::DoStartCmd()
 
 float FaceTracker::CalcExposureLevel(int width, int height,unsigned char *dsty, int limit)
 {
-	EyelockLog(logger, TRACE, "AGC");
+	EyelockLog(logger, TRACE, "CalcExposureLevel");
 	//Percentile and Average Calculation
 	unsigned char *dy = (unsigned char *)dsty;
 	double total = 0,Ptotal = 0,percentile = 0,hist[256]={0},average=0;
@@ -1104,10 +1108,11 @@ int FaceTracker::IrisFramesHaveEyes()
 Mat FaceTracker::preProcessingImg(Mat outImg)
 {
 	EyelockLog(logger, TRACE, "preProcessing");
-	EyelockLog(logger, TRACE, "resize");
+
 	cv::resize(outImg, smallImgBeforeRotate, cv::Size(), (1 / scaling),
 			(1 / scaling), INTER_NEAREST);	//py level 3
 
+	EyelockLog(logger, TRACE, "After resize in preProcessingImg");
 	if(bFaceMapDebug){
 		imshow("OriginalFaceImage", outImg);
 		cvWaitKey(1);
@@ -1147,6 +1152,7 @@ Mat FaceTracker::preProcessingImg(Mat outImg)
 
 void FaceTracker::moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, bool bDebugSessions)
 {
+	EyelockLog(logger, TRACE, "Entering > moveMotorToFaceTarget");
 	if ((eye_size >= MIN_FACE_SIZE) && (eye_size <= MAX_FACE_SIZE)) {// check face size
 
 		float err;
@@ -1200,6 +1206,7 @@ void FaceTracker::moveMotorToFaceTarget(float eye_size, bool bShowFaceTracking, 
 
 void FaceTracker::faceModeState(bool bDebugSessions)
 {
+	EyelockLog(logger, TRACE, "Entering > faceModeState");
 	MoveTo(CENTER_POS);
 	//MoveToAbs(CENTER_POS_TEST);
 
@@ -1217,6 +1224,8 @@ void FaceTracker::faceModeState(bool bDebugSessions)
 
 int FaceTracker::SelectWhichIrisCam(float eye_size, int cur_state)
 {
+	EyelockLog(logger, TRACE, "Entering > SelectWhichIrisCam");
+
 	if ((cur_state != STATE_MAIN_IRIS) && (cur_state != STATE_AUX_IRIS)) {
 		// this is we are just getting into irises so hard decision not hysterises
 		if (eye_size >= (switchThreshold))
@@ -1240,6 +1249,7 @@ int FaceTracker::SelectWhichIrisCam(float eye_size, int cur_state)
 
 char* FaceTracker::StateText(int state)
 {
+	EyelockLog(logger, TRACE, "Entering > StateText");
 	switch (state)
 	{
 	    case STATE_LOOK_FOR_FACE: return("FACE");
@@ -1253,6 +1263,7 @@ char* FaceTracker::StateText(int state)
 
 void FaceTracker::SweepFaceBrightness(void)
 {
+	EyelockLog(logger, TRACE, "Entering > SweepFaceBrightness");
 	// Sweep over the range step by step...
 	if (m_nCalculatedBrightness < FACE_GAIN_MIN)
 		m_nCalculatedBrightness = FACE_GAIN_MIN;
@@ -1273,6 +1284,8 @@ void FaceTracker::SweepFaceBrightness(void)
 
 void FaceTracker::DoAgc(void)
 {
+	EyelockLog(logger, TRACE, "Entering > DoAgc");
+
 	if(!foundFace)
 		p = CalcExposureLevel(smallImg.cols, smallImg.rows, (unsigned char *) (smallImg.data),180);
 	else
@@ -1340,10 +1353,11 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	foundFace = FindEyeLocation(smallImg, eyes, eye_size, face, MIN_FACE_SIZE, MAX_FACE_SIZE);
 
 	if(foundFace){
+		EyelockLog(logger, INFO, "FaceTracking found Face");
 		cv::Rect myFaceROI(face.x, face.y, face.width, face.height);
+		EyelockLog(logger, ERROR, "Before cropped image AGC");
 		m_CroppedFaceImageForAGC = smallImg(myFaceROI);
-		// imshow("Cropped", m_CroppedFaceImageForAGC);
-		// cvWaitKey(1);
+		EyelockLog(logger, TRACE, "After cropped image AGC");
 	}
 
 	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
@@ -1363,6 +1377,8 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 		noFaceCounter=0;
 	last_system_state = system_state;
 
+
+	EyelockLog(logger, INFO, "FaceTracking SystemState = %d", system_state);
 	// figure out our next state
 	switch(system_state)
 	{
@@ -1552,6 +1568,8 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					break;
 	}
 
+	EyelockLog(logger, INFO, "End of last_system_state != system_state = %d", system_state);
+
 /*	if(system_state  == STATE_MOVE_MOTOR  || last_system_state  == STATE_MOVE_MOTOR){
 		m_ProjPtr = false;
 	}*/
@@ -1615,18 +1633,18 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 				memcpy(m_RightCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
 			}
 
-   		//    printf("FaceTracking:  Pushing FaceFrame = %d\n", FaceCameraFrameNo);
+			EyelockLog(logger, DEBUG, "FaceTracking:  Pushing FaceFrame = %d\n", FaceCameraFrameNo);
 			// If we're full, the top is stale anyway, get rid of it, then add the current item
 			// Increase the size of the queues if we are dropping too many unprocessed FaceFrames here...
    		    if (g_pLeftCameraFaceQueue->Full())
    		    	g_pLeftCameraFaceQueue->Pop();
 			g_pLeftCameraFaceQueue->Push(m_LeftCameraFaceInfo);
-   		//    printf("FaceTracking:  Pushed LeftQueue, Size() = %d\n", g_pLeftCameraFaceQueue->Size());
+			EyelockLog(logger, DEBUG, "FaceTracking:  Pushed LeftQueue, Size() = %d\n", g_pLeftCameraFaceQueue->Size());
 			// If we're full, the top is stale anyway, get rid of it, then add the current item
    		    if (g_pRightCameraFaceQueue->Full())
    		    	g_pRightCameraFaceQueue->Pop();
 			g_pRightCameraFaceQueue->Push(m_RightCameraFaceInfo);
-   	//	    printf("FaceTracking:  Pushed Pushed RightQueue, Size() = %d\n", g_pRightCameraFaceQueue->Size());
+   		    EyelockLog(logger, DEBUG, "FaceTracking:  Pushed Pushed RightQueue, Size() = %d\n", g_pRightCameraFaceQueue->Size());
 
 			if(bFaceMapDebug){
 				char filename[100];
@@ -1725,7 +1743,7 @@ void *init_facetracking(void *arg) {
 	// printf("Inside init_facetracking\n");
 	FaceTracker m_faceTracker("/home/root/data/calibration/Face.ini");
 
-	EyelockLog(logger, TRACE, "Start FaceTracking Thread");
+	EyelockLog(logger, TRACE, "init_facetracking Start FaceTracking Thread");
 
 	// Flag to enable/disable AES Encrption in port com
 	bool bDoAESEncryption = m_faceTracker.FaceConfig.getValue("FTracker.AESEncrypt", false);
@@ -1748,10 +1766,14 @@ void *init_facetracking(void *arg) {
 	vs = new VideoStream(8194, m_faceTracker.m_ImageAuthentication); //Facecam is 8194...
 
 	pthread_create(&threadId, NULL, init_tunnel, NULL);
+	pthread_setname_np(threadId, "init_tunnel");
+
 	EyelockLog(logger, TRACE, "Start Tunnel Thread");
 
 	// Allocate our ec messaging queue, then start the thread...
 	pthread_create(&threadId, NULL, init_ec, vs);
+	pthread_setname_np(threadId, "init_ec");
+
 	EyelockLog(logger, TRACE, "Start  Eyelock Com Thread");
 
 	//Setting up Run mode
@@ -1768,7 +1790,7 @@ void *init_facetracking(void *arg) {
 
 	// Main Loop...
 	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
-
+	static unsigned int count = 0;
 	while (1)
 	{
 		// printf("Inside while of face tracking\n");
@@ -1776,6 +1798,9 @@ void *init_facetracking(void *arg) {
 		clock_t begin = clock();
 
 		bool status = vs->get(&w, &h, (char *) outImg.data, bDebugFrameBuffer);
+		if(count % 4*5 == 0){ // Every 5 seconds
+			cv::imwrite("InWhileFace.pgm",outImg);
+		}
 
 		clock_t end = clock();
 
@@ -1790,7 +1815,7 @@ void *init_facetracking(void *arg) {
 
 		//Main Face tracking operation
 		m_faceTracker.DoRunMode_test(m_faceTracker.bShowFaceTracking, m_faceTracker.bDebugSessions);
-
+		count++;
 	}
 	outImg.release();
 }
