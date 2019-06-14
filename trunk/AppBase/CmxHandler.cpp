@@ -2815,6 +2815,12 @@ int CmxHandler::CreateUDPServer(int port) {
 	struct sockaddr_in server;
 
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	
+#if 1 // Anita for listening from another application remove later
+	int enable = 1;
+	setsockopt(m_sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &enable, sizeof(int));
+#endif
+
 	if (sock < 0) {
 		EyelockLog(logger, ERROR, "Opening socket");
 		return sock;
@@ -3049,6 +3055,8 @@ void *leftCServer(void *arg) {
 		char * databuf = (char *) queueItem.m_ptr;
 
 		//  sleep(2);
+		unsigned int count = 0;
+		char filename[100];
 		while (!me->ShouldIQuit()) {
 
 			length = recvfrom(leftCSock, &databuf[rx_idx],
@@ -3108,6 +3116,14 @@ void *leftCServer(void *arg) {
 
 					// dont push if its a dummy buffer
 					if (databuf != dummy_buff) {
+						if(count % 4*5 == 0)
+						{
+							sprintf(filename,"IrisSocketCamId_%d.pgm", cam_id);
+							// Every 5 seconds
+							const cv::Mat img(cv::Size(1200, 960), CV_8U, queueItem.m_ptr);
+							cv::imwrite(filename,img);
+						}
+
 						// printf("CMX: Pushing Frame No = %d\n", databuf[3] & 0xff);
 						pFrameGrabber->PushProcessBuffer(queueItem);
 						pkgs_missed = 0;
@@ -3136,6 +3152,7 @@ void *leftCServer(void *arg) {
 				if (bytes_to_read <= 0)
 					bytes_to_read = IMAGE_SIZE;
 			}
+			count++;
 		}
 		printf("closing socket...\n");
 		close(leftCSock);

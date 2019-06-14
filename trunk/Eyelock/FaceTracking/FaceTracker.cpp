@@ -507,14 +507,14 @@ void FaceTracker::MoveRelAngle(float a)
 		// dont move in opposite direction we are there so too bad
 		if (a<0)
 			a=0;
-		MotorLog(Mlogger, DEBUG, "Bottom Hit---------- ---  %3.3f\n\n\n",a);
+		MotorLog(Mlogger, DEBUG, "Bottom Hit---------- ---  %3.3f",a);
 	}
 	if((a < 0)&&(current_a-a)>motorTop)
 	{
 		MotorLog(Mlogger, DEBUG, "Before correction for Motor top %3.3f  top %3.3f ",a,motorTop);
 		a = -1*(motorTop-current_a);
 
-		MotorLog(Mlogger, DEBUG, "motorTop Hit---------- ---  %3.3f\n\n\n",a);
+		MotorLog(Mlogger, DEBUG, "motorTop Hit---------- ---  %3.3f",a);
 
 	}
 
@@ -577,7 +577,7 @@ void FaceTracker::MoveRelAngle(float a)
 	usleep(50000);
 	current_a = read_angle();
 
-	MotorLog(Mlogger, DEBUG, "After move angle = , %03.3f, Processing Time = ,%03.3f\n",current_a,pr_time);
+	MotorLog(Mlogger, DEBUG, "After move angle = , %03.3f, Processing Time = ,%03.3f",current_a,pr_time);
 
 }
 
@@ -824,7 +824,7 @@ void FaceTracker::motorInit(){
 	}
   motorBottom=sum/NUMAVG + m_Motor_Bottom_Offset;
   motorTop= motorBottom + m_Motor_Range;
-  MotorLog(Mlogger, DEBUG, "Motor Bottom   %3.3f ------------\n\n\n",motorBottom);
+  MotorLog(Mlogger, DEBUG, "Motor Bottom   %3.3f ------------",motorBottom);
 
 }
 
@@ -840,7 +840,7 @@ void FaceTracker::motorInitCenterPos( int v){
 
 	}
 	motorCenter=sum/NUMAVG;
-	MotorLog(Mlogger, DEBUG, "Motor motorCenter   %3.3f ------------\n\n\n",motorCenter);
+	MotorLog(Mlogger, DEBUG, "Motor motorCenter   %3.3f ------------",motorCenter);
 }
 
 // Main DoStartCmd configuration for Eyelock matching
@@ -1771,8 +1771,8 @@ void *init_facetracking(void *arg) {
 	EyelockLog(logger, TRACE, "Start Tunnel Thread");
 
 	// Allocate our ec messaging queue, then start the thread...
-	pthread_create(&threadId, NULL, init_ec, vs);
-	pthread_setname_np(threadId, "init_ec");
+	pthread_create(&thredEcId, NULL, init_ec, vs);
+	pthread_setname_np(thredEcId, "init_ec");
 
 	EyelockLog(logger, TRACE, "Start  Eyelock Com Thread");
 
@@ -1799,7 +1799,7 @@ void *init_facetracking(void *arg) {
 
 		bool status = vs->get(&w, &h, (char *) outImg.data, bDebugFrameBuffer);
 		if(count % 4*5 == 0){ // Every 5 seconds
-			cv::imwrite("InWhileFace.pgm",outImg);
+			cv::imwrite("FaceImage.pgm",outImg);
 		}
 
 		clock_t end = clock();

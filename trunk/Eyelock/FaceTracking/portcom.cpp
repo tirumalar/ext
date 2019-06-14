@@ -138,12 +138,12 @@ void port_com_send(char *cmd_in, float *pr_time)
 	//	printf("sending enc: %s \n",buffer);
 		rv = send(sockfd, buffer, enc_size+1, 0);
 		if (rv != (enc_size+1))
-			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)\n", rv, strlen(buffer), strerror(errno));
+			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)", rv, strlen(buffer), strerror(errno));
 	//printf("%d rv send %d\n",x,rv);
 	}else{
 		rv = send(sockfd, buffer, strlen(buffer), 0);
 		if (rv != (int) strlen(buffer))
-			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)\n", rv, strlen(buffer), strerror(errno));
+			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)", rv, strlen(buffer), strerror(errno));
 		//printf("%d rv send %d\n",x,rv);
 	}
 	struct timeval tv;
@@ -230,8 +230,8 @@ void port_com_send(char *cmd_in, float *pr_time)
 	}
 
 
-	PortComLog(logger, TRACE, "Leaving port_com_send() %s -- recv Trys = %d, Current time = %2.4f, ProcessingTme = %2.4f \n", cmd, trys, (float) clock() / CLOCKS_PER_SEC,
-				(float) (clock() - t) / CLOCKS_PER_SEC);
+	PortComLog(logger, TRACE, "Leaving port_com_send()-- recv Trys = %d, Current time = %2.4f, ProcessingTme = %2.4f %s %s", trys, (float) clock() / CLOCKS_PER_SEC,
+				(float) (clock() - t) / CLOCKS_PER_SEC, cmd, buffer);
 
 
 	if (pr_time)
@@ -280,12 +280,12 @@ int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	//	printf("sending enc: %s \n",buffer);
 		rv = send(sockfd, buffer, enc_size+1, 0);
 		if (rv != (enc_size+1))
-			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)\n", rv, strlen(buffer), strerror(errno));
+			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)", rv, strlen(buffer), strerror(errno));
 	//printf("%d rv send %d\n",x,rv);
 	}else{
 		rv = send(sockfd, buffer, strlen(buffer), 0);
 		if (rv != (int) strlen(buffer))
-			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)\n", rv, strlen(buffer), strerror(errno));
+			PortComLog(logger, ERROR, "rv & command length don't match %d %d (errno=(%s)", rv, strlen(buffer), strerror(errno));
 	}
 	//printf("%d rv send %d\n",x,rv);
 
@@ -374,7 +374,7 @@ int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	}
 
 
-	PortComLog(logger, TRACE, "Leaving port_com_send_return -- recv Trys = %d, Current time = %2.4f, ProcessingTme = %2.4f %s %s \n", trys, (float) clock() / CLOCKS_PER_SEC,
+	PortComLog(logger, TRACE, "Leaving port_com_send_return -- recv Trys = %d, Current time = %2.4f, ProcessingTme = %2.4f %s %s", trys, (float) clock() / CLOCKS_PER_SEC,
 				(float) (clock() - t) / CLOCKS_PER_SEC, cmd, buffer);
 	pthread_mutex_unlock(&lock1);
 
@@ -443,7 +443,7 @@ while (1)
 				break;
 		}
 	}
-	PortComLog(logger, DEBUG, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>\n-->%s>\n",
+	PortComLog(logger, DEBUG, "Current time = %2.4f, ProcessingTme = %2.4f, <%s>-->%s>",
 					(float) clock() / CLOCKS_PER_SEC,
 					(float) (clock() - t) / CLOCKS_PER_SEC, cmd,buffer);
 	pthread_mutex_unlock(&lock1);
@@ -462,12 +462,12 @@ float read_angle(void) {
 		EyelockLog(logger, TRACE, "got data %d", len);
 		buffer[len] = 0;
 		sscanf(buffer, "%f %f %f %f", &x, &y, &z, &a);
-		EyelockLog(logger, TRACE, "Buffer =>%s\n", buffer);
-		EyelockLog(logger, TRACE, "%3.3f %3.3f %3.3f %3.3f  readTime=%2.4f\n",
+		EyelockLog(logger, TRACE, "Buffer =>%s", buffer);
+		EyelockLog(logger, TRACE, "%3.3f %3.3f %3.3f %3.3f  readTime=%2.4f",
 				x, y, z, a, (float) (clock() - t) / CLOCKS_PER_SEC );
 		return a;
 	} else
-		EyelockLog(logger, TRACE, "\n error reading angle");
+		EyelockLog(logger, TRACE, "error reading angle");
 	return 0;
 }
 
