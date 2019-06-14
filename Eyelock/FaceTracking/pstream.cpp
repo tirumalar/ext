@@ -50,12 +50,37 @@ void *leftCServer(void *arg);
 int m_port;
 
 #define FREE_BUFF_SIZE 2
-
+#if 0
 void VideoStream::flush() {
 	ImageQueueItemF val;
 	while ((m_pRingBuffer->TryPop(val)) != false)
 		usleep(1000);
 }
+#else
+void VideoStream::flush()
+{
+
+	// Move any stale face images from process buffer into Free buffer...
+
+	// Push any active item back into the Free buffer...
+
+	if (m_current_process_queue_item.m_ptr != NULL)
+
+	ReleaseProcessBuffer(m_current_process_queue_item); // Push item into free buffer...
+
+
+	// Remove item from process buffer...
+
+	while (m_ProcessBuffer->TryPop(m_current_process_queue_item))
+
+	ReleaseProcessBuffer(m_current_process_queue_item); //Push item into Free buffer
+
+
+	m_current_process_queue_item.m_ptr = NULL; //Required to prevent pushing this item into free buffer twice!
+
+}
+
+#endif
 VideoStream::~VideoStream()
 {
 	running=0;
@@ -167,6 +192,12 @@ int CreateUDPServer(int port) {
 	struct sockaddr_in server;
 
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
+
+#if 1 // Anita for listening from another application remove later
+	int enable = 1;
+	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &enable, sizeof(int));
+#endif
+
 	if (sock < 0) {
 		return sock;
 	}
@@ -466,7 +497,7 @@ void *VideoStream::ThreadServer(void *arg)
 						vs->PushProcessBuffer(queueItem);
 						if(count % 4*5 == 0){ // Every 5 seconds
 							const cv::Mat img(cv::Size(1200, 960), CV_8U, queueItem.m_ptr);
-							cv::imwrite("InThFace.pgm",img);
+							cv::imwrite("FaceSocket.pgm",img);
 						}
 						pkgs_missed=0;
 						pkgs_received=0;
