@@ -1,6 +1,12 @@
 #include "logging.h"
 #include "FileConfiguration.h"
 
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv/cv.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+
 #define BUFLEN 1500
 //#define IMAGE_SIZE 1152000
 #define NPACK 10
