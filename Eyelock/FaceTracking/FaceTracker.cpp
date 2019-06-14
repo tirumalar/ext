@@ -1044,7 +1044,7 @@ void FaceTracker::DoStartCmd()
 	// printf("no_move_area 	x: %d	y: %d	w: %d	h: %d\n", no_move_area.x, no_move_area.y, no_move_area.height, no_move_area.width);
 	search_eye_area = seacrhEyeArea(no_move_area);
 
-	system("touch /home/root/Eyelock.run");
+	// system("touch /home/root/Eyelock.run");
 	faceConfigInit = true;
 }
 
