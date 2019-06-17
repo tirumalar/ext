@@ -429,7 +429,7 @@ void FaceTracker::MainIrisSettings()
 	EyelockLog(logger, DEBUG, "configuring Main Iris settings");
 	// printf("configuring Main Iris settings\n");
 	//Iris configuration of LED
-	sprintf(cmd,"psoc_write(3,%i)| psoc_write(2,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(6,%i)\n", m_IrisLEDEnable, m_IrisLEDVolt, m_IrisLEDcurrentSet, m_IrisLEDtrigger, m_IrisLEDmaxTime);
+	sprintf(cmd,"psoc_write(3,%i)| psoc_write(2,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(6,%i)", m_IrisLEDEnable, m_IrisLEDVolt, m_IrisLEDcurrentSet, m_IrisLEDtrigger, m_IrisLEDmaxTime);
 	//printf(cmd);
 	port_com_send(cmd);
 	//port_com_send("psoc_write(3,0x31)| psoc_write(2,30) | psoc_write(5,40) | psoc_write(4,3) | psoc_write(6,4)");
@@ -452,6 +452,68 @@ void FaceTracker::SwitchIrisCameras(bool mode)
 	port_com_send(cmd);
 }
 
+void FaceTracker::readFaceAnalogGainReg(uint32_t Value)
+{
+	int count = 0;
+	char cmd[512];
+	int len;
+	char buffer[512];
+	while(count < 2)
+	{
+		sprintf(cmd,"rcr(0x04,0x30b0)");
+
+		if (!(len = port_com_send_return(cmd, buffer, 20) > 0))
+		{
+			PortComLog(logger, ERROR, "Failed to read register 0x30b0!!");
+		}
+		if (strstr(buffer,"0x90"))
+		{
+			// printf("readFaceAnalogGainReg %d %s\n", Value, buffer);
+			PortComLog(logger, DEBUG, "Face camera Analog gain write successful attempts..%d", count);
+			break;
+		}
+		else
+		{
+			sprintf(cmd,"wcr(0x04,0x30b0,%i)",Value);
+			port_com_send(cmd);
+			PortComLog(logger, ERROR, "Face camera Analog gain write again attempts..%d", count);
+		}
+		count++;
+	}
+}
+
+void FaceTracker::readDimFaceGainregVal(uint32_t Value)
+{
+	int count = 0;
+	char cmd[512];
+	int len;
+	char buffer[512];
+
+	while(count < 2)
+	{
+		sprintf(cmd,"rcr(0x04,0x30b0)");
+		if (!(len = port_com_send_return(cmd, buffer, 20) > 0))
+		{
+			PortComLog(logger, ERROR, "Failed to read register 0x30b0!!");
+		}
+
+		if (strstr(buffer,"0x80"))
+		{
+			// printf("readDimFaceGainregVal %d %s\n", Value, buffer);
+			PortComLog(logger, DEBUG, "Face camera Analog dimming gain write successful attempts..%d", count);
+			break;
+		}
+		else
+		{
+			sprintf(cmd,"wcr(0x04,0x30b0,%i)",Value);
+			port_com_send(cmd);
+			PortComLog(logger, ERROR, "Face camera Analog dimming gain write again attempts..%d", count);
+		}
+		count++;
+	}
+}
+
+
 void FaceTracker::SetFaceMode()
 {
 	// printf("Inside setFaceMode\n");
@@ -464,7 +526,7 @@ void FaceTracker::SetFaceMode()
 
 	char cmd[512];
 	EyelockLog(logger, DEBUG, "Setting Face Mode\n");
-	sprintf(cmd, "psoc_write(2,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)\n", m_faceLEDVolt, m_faceLEDcurrentSet, m_faceLEDtrigger, m_faceLEDEnable);
+	sprintf(cmd, "psoc_write(2,%i) | psoc_write(5,%i) | psoc_write(4,%i) | psoc_write(3,%i)", m_faceLEDVolt, m_faceLEDcurrentSet, m_faceLEDtrigger, m_faceLEDEnable);
 	EyelockLog(logger, DEBUG, "Face camera settings-faceLEDVolt:%d, faceLEDcurrentSet:%d, faceLEDtrigger:%d, faceLEDEnable:%d", m_faceLEDVolt, m_faceLEDcurrentSet, m_faceLEDtrigger, m_faceLEDEnable);
 	//printf(cmd);
 	port_com_send(cmd);
@@ -477,6 +539,11 @@ void FaceTracker::SetFaceMode()
 	sprintf(cmd,"wcr(0x04,0x30b0,%i)",((m_faceAnalogGain&0x3)<<4) | 0X80);
 	port_com_send(cmd);
 	EyelockLog(logger, DEBUG, "Face camera Analog gain:%d",(((m_faceAnalogGain&0x3)<<4) | 0X80));
+
+	// Read the register 0x30b0
+	unsigned int Value = ((m_faceAnalogGain&0x3)<<4) | 0X80;
+	readFaceAnalogGainReg(Value);
+
 	agc_val= FACE_GAIN_DEFAULT;
 	EyelockLog(logger, DEBUG, "Face camera gain default:%d", FACE_GAIN_DEFAULT);
 	// start_mode_change = std::chrono::system_clock::now();
@@ -592,13 +659,15 @@ void FaceTracker::DimmFaceForIris()
 	EyelockLog(logger, DEBUG, "Dimming face cameras -DimmingfaceExposureTime:%d, DimmingfaceDigitalGain:%d", m_DimmingfaceExposureTime, m_DimmingfaceDigitalGain);
 	port_com_send(cmd);
 
-	//Need to change this anlog gain setting
+	//Need to change this analog gain setting
 	{
 		char cmd[512];
-		sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((m_DimmingfaceAnalogGain&0x3)<<4) | 0X80);
+		sprintf(cmd,"wcr(0x04,0x30b0,%i)",((m_DimmingfaceAnalogGain&0x3)<<4) | 0X80);
 		EyelockLog(logger, DEBUG, "FACE_GAIN_MIN:%d DimmingfaceAnalogGain:%d", FACE_GAIN_MIN, (((m_DimmingfaceAnalogGain&0x3)<<4) | 0X80));
 		port_com_send(cmd);
 	}
+	unsigned int Value = ((m_DimmingfaceAnalogGain&0x3)<<4) | 0X80;
+	readDimFaceGainregVal(Value);
 	agc_val = FACE_GAIN_MIN;
 
 }
@@ -960,6 +1029,8 @@ void FaceTracker::DoStartCmd()
 	sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((m_faceAnalogGain&0x3)<<4) | 0X80);
 	EyelockLog(logger, DEBUG, "Face analog gain: %d", (((m_faceAnalogGain&0x3)<<4) | 0X80));
 	port_com_send(cmd);
+
+	readFaceAnalogGainReg((((m_faceAnalogGain&0x3)<<4) | 0X80));
 	//port_com_send("wcr(0x1f,0x30b0,0x80");		//all 4 Iris cameras gain is x80
 	//port_com_send("wcr(0x4,0x30b0,0x90");		//Only face camera gain is x90
 
@@ -1046,10 +1117,12 @@ void FaceTracker::DoStartCmd()
 
 	// system("touch /home/root/Eyelock.run");
 	faceConfigInit = true;
+
+	// Init the seed with 0 during startup
+	char cmd1[100];
+	sprintf(cmd1,"cam_set_seed(%i)", 0);		//Set the seed
+	port_com_send(cmd1);
 }
-
-
-
 
 float FaceTracker::CalcExposureLevel(int width, int height,unsigned char *dsty, int limit)
 {
@@ -1790,7 +1863,7 @@ void *init_facetracking(void *arg) {
 
 	// Main Loop...
 	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
-	static unsigned int count = 0;
+	// static unsigned int count = 0;
 	while (1)
 	{
 		// printf("Inside while of face tracking\n");
@@ -1798,16 +1871,17 @@ void *init_facetracking(void *arg) {
 		clock_t begin = clock();
 
 		bool status = vs->get(&w, &h, (char *) outImg.data, bDebugFrameBuffer);
+		/*
 		if(count % 4*5 == 0){ // Every 5 seconds
 			cv::imwrite("FaceImage.pgm",outImg);
-		}
+		}*/
 
 		clock_t end = clock();
 
 		if(status == false){
 			// printf("No Face Image for 15 seconds....%d\n", status);
 			EyelockLog(logger, ERROR, "No Face Image for 15 seconds");
-			system("/home/root/forcereboot.sh &");
+			// system("/home/root/forcereboot.sh &");
 		}else{
 			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 			EyelockLog(logger, DEBUG, "time_spent in receiving a frame..%ld\n", time_spent);
@@ -1815,7 +1889,7 @@ void *init_facetracking(void *arg) {
 
 		//Main Face tracking operation
 		m_faceTracker.DoRunMode_test(m_faceTracker.bShowFaceTracking, m_faceTracker.bDebugSessions);
-		count++;
+		// count++;
 	}
 	outImg.release();
 }

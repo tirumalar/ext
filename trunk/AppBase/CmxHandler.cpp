@@ -2816,7 +2816,7 @@ int CmxHandler::CreateUDPServer(int port) {
 
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
 	
-#if 1 // Anita for listening from another application remove later
+#if 0 // Anita for listening from another application remove later
 	int enable = 1;
 	setsockopt(m_sock, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &enable, sizeof(int));
 #endif

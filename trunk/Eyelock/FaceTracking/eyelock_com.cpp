@@ -442,14 +442,16 @@ void *init_ec(void * arg) {
 				buf[0] = 0x00;
 				char cmd[100];
 				sprintf(cmd,"cam_set_seed(%i)", theItem.m_RandomSeed);		//Set the seed
-				while(count++ < 5){
+				port_com_send(cmd);
+				vs->seed = theItem.m_RandomSeed;
+				/*while(count++ < 5){
 					port_com_send_return(cmd, buf, 256);
 					if(strstr(buf, "OK")){
 						vs->seed = theItem.m_RandomSeed;
 						break;
 					}
 
-				}
+				}*/
 
 			}
 		}
