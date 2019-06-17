@@ -277,6 +277,8 @@ private:
 	cv::Rect seacrhEyeArea(cv::Rect no_move_area);
 	cv::Rect adjustWidthDuringFaceDetection(cv::Rect face);
 
+	void readFaceAnalogGainReg(uint32_t Value);
+	void readDimFaceGainregVal(uint32_t Value);
 public:
 
 	bool bDebugSessions;

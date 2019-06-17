@@ -2258,18 +2258,19 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 	char filename[150];
 	int cam_idd = 0;
 	unsigned char frame_number = 0;
-	static unsigned int count = 0;
+	// static unsigned int count = 0;
 	if(frame->imageData != NULL)
 	{
 		cam_idd = frame->imageData[2]&0xff;
 		frame_number = frame->imageData[3]&0xff;
+		/*
 		if(count % 4*5 == 0)
 		{
 			// Every 5 seconds
 			sprintf(filename,"Iris_%d.pgm", cam_idd);
 			cv::Mat mateye = cv::cvarrToMat(frame);
 			imwrite(filename, mateye);
-		}
+		}*/
 	}
 
 #ifdef DEBUG_SESSION
@@ -2505,7 +2506,7 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 			}
 		}
 	}// !bSkipProcessing
-	count ++;
+	// count ++;
     return bSentSomething;
 }
 
