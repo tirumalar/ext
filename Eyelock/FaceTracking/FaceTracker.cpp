@@ -1426,11 +1426,11 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	foundFace = FindEyeLocation(smallImg, eyes, eye_size, face, MIN_FACE_SIZE, MAX_FACE_SIZE);
 
 	if(foundFace){
-		EyelockLog(logger, INFO, "FaceTracking found Face");
+		//  EyelockLog(logger, INFO, "FaceTracking found Face");
 		cv::Rect myFaceROI(face.x, face.y, face.width, face.height);
-		//EyelockLog(logger, TRACE, "Before cropped image AGC");
+		// EyelockLog(logger, TRACE, "Before cropped image AGC");
 		m_CroppedFaceImageForAGC = smallImg(myFaceROI);
-		//EyelockLog(logger, TRACE, "After cropped image AGC");
+		// EyelockLog(logger, TRACE, "After cropped image AGC");
 	}
 
 	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
@@ -1451,7 +1451,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	last_system_state = system_state;
 
 
-	EyelockLog(logger, INFO, "FaceTracking SystemState = %d", system_state);
+	// EyelockLog(logger, INFO, "FaceTracking SystemState = %d", system_state);
 	// figure out our next state
 	switch(system_state)
 	{
@@ -1641,7 +1641,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					break;
 	}
 
-	EyelockLog(logger, INFO, "End of last_system_state != system_state = %d", system_state);
+	// EyelockLog(logger, INFO, "End of last_system_state != system_state = %d", system_state);
 
 /*	if(system_state  == STATE_MOVE_MOTOR  || last_system_state  == STATE_MOVE_MOTOR){
 		m_ProjPtr = false;

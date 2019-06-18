@@ -86,7 +86,12 @@ then
     exit
 else
     echo "CalRect.ini file download Successful"
-	cp CalRect.ini /home/root/data/calibration
+    if [ -s $CALRECTFILE ]
+	then
+ 	cp CalRect.ini /home/root/data/calibration
+    else
+	echo "Downloaded ftp file CalRect.ini size is zero"
+    fi
 fi
 
 #Download Face.ini File from ftp
@@ -98,15 +103,20 @@ else
    echo $FACECONFIGFILE does not exist
 fi
 
-if ! wget -t 2 --user="$USER" --password="$PASSWD" "ftp://$host/$FACECONFIGFILE"
+if ! wget -t 2 --user="$USER" --password="$PASSWD" "ftp://$host/$FACECONFIGFILE" 
 then
     echo "Error downloading file; Face.ini is not available"
     exit
 else
-   echo "Face.ini file download Successful"
+    echo "Face.ini file download Successful"
+    if [ -s $FACECONFIGFILE ]
+	then
+	   echo "Face.ini file size is non zero, so copy to data calibration folder"
+           mv data/calibration/Face.ini data/calibration/Face.ini.Bkup
+           cp Face.ini /home/root/data/calibration 
+	else
+	   echo "Downloaded ftp file Face.ini size is zero"           
+    fi    
 fi
 
-#Copy the downloaded file to data calibration folder
-mv data/calibration/Face.ini data/calibration/Face.ini.Bkup
-cp Face.ini /home/root/data/calibration
 echo "*************************** Extftp script finished ***********************"
