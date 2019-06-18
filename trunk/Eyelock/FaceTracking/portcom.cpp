@@ -226,7 +226,7 @@ void port_com_send(char *cmd_in, float *pr_time)
 	{
 
 		PortComLog(logger, ERROR, "port_com_send(%s): 5 failures, rebooting! (errno=(%s)", cmd, strerror(errno));
-		// system("/home/root/forcereboot.sh &");
+		system("/home/root/forcereboot.sh &");
 	}
 
 
@@ -370,7 +370,7 @@ int port_com_send_return(char *cmd, char *buffer, int min_len) {
 	if (nFailCount >= 5)
 	{
 		PortComLog(logger, ERROR, "port_com_send_return(%s): 5 failures, rebooting!(errno=(%s)", cmd, strerror(errno));
-		// system("/home/root/forcereboot.sh &");
+		system("/home/root/forcereboot.sh &");
 	}
 
 
