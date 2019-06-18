@@ -1428,9 +1428,9 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	if(foundFace){
 		EyelockLog(logger, INFO, "FaceTracking found Face");
 		cv::Rect myFaceROI(face.x, face.y, face.width, face.height);
-		EyelockLog(logger, ERROR, "Before cropped image AGC");
+		//EyelockLog(logger, TRACE, "Before cropped image AGC");
 		m_CroppedFaceImageForAGC = smallImg(myFaceROI);
-		EyelockLog(logger, TRACE, "After cropped image AGC");
+		//EyelockLog(logger, TRACE, "After cropped image AGC");
 	}
 
 	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
