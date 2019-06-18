@@ -124,9 +124,9 @@ int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, bool bDebugFlag, ch
 
     if (m_current_process_queue_item.m_ptr != NULL)
     {
-    	EyelockLog(loggerp, INFO, "vs->get() Before ReleaseProcessBuffer...");
+    	//EyelockLog(loggerp, INFO, "vs->get() Before ReleaseProcessBuffer...");
     	ReleaseProcessBuffer(m_current_process_queue_item);
-    	EyelockLog(loggerp, INFO, "vs->get() After ReleaseProcessBuffer...");
+    	//EyelockLog(loggerp, INFO, "vs->get() After ReleaseProcessBuffer...");
     }
 
     if(bDebugFlag)
@@ -138,7 +138,7 @@ int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, bool bDebugFlag, ch
 			if((nwaitCount++) > 15000) // If we don't get an image within 15 seconds return false
 				return false;
 
-			EyelockLog(loggerp, INFO, "vs->get() TryPop failed!");
+			//EyelockLog(loggerp, INFO, "vs->get() TryPop failed!");
 		}
     }
     else
@@ -174,7 +174,7 @@ int VideoStream::get(int *win,int *hin,char *m_pImageBuffer, bool bDebugFlag, ch
 #endif
 	memcpy(m_pImageBuffer, m_current_process_queue_item.m_ptr, m_ImageSize);
 
-	EyelockLog(loggerp, INFO, "vs->get() OK returning image");
+	// EyelockLog(loggerp, INFO, "vs->get() OK returning image");
 
 	return 1;
 }
@@ -448,7 +448,7 @@ void *VideoStream::ThreadServer(void *arg)
                 return NULL;
         }
         vs->running=1;
-        unsigned int count = 0;
+        // unsigned int count = 0;
         while (vs->running)
         {
             length = recvfrom(leftCSock, &databuf[rx_idx], min(1500,bytes_to_read), 0, (struct sockaddr *)&from, &fromlen);
@@ -495,10 +495,11 @@ void *VideoStream::ThreadServer(void *arg)
                 	if (databuf != dummy_buff)
                 	{
 						vs->PushProcessBuffer(queueItem);
+						/*
 						if(count % 4*5 == 0){ // Every 5 seconds
 							const cv::Mat img(cv::Size(1200, 960), CV_8U, queueItem.m_ptr);
 							cv::imwrite("FaceSocket.pgm",img);
-						}
+						}*/
 						pkgs_missed=0;
 						pkgs_received=0;
 						pckcnt = 0;
@@ -526,7 +527,7 @@ void *VideoStream::ThreadServer(void *arg)
                if(bytes_to_read<=0)
             	   bytes_to_read=IMAGE_SIZE;
           }
-            count ++;
+           // count ++;
       }
        vs->running =-1;
       close(leftCSock);

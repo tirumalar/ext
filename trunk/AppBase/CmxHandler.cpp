@@ -3055,7 +3055,7 @@ void *leftCServer(void *arg) {
 		char * databuf = (char *) queueItem.m_ptr;
 
 		//  sleep(2);
-		unsigned int count = 0;
+		// unsigned int count = 0;
 		char filename[100];
 		while (!me->ShouldIQuit()) {
 
@@ -3116,13 +3116,14 @@ void *leftCServer(void *arg) {
 
 					// dont push if its a dummy buffer
 					if (databuf != dummy_buff) {
+						/*
 						if(count % 4*5 == 0)
 						{
 							sprintf(filename,"IrisSocketCamId_%d.pgm", cam_id);
 							// Every 5 seconds
 							const cv::Mat img(cv::Size(1200, 960), CV_8U, queueItem.m_ptr);
 							cv::imwrite(filename,img);
-						}
+						}*/
 
 						// printf("CMX: Pushing Frame No = %d\n", databuf[3] & 0xff);
 						pFrameGrabber->PushProcessBuffer(queueItem);
@@ -3152,7 +3153,7 @@ void *leftCServer(void *arg) {
 				if (bytes_to_read <= 0)
 					bytes_to_read = IMAGE_SIZE;
 			}
-			count++;
+			// count++;
 		}
 		printf("closing socket...\n");
 		close(leftCSock);
