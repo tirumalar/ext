@@ -58,7 +58,7 @@ EyelockLog(){
 
 if [[ -f ${EYELOCK_LOGCFG} ]]
 then
-	EYELOCK_LOGLEVELSTR=$(cat "${EYELOCK_LOGCFG}" | head -n1 | cut -d'=' -f2 | cut -d',' -f1)
+	EYELOCK_LOGLEVELSTR=$(grep 'log4j.category.nxtlog' "${EYELOCK_LOGCFG}" | head -n1 | cut -d'=' -f2 | cut -d',' -f1)
 else
 	EYELOCK_LOGLEVELSTR='INFO' # default
 fi
