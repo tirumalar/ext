@@ -379,7 +379,7 @@ programIcm(){
 
 cleanup(){
 	echo "Cleanup..."
-	#cd ${firmwareDir}; rm -r "fwHandler"; rm *.*; rm ${logger}
+	cd ${firmwareDir}; rm -r "fwHandler"; rm *.*; rm ${logger}
 	# should upgradeTemp be deleted? WebConfig doesn't
 	sync
 }
