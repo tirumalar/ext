@@ -50,7 +50,7 @@ void *leftCServer(void *arg);
 int m_port;
 
 #define FREE_BUFF_SIZE 2
-#if 0
+#if 1
 void VideoStream::flush() {
 	ImageQueueItemF val;
 	while ((m_pRingBuffer->TryPop(val)) != false)
