@@ -1706,18 +1706,18 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 				memcpy(m_RightCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
 			}
 
-			EyelockLog(logger, DEBUG, "FaceTracking:  Pushing FaceFrame = %d\n", FaceCameraFrameNo);
+			EyelockLog(logger, TRACE, "FaceTracking:  Pushing FaceFrame = %d\n", FaceCameraFrameNo);
 			// If we're full, the top is stale anyway, get rid of it, then add the current item
 			// Increase the size of the queues if we are dropping too many unprocessed FaceFrames here...
    		    if (g_pLeftCameraFaceQueue->Full())
    		    	g_pLeftCameraFaceQueue->Pop();
 			g_pLeftCameraFaceQueue->Push(m_LeftCameraFaceInfo);
-			EyelockLog(logger, DEBUG, "FaceTracking:  Pushed LeftQueue, Size() = %d\n", g_pLeftCameraFaceQueue->Size());
+			EyelockLog(logger, TRACE, "FaceTracking:  Pushed LeftQueue, Size() = %d\n", g_pLeftCameraFaceQueue->Size());
 			// If we're full, the top is stale anyway, get rid of it, then add the current item
    		    if (g_pRightCameraFaceQueue->Full())
    		    	g_pRightCameraFaceQueue->Pop();
 			g_pRightCameraFaceQueue->Push(m_RightCameraFaceInfo);
-   		    EyelockLog(logger, DEBUG, "FaceTracking:  Pushed Pushed RightQueue, Size() = %d\n", g_pRightCameraFaceQueue->Size());
+   		    EyelockLog(logger, TRACE, "FaceTracking:  Pushed Pushed RightQueue, Size() = %d\n", g_pRightCameraFaceQueue->Size());
 
 			if(bFaceMapDebug){
 				char filename[100];
@@ -1884,7 +1884,7 @@ void *init_facetracking(void *arg) {
 			system("/home/root/forcereboot.sh &");
 		}else{
 			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			EyelockLog(logger, DEBUG, "time_spent in receiving a frame..%ld\n", time_spent);
+			EyelockLog(logger, TRACE, "time_spent in receiving a frame..%ld\n", time_spent);
 		}
 
 		//Main Face tracking operation
