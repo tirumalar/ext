@@ -2358,7 +2358,7 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 			return bSentSomething;
 		}
 
-		EyelockLog(logger, DEBUG, "NoofHaarEyes = %d, maxEyes = %d\n", NoOfHaarEyes, maxEyes);
+		EyelockLog(logger, TRACE, "NoofHaarEyes = %d, maxEyes = %d\n", NoOfHaarEyes, maxEyes);
 
 		for(int eyeIdx=0;eyeIdx<maxEyes;eyeIdx++){
 			CvPoint2D32f irisCentroid = cvPoint2D32f(0,0);

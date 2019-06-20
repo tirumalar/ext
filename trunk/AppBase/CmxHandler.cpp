@@ -2994,7 +2994,7 @@ void *leftCServer(void *arg) {
 						pkgs_received = 0;
 						pckcnt = 0;
 					}else{
-						EyelockLog(logger, ERROR, "ImageAuthen: pFrameGrabber is full and can't push the frame: CamId:%d FrameId:%d\n", cam_id, databuf[3] & 0xff);
+						EyelockLog(logger, TRACE, "ImageAuthen: pFrameGrabber is full and can't push the frame: CamId:%d FrameId:%d\n", cam_id, databuf[3] & 0xff);
 					}
 
 					if (valid_image)
@@ -3131,7 +3131,7 @@ void *leftCServer(void *arg) {
 						pkgs_received = 0;
 						pckcnt = 0;
 					}else{
-						EyelockLog(logger, ERROR, "pFrameGrabber is full and can't push the frame: CamId:%d FrameId:%d\n", cam_id, databuf[3] & 0xff);
+						EyelockLog(logger, TRACE, "pFrameGrabber is full and can't push the frame: CamId:%d FrameId:%d\n", cam_id, databuf[3] & 0xff);
 					}
 
 					queueItem = pFrameGrabber->GetFreeBuffer();
