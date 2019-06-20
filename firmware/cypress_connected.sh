@@ -5,7 +5,7 @@ configureStatic(){
 	sleep 1
 	ifconfig "${IFACE}" hw ether "${MAC}"
 	sleep 1
-	ifconfig "${IFACE}" inet "${IP}" netmask "${MASK}" broadcast "${BRDCAST}" up
+	ifconfig "${IFACE}" inet "${IP}" netmask "${MASK}" up
 		
 	if [[ ${ENABLED_8021X} == 'true' ]]
 	then
@@ -17,9 +17,6 @@ configureStatic(){
 	#sleep "${WPA_TIMEOUT}"
 
 	route add default gw "${GW}"
-
-	echo "nameserver ${DNS1}" >> "${RESOLV_FILE}"
-	echo "nameserver ${DNS2}" >> "${RESOLV_FILE}"
 }
 
 configureDhcp(){
@@ -137,6 +134,8 @@ then
 			break
 		fi
 	done
+	echo "nameserver ${DNS1}" >> "${RESOLV_FILE}"
+	echo "nameserver ${DNS2}" >> "${RESOLV_FILE}"
 
 elif grep -q "${IFACE} inet dhcp" "${INTERFACES_FILE}"
 then
@@ -169,14 +168,6 @@ then
 	fi
 fi
 
-if [[ -n ${IP6} ]]
-then
-	ifconfig "${IFACE}" inet6 add "${IP6}"/"${MASK6}"
-	ip -6 route add "${GW6}" dev "${IFACE}"	
-	echo "nameserver ${DNS16}" >> "${RESOLV_FILE}"
-	echo "nameserver ${DNS26}" >> "${RESOLV_FILE}"
-fi	
-
 if [[ ${DHCP_MODE_6_STR} == 'auto' ]]
 then
 #TODO: check if radvdump is ready
@@ -202,6 +193,31 @@ else
 	echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - IPv6 is disabled" >> /home/root/nxtLog.log
 	# none - IPv6 dhcp disabled
 fi
+
+if [[ -n ${IP6} ]]
+then
+	if [[ -z ${MASK6} ]]
+	then
+		MASK6='64'
+	fi
+
+	ifconfig "${IFACE}" inet6 add "${IP6}"/"${MASK6}"
+fi	
+
+if [[ -n ${GW6} ]]
+then
+	ip -6 route add "${GW6}" dev "${IFACE}"	
+fi	
+
+if [[ -n ${DNS16} ]]
+then
+	echo "nameserver ${DNS16}" >> "${RESOLV_FILE}"
+fi	
+
+if [[ -n ${DNS26} ]]
+then
+	echo "nameserver ${DNS26}" >> "${RESOLV_FILE}"
+fi	
 
 resolvconf -u
 
