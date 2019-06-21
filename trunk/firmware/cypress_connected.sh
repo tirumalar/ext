@@ -160,11 +160,11 @@ then
 	if ! ifconfig "${IFACE}" | grep -q 'inet addr'
 	then
 		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - configuring DHCP failed. Falling back to the default IP" >> /home/root/nxtLog.log
-		ifconfig "${IFACE}" down
+		DEFAULT_IP_LABEL='default'
+		ifconfig "${IFACE}:${DEFAULT_IP_LABEL}" hw ether "${MAC}"
 		sleep 1
-		ifconfig "${IFACE}" hw ether "${MAC}"
-		sleep 1
-		ifconfig "${IFACE}" inet "169.254.1.1" netmask "255.255.0.0" broadcast "169.254.255.255" up
+		ifconfig "${IFACE}:${DEFAULT_IP_LABEL}" inet "169.254.1.1" netmask "255.255.0.0" up
+		configureDhcp
 	fi
 fi
 
