@@ -332,6 +332,29 @@ class InterfaceEditor
 
         // Load up the DHCP Settings
         $this->LoadReloadInterfacesSettings($HardwareType);
+		
+		if ($HardwareType === '1') // ext
+        {
+            $interfacesFile = "/home/www-internal/interfaces";
+			
+			$this->DHCPTimeout = trim(shell_exec(sprintf("grep '^#dhcp_timeout' $interfacesFile | cut -d' ' -f2")));
+			if (!ctype_digit($this->DHCPTimeout))
+			{
+				$this->DHCPTimeout = "15";
+			}
+			
+			$this->DHCPRetries = trim(shell_exec(sprintf("grep '^#dhcp_retries' $interfacesFile | cut -d' ' -f2")));
+			if (!ctype_digit($this->DHCPRetries))
+			{
+				$this->DHCPRetries = "3";
+			}
+						
+			$this->DHCPRetryDelay = trim(shell_exec(sprintf("grep '^#dhcp_retry_delay' $interfacesFile | cut -d' ' -f2")));
+			if (!ctype_digit($this->DHCPRetryDelay))
+			{
+				$this->DHCPRetryDelay = "1";
+			}
+        }
 
         // Determine Tamper flag
         $tampered = shell_exec("ls -la /home/root | grep tamper");
@@ -608,7 +631,8 @@ class InterfaceEditor
     {
 	//	error_log("updateInterfacesFile...");
         $bChanged = $bSwitchedToStatic;
-        $bDeviceNameChanged = FALSE;
+		$bDeviceNameChanged = FALSE;
+		$bDhcpSettingsChanged = FALSE;
 	    $NewDeviceName = "";
         $NewIpOfBoard = "";
         $NewNetwork = "";
@@ -748,6 +772,28 @@ class InterfaceEditor
                 $bChanged = TRUE;
                 $this->dns2 = $value;
 	     }
+		 
+		 if ($theHardwareType === '1') // ext
+		 {
+			if ($key === "DHCP_Timeout" && $value !== $this->DHCPTimeout)
+			{
+				$bDhcpSettingsChanged = TRUE;
+				$this->DHCPTimeout = $value;
+			}
+			 
+			if ($key === "DHCP_Retries" && $value !== $this->DHCPRetries)
+			{
+				$bDhcpSettingsChanged = TRUE;
+				$this->DHCPRetries = $value;
+			}			
+			
+			if ($key === "DHCP_RetryDelay" && $value !== $this->DHCPRetryDelay)
+			{
+				$bDhcpSettingsChanged = TRUE;
+				$this->DHCPRetryDelay = $value;
+			}
+		 }
+		 
         }
 
 
@@ -776,17 +822,47 @@ class InterfaceEditor
 			}
 			}
         }
-	
+		
+		
+	if ($theHardwareType === '1')
+	{
+		if ($bDhcpSettingsChanged)
+		{
+			$fileContent = "";
+			$fileContent .= sprintf("#dhcp_timeout %d\n", $this->DHCPTimeout);
+			$fileContent .= sprintf("#dhcp_retries %d\n", $this->DHCPRetries);
+			$fileContent .= sprintf("#dhcp_retry_delay %d\n", $this->DHCPRetryDelay);
+			
+			$f = fopen("/home/www-internal/interfaces", "r");
+			while (($line = fgets($f)) !== false) 
+			{
+				$lineParts = explode(" ", $line);
+				if ($lineParts[0] !== "#dhcp_timeout" && $lineParts[0] !== "#dhcp_retries" && $lineParts[0] !== "#dhcp_retry_delay")
+				{
+					$fileContent .= $line;
+				}
+			}
+			fclose($f);
+						
+			$f = fopen("/home/www-internal/iftemp","w");
+			fwrite($f, $fileContent);
+			fclose($f);
+
+			shell_exec("mv /home/www-internal/iftemp /home/www-internal/interfaces");
+		}
+	}
+				
 	 if ($bChanged)
         {
 			if ($theHardwareType === '1')
 			{
-				$strNewInterfaces = sprintf("auto %s\n", $InterfaceName);
+				$strNewInterfaces = sprintf("#dhcp_timeout %s\n", $this->DHCPTimeout);
+				$strNewInterfaces .= sprintf("#dhcp_retries %s\n", $this->DHCPRetries);
+				$strNewInterfaces .= sprintf("#dhcp_retry_delay %s\n", $this->DHCPRetryDelay);
+				$strNewInterfaces .= sprintf("auto %s\n", $InterfaceName);
 				$strNewInterfaces .= sprintf("iface %s inet static\n", $InterfaceName);
 				$strNewInterfaces .= sprintf("address %s\n", $this->IpOfBoard);
-				$strNewInterfaces .= sprintf("network %s\n", $this->Network);
 				$strNewInterfaces .= sprintf("netmask %s\n", $this->SubNetMask);
-				$strNewInterfaces .= sprintf("broadcast %s\n", $this->BroadcastIp);
 				$strNewInterfaces .= sprintf("gateway %s\n", $this->Gateway);
 				$strNewInterfaces .= sprintf("hwaddress ether %s\n", $this->MacAddress);
 				$strNewInterfaces .= sprintf("dns-nameservers %s %s\n", $this->dns1, $this->dns2);
@@ -903,7 +979,10 @@ class InterfaceEditor
 		{
 			if ($bSwitchingtoDHCP)
 			{
-				$strNewInterfaces = sprintf("auto %s\n", $InterfaceName);
+				$strNewInterfaces = sprintf("#dhcp_timeout %s\n", $this->DHCPTimeout);
+				$strNewInterfaces .= sprintf("#dhcp_retries %s\n", $this->DHCPRetries);
+				$strNewInterfaces .= sprintf("#dhcp_retry_delay %s\n", $this->DHCPRetryDelay);
+				$strNewInterfaces .= sprintf("auto %s\n", $InterfaceName);
 				$strNewInterfaces .= sprintf("iface %s inet dhcp\n", $InterfaceName);
 				$strNewInterfaces .= sprintf("hwaddress ether %s\n", $this->MacAddress);
 		

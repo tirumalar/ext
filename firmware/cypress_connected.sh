@@ -1,4 +1,5 @@
 #!/bin/bash
+NUMBER_REGEX='^[0-9]+$'
 
 configureStatic(){
 	ifconfig "${IFACE}" down
@@ -47,8 +48,25 @@ INTERFACES_FILE='/home/www-internal/interfaces'
 INTERFACES_FILE_6='/home/www-internal/interfaces6'
 RESOLV_FILE='/etc/resolvconf/resolv.conf.d/tail'
 IFACE='usbnet0'
-DHCP_RETRIES=3
-DHCP_TIMEOUT=15
+
+DHCP_TIMEOUT="$(grep '^#dhcp_timeout' ${INTERFACES_FILE} | cut -d' ' -f2)"
+if ! [[ ${DHCP_TIMEOUT} =~ ${NUMBER_REGEX} ]]
+then
+   DHCP_TIMEOUT=15
+fi
+
+DHCP_RETRIES="$(grep '^#dhcp_retries' ${INTERFACES_FILE} | cut -d' ' -f2)"
+if ! [[ ${DHCP_RETRIES} =~ ${NUMBER_REGEX} ]]
+then
+   DHCP_RETRIES=3
+fi
+
+DHCP_RETRY_DELAY="$(grep '^#dhcp_retry_delay' ${INTERFACES_FILE} | cut -d' ' -f2)"
+if ! [[ ${DHCP_RETRY_DELAY} =~ ${NUMBER_REGEX} ]]
+then
+   DHCP_RETRY_DELAY=1
+fi
+
 DHCP6_TIMEOUT=120
 WPA_TIMEOUT=60
 
@@ -153,6 +171,7 @@ then
 				break
 			fi
 		fi
+		sleep "${DHCP_RETRY_DELAY}"
 	done
 
 	killall -KILL dhclient
