@@ -236,6 +236,8 @@ upgradeMaster(){
 	#	echo 'Cypress connected udev rule is the same, no need to update'
 	fi
 	rm "${NEW_CYP_RULE}"
+	
+	systemctl disable ntp
 		
 	mv /home/root/interfaces /home/upgradeTemp/root/interfaces
 	mv /home/root/interfaces.md5 /home/upgradeTemp/root/interfaces.md5
