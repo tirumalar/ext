@@ -10,7 +10,7 @@ require("passwd.php");
 function logTimeSync($message)
 {
 	$log = fopen("/home/root/nxtEvent.log", "a");
-	fwrite($log, date("Y-m-d H:i:s, e"). " > ".$message."\n");
+	fwrite($log, gmdate("Y-m-d H:i:s, e"). " > ".$message."\n");
 	fclose($log);
 	
 	
