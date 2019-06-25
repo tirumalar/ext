@@ -225,18 +225,6 @@ upgradeMaster(){
 	#sed -i -e 's/log4j.appender.Rlog.layout.ConversionPattern=%d{yyyy-MM-dd}, %d{HH:mm:ss.SSS}, %-5p, [%c], - %m%n/log4j.appender.Rlog.layout.ConversionPattern=%d{yyyy-MM-dd}{UTC}, %d{HH:mm:ss.SSS}{UTC}, %-5p, [%c], - %m%n/g' /home/upgradeTemp/root/nxtlog.cfg
 	#sed -i -e 's/log4j.appender.R.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss}, UTC > %m%n/log4j.appender.R.layout.ConversionPattern=%d{yyyy-MM-dd HH:mm:ss}{UTC}, UTC > %m%n/g' /home/upgradeTemp/root/nxtevent.cfg
 	
-	# changing udev rule if needed
-	CUR_CYP_RULE='/etc/udev/rules.d/85-cypress_rule.rules'
-	NEW_CYP_RULE='/home/root/85-cypress_rule.rules'
-	if ! diff -q "${CUR_CYP_RULE}" "${NEW_CYP_RULE}"
-	then 
-		mv "${NEW_CYP_RULE}" "${CUR_CYP_RULE}" 
-		udevadm control --reload-rules
-	#else 
-	#	echo 'Cypress connected udev rule is the same, no need to update'
-	fi
-	rm "${NEW_CYP_RULE}"
-	
 	systemctl disable ntp
 		
 	mv /home/root/interfaces /home/upgradeTemp/root/interfaces
@@ -308,6 +296,18 @@ upgradeMaster(){
 
 	mv /home/root/OIMftp.sh /home
         chmod +x /home/OIMftp.sh
+		
+	# changing udev rule if needed
+	CUR_CYP_RULE='/etc/udev/rules.d/85-cypress_rule.rules'
+	NEW_CYP_RULE='/home/root/85-cypress_rule.rules'
+	if ! diff -q "${CUR_CYP_RULE}" "${NEW_CYP_RULE}"
+	then 
+		mv "${NEW_CYP_RULE}" "${CUR_CYP_RULE}" 
+		udevadm control --reload-rules
+	#else 
+	#	echo 'Cypress connected udev rule is the same, no need to update'
+	fi
+	rm "${NEW_CYP_RULE}"
 
 	${logger} -L"Applying done."
 
