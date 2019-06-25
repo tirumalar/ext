@@ -113,6 +113,9 @@ chmod a+x firewall.sh
 ./firewall.sh
 #bash -c "while true; do sleep 1; ./firewall.sh; break; done" &
 
+# log rotation for hbOIM, time sync and other bash script logs
+bash -c "while true; do /home/root/rotateLogs.sh /home/root/eyelockShellScripts.log 1000; sleep 10; done" &
+
 echo "******************************script finished ************************"
 
 

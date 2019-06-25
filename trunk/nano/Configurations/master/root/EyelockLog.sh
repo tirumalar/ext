@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export EYELOCK_LOGFILE='/home/root/nxtLog.log'
+export EYELOCK_LOGFILE='/home/root/eyelockShellScripts.log'
 export EYELOCK_LOGCFG='/home/root/nxtlog.cfg'
 
 export EYELOCK_LOGLABEL='EyelockShellScripts' # can be overwritten
