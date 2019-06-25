@@ -50,7 +50,7 @@ EyelockLog(){
 	local LEVEL=$(convertEyelockLogLevel "${LEVELSTR}")
 	if (( ${LEVEL} >= ${EYELOCK_LOGLEVEL} ))
 	then
-		NOW=$(date +"%Y-%m-%d, %T.000")
+		NOW=$(date -u +"%Y-%m-%d, %T.000")
 		echo "$NOW, ${LEVELSTR} , [${EYELOCK_LOGLABEL}], - $MSG" >> "${EYELOCK_LOGFILE}"
 	fi
 }
