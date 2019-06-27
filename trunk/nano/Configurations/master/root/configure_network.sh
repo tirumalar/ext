@@ -49,6 +49,14 @@ INTERFACES_FILE_6='/home/www-internal/interfaces6'
 RESOLV_FILE='/etc/resolvconf/resolv.conf.d/tail'
 IFACE='usbnet0'
 
+# On the first boot, the existing MAC and ID must be overwritten in interfaces file with the correct ones prior to network configuration
+MAC_FILE='/media/boot/MAC.txt'
+ID_FILE='/media/boot/id.txt'
+if [[ -f ${MAC_FILE} || -f ${ID_FILE} ]]
+then
+	exit 
+fi
+
 DHCP_TIMEOUT="$(grep '^#dhcp_timeout' ${INTERFACES_FILE} | cut -d' ' -f2)"
 if ! [[ ${DHCP_TIMEOUT} =~ ${NUMBER_REGEX} ]]
 then

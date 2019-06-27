@@ -55,32 +55,6 @@ if ! mount -t ext4 /dev/mapper/cryptohome /media/home; then
 	exit 1
 fi
 
-# Replace the existing MAC in interfaces file with the correct one,
-# replace the existing ID file in /home/root,
-# create factory hostname file and set factory hostname
-MAC_FILE='/media/boot/MAC.txt'
-ID_FILE='/media/boot/id.txt'
-if [[ -f ${MAC_FILE} ]]
-then
-	CUR_MAC=$(cat ${MAC_FILE} | tr -d '[:space:]')
-	INTERFACES_FILE='/home/www-internal/interfaces'
-	sed -i "s/hwaddress ether .*$/hwaddress ether ${CUR_MAC}/" "${INTERFACES_FILE}.default"
-	cp "${INTERFACES_FILE}"{.default,}
-	rm "${MAC_FILE}"
-	
-fi
-if [[ -f ${ID_FILE} ]]
-then
-	ID_FILE_DEST='/home/root/id.txt'
-	mv "${ID_FILE}" "${ID_FILE_DEST}"
-	FACTORY_HOSTNAME="nanoext$(cat ${ID_FILE_DEST} | tr -d '[:space:]')" 
-	echo "${FACTORY_HOSTNAME}" > '/home/www-internal/FactoryHostname'	
-
-	hostnamectl set-hostname "${FACTORY_HOSTNAME}"
-	awk -v factoryHostname="${FACTORY_HOSTNAME}" ' BEGIN { OFS = "\t" } ($1 == "127.0.1.1") { $2=factoryHostname; } { print } ' '/etc/hosts' > '/home/www-internal/hosts'
-	mv '/home/www-internal/hosts' '/etc/hosts'
-fi
-
 # Copy /home to encrypted volume
 if ! cp -Rp /home/* /media/home; then
 	printf "Cannot copy content of /home to encrypted volume\n" >&2
