@@ -1303,31 +1303,7 @@ unsigned int ImageProcessor::validateLeftRightEyecrops(cv::Rect FaceCoord, cv::P
 	}
 
 	if(bIrisToFaceMapDebug){
-
 		cv::Mat face = cv::Mat(1200, 960, CV_8UC1, faceImagePtr);
-		/*
-		cv::Mat face;
-		cv::resize(OrigImage, face, cv::Size(), (1 / 0.8), (1 / 8.0), cv::INTER_NEAREST);*/
-		// char filename[100];
-		int x = 0;
-		int y = 0;
-		if (CameraId == IRISCAM_AUX_LEFT) {
-			ptrF = projectPoints_IristoFace(ptrI, constantAuxl, magOffAuxl);
-			x = 30;
-			y = 30;
-		} else if (CameraId == IRISCAM_AUX_RIGHT) {
-			ptrF = projectPoints_IristoFace(ptrI, constantAuxR, magOffAuxR);
-			x = 100;
-			y = 100;
-		} else if (CameraId == IRISCAM_MAIN_LEFT) {
-			x = 30;
-			y = 30;
-			ptrF = projectPoints_IristoFace(ptrI, constantMainl, magOffMainl);
-		} else if (CameraId == IRISCAM_MAIN_RIGHT) {
-			x = 100;
-			y = 100;
-			ptrF = projectPoints_IristoFace(ptrI, constantMainR, magOffMainR);
-		}
 		try{
 			cv::rectangle(face, rightRect, cv::Scalar(255,0,0),1,0);
 			cv::rectangle(face, leftRect, cv::Scalar(255,0,0),1,0);
@@ -1336,14 +1312,8 @@ unsigned int ImageProcessor::validateLeftRightEyecrops(cv::Rect FaceCoord, cv::P
 			std::ostringstream ssCoInfo1;
 			std::ostringstream ssColeft;
 			std::ostringstream ssCoright;
-			ssCoInfo1 << ptrF.x << "," << ptrF.y;
-			putText(face,ssCoInfo1.str().c_str(),cv::Point(x,y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(128,128,128),2);
 			ssCoInfo << "+"; // ptrF.x << "," << ptrF.y;
 			putText(face,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(128,128,128),2);
-			ssColeft << "leftRect" << leftRect.x << "," << leftRect.y << "," << leftRect.width << "," << leftRect.height;
-			ssCoright << "rightRect" << rightRect.x << "," << rightRect.y << "," << rightRect.width << "," << rightRect.height;
-			putText(face,ssColeft.str().c_str(),cv::Point(200, 200), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(128,128,128),2);
-			putText(face,ssCoright.str().c_str(),cv::Point(300, 300), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(128,128,128),2);
 			imshow("IrisToFaceMap", face);
 			cvWaitKey(2);
 		}catch (cv::Exception& e) {
