@@ -18,6 +18,8 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/photo/photo.hpp>
+
+#if 0
 #include "portcom.h"
 #include "Synchronization.h"
 #include "pstream.h"
@@ -1601,6 +1603,7 @@ int main(int argc, char **argv)
 
 
 }
+#endif
 
 
 

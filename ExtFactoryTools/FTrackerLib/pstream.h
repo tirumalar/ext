@@ -1,4 +1,11 @@
 #include "logging.h"
+#include "FileConfiguration.h"
+
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv/cv.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #define BUFLEN 1500
 //#define IMAGE_SIZE 1152000
@@ -31,6 +38,9 @@ public:
 	~VideoStream();
 	int m_port;
 	bool m_UseImageAuthentication;
+
+	int rgbLEDBrightness;
+
 	volatile int running;
 	int cam_id;
 	RingBufferImageQueueF *m_pRingBuffer;
@@ -53,10 +63,10 @@ public:
 	void PushProcessBuffer(ImageQueueItemF m);
 
 	void flush(void);
-	int get(int *win, int *hin, char *m_pImageBuffer, char get_last=0);
+	int get(int *win, int *hin, char *m_pImageBuffer, bool bDebugFlag, char get_last=0);
 	//bool HandleReceiveImage(unsigned char *ptr, int length);
 	int GetCamId(void);
-	int length;
+	int m_ImageSize;
 
 	int frameId;
 
