@@ -26,7 +26,7 @@ EYELOCK_LOGLABEL='HBOIM'
 
 while true
 do
-	EyelockLog "restarting EXT from script" 'TRACE'
+	EyelockLog "restarting EXT from script" 'ERROR'
 
 	ELK_PID=$(ps -ef | grep '/Eyelock$' | awk '{print $2}')
 	if [[ ! -z ${ELK_PID} ]]
