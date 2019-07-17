@@ -1888,6 +1888,13 @@ function defineStrings($HardwareType)
             define ("AUTHENTICATION_SETTINGS_IRISCAPTUREMODE", "Iris Capture Mode");
             define ("AUTHENTICATION_SETTINGS_IRISCAPTURE", "Iris Capture");
             define ("DEVICE_EXTERNAL_POSTSCHEME", "Iris Post Scheme:");
+			define ("AUTHENTICATION_SETTINGS_IRISCAPTURESETTINGS", "Iris Capture Settings");
+			define ("AUTHENTICATION_SETTINGS_IRISCAPTURETIMEOUT", "Iris Capture Timeout:");
+			define ("AUTHENTICATION_SETTINGS_IRISCAPTURERESETDELAY", "Iris Capture Reset Delay:");
+			define ("AUTHENTICATION_SETTINGS_HTTPPOSTMSGFORMAT", "Http Post Message Format:");
+			define ("AUTHENTICATION_SETTINGS_IRISIMAGEFORMAT", "Iris Image Format:");
+			define ("AUTHENTICATION_SETTINGS_IRISIMAGEQUALITY", "Image Quality:");
+			define ("AUTHENTICATION_SETTINGS_100LOSSLESS", "(100 = Lossless)");
             define ("AUTHENTICATION_MODE_GROUPTITLE", "Combinando");
             define ("AUTHENTICATION_MODE_SINGLEEYELABEL", "Usar Apenas Um Olho");
             define ("AUTHENTICATION_MODE_DUALEYELABEL", "Usar Ambos os Olhos");
