@@ -705,6 +705,13 @@ function defineStrings($HardwareType)
             define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
             define ("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>IPv6 Pirmary DNS Server Address</span>");
             define ("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>IPv6 Secondary DNS Server Address</span>");
+			define ("TOOLTIP_IPV6_STATUS", "<span class='tooltip-header'>Current IPv6 addresses assigned to the EXT device</span>
+									<ul class='tooltip-list'>
+									<li><b>Global</b> – addresses that are globally valid.</li>
+									<li><b>Link-local</b> - addresses that are valid only for communications within the network segment or the broadcast domain that the EXT device is connected to.</li>
+			<li><b>Stateless</b> – addresses installed due to stateless address configuration.</li>
+									<li><b>Temporary</b> - temporary random addresses (documented in RFC 4941).</li>
+									</ul>");
 
             define ("TOOLTIP_DEVICE_TAB", "<b><i>Device Tab</i></b><br>Configuration of ".$NXTText."  device. (LED Brightness, Volume Control, Time Settings, Reboot and Factroy Reset)");
             define ("TOOLTIP_DEVICE_SPEAKERVOLUME", "<span style='font-size: 16px; font-style:bold'>Speaker Volume</span>
@@ -1492,6 +1499,13 @@ function defineStrings($HardwareType)
         define("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
         define("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>IPv6 Pirmary DNS Server Address</span>");
         define("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>IPv6 Secondary DNS Server Address</span>");
+		define ("TOOLTIP_IPV6_STATUS", "<span class='tooltip-header'>Current IPv6 addresses assigned to the EXT device</span>
+						<ul class='tooltip-list'>
+						<li><b>Global</b> – addresses that are globally valid.</li>
+						<li><b>Link-local</b> - addresses that are valid only for communications within the network segment or the broadcast domain that the EXT device is connected to.</li>
+<li><b>Stateless</b> – addresses installed due to stateless address configuration.</li>
+						<li><b>Temporary</b> - temporary random addresses (documented in RFC 4941).</li>
+						</ul>");
 		define("TOOLTIP_DEVICE_TAB", " <b><i>Device Tab</i></b><br>Конфигурация устройства  ".$NXTText." . (Яркость светодиода, управление громкостью, настройки времени, перезагрузка и сброс до заводских настроек)");
 		define("TOOLTIP_DEVICE_SPEAKERVOLUME", " <span style='font-size: 16px; font-style:bold'>Громкость динамика</span> <ul style='padding-left: 1em'><li>Установите громкость динамика ".$NXTText.".</li> <li>Для отключения звука установите значение 0.</li> <li>Диапазон значений: 0 - 100.</li> <li>По умолчанию: 40.</li></ul>");
 		define("TOOLTIP_DEVICE_LEDBRIGHTNESS", " <span style='font-size: 16px; font-style:bold'>Яркость подсветки светодиода</span> <ul style='padding-left: 1em'><li>Установите уровень яркости подсветки светодиода устройства ".$NXTText."</li> <li>Для отключения подсветки установите значение '0'.</li> <li>Диапазон яркости: 0 - 100.</li> <li>По умолчанию: 20.</li></ul>");
@@ -2321,6 +2335,13 @@ define ("TOOLTIP_NETWORK_DOWNLOADLOGBUTTON", "<span style='font-size: 16px; font
             define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>Endereço de gateway padrão do IPv6</span>");
             define ("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>Endereço do servidor DNS primário IPv6</span>");
             define ("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>Endereço do servidor DNS IPv6 secundário</span>");
+			define ("TOOLTIP_IPV6_STATUS", "<span class='tooltip-header'>Current IPv6 addresses assigned to the EXT device</span>
+							<ul class='tooltip-list'>
+							<li><b>Global</b> – addresses that are globally valid.</li>
+							<li><b>Link-local</b> - addresses that are valid only for communications within the network segment or the broadcast domain that the EXT device is connected to.</li>
+							<li><b>Stateless</b> – addresses installed due to stateless address configuration.</li>
+							<li><b>Temporary</b> - temporary random addresses (documented in RFC 4941).</li>
+							</ul>");
 			define("TOOLTIP_DEVICE_TAB"," <b><i>Aba Dispositivo</i></b><br>Configuração de dispositivo ".$NXTText." . (Brilho de LED, Controle de Volume, Configuração de Hora, Reboot e Reset de Fábrica)");
 			define("TOOLTIP_DEVICE_SPEAKERVOLUME"," <span style='font-size: 16px; font-style:bold'>Volume Alto-falante</span>
                                                 <ul style='padding-left: 1em'><li>Ajuste de volume do alto-falante ".$NXTText.".</li>
