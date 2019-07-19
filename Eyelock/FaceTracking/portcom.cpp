@@ -214,7 +214,7 @@ void port_com_send(char *cmd_in, float *pr_time)
 			if (rv < 0)
 			{
 				PortComLog(logger, ERROR, "port_com_send(%s): send: rv = %d, trys = %d, Failcount = %d, ErroNo = %d, cannot receive data (errno=(%s)", cmd, rv, trys, nFailCount, errno, strerror(errno));
-				if (errno == EPIPE || errno == ECONNRESET || errno == ENOTCONN || errno == EBADF)
+				if (errno == EPIPE || errno == ECONNRESET || errno == ENOTCONN || errno == EBADF || errno == ENOTSOCK)
 				{
 					// reconnect
 					PortComLog(logger, DEBUG, "port_com_send(%s): send: reconnecting");
@@ -422,7 +422,7 @@ int port_com_send_return(char *cmd, char *buffer, int min_len) {
 			if (rv < 0)
 			{
 				PortComLog(logger, ERROR, "port_com_send_return(%s): send: rv = %d, trys = %d, Failcount = %d, ErroNo = %d, cannot receive data (errno=(%s)", cmd, rv, trys, nFailCount, errno, strerror(errno));
-				if (errno == EPIPE || errno == ECONNRESET || errno == ENOTCONN || errno == EBADF)
+				if (errno == EPIPE || errno == ECONNRESET || errno == ENOTCONN || errno == EBADF || errno == ENOTSOCK)
 				{
 					// reconnect
 					PortComLog(logger, DEBUG, "port_com_send_return(%s): send: reconnecting");
