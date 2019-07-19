@@ -21,7 +21,7 @@ class IPv6Details
         "GlobalTemporary" => "",
         "Static" => ""
     ];
-
+	
     public $ConfigFilename = "/home/www-internal/interfaces6";
     public $ConfigFileContents = "";
 
@@ -40,6 +40,42 @@ class IPv6Details
     {
         $this->LoadAsssignedIPAddresses();
     }
+	
+	function GetIpAddresses()
+	{
+		$Ipv6Addresses = [];
+		
+		$ipCmdOut = trim(shell_exec("ip -6 addr show dev usbnet0 | grep inet6"));
+		$ipCmdOutLines = explode(PHP_EOL, $ipCmdOut);
+		foreach ($ipCmdOutLines as $line)
+		{
+			$line  = trim($line);
+			$ip = explode(' ', $line)[1];
+			if (strpos($line, 'scope global') !== false)
+			{
+				if (strpos($line, 'dynamic') !== false)
+				{
+					if (strpos($line, 'temporary') !== false)
+					{
+						$Ipv6Addresses[$ip] = "GlobalStatelessTemporary";
+					}
+					else
+					{
+						$Ipv6Addresses[$ip] = "GlobalStateless";
+					}
+				}
+				else
+				{
+					$Ipv6Addresses[$ip] = "Global";
+				}
+			}
+			elseif (strpos($line, 'scope link') !== false)
+			{
+				$Ipv6Addresses[$ip] = "LinkLocal";
+			}
+		}
+		return $Ipv6Addresses;
+	}
 
     function GetAssignedIPAddress($includeGreps, $excludeGreps)
     {

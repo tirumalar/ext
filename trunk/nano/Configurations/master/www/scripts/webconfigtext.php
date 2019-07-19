@@ -137,8 +137,8 @@ function defineStrings($HardwareType)
                 define ("NETWORK_IPV6CONFIGURATION_STATUS", "Status");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_LINK_LOCAL", "Link-local:");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_TEMPORARY", "Global temporary:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_STATIC", "Static:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS", "Global stateless:");
+				define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS_TEMPORARY", "Global stateless temporary:");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "Device currently has no IPv6 addresses assigned to it");
 
             define("SSL_PROTOCOL_LEGEND", "SSL Protocol");
@@ -1122,9 +1122,9 @@ function defineStrings($HardwareType)
             define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS Server 2:");
             define ("NETWORK_IPV6CONFIGURATION_STATUS", "Status");
             define ("NETWORK_IPV6CONFIGURATION_STATUS_LINK_LOCAL", "Link-local:");
-            define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
-            define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_TEMPORARY", "Global temporary:");
-            define ("NETWORK_IPV6CONFIGURATION_STATUS_STATIC", "Static:");
+			define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
+			define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS", "Global stateless:");
+			define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS_TEMPORARY", "Global stateless temporary:");
             define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "Device currently has no IPv6 addresses assigned to it");
         define("SSL_PROTOCOL_LEGEND", "SSL Protocol");
         define("SSLPROTO_DEFAULT", "Legacy");
@@ -1744,8 +1744,8 @@ function defineStrings($HardwareType)
                 define ("NETWORK_IPV6CONFIGURATION_STATUS", "Estado");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_LINK_LOCAL", "Link-local:");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_TEMPORARY", "Global temporária:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_STATIC", "Estático:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS", "Global stateless:");
+				define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS_TEMPORARY", "Global stateless temporary:");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "O dispositivo atualmente não tem endereços IPv6 atribuídos a ele");
 
             define("SSL_PROTOCOL_LEGEND", "SSL Protocolo");
