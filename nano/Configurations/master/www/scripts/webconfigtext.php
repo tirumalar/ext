@@ -595,8 +595,8 @@ function defineStrings($HardwareType)
             define ("NANO_DEVICE_RECONNECT", "Please check on device, then click Ok to check on status.");
 
             //Tooltip text
-            define ("TOOLTIP_LOGIN_installer", "The <b><i>installer</i></b> user type allows full edit priviledges.");
-            define ("TOOLTIP_LOGIN_SITEADMIN", "The <b><i>admin</i></b> user type allows full read and limited write priviledges.");
+            define ("TOOLTIP_LOGIN_installer", "<b>Installer</b><br>The <b><i>Installer</i></b> user type allows full edit privileges.");
+            define ("TOOLTIP_LOGIN_SITEADMIN", "<b>Admin</b><br>The <b><i>Admin</i></b> user type allows full read and limited write privileges.");
             define ("TOOLTIP_LOGIN_CHANGEPASSWORD", "Select the user type for which you wish to change the password.");
 
             define ("TOOLTIP_HOME_TAB", "<b><i>Home Tab</i></b> <br>Displays basic details of the ".$NXTText." . (Device Information, Software Information and Database Storage Statistics)");
