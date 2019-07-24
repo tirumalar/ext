@@ -984,13 +984,35 @@ void SocketClient::ConnectAuto(HostAddress& Address)
 	char *portDelimeter = strrchr(Address.GetOrigHostName(), ':');
 	char *portEnd = strrchr(Address.GetOrigHostName(), '.');
 
-	char adressCStr[255+1];
+	const char linkLocalAddressMark[] = "fe80:";
+	char addressCStrLowerCase[5+1];
+	int lastChar = sizeof(addressCStrLowerCase)-1;
+	addressCStrLowerCase[lastChar] = 0;
+	for (int i=0; i<lastChar; i++)
+	{
+		addressCStrLowerCase[i] = tolower(Address.GetOrigHostName()[i]);
+	}
+
+#ifdef CMX_C1
+#define SCOPE_ID_LEN 8
+		const char *scopeId = "%usbnet0";
+#endif
+
+	char adressCStr[255+SCOPE_ID_LEN+1]; // IP address or hostname + %scopeId + null terminator
 	memset(adressCStr,0,sizeof(adressCStr));
 	char portCStr[5+1];
 	memset(portCStr,0,sizeof(portCStr));
 
-	strncpy(adressCStr, Address.GetOrigHostName(), MIN(sizeof(adressCStr)-1, portDelimeter-Address.GetOrigHostName()));
+	strncpy(adressCStr, Address.GetOrigHostName(), MIN(sizeof(adressCStr)-1-SCOPE_ID_LEN, portDelimeter-Address.GetOrigHostName()));
+	if (!strncmp(addressCStrLowerCase, linkLocalAddressMark, lastChar))
+	{
+		strncpy(adressCStr+strlen(adressCStr), scopeId, SCOPE_ID_LEN);
+	}
+
 	strncpy(portCStr, portDelimeter+1, MIN(sizeof(portCStr)-1, portEnd-(portDelimeter+1)));
+
+	//DEBUG
+	//printf("getaddrinfo(%s,%s)", adressCStr, portCStr);
 
 	s = getaddrinfo(adressCStr, portCStr, &hints, &result);
 	if (s != 0) {
