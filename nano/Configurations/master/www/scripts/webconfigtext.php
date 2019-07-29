@@ -137,8 +137,8 @@ function defineStrings($HardwareType)
                 define ("NETWORK_IPV6CONFIGURATION_STATUS", "Status");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_LINK_LOCAL", "Link-local:");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_TEMPORARY", "Global temporary:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_STATIC", "Static:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS", "Global stateless:");
+				define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS_TEMPORARY", "Global stateless temporary:");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "Device currently has no IPv6 addresses assigned to it");
 
             define("SSL_PROTOCOL_LEGEND", "SSL Protocol");
@@ -705,6 +705,13 @@ function defineStrings($HardwareType)
             define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
             define ("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>IPv6 Pirmary DNS Server Address</span>");
             define ("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>IPv6 Secondary DNS Server Address</span>");
+			define ("TOOLTIP_IPV6_STATUS", "<span class='tooltip-header'>Current IPv6 addresses assigned to the EXT device</span>
+									<ul class='tooltip-list'>
+									<li><b>Global</b> – addresses that are globally valid.</li>
+									<li><b>Link-local</b> - addresses that are valid only for communications within the network segment or the broadcast domain that the EXT device is connected to.</li>
+			<li><b>Stateless</b> – addresses installed due to stateless address configuration.</li>
+									<li><b>Temporary</b> - temporary random addresses (documented in RFC 4941).</li>
+									</ul>");
 
             define ("TOOLTIP_DEVICE_TAB", "<b><i>Device Tab</i></b><br>Configuration of ".$NXTText."  device. (LED Brightness, Volume Control, Time Settings, Reboot and Factroy Reset)");
             define ("TOOLTIP_DEVICE_SPEAKERVOLUME", "<span style='font-size: 16px; font-style:bold'>Speaker Volume</span>
@@ -1137,9 +1144,9 @@ function defineStrings($HardwareType)
             define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS Server 2:");
             define ("NETWORK_IPV6CONFIGURATION_STATUS", "Status");
             define ("NETWORK_IPV6CONFIGURATION_STATUS_LINK_LOCAL", "Link-local:");
-            define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
-            define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_TEMPORARY", "Global temporary:");
-            define ("NETWORK_IPV6CONFIGURATION_STATUS_STATIC", "Static:");
+			define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
+			define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS", "Global stateless:");
+			define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS_TEMPORARY", "Global stateless temporary:");
             define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "Device currently has no IPv6 addresses assigned to it");
         define("SSL_PROTOCOL_LEGEND", "SSL Protocol");
         define("SSLPROTO_DEFAULT", "Legacy");
@@ -1507,6 +1514,13 @@ function defineStrings($HardwareType)
         define("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
         define("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>IPv6 Pirmary DNS Server Address</span>");
         define("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>IPv6 Secondary DNS Server Address</span>");
+		define ("TOOLTIP_IPV6_STATUS", "<span class='tooltip-header'>Current IPv6 addresses assigned to the EXT device</span>
+						<ul class='tooltip-list'>
+						<li><b>Global</b> – addresses that are globally valid.</li>
+						<li><b>Link-local</b> - addresses that are valid only for communications within the network segment or the broadcast domain that the EXT device is connected to.</li>
+<li><b>Stateless</b> – addresses installed due to stateless address configuration.</li>
+						<li><b>Temporary</b> - temporary random addresses (documented in RFC 4941).</li>
+						</ul>");
 		define("TOOLTIP_DEVICE_TAB", " <b><i>Device Tab</i></b><br>Конфигурация устройства  ".$NXTText." . (Яркость светодиода, управление громкостью, настройки времени, перезагрузка и сброс до заводских настроек)");
 		define("TOOLTIP_DEVICE_SPEAKERVOLUME", " <span style='font-size: 16px; font-style:bold'>Громкость динамика</span> <ul style='padding-left: 1em'><li>Установите громкость динамика ".$NXTText.".</li> <li>Для отключения звука установите значение 0.</li> <li>Диапазон значений: 0 - 100.</li> <li>По умолчанию: 40.</li></ul>");
 		define("TOOLTIP_DEVICE_LEDBRIGHTNESS", " <span style='font-size: 16px; font-style:bold'>Яркость подсветки светодиода</span> <ul style='padding-left: 1em'><li>Установите уровень яркости подсветки светодиода устройства ".$NXTText."</li> <li>Для отключения подсветки установите значение '0'.</li> <li>Диапазон яркости: 0 - 100.</li> <li>По умолчанию: 20.</li></ul>");
@@ -1695,7 +1709,7 @@ function defineStrings($HardwareType)
             define ("HOME_DEVICEINFO_GROUPTITLE", "Informação de Dispositivo");
             define ("HOME_DEVICEINFO_DEVICENAME", "Nome ".$NXTText.":");
             define ("HOME_DEVICEINFO_IPADDR", "Endereço IP:");
-            define ("HOME_DEVICEINFO_IPV6ADDR", "IPv6 Address:");
+            define ("HOME_DEVICEINFO_IPV6ADDR", "Endereço IPv6:");
 			define ("HOME_DEVICEINFO_SERIAL", "ID de Dispositivo:");
             define ("HOME_DEVICEINFO_MACADDR", "Endereço MAC:");
             define ("HOME_DEVICEINFO_LOCALTIME", $NXTText." Tempo Instantâneo");
@@ -1756,26 +1770,26 @@ function defineStrings($HardwareType)
             define ("NETWORK_STATICIP_BROADCASTNETWORKLABEL", "Rede Broadcast:");
             define ("NETWORK_STATICIP_SUBNETMASKLABEL", "Máscara de subrede:");
             define ("NETWORK_STATICIP_DEFAULTGATEWAYLABEL", "Gateway padrão:");
-            define ("NETWORK_IPV6_ENABLE", "Enable IPv6");
-            define ("NETWORK_IPV6_CONFIGURATION", "IPv6 Configuration...");
+            define ("NETWORK_IPV6_ENABLE", "IPV6 Ativo");
+            define ("NETWORK_IPV6_CONFIGURATION", "Configuração IPv6...");
                 // IPV6 Pop-up
-                define ("NETWORK_IPV6CONFIGURATION_TITLE", "IPv6 Configuration");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL", "General");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE", "DHCP Mode:");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION", "Information Only");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "Normal");
+                define ("NETWORK_IPV6CONFIGURATION_TITLE", "Configuração IPv6");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL", "Geral");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE", "Modo DHCP:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION", "Sem estado");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "Stateful");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_AUTO", "Auto");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE", "None");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_ADDRESS_PREFIX_LENGTH", "IPv6 Address/Subnet Prefix Length:");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Default Gateway:");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "DNS Server 1:");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS Server 2:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS", "Status");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE", "Desligado");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_ADDRESS_PREFIX_LENGTH", "Endereço IPv6/Comprimento do prefixo de sub-rede:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Gateway padrão:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "Servidor DNS 1:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "Servidor DNS 2:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS", "Estado");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_LINK_LOCAL", "Link-local:");
                 define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "Global:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_TEMPORARY", "Global temporary:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_STATIC", "Static:");
-                define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "Device currently has no IPv6 addresses assigned to it");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS", "Global stateless:");
+				define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS_TEMPORARY", "Global stateless temporary:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "O dispositivo atualmente não tem endereços IPv6 atribuídos a ele");
 
             define("SSL_PROTOCOL_LEGEND", "SSL Protocolo");
             define("SSLPROTO_DEFAULT", "Legacy");
@@ -1917,6 +1931,13 @@ function defineStrings($HardwareType)
             define ("AUTHENTICATION_SETTINGS_IRISCAPTUREMODE", "Iris Capture Mode");
             define ("AUTHENTICATION_SETTINGS_IRISCAPTURE", "Iris Capture");
             define ("DEVICE_EXTERNAL_POSTSCHEME", "Iris Post Scheme:");
+			define ("AUTHENTICATION_SETTINGS_IRISCAPTURESETTINGS", "Iris Capture Settings");
+			define ("AUTHENTICATION_SETTINGS_IRISCAPTURETIMEOUT", "Iris Capture Timeout:");
+			define ("AUTHENTICATION_SETTINGS_IRISCAPTURERESETDELAY", "Iris Capture Reset Delay:");
+			define ("AUTHENTICATION_SETTINGS_HTTPPOSTMSGFORMAT", "Http Post Message Format:");
+			define ("AUTHENTICATION_SETTINGS_IRISIMAGEFORMAT", "Iris Image Format:");
+			define ("AUTHENTICATION_SETTINGS_IRISIMAGEQUALITY", "Image Quality:");
+			define ("AUTHENTICATION_SETTINGS_100LOSSLESS", "(100 = Lossless)");
             define ("AUTHENTICATION_MODE_GROUPTITLE", "Combinando");
             define ("AUTHENTICATION_MODE_SINGLEEYELABEL", "Usar Apenas Um Olho");
             define ("AUTHENTICATION_MODE_DUALEYELABEL", "Usar Ambos os Olhos");
@@ -2330,19 +2351,26 @@ define ("TOOLTIP_NETWORK_DOWNLOADLOGBUTTON", "<span style='font-size: 16px; font
                                                 <ul style='padding-left: 1em'><li>Especifica o atraso em segundos entre cada nova tentativa do cliente DHCP.</li>
                                                 <li>Variação de duração (segundos): 0 – 60.</li>
                                                 <li>Valor padrão: 10.</li></ul>");
-            define ("TOOLTIP_IPV6_ENABLE", "<span class='tooltip-header'>Enable IPv6</span>");
-            define ("TOOLTIP_IPV6_CONFIGURATION", "<span class='tooltip-header'>Specify IPv6 Configuration Details</span>");
-            define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP Mode:</span>
+            define ("TOOLTIP_IPV6_ENABLE", "<span class='tooltip-header'>IPV6 Ativo</span>");
+            define ("TOOLTIP_IPV6_CONFIGURATION", "<span class='tooltip-header'>Especificar detalhes da configuração do IPv6</span>");
+            define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>Modo DHCP IPv6:</span>
                                                 <ul class='tooltip-list'>
-                                                <li><b>Stateless</b> – DHCPv6 is used to set DNS servers and NTP servers etc, but not to set IPv6 addresses</li>
-                                                <li><b>Stateful</b> - DHCPv6 is used to set IPv6 addresses as well as DNS servers etc.</li>
-                                                <li><b>Auto</b> – The use of DHCPv6 is determined by the router advertisements</li>
-                                                <li><b>Off</b> - DHCPv6 is disabled.</li>
+                                                <li><b>Sem estado</b> – O DHCPv6 é usado para definir servidores DNS e servidores NTP, etc., mas não para definir endereços IPv6</li>
+                                                <li><b>Stateful</b> - O DHCPv6 é usado para definir endereços IPv6, servidores DNS, etc.</li>
+                                                <li><b>Auto</b> – O uso de DHCPv6 é determinado pelos anúncios do roteador</li>
+                                                <li><b>Off</b> - O DHCPv6 está desativado.</li>
                                                 </ul>");
-            define ("TOOLTIP_IPV6_ADDRESS", "<span class='tooltip-header'>IPv6 Network Address</span>");
-            define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 Default Gateway Address</span>");
-            define ("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>IPv6 Pirmary DNS Server Address</span>");
-            define ("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>IPv6 Secondary DNS Server Address</span>");
+            define ("TOOLTIP_IPV6_ADDRESS", "<span class='tooltip-header'>Endereço de rede IPv6</span>");
+            define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>Endereço de gateway padrão do IPv6</span>");
+            define ("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>Endereço do servidor DNS primário IPv6</span>");
+            define ("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>Endereço do servidor DNS IPv6 secundário</span>");
+			define ("TOOLTIP_IPV6_STATUS", "<span class='tooltip-header'>Current IPv6 addresses assigned to the EXT device</span>
+							<ul class='tooltip-list'>
+							<li><b>Global</b> – addresses that are globally valid.</li>
+							<li><b>Link-local</b> - addresses that are valid only for communications within the network segment or the broadcast domain that the EXT device is connected to.</li>
+							<li><b>Stateless</b> – addresses installed due to stateless address configuration.</li>
+							<li><b>Temporary</b> - temporary random addresses (documented in RFC 4941).</li>
+							</ul>");
 			define("TOOLTIP_DEVICE_TAB"," <b><i>Aba Dispositivo</i></b><br>Configuração de dispositivo ".$NXTText." . (Brilho de LED, Controle de Volume, Configuração de Hora, Reboot e Reset de Fábrica)");
 			define("TOOLTIP_DEVICE_SPEAKERVOLUME"," <span style='font-size: 16px; font-style:bold'>Volume Alto-falante</span>
                                                 <ul style='padding-left: 1em'><li>Ajuste de volume do alto-falante ".$NXTText.".</li>
