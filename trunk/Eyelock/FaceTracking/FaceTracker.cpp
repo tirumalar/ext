@@ -15,7 +15,7 @@ double scaling = 8.0;		//Used for resizing the images in py lev 3
 // detect_area used for finding face in a certain rect area of entire image
 bool faceConfigInit;
 int targetOffset;
-Rect detect_area(15/SCALE,15/SCALE,(960/(SCALE*SCALE))+15/SCALE,(1200/(SCALE*SCALE))+15/SCALE); //15 was 30
+// Rect detect_area(15/SCALE,15/SCALE,(960/(SCALE*SCALE))+15/SCALE,(1200/(SCALE*SCALE))+15/SCALE); //15 was 30
 Rect no_move_area, no_move_areaX;		//Face target area
 Rect search_eye_area;					//Narrow down the eye search range in face
 Rect projFace;
@@ -141,6 +141,8 @@ FaceTracker::FaceTracker(char* filename)
 ,bActiveCenterPos(false)
 ,bIrisToFaceMapDebug(false)
 ,m_nCalculatedBrightness(0)
+,m_ImageWidth(1200)
+,m_ImageHeight(960)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -252,6 +254,14 @@ FaceTracker::FaceTracker(char* filename)
 
 	// Eyelock.ini Parameters	
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");
+	// Get the width and height of Image from Eyelock.ini
+	m_ImageWidth = EyelockConfig.getValue("FrameSize.width", 1200);
+	m_ImageHeight = EyelockConfig.getValue("FrameSize.height", 960);
+
+	detect_area.x = 15/SCALE;
+	detect_area.y = 15/SCALE;
+	detect_area.width = (m_ImageHeight/(SCALE*SCALE))+15/SCALE;
+	detect_area.height = (m_ImageWidth/(SCALE*SCALE))+15/SCALE; //15 was 30
 	m_ToneVolume = EyelockConfig.getValue("GRI.AuthorizationToneVolume", 40);
 	m_FixedAudSetVal = EyelockConfig.getValue("Eyelock.FixedAudSetValue", 5);
 	m_ImageAuthentication = EyelockConfig.getValue("Eyelock.ImageAuthentication", true);
@@ -262,7 +272,7 @@ FaceTracker::FaceTracker(char* filename)
 
 	m_EyelockIrisMode = EyelockConfig.getValue("Eyelock.IrisMode",1);
 
-	int m_ImageSize = 1200*960;
+	int m_ImageSize = m_ImageWidth * m_ImageHeight;
 	m_LeftCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
 	m_RightCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
 
@@ -840,10 +850,10 @@ cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 		modRect.x = 0;
 	if(modRect.y < 0)
 			modRect.y = 0;
-	if(modRect.width > WIDTH)
-			modRect.width = WIDTH;
-	if(modRect.height > HEIGHT)
-			modRect.height = HEIGHT;
+	if(modRect.width > m_ImageWidth)
+			modRect.width = m_ImageWidth;
+	if(modRect.height > m_ImageHeight)
+			modRect.height = m_ImageHeight;
 
 
 	return modRect;
@@ -1675,7 +1685,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	leftRect.x = FaceCoord.x + (FaceCoord.width/2); leftRect.y = FaceCoord.y;
 	leftRect.height = FaceCoord.height; leftRect.width = FaceCoord.width/2.0;
 
-	int ImageSize = 1200*960;
+	int ImageSize = m_ImageWidth * m_ImageHeight;
 
 	if(bFaceMapDebug){
 		RotatedfaceImg = rotation90(outImg);
@@ -1862,7 +1872,8 @@ void *init_facetracking(void *arg) {
 	m_faceTracker.DoStartCmd();
 
 	// Main Loop...
-	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
+	outImg = Mat(Size(m_faceTracker.m_ImageWidth, m_faceTracker.m_ImageHeight), CV_8U);
+
 	// static unsigned int count = 0;
 	while (1)
 	{
