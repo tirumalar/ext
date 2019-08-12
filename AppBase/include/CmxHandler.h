@@ -38,7 +38,7 @@ using namespace FlyCapture2;
 
 #define WAIT_PONG_TIME 	1000	// in ms
 #define SEND_PING_TIME 	3000	// in ms
-#define IMAGE_SIZE		1152000	// 1200*960 in bytes
+// #define IMAGE_SIZE		1152000	// 1200*960 in bytes
 #define PKG_SIZE	1500	// 1400 bytes
 //#define IMAGE_SIZE		2761728	// in bytes
 
@@ -79,6 +79,9 @@ public:
 	int m_debug;
 	bool m_waitPong;
 	int m_sock;
+	int m_ImageWidth;
+	int m_ImageHeight;
+	int m_ImageSize;
 	unsigned long m_pingTime;
 	pthread_t leftCThread;
 	pthread_t rightCThread;

@@ -2232,6 +2232,9 @@ rightCServerInfo(0)
 
 	m_audioVolume = conf.getValue("GRI.AuthorizationToneVolume", 0.0f);
 
+	m_ImageWidth = conf.getValue("FrameSize.width", 1200);
+	m_ImageHeight = conf.getValue("FrameSize.height", 960);
+	m_ImageSize = m_ImageWidth * m_ImageHeight;
 #ifdef HBOX_PG
 	m_width = conf.getValue("FrameSize.width",0);
 	m_height = conf.getValue("FrameSize.height",0);
@@ -2890,16 +2893,16 @@ void *leftCServer(void *arg) {
 	if (me->m_ImageAuthentication) {
 		int length;
 		int pckcnt = 0;
-		char buf[IMAGE_SIZE];
-		char dummy_buff[IMAGE_SIZE];
+		char buf[me->m_ImageSize];
+		char dummy_buff[me->m_ImageSize];
 		int datalen = 0;
-		int bytes_to_get = IMAGE_SIZE;
+		int bytes_to_get = me->m_ImageSize;
 		short *pShort = (short *) buf;
 		bool b_syncReceived = false;
 		struct sockaddr_in from;
 		int cam_id, FrameNo;
 		socklen_t fromlen = sizeof(struct sockaddr_in);
-		int bytes_to_read = IMAGE_SIZE;
+		int bytes_to_read = me->m_ImageSize;
 
 		int pkgs_received = 0;
 		int pkgs_missed = 0;
@@ -2956,13 +2959,13 @@ void *leftCServer(void *arg) {
 				} else if (b_syncReceived) {
 					hash_data = (unsigned short *) &databuf[rx_idx];
 					length =
-							(datalen + length <= IMAGE_SIZE - 4) ?
-									length : IMAGE_SIZE - 4 - datalen;
+							(datalen + length <= me->m_ImageSize - 4) ?
+									length : me->m_ImageSize - 4 - datalen;
 					datalen += length;
 					pckcnt++;
 
 					// dont do this on the last frame
-					if (datalen < IMAGE_SIZE - 5)
+					if (datalen < me->m_ImageSize - 5)
 						ps->syndrome = me->calc_syndrome(ps->syndrome, *hash_data);
 
 					// memcpy(databuf+datalen, buf, length);
@@ -2974,7 +2977,7 @@ void *leftCServer(void *arg) {
 				 continue;
 				 }*/
 				bytes_to_read -= length;
-				if (datalen >= IMAGE_SIZE - 5) {
+				if (datalen >= me->m_ImageSize - 5) {
 					//me->HandleReceiveImage(databuf, datalen);
 					unsigned char valid_image;
 					// lets see if calculated matches received
@@ -3012,11 +3015,11 @@ void *leftCServer(void *arg) {
 					// printf("Got image bytes to read = %d\n",bytes_to_read);
 					datalen = 0;
 					b_syncReceived = false;
-					bytes_to_read = IMAGE_SIZE;
+					bytes_to_read = me->m_ImageSize;
 					rx_idx = 0;
 				}
 				if (bytes_to_read <= 0)
-					bytes_to_read = IMAGE_SIZE;
+					bytes_to_read = me->m_ImageSize;
 			}
 		}
 		printf("closing socket...\n");
@@ -3025,16 +3028,16 @@ void *leftCServer(void *arg) {
 	} else {
 		int length;
 		int pckcnt = 0;
-		char buf[IMAGE_SIZE];
-		char dummy_buff[IMAGE_SIZE];
+		char buf[me->m_ImageSize];
+		char dummy_buff[me->m_ImageSize];
 		int datalen = 0;
-		int bytes_to_get = IMAGE_SIZE;
+		int bytes_to_get = me->m_ImageSize;
 		short *pShort = (short *) buf;
 		bool b_syncReceived = false;
 		struct sockaddr_in from;
 		int cam_id;
 		socklen_t fromlen = sizeof(struct sockaddr_in);
-		int bytes_to_read = IMAGE_SIZE;
+		int bytes_to_read = me->m_ImageSize;
 
 		int pkgs_received = 0;
 		int pkgs_missed = 0;
@@ -3070,7 +3073,7 @@ void *leftCServer(void *arg) {
 #if 0
 				if (!b_syncReceived)
 				{
-					long long int pos = memmem(pShort,IMAGE_SIZE/2,sync,1);
+					long long int pos = memmem(pShort,m_ImageSize/2,sync,1);
 					if (!pos)
 					{
 						printf("Sync bytes not FOUND\n");
@@ -3099,8 +3102,8 @@ void *leftCServer(void *arg) {
 					// printf("Sync\n");
 				} else if (b_syncReceived) {
 					length =
-							(datalen + length <= IMAGE_SIZE - 4) ?
-									length : IMAGE_SIZE - 4 - datalen;
+							(datalen + length <= me->m_ImageSize - 4) ?
+									length : me->m_ImageSize - 4 - datalen;
 					// memcpy(databuf+datalen, buf, length);
 					rx_idx += length;
 					datalen += length;
@@ -3111,7 +3114,7 @@ void *leftCServer(void *arg) {
 				 continue;
 				 }*/
 				bytes_to_read -= length;
-				if (datalen >= IMAGE_SIZE - 5) {
+				if (datalen >= me->m_ImageSize - 5) {
 					//me->HandleReceiveImage(databuf, datalen);
 
 					// dont push if its a dummy buffer
@@ -3147,11 +3150,11 @@ void *leftCServer(void *arg) {
 					// printf("Got image bytes to read = %d\n",bytes_to_read);
 					datalen = 0;
 					b_syncReceived = false;
-					bytes_to_read = IMAGE_SIZE;
+					bytes_to_read = me->m_ImageSize;
 					rx_idx = 0;
 				}
 				if (bytes_to_read <= 0)
-					bytes_to_read = IMAGE_SIZE;
+					bytes_to_read = me->m_ImageSize;
 			}
 			// count++;
 		}
@@ -3276,16 +3279,16 @@ void *rightCServer(void *arg)
       CmxHandler *me = (CmxHandler *) arg;
       int length;
       int pckcnt=0;
-      char buf[IMAGE_SIZE];
-      char databuf[IMAGE_SIZE];
+      char buf[me->m_ImageSize];
+      char databuf[me->m_ImageSize];
       int datalen = 0;
-      int bytes_to_get=IMAGE_SIZE;
+      int bytes_to_get=me->m_ImageSize;
       short *pShort = (short *)buf;
       bool b_syncReceived = false;
       struct sockaddr_in from;
       int cam_id;
       socklen_t fromlen = sizeof(struct sockaddr_in);
-      int bytes_to_read=IMAGE_SIZE;
+      int bytes_to_read=me->m_ImageSize;
 
       // me->HandleReceiveImage(databuf, datalen);
 
@@ -3317,22 +3320,22 @@ void *rightCServer(void *arg)
       	                }
       	                else if(b_syncReceived)
       	                {
-      	                        length = (datalen+length <= IMAGE_SIZE-4) ? length : IMAGE_SIZE-4-datalen;
+      	                        length = (datalen+length <= me->m_ImageSize-4) ? length : me->m_ImageSize-4-datalen;
       	                        memcpy(databuf+datalen, buf, length);
       	                        datalen += length;
       	                        pckcnt++;
       	                }
       	                bytes_to_read-=  length;
-      	                if(datalen >= IMAGE_SIZE-5)
+      	                if(datalen >= me->m_ImageSize-5)
       	                {
       	                    me->HandleReceiveImage(databuf, datalen);
       	                   // printf("Got image bytes to read = %d\n",bytes_to_read);
       	                   	datalen = 0;
       	                   	b_syncReceived=false;
-      	                   	bytes_to_read=IMAGE_SIZE;
+      	                   	bytes_to_read=me->m_ImageSize;
       	               }
       	               if(bytes_to_read<=0)
-      	            	   bytes_to_read=IMAGE_SIZE;
+      	            	   bytes_to_read=me->m_ImageSize;
       	            }
       }
       printf("closing socket...\n");
@@ -3347,8 +3350,8 @@ void *rightCServer1(void *arg)
         CmxHandler *me = (CmxHandler *) arg;
         int length;
         int pckcnt=0;
-        char buf[IMAGE_SIZE];
-        char databuf[IMAGE_SIZE];
+        char buf[me->m_ImageSize];
+        char databuf[me->m_ImageSize];
         int datalen = 0;
         short *pShort = (short *)buf;
         bool b_syncReceived = false;
@@ -3385,13 +3388,13 @@ void *rightCServer1(void *arg)
                 }
                 else if(b_syncReceived)
                 {
-                        length = (datalen+length <= IMAGE_SIZE-4) ? length : IMAGE_SIZE-4-datalen;
+                        length = (datalen+length <= me->m_ImageSize-4) ? length : me->m_ImageSize-4-datalen;
                         memcpy(databuf+datalen, buf, length);
                         datalen += length;
                         pckcnt++;
                 }
          //       printf("leftCServer: received : total %d , in this packet %d of total 1152000 \n",datalen,length);
-                if (datalen >= IMAGE_SIZE-5)
+                if (datalen >= me->m_ImageSize-5)
                 {
                 	//struct timeval te;
                 	//gettimeofday(&te, NULL); // get current time
@@ -3429,7 +3432,7 @@ void *faceServer(void *arg)
 
 	CmxHandler *me = (CmxHandler *) arg;
 	int length;
-	char buf[IMAGE_SIZE];
+	char buf[me->m_ImageSize];
 	struct sockaddr_in from;
 	socklen_t fromlen = sizeof(struct sockaddr_in);
 	int faceSock = me->CreateUDPServer(8194);
@@ -3444,7 +3447,7 @@ void *faceServer(void *arg)
 				printf("waiting for image\n");
 				while ( data_size <= 307210)
 				{
-					length = recvfrom(faceSock, buf+data_size, (IMAGE_SIZE - data_size), 0, (struct sockaddr *)&from, &fromlen);
+					length = recvfrom(faceSock, buf+data_size, (me->m_ImageSize - data_size), 0, (struct sockaddr *)&from, &fromlen);
 					data_size = data_size + length;
 
 				}

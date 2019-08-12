@@ -40,8 +40,8 @@
 
 
 //WIDTH and HEIGHT of input image
-#define WIDTH 1200
-#define HEIGHT 960
+//#define WIDTH 1200
+// #define HEIGHT 960
 
 #define STATE_LOOK_FOR_FACE 1
 #define STATE_MOVE_MOTOR    2
@@ -238,6 +238,7 @@ private:
 
 	int m_nCalculatedBrightness;
 
+	Rect detect_area;
 	void SetExp(int cam, int val);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
 	void SelLedDistance(int val); // val between 0 and 100
@@ -284,6 +285,9 @@ public:
 	bool bDebugSessions;
 	bool bShowFaceTracking;
 	bool m_ImageAuthentication;
+	int m_ImageWidth;
+	int m_ImageHeight;
+
 	//bool faceConfigInit;
 
 	FileConfiguration FaceConfig;

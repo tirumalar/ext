@@ -1303,7 +1303,7 @@ unsigned int ImageProcessor::validateLeftRightEyecrops(cv::Rect FaceCoord, cv::P
 	}
 
 	if(bIrisToFaceMapDebug){
-		cv::Mat face = cv::Mat(1200, 960, CV_8UC1, faceImagePtr);
+		cv::Mat face = cv::Mat(m_Imagewidth, m_Imageheight, CV_8UC1, faceImagePtr);
 		try{
 			cv::rectangle(face, rightRect, cv::Scalar(255,0,0),1,0);
 			cv::rectangle(face, leftRect, cv::Scalar(255,0,0),1,0);

@@ -219,7 +219,7 @@ extern int h_errno;
 //struct hostent *gethostbyname(const char *name);
 
 #include <sys/socket.h>
-void SendUdpImage(int port, char *image, int bytes_left)
+void SendUdpImage(int port, char *image, int bytes_left, int width)
 {
 	int sock;
 	 struct hostent *hp; /* host information */
@@ -249,7 +249,7 @@ void SendUdpImage(int port, char *image, int bytes_left)
     memset(&image[2],0x10,2000);
 	while (bytes_left)
 	{
-	bytes_to_send = min(bytes_left,1200);
+	bytes_to_send = min(bytes_left,width);	// bytes_to_send = min(bytes_left,1200);
 	r = sendto(fd, &image[index], bytes_to_send,0, (struct sockaddr *)&servaddr, sizeof(servaddr));
 	index+=r;
 	bytes_left -=r;
@@ -314,15 +314,15 @@ void *VideoStream::ThreadServer(void *arg)
 		printf("Image Authentication ThreadServer() start\n");
 		int length;
 		int pckcnt = 0;
-		char buf[IMAGE_SIZE];
-		char dummy_buff[IMAGE_SIZE];
+		char buf[vs->m_ImageSize];
+		char dummy_buff[vs->m_ImageSize];
 
 		int datalen = 0;
 		short *pShort = (short *) buf;
 		bool b_syncReceived = false;
 		struct sockaddr_in from;
 		socklen_t fromlen = sizeof(struct sockaddr_in);
-		int bytes_to_read = IMAGE_SIZE;
+		int bytes_to_read = vs->m_ImageSize;
 
 		int pkgs_received = 0;
 		int pkgs_missed = 0;
@@ -366,20 +366,20 @@ void *VideoStream::ThreadServer(void *arg)
 					hash_data = (unsigned short *) &databuf[rx_idx];
 
 					length =
-							(datalen + length <= IMAGE_SIZE - 4) ?
-									length : IMAGE_SIZE - 4 - datalen;
+							(datalen + length <= vs->m_ImageSize - 4) ?
+									length : vs->m_ImageSize - 4 - datalen;
 					datalen += length;
 					pckcnt++;
 
 					// dont do this on the last frame
-					if (datalen < IMAGE_SIZE - 5)
+					if (datalen < vs->m_ImageSize - 5)
 						vs->syndrome = vs->calc_syndrome(vs->syndrome, *hash_data);
 
 	//                        memcpy(databuf+datalen, buf, length);
 					rx_idx += length;
 				}
 				bytes_to_read -= length;
-				if (datalen >= IMAGE_SIZE - 5) {
+				if (datalen >= vs->m_ImageSize - 5) {
 					//vs->HandleReceiveImage(databuf, datalen);
 					unsigned char valid_image;
 					// lets see if calculated matches received
@@ -410,11 +410,11 @@ void *VideoStream::ThreadServer(void *arg)
 					// printf("Got image bytes to read = %d\n",bytes_to_read);
 					datalen = 0;
 					b_syncReceived = false;
-					bytes_to_read = IMAGE_SIZE;
+					bytes_to_read = vs->m_ImageSize;
 					rx_idx = 0;
 				}
 				if (bytes_to_read <= 0)
-					bytes_to_read = IMAGE_SIZE;
+					bytes_to_read = vs->m_ImageSize;
 			}
 		}
 		vs->running = -1;
@@ -423,15 +423,15 @@ void *VideoStream::ThreadServer(void *arg)
         printf("No Image Authentication ThreadServer() start\n");
         int length;
         int pckcnt=0;
-        char buf[IMAGE_SIZE];
-        char dummy_buff[IMAGE_SIZE];
+        char buf[vs->m_ImageSize];
+        char dummy_buff[vs->m_ImageSize];
 
         int datalen = 0;
         short *pShort = (short *)buf;
         bool b_syncReceived = false;
         struct sockaddr_in from;
         socklen_t fromlen = sizeof(struct sockaddr_in);
-        int bytes_to_read=IMAGE_SIZE;
+        int bytes_to_read=vs->m_ImageSize;
 
         int pkgs_received = 0;
         int pkgs_missed = 0;
@@ -478,7 +478,7 @@ void *VideoStream::ThreadServer(void *arg)
                 }
                 else if(b_syncReceived)
                 {
-                        length = (datalen+length <= IMAGE_SIZE-4) ? length : IMAGE_SIZE-4-datalen;
+                        length = (datalen+length <= vs->m_ImageSize-4) ? length : vs->m_ImageSize-4-datalen;
 //                        memcpy(databuf+datalen, buf, length);
                         rx_idx+=length;
                         datalen += length;
@@ -488,7 +488,7 @@ void *VideoStream::ThreadServer(void *arg)
                 	continue;
                 }*/
                 bytes_to_read-=  length;
-                if(datalen >= IMAGE_SIZE-5)
+                if(datalen >= vs->m_ImageSize-5)
                 {
                     //vs->HandleReceiveImage(databuf, datalen);
 
@@ -521,11 +521,11 @@ void *VideoStream::ThreadServer(void *arg)
                    // printf("Got image bytes to read = %d\n",bytes_to_read);
                    	datalen = 0;
                    	b_syncReceived=false;
-                   	bytes_to_read=IMAGE_SIZE;
+                   	bytes_to_read=vs->m_ImageSize;
                    	rx_idx=0;
                }
                if(bytes_to_read<=0)
-            	   bytes_to_read=IMAGE_SIZE;
+            	   bytes_to_read=vs->m_ImageSize;
           }
            // count ++;
       }
@@ -544,15 +544,20 @@ VideoStream ::VideoStream(int port, bool ImageAuthFlag) : frameId(0)
 	seed = 0;
 
 	m_pRingBuffer = new RingBufferImageQueueF(2);
-	m_ImageSize = (HEIGHT * WIDTH);
+
+	// Read RGB LED Brightness
+	FileConfiguration Config("/home/root/Eyelock.ini");
+	rgbLEDBrightness = Config.getValue("GRI.LEDBrightness", 80);
+
+	m_ImageWidth = Config.getValue("FrameSize.width", 1200);
+	m_ImageHeight = Config.getValue("FrameSize.height", 960);
+
+	m_ImageSize = (m_ImageWidth * m_ImageHeight);
 
 	m_current_process_queue_item.m_ptr = NULL;
 	m_FreeBuffer = new RingBufferImageQueueF(FREE_BUFF_SIZE);
 	m_ProcessBuffer = new RingBufferImageQueueF(FREE_BUFF_SIZE);
 
-	// Read RGB LED Brightness
-	FileConfiguration Config("/home/root/Eyelock.ini");
-	rgbLEDBrightness = Config.getValue("GRI.LEDBrightness", 80);
 
 
 	for (int x = 0 ; x < FREE_BUFF_SIZE; x++)
