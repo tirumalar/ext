@@ -11,7 +11,7 @@ using namespace std;
 Point eyes;	// hold eye info from each frame
 
 double scaling = 8.0;		//Used for resizing the images in py lev 3
-
+bool mb_tempAlreadyLogged=false;
 // detect_area used for finding face in a certain rect area of entire image
 bool faceConfigInit;
 int targetOffset;
@@ -77,43 +77,46 @@ void LogSessionEvent(const char* msg)
 }
 #endif /* DEBUG_SESSION */
 
+
 void DoTemperatureLog()
 {
 	int len;
 	float tempData;
 	char temperatureBuf[512];
 
-	if ((len = port_com_send_return("accel_temp()", temperatureBuf, 20)) > 0) {
+	if ((len = port_com_send_return("accel_temp()", temperatureBuf, 20)) > 0)
+	{
 		sscanf(temperatureBuf, "%f", &tempData);
-		EyelockLog(logger, DEBUG, "temp reading =>%3.3f\n", tempData);
-
-#ifdef TEMP_LOGGING_TO_SEPARATE_FILE
-		time_t timer;
-		struct tm* tm1;
-		time(&timer);
-		tm1 = localtime(&timer);
-
-		FILE *file = fopen("temperature.log", "a");
-		if (file){
-			char time_str[100];
-			strftime(time_str, 100, "%Y %m %d %H:%M:%S", tm1);
-			fprintf(file, "[%s] %3.3f\n", time_str, tempData);
-			fclose(file);
-		}
-#endif
-
 		if (tempData > tempHighThreshold)
 		{
-			EyelockEvent("Temperature is too high: %3.3f!", tempData);
-			EyelockLog(logger, ERROR, "OIM temperature is too high: %3.3f (threshold %3.3f)", tempData, tempHighThreshold);
+			if(!mb_tempAlreadyLogged)
+			{
+				EyelockEvent("INFO:OIM Temperature is too high: %3.3f!", tempData);
+				EyelockLog(logger, INFO, "OIM temperature is too high: %3.3f (threshold %3.3f)", tempData, tempHighThreshold);
+				mb_tempAlreadyLogged = true;
+			}
 		}
-		if (tempData < tempLowThreshold)
+		else if (tempData < tempLowThreshold)
 		{
-			EyelockEvent("Temperature is too low: %3.3f!", tempData);
-			EyelockLog(logger, ERROR, "OIM temperature is too low: %3.3f (threshold %3.3f)", tempData, tempLowThreshold);
+			if(!mb_tempAlreadyLogged)
+			{
+				EyelockEvent("INFO:OIM Temperature is too low: %3.3f!", tempData);
+				EyelockLog(logger, INFO, "OIM temperature is too low: %3.3f (threshold %3.3f)", tempData, tempHighThreshold);
+				mb_tempAlreadyLogged = true;
+			}
+		}
+		else
+		{
+			if(mb_tempAlreadyLogged)
+			{
+				EyelockEvent("INFO:OIM Temperature restored to normal");
+				EyelockLog(logger, INFO, "OIM temperature restored to normal: %3.3f (threshold %3.3f)", tempData, tempHighThreshold);
+				mb_tempAlreadyLogged = false;
+			}
 		}
 	}
 }
+
 
 FaceTracker::FaceTracker(char* filename)
 :FaceConfig(filename)
