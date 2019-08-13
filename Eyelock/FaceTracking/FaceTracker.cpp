@@ -101,7 +101,7 @@ void DoTemperatureLog()
 			if(!mb_tempAlreadyLogged)
 			{
 				EyelockEvent("INFO:OIM Temperature is too low: %3.3f!", tempData);
-				EyelockLog(logger, INFO, "OIM temperature is too low: %3.3f (threshold %3.3f)", tempData, tempHighThreshold);
+				EyelockLog(logger, INFO, "OIM temperature is too low: %3.3f (threshold %3.3f)", tempData, tempLowThreshold);
 				mb_tempAlreadyLogged = true;
 			}
 		}
@@ -110,7 +110,7 @@ void DoTemperatureLog()
 			if(mb_tempAlreadyLogged)
 			{
 				EyelockEvent("INFO:OIM Temperature restored to normal");
-				EyelockLog(logger, INFO, "OIM temperature restored to normal: %3.3f (threshold %3.3f)", tempData, tempHighThreshold);
+				EyelockLog(logger, INFO, "OIM temperature restored to normal: %3.3f (thresholds are [%3.3f,%3.3f])", tempData, tempLowThreshold, tempHighThreshold);
 				mb_tempAlreadyLogged = false;
 			}
 		}
@@ -154,7 +154,7 @@ FaceTracker::FaceTracker(char* filename)
 	cur_pos = CENTER_POS;
 	tempTarget = FaceConfig.getValue("FTracker.tempReadingTimeInMinutes",5);
 	tempTarget = tempTarget * 60;	//converting into sec
-	tempHighThreshold = FaceConfig.getValue("FTracker.OimTemperatureHighThreshold", 60.0f);
+	tempHighThreshold = FaceConfig.getValue("FTracker.OimTemperatureHighThreshold", 80.0f);
 	tempLowThreshold = FaceConfig.getValue("FTracker.OimTemperatureLowThreshold", 0.0f);
 	
 	//For motor acceleration
