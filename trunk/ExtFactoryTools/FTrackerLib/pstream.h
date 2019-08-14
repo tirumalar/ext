@@ -15,12 +15,13 @@
 
 #define min(a,b)((a<b)?(a):(b))
 #define max(a,b)((a>b)?(a):(b))
-#define WIDTH 1200
-#define HEIGHT 960
+
+//#define WIDTH 1200
+//#define HEIGHT 960
 
 #define PORT 8193
 
-#define IMAGE_SIZE WIDTH*HEIGHT
+//#define IMAGE_SIZE WIDTH*HEIGHT
 
 struct ImageQueueItemF {
 	unsigned char *m_ptr;	// image size 1152000
@@ -52,7 +53,6 @@ public:
 	ImageQueueItemF m_current_process_queue_item;
 
 	char buf[BUFLEN];
-	char offset_image[IMAGE_SIZE];
 	char offset_sub_enable;
 	char offset_image_loaded;
 	pthread_t Thread;
@@ -67,6 +67,8 @@ public:
 	//bool HandleReceiveImage(unsigned char *ptr, int length);
 	int GetCamId(void);
 	int m_ImageSize;
+	int m_ImageWidth;
+	int m_ImageHeight;
 
 	int frameId;
 

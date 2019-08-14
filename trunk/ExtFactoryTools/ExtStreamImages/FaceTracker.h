@@ -37,8 +37,8 @@
 #include "logging.h"
 
 //WIDTH and HEIGHT of input image
-#define WIDTH 1200
-#define HEIGHT 960
+//#define WIDTH 1200
+// #define HEIGHT 960
 
 #define STATE_LOOK_FOR_FACE 1
 #define STATE_MOVE_MOTOR    2
@@ -97,6 +97,10 @@ void *DoTamper(void *arg);
 #define IRISCAM_AUX_LEFT   129 // 0x81
 #define IRISCAM_AUX_RIGHT  130 // 0x82
 
+// DISPLAY RESOLUTION OF THE SCREEN
+#define DISPLAY_WIN_WIDTH 1920
+#define DISPLAY_WIN_HEIGHT 1080
+
 struct PortServerInfo
 {
 	unsigned short port;
@@ -110,7 +114,7 @@ pthread_t rightCThread;
 class FaceTracker{
 private:
 
-	int FRAME_DELAY;
+
 	bool m_ProjPtr;
 	int rectX, rectY, rectW, rectH;
 	int previousEye_distance;
@@ -292,7 +296,10 @@ private:
 
 	cv::Point2i projectPoints_IristoFace(cv::Point2i ptrI, cv::Point2f constant, float ConstDiv);
 
-	void validateLeftRightEyecrops( int CameraId, cv::Point2i ptrI, cv::Rect leftRect, cv::Rect rightRect, cv::Mat IrisImage, cv::Mat faceImage);
+	int validateLeftRightEyecrops( int CameraId, cv::Point2i ptrI, cv::Rect leftRect, cv::Rect rightRect, cv::Mat IrisImage, cv::Mat faceImage, IplImage *eyeCrop);
+	int streamVideo(int cam, cv::Rect FaceCoord, cv::Mat FaceImg);
+	int ProcessIrisImage(IplImage *inputImage, cv::Mat faceImage, cv::Mat IrisImage, cv::Rect leftRect, cv::Rect rightRect);
+
 	unsigned int m_IrisToFaceMapCorrectionVal;
 	float magOffMainl, magOffMainR, magOffAuxl, magOffAuxR;
 	float magOffMainlDiv, magOffMainRDiv, magOffAuxlDiv, magOffAuxRDiv;
@@ -302,14 +309,22 @@ private:
 	unsigned int m_eyeLabel;
 	IplImage *m_LeftCameraIrisImage;
 	IplImage *m_RightCameraIrisImage;
+	int resizeFaceWidth, resizeIrisWidth, resizeIrisHeight, IrisPointYLoc;
+	IplImage *m_EyeCrop;
 
 public:
+	int FRAME_DELAY;
+	int m_ImageWidth;
+	int m_ImageHeight;
 
 	bool bDebugSessions;
 	bool bShowFaceTracking;
 	bool m_ImageAuthentication;
 
 	int m_Deviceid;
+	int m_CameraNo;
+	int m_Distance;
+
 	FileConfiguration FaceConfig;
 
 	PortServerInfo *leftCServerInfo;
@@ -327,10 +342,9 @@ public:
 
 	void DoStartCmd();
 	void configureDetector();
-	void DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions);
-	bool ProcessIrisImage(IplImage *inputImage, cv::Mat faceImage, cv::Mat IrisImage, cv::Rect leftRect, cv::Rect rightRect);
-	void DoRunMode(bool bShowFaceTracking, bool bDebugSessions, int CameraNo);
-	bool streamVideo(int cam, cv::Rect FaceCoord, cv::Mat FaceImg);
+
+	int DoRunMode(bool bShowFaceTracking, bool bDebugSessions, int CameraNo);
+
 	void displayInstruction();
 	char textI9[512], textI10[512], textI11[512],textI12[512],textI13[512],textI14[512];
 	Mat DisImg;

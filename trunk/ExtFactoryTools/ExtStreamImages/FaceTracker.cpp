@@ -2,6 +2,8 @@
 #include "FaceTracker.h"
 #include "file_manip.h"
 #include "EyeDetectAndMatchServer.h"
+#include "EyeSegmentServer_fixed.h"
+#include "EdgeImage_private.h"
 
 using namespace cv;
 // using namespace std::chrono;
@@ -75,6 +77,7 @@ FaceTracker::FaceTracker(char* filename)
 ,m_nCalculatedBrightness(0)
 ,m_eyeLabel(0)
 ,status(false)
+,m_CameraNo(1)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -177,11 +180,17 @@ FaceTracker::FaceTracker(char* filename)
 
 	// Eyelock.ini Parameters	
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");
+
+	// Get the width and height of Image from Eyelock.ini
+	m_ImageWidth = EyelockConfig.getValue("FrameSize.width", 1200);
+	m_ImageHeight = EyelockConfig.getValue("FrameSize.height", 960);
+
+
 	m_ToneVolume = EyelockConfig.getValue("GRI.AuthorizationToneVolume", 40);
 	m_FixedAudSetVal = EyelockConfig.getValue("Eyelock.FixedAudSetValue", 5);
 	m_ImageAuthentication = EyelockConfig.getValue("Eyelock.ImageAuthentication", true);
 	m_CameraTestTime = EyelockConfig.getValue("Eyelock.ExtTestEachCameraTime", 120);
-	printf("m_CameraTestTime.......%d\n", m_CameraTestTime);
+	// printf("m_CameraTestTime.......%d\n", m_CameraTestTime);
 
 	bIrisToFaceMapDebug = EyelockConfig.getValue("Eyelock.IrisToFaceMapDebug", false);
 
@@ -219,10 +228,11 @@ FaceTracker::FaceTracker(char* filename)
 	projOffset_m = CalibDefaultConfig.getValue("FTracker.projectionOffsetValMain",float(50.00));
 	projOffset_a = CalibDefaultConfig.getValue("FTracker.projectionOffsetValAux",float(200.00));
 
-	m_LeftCameraIrisImage = cvCreateImage(cvSize(WIDTH, HEIGHT),IPL_DEPTH_8U,1);
-	m_RightCameraIrisImage = cvCreateImage(cvSize(WIDTH, HEIGHT),IPL_DEPTH_8U,1);
+	m_LeftCameraIrisImage = cvCreateImage(cvSize(m_ImageWidth, m_ImageHeight),IPL_DEPTH_8U,1);
+	m_RightCameraIrisImage = cvCreateImage(cvSize(m_ImageWidth, m_ImageHeight),IPL_DEPTH_8U,1);
 
-	m_pSrv = new EyeDetectAndMatchServer(WIDTH, HEIGHT, m_detectLevel, "Eyelock.log");
+	m_EyeCrop = cvCreateImage(cvSize(640, 480),IPL_DEPTH_8U,1);
+	m_pSrv = new EyeDetectAndMatchServer(m_ImageWidth, m_ImageHeight, m_detectLevel, "Eyelock.log");
 
 	m_pSrv->SetSingleSpecMode(EyelockConfig.getValue("GRI.SingleSpecMode",false));
 	m_pSrv->SetDoHaar(EyelockConfig.getValue("GRI.DoHaar",true));
@@ -253,11 +263,23 @@ FaceTracker::FaceTracker(char* filename)
 
 	detector->m_shouldLog=0;
 
+	m_pSrv->LoadHaarClassifier("/home/root/data/adaboostClassifier.txt");
+	frame.setScratch(m_pSrv->GetScratch());
+
+
 	leftCam = 8192;
 	rightCam = 8193;
 	faceCam = 8194;
 
-	DisImg = cv::Mat::zeros(400, 650, CV_8UC3);
+	// DisImg = cv::Mat::zeros(400, 650, CV_8UC3);
+
+	resizeFaceWidth = DISPLAY_WIN_HEIGHT * m_ImageHeight / m_ImageWidth;
+
+	resizeIrisWidth = DISPLAY_WIN_WIDTH - resizeFaceWidth;
+
+	resizeIrisHeight = resizeIrisWidth * m_ImageHeight / m_ImageWidth;
+
+	IrisPointYLoc = ((DISPLAY_WIN_HEIGHT - resizeIrisHeight)/2);
 }
 
 FaceTracker::~FaceTracker()
@@ -266,6 +288,14 @@ FaceTracker::~FaceTracker()
 		delete [] m_LeftCameraFaceInfo.faceImagePtr;
 	if(m_RightCameraFaceInfo.faceImagePtr)
 		delete [] m_RightCameraFaceInfo.faceImagePtr;
+}
+
+void setCamera(string cam, int delay){
+	char cmd[512];
+
+	sprintf(cmd,"set_cam_mode(%s,%d)",cam.c_str(), delay);
+	port_com_send(cmd);
+	usleep(1);
 }
 
 void FaceTracker::SetExp(int cam, int val)
@@ -342,37 +372,6 @@ void FaceTracker::MoveToAbs(int v)
 	port_com_send(cmd);
 	//EyelockLog(logger, DEBUG, "Moving to center position");
 	EyelockLog(logger, DEBUG, "Move to ABS CENTER Position after Match/nonMatch:%d", v);
-}
-
-
-void FaceTracker::setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask)
-{
-	EyelockLog(logger, TRACE, "setRGBled");
-	static int free = 1;
-	static int setTime = 0;
-
-	static std::chrono:: time_point<std::chrono::system_clock> start, end;
-
-	end = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_seconds = end-start;
-	if(elapsed_seconds.count()>=setTime || VIPcall==1)
-	{
-		free=1;
-
-	}
-	EyelockLog(logger, DEBUG, "Current time : %u",start);
-	if(free)
-	{
-		char temp[40];
-		//sprintf(temp,"fixed_set_rgbm(%d,%d,%d,%d)",R,G,B,mask);
-		EyelockLog(logger, DEBUG, "fixed_set_rgbm:%d,%d,%d,%d",R,G,B,mask);
-		sprintf(temp,"fixed_set_rgb(%d,%d,%d)",R,G,B);
-		port_com_send(temp);
-		free = 0;
-		start = std::chrono::system_clock::now();
-		setTime = (double)mtime/1000;
-		EyelockLog(logger, DEBUG, "time set for setREGLed: settime : %u",setTime);
-	}
 }
 
 char* GetTimeStamp()
@@ -643,107 +642,6 @@ void FaceTracker::DimmFaceForIris()
 
 }
 
-void FaceTracker::SetIrisMode(float CurrentEye_distance)
-{
-
-	EyelockLog(logger, TRACE, "SetIrisMode");
-	char cmd[512];
-	
-	// printf("Dimming face cameras!!!");
-	sprintf(cmd, "wcr(0x04,0x3012,%i) | wcr(0x04,0x305e,%i)", m_DimmingfaceExposureTime, m_DimmingfaceDigitalGain);
-	EyelockLog(logger, DEBUG, "Dimming face cameras -DimmingfaceExposureTime:%d, DimmingfaceDigitalGain:%d", m_DimmingfaceExposureTime, m_DimmingfaceDigitalGain);
-	port_com_send(cmd);
-	//port_com_send("wcr(0x04,0x3012,7) | wcr(0x04,0x305e,0x20)");
-	{
-		char cmd[512];
-		sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((m_DimmingfaceAnalogGain&0x3)<<4) | 0X80);
-		EyelockLog(logger, DEBUG, "FACE_GAIN_MIN:%d DimmingfaceAnalogGain:%d", FACE_GAIN_MIN, (((m_DimmingfaceAnalogGain&0x3)<<4) | 0X80));
-		port_com_send(cmd);
-	}
-	agc_val = FACE_GAIN_MIN;
-
-	//switching cameras
-	//EyelockLog(logger, DEBUG, "previousEye_distance: %i; CurrentEye_distance: %i; diffEyedistance: %i\n", previousEye_distance, CurrentEye_distance, diffEyedistance);
-	EyelockLog(logger, DEBUG, "previousEye_distance: %i; CurrentEye_distance: %i; \n", previousEye_distance, CurrentEye_distance);
-
-	if (currnet_mode==MODE_FACE)
-			errSwitchThreshold =0;
-
-	if (CurrentEye_distance >= (switchThreshold+errSwitchThreshold)) //&& diffEyedistance <= errSwitchThreshold)
-	{
-		if(currnet_mode==MODE_EYES_MAIN)
-		{
-			printf("Dont need to change Main cam");
-			EyelockLog(logger, DEBUG, "Don't need to change Main cameras");
-			return;
-		}
-
-		MainIrisSettings();											//change to Iris settings
-		SwitchIrisCameras(true);									//switch cameras
-		currnet_mode = MODE_EYES_MAIN;								//set current mode
-	 	previousEye_distance = CurrentEye_distance;					//save current eye distance for later use
-		printf("Turning on Main Cameras\n");
-		EyelockLog(logger, DEBUG, "Turning on Main Cameras");
-		//port_com_send("fixed_set_rgb(100,0,0)");
-	}
-	else if (CurrentEye_distance < (switchThreshold-errSwitchThreshold))// && diffEyedistance <= errSwitchThreshold)
-	{
-		if(currnet_mode==MODE_EYES_AUX)
-		{
-			printf("Dont need to change Aux cam");
-			EyelockLog(logger, DEBUG, "Dont need to change Aux camera");
-			return;
-		}
-
-		MainIrisSettings();
-		SwitchIrisCameras(false);
-		currnet_mode = MODE_EYES_AUX;
-		previousEye_distance = CurrentEye_distance;
-		printf("Turning on AUX Cameras\n");
-		EyelockLog(logger, DEBUG, "Turning on AUX Cameras");
-		//port_com_send("fixed_set_rgb(100,100,0)");
-	}
-/*	else if (CurrentEye_distance >= switchThreshold && diffEyedistance > errSwitchThreshold)
-	{
-		if(currnet_mode==MODE_EYES_MAIN)
-		{
-			printf("Dont need to change Main cam");
-			EyelockLog(logger, DEBUG, "Don't need to change Main cameras");
-			return;
-		}
-		MainIrisSettings();
-		SwitchIrisCameras(true);
-		currnet_mode = MODE_EYES_MAIN;
-		previousEye_distance = CurrentEye_distance;
-		printf("Turning on Main Cameras\n");
-		EyelockLog(logger, DEBUG, "Turning on Main cameras");
-		//port_com_send("fixed_set_rgb(100,0,0)");
-	}
-	else if (CurrentEye_distance < switchThreshold && diffEyedistance > errSwitchThreshold)
-	{
-		if(currnet_mode==MODE_EYES_AUX)
-		{
-			printf("Dont need to change Aux cam");
-			EyelockLog(logger, DEBUG, "Dont need to change Aux camera");
-			return;
-		}
-		//AuxIrisSettings();			//use this function if we have different settings for aux and main cameras
-		// AS we are using same LED setting for aux and main, Im calling this function at the very beginning
-		MainIrisSettings();
-		SwitchIrisCameras(false);
-		currnet_mode = MODE_EYES_AUX;
-		previousEye_distance = CurrentEye_distance;
-		printf("Turning on AUX Cameras\n");
-		EyelockLog(logger, DEBUG, "Turning on AUX cameras");
-		//port_com_send("fixed_set_rgb(100,100,0)");
-	}*/
-	IrisFrameCtr=0;
-	// start_mode_change = std::chrono::system_clock::now();
-
-
-}
-
-
 cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 	EyelockLog(logger, TRACE, "Entering > seacrhEyeArea()");
 	if (float(ERROR_CHECK_EYES_HT +  ERROR_CHECK_EYES_HB) >= 0.9){
@@ -769,11 +667,10 @@ cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 		modRect.x = 0;
 	if(modRect.y < 0)
 			modRect.y = 0;
-	if(modRect.width > WIDTH)
-			modRect.width = WIDTH;
-	if(modRect.height > HEIGHT)
-			modRect.height = HEIGHT;
-
+	if(modRect.width > m_ImageWidth)
+			modRect.width = m_ImageWidth;
+	if(modRect.height > m_ImageHeight)
+			modRect.height = m_ImageHeight;
 
 	return modRect;
 }
@@ -990,6 +887,14 @@ void FaceTracker::DoStartCmd()
 	char cmd1[100];
 	sprintf(cmd1,"cam_set_seed(%i)", 0);		//Set the seed
 	port_com_send(cmd1);
+
+	MainIrisSettings();
+	string camID;
+	camID = "0x47"; //camID = "0x08"; 	//
+	setCamera(camID, FRAME_DELAY);
+
+	DimmFaceForIris();	//Dim face settings
+
 }
 
 float FaceTracker::CalcExposureLevel(int width, int height,unsigned char *dsty, int limit)
@@ -1117,6 +1022,7 @@ void FaceTracker::faceModeState(bool bDebugSessions)
 	SetFaceMode();
 }
 
+
 int FaceTracker::SelectWhichIrisCam(float eye_size, int cur_state)
 {
 	EyelockLog(logger, TRACE, "Entering > SelectWhichIrisCam");
@@ -1140,19 +1046,6 @@ int FaceTracker::SelectWhichIrisCam(float eye_size, int cur_state)
 			return STATE_MAIN_IRIS;
 		else
 			return STATE_AUX_IRIS;
-}
-
-char* FaceTracker::StateText(int state)
-{
-	EyelockLog(logger, TRACE, "Entering > StateText");
-	switch (state)
-	{
-	    case STATE_LOOK_FOR_FACE: return("FACE");
-		case STATE_MAIN_IRIS: return ("MAIN");
-		case STATE_AUX_IRIS:  return ("AUX");
-		case STATE_MOVE_MOTOR:return ("MOVE");
-	}
-	return "none";
 }
 
 
@@ -1213,334 +1106,6 @@ void FaceTracker::DoAgc(void)
 	}
 }
 
-
-void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
-	EyelockLog(logger, TRACE, "DoRunMode_test");
-
-	cv::Rect face;
-	int start_process_time = clock();
-
-	unsigned char FaceCameraFrameNo = (int)outImg.at<uchar>(0,3);
-
-//	printf("FaceTracking: FrameNo = %d\n", FaceCameraFrameNo);
-
-	unsigned int FaceFrameIndex=0;
-	static unsigned int FaceCtrIndex=0;
-
-	if(FaceCtrIndex != 0)
-		FaceFrameIndex = (255 * FaceCtrIndex) + FaceCameraFrameNo;
-	else
-		FaceFrameIndex = FaceCameraFrameNo;
-
-	if(FaceCameraFrameNo == 255){
-		FaceCtrIndex++;
-	}
-
-
-	// printf("FaceCameraFrameNo%d\n", FaceCameraFrameNo);
-
-	struct timeval m_timer;
-	gettimeofday(&m_timer, 0);
-	TV_AS_USEC(m_timer,starttimestamp);
-
-	smallImg = preProcessingImg(outImg);
-
-	foundFace = FindEyeLocation(smallImg, eyes, eye_size, face, MIN_FACE_SIZE, MAX_FACE_SIZE);
-
-	if(foundFace){
-		//  EyelockLog(logger, INFO, "FaceTracking found Face");
-		cv::Rect myFaceROI(face.x, face.y, face.width, face.height);
-		// EyelockLog(logger, TRACE, "Before cropped image AGC");
-		m_CroppedFaceImageForAGC = smallImg(myFaceROI);
-		// EyelockLog(logger, TRACE, "After cropped image AGC");
-	}
-
-	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
-
-
-	bool eyesInDetect = foundFace? detect_area.contains(eyes):false;		// Face in face camera field of view
-	bool eyesInViewOfIriscam = eyesInDetect ? search_eye_area.contains(eyes):false;		// Face/eyes in narrow Rect calculated from calibration
-	bool eyesInViewOfIriscamNoMove = eyesInDetect ? no_move_area.contains(eyes):false;	//Face/eyes in Bigger Rect calculated from calibration
-
-	if (foundFace==false){
-		noFaceCounter++;
-		m_ProjPtr = false;	//projPtr is only false if FindEyeLocation() doesn't find any face
-	}
-	noFaceCounter = min(noFaceCounter,NO_FACE_SWITCH_FACE);
-
-	if (foundFace)
-		noFaceCounter=0;
-	last_system_state = system_state;
-
-
-	// EyelockLog(logger, INFO, "FaceTracking SystemState = %d", system_state);
-	// figure out our next state
-	switch(system_state)
-	{
-	case STATE_LOOK_FOR_FACE:
-							// we see eyes but need to move to them
-							if (eyesInDetect && !eyesInViewOfIriscam)
-								{
-								system_state = STATE_MOVE_MOTOR;		//Setting up this state cause one extra move during face tracking
-								moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-								break;
-								}
-							//if (eyesInDetect && eyesInViewOfIriscam)	//Very strict condition and slowing down the performance
-							//if (eyesInViewOfIriscamNoMove)			//Relax the the previous condition but still slowing down the performance
-							if (eyesInDetect)	//No strict condition but there will be no face images in pipeline
-									system_state = SelectWhichIrisCam(eye_size,system_state);
-							if(b_EnableFaceAGC)
-								SweepFaceBrightness();
-							//if (eyesInViewOfIriscam)
-							break;
-
-	case STATE_MAIN_IRIS:
-						system_state = SelectWhichIrisCam(eye_size,system_state);
-						if (noFaceCounter >= NO_FACE_SWITCH_FACE)
-							{
-							system_state=STATE_LOOK_FOR_FACE;
-							break;
-							}
-						if (eyesInDetect &&  !eyesInViewOfIriscam){
-							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
-						}
-						break;
-	case STATE_AUX_IRIS:
-						system_state = SelectWhichIrisCam(eye_size,system_state);
-						if (noFaceCounter >= NO_FACE_SWITCH_FACE)
-							{
-							system_state=STATE_LOOK_FOR_FACE;
-							break;
-							}
-						if (eyesInDetect &&  !eyesInViewOfIriscam){
-							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
-						}
-						break;
-	case STATE_MOVE_MOTOR:
-						//if (eyesInDetect && eyesInViewOfIriscam)	//Very strict condition and slowing down the performance
-						//if (eyesInViewOfIriscamNoMove)			//Relax the the previous condition but still slowing down the performance
-						if (eyesInDetect)	//No strict condition but there will be no face images in pipeline
-							{
-							system_state = SelectWhichIrisCam(eye_size,system_state);
-							break;
-							}
-						if (!foundFace)
-							{
-							system_state = STATE_LOOK_FOR_FACE;
-							break;
-							}
-						if(b_EnableFaceAGC)
-							DoAgc();
-						moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-	}
-
-
-	currnet_mode = -1;		//This variable is needed for setFaceMode()
-	// handle switching state
-	//if (last_system_state != system_state)
-	// if(foundEyes)
-
-		if (g_MatchState)
-			g_MatchState=0;
-		last_angle_move=0;
-
-	int stateofIrisCameras = 0;
-
-	if (last_system_state != system_state)
-	switch(last_system_state)
-	{
-	case STATE_LOOK_FOR_FACE:
-					switch (system_state)
-					{
-					case STATE_MOVE_MOTOR:
-						// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
-						//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-						// flush after moving to get more accurate motion on next loop
-						vs->flush();
-						m_ProjPtr = false;
-						break;
-					case STATE_MAIN_IRIS:
-						// enable main camera and set led currnet
-						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings();											//change to Iris settings
-						SwitchIrisCameras(true);									//switch cameras
-						stateofIrisCameras = STATE_MAIN_IRIS;
-						m_ProjPtr = true;		//Added by Mo
-						break;
-					case STATE_AUX_IRIS:
-						// enable aux camera and set led currnet
-						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings();											//change to Iris settings
-						SwitchIrisCameras(false);									//switch cameras
-						stateofIrisCameras = STATE_AUX_IRIS;
-						m_ProjPtr = true;		//Added by Mo
-						break;
-					}
-				//DMOOUT	if(b_EnableFaceAGC)
-				//DMOOUT		DoAgc();
-					break;
-	case STATE_AUX_IRIS:
-					switch (system_state)
-					{
-					case STATE_MOVE_MOTOR: // cannot happen
-						// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
-						//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-						m_ProjPtr = false;
-						break;
-					case STATE_LOOK_FOR_FACE:
-						// disable iris camera set current for face camera
-						MoveTo(CENTER_POS);
-						SetFaceMode();
-						m_ProjPtr = false;
-						break;
-					case STATE_MAIN_IRIS:
-						//if the switch happen from AUX to MAIN then we
-						//dont need to dim down the face cam settings because it is already
-						//dimmed down
-						//DimmFaceForIris();											//Dim face settings
-						MainIrisSettings();											//change to Iris settings
-						SwitchIrisCameras(true);									//switch cameras
-						stateofIrisCameras = STATE_MAIN_IRIS;
-						m_ProjPtr = true;		//Added by Mo
-						break;
-					}
-					break;
-	case STATE_MAIN_IRIS:
-						switch (system_state)
-						{
-						case STATE_MOVE_MOTOR:
-							// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
-							//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							m_ProjPtr = false;
-							break;
-						case STATE_LOOK_FOR_FACE:
-							// disable iris camera set current for face camera
-							MoveTo(CENTER_POS);
-							SetFaceMode();
-							m_ProjPtr = false;
-							break;
-						case STATE_AUX_IRIS:
-							//if the switch happen from AUX to MAIN then we
-							//dont need to dim down the face cam settings because it is already
-							//dimmed down
-							//DimmFaceForIris();
-							MainIrisSettings();											//change to Iris settings
-							SwitchIrisCameras(false);									//switch cameras
-							stateofIrisCameras = STATE_AUX_IRIS;
-							m_ProjPtr = true;		//Added by Mo
-							break;
-						}
-						break;
-	case STATE_MOVE_MOTOR:
-					switch (system_state)
-					{
-					case STATE_LOOK_FOR_FACE:
-						// disable iris camera set current for face camera
-						MoveTo(CENTER_POS);
-						SetFaceMode();
-						m_ProjPtr = false;
-						break;
-					case STATE_AUX_IRIS:
-						// switch only the expusure and camera enables
-						// no need to change voltage or current
-						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings();											//change to Iris settings
-						SwitchIrisCameras(false);									//switch cameras
-						stateofIrisCameras = STATE_AUX_IRIS;
-						m_ProjPtr = true;		//Added by Mo
-						break;
-					case STATE_MAIN_IRIS:
-						// enable main cameras and set
-						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings();											//change to Iris settings
-						SwitchIrisCameras(true);									//switch cameras
-						stateofIrisCameras = STATE_MAIN_IRIS;
-						m_ProjPtr = true;		//Added by Mo
-						break;
-					}
-					break;
-	}
-
-	// EyelockLog(logger, INFO, "End of last_system_state != system_state = %d", system_state);
-
-	face = adjustWidthDuringFaceDetection(face);
-	if(bFaceMapDebug)
-		EyelockLog(logger, DEBUG, "in DoRunMode_test face.x	%d face.y	%d face.height	%d face.width	%d\n", face.x, face.y, face.height, face.width);
-
-	//Scaling out projFace coordinates
-	cv::Rect FaceCoord;
-	FaceCoord.x = face.x * scaling;		//column
-	FaceCoord.y = face.y * scaling; // rectY - (targetOffset * scaling);
-	FaceCoord.width = face.width * scaling;
-	FaceCoord.height = face.height *scaling; // rectH + (targetOffset * scaling);
-
-	int w, h;
-
-	cv::Rect rightRect, leftRect;
-
-	//Separate Right eye Rect
-	rightRect.x = FaceCoord.x;
-	rightRect.y = FaceCoord.y;
-	rightRect.height = FaceCoord.height;
-	rightRect.width = FaceCoord.width/2.0;
-
-	//Separate left eye Rect
-	leftRect.x = FaceCoord.x + (FaceCoord.width/2.0);
-	leftRect.y = FaceCoord.y;
-	leftRect.height = FaceCoord.height;
-	leftRect.width = FaceCoord.width/2.0;
-
-	cv::Mat RotatedfaceImg = rotation90(outImg);
-
-	cv::Mat resizeFace;
-	resize(RotatedfaceImg, resizeFace, cvSize(960, 960), 0,0, INTER_LINEAR);
-
-	cv::Mat ColorFaceImage;
-	cv::cvtColor(resizeFace, ColorFaceImage, CV_GRAY2BGR);
-
-	if(foundFace){
-		LeftIrisCamera->get(&w, &h, (char *) LeftIrisImg.data, false);
-	 	RightIrisCamera->get(&w, &h, (char *) RightIrisImg.data, false);
-
-		cvSetData(m_LeftCameraIrisImage, LeftIrisImg.data, (int)LeftIrisImg.step[0]);
-		cvSetData(m_RightCameraIrisImage, RightIrisImg.data, (int)RightIrisImg.step[0]);
-
-		ProcessIrisImage(m_LeftCameraIrisImage, ColorFaceImage, LeftIrisImg, leftRect, rightRect);
-		ProcessIrisImage(m_RightCameraIrisImage, ColorFaceImage, RightIrisImg, leftRect, rightRect);
-
-	}
-
-	EyelockLog(logger, TRACE, "FaceFrameNo:%d STATE:%8s LAST_STATE:%8s NFC:%2d %c%c%c  I_SIZE:%03.1f  I_POS(%3d,%3d) Proj:%d MV:%3.3f TIME:%3.3f AGC:%5d MS:%d \n",FaceCameraFrameNo, StateText(system_state),
-			StateText(last_system_state),
-					noFaceCounter,
-					foundFace?'E':'.',
-				eyesInDetect?'D':'.',
-				eyesInViewOfIriscam?'V':'.',
-						eye_size,
-						eyes.x,
-						eyes.y,
-						m_ProjPtr,
-						last_angle_move,
-						process_time,
-						agc_set_gain,
-						g_MatchState
-						);
-
-	if(1){
-		EyelockLog(logger, TRACE, "Imshow");
-		cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
-		cv::rectangle(smallImg, search_eye_area, Scalar(255, 0, 0), 1, 0);
-		cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
-		cv::rectangle(smallImg, face, Scalar(255,0,0),1,0);
-		imshow("FaceTracker", smallImg);
-		cvWaitKey(1);
-	}
-
-}
-
-
 //projectPointsPtr1() input needs to be scaled out to the input image size
 cv::Point2i FaceTracker::projectPoints_IristoFace(cv::Point2i ptrI, cv::Point2f constant, float ConstDiv)
 {
@@ -1571,136 +1136,153 @@ cv::Point2i FaceTracker::projectPoints_IristoFace(cv::Point2i ptrI, cv::Point2f 
 	return ptrF;
 }
 
+int RunSystemCmdCal(const char *ptr){
+	int status = system(ptr);
+	return status;
+}
 
-void FaceTracker::validateLeftRightEyecrops( int CameraId, cv::Point2i ptrI, cv::Rect leftRect, cv::Rect rightRect, cv::Mat IrisImage, cv::Mat faceImage)
+void Motorfxrel(int dist)
+{
+	char cmd[512];
+	sprintf(cmd, "fx_rel(%i)\n",dist);
+	port_com_send(cmd);
+	usleep(5000);
+}
+
+
+int FaceTracker::validateLeftRightEyecrops( int CameraId, cv::Point2i ptrI, cv::Rect leftRect, cv::Rect rightRect, cv::Mat IrisImage, cv::Mat faceImage, IplImage *eyeCrop)
 {
 	char filename[100];
 	char key;
-
 	cv::Point2i ptrF;
+	std::ostringstream ssCoInfo;
 
 	//Project Iris points to face image
-	if(1){
-		if (CameraId == IRISCAM_AUX_LEFT) {
-			ptrF = projectPoints_IristoFace(ptrI, constantAuxl, magOffAuxl);
-		} else if (CameraId == IRISCAM_AUX_RIGHT) {
-			ptrF = projectPoints_IristoFace(ptrI, constantAuxR, magOffAuxR);
-		} else if (CameraId == IRISCAM_MAIN_LEFT) {
-			ptrF = projectPoints_IristoFace(ptrI, constantMainl, magOffMainl);
-		} else if (CameraId == IRISCAM_MAIN_RIGHT) {
-			ptrF = projectPoints_IristoFace(ptrI, constantMainR, magOffMainR);
-		}
-		try{
-			cv::rectangle(faceImage, rightRect, cv::Scalar(255,255,255),1,0);
-			cv::rectangle(faceImage, leftRect, cv::Scalar(255,255,255),1,0);
-
-			std::ostringstream ssCoInfo;
-			ssCoInfo << "+";
+	// try
+	{
+		cv::rectangle(faceImage, rightRect, cv::Scalar(255,255,255),1,0);
+		cv::rectangle(faceImage, leftRect, cv::Scalar(255,255,255),1,0);
+		ssCoInfo << "+";
+		if(foundFace){
 			if (CameraId == IRISCAM_AUX_LEFT){
 				// light green
+				ptrF = projectPoints_IristoFace(ptrI, constantAuxl, magOffAuxl);
 				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(144,238,144),2);
 			}else if (CameraId == IRISCAM_AUX_RIGHT){
 				// light blue
+				ptrF = projectPoints_IristoFace(ptrI, constantAuxR, magOffAuxR);
 				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(230,216,173),2);
 			}else if (CameraId == IRISCAM_MAIN_LEFT){
 				// Red
+				ptrF = projectPoints_IristoFace(ptrI, constantMainl, magOffMainl);
 				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
 			}else if (CameraId == IRISCAM_MAIN_RIGHT){
 				// Orange
+				ptrF = projectPoints_IristoFace(ptrI, constantMainR, magOffMainR);
 				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv:: Scalar(0,165,255),2);
 			}
-
-#if 0
-			cv::Mat DisplayImage(cv::Size(1920, 960), CV_8UC3, Scalar(0,0,0));
-
-			//cv::Mat resizeFace = Mat(Size(640,480), CV_8UC3);
-			//resize(faceImage, resizeFace, cvSize(640, 480), 0,0, INTER_LINEAR);
-
-			cv::Mat resizeIris;
-			resize(IrisImage, resizeIris, cvSize(960, 960), 0,0, INTER_LINEAR);
-
-			cv::Mat ColorIrisImage;
-			cv::cvtColor(resizeIris, ColorIrisImage, CV_GRAY2BGR);
-
-			faceImage.copyTo(DisplayImage(cv::Rect(0,0,960,960)));
-
-			ColorIrisImage.copyTo(DisplayImage(cv::Rect(960,0,960,960)));
-#else
-
-			cv::Mat resizeFace;
-			resize(faceImage, resizeFace, cvSize(960, 960), 0,0, INTER_LINEAR);
-
-			cv::Mat DisplayImage(cv::Size(1920, 960), CV_8UC3, Scalar(0,0,0));
-
-			//cv::Mat resizeFace = Mat(Size(640,480), CV_8UC3);
-			//resize(faceImage, resizeFace, cvSize(640, 480), 0,0, INTER_LINEAR);
-
-
-			cv::Mat resizeIris;
-			resize(IrisImage, resizeIris, cvSize(960, 960), 0,0, INTER_LINEAR);
-
-			cv::Mat ColorIrisImage;
-			cv::cvtColor(resizeIris, ColorIrisImage, CV_GRAY2BGR);
-
-			resizeFace.copyTo(DisplayImage(cv::Rect(0,0,960,960)));
-
-			ColorIrisImage.copyTo(DisplayImage(cv::Rect(960,0,960,960)));
-#endif
-			/* if ((CameraId == IRISCAM_AUX_LEFT) || (CameraId == IRISCAM_MAIN_LEFT)) {
-				ColorIrisImage.copyTo(DisplayImage(cv::Rect(0,0,960,960)));
-			}else if ((CameraId == IRISCAM_AUX_RIGHT) || (CameraId == IRISCAM_MAIN_RIGHT)) {
-				ColorIrisImage.copyTo(DisplayImage(cv::Rect(960,0,960,960)));
-			}*/
-
-
-			cvNamedWindow("EXT", CV_WINDOW_NORMAL);
-			cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
-#if 1
-			std::ostringstream ssCoInfo1;
-			ssCoInfo1 << "CAM " <<  CameraId  <<  (CameraId & 0x80 ?  "AUX":"MAIN");
-			putText(DisplayImage,ssCoInfo1.str().c_str(),cv::Point(980,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
-#endif
-			imshow("EXT", DisplayImage);
-//			cvWaitKey(1);
-
-			//for continuous streaming
-			key = cv::waitKey(1);
-			//For saving images while streaming individual cameras
-
-			if(key=='s')
-			{
-				sprintf(filename,"IrisImage_DeviceId_%d_CamId_%d.pgm", m_Deviceid, CameraId);
-				imwrite(filename, IrisImage);
-			}
-
-			/*
-			//For quit streaming
-			if (key=='q'){
-				m_quit = true;
-				destroyWindow("EXT");
-				return m_quit;
-			}*/
-
-		}catch (cv::Exception& e) {
-			cout << e.what() << endl;
 		}
 
+		cv::Mat DisplayImage(cv::Size(DISPLAY_WIN_WIDTH, DISPLAY_WIN_HEIGHT), CV_8UC3, Scalar(0,0,0));
+
+		cv::Mat resizeFace;
+		resize(faceImage, resizeFace, cvSize(resizeFaceWidth, DISPLAY_WIN_HEIGHT), 0,0, INTER_LINEAR);
+
+		cv::Mat resizeIris;
+		resize(IrisImage, resizeIris, cvSize(resizeIrisWidth, resizeIrisHeight), 0,0, INTER_LINEAR);
+
+		cv::Mat ColorIrisImage;
+		cv::cvtColor(resizeIris, ColorIrisImage, CV_GRAY2BGR);
+
+		resizeFace.copyTo(DisplayImage(cv::Rect(0,0,resizeFaceWidth,DISPLAY_WIN_HEIGHT)));
+		ColorIrisImage.copyTo(DisplayImage(cv::Rect(resizeFaceWidth,IrisPointYLoc,resizeIrisWidth,resizeIrisHeight)));
+
+		std::ostringstream ssCoInfo1;
+		ssCoInfo1 << m_Deviceid << " CAM " <<   CameraId  <<  (CameraId & 0x80 ?  " AUX":" MAIN ") <<   m_Distance << "\"";
+		putText(DisplayImage,ssCoInfo1.str().c_str(),cv::Point(980,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
+
+		cvNamedWindow("EXT", CV_WINDOW_NORMAL);
+		cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+		imshow("EXT", DisplayImage);
+		key = cv::waitKey(1);
+		switch (key)
+		{
+			case '1':
+				m_CameraNo = 1;
+				return 1;
+			case '2':
+				m_CameraNo = 2;
+				return 2;
+			case '3':
+				m_CameraNo = 3;
+				return 3;
+			case '4':
+				m_CameraNo = 4;
+				return 4;
+			case 'q':
+				destroyWindow("EXT");
+				system("killall -KILL ExtStreamImages");
+				break;
+			case 'm':
+				//bool eyesInDetect = foundFace? detect_area.contains(eyes):false;		// Face in face camera field of view
+				//bool eyesInViewOfIriscam = eyesInDetect ? search_eye_area.contains(eyes):false;		// Face/eyes in narrow Rect calculated from calibration
+				////bool eyesInViewOfIriscamNoMove = eyesInDetect ? no_move_area.contains(eyes):false;	//Face/eyes in Bigger Rect calculated from calibration
+				// if (eyesInDetect && !eyesInViewOfIriscam){
+				moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+				//}
+				break;
+			case 'd':
+				destroyWindow("EXT");
+				printf("Enter the new Distance\n");
+				cin >> m_Distance;
+				break;
+			case 's':
+				// char DistanceValue;
+				time_t timer;
+				struct tm* tm1;
+				time(&timer);
+				tm1 = localtime(&timer);
+				char time_str[100];
+				strftime(time_str, 100, "%Y_%m_%d_%H-%M-%S", tm1);
+				struct timespec ts;
+				clock_gettime(CLOCK_REALTIME, &ts);
+				/*if ((key != 0) && (key != 's') && (key >= LowerBound || key <= UpperBound)){
+					DistanceValue = key;
+				}*/
+				if((CameraId == IRISCAM_MAIN_LEFT) || (CameraId == IRISCAM_MAIN_RIGHT))
+					sprintf(filename,"DeviceTestingFiles/%d_Main_%d_%dInches_%s_%lu.bmp", m_Deviceid, CameraId, m_Distance, time_str, ts.tv_sec);
+				else
+					sprintf(filename,"DeviceTestingFiles/%d_Aux_%d_%dInches_%s_%lu.bmp", m_Deviceid, CameraId, m_Distance, time_str, ts.tv_sec);
+				imwrite(filename, IrisImage);
+				sprintf(filename,"DeviceTestingFiles/%d_Face_%dInches_%s_%lu.bmp", m_Deviceid, m_Distance, time_str, ts.tv_sec);
+				imwrite(filename, faceImage);
+				cv::Mat mateyeCrop = cv::cvarrToMat(eyeCrop);
+				sprintf(filename,"DeviceTestingFiles/%d_eyeCrop_%dInches_%s_%lu.bmp", m_Deviceid, m_Distance, time_str, ts.tv_sec);
+				imwrite(filename, mateyeCrop);
+				break;
+
+			case 'r':
+				destroyWindow("EXT");
+				printf("Enter the motor movement distance\n");
+				int dist;
+				cin >> dist;
+				Motorfxrel(dist);
+				break;
+			case 'h':
+				motorInit();
+				break;
+			default:
+				break;
+
+		};
+
 	}
-	/*
-	// 1 - Left; 2 - Right; 0-Undefined
-	if (leftRect.contains(ptrF)){
-		EyelockLog(logger, DEBUG, "Left EYE found	return %d !!!!\n", 1);
-		return 1;
-	}else if (rightRect.contains(ptrF)){
-		EyelockLog(logger, DEBUG, "Right EYE found	return %d !!!!\n", 2);
-		return 2;
-	}else{
-		EyelockLog(logger, DEBUG, "Undefined EYE found	return %d !!!!\n", 0);
-		return 0;
+	/*catch (cv::Exception& e) {
+		cout << e.what() << endl;
 	}*/
+	return m_CameraNo;
 
 }
-
 
 void setImage(IplImage *dst, IplImage *m_src) {
 
@@ -1826,10 +1408,8 @@ bool FaceTracker::ProcessIrisImage(IplImage *inputImage, cv::Mat faceImage, cv::
 }
 #else
 
-bool FaceTracker::ProcessIrisImage(IplImage *inputImage, cv::Mat faceImage, cv::Mat IrisImage, cv::Rect leftRect, cv::Rect rightRect)
+int FaceTracker::ProcessIrisImage(IplImage *inputImage, cv::Mat faceImage, cv::Mat IrisImage, cv::Rect leftRect, cv::Rect rightRect)
 {
-
-	char filename[100];
 
 	int cam_idd = 0;
 	unsigned char frame_number = 0;
@@ -1839,48 +1419,45 @@ bool FaceTracker::ProcessIrisImage(IplImage *inputImage, cv::Mat faceImage, cv::
 		cam_idd = inputImage->imageData[2]&0xff;
 		frame_number = inputImage->imageData[3]&0xff;
 	}
-#if 0
-	char key = cvWaitKey(1);
-	if(key == 's'){
-		sprintf(filename,"IrisImage_%d_%d.pgm", m_Deviceid, cam_idd);
-		cv::Mat mateye = cv::cvarrToMat(inputImage);
-		imwrite(filename, mateye);
-		mateye.release();
-	}
-#endif
 
-	m_pSrv->LoadHaarClassifier("/home/root/data/adaboostClassifier.txt");
-	frame.setScratch(m_pSrv->GetScratch());
 	Image8u img(inputImage, false);
 	frame.SetImage(&img);
-	bool detect = false;
-	detect = m_pSrv->Detect(&frame);
+	bool detect = m_pSrv->Detect(&frame);
+
+	//int NoOfHaarEyes = frame.GetNumberOfHaarEyes();
+
+    // int maxEyes = frame.GetEyeCenterPointList()->size();
 	int left, top;
-	CvScalar color = cvRealScalar(255);
+	cv::Point2i ptrI;
+	if(detect){
+		for(int eyeIdx = 0; eyeIdx < frame.GetNumberOfHaarEyes(); eyeIdx++)
+		{
+			// CvPoint2D32f irisCentroid = cvPoint2D32f(0,0);
 
-	int NoOfHaarEyes = frame.GetNumberOfHaarEyes();
+			CEyeCenterPoint& centroid = frame.GetEyeCenterPointList()->at(eyeIdx);
+			ptrI= cv::Point2i(centroid.m_nCenterPointX, centroid.m_nCenterPointY);
 
-    int maxEyes = frame.GetEyeCenterPointList()->size();
-    cv::Point2i ptrI;
-	for(int eyeIdx = 0; eyeIdx < frame.GetNumberOfHaarEyes(); eyeIdx++)
-	{
-		CvPoint2D32f irisCentroid = cvPoint2D32f(0,0);
+			// Get Eyecrop
+			frame.GetCroppedEye(eyeIdx, m_EyeCrop, left, top);
 
-		CEyeCenterPoint& centroid = frame.GetEyeCenterPointList()->at(eyeIdx);
-		ptrI= cv::Point2i(centroid.m_nCenterPointX, centroid.m_nCenterPointY);
+			
+			m_CameraNo = validateLeftRightEyecrops(cam_idd, ptrI, leftRect, rightRect, IrisImage, faceImage, m_EyeCrop);
 
-		validateLeftRightEyecrops(cam_idd, ptrI, leftRect, rightRect, IrisImage, faceImage);
-
+		}
+	}else{
+		m_CameraNo = validateLeftRightEyecrops(cam_idd, ptrI, leftRect, rightRect, IrisImage, faceImage, m_EyeCrop);
 	}
 
-	return 0;
+	return m_CameraNo;
 }
+
 #endif
 
-bool FaceTracker::streamVideo(int cam, cv::Rect FaceCoord, cv::Mat FaceImg)
+int FaceTracker::streamVideo(int cam, cv::Rect FaceCoord, cv::Mat FaceImg)
 {
 
 	int w,h;
+
 	cv::Rect rightRect, leftRect;
 
 	//Separate Right eye Rect
@@ -1896,50 +1473,24 @@ bool FaceTracker::streamVideo(int cam, cv::Rect FaceCoord, cv::Mat FaceImg)
 	leftRect.width = FaceCoord.width/2.0;
 
 	cv::Mat RotatedfaceImg = rotation90(FaceImg);
-#if 0
-	cv::Mat resizeFace;
-	resize(RotatedfaceImg, resizeFace, cvSize(960, 960), 0,0, INTER_LINEAR);
-
-	cv::Mat ColorFaceImage;
-	cv::cvtColor(resizeFace, ColorFaceImage, CV_GRAY2BGR);
-#else
 	cv::Mat ColorFaceImage;
 	cv::cvtColor(RotatedfaceImg, ColorFaceImage, CV_GRAY2BGR);
-#endif
 
 	if(cam == 8192)
 	{
-
-		DimmFaceForIris();	//Dim face settings
-		MainIrisSettings();
-
 		LeftIrisCamera->get(&w,&h,(char *)LeftIrisImg.data, false);
 		cvSetData(m_LeftCameraIrisImage, LeftIrisImg.data, (int)LeftIrisImg.step[0]);
-
-		ProcessIrisImage(m_LeftCameraIrisImage, ColorFaceImage, LeftIrisImg, leftRect, rightRect);
+		m_CameraNo = ProcessIrisImage(m_LeftCameraIrisImage, ColorFaceImage, LeftIrisImg, leftRect, rightRect);
 	}
 	else if (cam == 8193)
 	{
-		DimmFaceForIris();	//Dim face settings
-		MainIrisSettings();
 		RightIrisCamera->get(&w,&h,(char *)RightIrisImg.data, false);
 		cvSetData(m_RightCameraIrisImage, RightIrisImg.data, (int)RightIrisImg.step[0]);
-		ProcessIrisImage(m_RightCameraIrisImage, ColorFaceImage, RightIrisImg, leftRect, rightRect);
-		/*if(m_quit){
-			return true;
-		}*/
+		m_CameraNo = ProcessIrisImage(m_RightCameraIrisImage, ColorFaceImage, RightIrisImg, leftRect, rightRect);
 	}
+
+	return m_CameraNo;
 }
-
-
-void setCamera(string cam, int delay){
-	char cmd[512];
-
-	sprintf(cmd,"set_cam_mode(%s,%d)",cam.c_str(), delay);
-	port_com_send(cmd);
-	usleep(100);
-}
-
 
 Mat msgImage = Mat(450, 1800, CV_8U);
 Mat msgImage1 = Mat(450, 1800, CV_8U);	//for showing messages
@@ -2012,58 +1563,38 @@ void FaceTracker::displayInstruction(){
 	}
 #endif
 
-void FaceTracker::DoRunMode(bool bShowFaceTracking, bool bDebugSessions, int CameraNo)
+static void help()
 {
-
-	string camID;
-	cv::Rect face;
-	int start_process_time = clock();
-
-	unsigned char FaceCameraFrameNo = (int)outImg.at<uchar>(0,3);
-
-//	printf("FaceTracking: FrameNo = %d\n", FaceCameraFrameNo);
-
-	unsigned int FaceFrameIndex=0;
-	static unsigned int FaceCtrIndex=0;
-
-	if(FaceCtrIndex != 0)
-		FaceFrameIndex = (255 * FaceCtrIndex) + FaceCameraFrameNo;
-	else
-		FaceFrameIndex = FaceCameraFrameNo;
-
-	if(FaceCameraFrameNo == 255){
-		FaceCtrIndex++;
+	cout << "\nThis Application is used for testing EXT\n"
+			"Enter device ID and face target distance to proceed\n"
+			"To switch between cameras use keys 1, 2, 3 and 4:\n"
+			"To save images at new target distance press d, enter the distance, press enter "
+			"Move the mouse on the display screen after entering the distance and then press 's' to save images\n"
+			"Images are saved in /home/root/DeviceTestingFiles folder\n"
+			"Hot keys work only if the mouse is on the displayed image screen, i.e EXT Window Screen\n"
+			<< endl;
+	cout << "Hot keys: \n"
+	            "q - quit/exit the application\n"
+	            "s - save images\n"
+	            "d - Enter new target distance on console and then press enter, to save images at new distance press 's'\n"
+				"m - motor movement based on face size\n"
+	            "h - fx_home \n"
+	            "r - Enter distance to move motor - fx_rel\n"
+	            "1 - Main Left Camera\n"
+	            "2 - Main Right Camera\n"
+				"3 - Aux Left Camera\n"
+				"4 - Aux Right Camera\n"
+	            << endl;
 	}
 
-	struct timeval m_timer;
-	gettimeofday(&m_timer, 0);
-	TV_AS_USEC(m_timer,starttimestamp);
+int FaceTracker::DoRunMode(bool bShowFaceTracking, bool bDebugSessions, int CameraNo)
+{
+	string camID;
+	cv::Rect face;
 
 	smallImg = preProcessingImg(outImg);
 
 	foundFace = FindEyeLocation(smallImg, eyes, eye_size, face, MIN_FACE_SIZE, MAX_FACE_SIZE);
-
-
-	if(foundFace){
-		//  EyelockLog(logger, INFO, "FaceTracking found Face");
-		cv::Rect myFaceROI(face.x, face.y, face.width, face.height);
-		// EyelockLog(logger, TRACE, "Before cropped image AGC");
-		m_CroppedFaceImageForAGC = smallImg(myFaceROI);
-		// EyelockLog(logger, TRACE, "After cropped image AGC");
-	}
-
-	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
-
-	bool eyesInDetect = foundFace? detect_area.contains(eyes):false;		// Face in face camera field of view
-	bool eyesInViewOfIriscam = eyesInDetect ? search_eye_area.contains(eyes):false;		// Face/eyes in narrow Rect calculated from calibration
-	bool eyesInViewOfIriscamNoMove = eyesInDetect ? no_move_area.contains(eyes):false;	//Face/eyes in Bigger Rect calculated from calibration
-
-
-	if (eyesInDetect && !eyesInViewOfIriscam)
-	{
-		moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-	}
-
 
 	face = adjustWidthDuringFaceDetection(face);
 
@@ -2079,37 +1610,31 @@ void FaceTracker::DoRunMode(bool bShowFaceTracking, bool bDebugSessions, int Cam
 	if(CameraNo == 1)
 	{
 		// Main Left Camera
-		camID = "0x07"; //camID = "0x08"; 	//
+		camID = "0x07"; // camID = "0x47"; //camID = "0x08"; 	//
 		setCamera(camID, FRAME_DELAY);
-		streamVideo(leftCam, FaceCoord, outImg);
+		m_CameraNo = streamVideo(leftCam, FaceCoord, outImg);
 	}
 	else if(CameraNo == 2)
 	{
 		//For Main Right Camera
 		camID = "0x07"; // camID= "0x10"; //
 		setCamera(camID, FRAME_DELAY);
-		streamVideo(rightCam, FaceCoord, outImg);
+		m_CameraNo = streamVideo(rightCam, FaceCoord, outImg);
 	}
 	else if(CameraNo == 3)
 	{
 		//For Aux Left Camera
 		camID = "0x87"; //camID = "0x01"; //
 		setCamera(camID, FRAME_DELAY);
-		streamVideo(leftCam, FaceCoord, outImg);
+		m_CameraNo = streamVideo(leftCam, FaceCoord, outImg);
 	}
 	else if(CameraNo == 4)
 	{
 		//For Aux Right Camera
 		camID = "0x87"; // camID = "0x02"; //
 		setCamera(camID, FRAME_DELAY);
-		streamVideo(rightCam, FaceCoord, outImg);
+		m_CameraNo = streamVideo(rightCam, FaceCoord, outImg);
 	}
-/*
-	if (eyesInDetect){
-		camID = "0x07";
-		setCamera(camID, FRAME_DELAY);
-		streamVideo(leftCam, FaceCoord, outImg);
-	}*/
 
 	if(bShowFaceTracking)
 	{
@@ -2121,25 +1646,22 @@ void FaceTracker::DoRunMode(bool bShowFaceTracking, bool bDebugSessions, int Cam
 		imshow("FaceTracker", smallImg);
 		cvWaitKey(1);
 	}
+	return m_CameraNo;
 }
 
-
-
-#if 0
 int main(int argc, char **argv)
 {
+	help();
+
 	FaceTracker m_faceTracker("/home/root/data/calibration/Face.ini");
 
 	EyelockLog(logger, TRACE, "init_facetracking Start FaceTracking Thread");
 
 	printf("INSERT OIM DEVICE NUMBER THEN PRESS ENTER\n");
-	// cin >> m_faceTracker.m_Deviceid;
+	cin >> m_faceTracker.m_Deviceid;
 
-	// Get the Face.ini and CalRect.ini
-#if 0
-	wget -t 2 --user="$USER" --password="$PASSWD" "ftp://$host/$FACECONFIGFILE"
-	cp Face.ini /home/root/data/calibration
-#endif
+	printf("Enter the Distance\n");
+	cin >> m_faceTracker.m_Distance;
 
 	// Flag to enable/disable AES Encrption in port com
 	bool bDoAESEncryption = m_faceTracker.FaceConfig.getValue("FTracker.AESEncrypt", false);
@@ -2154,8 +1676,14 @@ int main(int argc, char **argv)
 
 	RightIrisCamera = new VideoStream(8193, m_faceTracker.m_ImageAuthentication); //RightCam is 8193...
 
-	LeftIrisImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
-	RightIrisImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
+	// Read the width and height of image from the Eyelock.ini file
+	FileConfiguration Config("/home/root/Eyelock.ini");
+	m_faceTracker.m_ImageWidth = Config.getValue("FrameSize.width", 1200);
+	m_faceTracker.m_ImageHeight = Config.getValue("FrameSize.height", 960);
+
+	LeftIrisImg = Mat(Size(m_faceTracker.m_ImageWidth, m_faceTracker.m_ImageHeight), CV_8U);
+
+	RightIrisImg = Mat(Size(m_faceTracker.m_ImageWidth, m_faceTracker.m_ImageHeight), CV_8U);
 
 	// Initialize Face Detection
 	face_init();
@@ -2167,532 +1695,116 @@ int main(int argc, char **argv)
 	m_faceTracker.DoStartCmd();
 
 	// Main Loop...
-	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
+	outImg = Mat(Size(m_faceTracker.m_ImageWidth, m_faceTracker.m_ImageHeight), CV_8U);
+
+#if 1
+	while(1){
+		vs->get(&w, &h, (char *) outImg.data, false);
+		// printf("m_CameraNo....%d\n", m_faceTracker.m_CameraNo);
+		if(m_faceTracker.m_CameraNo == 1){
+			// printf("Testing Left Main Camera\n");
 
 
-	while (1)
-	{
-		clock_t begin = clock();
+				m_faceTracker.m_CameraNo = m_faceTracker.DoRunMode(m_faceTracker.bShowFaceTracking, false, 1);
 
-		bool status = vs->get(&w, &h, (char *) outImg.data, false);
+		}else if (m_faceTracker.m_CameraNo == 2){
+			// printf("Testing Right Main Camera\n");
 
-		clock_t end = clock();
 
-		if(status == false){
-			// printf("No Face Image for 15 seconds....%d\n", status);
-			EyelockLog(logger, ERROR, "No Face Image for 15 seconds");
-		}else{
-			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			EyelockLog(logger, TRACE, "time_spent in receiving a frame..%ld\n", time_spent);
+			m_faceTracker.m_CameraNo = m_faceTracker.DoRunMode(m_faceTracker.bShowFaceTracking, false, 2);
+		}else if (m_faceTracker.m_CameraNo == 3){
+
+				m_faceTracker.m_CameraNo = m_faceTracker.DoRunMode(m_faceTracker.bShowFaceTracking, false, 3);
+
+		}else if (m_faceTracker.m_CameraNo == 4){
+			// printf("Testing Right Aux Camera\n");
+
+			m_faceTracker.m_CameraNo = m_faceTracker.DoRunMode(m_faceTracker.bShowFaceTracking, false, 4);
 		}
 
-		//Main Face tracking operation
-		m_faceTracker.DoRunMode_test(m_faceTracker.bShowFaceTracking, false);
-
 	}
-	outImg.release();
-}
 #else
-#if 1 // Working
-int main(int argc, char **argv)
-{
-	int CameraNo;
-	FaceTracker m_faceTracker("/home/root/data/calibration/Face.ini");
-
-	EyelockLog(logger, TRACE, "init_facetracking Start FaceTracking Thread");
-
-	printf("INSERT OIM DEVICE NUMBER THEN PRESS ENTER\n");
-	cin >> m_faceTracker.m_Deviceid;
-
-	// Flag to enable/disable AES Encrption in port com
-	bool bDoAESEncryption = m_faceTracker.FaceConfig.getValue("FTracker.AESEncrypt", false);
-
-	int w, h;
-
-	//vid_stream_start
-	vs = new VideoStream(8194, m_faceTracker.m_ImageAuthentication); //Facecam is 8194...
-
-	// Iris streams
-	LeftIrisCamera = new VideoStream(8192, m_faceTracker.m_ImageAuthentication); //LeftCam is 8192...
-
-	RightIrisCamera = new VideoStream(8193, m_faceTracker.m_ImageAuthentication); //RightCam is 8193...
-
-	LeftIrisImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
-
-	RightIrisImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
-
-	// Initialize Face Detection
-	face_init();
-
-	// Intialize Portcom for device control
-	portcom_start(bDoAESEncryption);
-
-	// Load FaceTracking config... Configure all hardware
-	m_faceTracker.DoStartCmd();
-
-	// Main Loop...
-	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
-
-	while(1){
-		printf("Testing Left Main Camera\n");
-		clock_t begin = clock();
-		while(1)
-		{
-
-			bool status = vs->get(&w, &h, (char *) outImg.data, false);
-			m_faceTracker.DoRunMode(m_faceTracker.bShowFaceTracking, false, 1);
-			clock_t end = clock();
-			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			// printf("elapsed time:%f  %d\n",time_spent, (int)time_spent );
-			if((int)time_spent == m_faceTracker.m_CameraTestTime){
-				// terminate = 0;
-				// printf("Finished 3 minutes\n");
-				break;
-			}
-		}
-
-		printf("Testing Right Main Camera\n");
-
-		begin = clock();
-		while(1)
-		{
-			// printf("Right Main Camera\n");
-			bool status = vs->get(&w, &h, (char *) outImg.data, false);
-			m_faceTracker.DoRunMode(m_faceTracker.bShowFaceTracking, false, 2);
-			clock_t end = clock();
-			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			// printf("elapsed time:%f  %d\n",time_spent, (int)time_spent );
-			if((int)time_spent == m_faceTracker.m_CameraTestTime){
-				break;
-			}
-		}
-
-		printf("Testing Left Aux Camera\n");
-		begin = clock();
-		while(1)
-		{
-			bool status = vs->get(&w, &h, (char *) outImg.data, false);
-			m_faceTracker.DoRunMode(m_faceTracker.bShowFaceTracking, false, 3);
-			clock_t end = clock();
-			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			// printf("elapsed time:%f  %d\n",time_spent, (int)time_spent );
-			if((int)time_spent == m_faceTracker.m_CameraTestTime){
-			// terminate = 0;
-			// printf("Finished 3 minutes\n");
-				break;
-			}
-		}
-
-		printf("Testing Right Aux Camera\n");
-		begin = clock();
-		while(1)
-		{
-			bool status = vs->get(&w, &h, (char *) outImg.data, false);
-			m_faceTracker.DoRunMode(m_faceTracker.bShowFaceTracking, false, 4);
-			clock_t end = clock();
-			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			if((int)time_spent == m_faceTracker.m_CameraTestTime){
-				break;
-			}
-		}
-	}
-	outImg.release();
-
-}
-
-#endif
-#endif
-
-cv::Point2i FaceTracker::ProcessIrisImage2(IplImage *inputImage, cv::Mat faceImage, cv::Mat IrisImage, cv::Rect leftRect, cv::Rect rightRect)
-{
-
-	char filename[100];
-
-	int cam_idd = 0;
-	unsigned char frame_number = 0;
-
-	if(inputImage->imageData != NULL)
-	{
-		cam_idd = inputImage->imageData[2]&0xff;
-		frame_number = inputImage->imageData[3]&0xff;
-	}
-#if 0
-	char key = cvWaitKey(1);
-	if(key == 's'){
-		sprintf(filename,"IrisImage_%d_%d.pgm", m_Deviceid, cam_idd);
-		cv::Mat mateye = cv::cvarrToMat(inputImage);
-		imwrite(filename, mateye);
-		mateye.release();
-	}
-#endif
-
-	m_pSrv->LoadHaarClassifier("/home/root/data/adaboostClassifier.txt");
-	frame.setScratch(m_pSrv->GetScratch());
-	Image8u img(inputImage, false);
-	frame.SetImage(&img);
-	bool detect = false;
-	detect = m_pSrv->Detect(&frame);
-	int left, top;
-	CvScalar color = cvRealScalar(255);
-
-	int NoOfHaarEyes = frame.GetNumberOfHaarEyes();
-
-    int maxEyes = frame.GetEyeCenterPointList()->size();
-    cv::Point2i ptrI;
-	for(int eyeIdx = 0; eyeIdx < frame.GetNumberOfHaarEyes(); eyeIdx++)
-	{
-		CvPoint2D32f irisCentroid = cvPoint2D32f(0,0);
-
-		CEyeCenterPoint& centroid = frame.GetEyeCenterPointList()->at(eyeIdx);
-		ptrI= cv::Point2i(centroid.m_nCenterPointX, centroid.m_nCenterPointY);
-	}
-
-	return ptrI;
-}
-
-bool FaceTracker::streamVideo2(int CameraType, cv::Rect FaceCoord, cv::Mat FaceImg)
-{
-
-	int w,h;
-	cv::Rect rightRect, leftRect;
-
-	//Separate Right eye Rect
-	rightRect.x = FaceCoord.x;
-	rightRect.y = FaceCoord.y;
-	rightRect.height = FaceCoord.height;
-	rightRect.width = FaceCoord.width/2.0;
-
-	//Separate left eye Rect
-	leftRect.x = FaceCoord.x + (FaceCoord.width/2.0);
-	leftRect.y = FaceCoord.y;
-	leftRect.height = FaceCoord.height;
-	leftRect.width = FaceCoord.width/2.0;
-
-	cv::Mat RotatedfaceImg = rotation90(FaceImg);
-	cv::Mat ColorFaceImage;
-	cv::cvtColor(RotatedfaceImg, ColorFaceImage, CV_GRAY2BGR);
-
-	cv::Point2i ptrILeft;
-	cv::Point2i ptrIRight;
-	DimmFaceForIris();	//Dim face settings
-	MainIrisSettings();
-
-	LeftIrisCamera->get(&w,&h,(char *)LeftIrisImg.data, false);
-	cvSetData(m_LeftCameraIrisImage, LeftIrisImg.data, (int)LeftIrisImg.step[0]);
-
-	ptrILeft = ProcessIrisImage2(m_LeftCameraIrisImage, ColorFaceImage, LeftIrisImg, leftRect, rightRect);
-
-	RightIrisCamera->get(&w,&h,(char *)RightIrisImg.data, false);
-	cvSetData(m_RightCameraIrisImage, RightIrisImg.data, (int)RightIrisImg.step[0]);
-	ptrIRight = ProcessIrisImage2(m_RightCameraIrisImage, ColorFaceImage, RightIrisImg, leftRect, rightRect);
-
-	if(CameraType == 1)
-		validateLeftRightEyecrops2(IRISCAM_MAIN_LEFT, IRISCAM_MAIN_RIGHT, ptrILeft, ptrIRight, leftRect, rightRect, LeftIrisImg, RightIrisImg, ColorFaceImage);
-	else
-		validateLeftRightEyecrops2(IRISCAM_AUX_LEFT, IRISCAM_AUX_RIGHT, ptrILeft, ptrIRight, leftRect, rightRect, LeftIrisImg, RightIrisImg, ColorFaceImage);
-
-	return 0;
-}
-
-void FaceTracker::validateLeftRightEyecrops2( int CameraIdLeft, int CameraIdRight, cv::Point2i ptrILeft, cv::Point2i ptrIRight, cv::Rect leftRect,
-		cv::Rect rightRect, cv::Mat LeftIrisImage, cv::Mat RightIrisImage, cv::Mat faceImage)
-{
-	char filename[100];
-	char key;
-
-	cv::Point2i ptrFLeft;
-	cv::Point2i ptrFRight;
-
-	//Project Iris points to face image
-	if(1){
-		if (CameraIdLeft == IRISCAM_AUX_LEFT) {
-			ptrFLeft = projectPoints_IristoFace(ptrILeft, constantAuxl, magOffAuxl);
-		} else if (CameraIdLeft == IRISCAM_AUX_RIGHT) {
-			ptrFLeft = projectPoints_IristoFace(ptrILeft, constantAuxR, magOffAuxR);
-		} else if (CameraIdLeft == IRISCAM_MAIN_LEFT) {
-			ptrFLeft = projectPoints_IristoFace(ptrILeft, constantMainl, magOffMainl);
-		} else if (CameraIdLeft == IRISCAM_MAIN_RIGHT) {
-			ptrFLeft = projectPoints_IristoFace(ptrILeft, constantMainR, magOffMainR);
-		}
-
-		if (CameraIdRight == IRISCAM_AUX_LEFT) {
-			ptrFRight = projectPoints_IristoFace(ptrIRight, constantAuxl, magOffAuxl);
-		} else if (CameraIdRight == IRISCAM_AUX_RIGHT) {
-			ptrFRight = projectPoints_IristoFace(ptrIRight, constantAuxR, magOffAuxR);
-		} else if (CameraIdRight == IRISCAM_MAIN_LEFT) {
-			ptrFRight = projectPoints_IristoFace(ptrIRight, constantMainl, magOffMainl);
-		} else if (CameraIdRight == IRISCAM_MAIN_RIGHT) {
-			ptrFRight = projectPoints_IristoFace(ptrIRight, constantMainR, magOffMainR);
-		}
-
-		try{
-			cv::rectangle(faceImage, rightRect, cv::Scalar(255,255,255),1,0);
-			cv::rectangle(faceImage, leftRect, cv::Scalar(255,255,255),1,0);
-
-			std::ostringstream ssCoInfo;
-			ssCoInfo << "+";
-			if (CameraIdLeft == IRISCAM_AUX_LEFT){
-				// light green
-				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrFLeft.x,ptrFLeft.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(144,238,144),2);
-			}else if (CameraIdLeft == IRISCAM_AUX_RIGHT){
-				// light blue
-				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrFLeft.x,ptrFLeft.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(230,216,173),2);
-			}else if (CameraIdLeft == IRISCAM_MAIN_LEFT){
-				// Red
-				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrFLeft.x,ptrFLeft.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
-			}else if (CameraIdLeft == IRISCAM_MAIN_RIGHT){
-				// Orange
-				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrFLeft.x,ptrFLeft.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv:: Scalar(0,165,255),2);
-			}
-
-			if (CameraIdRight == IRISCAM_AUX_LEFT){
-				// light green
-				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrFRight.x,ptrFRight.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(144,238,144),2);
-			}else if (CameraIdRight == IRISCAM_AUX_RIGHT){
-				// light blue
-				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrFRight.x,ptrFRight.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(230,216,173),2);
-			}else if (CameraIdRight == IRISCAM_MAIN_LEFT){
-				// Red
-				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrFRight.x,ptrFRight.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
-			}else if (CameraIdRight == IRISCAM_MAIN_RIGHT){
-				// Orange
-				putText(faceImage,ssCoInfo.str().c_str(),cv::Point(ptrFRight.x,ptrFRight.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv:: Scalar(0,165,255),2);
-			}
-
-			cv::Mat resizeFace;
-			resize(faceImage, resizeFace, cvSize(640, 480), 0,0, INTER_LINEAR);
-
-			cv::Mat DisplayImage(cv::Size(1920, 480), CV_8UC3, Scalar(0,0,0));
-
-			//cv::Mat resizeFace = Mat(Size(640,480), CV_8UC3);
-			//resize(faceImage, resizeFace, cvSize(640, 480), 0,0, INTER_LINEAR);
-
-
-			cv::Mat resizeLeftIris;
-			resize(LeftIrisImage, resizeLeftIris, cvSize(640, 480), 0,0, INTER_LINEAR);
-
-			cv::Mat ColorLeftIrisImage;
-			cv::cvtColor(resizeLeftIris, ColorLeftIrisImage, CV_GRAY2BGR);
-
-			cv::Mat resizeRightIris;
-			resize(RightIrisImage, resizeRightIris, cvSize(640, 480), 0,0, INTER_LINEAR);
-
-			cv::Mat ColorRightIrisImage;
-			cv::cvtColor(resizeRightIris, ColorRightIrisImage, CV_GRAY2BGR);
-
-
-			resizeFace.copyTo(DisplayImage(cv::Rect(640,0,640,480)));
-
-			ColorLeftIrisImage.copyTo(DisplayImage(cv::Rect(0,0,640,480)));
-
-			ColorRightIrisImage.copyTo(DisplayImage(cv::Rect(1280,0,640,480)));
-
-		//	cvNamedWindow("EXT", CV_WINDOW_NORMAL);
-		//	cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
-
-			std::ostringstream ssCoInfo1;
-			ssCoInfo1 << CameraIdLeft  <<  (CameraIdLeft & 0x80 ?  "AUX":"MAIN");
-			putText(DisplayImage,ssCoInfo1.str().c_str(),cv::Point(0,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
-
-			std::ostringstream ssCoInfo2;
-			ssCoInfo2 << CameraIdRight  <<  (CameraIdRight & 0x80 ?  "AUX":"MAIN");
-			putText(DisplayImage,ssCoInfo2.str().c_str(),cv::Point(1280,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
-
-			imshow("EXT", DisplayImage);
-
-			key = cv::waitKey(1);
-			//For saving images while streaming individual cameras
-			if(key=='s')
-			{
-				sprintf(filename,"IrisImage_DeviceId_%d_CamId_%d.pgm", m_Deviceid, CameraIdLeft);
-				imwrite(filename, LeftIrisImage);
-
-				sprintf(filename,"IrisImage_DeviceId_%d_CamId_%d.pgm", m_Deviceid, CameraIdRight);
-				imwrite(filename, RightIrisImage);
-			}
-			//	cvWaitKey(1);
-
-		}catch (cv::Exception& e) {
-			cout << e.what() << endl;
-		}
-
-	}
-
-
-}
-
-void FaceTracker::DoRunMode2Streams(bool bShowFaceTracking, bool bDebugSessions, int CameraType)
-{
-
 	string camID;
-	cv::Rect face;
-	int start_process_time = clock();
+	while (1) {
+		printf("m_CameraNo....%d\n", m_faceTracker.m_CameraNo);
+		if (m_faceTracker.m_CameraNo == 1) {
+			printf("Testing Left Main Camera\n");
+			static int firstEntry = 1;
+			if (firstEntry) {
+				camID = "0x07"; //camID = "0x08"; 	//
+				setCamera(camID, m_faceTracker.FRAME_DELAY);
+				firstEntry = 0;
+			}
+			while (1) {
+				vs->get(&w, &h, (char *) outImg.data, false);
+				m_faceTracker.m_CameraNo = m_faceTracker.DoRunMode(
+						m_faceTracker.bShowFaceTracking, false, 1);
+				if (m_faceTracker.m_CameraNo != 1) {
+					firstEntry = 1;
+					break;
+				}
+			}
 
-	unsigned char FaceCameraFrameNo = (int)outImg.at<uchar>(0,3);
+		} else if (m_faceTracker.m_CameraNo == 2) {
+			printf("Testing Right Main Camera\n");
+			static int firstEntry = 1;
+			if (firstEntry) {
+				camID = "0x07"; //camID = "0x08"; 	//
+				setCamera(camID, m_faceTracker.FRAME_DELAY);
+				firstEntry = 0;
+			}
+			while (1) {
+				vs->get(&w, &h, (char *) outImg.data, false);
+				m_faceTracker.m_CameraNo = m_faceTracker.DoRunMode(
+						m_faceTracker.bShowFaceTracking, false, 2);
+				if (m_faceTracker.m_CameraNo != 2) {
+					firstEntry = 1;
+					break;
+				}
+			}
+		} else if (m_faceTracker.m_CameraNo == 3) {
+			static int firstEntry = 1;
+			if (firstEntry) {
+				camID = "0x07"; //camID = "0x08"; 	//
+				setCamera(camID, m_faceTracker.FRAME_DELAY);
+				firstEntry = 0;
+			}
+			while (1) {
+				vs->get(&w, &h, (char *) outImg.data, false);
+				m_faceTracker.m_CameraNo = m_faceTracker.DoRunMode(
+						m_faceTracker.bShowFaceTracking, false, 3);
+				if (m_faceTracker.m_CameraNo != 3) {
+					firstEntry = 1;
+					break;
+				}
+			}
 
-//	printf("FaceTracking: FrameNo = %d\n", FaceCameraFrameNo);
-
-	unsigned int FaceFrameIndex=0;
-	static unsigned int FaceCtrIndex=0;
-
-	if(FaceCtrIndex != 0)
-		FaceFrameIndex = (255 * FaceCtrIndex) + FaceCameraFrameNo;
-	else
-		FaceFrameIndex = FaceCameraFrameNo;
-
-	if(FaceCameraFrameNo == 255){
-		FaceCtrIndex++;
-	}
-
-	struct timeval m_timer;
-	gettimeofday(&m_timer, 0);
-	TV_AS_USEC(m_timer,starttimestamp);
-
-	smallImg = preProcessingImg(outImg);
-
-	foundFace = FindEyeLocation(smallImg, eyes, eye_size, face, MIN_FACE_SIZE, MAX_FACE_SIZE);
-
-
-	if(foundFace){
-		//  EyelockLog(logger, INFO, "FaceTracking found Face");
-		cv::Rect myFaceROI(face.x, face.y, face.width, face.height);
-		// EyelockLog(logger, TRACE, "Before cropped image AGC");
-		m_CroppedFaceImageForAGC = smallImg(myFaceROI);
-		// EyelockLog(logger, TRACE, "After cropped image AGC");
-	}
-
-	float process_time = (float) (clock() - start_process_time) / CLOCKS_PER_SEC;
-
-	bool eyesInDetect = foundFace? detect_area.contains(eyes):false;		// Face in face camera field of view
-	bool eyesInViewOfIriscam = eyesInDetect ? search_eye_area.contains(eyes):false;		// Face/eyes in narrow Rect calculated from calibration
-	bool eyesInViewOfIriscamNoMove = eyesInDetect ? no_move_area.contains(eyes):false;	//Face/eyes in Bigger Rect calculated from calibration
-
-
-	if (eyesInDetect && !eyesInViewOfIriscam)
-	{
-		moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-	}
-
-
-	face = adjustWidthDuringFaceDetection(face);
-
-	//Scaling out projFace coordinates
-	cv::Rect FaceCoord;
-	FaceCoord.x = face.x * scaling;		//column
-	FaceCoord.y = face.y * scaling; // rectY - (targetOffset * scaling);
-	FaceCoord.width = face.width * scaling;
-	FaceCoord.height = face.height *scaling; // rectH + (targetOffset * scaling);
-
-	cv::Point2i ptrILeft;
-	cv::Point2i ptrIRight;
-	if(CameraType == 1)
-	{
-		// Main Left Camera
-		camID = "0x07"; //camID = "0x08"; 	//
-		setCamera(camID, FRAME_DELAY);
-		streamVideo2(CameraType, FaceCoord, outImg);
-
-	}
-
-	else if(CameraType == 2)
-	{
-		//For Aux Left Camera
-		camID = "0x87"; //camID = "0x01"; //
-		setCamera(camID, FRAME_DELAY);
-		streamVideo2(CameraType, FaceCoord, outImg);
-	}
-
-	if(bShowFaceTracking)
-	{
-		EyelockLog(logger, TRACE, "Imshow");
-		cv::rectangle(smallImg, no_move_area, Scalar(255, 0, 0), 1, 0);
-		cv::rectangle(smallImg, search_eye_area, Scalar(255, 0, 0), 1, 0);
-		cv::rectangle(smallImg, detect_area, Scalar(255, 0, 0), 1, 0);
-		cv::rectangle(smallImg, face, Scalar(255,0,0),1,0);
-		imshow("FaceTracker", smallImg);
-		cvWaitKey(1);
-	}
-}
-#if 0
-
-int main(int argc, char **argv)
-{
-	int CameraNo;
-	FaceTracker m_faceTracker("/home/root/data/calibration/Face.ini");
-
-	EyelockLog(logger, TRACE, "init_facetracking Start FaceTracking Thread");
-
-	printf("INSERT OIM DEVICE NUMBER THEN PRESS ENTER\n");
-	cin >> m_faceTracker.m_Deviceid;
-
-	// Flag to enable/disable AES Encrption in port com
-	bool bDoAESEncryption = m_faceTracker.FaceConfig.getValue("FTracker.AESEncrypt", false);
-
-	int w, h;
-
-	//vid_stream_start
-	vs = new VideoStream(8194, m_faceTracker.m_ImageAuthentication); //Facecam is 8194...
-
-	// Iris streams
-	LeftIrisCamera = new VideoStream(8192, m_faceTracker.m_ImageAuthentication); //LeftCam is 8192...
-
-	RightIrisCamera = new VideoStream(8193, m_faceTracker.m_ImageAuthentication); //RightCam is 8193...
-
-	LeftIrisImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
-
-	RightIrisImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
-
-	// Initialize Face Detection
-	face_init();
-
-	// Intialize Portcom for device control
-	portcom_start(bDoAESEncryption);
-
-	// Load FaceTracking config... Configure all hardware
-	m_faceTracker.DoStartCmd();
-
-	// Main Loop...
-	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
-
-	// Note:
-	// 1 is Main Cameras; 2 is Aux Cameras
-	while(1){
-		printf("Testing Main Camera\n");
-		clock_t begin = clock();
-		while(1)
-		{
-			string camID = "0x07";
-			bool status = vs->get(&w, &h, (char *) outImg.data, false);
-			m_faceTracker.DoRunMode2Streams(m_faceTracker.bShowFaceTracking, false, 1);
-			clock_t end = clock();
-			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			// printf("elapsed time:%f  %d\n",time_spent, (int)time_spent );
-			if((int)time_spent == m_faceTracker.m_CameraTestTime){
-				// terminate = 0;
-				// printf("Finished 3 minutes\n");
-				break;
+		} else if (m_faceTracker.m_CameraNo == 4) {
+			printf("Testing Right Aux Camera\n");
+			static int firstEntry = 1;
+			if (firstEntry) {
+				camID = "0x07"; //camID = "0x08"; 	//
+				setCamera(camID, m_faceTracker.FRAME_DELAY);
+				firstEntry = 0;
+			}
+			while (1) {
+				vs->get(&w, &h, (char *) outImg.data, false);
+				m_faceTracker.m_CameraNo = m_faceTracker.DoRunMode(
+						m_faceTracker.bShowFaceTracking, false, 4);
+				if (m_faceTracker.m_CameraNo != 4) {
+					firstEntry = 1;
+					break;
+				}
 			}
 		}
 
-		printf("Testing Aux Camera\n");
-		begin = clock();
-		while(1)
-		{
-			string camID = "0x87";
-			bool status = vs->get(&w, &h, (char *) outImg.data, false);
-			m_faceTracker.DoRunMode2Streams(m_faceTracker.bShowFaceTracking, false, 2);
-			clock_t end = clock();
-			double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-			if((int)time_spent == m_faceTracker.m_CameraTestTime){
-				break;
-			}
-		}
 	}
+
+#endif
 	outImg.release();
 
 }
 
-#endif
 
 
 
