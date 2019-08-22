@@ -361,6 +361,9 @@ private:
 	unsigned int m_FaceFrameQueueSize;
     SocketFactory *m_socketFactory;
     bool n_bDebugFrameBuffer;
+    bool m_AdaptiveGain;
+    std::map<int,int> FaceWidthGainMap;
+    void CreateFaceWidthGainMap();
 };
 
 #endif /* IMAGEPROCESSOR_H_ */
