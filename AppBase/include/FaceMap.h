@@ -15,6 +15,7 @@ typedef struct FaceImageQueue{
 	cv::Rect ScaledFaceCoord;
 	unsigned char FaceFrameNo;
 	bool projPtr;
+	int FaceWidth;
 	unsigned char *faceImagePtr;	// image size 1152000
 };
 

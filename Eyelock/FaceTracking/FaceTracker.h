@@ -111,7 +111,7 @@ private:
 	int noeyesframe;
 	int agc_val;
 
-	float eye_size;
+	int eye_size;
 	float p; //AGC
 
 	int agc_set_gain;
@@ -239,11 +239,16 @@ private:
 	int m_nCalculatedBrightness;
 
 	Rect detect_area;
+
+	bool m_AdaptiveGain;
+
+	std::map<int,int> FaceWidthGainMap;
+
 	void SetExp(int cam, int val);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
 	void SelLedDistance(int val); // val between 0 and 100
 
-	void MainIrisSettings();
+	void MainIrisSettings(int FaceWidth);
 	void SwitchIrisCameras(bool mode);
 	void SetFaceMode();
 
@@ -280,6 +285,10 @@ private:
 
 	void readFaceAnalogGainReg(uint32_t Value);
 	void readDimFaceGainregVal(uint32_t Value);
+	void CreateFaceWidthGainMap();
+	void AdaptiveGain(int faceWidth);
+	int CalculateGainWithKH(int facewidth);
+	int CalculateGain(int facewidth);
 public:
 
 	bool bDebugSessions;

@@ -29,7 +29,7 @@ Mat RotatedfaceImg;
 
 // std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
 
-int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size, Rect &face, int min_face_size, int max_face_size);
+int  FindEyeLocation( Mat frame , Point &eyes, int &eye_size, Rect &face, int min_face_size, int max_face_size);
 int face_init();
 float read_angle(void);
 
@@ -146,6 +146,7 @@ FaceTracker::FaceTracker(char* filename)
 ,m_nCalculatedBrightness(0)
 ,m_ImageWidth(1200)
 ,m_ImageHeight(960)
+,m_AdaptiveGain(true)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -254,6 +255,8 @@ FaceTracker::FaceTracker(char* filename)
 
 	m_Motor_Bottom_Offset = FaceConfig.getValue("FTracker.MotorBottomOffset",5);
 	m_Motor_Range = FaceConfig.getValue("FTracker.MotorRange",55);
+
+	m_AdaptiveGain = FaceConfig.getValue("FTracker.AdaptiveGain", true);
 
 	// Eyelock.ini Parameters	
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");
@@ -432,7 +435,7 @@ char* GetTimeStamp()
 	return(timeVar);
 }
 
-void FaceTracker::MainIrisSettings()
+void FaceTracker::MainIrisSettings(int FaceWidth)
 {
 	EyelockLog(logger, TRACE, "MainIrisSettings");
 
@@ -450,6 +453,141 @@ void FaceTracker::MainIrisSettings()
 	//port_com_send("wcr(0x83,0x3012,12) | wcr(0x83,0x301e,0) | wcr(0x83,0x305e,128)");
 
 	EyelockLog(logger, DEBUG, "Values in MainIrisSettings IrisLEDEnable:%d, IrisLEDVolt:%d, IrisLEDcurrentSet:%d, IrisLEDtrigger:%d, IrisLEDmaxTime:%d ", m_IrisLEDEnable, m_IrisLEDVolt, m_IrisLEDcurrentSet, m_IrisLEDtrigger, m_IrisLEDmaxTime);
+	if(m_AdaptiveGain){
+		AdaptiveGain(FaceWidth);
+	}
+}
+
+void FaceTracker::CreateFaceWidthGainMap()
+{
+#if 0
+	FaceWidthGainMap.insert ( std::pair<int,int>(20,255));
+	FaceWidthGainMap.insert ( std::pair<int,int>(21,255));
+	FaceWidthGainMap.insert ( std::pair<int,int>(22,255));
+	FaceWidthGainMap.insert ( std::pair<int,int>(23,240));
+	FaceWidthGainMap.insert ( std::pair<int,int>(24,221));
+	FaceWidthGainMap.insert ( std::pair<int,int>(25,205));
+	FaceWidthGainMap.insert ( std::pair<int,int>(26,190));
+	FaceWidthGainMap.insert ( std::pair<int,int>(27,177));
+	FaceWidthGainMap.insert ( std::pair<int,int>(28,165));
+	FaceWidthGainMap.insert ( std::pair<int,int>(29,154));
+	FaceWidthGainMap.insert ( std::pair<int,int>(30,145));
+	FaceWidthGainMap.insert ( std::pair<int,int>(31,136));
+	FaceWidthGainMap.insert ( std::pair<int,int>(32,128));
+	FaceWidthGainMap.insert ( std::pair<int,int>(33,121));
+	FaceWidthGainMap.insert ( std::pair<int,int>(34,115));
+	FaceWidthGainMap.insert ( std::pair<int,int>(35,109));
+	FaceWidthGainMap.insert ( std::pair<int,int>(36,103));
+	FaceWidthGainMap.insert ( std::pair<int,int>(37,98));
+	FaceWidthGainMap.insert ( std::pair<int,int>(38,93));
+	FaceWidthGainMap.insert ( std::pair<int,int>(39,89));
+	FaceWidthGainMap.insert ( std::pair<int,int>(40,85));
+	FaceWidthGainMap.insert ( std::pair<int,int>(41,81));
+	FaceWidthGainMap.insert ( std::pair<int,int>(42,77));
+	FaceWidthGainMap.insert ( std::pair<int,int>(43,74));
+	FaceWidthGainMap.insert ( std::pair<int,int>(44,71));
+	FaceWidthGainMap.insert ( std::pair<int,int>(45,68));
+	FaceWidthGainMap.insert ( std::pair<int,int>(46,65));
+	FaceWidthGainMap.insert ( std::pair<int,int>(47,63));
+	FaceWidthGainMap.insert ( std::pair<int,int>(48,61));
+	FaceWidthGainMap.insert ( std::pair<int,int>(49,58));
+	FaceWidthGainMap.insert ( std::pair<int,int>(50,56));
+	FaceWidthGainMap.insert ( std::pair<int,int>(51,54));
+	FaceWidthGainMap.insert ( std::pair<int,int>(52,52));
+	FaceWidthGainMap.insert ( std::pair<int,int>(53,51));
+	FaceWidthGainMap.insert ( std::pair<int,int>(54,49));
+	FaceWidthGainMap.insert ( std::pair<int,int>(55,47));
+	FaceWidthGainMap.insert ( std::pair<int,int>(56,46));
+	FaceWidthGainMap.insert ( std::pair<int,int>(57,44));
+	FaceWidthGainMap.insert ( std::pair<int,int>(58,43));
+	FaceWidthGainMap.insert ( std::pair<int,int>(59,42));
+	FaceWidthGainMap.insert ( std::pair<int,int>(60,40));
+	FaceWidthGainMap.insert ( std::pair<int,int>(61,39));
+#else
+	FaceWidthGainMap.insert ( std::pair<int,int>(20,255));
+	FaceWidthGainMap.insert ( std::pair<int,int>(21,241));
+	FaceWidthGainMap.insert ( std::pair<int,int>(22,220));
+	FaceWidthGainMap.insert ( std::pair<int,int>(23,202));
+	FaceWidthGainMap.insert ( std::pair<int,int>(24,186));
+	FaceWidthGainMap.insert ( std::pair<int,int>(25,172));
+	FaceWidthGainMap.insert ( std::pair<int,int>(26,160));
+	FaceWidthGainMap.insert ( std::pair<int,int>(27,149));
+	FaceWidthGainMap.insert ( std::pair<int,int>(28,139));
+	FaceWidthGainMap.insert ( std::pair<int,int>(29,130));
+	FaceWidthGainMap.insert ( std::pair<int,int>(30,122));
+	FaceWidthGainMap.insert ( std::pair<int,int>(31,115));
+	FaceWidthGainMap.insert ( std::pair<int,int>(32,108));
+	FaceWidthGainMap.insert ( std::pair<int,int>(33,102));
+	FaceWidthGainMap.insert ( std::pair<int,int>(34,96));
+	FaceWidthGainMap.insert ( std::pair<int,int>(35,91));
+	FaceWidthGainMap.insert ( std::pair<int,int>(36,87));
+	FaceWidthGainMap.insert ( std::pair<int,int>(37,82));
+	FaceWidthGainMap.insert ( std::pair<int,int>(38,78));
+	FaceWidthGainMap.insert ( std::pair<int,int>(39,75));
+	FaceWidthGainMap.insert ( std::pair<int,int>(40,71));
+	FaceWidthGainMap.insert ( std::pair<int,int>(41,68));
+	FaceWidthGainMap.insert ( std::pair<int,int>(42,65));
+	FaceWidthGainMap.insert ( std::pair<int,int>(43,62));
+	FaceWidthGainMap.insert ( std::pair<int,int>(44,60));
+	FaceWidthGainMap.insert ( std::pair<int,int>(45,57));
+	FaceWidthGainMap.insert ( std::pair<int,int>(46,55));
+	FaceWidthGainMap.insert ( std::pair<int,int>(47,53));
+	FaceWidthGainMap.insert ( std::pair<int,int>(48,51));
+	FaceWidthGainMap.insert ( std::pair<int,int>(49,49));
+	FaceWidthGainMap.insert ( std::pair<int,int>(50,47));
+	FaceWidthGainMap.insert ( std::pair<int,int>(51,46));
+	FaceWidthGainMap.insert ( std::pair<int,int>(52,44));
+	FaceWidthGainMap.insert ( std::pair<int,int>(53,43));
+	FaceWidthGainMap.insert ( std::pair<int,int>(54,41));
+	FaceWidthGainMap.insert ( std::pair<int,int>(55,40));
+	FaceWidthGainMap.insert ( std::pair<int,int>(56,39));
+	FaceWidthGainMap.insert ( std::pair<int,int>(57,37));
+	FaceWidthGainMap.insert ( std::pair<int,int>(58,36));
+	FaceWidthGainMap.insert ( std::pair<int,int>(59,35));
+	FaceWidthGainMap.insert ( std::pair<int,int>(60,34));
+	FaceWidthGainMap.insert ( std::pair<int,int>(61,33));
+#endif
+}
+
+int FaceTracker::CalculateGain(int facewidth)
+{
+	int gain = 120000 / pow(facewidth, 2) ;
+
+	if(gain > 255)
+		gain = 255;
+	if(gain < 32)
+		gain = 32;
+	return gain;
+}
+
+int FaceTracker::CalculateGainWithKH(int facewidth)
+{
+	int KF = 26208;
+	float KG = 0.000173;
+	int KH = 8;
+
+	// gain = KG * (KF/facewidth + KH)2
+	int gain = KG * pow(((KF/facewidth) + KH), 2);
+
+	if(gain > 255)
+		gain = 255;
+	if(gain < 32)
+		gain = 32;
+
+	return gain;
+}
+
+void FaceTracker::AdaptiveGain(int faceWidth)
+{
+	EyelockLog(logger, TRACE, "AdaptiveGain");
+
+	char buff[512];
+	// Set the gain based on distance
+	// int Gain = FaceWidthGainMap.find(faceWidth)->second;
+	int Gain = CalculateGainWithKH(faceWidth);
+	// printf("FaceWidth %d Gain %d\n", faceWidth, Gain);
+	sprintf(buff,"wcr(0x1f,0x305e,%d)", Gain);
+	port_com_send(buff);
 }
 
 void FaceTracker::SwitchIrisCameras(bool mode)
@@ -685,6 +823,7 @@ void FaceTracker::DimmFaceForIris()
 
 }
 
+#if 0 // Commented as the function is not used
 void FaceTracker::SetIrisMode(float CurrentEye_distance)
 {
 
@@ -784,7 +923,7 @@ void FaceTracker::SetIrisMode(float CurrentEye_distance)
 
 
 }
-
+#endif
 #if 0
 cv::Rect FaceTracker::seacrhEyeArea(cv::Rect no_move_area){
 	/// printf("no_move_area 	x: %d	y: %d	w: %d	h: %d\n", no_move_area.x, no_move_area.y, no_move_area.height, no_move_area.width);
@@ -1313,7 +1452,7 @@ int FaceTracker::SelectWhichIrisCam(float eye_size, int cur_state)
 	EyelockLog(logger, TRACE, "Entering > SelectWhichIrisCam");
 
 	if ((cur_state != STATE_MAIN_IRIS) && (cur_state != STATE_AUX_IRIS)) {
-		// this is we are just getting into irises so hard decision not hysterises
+		// this is we are just getting into irises so hard decision not hysteresis
 		if (eye_size >= (switchThreshold))
 			return STATE_MAIN_IRIS;
 		else
@@ -1555,7 +1694,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					case STATE_MAIN_IRIS:
 						// enable main camera and set led currnet
 						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings();											//change to Iris settings
+						MainIrisSettings(eye_size);											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
 						m_ProjPtr = true;		//Added by Mo
@@ -1563,7 +1702,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					case STATE_AUX_IRIS:
 						// enable aux camera and set led currnet
 						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings();											//change to Iris settings
+						MainIrisSettings(eye_size);											//change to Iris settings
 						SwitchIrisCameras(false);									//switch cameras
 						stateofIrisCameras = STATE_AUX_IRIS;
 						m_ProjPtr = true;		//Added by Mo
@@ -1591,7 +1730,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						//dont need to dim down the face cam settings because it is already
 						//dimmed down
 						//DimmFaceForIris();											//Dim face settings
-						MainIrisSettings();											//change to Iris settings
+						MainIrisSettings(eye_size);											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
 						m_ProjPtr = true;		//Added by Mo
@@ -1617,7 +1756,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							//dont need to dim down the face cam settings because it is already
 							//dimmed down
 							//DimmFaceForIris();
-							MainIrisSettings();											//change to Iris settings
+							MainIrisSettings(eye_size);											//change to Iris settings
 							SwitchIrisCameras(false);									//switch cameras
 							stateofIrisCameras = STATE_AUX_IRIS;
 							m_ProjPtr = true;		//Added by Mo
@@ -1637,7 +1776,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						// switch only the expusure and camera enables
 						// no need to change voltage or current
 						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings();											//change to Iris settings
+						MainIrisSettings(eye_size);											//change to Iris settings
 						SwitchIrisCameras(false);									//switch cameras
 						stateofIrisCameras = STATE_AUX_IRIS;
 						m_ProjPtr = true;		//Added by Mo
@@ -1645,7 +1784,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					case STATE_MAIN_IRIS:
 						// enable main cameras and set
 						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings();											//change to Iris settings
+						MainIrisSettings(eye_size);											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
 						m_ProjPtr = true;		//Added by Mo
@@ -1706,12 +1845,12 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 			m_LeftCameraFaceInfo.ScaledFaceCoord = FaceCoord;
 			m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
 			m_LeftCameraFaceInfo.projPtr = m_ProjPtr;
+			m_LeftCameraFaceInfo.FaceWidth = eye_size;
 
 			m_RightCameraFaceInfo.ScaledFaceCoord = FaceCoord;
 			m_RightCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
 			m_RightCameraFaceInfo.projPtr = m_ProjPtr;
-
-
+			m_LeftCameraFaceInfo.FaceWidth = eye_size;
 
 			if(bIrisToFaceMapDebug){
 				RotatedfaceImg = rotation90(outImg);

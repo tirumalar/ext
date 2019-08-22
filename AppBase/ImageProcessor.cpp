@@ -414,6 +414,7 @@ m_LedConsolidator = NULL;
 	m_EyelockIrisMode = pConf->getValue("Eyelock.IrisMode",1);
 	// printf("m_EyelockIrisModem_EyelockIrisMode...%d\n", m_EyelockIrisMode);
 
+	CreateFaceWidthGainMap();
 	if(m_OIMFTPEnabled){
 		// Calibration Parameters from CalRectFromOIM.ini
 		FileConfiguration CalRectConfig("/home/root/CalRect.ini");
@@ -486,6 +487,7 @@ m_LedConsolidator = NULL;
 
 	m_bFaceMapDebug = m_FaceConfig.getValue("FTracker.FaceMapDebug", false);
 	n_bDebugFrameBuffer = m_FaceConfig.getValue("FTracker.DebugFrameBuffer", false);
+	m_AdaptiveGain = m_FaceConfig.getValue("FTracker.AdaptiveGain", true);
 
 #ifdef IRIS_CAPTURE
 	// bool bIrisMode = pConf->getValue("Eyelock.IrisMode", 1) == 2; // DMOTODO default to capture for now...
@@ -2223,6 +2225,62 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 	 }
 }
 
+void ImageProcessor::CreateFaceWidthGainMap()
+{
+	FaceWidthGainMap.insert ( std::pair<int,int>(20,255));
+	FaceWidthGainMap.insert ( std::pair<int,int>(21,255));
+	FaceWidthGainMap.insert ( std::pair<int,int>(22,248));
+	FaceWidthGainMap.insert ( std::pair<int,int>(23,227));
+	FaceWidthGainMap.insert ( std::pair<int,int>(24,209));
+	FaceWidthGainMap.insert ( std::pair<int,int>(25,192));
+	FaceWidthGainMap.insert ( std::pair<int,int>(26,178));
+	FaceWidthGainMap.insert ( std::pair<int,int>(27,165));
+	FaceWidthGainMap.insert ( std::pair<int,int>(28,154));
+	FaceWidthGainMap.insert ( std::pair<int,int>(29,143));
+	FaceWidthGainMap.insert ( std::pair<int,int>(30,134));
+	FaceWidthGainMap.insert ( std::pair<int,int>(31,125));
+	FaceWidthGainMap.insert ( std::pair<int,int>(32,118));
+	FaceWidthGainMap.insert ( std::pair<int,int>(33,111));
+	FaceWidthGainMap.insert ( std::pair<int,int>(34,104));
+	FaceWidthGainMap.insert ( std::pair<int,int>(35,98));
+	FaceWidthGainMap.insert ( std::pair<int,int>(36,93));
+	FaceWidthGainMap.insert ( std::pair<int,int>(37,88));
+	FaceWidthGainMap.insert ( std::pair<int,int>(38,84));
+	FaceWidthGainMap.insert ( std::pair<int,int>(39,79));
+	FaceWidthGainMap.insert ( std::pair<int,int>(40,76));
+	FaceWidthGainMap.insert ( std::pair<int,int>(41,72));
+	FaceWidthGainMap.insert ( std::pair<int,int>(42,69));
+	FaceWidthGainMap.insert ( std::pair<int,int>(43,65));
+	FaceWidthGainMap.insert ( std::pair<int,int>(44,62));
+	FaceWidthGainMap.insert ( std::pair<int,int>(45,60));
+	FaceWidthGainMap.insert ( std::pair<int,int>(46,57));
+	FaceWidthGainMap.insert ( std::pair<int,int>(47,55));
+	FaceWidthGainMap.insert ( std::pair<int,int>(48,53));
+	FaceWidthGainMap.insert ( std::pair<int,int>(49,50));
+	FaceWidthGainMap.insert ( std::pair<int,int>(50,48));
+	FaceWidthGainMap.insert ( std::pair<int,int>(51,46));
+	FaceWidthGainMap.insert ( std::pair<int,int>(52,45));
+	FaceWidthGainMap.insert ( std::pair<int,int>(53,43));
+	FaceWidthGainMap.insert ( std::pair<int,int>(54,42));
+	FaceWidthGainMap.insert ( std::pair<int,int>(55,40));
+	FaceWidthGainMap.insert ( std::pair<int,int>(56,39));
+	FaceWidthGainMap.insert ( std::pair<int,int>(57,37));
+	FaceWidthGainMap.insert ( std::pair<int,int>(58,36));
+	FaceWidthGainMap.insert ( std::pair<int,int>(59,35));
+	FaceWidthGainMap.insert ( std::pair<int,int>(60,34));
+	FaceWidthGainMap.insert ( std::pair<int,int>(61,33));
+	FaceWidthGainMap.insert ( std::pair<int,int>(62,33));
+	FaceWidthGainMap.insert ( std::pair<int,int>(63,33));
+	FaceWidthGainMap.insert ( std::pair<int,int>(64,33));
+	FaceWidthGainMap.insert ( std::pair<int,int>(65,32));
+	FaceWidthGainMap.insert ( std::pair<int,int>(66,32));
+	FaceWidthGainMap.insert ( std::pair<int,int>(67,32));
+	FaceWidthGainMap.insert ( std::pair<int,int>(68,32));
+	FaceWidthGainMap.insert ( std::pair<int,int>(69,32));
+	FaceWidthGainMap.insert ( std::pair<int,int>(70,32));
+}
+
+
 bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 {
 	char filename[150];
@@ -2249,15 +2307,6 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 	}
 #endif
 
-	if(m_IrisCameraPreview && (frame->imageData != NULL)){
-		cv::Mat mateye = cv::cvarrToMat(frame);
-		std::ostringstream ssCoInfo;
-		ssCoInfo << "CAM " <<  cam_idd  <<  (cam_idd & 0x80 ?  "AUX":"MAIN");
-		putText(mateye,ssCoInfo.str().c_str(),cv::Point(10,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
-		imshow("IrisCamera", mateye);
-		cvWaitKey(1);
-	}
-
 	if(m_SaveFullFrame){
 		sprintf(filename,"InputImage_%d_%d.pgm", cam_idd, m_faceIndex);
 		cv::Mat mateye = cv::cvarrToMat(frame);
@@ -2278,6 +2327,23 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 	{
 		if (!GetFaceInfoForIristoFaceMapping(cam_idd, frame_number, FaceInfo))
 			bSkipProcessingImage = true; // Skip all other processing... This simulates the No Eyes Detected Case
+	}
+
+	if(m_IrisCameraPreview && (frame->imageData != NULL)){
+		cv::Mat mateye = cv::cvarrToMat(frame);
+		std::ostringstream ssCoInfo;
+		ssCoInfo << "CAM " <<  cam_idd  <<  (cam_idd & 0x80 ?  "AUX":"MAIN");
+		putText(mateye,ssCoInfo.str().c_str(),cv::Point(10,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
+		if(m_AdaptiveGain){
+			int faceWidth = FaceInfo.FaceWidth;
+			std::ostringstream ssCoInfo1;
+			int Gain = 0;
+			Gain = FaceWidthGainMap.find(faceWidth)->second;
+			ssCoInfo1 << faceWidth   <<   Gain;
+			putText(mateye,ssCoInfo1.str().c_str(),cv::Point(40,100), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
+		}
+		imshow("IrisCamera", mateye);
+		cvWaitKey(1);
 	}
 
 	bool bSentSomething = false;
