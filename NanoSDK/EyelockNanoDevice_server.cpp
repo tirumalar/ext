@@ -101,6 +101,41 @@ EyelockNanoDeviceHandler::EyelockNanoDeviceHandler(Configuration * conf) :m_conf
 			ThriftcallforMasterSlave();
 		}
 	}
+
+   //retrieving device ID
+   char myID[10];
+   strcpy(myID, "0000");
+   FILE *fp = fopen("/home/root/id.txt", "r");
+   if (fp != NULL)
+   {
+	   if (fgets(myID, 10, fp) != NULL)
+	   {
+		   myID[strlen(myID)-1] = '\0';
+	   }
+	   fclose(fp);
+	   m_sDeviceId = myID;
+   }
+   else
+   {
+	   EyelockLog(logger, ERROR, "Unable to open device ID file");
+   }
+
+   // max user count
+   stringstream ss;
+   ss << MAX_USERS;
+   m_sMaxDbRecordsCount = ss.str();
+
+#ifdef CMX_C1
+	std::string pimVerFile = m_conf->getValue("Eyelock.PimVersionFilepath","/home/root/BobVersion");
+	m_sPimFwVersion = GetDeviceComponentVersion("ICM software version", pimVerFile);
+	m_sPimHwVersion = GetDeviceComponentVersion("ICM hardware version", pimVerFile);
+
+	std::string oimVerFile = m_conf->getValue("Eyelock.OimVersionFilepath","/home/root/OimVersion");
+	m_sFpgaVersion = GetDeviceComponentVersion("FPGA", oimVerFile);
+	m_sFixedBoardVersion = GetDeviceComponentVersion("Fixed", oimVerFile);
+	m_sCameraBoardVersion = GetDeviceComponentVersion("Cam", oimVerFile);
+#endif
+
 }
 
 void EyelockNanoDeviceHandler::SetEyelockThread(EyeLockThread *ptr) {
@@ -187,8 +222,8 @@ int32_t EyelockNanoDeviceHandler::stopImageStream(const std::string& ipaddress,
 
 void EyelockNanoDeviceHandler::SetEyelockFirmwareVersion(
 		std::string firmwareRevision) {
-	//m_sVersion = firmwareRevision;
-	m_sVersion = "5.05.1905";
+	m_sVersion = firmwareRevision;
+	//m_sVersion = "5.05.1905";
 }
 
 std::string EyelockNanoDeviceHandler::GetIcmVersion()
@@ -215,6 +250,29 @@ std::string EyelockNanoDeviceHandler::GetIcmVersion()
 		}
 		return Version;
 	}
+}
+
+string EyelockNanoDeviceHandler::GetDeviceComponentVersion(string file,
+		string token) {
+
+	ifstream fs(file, ios::in | ios::binary | ios::ate);
+	if (fs.is_open()) {
+		string ver;
+		ver.resize(fs.tellg());
+		fs.seekg(0, ios::beg);
+		fs.read(&ver[0], ver.size());
+		fs.close();
+		size_t tokenStart = ver.find(token);
+		if (tokenStart != string::npos) {
+			size_t verStart = ver.find_first_not_of(" \t", ver.find(':', tokenStart)+1);
+			if (verStart != string::npos && ver[verStart] != '\n' && ver[verStart] != '\r')
+			{
+				size_t verEnd = ver.find_first_of(" \t\n\r", verStart);
+				return ver.substr(verStart, verEnd - verStart);
+			}
+		}
+	}
+	return "";
 }
 
 void EyelockNanoDeviceHandler::GetSlaveVersion(std::string& _return)
@@ -1526,24 +1584,7 @@ void* ScriptRunner(void *command){
  void EyelockNanoDeviceHandler::GetDeviceId(std::string& _return) {
 	 EyelockLog(logger, DEBUG, "Requested device ID");
 
-   char myID[10];
-
-   strcpy(myID, "0000");
-   FILE *fp = fopen("/home/root/id.txt", "r");
-   if (fp != NULL)
-   {
-	   if (fgets(myID, 10, fp) != NULL)
-	   {
-		   myID[strlen(myID)-1] = '\0';
-	   }
-	   fclose(fp);
-   }
-   else
-   {
-	   EyelockLog(logger, ERROR, "Unable to open device ID file");
-   }
-   std::string deviceIdStr(myID);
-   _return = deviceIdStr;
+   _return = m_sDeviceId;
  }
 
 
@@ -1893,5 +1934,97 @@ void EyelockNanoDeviceHandler::GetFileChecksum(std::string& _return, const std::
 	}
 }
 
+void EyelockNanoDeviceHandler::GetDeviceInfo(map<string, string> & _return)
+{
+	bool failure = false;
+
+	if (!m_sDeviceId.empty())
+	{
+		_return.insert(pair<string, string>("Device_Id", m_sDeviceId));
+	}
+	else
+	{
+		failure = true;
+	}
+
+	if (!m_sMaxDbRecordsCount.empty())
+	{
+		_return.insert(pair<string, string>("Max_Device_Db_Records_Count", m_sMaxDbRecordsCount));
+	}
+	else
+	{
+		failure = true;
+	}
+
+#ifdef CMX_C1 // EXT
+	_return.insert(pair<string, string>("Device_Type", "EXT"));
+
+	if (!m_sVersion.empty())
+	{
+		_return.insert(pair<string, string>("Firmware_Revision", m_sVersion));
+	}
+	else
+	{
+		failure = true;
+	}
+
+	if (!m_sPimFwVersion.empty())
+	{
+		_return.insert(pair<string, string>("Pim_Board_Firmware_Revision", m_sPimFwVersion));
+	}
+	else
+	{
+		failure = true;
+	}
+
+	if (!m_sPimHwVersion.empty())
+	{
+		_return.insert(pair<string, string>("Pim_Board_Hardware_Revision", m_sPimHwVersion));
+	}
+	else
+	{
+		failure = true;
+	}
+
+	if (!m_sFpgaVersion.empty())
+	{
+		_return.insert(pair<string, string>("Fpga_Firmware_Revision", m_sFpgaVersion));
+	}
+	else
+	{
+		failure = true;
+	}
+	if (!m_sFixedBoardVersion.empty())
+	{
+		_return.insert(pair<string, string>("Camera_Board_Firmware_Revision", m_sFixedBoardVersion));
+	}
+	else
+	{
+		failure = true;
+	}
+
+	if (!m_sCameraBoardVersion.empty())
+	{
+		_return.insert(pair<string, string>("Fixed_Board_Firmware_Revision", m_sCameraBoardVersion));
+	}
+	else
+	{
+		failure = true;
+	}
+
+	if (failure)
+	{
+		_return.insert(pair<string, string>("RET_VALUE", "ERR_VERSION"));
+	}
+	else
+	{
+		_return.insert(pair<string, string>("RET_VALUE", "SUCCESS"));
+	}
+
+#else // NXT
+	_return.insert(pair<string,string> ("Device_Type", "NXT"));
+	// NXT versions
+#endif
+}
 
 

@@ -212,6 +212,66 @@ class EyelockNanoDeviceHandler : virtual public EyelockNanoDeviceIf {
     printf("GetFileChecksum\n");
   }
 
+  int32_t SetIntParameter(const std::string& paramName, const int64_t value) {
+    // Your implementation goes here
+    printf("SetIntParameter\n");
+  }
+
+  void GetIntParameter(GetIntReturn& _return, const std::string& paramName) {
+    // Your implementation goes here
+    printf("GetIntParameter\n");
+  }
+
+  int32_t SetUIntParameter(const std::string& paramName, const int64_t value) {
+    // Your implementation goes here
+    printf("SetUIntParameter\n");
+  }
+
+  void GetUIntParameter(GetIntReturn& _return, const std::string& paramName) {
+    // Your implementation goes here
+    printf("GetUIntParameter\n");
+  }
+
+  int32_t SetDoubleParameter(const std::string& paramName, const double value) {
+    // Your implementation goes here
+    printf("SetDoubleParameter\n");
+  }
+
+  void GetDoubleParameter(GetDoubleReturn& _return, const std::string& paramName) {
+    // Your implementation goes here
+    printf("GetDoubleParameter\n");
+  }
+
+  int32_t SetBoolParameter(const std::string& paramName, const bool value) {
+    // Your implementation goes here
+    printf("SetBoolParameter\n");
+  }
+
+  void GetBoolParameter(GetBoolReturn& _return, const std::string& paramName) {
+    // Your implementation goes here
+    printf("GetBoolParameter\n");
+  }
+
+  int32_t SetStrParameter(const std::string& paramName, const std::string& value) {
+    // Your implementation goes here
+    printf("SetStrParameter\n");
+  }
+
+  void GetStrParameter(GetStrReturn& _return, const std::string& paramName) {
+    // Your implementation goes here
+    printf("GetStrParameter\n");
+  }
+
+  int32_t ResetConfigParameters() {
+    // Your implementation goes here
+    printf("ResetConfigParameters\n");
+  }
+
+  void GetDeviceInfo(std::map<std::string, std::string> & _return) {
+    // Your implementation goes here
+    printf("GetDeviceInfo\n");
+  }
+
 };
 
 int main(int argc, char **argv) {

@@ -230,6 +230,8 @@ service EyelockNanoDevice
 	i32 SetStrParameter(1:string paramName, 2:string value);
 	GetStrReturn GetStrParameter(1:string paramName);
 	i32 ResetConfigParameters();
+	
+	map<string,string> GetDeviceInfo();
 
 	}
 

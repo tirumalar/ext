@@ -84,9 +84,12 @@ class EyelockNanoDeviceHandler : virtual public EyelockNanoDeviceIf {
   void GetStrParameter(GetStrReturn& _return, const std::string& paramName);
   int32_t ResetConfigParameters();
 
+  void GetDeviceInfo(std::map<std::string, std::string> & _return);
+
  private:
   int32_t ACD_DataTypeValidation(const ACD_Type::type dbtype);
   std::string GetIcmVersion();
+  std::string GetDeviceComponentVersion(std::string file, std::string token);
   int32_t getSlaveStatus(int32_t status);
   int32_t slaveConnectionValidation();
   int32_t createRestorePoint(std::string restorePointName);
@@ -101,6 +104,16 @@ class EyelockNanoDeviceHandler : virtual public EyelockNanoDeviceIf {
   std::string      m_sStream_IPAddress;
   std::string      m_sStream_PortNo;
   std::string	   m_sVersion;
+  std::string	   m_sDeviceId;
+  std::string	   m_sMaxDbRecordsCount;
+#ifdef CMX_C1
+  std::string	   m_sPimFwVersion;
+  std::string	   m_sPimHwVersion;
+  std::string	   m_sFpgaVersion;
+  std::string	   m_sFixedBoardVersion;
+  std::string	   m_sCameraBoardVersion;
+#endif
+
   int 			   m_nNano_Mode;
   int 			   m_nFrameType;
   bool             m_bSecurelistener;

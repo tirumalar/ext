@@ -64,6 +64,7 @@ class EyelockNanoDeviceIf {
   virtual int32_t SetStrParameter(const std::string& paramName, const std::string& value) = 0;
   virtual void GetStrParameter(GetStrReturn& _return, const std::string& paramName) = 0;
   virtual int32_t ResetConfigParameters() = 0;
+  virtual void GetDeviceInfo(std::map<std::string, std::string> & _return) = 0;
 };
 
 class EyelockNanoDeviceIfFactory {
@@ -271,6 +272,9 @@ class EyelockNanoDeviceNull : virtual public EyelockNanoDeviceIf {
   int32_t ResetConfigParameters() {
     int32_t _return = 0;
     return _return;
+  }
+  void GetDeviceInfo(std::map<std::string, std::string> & /* _return */) {
+    return;
   }
 };
 
@@ -5535,6 +5539,100 @@ class EyelockNanoDevice_ResetConfigParameters_presult {
 
 };
 
+
+class EyelockNanoDevice_GetDeviceInfo_args {
+ public:
+
+  EyelockNanoDevice_GetDeviceInfo_args() {
+  }
+
+  virtual ~EyelockNanoDevice_GetDeviceInfo_args() throw() {}
+
+
+  bool operator == (const EyelockNanoDevice_GetDeviceInfo_args & /* rhs */) const
+  {
+    return true;
+  }
+  bool operator != (const EyelockNanoDevice_GetDeviceInfo_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const EyelockNanoDevice_GetDeviceInfo_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class EyelockNanoDevice_GetDeviceInfo_pargs {
+ public:
+
+
+  virtual ~EyelockNanoDevice_GetDeviceInfo_pargs() throw() {}
+
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _EyelockNanoDevice_GetDeviceInfo_result__isset {
+  _EyelockNanoDevice_GetDeviceInfo_result__isset() : success(false) {}
+  bool success;
+} _EyelockNanoDevice_GetDeviceInfo_result__isset;
+
+class EyelockNanoDevice_GetDeviceInfo_result {
+ public:
+
+  EyelockNanoDevice_GetDeviceInfo_result() {
+  }
+
+  virtual ~EyelockNanoDevice_GetDeviceInfo_result() throw() {}
+
+  std::map<std::string, std::string>  success;
+
+  _EyelockNanoDevice_GetDeviceInfo_result__isset __isset;
+
+  void __set_success(const std::map<std::string, std::string> & val) {
+    success = val;
+  }
+
+  bool operator == (const EyelockNanoDevice_GetDeviceInfo_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const EyelockNanoDevice_GetDeviceInfo_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const EyelockNanoDevice_GetDeviceInfo_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _EyelockNanoDevice_GetDeviceInfo_presult__isset {
+  _EyelockNanoDevice_GetDeviceInfo_presult__isset() : success(false) {}
+  bool success;
+} _EyelockNanoDevice_GetDeviceInfo_presult__isset;
+
+class EyelockNanoDevice_GetDeviceInfo_presult {
+ public:
+
+
+  virtual ~EyelockNanoDevice_GetDeviceInfo_presult() throw() {}
+
+  std::map<std::string, std::string> * success;
+
+  _EyelockNanoDevice_GetDeviceInfo_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class EyelockNanoDeviceClient : virtual public EyelockNanoDeviceIf {
  public:
   EyelockNanoDeviceClient(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> prot) :
@@ -5702,6 +5800,9 @@ class EyelockNanoDeviceClient : virtual public EyelockNanoDeviceIf {
   int32_t ResetConfigParameters();
   void send_ResetConfigParameters();
   int32_t recv_ResetConfigParameters();
+  void GetDeviceInfo(std::map<std::string, std::string> & _return);
+  void send_GetDeviceInfo();
+  void recv_GetDeviceInfo(std::map<std::string, std::string> & _return);
  protected:
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot_;
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot_;
@@ -5766,6 +5867,7 @@ class EyelockNanoDeviceProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_SetStrParameter(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_GetStrParameter(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_ResetConfigParameters(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_GetDeviceInfo(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   EyelockNanoDeviceProcessor(boost::shared_ptr<EyelockNanoDeviceIf> iface) :
     iface_(iface) {
@@ -5818,6 +5920,7 @@ class EyelockNanoDeviceProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["SetStrParameter"] = &EyelockNanoDeviceProcessor::process_SetStrParameter;
     processMap_["GetStrParameter"] = &EyelockNanoDeviceProcessor::process_GetStrParameter;
     processMap_["ResetConfigParameters"] = &EyelockNanoDeviceProcessor::process_ResetConfigParameters;
+    processMap_["GetDeviceInfo"] = &EyelockNanoDeviceProcessor::process_GetDeviceInfo;
   }
 
   virtual ~EyelockNanoDeviceProcessor() {}
@@ -6302,6 +6405,16 @@ class EyelockNanoDeviceMultiface : virtual public EyelockNanoDeviceIf {
       ifaces_[i]->ResetConfigParameters();
     }
     return ifaces_[i]->ResetConfigParameters();
+  }
+
+  void GetDeviceInfo(std::map<std::string, std::string> & _return) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->GetDeviceInfo(_return);
+    }
+    ifaces_[i]->GetDeviceInfo(_return);
+    return;
   }
 
 };
