@@ -313,7 +313,7 @@ class SocketClient: public SocketStream
 		virtual void SecureIt();
 		void Connect(HostAddress& Addr);
 		void ConnectByHostname(HostAddress& Addr);
-		void ConnectAuto(HostAddress& Addr);
+		void ConnectAuto(HostAddress& Addr, bool isSecure);
 };
 
 ///////////////////////////////////////////////////////////////////////////////

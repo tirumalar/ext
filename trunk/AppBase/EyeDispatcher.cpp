@@ -136,7 +136,7 @@ void EyeDispatcher::AddAddress(const char *address)
 		if(address != 0)
 		{
 			//printf("HostAddress::HostAddress(%s) =>", address); fflush(stdout);
-			HostAddress *pAddress = new HostAddress(address);
+			HostAddress *pAddress = new HostAddress(address, eIPv4, false);
 			//printf("HostAddress::HostAddress(%s) <=", address); fflush(stdout);
 
 #if USE_SEMAPHORE
@@ -314,13 +314,16 @@ void EyeDispatcher::SendMessage(HTTPPOSTMsg* out_msg, HostAddress &address, bool
 			ScopeLock lock(m_SecureCommLock);
 			security = m_bSecure ? SOCK_SECURE : SOCK_UNSECURE;
 		}
-		SocketClient client= (supportNanoSDK) ? m_socketFactory->createSocketClient(security): m_socketFactory->createSocketClient ("GRI.EyeDispatcherSecure");
+
+		SocketClient client = m_socketFactory->createSocketClient(SOCK_UNSECURE);
+		 // will be secured later after connect
+
 		client.SetTimeouts(m_timeOutConn);
 
 		if(retry) {
 			client.ConnectByHostname(address);
 		} else {
-			client.Connect(address);
+			client.ConnectAuto(address, security == SOCK_SECURE);
 		}
 
 		client.SetTimeouts(m_timeOutSend);
