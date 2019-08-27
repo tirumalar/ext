@@ -127,13 +127,13 @@ EyelockNanoDeviceHandler::EyelockNanoDeviceHandler(Configuration * conf) :m_conf
 
 #ifdef CMX_C1
 	std::string pimVerFile = m_conf->getValue("Eyelock.PimVersionFilepath","/home/root/BobVersion");
-	m_sPimFwVersion = GetDeviceComponentVersion("ICM software version", pimVerFile);
-	m_sPimHwVersion = GetDeviceComponentVersion("ICM hardware version", pimVerFile);
+	m_sPimFwVersion = GetDeviceComponentVersion(pimVerFile, "ICM software version");
+	m_sPimHwVersion = GetDeviceComponentVersion(pimVerFile, "ICM hardware version");
 
 	std::string oimVerFile = m_conf->getValue("Eyelock.OimVersionFilepath","/home/root/OimVersion");
-	m_sFpgaVersion = GetDeviceComponentVersion("FPGA", oimVerFile);
-	m_sFixedBoardVersion = GetDeviceComponentVersion("Fixed", oimVerFile);
-	m_sCameraBoardVersion = GetDeviceComponentVersion("Cam", oimVerFile);
+	m_sFpgaVersion = GetDeviceComponentVersion(oimVerFile, "FPGA");
+	m_sFixedBoardVersion = GetDeviceComponentVersion(oimVerFile, "Fixed");
+	m_sCameraBoardVersion = GetDeviceComponentVersion(oimVerFile, "Cam");
 #endif
 
 }
