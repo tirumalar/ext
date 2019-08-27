@@ -152,9 +152,10 @@ bool SDKDispatcher::SendMsg(HostAddress &add,timeval &sendtimeOut,timeval &connt
 	free(messageStr);
 
 	try{
-		SocketClient client=m_socketFactory->createSocketClient("Eyelock.SDKDispatcherSecure");
+		SocketClient client=m_socketFactory->createSocketClient(SOCK_UNSECURE);
+		// will be secured later after connect
 		client.SetTimeouts(conntimeOut);
-		client.ConnectAuto(add);
+		client.ConnectAuto(add, m_conf->getValue("Eyelock.SDKDispatcherSecure", true));
 		client.SetTimeouts(sendtimeOut);
 
 		if(bblock){

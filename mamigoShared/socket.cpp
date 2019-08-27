@@ -965,7 +965,7 @@ void SocketClient::Connect(HostAddress& Address)
 	}
 }
 
-void SocketClient::ConnectAuto(HostAddress& Address)
+void SocketClient::ConnectAuto(HostAddress& Address, bool isSecure)
 {
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
@@ -981,8 +981,8 @@ void SocketClient::ConnectAuto(HostAddress& Address)
 	hints.ai_flags = 0;
 	hints.ai_protocol = 0; /* Any protocol */
 
-	char *portDelimeter = strrchr(Address.GetOrigHostName(), ':');
-	char *portEnd = strrchr(Address.GetOrigHostName(), '.');
+	const char *portDelimeter = strrchr(Address.GetOrigHostName(), ':');
+	const char *portEnd = strrchr(Address.GetOrigHostName(), '.');
 
 	const char linkLocalAddressMark[] = "fe80:";
 	char addressCStrLowerCase[5+1];
@@ -1042,9 +1042,13 @@ void SocketClient::ConnectAuto(HostAddress& Address)
 		throw NetConnectException("Could not connect");
 	}
 
-	if(mySecureTrait)
+	if (isSecure)
 	{
-		mySecureTrait->Connect(Address);
+		SecureIt();
+		if(mySecureTrait)
+		{
+			mySecureTrait->Connect(Address);
+		}
 	}
 }
 
