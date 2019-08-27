@@ -8351,6 +8351,186 @@ uint32_t EyelockNanoDevice_ResetConfigParameters_presult::read(::apache::thrift:
   return xfer;
 }
 
+uint32_t EyelockNanoDevice_GetDeviceInfo_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    xfer += iprot->skip(ftype);
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t EyelockNanoDevice_GetDeviceInfo_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("EyelockNanoDevice_GetDeviceInfo_args");
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t EyelockNanoDevice_GetDeviceInfo_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  xfer += oprot->writeStructBegin("EyelockNanoDevice_GetDeviceInfo_pargs");
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t EyelockNanoDevice_GetDeviceInfo_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_MAP) {
+          {
+            this->success.clear();
+            uint32_t _size133;
+            ::apache::thrift::protocol::TType _ktype134;
+            ::apache::thrift::protocol::TType _vtype135;
+            xfer += iprot->readMapBegin(_ktype134, _vtype135, _size133);
+            uint32_t _i137;
+            for (_i137 = 0; _i137 < _size133; ++_i137)
+            {
+              std::string _key138;
+              xfer += iprot->readString(_key138);
+              std::string& _val139 = this->success[_key138];
+              xfer += iprot->readString(_val139);
+            }
+            xfer += iprot->readMapEnd();
+          }
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t EyelockNanoDevice_GetDeviceInfo_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("EyelockNanoDevice_GetDeviceInfo_result");
+
+  if (this->__isset.success) {
+    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_MAP, 0);
+    {
+      xfer += oprot->writeMapBegin(::apache::thrift::protocol::T_STRING, ::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->success.size()));
+      std::map<std::string, std::string> ::const_iterator _iter140;
+      for (_iter140 = this->success.begin(); _iter140 != this->success.end(); ++_iter140)
+      {
+        xfer += oprot->writeString(_iter140->first);
+        xfer += oprot->writeString(_iter140->second);
+      }
+      xfer += oprot->writeMapEnd();
+    }
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+uint32_t EyelockNanoDevice_GetDeviceInfo_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+        if (ftype == ::apache::thrift::protocol::T_MAP) {
+          {
+            (*(this->success)).clear();
+            uint32_t _size141;
+            ::apache::thrift::protocol::TType _ktype142;
+            ::apache::thrift::protocol::TType _vtype143;
+            xfer += iprot->readMapBegin(_ktype142, _vtype143, _size141);
+            uint32_t _i145;
+            for (_i145 = 0; _i145 < _size141; ++_i145)
+            {
+              std::string _key146;
+              xfer += iprot->readString(_key146);
+              std::string& _val147 = (*(this->success))[_key146];
+              xfer += iprot->readString(_val147);
+            }
+            xfer += iprot->readMapEnd();
+          }
+          this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
 int32_t EyelockNanoDeviceClient::startImageStream(const std::string& ipaddress, const std::string& portno, const bool secure, const ELKNS_ImageFormats::type format)
 {
   send_startImageStream(ipaddress, portno, secure, format);
@@ -11199,6 +11379,63 @@ int32_t EyelockNanoDeviceClient::recv_ResetConfigParameters()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "ResetConfigParameters failed: unknown result");
 }
 
+void EyelockNanoDeviceClient::GetDeviceInfo(std::map<std::string, std::string> & _return)
+{
+  send_GetDeviceInfo();
+  recv_GetDeviceInfo(_return);
+}
+
+void EyelockNanoDeviceClient::send_GetDeviceInfo()
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("GetDeviceInfo", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  EyelockNanoDevice_GetDeviceInfo_pargs args;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void EyelockNanoDeviceClient::recv_GetDeviceInfo(std::map<std::string, std::string> & _return)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("GetDeviceInfo") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  EyelockNanoDevice_GetDeviceInfo_presult result;
+  result.success = &_return;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.success) {
+    // _return pointer has now been filled
+    return;
+  }
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "GetDeviceInfo failed: unknown result");
+}
+
 bool EyelockNanoDeviceProcessor::dispatchCall(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, const std::string& fname, int32_t seqid, void* callContext) {
   ProcessMap::iterator pfn;
   pfn = processMap_.find(fname);
@@ -13861,6 +14098,60 @@ void EyelockNanoDeviceProcessor::process_ResetConfigParameters(int32_t seqid, ::
 
   if (this->eventHandler_.get() != NULL) {
     this->eventHandler_->postWrite(ctx, "EyelockNanoDevice.ResetConfigParameters", bytes);
+  }
+}
+
+void EyelockNanoDeviceProcessor::process_GetDeviceInfo(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (this->eventHandler_.get() != NULL) {
+    ctx = this->eventHandler_->getContext("EyelockNanoDevice.GetDeviceInfo", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "EyelockNanoDevice.GetDeviceInfo");
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->preRead(ctx, "EyelockNanoDevice.GetDeviceInfo");
+  }
+
+  EyelockNanoDevice_GetDeviceInfo_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->postRead(ctx, "EyelockNanoDevice.GetDeviceInfo", bytes);
+  }
+
+  EyelockNanoDevice_GetDeviceInfo_result result;
+  try {
+    iface_->GetDeviceInfo(result.success);
+    result.__isset.success = true;
+  } catch (const std::exception& e) {
+    if (this->eventHandler_.get() != NULL) {
+      this->eventHandler_->handlerError(ctx, "EyelockNanoDevice.GetDeviceInfo");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("GetDeviceInfo", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->preWrite(ctx, "EyelockNanoDevice.GetDeviceInfo");
+  }
+
+  oprot->writeMessageBegin("GetDeviceInfo", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->postWrite(ctx, "EyelockNanoDevice.GetDeviceInfo", bytes);
   }
 }
 
