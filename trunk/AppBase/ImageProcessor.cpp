@@ -487,7 +487,7 @@ m_LedConsolidator = NULL;
 
 	m_bFaceMapDebug = m_FaceConfig.getValue("FTracker.FaceMapDebug", false);
 	n_bDebugFrameBuffer = m_FaceConfig.getValue("FTracker.DebugFrameBuffer", false);
-	m_AdaptiveGain = m_FaceConfig.getValue("FTracker.AdaptiveGain", true);
+	m_AdaptiveGain = m_FaceConfig.getValue("FTracker.AdaptiveGain", false);
 
 #ifdef IRIS_CAPTURE
 	// bool bIrisMode = pConf->getValue("Eyelock.IrisMode", 1) == 2; // DMOTODO default to capture for now...

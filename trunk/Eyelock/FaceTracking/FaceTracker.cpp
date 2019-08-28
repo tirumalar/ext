@@ -256,7 +256,7 @@ FaceTracker::FaceTracker(char* filename)
 	m_Motor_Bottom_Offset = FaceConfig.getValue("FTracker.MotorBottomOffset",5);
 	m_Motor_Range = FaceConfig.getValue("FTracker.MotorRange",55);
 
-	m_AdaptiveGain = FaceConfig.getValue("FTracker.AdaptiveGain", true);
+	m_AdaptiveGain = FaceConfig.getValue("FTracker.AdaptiveGain", false);
 
 	// Eyelock.ini Parameters	
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");
