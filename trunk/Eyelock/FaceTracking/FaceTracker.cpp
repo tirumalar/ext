@@ -1982,6 +1982,9 @@ void *init_facetracking(void *arg) {
 	pthread_t threadId;
 	pthread_t thredEcId;
 
+	// Intialize Portcom for device control
+	portcom_start(bDoAESEncryption);
+
 	//pThread for face tracker active
 	// Run Mode
 	// Create Tunnel Thread
@@ -2006,9 +2009,6 @@ void *init_facetracking(void *arg) {
 
 	// Initialize Face Detection
 	face_init();
-
-	// Intialize Portcom for device control
-	portcom_start(bDoAESEncryption);
 
 	// Load FaceTracking config... Configure all hardware
 	m_faceTracker.DoStartCmd();
