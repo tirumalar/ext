@@ -308,6 +308,17 @@ upgradeMaster(){
 	#	echo 'Cypress connected udev rule is the same, no need to update'
 	fi
 	rm "${NEW_CYP_RULE}"
+	
+	# changing dhcp exit hook if needed
+	CUR_DHCP_HOOK='/etc/dhcp/dhclient-exit-hooks.d/eyelock_dhcp_exit_hook'
+	NEW_DHCP_HOOK='/home/root/eyelock_dhcp_exit_hook'
+	if ! diff -q "${CUR_DHCP_HOOK}" "${NEW_DHCP_HOOK}"
+	then 
+		mv "${NEW_DHCP_HOOK}" "${CUR_DHCP_HOOK}" 
+		chmod +x "${CUR_DHCP_HOOK}" 
+	else
+		rm "${NEW_DHCP_HOOK}"
+	fi
 
 	${logger} -L"Applying done."
 
