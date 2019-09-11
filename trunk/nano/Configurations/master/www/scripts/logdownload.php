@@ -46,6 +46,12 @@ if (isset($_GET['logfiletype']))
 		$slaveLogPath = "/home/slavelogs/messages";
           break;
         }
+        case '7':
+        {
+          $urllog = "/home/root/eyelockShellScripts.log";
+		$slaveLogPath = "/home/slavelogs/eyelockShellScripts.log";
+          break;
+        }
 
         case '3':
         {
