@@ -20,7 +20,7 @@ then
 	#echo "$NOW, INFO , [Eyelock], - Eyelock EXT Clock Sync" >> /home/root/nxtLog.log
 	EyelockLog "Eyelock EXT Clock Sync" 'INFO'
 	
-	if /home/root/ntpdate -s -t 3 "$TIMESERVER"
+	if /home/root/ntpdate -s -t 6 "$TIMESERVER"
 	then
 		#echo "$NOW, INFO , [Eyelock], - daily sync: synchronized successfully with $TIMESERVER" >> /home/root/nxtLog.log
 		EyelockLog "daily sync: synchronized successfully with $TIMESERVER" 'INFO'
