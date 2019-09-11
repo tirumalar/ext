@@ -1190,6 +1190,10 @@ function updateTime()
               logtype = "2";
               dllogname = strDeviceName + "_log_messages.rtf"
           }
+          else if (e.shiftKey) {
+              logtype = "7";
+              dllogname = strDeviceName + "_log_scripts.txt"
+          }
           else {
               logtype = "3";
               dllogname = strDeviceName + "_log.csv"
