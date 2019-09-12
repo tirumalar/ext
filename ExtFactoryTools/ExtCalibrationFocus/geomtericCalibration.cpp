@@ -33,6 +33,36 @@ using namespace std;
 
 const char logger[30] = "ExtSetUp";
 
+Mat msgImage = Mat(450, 1800, CV_8U);
+Mat msgImage1 = Mat(450, 1800, CV_8U);	//for showing messages
+
+string msgLine1 = "";			//for showing messages
+string msgLine2 = "";
+string msgLine3 = "";
+
+void showMessage()
+
+//Draws a window with up to five lines of text, ~60 characters per line.
+
+{
+
+	int fontFace = FONT_HERSHEY_COMPLEX;
+	double fontScale = 1.5;
+	int thickness = 2;
+
+	msgImage = 0;
+
+	putText(msgImage, msgLine1, Point(50,75), fontFace, fontScale, Scalar::all(255), thickness, 8);
+	putText(msgImage, msgLine2, Point(50,150), fontFace, fontScale, Scalar::all(255), thickness, 8);
+	putText(msgImage, msgLine3, Point(50,225), fontFace, fontScale, Scalar::all(255), thickness, 8);
+//	putText(msgImage, msgLine4, Point(50,300), fontFace, fontScale, Scalar::all(255), thickness, 8);
+//	putText(msgImage, msgLine5, Point(50,375), fontFace, fontScale, Scalar::all(255), thickness, 8);
+
+	imshow("Message", msgImage);
+//	waitKey(0);
+}
+
+
 geomtericCalibration::geomtericCalibration(char* filename)
 :geoConfig(filename)
 ,m_allLEDhighVoltEnable(0)
@@ -545,7 +575,7 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 	stringstream ssI;
 	string ssO;
 
-	FileConfiguration CalibConfig("/home/root/data/calibration/Calibration.ini");
+	FileConfiguration CalibConfig("/home/root/data/calibration/CalRect.ini");
 
 	ssI << auxRect.x;
 	ssI >> ssO;
@@ -648,7 +678,7 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 	CalibConfig.setValue("FTracker.constantMainLeftCam_y",ssO.c_str());
 
 
-	CalibConfig.writeIni("/home/root/data/calibration/Calibration.ini");
+	CalibConfig.writeIni("/home/root/data/calibration/CalRect.ini");
 
 	// Creating CalRect.ini and upload to OIM ftp
 	char buf[200];
@@ -680,69 +710,115 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 	outfile.close();
 
 	EyelockLog(logger, DEBUG, "Finished writing Calibration Rect data to CalRect.ini file");
+	char newCalRectFName[100];
+	char BufFTPScript[200];
 
 	// Format the OIM ftp drive
 	EyelockLog(logger, DEBUG, "Format the ftp drive");
-	port_com_send("f_formt(0)");
+	port_com_send("f_formt");
 
 	// upload to OIM
 	sprintf(buf, "%s", "wput -B -t 2 -q CalRect.ini ftp://guest:guest@192.168.4.172");
 	EyelockLog(logger, DEBUG, "Create ftp upload system command");
 	fflush(stdout);
-	RunSystemCmdCal(buf);
+	int status = RunSystemCmdCal(buf);
 	EyelockLog(logger, DEBUG, "Uploading of CalRect.ini File to OIM ftp is Successful");
+	if(status == 0)
+	{
+		printf("Uploading of CalRect.ini File to OIM ftp is Successful\n");
 
-	// Window prompting to enter the OIM Number on the console
-	string Msg = "Enter the OIM device number on the command line";
-	Mat MatImage(600, 900, CV_8UC3, Scalar(0,0,0));
-	cv::putText(MatImage,Msg, cvPoint(50,100), CV_FONT_HERSHEY_COMPLEX,1,cvScalar(0,0,255),2,CV_AA);
-	imshow("Message", MatImage);
-	/*char v = cvWaitKey();
-	if(v == 'q')
-		continue;
-	*/
+		// Rename the CalRect.ini file with DeviceId entered
+		sprintf(newCalRectFName, "CalRect.ini.%d", Deviceid);
+		if(rename("CalRect.ini", newCalRectFName ) == 0)
+			printf("CalRect.ini file is renamed to %s\n", newCalRectFName);
+		else
+		   perror("Error renaming CalRect.ini file" );
 
-	// Upload the files to FTP for backup
-	int Deviceid;
-	cout << "Enter the OIM device number" << endl;
-	cin >> Deviceid;
+		string str1 = "cp ";
+		str1 = str1 + newCalRectFName + " /home/root/GeometricCalibration";
+		const char *command1 = str1.c_str();
+		system(command1);
 
-	char newCalRectFName[100];
+		// WRITING Face.ini to OIM ftp
+		// Copy the faceConfig.ini file to /home/root folder to rename and upload to ftp
+		system("cp data/calibration/Face.ini .");
 
-	// Rename the CalRect.ini file with DeviceId entered
-	sprintf(newCalRectFName, "CalRect.ini.%d", Deviceid);
-	if(rename("CalRect.ini", newCalRectFName ) == 0)
-		printf("CalRect.ini file is renamed to %s\n", newCalRectFName);
+		// Uploading the file to OIM ftp
+		char buf1[200];
+		sprintf(buf1, "%s", "wput -B -t 2 Face.ini ftp://guest:guest@192.168.4.172");
+		fflush(stdout);
+		status = RunSystemCmdCal(buf1);
+		if(status == 0)
+		{
+			printf("Uploading of Face.ini File to OIM ftp is Successful\n");
+		}
+		else
+		{
+			sprintf(BufFTPScript, "%s", "/home/root/OIMCalftp.sh");
+			status = RunSystemCmdCal(BufFTPScript);
+			if(status)
+			{
+				msgLine1 = "UPLOAD OF CalRect.ini and Face.ini files to OIM FTP FAILED.";
+				msgLine2 = "TRY AGAIN!!. Hit any Key to exit.";
+				showMessage();
+				cvWaitKey(0);
+				printf("UPLOADING OF CalRect.ini and Face.ini files to OIM FTP failed....status:%d\n", status);
+				printf("TRY AGAIN!!!! \n");
+				exit(0);
+			}
+			else
+			{
+				printf("UPLOADING OF CalRect.ini and Face.ini files to OIM FTP SUCCESSFUL....status:%d\n", status);
+				exit(0);
+			}
+		}
+	}
 	else
-	   perror("Error renaming CalRect.ini file" );
+	{
+		// Rename the CalRect.ini file with DeviceId entered
+		sprintf(newCalRectFName, "CalRect.ini.%d", Deviceid);
+		if(rename("CalRect.ini", newCalRectFName ) == 0)
+			printf("CalRect.ini file is renamed to %s\n", newCalRectFName);
+		else
+		   perror("Error renaming CalRect.ini file" );
 
+		string str1 = "cp ";
+		str1 = str1 + newCalRectFName + " /home/root/GeometricCalibration";
+		const char *command1 = str1.c_str();
+		system(command1);
+
+		sprintf(BufFTPScript, "%s", "/home/root/OIMCalftp.sh");
+		status = RunSystemCmdCal(BufFTPScript);
+		if(status)
+		{
+			msgLine1 = "UPLOAD OF CalRect.ini and Face.ini files to OIM FTP FAILED.";
+			msgLine2 = "TRY AGAIN!!. Hit any Key to exit.";
+			showMessage();
+			printf("UPLOADING OF CalRect.ini and Face.ini files to OIM FTP failed....status:%d\n", status);
+			printf("TRY AGAIN!!!! \n");
+			exit(0);
+		}
+		else
+		{
+			printf("UPLOADING OF CalRect.ini and Face.ini files to OIM FTP SUCCESSFUL....status:%d\n", status);
+			exit(0);
+		}
+	}
+
+#if 0
 	char FTPDetails[200];
 	sprintf(FTPDetails, "wput -B -t 2 -q %s ftp://mamigotesters:'C3$W4$gr3+'@107.22.234.115/EXTCalibrationFiles/", newCalRectFName);
 	fflush(stdout);
 	RunSystemCmdCal(FTPDetails);
 	printf("Upload of %s to ftp is Successful\n", newCalRectFName);
-
-
-#if 0
-	char newfaceConfigFileName[100];
-	// Copy the faceConfig.ini file to /home/root folder to rename and upload to ftp
-	system("cp data/calibration/faceConfig.ini .");
-
-	// Rename faceConfig.ini file with DeviceId
-	sprintf(newfaceConfigFileName, "faceConfig.ini.%d", Deviceid);
-
-	// printf("faceConfig file ....%s\n", newfaceConfigFileName);
-	if(rename("faceConfig.ini", newfaceConfigFileName) == 0)
-		printf("faceConfig.ini file is renamed to %s\n", newfaceConfigFileName);
-	else
-		perror("Error renaming faceConfig.ini file" );
-
-	sprintf(FTPDetails, "wput -B -t 2 -q %s ftp://mamigotesters:'C3$W4$gr3+'@107.22.234.115/EXTCalibrationFiles/", newfaceConfigFileName);
-	fflush(stdout);
-	RunSystemCmdCal(FTPDetails);
-	printf("Upload of %s to ftp is Successful\n", newfaceConfigFileName);
+	if(status == 0)
+		printf("Uploading of CalRect.ini File to ftp is Successful\n");
+	else{
+		printf("UPLOADING OF FILE CalRect.ini to FTP failed....status:%d\n", status);
+		printf("TRY AGAIN!!!! \n");
+		exit(0);
+	}
 #endif
-
 }
 
 
