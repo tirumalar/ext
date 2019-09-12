@@ -46,7 +46,7 @@ const char logger[30] = "ExtSetUp";
 const char stateMachineLogger[30] = "StateMachine";
 VideoStream *vs;
 Mat outImg, smallImg;
-//Reading from faceConfig.ini
+
 int CENTER_POS;
 int IrisFrameCtr = 0;		//used for counting Iris Frame
 int cur_pos=CENTER_POS;
@@ -192,11 +192,11 @@ void setCameraStreaming(int cam){
 
 	vs = new VideoStream(cam, false);
 	vs->flush();
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
 }
 
 
@@ -569,10 +569,10 @@ void streamVideoFocus(extFocus fs, int cam){
 	vs = new VideoStream(cam, false);
 	vs->flush();
 	usleep(100);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
 
 	if (cam == 8194){
 		printf("Star streaming of face camera for focusing\n");
@@ -583,7 +583,7 @@ void streamVideoFocus(extFocus fs, int cam){
 	}
 
 	while(1){
-		vs->get(&w,&h,(char *)outImg.data);
+		vs->get(&w,&h,(char *)outImg.data, false);
 		fs.camControlFocus(outImg, vs->cam_id);
 
 		if(fs.m_quit)
@@ -593,7 +593,7 @@ void streamVideoFocus(extFocus fs, int cam){
 }
 
 void startFocusApp(){
-	extFocus fs("/home/root/data/calibration/faceConfig.ini");
+	extFocus fs("/home/root/data/calibration/ExtCalibrationFocusApp.ini");
 	fs.DoStartCmd_focus();	//initialize the firmware and variables
 
 	string camID;
@@ -639,15 +639,15 @@ void RunCamFocus(extFocus fs){
 	vs = new VideoStream(leftCam, false);
 	vs->flush();
 	usleep(100);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
 
 	printf("Start Left Iris Aux Camera \n");
 
 	while(1){
-		vs->get(&w,&h,(char *)outImg.data);
+		vs->get(&w,&h,(char *)outImg.data, false);
 		fs.camControlFocus(outImg, vs->cam_id);
 
 		if(fs.m_quit)
@@ -659,15 +659,15 @@ void RunCamFocus(extFocus fs){
 	vs = new VideoStream(rightCam, false);
 	vs->flush();
 	usleep(100);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
 	fs.m_quit = false;
 
 	printf("Start Right Iris Aux Camera \n");
 	while(1){
-		vs->get(&w,&h,(char *)outImg.data);
+		vs->get(&w,&h,(char *)outImg.data, false);
 		fs.camControlFocus(outImg, vs->cam_id);
 
 		if(fs.m_quit)
@@ -685,14 +685,14 @@ void RunCamFocus(extFocus fs){
 	vs = new VideoStream(leftCam, false);
 	vs->flush();
 	usleep(10000);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
 
 	printf("Start left Iris Main Camera \n");
 	while(1){
-		vs->get(&w,&h,(char *)outImg.data);
+		vs->get(&w,&h,(char *)outImg.data, false);
 		fs.camControlFocus(outImg, vs->cam_id);
 		//printf("quit:::::: %i\n", quit);
 
@@ -704,14 +704,14 @@ void RunCamFocus(extFocus fs){
 	vs = new VideoStream(rightCam, false);
 	vs->flush();
 	usleep(100);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
 
 	printf("Start right Iris Main Camera \n");
 	while(1){
-		vs->get(&w,&h,(char *)outImg.data);
+		vs->get(&w,&h,(char *)outImg.data, false);
 		fs.camControlFocus(outImg, vs->cam_id);
 
 		if(fs.m_quit)
@@ -722,14 +722,14 @@ void RunCamFocus(extFocus fs){
 	vs = new VideoStream(8194, false);
 	vs->flush();
 	usleep(100);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
-	vs->get(&w,&h,(char *)outImg.data);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
+	vs->get(&w,&h,(char *)outImg.data, false);
 
 	printf("Start face Camera \n");
 	while(1){
-		vs->get(&w,&h,(char *)outImg.data);
+		vs->get(&w,&h,(char *)outImg.data, false);
 		fs.camControlFocus(outImg, faceCam);
 
 		if(fs.m_quit)
@@ -742,36 +742,43 @@ void RunCamFocus(extFocus fs){
 
 int main(int argc, char **argv)
 {
+
+
 	EyelockLog(logger, TRACE, "Inside main function");
 
-	geomtericCalibration gc("/home/root/data/calibration/faceConfig.ini");
-	bool bDoAESEncryption = gc.geoConfig.getValue("FTracker.AESEncrypt", false);
+	// Ini to do Calibration is ExtCalibrationFocusApp.ini
+	geomtericCalibration gc("/home/root/data/calibration/ExtCalibrationFocusApp.ini");
 
-	outImg = Mat(Size(WIDTH,HEIGHT), CV_8U);
+	printf("INSERT OIM DEVICE NUMBER THEN PRESS ENTER\n");
+	cin >> gc.Deviceid;
+
+	// Face.ini should be read to support AES Encrption
+	FileConfiguration faceConfig("/home/root/data/calibration/Face.ini");
+	bool bDoAESEncryption = faceConfig.getValue("FTracker.AESEncrypt", false);
+
+	// Read width and height from Eyelock.ini
+	FileConfiguration Config("/home/root/Eyelock.ini");
+	gc.m_ImageWidth = Config.getValue("FrameSize.width", 1200);
+	gc.m_ImageHeight = Config.getValue("FrameSize.height", 960);
+
+	outImg = Mat(Size(gc.m_ImageWidth , gc.m_ImageHeight), CV_8U);
 
 	// Focus the cameras
 	portcom_start(bDoAESEncryption);
 	startFocusApp();
 
-	while(1){
-		char buff[512];
-		// Window prompting to enter the OIM Number on the console
-		string Msg = "Focusing of Cameras is complete";
-		string Msg1 = "Place the target for Geometric Calibration";
-		sprintf(buff, "Press 'q' to continue!");
-		// string Msg2 = ;
-		Mat MatImage(600, 900, CV_8UC3, Scalar(0,0,0));
-		cv::putText(MatImage,Msg, cvPoint(10,50), CV_FONT_HERSHEY_COMPLEX,1,cvScalar(0,0,255),2,CV_AA);
-		cv::putText(MatImage,Msg1, cvPoint(10,100), CV_FONT_HERSHEY_COMPLEX,1,cvScalar(0,0,255),2,CV_AA);
-		cv::putText(MatImage,buff, cvPoint(10,200), CV_FONT_HERSHEY_COMPLEX,1,cvScalar(0,0,255),2,CV_AA);
-		imshow(buff, MatImage);
-		char key = cv::waitKey();
-		if(key == 'q')
-			break;
-	};
-
-	sleep(2);
-
+	// Window to prompt to insert Calibration Target
+	char buff[512];
+	string Msg = "Camera focus is complete.";
+	string Msg1 = "INSERT CALIBRATION TARGET";
+	sprintf(buff, "Press any key.");
+	Mat MatImage(600, 900, CV_8UC3, Scalar(0,0,0));
+	cv::putText(MatImage,Msg, cvPoint(10,50), CV_FONT_HERSHEY_COMPLEX,1,cvScalar(0,0,255),2,CV_AA);
+	cv::putText(MatImage,Msg1, cvPoint(10,100), CV_FONT_HERSHEY_COMPLEX,1,cvScalar(0,0,255),2,CV_AA);
+	cv::putText(MatImage,buff, cvPoint(10,200), CV_FONT_HERSHEY_COMPLEX,1,cvScalar(0,0,255),2,CV_AA);
+	imshow(buff, MatImage);
+	cvWaitKey(0);
+	cvDestroyWindow(buff);
 	//Camera to camera geometric calibration
 	gc.DoStartCmd_CamCal();
 	startGeometricCalibrationApp(gc, gc.m_calDebug);

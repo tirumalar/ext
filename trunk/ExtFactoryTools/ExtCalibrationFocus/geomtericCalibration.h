@@ -66,6 +66,10 @@ class geomtericCalibration{
 public:
 	cv::Point pt1,pt2,pt3,pt4,pt5,pt6,pt7,pt8;
 	bool m_calDebug, m_calTwoPoint;
+	unsigned int Deviceid;
+
+	int m_ImageWidth;
+	int m_ImageHeight;
 
 	geomtericCalibration(char* filename);
 	virtual ~geomtericCalibration();
@@ -80,9 +84,6 @@ public:
 	void calibDataWrite(cv::Rect auxRect, vector<float> rectRightAux,vector<float> rectLeftAux, vector<float> rectRightMain, vector<float> rectLeftMain);
 	void brightnessAdjust(Mat outImg, int cam, bool calDebug);
 	float AGC(int width, int height,unsigned char *dsty, int limit);
-
-
-
 
 };
 
