@@ -602,6 +602,70 @@ upgradeOim(){
 	# TODO: revert back the first and the second chips if this failed?
 }
 
+upgrade_partial(){
+	firmwareDir=/home/firmware
+	
+	masterFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml nanofilename)
+		
+	mv ${firmwareDir}/fwHandler/MultiChannelLogger ${firmwareDir}
+	mv ${firmwareDir}/fwHandler/MultiChannelLoggerSettings.xml ${firmwareDir}
+		
+	logger=${firmwareDir}/MultiChannelLogger
+	loggerDestIp=$1
+	loggerDestPort=$2
+	loggerDestSecure=$3
+
+	# working directory: /home/firmware
+	cd ${firmwareDir}
+
+	configureLogger
+
+	${logger} -L"UPGRADE_RUNNING"
+	${logger} -L"Upgrade process started."
+
+	if [[ -n "${masterFileName}" && -e ${masterFileName} ]]
+	then
+		${logger} -L"Decrypting ..."
+		/home/root/KeyMgr -d -i ${firmwareDir}/"${masterFileName}" -o ${firmwareDir}/out.tar.gz > /dev/null
+		if [[ $? -ne 0 ]]
+		then
+			${logger} -L"Error: Master: decrypting failed."
+			${logger} -L"STATUS:UNSUCCESSFUL"
+			cleanup
+			# TODO: change led color to white. Or reboot?
+			exit 1
+		fi
+		mv ${firmwareDir}/out.tar.gz ${firmwareDir}/"${masterFileName}"
+		${logger} -L"Decrypting done."
+
+		${logger} -L"Extracting..."
+		if [[ -d /home/upgradeTemp ]]
+		then
+			rm -r /home/upgradeTemp
+		fi
+		mkdir -p /home/upgradeTemp/
+		tar -xvzf ${firmwareDir}/"${masterFileName}" -C /home/upgradeTemp > /dev/null
+		if [[ $? -ne 0 ]]
+		then
+			${logger} -L"Error: extracting failed."
+			return 1
+		fi
+		${logger} -L"Extracting done."
+		
+		mv /home/upgradeTemp/www/scripts/EventHandlers.js /home/www/scripts/EventHandlers.js 
+		mv /home/upgradeTemp/www/scripts/logdownload.php /home/www/scripts/logdownload.php
+		mv /home/upgradeTemp/root/timesync.sh /home/root/timesync.sh
+		
+		${logger} -L"FW upgrade done."
+		
+		${logger} -L"STATUS:SUCCESS"
+		${logger} -L"Device will be rebooted."
+
+		cleanup
+		rebootDevice
+	fi
+}
+
 # performed by WebConfig/SDK themselves:
 # *******************************************************************************
 #echo "Upgrading..."
@@ -941,7 +1005,7 @@ operation=$1
 case "${operation}" in
 
 	"upgrade" )
-	upgrade $2 $3 $4
+	upgrade_partial $2 $3 $4
 
 	;;
 
