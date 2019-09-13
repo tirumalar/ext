@@ -141,7 +141,7 @@ openssl dgst -sha256 -sign "${KEY_FILE}" -out "${TARGET_DIR}/${FWHANDLER_FILE}.s
 # -----------------------------------------------------------------------------------------------------------
 cp "${EYELOCK_WS_EXT}/ICMBinary/ext_pim.cyacd" "${TARGET_DIR}/${ICM_FILE}"
 
-cp "${EYELOCK_WS_EXT}/OIMBinaries/output12.bin" "${TARGET_DIR}/${FPGA_FILE}"
+cp "${EYELOCK_WS_EXT}/OIMBinaries/output_1_8.bin" "${TARGET_DIR}/${FPGA_FILE}"
 cp "${EYELOCK_WS_EXT}/OIMBinaries/fixed.cyacd" "${TARGET_DIR}/${FIXED_BRD_FILE}"
 cp "${EYELOCK_WS_EXT}/OIMBinaries/camera.cyacd" "${TARGET_DIR}/${CAM_BRD_FILE}"
 
