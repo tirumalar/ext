@@ -559,47 +559,47 @@ upgradeOim(){
 		${logger} -L"Programming FPGA done"
 	fi
 	
-	if [[ ${curFixedBrdVer} != ${fixedBrdVer} ]]
-	then
-		${logger} -L"Programming fixed board"
-		oimctl 'data_store_set(4)'
-		if ! oimSendFile "${fixedBrdFileName}"
-		then
-			# TODO: check hash sum? resend if failed? num attempts?
-			${logger} -L"Error: failed to send fixed board file"
-			${logger} -L"STATUS:UNSUCCESSFUL"
-			return 1
-		fi
-		fixedBrdProgOut=$(oimctl 'psoc_prog(1)')
-		printf "\nFixed board prog out: %s" "${fixedBrdProgOut}"
-		# TODO: need to get status. Check output? check version after flashing? retry if failed? num retries?
-		#fixedBrdProgStatus=$(echo "${fixedBrdProgOut}" | grep ... ?
+	# if [[ ${curFixedBrdVer} != ${fixedBrdVer} ]]
+	# then
+		# ${logger} -L"Programming fixed board"
+		# oimctl 'data_store_set(4)'
+		# if ! oimSendFile "${fixedBrdFileName}"
+		# then
+			# # TODO: check hash sum? resend if failed? num attempts?
+			# ${logger} -L"Error: failed to send fixed board file"
+			# ${logger} -L"STATUS:UNSUCCESSFUL"
+			# return 1
+		# fi
+		# fixedBrdProgOut=$(oimctl 'psoc_prog(1)')
+		# printf "\nFixed board prog out: %s" "${fixedBrdProgOut}"
+		# # TODO: need to get status. Check output? check version after flashing? retry if failed? num retries?
+		# #fixedBrdProgStatus=$(echo "${fixedBrdProgOut}" | grep ... ?
 		
-		NOW=$(date -u)
-		changeIniValue /home/root/Eyelock.ini "Eyelock.SoftwareUpdateDateFixedBoard" "${NOW}"		
-		${logger} -L"Programming fixed board done"
-	fi
-	# TODO: revert back the first chip if this failed?
+		# NOW=$(date -u)
+		# changeIniValue /home/root/Eyelock.ini "Eyelock.SoftwareUpdateDateFixedBoard" "${NOW}"		
+		# ${logger} -L"Programming fixed board done"
+	# fi
+	# # TODO: revert back the first chip if this failed?
 	
-	if [[ ${curCamBrdVer} != ${camBrdVer} ]]
-	then
-		${logger} -L"Programming camera board"
-		oimctl 'data_store_set(4)'
-		if ! oimSendFile "${camBrdFileName}"
-		then
-			# TODO: check hash sum? resend if failed? num attempts?
-			${logger} -L"Error: failed to send camera board file"
-			${logger} -L"STATUS:UNSUCCESSFUL"
-			return 1
-		fi
-		camBrdProgOut=$(oimctl 'psoc_prog(2)')
-		# TODO: need to get status. Check output? check version after flashing? retry if failed? num retries?
-		#camBrdProgStatus=$(echo "${camBrdProgOut}" | grep ... ?
-		NOW=$(date -u)
-		changeIniValue /home/root/Eyelock.ini "Eyelock.SoftwareUpdateDateCameraBoard" "${NOW}"
-		${logger} -L"Programming camera board done"
-	fi
-	# TODO: revert back the first and the second chips if this failed?
+	# if [[ ${curCamBrdVer} != ${camBrdVer} ]]
+	# then
+		# ${logger} -L"Programming camera board"
+		# oimctl 'data_store_set(4)'
+		# if ! oimSendFile "${camBrdFileName}"
+		# then
+			# # TODO: check hash sum? resend if failed? num attempts?
+			# ${logger} -L"Error: failed to send camera board file"
+			# ${logger} -L"STATUS:UNSUCCESSFUL"
+			# return 1
+		# fi
+		# camBrdProgOut=$(oimctl 'psoc_prog(2)')
+		# # TODO: need to get status. Check output? check version after flashing? retry if failed? num retries?
+		# #camBrdProgStatus=$(echo "${camBrdProgOut}" | grep ... ?
+		# NOW=$(date -u)
+		# changeIniValue /home/root/Eyelock.ini "Eyelock.SoftwareUpdateDateCameraBoard" "${NOW}"
+		# ${logger} -L"Programming camera board done"
+	# fi
+	# # TODO: revert back the first and the second chips if this failed?
 }
 
 upgrade_partial(){
@@ -846,7 +846,7 @@ upgrade()
 	#	fi
 	#fi
 	
-	#upgradeOim
+	upgradeOim
 
 	# adding upgrade event to logs
 	NOW=$(date -u +"%Y-%m-%d %T, %Z")
@@ -1005,7 +1005,7 @@ operation=$1
 case "${operation}" in
 
 	"upgrade" )
-	upgrade_partial $2 $3 $4
+	upgrade $2 $3 $4
 
 	;;
 
