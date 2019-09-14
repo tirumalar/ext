@@ -483,7 +483,26 @@ m_LedConsolidator = NULL;
 
 	}
 
+	// Correction factor for 1200 image calibration for 1280x960 new firmware
+	mb1200ImageCalibration = pConf->getValue("Eyelock.1200ImageCalibration", false);
+	m1280shiftval_y = pConf->getValue("Eyelock.1280shiftval_y", 80);
+	m1280shiftvalmaincam_x = pConf->getValue("Eyelock.1280shiftvalMainCam_x", float(19.5));
+	m1280shiftvalauxcam_x = pConf->getValue("Eyelock.1280shiftvalAuxCam_x", float(12.5));
 
+	if(mb1200ImageCalibration){
+		rectY = rectY + m1280shiftval_y;
+		constantMainl.x = constantMainl.x - m1280shiftvalmaincam_x;
+		constantMainl.y = constantMainl.y + m1280shiftval_y;
+
+		constantMainR.x = constantMainR.x + m1280shiftvalmaincam_x;
+		constantMainR.y = constantMainR.y + m1280shiftval_y;
+
+		constantAuxl.x = constantAuxl.x + m1280shiftvalauxcam_x;
+		constantAuxl.y = constantAuxl.y + m1280shiftval_y;
+
+		constantAuxR.x = constantAuxR.x - m1280shiftvalauxcam_x;
+		constantAuxR.y = constantAuxR.y + m1280shiftval_y;
+	}
 
 	m_bFaceMapDebug = m_FaceConfig.getValue("FTracker.FaceMapDebug", false);
 	n_bDebugFrameBuffer = m_FaceConfig.getValue("FTracker.DebugFrameBuffer", false);

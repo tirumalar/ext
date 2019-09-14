@@ -265,6 +265,9 @@ protected:
 	bool m_SaveProjImage;
 	bool m_OIMFTPEnabled;
 	int rectX, rectY, rectW, rectH;
+	bool mb1200ImageCalibration;
+	int m1280shiftval_y;
+	float m1280shiftvalmaincam_x, m1280shiftvalauxcam_x;
 	float magOffMainl, magOffMainR, magOffAuxl, magOffAuxR;
 	float magOffMainlDiv, magOffMainRDiv, magOffAuxlDiv, magOffAuxRDiv;
 	cv::Point2f constantMainl, constantMainR, constantAuxl, constantAuxR;
