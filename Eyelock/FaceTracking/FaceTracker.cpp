@@ -298,6 +298,12 @@ FaceTracker::FaceTracker(char* filename)
 		rectH = CalibDefaultConfig.getValue("FTracker.targetRectHeight", 121);
 	}
 
+	// Correction factor for 1200 image calibration for 1280x960 new firmware
+	mb1200ImageCalibration = EyelockConfig.getValue("Eyelock.1200ImageCalibration", false);
+	m1280shiftval_y = EyelockConfig.getValue("Eyelock.1280shiftval_y", 80);
+	if(mb1200ImageCalibration){
+		rectY = rectY + m1280shiftval_y;
+	}
 #ifdef DEBUG_SESSION
 	bDebugSessions = FaceConfig.getValue("FTracker.DebugSessions",false);
 	m_sessionDir = string(EyelockConfig.getValue("Eyelock.DebugSessionDir","DebugSessions/Session"));
@@ -551,7 +557,7 @@ void FaceTracker::CreateFaceWidthGainMap()
 
 int FaceTracker::CalculateGain(int facewidth)
 {
-	int gain = 120000 / pow(facewidth, 2) ;
+	int gain = 12200 / pow(facewidth, 2) ;
 
 	if(gain > 255)
 		gain = 255;

@@ -103,6 +103,8 @@ private:
 	int FRAME_DELAY;
 	bool m_ProjPtr;
 	int rectX, rectY, rectW, rectH;
+	int m1280shiftval_y;
+	bool mb1200ImageCalibration;
 	int previousEye_distance;
 	int cur_pos;
 
