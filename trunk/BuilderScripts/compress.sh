@@ -14,7 +14,7 @@ mkdir "${TARGET_DIR}"
 
 # versions
 FW_VER=$(awk ' $0 ~ "^#define EYELOCK_VERSION \".*\"" {split($0, parts, "\""); printf("%s\n",parts[2])} ' "${EYELOCK_WS_EXT}/Eyelock/EyeLockMain.cpp")
-ICM_VER=$(cat "${EYELOCK_WS_EXT}/ICMBinary/icmversion.txt")
+ICM_VER=$(cat "${EYELOCK_WS_EXT}/ICMBinary/icmversion.txt" | tr -d '\n\r\t ')
 
 FPGA_VER=$(cat "${EYELOCK_WS_EXT}/OIMBinaries/versions.txt" | grep 'FPGA VERSION' | cut -d':' -f2)
 FIXED_BRD_VER=$(cat "${EYELOCK_WS_EXT}/OIMBinaries/versions.txt" | grep 'Fixed board Verson' | cut -d':' -f2)
@@ -22,7 +22,7 @@ CAM_BRD_VER=$(cat "${EYELOCK_WS_EXT}/OIMBinaries/versions.txt" | grep 'Cam Psoc 
 
 ICM_FILE="nanoExt_ICM_v${ICM_VER}.cyacd"
 
-FPGA_FILE="nanoExt_FPGA_v${FPGA_VER}.cyacd"
+FPGA_FILE="nanoExt_FPGA_v${FPGA_VER}.bin"
 FIXED_BRD_FILE="nanoExt_FixedBoard_v${FIXED_BRD_VER}.cyacd"
 CAM_BRD_FILE="nanoExt_CameraBoard_v${CAM_BRD_VER}.cyacd"
 
