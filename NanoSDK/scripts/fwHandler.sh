@@ -551,6 +551,10 @@ upgradeOim(){
 			return 1
 		fi
 		# TODO: check hash sum? resend if failed? num attempts?
+		
+		sleep 2
+		# extra "enter" after sending the file
+		oimctl ''		
 		fpgaProgOut=$(oimctl 'flash_prog')
 		# TODO: need to get status. Check output? check version after flashing? retry if failed? num retries?
 		#fpgaProgStatus=$(echo "${fpgaProgOut}" | grep ... ?
