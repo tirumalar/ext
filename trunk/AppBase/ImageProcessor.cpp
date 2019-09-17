@@ -506,7 +506,10 @@ m_LedConsolidator = NULL;
 
 	m_bFaceMapDebug = m_FaceConfig.getValue("FTracker.FaceMapDebug", false);
 	n_bDebugFrameBuffer = m_FaceConfig.getValue("FTracker.DebugFrameBuffer", false);
-	m_AdaptiveGain = m_FaceConfig.getValue("FTracker.AdaptiveGain", false);
+	// Adaptive gain
+	m_AdaptiveGain = pConf->getValue("FTracker.AdaptiveGain", false);
+	m_AdaptiveGainFactor = pConf->getValue("FTracker.AdaptiveGainFactor",20000);
+	m_AdaptiveGainAuxAdjust = pConf->getValue("FTracker.AdaptiveGainAuxAdjust",float(1.25));
 
 #ifdef IRIS_CAPTURE
 	// bool bIrisMode = pConf->getValue("Eyelock.IrisMode", 1) == 2; // DMOTODO default to capture for now...
@@ -2299,6 +2302,28 @@ void ImageProcessor::CreateFaceWidthGainMap()
 	FaceWidthGainMap.insert ( std::pair<int,int>(70,32));
 }
 
+int ImageProcessor::CalculateGainWithKH(int facewidth, int CameraId)
+{
+	int KF = m_AdaptiveGainFactor;
+
+	// 	printf("m_AdaptiveGainFactor...%d  Adjust----%f\n", m_AdaptiveGainFactor, m_AdaptiveGainAuxAdjust);
+	if((CameraId == IRISCAM_AUX_LEFT) || (CameraId == IRISCAM_AUX_RIGHT))
+		KF = m_AdaptiveGainAuxAdjust * m_AdaptiveGainFactor;
+
+	float KG = 0.000173;
+	int KH = 8;
+
+	// gain = KG * (KF/facewidth + KH)2
+	int gain = KG * pow(((KF/facewidth) + KH), 2);
+
+	if(gain >= 255)
+		gain = 255;
+	if(gain <= 32)
+		gain = 32;
+
+	return gain;
+}
+
 
 bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 {
@@ -2347,22 +2372,28 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 		if (!GetFaceInfoForIristoFaceMapping(cam_idd, frame_number, FaceInfo))
 			bSkipProcessingImage = true; // Skip all other processing... This simulates the No Eyes Detected Case
 	}
+	
 
 	if(m_IrisCameraPreview && (frame->imageData != NULL)){
 		cv::Mat mateye = cv::cvarrToMat(frame);
 		std::ostringstream ssCoInfo;
-		ssCoInfo << "CAM " <<  cam_idd  <<  (cam_idd & 0x80 ?  "AUX":"MAIN");
-		putText(mateye,ssCoInfo.str().c_str(),cv::Point(10,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
 		if(m_AdaptiveGain){
-			int faceWidth = FaceInfo.FaceWidth;
-			std::ostringstream ssCoInfo1;
-			int Gain = 0;
-			Gain = FaceWidthGainMap.find(faceWidth)->second;
-			ssCoInfo1 << faceWidth   <<   Gain;
-			putText(mateye,ssCoInfo1.str().c_str(),cv::Point(40,100), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
+			if(FaceInfo.FaceWidth && FaceInfo.FoundFace){
+				cv::Mat ColorIrisImage;
+				cv::cvtColor(mateye, ColorIrisImage, CV_GRAY2BGR);
+				int Gain = CalculateGainWithKH(FaceInfo.FaceWidth, cam_idd);
+				// printf("ImageProcessor %d %d %d\n", cam_idd, FaceInfo.FaceWidth, Gain);
+				ssCoInfo << " CAM " << cam_idd  <<  (cam_idd & 0x80 ?  " AUX":" MAIN ") << " " << "FW=" << FaceInfo.FaceWidth << " " << "G=" << Gain;
+				putText(ColorIrisImage,ssCoInfo.str().c_str(),cv::Point(40,100), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
+				imshow("IrisCamera", ColorIrisImage);
+				cvWaitKey(1);
+			}
+		}else{
+			ssCoInfo << "CAM " <<  cam_idd  <<  (cam_idd & 0x80 ?  "AUX":"MAIN");
+			putText(mateye,ssCoInfo.str().c_str(),cv::Point(10,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
+			imshow("IrisCamera", mateye);
+			cvWaitKey(1);
 		}
-		imshow("IrisCamera", mateye);
-		cvWaitKey(1);
 	}
 
 	bool bSentSomething = false;
@@ -2800,6 +2831,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		}
 	#endif
 
+		/*
 		if(m_IrisCameraPreview && (frame->imageData != NULL)){
 			cv::Mat mateye = cv::cvarrToMat(frame);
 			std::ostringstream ssCoInfo;
@@ -2807,7 +2839,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			putText(mateye,ssCoInfo.str().c_str(),cv::Point(10,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
 			imshow("IrisCamera", mateye);
 			cvWaitKey(1);
-		}
+		}*/
 
 		if(m_SaveFullFrame){
 			sprintf(filename,"InputImage_%d_%d.pgm", cam_idd, m_faceIndex);
@@ -2833,6 +2865,28 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				bSkipProcessingImage = true; // Skip all other processing... This simulates the No Eyes Detected Case
 		}
 
+		if(m_IrisCameraPreview && (frame->imageData != NULL)){
+			cv::Mat mateye = cv::cvarrToMat(frame);
+			std::ostringstream ssCoInfo;
+			if(m_AdaptiveGain){
+				if(FaceInfo.FaceWidth && FaceInfo.FoundFace){
+					cv::Mat ColorIrisImage;
+					cv::cvtColor(mateye, ColorIrisImage, CV_GRAY2BGR);
+					int Gain = CalculateGainWithKH(FaceInfo.FaceWidth, cam_idd);
+					// printf("ImageProcessor %d %d %d\n", cam_idd, FaceInfo.FaceWidth, Gain);
+					ssCoInfo << " CAM " << cam_idd  <<  (cam_idd & 0x80 ?  " AUX":" MAIN ") << " " << "FW=" << FaceInfo.FaceWidth << " " << "G=" << Gain;
+					putText(ColorIrisImage,ssCoInfo.str().c_str(),cv::Point(40,100), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
+					imshow("IrisCamera", ColorIrisImage);
+					cvWaitKey(1);
+				}
+			}else{
+				ssCoInfo << "CAM " <<  cam_idd  <<  (cam_idd & 0x80 ?  "AUX":"MAIN");
+				putText(mateye,ssCoInfo.str().c_str(),cv::Point(10,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
+				imshow("IrisCamera", mateye);
+				cvWaitKey(1);
+			}
+
+		}
 
 		bool detect;
 		int NoOfHaarEyes = 0;

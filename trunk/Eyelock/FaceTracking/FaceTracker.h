@@ -244,13 +244,15 @@ private:
 
 	bool m_AdaptiveGain;
 
+	int m_AdaptiveGainFactor;
+	float m_AdaptiveGainAuxAdjust;
 	std::map<int,int> FaceWidthGainMap;
 
 	void SetExp(int cam, int val);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
 	void SelLedDistance(int val); // val between 0 and 100
 
-	void MainIrisSettings(int FaceWidth);
+	void MainIrisSettings(int FaceWidth, int CameraState);
 	void SwitchIrisCameras(bool mode);
 	void SetFaceMode();
 
@@ -288,8 +290,8 @@ private:
 	void readFaceAnalogGainReg(uint32_t Value);
 	void readDimFaceGainregVal(uint32_t Value);
 	void CreateFaceWidthGainMap();
-	void AdaptiveGain(int faceWidth);
-	int CalculateGainWithKH(int facewidth);
+	void AdaptiveGain(int faceWidth, int CameraState);
+	int CalculateGainWithKH(int facewidth, int CameraState);
 	int CalculateGain(int facewidth);
 public:
 
