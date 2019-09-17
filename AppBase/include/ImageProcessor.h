@@ -258,6 +258,24 @@ protected:
 	IplImage *m_OffsetOutputImage;
 	IplImage *m_ProcessImageFrame;
 
+	// Calibration Parallex Correction
+	float baselineDistance;
+	float faceLensEFL;
+	float auxLensEFL;
+	float mainLensEFL;
+	float pixelSize;
+	float avgHeadWidth;
+	float faceDistanceScale;
+	float magFaceBaseline;
+	float magAuxBaseline;
+	float magMainBaseline;
+
+	float faceDistance;
+	cv::Point2f angCompMainl, angCompMainR, angCompAuxl, angCompAuxR;
+
+	cv::Point2f camOffsetMainl, camOffsetMainR, camOffsetAuxl, camOffsetAuxR;
+	bool m_ParallaxCorrection;
+
 	bool m_DebugTesting;
 	std::string m_sessionDir;
 
@@ -370,6 +388,12 @@ private:
     float m_AdaptiveGainAuxAdjust;
     std::map<int,int> FaceWidthGainMap;
     void CreateFaceWidthGainMap();
+
+    // Calibration Parallax
+    float getUnscaledAngleComponent(float offsetBaseline, float cameraOffset, float magIrisBaseline, int irisSize, int faceSize);
+    float getfaceDistance(cv::Rect FaceCoord);
+    cv::Point2i projectPoints_IristoFace_Parallax(cv::Point2i ptrI, cv::Point2f camOffset, cv::Point2f angComp, float irisEFL, float distanceMM);
+    int validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Point2i ptrI, int CameraId, unsigned char *faceImagePtr, int m_faceIndex);
 };
 
 #endif /* IMAGEPROCESSOR_H_ */
