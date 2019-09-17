@@ -350,6 +350,7 @@ private:
     unsigned int validateLeftRightEyecrops(cv::Rect FaceCoord, cv::Point2i ptrI, int CameraId, unsigned char *faceImagePtr, int m_faceIndex);
 	bool validateEyecrops_IrisToFaceMapping(cv::Rect projFace, cv::Point2i ptrI, int CameraId);
 	bool ValidateEyeCropUsingIrisToFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
+	int CalculateGainWithKH(int facewidth, int CameraId);
 	bool m_activeEyeSideLabeling;
 	bool m_IrisToFaceMapping;
 	bool bIrisToFaceMapDebug;
@@ -365,6 +366,8 @@ private:
     SocketFactory *m_socketFactory;
     bool n_bDebugFrameBuffer;
     bool m_AdaptiveGain;
+    int m_AdaptiveGainFactor;
+    float m_AdaptiveGainAuxAdjust;
     std::map<int,int> FaceWidthGainMap;
     void CreateFaceWidthGainMap();
 };

@@ -146,7 +146,9 @@ FaceTracker::FaceTracker(char* filename)
 ,m_nCalculatedBrightness(0)
 ,m_ImageWidth(1200)
 ,m_ImageHeight(960)
-,m_AdaptiveGain(true)
+,m_AdaptiveGain(false)
+,m_AdaptiveGainFactor(20000)
+,m_AdaptiveGainAuxAdjust(1.25)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -256,7 +258,6 @@ FaceTracker::FaceTracker(char* filename)
 	m_Motor_Bottom_Offset = FaceConfig.getValue("FTracker.MotorBottomOffset",5);
 	m_Motor_Range = FaceConfig.getValue("FTracker.MotorRange",55);
 
-	m_AdaptiveGain = FaceConfig.getValue("FTracker.AdaptiveGain", false);
 
 	// Eyelock.ini Parameters	
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");
@@ -282,6 +283,11 @@ FaceTracker::FaceTracker(char* filename)
 	m_LeftCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
 	m_RightCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
 
+	// Adaptive Gain
+	m_AdaptiveGain = EyelockConfig.getValue("FTracker.AdaptiveGain", false);
+	m_AdaptiveGainFactor = EyelockConfig.getValue("FTracker.AdaptiveGainFactor",20000);
+	m_AdaptiveGainAuxAdjust = EyelockConfig.getValue("FTracker.AdaptiveGainAuxAdjust",float(1.25));
+	
 	if (m_OIMFTPEnabled) {
 		// Calibration Parameters from CalRectFromOIM.ini
 		FileConfiguration CalRectConfig("/home/root/CalRect.ini");
@@ -441,7 +447,7 @@ char* GetTimeStamp()
 	return(timeVar);
 }
 
-void FaceTracker::MainIrisSettings(int FaceWidth)
+void FaceTracker::MainIrisSettings(int FaceWidth, int CameraState)
 {
 	EyelockLog(logger, TRACE, "MainIrisSettings");
 
@@ -460,7 +466,7 @@ void FaceTracker::MainIrisSettings(int FaceWidth)
 
 	EyelockLog(logger, DEBUG, "Values in MainIrisSettings IrisLEDEnable:%d, IrisLEDVolt:%d, IrisLEDcurrentSet:%d, IrisLEDtrigger:%d, IrisLEDmaxTime:%d ", m_IrisLEDEnable, m_IrisLEDVolt, m_IrisLEDcurrentSet, m_IrisLEDtrigger, m_IrisLEDmaxTime);
 	if(m_AdaptiveGain){
-		AdaptiveGain(FaceWidth);
+		AdaptiveGain(FaceWidth, CameraState);
 	}
 }
 
@@ -559,39 +565,44 @@ int FaceTracker::CalculateGain(int facewidth)
 {
 	int gain = 12200 / pow(facewidth, 2) ;
 
-	if(gain > 255)
+	if(gain >= 255)
 		gain = 255;
-	if(gain < 32)
+	if(gain <= 32)
 		gain = 32;
 	return gain;
 }
 
-int FaceTracker::CalculateGainWithKH(int facewidth)
+int FaceTracker::CalculateGainWithKH(int facewidth, int CameraState)
 {
-	int KF = 26208;
+	int KF = m_AdaptiveGainFactor;
+
+// 	printf("m_AdaptiveGainFactor...%d  Adjust----%f\n", m_AdaptiveGainFactor, m_AdaptiveGainAuxAdjust);
+	if(CameraState == STATE_AUX_IRIS)
+		KF = m_AdaptiveGainAuxAdjust * m_AdaptiveGainFactor;
+
 	float KG = 0.000173;
 	int KH = 8;
 
 	// gain = KG * (KF/facewidth + KH)2
 	int gain = KG * pow(((KF/facewidth) + KH), 2);
 
-	if(gain > 255)
+	if(gain >= 255)
 		gain = 255;
-	if(gain < 32)
+	if(gain <= 32)
 		gain = 32;
 
 	return gain;
 }
 
-void FaceTracker::AdaptiveGain(int faceWidth)
+void FaceTracker::AdaptiveGain(int faceWidth, int CameraState)
 {
 	EyelockLog(logger, TRACE, "AdaptiveGain");
 
 	char buff[512];
 	// Set the gain based on distance
 	// int Gain = FaceWidthGainMap.find(faceWidth)->second;
-	int Gain = CalculateGainWithKH(faceWidth);
-	// printf("FaceWidth %d Gain %d\n", faceWidth, Gain);
+	int Gain = CalculateGainWithKH(faceWidth, CameraState);
+	// printf("FaceTracker:: FaceWidth %d Gain %d\n", faceWidth, Gain);
 	sprintf(buff,"wcr(0x1f,0x305e,%d)", Gain);
 	port_com_send(buff);
 }
@@ -1700,7 +1711,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					case STATE_MAIN_IRIS:
 						// enable main camera and set led currnet
 						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings(eye_size);											//change to Iris settings
+						MainIrisSettings(eye_size, STATE_MAIN_IRIS);											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
 						m_ProjPtr = true;		//Added by Mo
@@ -1708,7 +1719,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					case STATE_AUX_IRIS:
 						// enable aux camera and set led currnet
 						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings(eye_size);											//change to Iris settings
+						MainIrisSettings(eye_size, STATE_AUX_IRIS);											//change to Iris settings
 						SwitchIrisCameras(false);									//switch cameras
 						stateofIrisCameras = STATE_AUX_IRIS;
 						m_ProjPtr = true;		//Added by Mo
@@ -1736,7 +1747,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						//dont need to dim down the face cam settings because it is already
 						//dimmed down
 						//DimmFaceForIris();											//Dim face settings
-						MainIrisSettings(eye_size);											//change to Iris settings
+						MainIrisSettings(eye_size, STATE_MAIN_IRIS);											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
 						m_ProjPtr = true;		//Added by Mo
@@ -1762,7 +1773,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							//dont need to dim down the face cam settings because it is already
 							//dimmed down
 							//DimmFaceForIris();
-							MainIrisSettings(eye_size);											//change to Iris settings
+							MainIrisSettings(eye_size, STATE_AUX_IRIS);											//change to Iris settings
 							SwitchIrisCameras(false);									//switch cameras
 							stateofIrisCameras = STATE_AUX_IRIS;
 							m_ProjPtr = true;		//Added by Mo
@@ -1782,7 +1793,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						// switch only the expusure and camera enables
 						// no need to change voltage or current
 						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings(eye_size);											//change to Iris settings
+						MainIrisSettings(eye_size, STATE_AUX_IRIS);											//change to Iris settings
 						SwitchIrisCameras(false);									//switch cameras
 						stateofIrisCameras = STATE_AUX_IRIS;
 						m_ProjPtr = true;		//Added by Mo
@@ -1790,7 +1801,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					case STATE_MAIN_IRIS:
 						// enable main cameras and set
 						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings(eye_size);											//change to Iris settings
+						MainIrisSettings(eye_size, STATE_MAIN_IRIS);											//change to Iris settings
 						SwitchIrisCameras(true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
 						m_ProjPtr = true;		//Added by Mo
@@ -1845,14 +1856,19 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 		cvWaitKey(1);
 	}
 
+	// printf("eye_size.......%d\n", eye_size);
+
 	// printf("PushToQueue foundEyes %d FaceFrameNo %d face x = %d  face y = %d face width = %d  face height = %d \n", foundEyes, FaceCameraQFrameNo, face.x,  face.y,  face.width, face.height);
 	 if (true) {//system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){ // Removed for odriod by Anita
 //		if(m_ProjPtr && eyesInViewOfIriscamNoMove){ // Removed by sarvesh
+
+		 	m_LeftCameraFaceInfo.FoundFace = foundFace;
 			m_LeftCameraFaceInfo.ScaledFaceCoord = FaceCoord;
 			m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
 			m_LeftCameraFaceInfo.projPtr = m_ProjPtr;
 			m_LeftCameraFaceInfo.FaceWidth = eye_size;
 
+			m_RightCameraFaceInfo.FoundFace = foundFace;
 			m_RightCameraFaceInfo.ScaledFaceCoord = FaceCoord;
 			m_RightCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
 			m_RightCameraFaceInfo.projPtr = m_ProjPtr;
