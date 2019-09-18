@@ -686,6 +686,16 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 
 	EyelockLog(logger, DEBUG, "Create CalRect.ini file in /home/root folder");
 
+
+	// Image Width used for calibration
+	outfile << "FTracker.ImageWidth=" << m_ImageWidth << std::endl;
+	if(m_ImageWidth == 1280)
+		m_bCalibImageSizeIs1280 = true;
+	else
+		m_bCalibImageSizeIs1280 = false;
+
+	outfile << "FTracker.CalibImageSizeIs1280=" << m_bCalibImageSizeIs1280 << std::endl;
+
 	// CalRect Parameters
 	outfile << "FTracker.targetRectX=" << auxRect.x << std::endl;
 	outfile << "FTracker.targetRectY=" << auxRect.y << std::endl;
@@ -769,6 +779,36 @@ void geomtericCalibration::calibDataWrite(cv::Rect auxRect, vector<float> rectRi
 			else
 			{
 				printf("UPLOADING OF CalRect.ini and Face.ini files to OIM FTP SUCCESSFUL....status:%d\n", status);
+				exit(0);
+			}
+		}
+
+		// Upload HWVer.txt file to OIM ftp
+		char hwtxtbuf[200];
+		sprintf(hwtxtbuf, "%s", "wput -B -t 2 HWVer.txt ftp://guest:guest@192.168.4.172");
+		fflush(stdout);
+		status = RunSystemCmdCal(hwtxtbuf);
+		if(status == 0)
+		{
+			printf("Uploading of HWVer.txt file to OIM ftp is Successful\n");
+		}
+		else
+		{
+			sprintf(BufFTPScript, "%s", "/home/root/OIMCalftp.sh");
+			status = RunSystemCmdCal(BufFTPScript);
+			if(status)
+			{
+				msgLine1 = "UPLOAD OF HWVer.txt to OIM FTP FAILED.";
+				msgLine2 = "TRY AGAIN!!. Hit any Key to exit.";
+				showMessage();
+				cvWaitKey(0);
+				printf("UPLOADING OF all files to OIM FTP failed....status:%d\n", status);
+				printf("TRY AGAIN!!!! \n");
+				exit(0);
+			}
+			else
+			{
+				printf("UPLOADING OF all files (CalRect.ini, Face.ini and HWVer.txt) to OIM FTP SUCCESSFUL....status:%d\n", status);
 				exit(0);
 			}
 		}
