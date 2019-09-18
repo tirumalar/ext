@@ -71,6 +71,8 @@ public:
 	int m_ImageWidth;
 	int m_ImageHeight;
 
+	bool m_bCalibImageSizeIs1280; // Flag used for knowing size of image used for calibration
+
 	geomtericCalibration(char* filename);
 	virtual ~geomtericCalibration();
 	FileConfiguration geoConfig;
