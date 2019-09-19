@@ -149,6 +149,8 @@ FaceTracker::FaceTracker(char* filename)
 ,m_AdaptiveGain(false)
 ,m_AdaptiveGainFactor(20000)
 ,m_AdaptiveGainAuxAdjust(1.25)
+,m_CalibrationImageSize(1200)
+,m_bCalibImageSizeIs1280(false)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -295,6 +297,10 @@ FaceTracker::FaceTracker(char* filename)
 		rectY = CalRectConfig.getValue("FTracker.targetRectY", 497);
 		rectW = CalRectConfig.getValue("FTracker.targetRectWidth", 960);
 		rectH = CalRectConfig.getValue("FTracker.targetRectHeight", 121);
+		// ImageSize used for calibration
+		m_CalibrationImageSize = CalRectConfig.getValue("FTracker.ImageWidth", 1200);
+		m_bCalibImageSizeIs1280 = CalRectConfig.getValue("FTracker.CalibImageSizeIs1280", false);
+
 	} else {
 		// To support old devices which don't have cal rect file stored on OIM
 		FileConfiguration CalibDefaultConfig("/home/root/data/calibration/CalRect.ini");
@@ -302,12 +308,19 @@ FaceTracker::FaceTracker(char* filename)
 		rectY = CalibDefaultConfig.getValue("FTracker.targetRectY", 497);
 		rectW = CalibDefaultConfig.getValue("FTracker.targetRectWidth", 960);
 		rectH = CalibDefaultConfig.getValue("FTracker.targetRectHeight", 121);
+
+		// ImageSize used for calibration
+		m_CalibrationImageSize = CalibDefaultConfig.getValue("FTracker.ImageWidth", 1200);
+		m_bCalibImageSizeIs1280 = CalibDefaultConfig.getValue("FTracker.CalibImageSizeIs1280", false);
+
 	}
 
 	// Correction factor for 1200 image calibration for 1280x960 new firmware
 	mb1200ImageCalibration = EyelockConfig.getValue("Eyelock.1200ImageCalibration", false);
 	m1280shiftval_y = EyelockConfig.getValue("Eyelock.1280shiftval_y", 80);
-	if(mb1200ImageCalibration){
+
+	// Calibration correction for 1200 image calibration but input image stream size is 1280
+	if(m_CalibrationImageSize == 1200 && m_bCalibImageSizeIs1280 == false){
 		rectY = rectY + m1280shiftval_y;
 	}
 #ifdef DEBUG_SESSION
