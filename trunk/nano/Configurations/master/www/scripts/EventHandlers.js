@@ -1452,17 +1452,18 @@ function HideIPv6Dlg()
  {
      
      if (document.getElementById('GRI_EnableNWHDMatcher').checked) {
-             $('#GRI_HDMatcher_Address').removeAttr('disabled');
-             $('#GRI_NWHDPort').removeAttr('disabled');
+         // DMO removed to handle admin vs. installer saving issue.  See inieditor.php
+        //     $('#GRI_HDMatcher_Address').removeAttr('disabled');
+        //     $('#GRI_NWHDPort').removeAttr('disabled');
              $('#NW_Matcher_Comm_Secure').removeAttr('disabled');
          }
          else {
-             $('#GRI_HDMatcher_Address').attr({
-                 'disabled': 'disabled'
-             });
-             $('#GRI_NWHDPort').attr({
-                 'disabled': 'disabled'
-             });
+   //          $('#GRI_HDMatcher_Address').attr({
+   //              'disabled': 'disabled'
+   //          });
+    //         $('#GRI_NWHDPort').attr({
+    //             'disabled': 'disabled'
+    //         });
              $('#NW_Matcher_Comm_Secure').attr({
                  'disabled': 'disabled'
              });
