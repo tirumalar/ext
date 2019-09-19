@@ -104,6 +104,8 @@ private:
 	bool m_ProjPtr;
 	int rectX, rectY, rectW, rectH;
 	int m1280shiftval_y;
+	int m_CalibrationImageSize;
+	bool m_bCalibImageSizeIs1280;
 	bool mb1200ImageCalibration;
 	int previousEye_distance;
 	int cur_pos;

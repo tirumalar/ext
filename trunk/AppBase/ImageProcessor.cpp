@@ -83,7 +83,9 @@ m_DetectedEyeWriteIterator(m_DetectedEyesQueue),m_MotionDetection(0),m_Futuristi
 m_SpoofTrackerCount(0),m_nanoSpoofDetector(0),m_nanoSpoofDataCount(0),m_FocusImageLevel(0),m_smallCroppedEye(0),m_maxEyes(10),m_blackThreshold(0),m_enableBlackLevel(false),
 m_enableAreaFocus(false),m_blackMinThreshold(0.0),m_NumTrackedEyes(0),m_socketFactory(0),m_saveDiscardedEyes(false),m_discardedSaveCount(0),m_prevTS(0),m_timegapForStaleframe(250000),
 m_haloMinCount(20),m_haloMaxCount(110),m_il0(0),m_faceIndex(0),m_secondLevelImage(NULL),m_confusionTimeThresholduSec(0),m_prevConfusionTS(0),m_checkConfusion(false),
-m_haloTopPixelsPercentage(25.0f),m_haloCountByBottomPixels(6),m_haloBottomPixelsIntensityThresh(91),m_MHaloNegationThresh(350),m_FaceIrisMapping(false),bIrisToFaceMapDebug(false),m_projStatus(true),m_IrisCameraPreview(false){
+m_haloTopPixelsPercentage(25.0f),m_haloCountByBottomPixels(6),m_haloBottomPixelsIntensityThresh(91),m_MHaloNegationThresh(350),m_FaceIrisMapping(false),bIrisToFaceMapDebug(false),
+m_projStatus(true),m_IrisCameraPreview(false),m_CalibrationImageSize(1200),m_bCalibImageSizeIs1280(false)
+{
 printf("ImageProcessor::ImageProcessor: set the configuration file\n"); fflush(stdout);
 
 m_tsDestAddrpresent=false;
@@ -417,6 +419,12 @@ m_LedConsolidator = NULL;
 	// CreateFaceWidthGainMap();
 	// Calibration Parallax Correction
 	m_ParallaxCorrection = pConf->getValue("Eyelock.ParallexCorrection", false);
+	// Correction factor for 1200 image calibration for 1280x960 new firmware
+	mb1200ImageCalibration = pConf->getValue("Eyelock.1200ImageCalibration", false);
+	m1280shiftval_y = pConf->getValue("Eyelock.1280shiftval_y", 80);
+	m1280shiftvalmaincam_x = pConf->getValue("Eyelock.1280shiftvalMainCam_x", float(18));
+	m1280shiftvalauxcam_x = pConf->getValue("Eyelock.1280shiftvalAuxCam_x", float(11.52));
+
 	if(m_OIMFTPEnabled){
 		// Calibration Parameters from CalRectFromOIM.ini
 		FileConfiguration CalRectConfig("/home/root/CalRect.ini");
@@ -448,6 +456,10 @@ m_LedConsolidator = NULL;
 		useOffest_a = CalRectConfig.getValue("FTracker.projectionOffsetAux",true);
 		projOffset_m = CalRectConfig.getValue("FTracker.projectionOffsetValMain",float(50.00));
 		projOffset_a = CalRectConfig.getValue("FTracker.projectionOffsetValAux",float(200.00));
+
+		// ImageSize used for calibration
+		m_CalibrationImageSize = CalRectConfig.getValue("FTracker.ImageWidth", 1200);
+		m_bCalibImageSizeIs1280 = CalRectConfig.getValue("FTracker.CalibImageSizeIs1280",false);
 
 	}else{
 		FileConfiguration CalibDefaultConfig("/home/root/data/calibration/CalRect.ini");
@@ -483,23 +495,21 @@ m_LedConsolidator = NULL;
 		projOffset_m = CalibDefaultConfig.getValue("FTracker.projectionOffsetValMain",float(50.00));
 		projOffset_a = CalibDefaultConfig.getValue("FTracker.projectionOffsetValAux",float(200.00));
 
+		// ImageSize used for calibration
+		m_CalibrationImageSize = CalibDefaultConfig.getValue("FTracker.ImageWidth", 1200);
+		m_bCalibImageSizeIs1280 = CalibDefaultConfig.getValue("FTracker.CalibImageSizeIs1280", false);
+
 	}
-
-	// Correction factor for 1200 image calibration for 1280x960 new firmware
-	mb1200ImageCalibration = pConf->getValue("Eyelock.1200ImageCalibration", false);
-	m1280shiftval_y = pConf->getValue("Eyelock.1280shiftval_y", 80);
-	m1280shiftvalmaincam_x = pConf->getValue("Eyelock.1280shiftvalMainCam_x", float(19.5));
-	m1280shiftvalauxcam_x = pConf->getValue("Eyelock.1280shiftvalAuxCam_x", float(12.5));
-
-	if(mb1200ImageCalibration){
+	// Calibration correction for 1200 image calibration but input image stream size is 1280
+	if(m_CalibrationImageSize == 1200 && m_bCalibImageSizeIs1280 == false){
 		rectY = rectY + m1280shiftval_y;
 		constantMainl.x = constantMainl.x - m1280shiftvalmaincam_x;
 		constantMainl.y = constantMainl.y + m1280shiftval_y;
 
-		constantMainR.x = constantMainR.x + m1280shiftvalmaincam_x;
+		constantMainR.x = constantMainR.x - m1280shiftvalmaincam_x;
 		constantMainR.y = constantMainR.y + m1280shiftval_y;
 
-		constantAuxl.x = constantAuxl.x + m1280shiftvalauxcam_x;
+		constantAuxl.x = constantAuxl.x - m1280shiftvalauxcam_x;
 		constantAuxl.y = constantAuxl.y + m1280shiftval_y;
 
 		constantAuxR.x = constantAuxR.x - m1280shiftvalauxcam_x;

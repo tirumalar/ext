@@ -274,6 +274,9 @@ protected:
 	cv::Point2f angCompMainl, angCompMainR, angCompAuxl, angCompAuxR;
 
 	cv::Point2f camOffsetMainl, camOffsetMainR, camOffsetAuxl, camOffsetAuxR;
+
+	int m_CalibrationImageSize;
+	bool m_bCalibImageSizeIs1280;
 	bool m_ParallaxCorrection;
 
 	bool m_DebugTesting;
