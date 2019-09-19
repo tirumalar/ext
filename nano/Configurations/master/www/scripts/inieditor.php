@@ -1253,6 +1253,7 @@ class INIEditor
         $bFoundDualAuthParityEnabled = FALSE;
         $bFoundDualAuthLEDEnabled = FALSE;
         $bFoundHDMatcherEnabled = FALSE;
+        $bFoundNWMatcherAddress = FALSE;
         $bFoundRelayEnable = FALSE;
      //   $bFoundEnableIEEE8021X = FALSE;
         $bFoundEnableNegativeMatchTimeout = FALSE;
@@ -1605,6 +1606,8 @@ class INIEditor
             }
             else if ($key === "GRI_HDMatcher_Address")
             {
+                $bFoundNWMatcherAddress = TRUE;
+
                 // Ok, we found the IP now we need to grab the port...
                 $networkip = trim($value);
                 if (strlen($networkip)>0)
@@ -2117,9 +2120,12 @@ class INIEditor
 			$this->remove( "NwListener.Debug");
 		}
 		
-        if (!$bFoundHDMatcherEnabled)
+        if (!$bFoundHDMatcherEnabled && $bFoundNWMatcherAddress)
         {
-            // Need to set the matcherID to the REMOTE entry...
+            //$bFoundNWMatcherAddress will ONLY be true for installer mode.. so only handle removing
+            // these items if in installer mode and NM is not enabled.
+            // For admin mode... we leave it all alone...
+            // Need to set the matcherID to the LOCAL entry...
             $this->GRI_HDMatcherID = sprintf("%d", $this->MatcherIDLocal);
             $this->set("GRI.HDMatcherID", $this->GRI_HDMatcherID);
             
