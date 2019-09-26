@@ -1620,6 +1620,54 @@ int BobSetDataAndRunCommand(void *ptr, int len, int cmd)
 	return result;
 }
 
+int BobSendAcsData(void *ptr, int bitLen)
+{
+	int result = 1;
+	int fd = 0;
+	int byteLen = (bitLen + 7) / 8;
+
+	usleep(100);
+	BobMutexStart();
+
+	fd = i2c_start_transaction();
+	if(fd == 0)
+	{
+		EyelockLog(logger, ERROR, "BobSendAcsData : BoB => Error starting interface");
+		return -1;
+	}
+	result = internal_write_array_timeout(fd, BOB_ACCESS_DATA_OFFSET, ptr, byteLen, 1);
+	if(result != 0)
+	{
+		EyelockLog(logger, ERROR, "BobSendAcsData : BoB => Error writing data array");
+		return -1;
+	}
+
+	usleep(5000);
+	result = BobWriteReg(BOB_DATA_LENGTH_OFFSET, 0);
+	if(result != 0)
+	{
+		EyelockLog(logger, ERROR, "BobSendAcsData : BoB => Error writing data array length");
+		return -1;
+	}
+	result = BobWriteReg(BOB_DATA_LENGTH_OFFSET+1, bitLen);
+	if(result != 0)
+	{
+		EyelockLog(logger, ERROR, "BobSendAcsData : BoB => Error writing data array length");
+		return -1;
+	}
+	usleep(100);
+	result = BobWriteReg(BOB_COMMAND_OFFSET, BOB_COMMAND_SEND);
+	if(result != 0)
+	{
+		EyelockLog(logger, ERROR, "BobSendAcsData : BoB => Error writing command");
+		return -1;
+	}
+
+	BobMutexEnd();
+	usleep(100);
+	return result;
+}
+
 
 int BoBGetCommand()
 {
