@@ -682,7 +682,7 @@ int BobReadReg(icmreg_t reg, unsigned int *val)
 		EyelockLog(logger, ERROR, "BobReadReg:BoB => Error starting interface");
         return -1;
     }
-	int result = internal_read_reg(fd, reg, val);
+	int result = internal_read_reg_timeout(fd, reg, val, 1000);
 	//close(fd);
 	return result;
 
@@ -726,7 +726,7 @@ int internal_read_reg(int fd, icmreg_t reg, unsigned int *val)
 		*val = buff[4];
 	return 0;
 }
-int internal_read_reg_timeout(int fd, icmreg_t reg, unsigned int *val, long int timeout_sec)
+int internal_read_reg_timeout(int fd, icmreg_t reg, unsigned int *val, long int timeout_usec)
 {
 	int result = -1, select_result = -1;
 	unsigned char temp_buf[5];
@@ -744,8 +744,8 @@ int internal_read_reg_timeout(int fd, icmreg_t reg, unsigned int *val, long int 
 	temp_buf[2] = reg & 0xFF;
 	temp_buf[3] = 0x01;
 
-	timeout.tv_sec = timeout_sec;
-	timeout.tv_usec = 0;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = timeout_usec;
 
 	FD_ZERO(&select_set);
 	FD_SET(fd, &select_set);
@@ -1007,7 +1007,7 @@ int BobWriteReg(icmreg_t reg, unsigned int val)
         return -1;
     }
 	//EyelockLog(logger, DEBUG, "BoB => @@@ write data reg=%d value=%d @@@", reg, val);
-	int result = internal_write_reg(fd, reg, val);
+	int result = internal_write_reg_timeout(fd, reg, val, 1000);
 	//close(fd);
 	return result;
 
@@ -1049,7 +1049,7 @@ int internal_write_reg(int fd, icmreg_t reg, unsigned int val)
 	read(fd, buff,4);
 	return result;
 }
-int internal_write_reg_timeout(int fd, icmreg_t reg, unsigned int val, long int timeout_sec)
+int internal_write_reg_timeout(int fd, icmreg_t reg, unsigned int val, long int timeout_usec)
 {
 	int result = -1, select_result = -1;
 	unsigned char temp_buf[5];
@@ -1068,8 +1068,8 @@ int internal_write_reg_timeout(int fd, icmreg_t reg, unsigned int val, long int 
 	temp_buf[3] = 0x01;
 	temp_buf[4] = val;
 
-	timeout.tv_sec = timeout_sec;
-	timeout.tv_usec = 0;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = timeout_usec;
 
 	FD_ZERO(&select_set);
 	FD_SET(fd, &select_set);
