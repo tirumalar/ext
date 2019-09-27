@@ -309,6 +309,15 @@ upgradeMaster(){
 	fi
 	rm "${NEW_CYP_RULE}"
 	
+	# changing usb network adapter systemd rule if needed
+	CUR_USBNET_SYSTEMD_RULE='/lib/systemd/system/eyelock-ext-usbnet.service'
+	NEW_USBNET_SYSTEMD_RULE='/home/root/eyelock-ext-usbnet.service'
+	if ! diff -q "${CUR_USBNET_SYSTEMD_RULE}" "${NEW_USBNET_SYSTEMD_RULE}"
+	then 
+		mv "${NEW_USBNET_SYSTEMD_RULE}" "${CUR_USBNET_SYSTEMD_RULE}" 
+	fi
+	rm "${NEW_USBNET_SYSTEMD_RULE}"
+	
 	# changing dhcp exit hook if needed
 	CUR_DHCP_HOOK='/etc/dhcp/dhclient-exit-hooks.d/eyelock_dhcp_exit_hook'
 	NEW_DHCP_HOOK='/home/root/eyelock_dhcp_exit_hook'
