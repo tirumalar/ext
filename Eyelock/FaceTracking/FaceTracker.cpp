@@ -630,7 +630,7 @@ void FaceTracker::AdaptiveGain(int faceWidth, int CameraState)
 	// int Gain = FaceWidthGainMap.find(faceWidth)->second;
 	int Gain = CalculateGainWithKH(faceWidth, CameraState);
 	// printf("FaceTracker:: FaceWidth %d Gain %d\n", faceWidth, Gain);
-	sprintf(buff,"wcr(0x1f,0x305e,%d)", Gain);
+	sprintf(buff,"wcr(0x1B,0x305e,%d)", Gain);
 	port_com_send(buff);
 }
 
