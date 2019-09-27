@@ -2529,16 +2529,23 @@ void ImageProcessor::CreateFaceWidthGainMap()
 int ImageProcessor::CalculateGainWithKH(int facewidth, int CameraId)
 {
 	int KF = m_AdaptiveGainFactor;
+	int gain;
 
 	// 	printf("m_AdaptiveGainFactor...%d  Adjust----%f\n", m_AdaptiveGainFactor, m_AdaptiveGainAuxAdjust);
-	if((CameraId == IRISCAM_AUX_LEFT) || (CameraId == IRISCAM_AUX_RIGHT))
+	if((CameraId == IRISCAM_AUX_LEFT) || (CameraId == IRISCAM_AUX_RIGHT)){
 		KF = m_AdaptiveGainAuxAdjust * m_AdaptiveGainFactor;
-
+		gain = 120; // This code is used only for display on iris cameras so hardcorded current aux values
+	}
+	else{
+		gain =43;
+	}
 	float KG = 0.000173;
 	int KH = 8;
 
 	// gain = KG * (KF/facewidth + KH)2
-	int gain = KG * pow(((KF/facewidth) + KH), 2);
+
+	if(facewidth)
+		gain = KG * pow(((KF/facewidth) + KH), 2);
 
 	if(gain >= 255)
 		gain = 255;

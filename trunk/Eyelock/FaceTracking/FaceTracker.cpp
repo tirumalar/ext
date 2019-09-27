@@ -29,7 +29,7 @@ Mat RotatedfaceImg;
 
 // std::chrono:: time_point<std::chrono::system_clock> start_mode_change;
 
-int  FindEyeLocation( Mat frame , Point &eyes, int &eye_size, Rect &face, int min_face_size, int max_face_size);
+int  FindEyeLocation( Mat frame , Point &eyes, float &eye_size, Rect &face, int min_face_size, int max_face_size);
 int face_init();
 float read_angle(void);
 
@@ -588,16 +588,22 @@ int FaceTracker::CalculateGain(int facewidth)
 int FaceTracker::CalculateGainWithKH(int facewidth, int CameraState)
 {
 	int KF = m_AdaptiveGainFactor;
+	int gain;
 
 // 	printf("m_AdaptiveGainFactor...%d  Adjust----%f\n", m_AdaptiveGainFactor, m_AdaptiveGainAuxAdjust);
-	if(CameraState == STATE_AUX_IRIS)
+	if(CameraState == STATE_AUX_IRIS){
 		KF = m_AdaptiveGainAuxAdjust * m_AdaptiveGainFactor;
+		gain = m_LeftAuxIrisCamDigitalGain;
+	}else{
+		gain = m_LeftMainIrisCamDigitalGain;
+	}
 
 	float KG = 0.000173;
 	int KH = 8;
 
 	// gain = KG * (KF/facewidth + KH)2
-	int gain = KG * pow(((KF/facewidth) + KH), 2);
+	if(facewidth)
+		gain = KG * pow(((KF/facewidth) + KH), 2);
 
 	if(gain >= 255)
 		gain = 255;
