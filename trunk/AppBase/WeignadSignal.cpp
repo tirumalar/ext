@@ -84,18 +84,7 @@ void WeignadSignal::Send(const char *data)
 				EyelockLog(logger, DEBUG, " %s Writing data to I2C @ BobSetData ", name.c_str());
 				PrintForDebug(string);
 			}
-
-			result = BobSendAcsData((void *)string, m_bitcount);
-		    if(result != 0) {
-		    	EyelockLog(logger, ERROR, "%s I2CBus Data Write failed @ BobSendAcsData ", name.c_str());
-		    	fprintf(stderr, "%s I2CBus Data Write failed @ BobSendAcsData\n", name.c_str()); fflush(stdout); return;
-		    }
-
-		    if (m_transTOC)
-		    	result = BobSetACSTypeBits(m_bitcount);
-
-// old code
-/*			result = BobSetData((void *)string, bytes);
+			result = BobSetData((void *)string, bytes);
 		    if(result != 0) {
 		    	EyelockLog(logger, ERROR, "%s I2CBus Data Write failed @ BobSetData ", name.c_str());
 		    	fprintf(stderr, "%s I2CBus Data Write failed @ BobSetData\n", name.c_str()); fflush(stdout); return;
@@ -109,8 +98,6 @@ void WeignadSignal::Send(const char *data)
 		    	EyelockLog(logger, ERROR, "%s I2CBus Command Write failed @ BobSetDataLength or BobSetCommand ", name.c_str());
 		    	fprintf(stderr, "%s I2CBus Command Write failed @ BobSetDataLength or BobSetCommand\n", name.c_str()); fflush(stdout); return;
 			}
-*/
-// end old code
 
 		    if(m_debug)
 		    	EyelockLog(logger, DEBUG, " %s Writing data to I2C Length %d", name.c_str(), m_bitcount);

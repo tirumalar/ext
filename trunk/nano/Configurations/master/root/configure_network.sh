@@ -182,7 +182,6 @@ then
 		sleep "${DHCP_RETRY_DELAY}"
 	done
 
-	killall -KILL dhclient
 	
 	if ! ifconfig "${IFACE}" | grep -q 'inet addr'
 	then
@@ -217,7 +216,7 @@ elif [[ ${DHCP_MODE_6_STR} == 'information-only' ]]
 then 
 	timeout "${DHCP6_TIMEOUT}" bash -c "dhclient -1 -d -v -6 -S ${IFACE}"
 else 
-	echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - IPv6 is disabled" >> /home/root/nxtLog.log
+	echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - DHCP for IPv6 is disabled" >> /home/root/nxtLog.log
 	# none - IPv6 dhcp disabled
 fi
 

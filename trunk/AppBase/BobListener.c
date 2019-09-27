@@ -682,7 +682,7 @@ int BobReadReg(icmreg_t reg, unsigned int *val)
 		EyelockLog(logger, ERROR, "BobReadReg:BoB => Error starting interface");
         return -1;
     }
-	int result = internal_read_reg_timeout(fd, reg, val, 1000);
+	int result = internal_read_reg(fd, reg, val);
 	//close(fd);
 	return result;
 
@@ -726,7 +726,7 @@ int internal_read_reg(int fd, icmreg_t reg, unsigned int *val)
 		*val = buff[4];
 	return 0;
 }
-int internal_read_reg_timeout(int fd, icmreg_t reg, unsigned int *val, long int timeout_usec)
+int internal_read_reg_timeout(int fd, icmreg_t reg, unsigned int *val, long int timeout_sec)
 {
 	int result = -1, select_result = -1;
 	unsigned char temp_buf[5];
@@ -744,8 +744,8 @@ int internal_read_reg_timeout(int fd, icmreg_t reg, unsigned int *val, long int 
 	temp_buf[2] = reg & 0xFF;
 	temp_buf[3] = 0x01;
 
-	timeout.tv_sec = 0;
-	timeout.tv_usec = timeout_usec;
+	timeout.tv_sec = timeout_sec;
+	timeout.tv_usec = 0;
 
 	FD_ZERO(&select_set);
 	FD_SET(fd, &select_set);
@@ -1007,7 +1007,7 @@ int BobWriteReg(icmreg_t reg, unsigned int val)
         return -1;
     }
 	//EyelockLog(logger, DEBUG, "BoB => @@@ write data reg=%d value=%d @@@", reg, val);
-	int result = internal_write_reg_timeout(fd, reg, val, 1000);
+	int result = internal_write_reg(fd, reg, val);
 	//close(fd);
 	return result;
 
@@ -1049,7 +1049,7 @@ int internal_write_reg(int fd, icmreg_t reg, unsigned int val)
 	read(fd, buff,4);
 	return result;
 }
-int internal_write_reg_timeout(int fd, icmreg_t reg, unsigned int val, long int timeout_usec)
+int internal_write_reg_timeout(int fd, icmreg_t reg, unsigned int val, long int timeout_sec)
 {
 	int result = -1, select_result = -1;
 	unsigned char temp_buf[5];
@@ -1068,8 +1068,8 @@ int internal_write_reg_timeout(int fd, icmreg_t reg, unsigned int val, long int 
 	temp_buf[3] = 0x01;
 	temp_buf[4] = val;
 
-	timeout.tv_sec = 0;
-	timeout.tv_usec = timeout_usec;
+	timeout.tv_sec = timeout_sec;
+	timeout.tv_usec = 0;
 
 	FD_ZERO(&select_set);
 	FD_SET(fd, &select_set);
@@ -1615,54 +1615,6 @@ int BobSetDataAndRunCommand(void *ptr, int len, int cmd)
 	result = BobWriteArray(BOB_ACCESS_DATA_OFFSET, ptr, len);
 	usleep(5000);
 	result = BobWriteReg(BOB_COMMAND_OFFSET, cmd);
-	BobMutexEnd();
-	usleep(100);
-	return result;
-}
-
-int BobSendAcsData(void *ptr, int bitLen)
-{
-	int result = 1;
-	int fd = 0;
-	int byteLen = (bitLen + 7) / 8;
-
-	usleep(100);
-	BobMutexStart();
-
-	fd = i2c_start_transaction();
-	if(fd == 0)
-	{
-		EyelockLog(logger, ERROR, "BobSendAcsData : BoB => Error starting interface");
-		return -1;
-	}
-	result = internal_write_array_timeout(fd, BOB_ACCESS_DATA_OFFSET, ptr, byteLen, 1);
-	if(result != 0)
-	{
-		EyelockLog(logger, ERROR, "BobSendAcsData : BoB => Error writing data array");
-		return -1;
-	}
-
-	usleep(5000);
-	result = BobWriteReg(BOB_DATA_LENGTH_OFFSET, 0);
-	if(result != 0)
-	{
-		EyelockLog(logger, ERROR, "BobSendAcsData : BoB => Error writing data array length");
-		return -1;
-	}
-	result = BobWriteReg(BOB_DATA_LENGTH_OFFSET+1, bitLen);
-	if(result != 0)
-	{
-		EyelockLog(logger, ERROR, "BobSendAcsData : BoB => Error writing data array length");
-		return -1;
-	}
-	usleep(100);
-	result = BobWriteReg(BOB_COMMAND_OFFSET, BOB_COMMAND_SEND);
-	if(result != 0)
-	{
-		EyelockLog(logger, ERROR, "BobSendAcsData : BoB => Error writing command");
-		return -1;
-	}
-
 	BobMutexEnd();
 	usleep(100);
 	return result;
