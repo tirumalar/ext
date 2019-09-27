@@ -115,7 +115,7 @@ private:
 	int noeyesframe;
 	int agc_val;
 
-	int eye_size;
+	float eye_size;
 	float p; //AGC
 
 	int agc_set_gain;
