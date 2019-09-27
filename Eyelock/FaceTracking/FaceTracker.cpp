@@ -151,6 +151,9 @@ FaceTracker::FaceTracker(char* filename)
 ,m_AdaptiveGainAuxAdjust(1.25)
 ,m_CalibrationImageSize(1200)
 ,m_bCalibImageSizeIs1280(false)
+,m_EnableIrisCameraPingPong(false)
+,m_NearSwitchThreshold(35)
+,m_FarSwitchThreshold(45)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -289,6 +292,11 @@ FaceTracker::FaceTracker(char* filename)
 	m_AdaptiveGain = EyelockConfig.getValue("FTracker.AdaptiveGain", false);
 	m_AdaptiveGainFactor = EyelockConfig.getValue("FTracker.AdaptiveGainFactor",20000);
 	m_AdaptiveGainAuxAdjust = EyelockConfig.getValue("FTracker.AdaptiveGainAuxAdjust",float(1.25));
+	
+	// PingPong Parameters - 35-45
+	m_EnableIrisCameraPingPong=EyelockConfig.getValue("FTracker.PingPong",false);
+	m_NearSwitchThreshold = EyelockConfig.getValue("FTracker.NearSwitchThreshold",35);
+	m_FarSwitchThreshold = EyelockConfig.getValue("FTracker.FarSwitchThreshold",45);
 	
 	if (m_OIMFTPEnabled) {
 		// Calibration Parameters from CalRectFromOIM.ini
@@ -626,16 +634,30 @@ void FaceTracker::AdaptiveGain(int faceWidth, int CameraState)
 	port_com_send(buff);
 }
 
-void FaceTracker::SwitchIrisCameras(bool mode)
+void FaceTracker::SwitchIrisCameras(float eye_size, bool mode)
 {
 	EyelockLog(logger, TRACE, "SwitchIrisCameras");
-
 	char cmd[100];
-	if (mode)
-		sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY); // --- Main
-	else
-		sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY); // --- AUX
-
+	if(mode){
+		if(m_EnableIrisCameraPingPong){
+			if((eye_size <= m_FarSwitchThreshold) && (eye_size >= m_NearSwitchThreshold))
+				sprintf(cmd,"set_cam_mode(0x47,%d)",FRAME_DELAY); // both Main and Aux
+			else
+				sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY); // --- Main
+		}else{
+			sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY); // --- Main
+		}
+	}
+	else{
+		if(m_EnableIrisCameraPingPong){
+			if((eye_size <= m_FarSwitchThreshold) && (eye_size >= m_NearSwitchThreshold))
+				sprintf(cmd,"set_cam_mode(0x47,%d)",FRAME_DELAY); // both main and aux
+			else
+				sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY); // --- Aux
+		}else{
+			sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY); // --- AUX
+		}
+	}
 	port_com_send(cmd);
 }
 
@@ -1731,7 +1753,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						// enable main camera and set led currnet
 						DimmFaceForIris();											//Dim face settings
 						MainIrisSettings(eye_size, STATE_MAIN_IRIS);											//change to Iris settings
-						SwitchIrisCameras(true);									//switch cameras
+						SwitchIrisCameras(eye_size, true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
 						m_ProjPtr = true;		//Added by Mo
 						break;
@@ -1739,7 +1761,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						// enable aux camera and set led currnet
 						DimmFaceForIris();											//Dim face settings
 						MainIrisSettings(eye_size, STATE_AUX_IRIS);											//change to Iris settings
-						SwitchIrisCameras(false);									//switch cameras
+						SwitchIrisCameras(eye_size, false);									//switch cameras
 						stateofIrisCameras = STATE_AUX_IRIS;
 						m_ProjPtr = true;		//Added by Mo
 						break;
@@ -1767,7 +1789,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						//dimmed down
 						//DimmFaceForIris();											//Dim face settings
 						MainIrisSettings(eye_size, STATE_MAIN_IRIS);											//change to Iris settings
-						SwitchIrisCameras(true);									//switch cameras
+						SwitchIrisCameras(eye_size, true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
 						m_ProjPtr = true;		//Added by Mo
 						break;
@@ -1793,7 +1815,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							//dimmed down
 							//DimmFaceForIris();
 							MainIrisSettings(eye_size, STATE_AUX_IRIS);											//change to Iris settings
-							SwitchIrisCameras(false);									//switch cameras
+							SwitchIrisCameras(eye_size, false);									//switch cameras
 							stateofIrisCameras = STATE_AUX_IRIS;
 							m_ProjPtr = true;		//Added by Mo
 							break;
@@ -1813,7 +1835,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						// no need to change voltage or current
 						DimmFaceForIris();											//Dim face settings
 						MainIrisSettings(eye_size, STATE_AUX_IRIS);											//change to Iris settings
-						SwitchIrisCameras(false);									//switch cameras
+						SwitchIrisCameras(eye_size, false);									//switch cameras
 						stateofIrisCameras = STATE_AUX_IRIS;
 						m_ProjPtr = true;		//Added by Mo
 						break;
@@ -1821,7 +1843,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						// enable main cameras and set
 						DimmFaceForIris();											//Dim face settings
 						MainIrisSettings(eye_size, STATE_MAIN_IRIS);											//change to Iris settings
-						SwitchIrisCameras(true);									//switch cameras
+						SwitchIrisCameras(eye_size, true);									//switch cameras
 						stateofIrisCameras = STATE_MAIN_IRIS;
 						m_ProjPtr = true;		//Added by Mo
 						break;

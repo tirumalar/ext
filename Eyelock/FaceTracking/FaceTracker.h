@@ -140,6 +140,12 @@ private:
 	int switchThreshold;		// 37
 	int errSwitchThreshold;		//6
 	
+	
+	// PingPong
+	int m_NearSwitchThreshold;
+	int m_FarSwitchThreshold;
+	bool m_EnableIrisCameraPingPong;
+
 	cv::Mat m_CroppedFaceImageForAGC; // For AGC
 	bool foundFace;
 	//AGC parameters
@@ -255,7 +261,7 @@ private:
 	void SelLedDistance(int val); // val between 0 and 100
 
 	void MainIrisSettings(int FaceWidth, int CameraState);
-	void SwitchIrisCameras(bool mode);
+	void SwitchIrisCameras(float eye_size, bool mode);
 	void SetFaceMode();
 
 	void DimmFaceForIris();
