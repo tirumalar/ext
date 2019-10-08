@@ -1253,7 +1253,6 @@ class INIEditor
         $bFoundDualAuthParityEnabled = FALSE;
         $bFoundDualAuthLEDEnabled = FALSE;
         $bFoundHDMatcherEnabled = FALSE;
-        $bFoundNWMatcherAddress = FALSE;
         $bFoundRelayEnable = FALSE;
      //   $bFoundEnableIEEE8021X = FALSE;
         $bFoundEnableNegativeMatchTimeout = FALSE;
@@ -1606,7 +1605,6 @@ class INIEditor
             }
             else if ($key === "GRI_HDMatcher_Address")
             {
-                $bFoundNWMatcherAddress = TRUE;
 
                 // Ok, we found the IP now we need to grab the port...
                 $networkip = trim($value);
@@ -2119,27 +2117,25 @@ class INIEditor
 		if ( !$bFound_NwListener_Debug ) {
 			$this->remove( "NwListener.Debug");
 		}
-		
-        if (!$bFoundHDMatcherEnabled && $bFoundNWMatcherAddress)
-        {
-            //$bFoundNWMatcherAddress will ONLY be true for installer mode.. so only handle removing
-            // these items if in installer mode and NM is not enabled.
-            // For admin mode... we leave it all alone...
-            // Need to set the matcherID to the LOCAL entry...
-            $this->GRI_HDMatcherID = sprintf("%d", $this->MatcherIDLocal);
-            $this->set("GRI.HDMatcherID", $this->GRI_HDMatcherID);
-            
-            //Remove PCMATCHER fields from ini and decrease HDMatcherCount by 1
-            if($this->MatcherIndex > -1){
-            	//remove all fields related to PCMATCHER
-            	$this->removeKeyFromINI(sprintf('GRI.HDMatcher.%d',$this->MatcherIndex));
-            	if($this->MatcherCount > 0){
-            		$this->MatcherCount = $this->MatcherCount - 1;
-            		$this->set("GRI.HDMatcherCount", $this->MatcherCount);
-            	}
-            } 
-        }
 
+        if ($_SESSION["UserName"] === "installer")
+		{		
+			if (!$bFoundHDMatcherEnabled)
+			{
+				$this->GRI_HDMatcherID = sprintf("%d", $this->MatcherIDLocal);
+				$this->set("GRI.HDMatcherID", $this->GRI_HDMatcherID);
+				
+				//Remove PCMATCHER fields from ini and decrease HDMatcherCount by 1
+				if($this->MatcherIndex > -1){
+					//remove all fields related to PCMATCHER
+					$this->removeKeyFromINI(sprintf('GRI.HDMatcher.%d',$this->MatcherIndex));
+					if($this->MatcherCount > 0){
+						$this->MatcherCount = $this->MatcherCount - 1;
+						$this->set("GRI.HDMatcherCount", $this->MatcherCount);
+					}
+				} 
+			}
+		}
 
         if ($bFound_HttpPostSenderDest || $bFound_HttpPostSenderDestPostIris ||
             $bFound_HttpPostSenderDestSignalError || $bFound_HttpPostSenderDestSignalHeartBeat ||
