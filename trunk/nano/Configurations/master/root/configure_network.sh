@@ -203,18 +203,18 @@ then
 	if [[ ${RA_MANAGED_FLAG} == 'on' ]] 
 	then
 		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - Router Advertisements: managed flag is active" >> /home/root/nxtLog.log
-		timeout "${DHCP6_TIMEOUT}" bash -c "dhclient -1 -d -v -6 -N ${IFACE}"
+		dhclient -1 -d -v -6 -N "${IFACE}" &
 	elif [[ ${RA_OTHER_FLAG} == 'on' ]] 
 	then
 		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - Router Advertisements: other flag is active" >> /home/root/nxtLog.log
-		timeout "${DHCP6_TIMEOUT}" bash -c "dhclient -1 -d -v -6 -S ${IFACE}"
+		dhclient -1 -d -v -6 -S "${IFACE}"
 	fi
 elif [[ ${DHCP_MODE_6_STR} == 'normal' ]]
 then
-	timeout "${DHCP6_TIMEOUT}" bash -c "dhclient -1 -d -v -6 -N ${IFACE}"
+	dhclient -1 -d -v -6 -N "${IFACE}" &
 elif [[ ${DHCP_MODE_6_STR} == 'information-only' ]]
 then 
-	timeout "${DHCP6_TIMEOUT}" bash -c "dhclient -1 -d -v -6 -S ${IFACE}"
+	dhclient -1 -d -v -6 -S "${IFACE}" &
 else 
 	echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - DHCP for IPv6 is disabled" >> /home/root/nxtLog.log
 	# none - IPv6 dhcp disabled
@@ -245,6 +245,8 @@ then
 	echo "nameserver ${DNS26}" >> "${RESOLV_FILE}"
 fi	
 
+bash -c "sleep 20; if grep -a 'avahi' /var/log/syslog.1 /var/log/syslog | tail -n 25 | grep -qi 'name conflict'; then systemctl restart avahi-daemon.service; fi;" &
+		
 resolvconf -u
 
 
