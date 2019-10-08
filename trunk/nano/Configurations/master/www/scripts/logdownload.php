@@ -11,7 +11,7 @@ if (!isset($_SESSION["LoggedIn"]) || $_SESSION["LoggedIn"] == false)
    header("Content-Type: application/octet-stream;  X-Content-Type-Options: nosniff;");
    header("Content-Disposition: attachment; filename={$_GET['dlfilename']}");
 $slavelog = false;
-if(isset($_GET['slavelog']))
+/*if(isset($_GET['slavelog']))
 {
 	if(!file_exists("/home/slavelogs")) //this checks for a directory too apparently.
 		mkdir("/home/slavelogs");
@@ -19,7 +19,7 @@ if(isset($_GET['slavelog']))
 	//250 will download all of the possible slave logs to the directory /home/slavelogs/
 	if($_GET['slavelog'] == "1")
 		$slavelog = true;
-}
+}*/ // ignoring slave option for EXT
 
 if (isset($_GET['logfiletype']))
 {
@@ -42,7 +42,8 @@ if (isset($_GET['logfiletype']))
 
         case '2':
         {
-          $urllog = "/var/log/messages";
+          NXTW_shell_exec("1344");
+		  $urllog = "/home/root/syslog";
 		$slaveLogPath = "/home/slavelogs/messages";
           break;
         }
@@ -93,5 +94,10 @@ if (isset($_GET['logfiletype']))
 	
 	
    readfile($urllog);
+   
+    if ($_GET['logfiletype'] === '2' )
+	{
+		shell_exec("rm /home/root/syslog");
+	}
 }
 ?>
