@@ -534,9 +534,12 @@ namespace EyelockConfigurationNS
 	}
 
 	const float GRI_LEDBrightnessDefault = 80.0f;
+	const int GRI_LEDBrightnessMaximumDefault = 128;
 	float EyelockConfiguration::getGRI_LEDBrightness()
 	{
-		return conf.getFloat(string("GRI.LEDBrightness"), GRI_LEDBrightnessDefault);
+		int LEDBrightnessMaximum = conf.getInt(string("GRI.LEDBrightnessMaximum"), GRI_LEDBrightnessMaximumDefault);
+		
+		return conf.getFloat(string("GRI.LEDBrightness"), GRI_LEDBrightnessDefault)/LEDBrightnessMaximum * 100;
 	}
 
 	bool EyelockConfiguration::setGRI_LEDBrightness(float newValue)
@@ -545,8 +548,10 @@ namespace EyelockConfigurationNS
 		{
 			return false;
 		}
+		
+		int LEDBrightnessMaximum = conf.getInt(string("GRI.LEDBrightnessMaximum"), GRI_LEDBrightnessMaximumDefault);
 
-		conf.setValue("GRI.LEDBrightness", newValue);
+		conf.setValue("GRI.LEDBrightness", newValue/100 * LEDBrightnessMaximum);
 
 		return true;
 	}
