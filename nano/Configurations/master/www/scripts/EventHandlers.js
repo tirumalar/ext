@@ -1452,18 +1452,17 @@ function HideIPv6Dlg()
  {
      
      if (document.getElementById('GRI_EnableNWHDMatcher').checked) {
-         // DMO removed to handle admin vs. installer saving issue.  See inieditor.php
-        //     $('#GRI_HDMatcher_Address').removeAttr('disabled');
-        //     $('#GRI_NWHDPort').removeAttr('disabled');
+             $('#GRI_HDMatcher_Address').removeAttr('disabled');
+             $('#GRI_NWHDPort').removeAttr('disabled');
              $('#NW_Matcher_Comm_Secure').removeAttr('disabled');
          }
          else {
-   //          $('#GRI_HDMatcher_Address').attr({
-   //              'disabled': 'disabled'
-   //          });
-    //         $('#GRI_NWHDPort').attr({
-    //             'disabled': 'disabled'
-    //         });
+             $('#GRI_HDMatcher_Address').attr({
+                 'disabled': 'disabled'
+             });
+             $('#GRI_NWHDPort').attr({
+                 'disabled': 'disabled'
+             });
              $('#NW_Matcher_Comm_Secure').attr({
                  'disabled': 'disabled'
              });
@@ -2408,4 +2407,18 @@ $(document).ready(function () {
      setEnableNegativeMatchTimeout($('#Eyelock_EnableNegativeMatchTimeout'));
  });
 
+function enableIpv6SubnetMaskValidator() {
+	var ipv6_address_value = $("#ipv6_address").val();
+	if (ipv6_address_value != '') {
+		$('#ipv6_prefix_len').attr('data-bvalidator', 'required,min[0],max[128]');
+	} else {
+		$('#ipv6_prefix_len').attr('data-bvalidator', 'min[0],max[128]');	
+	}
+}
 
+$(document).ready(function () {
+    enableIpv6SubnetMaskValidator();
+    $('#ipv6_address').on('keyup', function () {
+		enableIpv6SubnetMaskValidator();
+    });
+});

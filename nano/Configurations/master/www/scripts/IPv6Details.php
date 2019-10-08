@@ -30,7 +30,7 @@ class IPv6Details
         "DhcpMode" => "information-only",
         //"AcceptRouterAdvertisements" => "true",
         "Address" => "",
-        "SubnetPrefixLength" => "64",
+        "SubnetPrefixLength" => "",
         "Gateway" => "",
         "Dns1" => "",
         "Dns2" => ""
@@ -151,7 +151,7 @@ class IPv6Details
                     }
                     break;
                 case "ipv6_prefix_len":
-                    if (ctype_digit($value))
+                    if (ctype_digit($value) || $value === "")
                     {
                         $this->SubnetPrefixLength = $value;
                     }
