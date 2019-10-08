@@ -24,7 +24,7 @@ passive
 ls
 get $AUTHFILE auth.$$
 get $REJFILE rej.$$
-get $TAMPERFILE tamper.$$
+get $TAMPERFILE tamper1.$$
 quit
 EOT
 
