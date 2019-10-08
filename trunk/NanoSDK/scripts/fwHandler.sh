@@ -429,7 +429,7 @@ rebootDevice(){
 	
 	cd /home/root
 
-	NOW=$(date +"%Y-%m-%d, %T.000")
+	NOW=$(date -u +"%Y-%m-%d, %T.000")
 	echo "$NOW, INFO , [Eyelock], - Rebooting OIM" >> /home/root/nxtLog.log
 
 	# reboot OIM
@@ -440,7 +440,7 @@ rebootDevice(){
 
 	sync
 	
-	NOW=$(date +"%Y-%m-%d, %T.000")
+	NOW=$(date -u +"%Y-%m-%d, %T.000")
 	echo "$NOW, INFO , [Eyelock], - Rebooting COTS" >> /home/root/nxtLog.log
 	
 	reboot
@@ -864,7 +864,7 @@ upgrade()
 	# adding upgrade event to logs
 	NOW=$(date -u +"%Y-%m-%d %T, %Z")
 	echo "$NOW > SW Upgrade: AppVer: ${nanoVersion}; ICM FW: ${bobVersion}" >> /home/root/nxtEvent.log
-	NOW=$(date +"%Y-%m-%d, %T.000")
+	NOW=$(date -u +"%Y-%m-%d, %T.000")
 	echo "$NOW, INFO , [Eyelock], - SW Upgrade: AppVer: ${nanoVersion}; ICM FW: ${bobVersion}" >> /home/root/nxtLog.log
 
 	${logger} -L"Upgrade done."
@@ -994,7 +994,7 @@ restore(){
 	# adding restore event to logs
 	NOW=$(date -u +"%Y-%m-%d %T, %Z")
 	echo "$NOW > SW Restore: ${restorePointName}" >> /home/root/nxtEvent.log
-	NOW=$(date +"%Y-%m-%d, %T.000")
+	NOW=$(date -u +"%Y-%m-%d, %T.000")
 	echo "$NOW, INFO , [Eyelock], - Restore: ${restorePointName}" >> /home/root/nxtLog.log
 
 	sync
