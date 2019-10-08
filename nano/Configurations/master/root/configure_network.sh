@@ -1,4 +1,7 @@
 #!/bin/bash
+source '/home/root/EyelockLog.sh'
+EYELOCK_LOGLABEL='NetworkConfiguration'
+
 NUMBER_REGEX='^[0-9]+$'
 
 configureStatic(){
@@ -12,7 +15,7 @@ configureStatic(){
 	then
 		# in NXT it is /home/wpa_supplicant
 		killall -KILL wpa_supplicant
-		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - 802.1x is enabled, starting wpa_supplicant" >> /home/root/nxtLog.log
+		EyelockLog "802.1x is enabled, starting wpa_supplicant" 'INFO'
 		wpa_supplicant -c /home/www-internal/802.1XCerts/wpa_supplicant-wired.conf -D wired -i "${IFACE}" -ddd -t >> /home/root/wpa_supplicant.log &
 	fi
 	#sleep "${WPA_TIMEOUT}"
@@ -33,7 +36,7 @@ configureDhcp(){
 	then
 		# in NXT it is /home/wpa_supplicant
 		killall -KILL wpa_supplicant
-		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - 802.1x is enabled, starting wpa_supplicant" >> /home/root/nxtLog.log
+		EyelockLog "802.1x is enabled, starting wpa_supplicant" 'INFO'
 		wpa_supplicant -c /home/www-internal/802.1XCerts/wpa_supplicant-wired.conf -D wired -i "${IFACE}" -ddd -t >> /home/root/wpa_supplicant.log &
 		sleep "${WPA_TIMEOUT}"
 	fi
@@ -42,7 +45,7 @@ configureDhcp(){
 }
 
 sleep 5
-echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - USB-ethernet adapter connected" >> /home/root/nxtLog.log
+EyelockLog "USB-ethernet adapter connected" 'INFO'
 
 INTERFACES_FILE='/home/www-internal/interfaces'
 INTERFACES_FILE_6='/home/www-internal/interfaces6'
@@ -79,7 +82,7 @@ DHCP6_TIMEOUT=120
 WPA_TIMEOUT=60
 
 MAC="$(grep '^hwaddress ether' ${INTERFACES_FILE} | cut -d' ' -f3)"
-echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - MAC address: ${MAC}" >> /home/root/nxtLog.log
+EyelockLog "MAC address: ${MAC}" 'INFO'
 
 # 802.1X
 if grep -q "^#EnableIEEE8021X=true" /home/www-internal/802.1XCerts/wpa_supplicant-wired.conf
@@ -92,9 +95,9 @@ fi
 # 2 if file not found
 if [[ ${ENABLED_8021X} == 'false' ]]
 then
-	echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - 802.1x is disabled" >> /home/root/nxtLog.log
+	EyelockLog "802.1x is disabled" 'INFO'
 else
-	echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - 802.1x is enabled, wpa_supplicant will be started" >> /home/root/nxtLog.log
+	EyelockLog "802.1x is enabled, wpa_supplicant will be started" 'INFO'
 		
 	#log rotation
 	bash -c "while true; do /home/root/rotateLogs.sh /home/root/wpa_supplicant.log 1000; sleep 10; done" &
@@ -151,12 +154,12 @@ then
 	
 	for (( c=1; c<=3; c++ ))
 	do
-		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - configuring static IP ${IP}, netmask ${MASK}, broadcast ${BRDCAST}, gateway ${GW} (attempt ${c})" >> /home/root/nxtLog.log
+		EyelockLog "configuring static IP ${IP}, netmask ${MASK}, broadcast ${BRDCAST}, gateway ${GW} (attempt ${c})" 'INFO'
 		configureStatic
 		sleep 3
 		if ifconfig "${IFACE}" | grep -q 'RUNNING'
 		then
-			echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - static IP configured" >> /home/root/nxtLog.log
+			EyelockLog "static IP configured" 'INFO'
 			break
 		fi
 	done
@@ -167,15 +170,15 @@ elif grep -q "${IFACE} inet dhcp" "${INTERFACES_FILE}"
 then
 	for (( c=1; c<="${DHCP_RETRIES}"; c++ ))
 	do
-		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - configuring DHCP attempt ${c} out of ${DHCP_RETRIES}, timeout ${DHCP_TIMEOUT}" >> /home/root/nxtLog.log
-
+		EyelockLog "configuring DHCP attempt ${c} out of ${DHCP_RETRIES}, timeout ${DHCP_TIMEOUT}" 'INFO'
+		
 		configureDhcp
 		sleep "${DHCP_TIMEOUT}"
 		if ifconfig "${IFACE}" | grep -q 'RUNNING'
 		then
 			if ifconfig "${IFACE}" | grep -q 'inet addr'
 			then
-				echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - DHCP configured" >> /home/root/nxtLog.log
+				EyelockLog "DHCP configured" 'INFO'
 				break
 			fi
 		fi
@@ -185,7 +188,7 @@ then
 	
 	if ! ifconfig "${IFACE}" | grep -q 'inet addr'
 	then
-		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - configuring DHCP failed. Falling back to the default IP" >> /home/root/nxtLog.log
+		EyelockLog "configuring DHCP failed. Falling back to the default IP" 'INFO'
 		DEFAULT_IP_LABEL='default'
 		ifconfig "${IFACE}:${DEFAULT_IP_LABEL}" hw ether "${MAC}"
 		sleep 1
@@ -202,11 +205,11 @@ then
 	rm "${RADVDUMP_OUT}"
 	if [[ ${RA_MANAGED_FLAG} == 'on' ]] 
 	then
-		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - Router Advertisements: managed flag is active" >> /home/root/nxtLog.log
+		EyelockLog "Router Advertisements: managed flag is active" 'INFO'
 		dhclient -1 -d -v -6 -N "${IFACE}" &
 	elif [[ ${RA_OTHER_FLAG} == 'on' ]] 
 	then
-		echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - Router Advertisements: other flag is active" >> /home/root/nxtLog.log
+		EyelockLog "Router Advertisements: other flag is active" 'INFO'
 		dhclient -1 -d -v -6 -S "${IFACE}"
 	fi
 elif [[ ${DHCP_MODE_6_STR} == 'normal' ]]
@@ -216,7 +219,7 @@ elif [[ ${DHCP_MODE_6_STR} == 'information-only' ]]
 then 
 	dhclient -1 -d -v -6 -S "${IFACE}" &
 else 
-	echo "$(date +'%Y-%m-%d, %T.000'), INFO , [NetworkConfiguration], - DHCP for IPv6 is disabled" >> /home/root/nxtLog.log
+	EyelockLog "DHCP for IPv6 is disabled" 'INFO'
 	# none - IPv6 dhcp disabled
 fi
 

@@ -117,7 +117,7 @@ NOW=$(date -u +"%Y-%m-%d %T, %Z")
 echo "$NOW > Factory Reset" > nxtEvent.log
 
 rm nxtLog*.log*
-NOW=$(date +"%Y-%m-%d, %T.000")
+NOW=$(date -u +"%Y-%m-%d, %T.000")
 echo "$NOW, INFO , [Eyelock], - Factory Reset" > nxtLog.log
 
 if grep -qi '^eyelock.hardwaretype=1' '/home/default/Eyelock.ini'

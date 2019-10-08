@@ -46,7 +46,7 @@ chmod +x /home/root/ntpdate
 NOW=$(date -u +"%Y-%m-%d %T, %Z")
 echo "$NOW > Eyelock NXT Start" >> /home/root/nxtEvent.log
 
-NOW=$(date +"%Y-%m-%d, %T.000")
+NOW=$(date -u +"%Y-%m-%d, %T.000")
 echo "$NOW, INFO , [Eyelock], - Eyelock NXT Start" >> /home/root/nxtLog.log
 
 cd /home/
