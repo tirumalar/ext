@@ -1229,7 +1229,7 @@ var download = function() {
 		 if(logtype == "1" || logtype == "2")
 		 {
            ifrm.src = "/scripts/logdownload.php?logfiletype=" + logtype + "&" + "dlfilename=camera1_" + dllogname + "&slavelog=0";// + slaveLog;
-		   ifrm2.src ="/scripts/logdownload.php?logfiletype=" + logtype + "&" + "dlfilename=camera2_" + dllogname + "&slavelog=1";
+		   //ifrm2.src ="/scripts/logdownload.php?logfiletype=" + logtype + "&" + "dlfilename=camera2_" + dllogname + "&slavelog=1";
 		 }
 		 else
 			  ifrm.src = "/scripts/logdownload.php?logfiletype=" + logtype + "&" + "dlfilename=" + dllogname + "&slavelog=0";

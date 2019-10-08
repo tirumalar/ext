@@ -1122,6 +1122,11 @@ int processCommand(char *str)
 			system("rm /etc/resolv.conf; mv /home/www-internal/resolv.conf.temp /etc/resolv.conf");
 			break;
 		}
+		case 1344:
+		{
+			system("cat /var/log/syslog.1 /var/log/syslog > /home/root/syslog");
+			break;
+		}
 		default:
 			printf("Unknown token %d\n", nToken);
 			len = sprintf(szTokenBuffer, "echo 'Unknown token %d\n'", nToken);
