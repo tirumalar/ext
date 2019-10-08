@@ -39,7 +39,15 @@ $interfaceSettings->LoadInterfaceSettings($eyeLockINI->HardwareType); // Must lo
 //$IEEE802Settings->LoadIEEE802Config();
 $ipv6Settings->LoadConfig();
 $ipv6Settings->ParseRequest($_POST);
-$fullReboot = $ipv6Settings->SaveConfig();
+if ($_SESSION["UserName"] === "installer")
+{
+	$ipv6Settings->ParseRequest($_POST);
+	$fullReboot = $ipv6Settings->SaveConfig();
+}
+else
+{
+	$fullReboot = false;
+}
 
 if (!$IEEE802Settings->SaveIEEE802Config($_POST))
 {
