@@ -31,7 +31,7 @@ nxtW
 KeyMgr
 icm_communicator_EXT
 MultiChannelLogger
-FaceTracker
+ExtCapture
 i2cHandler
 )
 

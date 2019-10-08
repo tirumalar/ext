@@ -92,6 +92,7 @@ rsync -r --exclude='sdk_upgradeSlaveFirmware.sh' "${EYELOCK_WS_EXT}/NanoSDK/scri
 cp "${EYELOCK_WS_EXT}/Eyelock/data/keys.db" "${ROOT_DIR}"
 cp "${EYELOCK_WS_EXT}/linux/bin/Release/Eyelock" "${ROOT_DIR}"
 cp "${EYELOCK_WS_EXT}/linux/bin/Release/FaceTracker" "${ROOT_DIR}"
+cp "${EYELOCK_WS_EXT}/linux/bin/Release/ExtCapture" "${ROOT_DIR}"
 
 cp "${EYELOCK_WS_EXT}/linux/bin/Release/KeyMgr" "${ROOT_DIR}"
 cp "${EYELOCK_WS_EXT}/icm_communicator_EXT/icm_communicator" "${ROOT_DIR}"

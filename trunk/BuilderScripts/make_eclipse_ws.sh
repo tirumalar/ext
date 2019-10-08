@@ -28,6 +28,7 @@ MultiChannelLogger
 EXTFaceDetection/CLM
 EXTFaceDetection/facedetect
 EXTFaceDetection/FaceTracker
+ExtFactoryTools/ExtCapture
 i2cHandler
 )
 
