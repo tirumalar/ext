@@ -108,7 +108,7 @@ function updateDisplay(theResponse)
         var imgLine = ' ';
 
         logLine = "<div id='logheaderdiv' style='border-top: solid 1px #a6b969; border-left: solid 1px #a6b969; border-right: solid 1px #a6b969; margin-left: 2%; font-size: 12px; margin-top: 10px; margin-bottom: 0px; width: 96%; text-align: left;overflow: auto'>";
-        logLine += "<table id='logheadertable' class='sizeabletable' width='100%' border='0' cellpadding='0' cellspacing='0' style='table-layout:fixed;resize:horizontal'>";
+        logLine += "<table id='logheadertable' class='sizeabletable' width='100%' border='0' cellpadding='0' cellspacing='0' style='table-layout:fixed;resize:horizontal;font-size:12px'>";
 		logLine += "<tr><th style='width:17em' class='right'>" + GlobalStrings.LogHeaderStatus + "</th><th style='width:12em' class='right'>" + GlobalStrings.LogHeaderDate + "</th><th style='width:9em' class='right'>" + GlobalStrings.LogHeaderName + "</th><th style='width:7em' class='right'>" + GlobalStrings.LogHeaderCode + "</th><th>" + GlobalStrings.LogHeaderMessage +"/GUID" + "</th></tr>";
         logLine += "</table></div>"
 
@@ -118,7 +118,7 @@ function updateDisplay(theResponse)
         if (currentLogValue.length <= 0)
             logLine += Globalstrings.logNoInfo;
         else {
-            logLine += "<table id='logtable' class='sizeabletable' tabindex='0' width='100%' border='0' cellpadding='0' cellspacing='0' style='table-layout:fixed;resize:horizontal'>";
+            logLine += "<table id='logtable' class='sizeabletable' tabindex='0' width='100%' border='0' cellpadding='0' cellspacing='0' style='table-layout:fixed;resize:horizontal;font-size:12px'>";
 
             for (i = currentLogValue.length-1; i >= 0; i--)
             {
