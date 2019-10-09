@@ -2418,7 +2418,7 @@ function enableIpv6SubnetMaskValidator() {
 
 $(document).ready(function () {
     enableIpv6SubnetMaskValidator();
-    $('#ipv6_address').on('keyup', function () {
+    $('#ipv6_address').on('change', function () {
 		enableIpv6SubnetMaskValidator();
     });
 });
