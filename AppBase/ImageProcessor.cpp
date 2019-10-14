@@ -657,7 +657,7 @@ m_LedConsolidator = NULL;
 		IplImageScreen1 = cvLoadImage("/home/root/screens/Slide1.BMP", cv::IMREAD_COLOR);
 		IplImageScreen2 = cvLoadImage("/home/root/screens/Slide2.BMP", cv::IMREAD_COLOR);
 		IplImageScreen3 = cvLoadImage("/home/root/screens/Slide3.BMP", cv::IMREAD_COLOR);
-		//  MatImgScreen3 = cv::cvarrToMat(IplImageScreen3);
+		MatImgScreen3 = cv::cvarrToMat(IplImageScreen3);
 		cvNamedWindow("EXT", CV_WINDOW_NORMAL);
 		cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
 		cvShowImage("EXT", IplImageScreen1);
@@ -3509,6 +3509,13 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 					pImage = resizeImage->imageData;
 				}
 
+				if(m_DHSScreens){
+					IplImage *imgHeader = cvCreateImageHeader(cvSize(640,480), IPL_DEPTH_8U, 1);
+					cvSetImageData(imgHeader, images.first->GetImage(), 640);
+					cv::Mat mateye = cv::cvarrToMat(imgHeader);
+					cv::cvtColor(mateye, MatColorBestEye1, CV_GRAY2BGR);
+					MatColorBestEye1.copyTo(MatImgScreen3(cv::Rect(180, 300, 640, 480)));
+				}
 				if (b_SaveBestEyes)
 				{
 					IplImage *imgHeader = cvCreateImageHeader(cvSize(640,480), IPL_DEPTH_8U, 1);
@@ -3550,6 +3557,15 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 					resizeImage = cvCreateImageHeader(cvSize(640, 480), 8, 1);
 					resizeImage = ResizeFrame(640, 480, images.second->GetImage(), cam_idd);
 					pImage = resizeImage->imageData;
+				}
+
+				// Anita on 8th Oct 2019
+				if(m_DHSScreens){
+					IplImage *imgHeader = cvCreateImageHeader(cvSize(640,480), IPL_DEPTH_8U, 1);
+					cvSetImageData(imgHeader, images.second->GetImage(), 640);
+					cv::Mat mateye = cv::cvarrToMat(imgHeader);
+					cv::cvtColor(mateye, MatColorBestEye2, CV_GRAY2BGR);
+					MatColorBestEye2.copyTo(MatImgScreen3(cv::Rect(1000, 300, 640, 480)));
 				}
 
 				if (b_SaveBestEyes)

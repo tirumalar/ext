@@ -383,6 +383,9 @@ private:
 	IplImage *IplImageScreen1;
 	IplImage *IplImageScreen2;
 	IplImage *IplImageScreen3;
+	cv::Mat MatImgScreen3;
+	cv::Mat MatColorBestEye1;
+	cv::Mat MatColorBestEye2;
 	unsigned int m_FaceFrameQueueSize;
     SocketFactory *m_socketFactory;
     bool n_bDebugFrameBuffer;
