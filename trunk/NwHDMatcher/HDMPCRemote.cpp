@@ -27,7 +27,7 @@ using std::pair;
 using std::min;
 using namespace std;
 
-HDMPCRemote::HDMPCRemote(int size, int id,const char* addr):HDMRemote(size,id,addr) {
+HDMPCRemote::HDMPCRemote(int size, int id,const char* addr):HDMRemote(size,id,0,addr) {
 	m_taskId = -1;
 	m_Status=AVAILABLE;
 }

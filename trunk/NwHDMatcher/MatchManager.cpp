@@ -64,13 +64,14 @@ void MatchManager::CreateMatchers(Configuration & conf){
     char *addressstr = "GRI.HDMatcher.%d.Address";
     for(int i=0;i<m_HDCount;i++){
 		 //LOCAL,REMOTE
-		char str[100];
+    	char str[100];
 		sprintf(str,typestr,i);
 		int matchertype = conf.getValueIndex(str,LOCAL, PCMATCHER,LOCAL,"LOCAL","REMOTE","NWMATCHER","PCMATCHER");
 		sprintf(str,buffsizestr,i);
 		int buffsize = conf.getValue(str,1024*1024);
 		sprintf(str,addressstr,i);
 		const char* addr= conf.getValue(str,"");
+		printf("Matcher %d : %d %d %s \n",i,matchertype,buffsize,addr);
 		bool matchFlag = false;
 #ifdef OTO_MATCH
 		bool dualAuth = conf.getValue("GRITrigger.DualAuthenticationMode",false);
@@ -89,15 +90,19 @@ void MatchManager::CreateMatchers(Configuration & conf){
 
 		int invalid = false;
 		if (addr == NULL)
+		{
+			printf("MatchManager***** address is NULL\n");
 			invalid = true;
+		}
 		else {
 			unsigned int i;
 			// check IP addr and port number
-			for(i = 0; i < sizeof(addr); i++)
+			for(i = 0; i < strlen(addr); i++)
 			{
 				if(addr[i] == ':')
 					break;
 			}
+
 			// check IP address "0.0.0.0"
 			if (strncmp(addr, "0.0.0.0", i) == 0 || atoi(addr+i+1) == 0) {
 				invalid = true;
