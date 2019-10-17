@@ -3,7 +3,7 @@
 #cp /home/www/nxtW /home/
 
 sleep 10
-
+echo 0 > /sys/class/amhdmitx/amhdmitx0/phy
 # On the first boot, replace the existing MAC in interfaces file with the correct one,
 # replace the existing ID file in /home/root,
 # create factory hostname file and set factory hostname
