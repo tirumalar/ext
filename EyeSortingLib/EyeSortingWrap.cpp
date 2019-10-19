@@ -46,7 +46,7 @@ EyeSortingWrap::EyeSortingWrap(int FeatureScale, int maxSpecularityValue, int Ea
 			weightSum += (weights[i]);
 		}
 		
-		int featureMask = 0xffffffff;
+		int featureMask = 0xFF; // Anita on 8th Oct 2019
 
 		float commonBitScale = float(weightSum) / 8;
 #if 0 //Anita
