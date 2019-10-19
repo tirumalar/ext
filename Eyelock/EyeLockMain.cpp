@@ -194,17 +194,19 @@ EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchP
 		AllocateOIMQueue(10); // 10 is queue sizee.  Can be replaced with config value later if necessary
 		AllocateFaceQueue(m_FaceFrameQueueSize);
 
+		// Create Cmx handler
+		pCMXHandle = new CmxHandler(conf);
+
 		// Start facetracking threads
 		startFaceTracking();
 
-		// Create Cmx handler
-		pCMXHandle = new CmxHandler(conf);
 		if (pCMXHandle)
 		{
 			pCMXHandle->SetImageProcessor(pImageProcessor->m_ImageProcessor);
 			pImageProcessor->m_ImageProcessor->SetCMXHandler(pCMXHandle);
 			pCMXHandle->SetFaceTrackingQueue(g_pOIMQueue); //DMO configure facetracking queue
 		}
+
 #endif
 
 		m_SendLed=conf.getValue("GRI.LED.SendResult",true);

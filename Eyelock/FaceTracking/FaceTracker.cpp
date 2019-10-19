@@ -154,6 +154,7 @@ FaceTracker::FaceTracker(char* filename)
 ,m_EnableIrisCameraPingPong(false)
 ,m_NearSwitchThreshold(35)
 ,m_FarSwitchThreshold(45)
+,m_CmxHandler(NULL)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -1903,6 +1904,10 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	 if (true) {//system_state == STATE_MAIN_IRIS || system_state == STATE_AUX_IRIS){ // Removed for odriod by Anita
 //		if(m_ProjPtr && eyesInViewOfIriscamNoMove){ // Removed by sarvesh
 
+		 	if(m_CmxHandler != NULL){
+		 		m_CmxHandler->SetLatestFaceCoordRect(FaceCoord);
+		 	}
+
 		 	m_LeftCameraFaceInfo.FoundFace = foundFace;
 			m_LeftCameraFaceInfo.ScaledFaceCoord = FaceCoord;
 			m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
@@ -1920,7 +1925,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 				memcpy(m_LeftCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
 				memcpy(m_RightCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
 			}
-
+#if 0 // Anita on 10th Oct
 			EyelockLog(logger, TRACE, "FaceTracking:  Pushing FaceFrame = %d\n", FaceCameraFrameNo);
 			// If we're full, the top is stale anyway, get rid of it, then add the current item
 			// Increase the size of the queues if we are dropping too many unprocessed FaceFrames here...
@@ -1933,7 +1938,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
    		    	g_pRightCameraFaceQueue->Pop();
 			g_pRightCameraFaceQueue->Push(m_RightCameraFaceInfo);
    		    EyelockLog(logger, TRACE, "FaceTracking:  Pushed Pushed RightQueue, Size() = %d\n", g_pRightCameraFaceQueue->Size());
-
+#endif
 			if(bFaceMapDebug){
 				char filename[100];
 				sprintf(filename,"FaceImage_%d_ProjPtr_%d.pgm", FaceCameraFrameNo, m_ProjPtr);
@@ -2031,6 +2036,7 @@ void *init_facetracking(void *arg) {
 	// printf("Inside init_facetracking\n");
 	FaceTracker m_faceTracker("/home/root/data/calibration/Face.ini");
 
+	m_faceTracker.m_CmxHandler = ((EyeLockMain *) arg)->GetCmxHandler();
 	EyelockLog(logger, TRACE, "init_facetracking Start FaceTracking Thread");
 
 	// Flag to enable/disable AES Encrption in port com

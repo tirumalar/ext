@@ -400,6 +400,7 @@ private:
     float getfaceDistance(cv::Rect FaceCoord);
     cv::Point2i projectPoints_IristoFace_Parallax(cv::Point2i ptrI, cv::Point2f camOffset, cv::Point2f angComp, float irisEFL, float distanceMM);
     int validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Point2i ptrI, int CameraId, unsigned char *faceImagePtr, int m_faceIndex);
+    cv::Rect m_BScaledFaceRect;
 };
 
 #endif /* IMAGEPROCESSOR_H_ */

@@ -2885,6 +2885,18 @@ void CmxHandler::SetSeed(unsigned short sd)
 	// seed=sd;
 }
 
+void CmxHandler::SetLatestFaceCoordRect(cv::Rect ScaledFaceRect)
+{
+	ScopeLock lock(m_FaceRectLock);
+
+	m_ScaledFaceRect = ScaledFaceRect;
+}
+
+cv::Rect CmxHandler::GetLatestFaceCoordRect()
+{
+	ScopeLock lock(m_FaceRectLock);
+	return m_ScaledFaceRect;
+}
 void *leftCServer(void *arg) {
 	EyelockLog(logger, TRACE, "CmxHandler::leftCServer() start");
 	PortServerInfo *ps = (PortServerInfo*) arg;
@@ -2918,9 +2930,9 @@ void *leftCServer(void *arg) {
 			return NULL;
 		}
 
-		BufferBasedFrameGrabber *pFrameGrabber =
-				(BufferBasedFrameGrabber*) me->pImageProcessor->GetFrameGrabber();
+		BufferBasedFrameGrabber *pFrameGrabber = (BufferBasedFrameGrabber*) me->pImageProcessor->GetFrameGrabber();
 		queueItem = pFrameGrabber->GetFreeBuffer();
+		queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
 		char * databuf = (char *) queueItem.m_ptr;
 
 		//  sleep(2);
@@ -3000,8 +3012,10 @@ void *leftCServer(void *arg) {
 						EyelockLog(logger, TRACE, "ImageAuthen: pFrameGrabber is full and can't push the frame: CamId:%d FrameId:%d\n", cam_id, databuf[3] & 0xff);
 					}
 
-					if (valid_image)
+					if (valid_image){
 						queueItem = pFrameGrabber->GetFreeBuffer();
+						queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
+					}
 
 					// if not put data into dummy buffer
 					if (!queueItem.m_ptr) {
@@ -3052,9 +3066,9 @@ void *leftCServer(void *arg) {
 			return NULL;
 		}
 
-		BufferBasedFrameGrabber *pFrameGrabber =
-				(BufferBasedFrameGrabber*) me->pImageProcessor->GetFrameGrabber();
+		BufferBasedFrameGrabber *pFrameGrabber = (BufferBasedFrameGrabber*) me->pImageProcessor->GetFrameGrabber();
 		queueItem = pFrameGrabber->GetFreeBuffer();
+		queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
 		char * databuf = (char *) queueItem.m_ptr;
 
 		//  sleep(2);
@@ -3138,6 +3152,7 @@ void *leftCServer(void *arg) {
 					}
 
 					queueItem = pFrameGrabber->GetFreeBuffer();
+					queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
 					// if not put data into dummy buffer
 					if (!queueItem.m_ptr) {
 						pkgs_missed++;

@@ -27,11 +27,15 @@ public:
 		framer->getIlluminatorState(ts,il0,il1);
 	}
 	virtual void clearFrameBuffer(){};
+	virtual cv::Rect getLatestScaledFaceRect(){
+		return m_ScaledFaceRect;
+	}
 protected:
 	Aquisition():temp_header(0){}
 	FrameGrabber *framer;
 	IplImage *temp_header;
 	bool m_bSingleFrame;
+	cv::Rect m_ScaledFaceRect;
 };
 
 class AquisitionFile: public Aquisition{

@@ -82,6 +82,7 @@ public:
 	int m_ImageWidth;
 	int m_ImageHeight;
 	int m_ImageSize;
+	cv::Rect m_ScaledFaceRect;
 	unsigned long m_pingTime;
 	pthread_t leftCThread;
 	pthread_t rightCThread;
@@ -95,12 +96,15 @@ public:
 	OIMQueue *m_pOIMQueue;
 
 	F2FDispatcher *pF2FDispatcher;
+	Mutex m_FaceRectLock;
 
 	bool m_ImageAuthentication;
 	unsigned short int m_Randomseed;
 	unsigned short int GenerateSeed();
 	unsigned short calc_syndrome(unsigned short syndrome, unsigned short p);
 	void SetSeed(unsigned short sd);
+	void SetLatestFaceCoordRect(cv::Rect ScaledFaceRect);
+	cv::Rect GetLatestFaceCoordRect();
 private:
     bool HandleReceiveMsg(Socket & client);
     void SendMessage(char *out_msg, int len, unsigned short randomseed);

@@ -13,8 +13,8 @@
 // 8192 left camer
 // 8193 right
 
-#define min(a,b)((a<b)?(a):(b))
-#define max(a,b)((a>b)?(a):(b))
+//#define min(a,b)((a<b)?(a):(b))
+//#define max(a,b)((a>b)?(a):(b))
 //#define WIDTH 1200
 //#define HEIGHT 960
 

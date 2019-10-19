@@ -266,6 +266,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw(){
 	m_ill0 = m_current_process_queue_item.m_ill0;
 	m_frameIndex = m_current_process_queue_item.m_frameIndex;
 	m_ts = m_current_process_queue_item.m_endTime;
+	m_ScaledFaceRect = m_current_process_queue_item.ScaledFaceRect;
 
 	EyelockLog(logger, TRACE, "get image queue m_ill0 %d, m_frameIndex %d, time %llu", m_ill0,m_frameIndex, m_ts);
 
@@ -372,6 +373,7 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 	m_ill0 = m_current_process_queue_item.m_ill0;
 	m_frameIndex = m_current_process_queue_item.m_frameIndex;
 	m_ts = m_current_process_queue_item.m_endTime;
+	m_ScaledFaceRect = m_current_process_queue_item.ScaledFaceRect;
 
 	EyelockLog(logger, TRACE, "get image queue m_ill0 %d, m_frameIndex %d, time %llu", m_ill0,m_frameIndex, m_ts);
 
