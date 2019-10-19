@@ -9,6 +9,7 @@
 #define FRAMEGRABBER_H_
 #include <stddef.h>
 #include <sys/types.h>
+#include <opencv/cv.h>
 
 class Configuration;
 
@@ -27,6 +28,10 @@ public:
 	virtual void getDims(int& width, int& height) const{}
 	virtual char *getLatestFrame_raw_nowait(){return NULL;}
 	virtual char *getLatestFrame_raw(){return 0;}
+	virtual cv::Rect getLatestScaledFaceRect(){
+		return m_ScaledFaceRect;
+	}
+
 	//virtual void getIlluminator(int& il0,int& il1){ il0 = m_ill0;il1 = m_frameIndex;}
 	virtual void getIlluminatorState(__int64_t& ts,int &il0,int& il1){ ts = m_ts,il0 = m_ill0; il1 = m_frameIndex;}
 
@@ -52,6 +57,7 @@ protected:
 	virtual void update_extra_regs(char *str);
 	int m_ill0,m_frameIndex;
 	__int64_t m_ts;
+	cv::Rect m_ScaledFaceRect;
 };
 
 

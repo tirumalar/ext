@@ -59,6 +59,7 @@ IplImage *Aquisition::getFrame()
 		}
 	}
     char *raw = framer->getLatestFrame_raw();
+    m_ScaledFaceRect = framer->getLatestScaledFaceRect();
     if(raw==0){
     	framer->stop();
     	throw "could not grab a frame";
@@ -81,6 +82,7 @@ IplImage *Aquisition::getFrame_nowait()
 	// printf ("\n\n Acquisition GetframeNoWait() \n\n");
 	// return immediately even if queue empty
     char *raw = framer->getLatestFrame_raw_nowait();
+    m_ScaledFaceRect = framer->getLatestScaledFaceRect();
 
     if (raw == NULL)
     	return NULL;
@@ -157,6 +159,7 @@ IplImage *AquisitionBuffer::getFrame()
 		}
 	}
     char *raw = framer->getLatestFrame_raw();
+    m_ScaledFaceRect = framer->getLatestScaledFaceRect();
     if(raw==0){
     	framer->stop();
     	throw "could not grab a frame";

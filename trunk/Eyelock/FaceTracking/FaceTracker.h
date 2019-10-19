@@ -37,7 +37,8 @@
 #include "FileConfiguration.h"
 #include "Configuration.h"
 #include "logging.h"
-
+#include "CmxHandler.h"
+#include "EyeLockMain.h"
 
 //WIDTH and HEIGHT of input image
 //#define WIDTH 1200
@@ -308,6 +309,8 @@ public:
 	bool m_ImageAuthentication;
 	int m_ImageWidth;
 	int m_ImageHeight;
+
+	CmxHandler *m_CmxHandler;
 
 	//bool faceConfigInit;
 

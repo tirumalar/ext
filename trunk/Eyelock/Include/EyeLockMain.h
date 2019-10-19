@@ -71,7 +71,10 @@ public:
 	int CheckTemperature();
 	int CheckTamperSensor();
 	int GetMotherBoardVersion();
-
+	CmxHandler* GetCmxHandler()
+	{
+		return pCMXHandle;
+	}
 	AudioDispatcher *GetAudioDispatcher(){ return pAudioDispatcher;}
 	EyeLockThread *GetImageProcessor (){return pImageProcessor;}
 	FileConfiguration conf;

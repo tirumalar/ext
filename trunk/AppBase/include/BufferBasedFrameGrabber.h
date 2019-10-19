@@ -10,6 +10,7 @@
 
 #include "FrameGrabber.h"
 #include "Synchronization.h"
+#include <opencv/cv.h>
 
 typedef struct ImageQueueItem{
 	// unsigned char m_ptr[5038848];	// image size 1152000
@@ -23,6 +24,7 @@ typedef struct ImageQueueItem{
 	unsigned int AuxRightFrameIndex;
 	unsigned int MainLeftFrameIndex;
 	unsigned int MainRightFrameIndex;
+	cv::Rect ScaledFaceRect;
 };
 
 
