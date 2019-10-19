@@ -48,6 +48,7 @@ int main(int argc, char **argv)
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");
 	int m_ImageWidth = EyelockConfig.getValue("FrameSize.width", 1200);
 	int m_ImageHeight = EyelockConfig.getValue("FrameSize.height", 960);
+	bool m_ImageAuthentication = EyelockConfig.getValue("Eyelock.ImageAuthentication", true);
 
 	outImg = Mat(Size(m_ImageWidth, m_ImageHeight), CV_8U);
 	if (argc<2){
@@ -56,7 +57,7 @@ int main(int argc, char **argv)
 	}
 
 	// vid_stream_start
-	vs= new VideoStream(atoi(argv[1]), false);
+	vs= new VideoStream(atoi(argv[1]), m_ImageAuthentication);
 	sprintf(temp, "Disp %d",atoi (argv[1]) );
 
 	int w,h;
