@@ -133,6 +133,11 @@ function ProcessLoggedOnuser()
                 (elem[i].id === "Eyelock_NegativeMatchResetTimer"))
                 continue;
 
+            // Exclude IPv6 config button
+            if ((elem[i].id == "ipv6settingsbutton") ||
+                (elem[i].id == "ipv6settingsOKbutton"))
+                continue;
+
             // Now exclude all of the 'Log' tab items...
             if ((elem[i].id === "refreshlog") ||
                 (elem[i].id === "downloadlog"))
