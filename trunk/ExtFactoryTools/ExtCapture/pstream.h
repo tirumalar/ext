@@ -8,6 +8,12 @@
 #include <opencv2/imgcodecs.hpp>
 
 #define BUFLEN 1500
+
+#define IMAGE_START_OFFSET 6
+#define CAM_ID_OFFSET      4
+#define FRAME_ID_OFFSET    5
+
+
 //#define IMAGE_SIZE 1152000
 #define NPACK 10
 // 8192 left camer
