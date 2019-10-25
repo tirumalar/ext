@@ -155,6 +155,7 @@ FaceTracker::FaceTracker(char* filename)
 ,m_NearSwitchThreshold(35)
 ,m_FarSwitchThreshold(45)
 ,m_CmxHandler(NULL)
+,flag_dark_main(1)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -294,6 +295,10 @@ FaceTracker::FaceTracker(char* filename)
 	m_AdaptiveGainFactor = EyelockConfig.getValue("FTracker.AdaptiveGainFactor",20000);
 	m_AdaptiveGainAuxAdjust = EyelockConfig.getValue("FTracker.AdaptiveGainAuxAdjust",float(1.25));
 	
+	// Column Noise Correction
+	m_EnableColumnNoiseReduction = EyelockConfig.getValue("Eyelock.EnableColumnNoiseReduction", false);
+	m_DarkImageGenFrameCnt = EyelockConfig.getValue("Eyelock.DarkImageFrameGenCounter", 10);
+
 	// PingPong Parameters - 35-45
 	m_EnableIrisCameraPingPong=EyelockConfig.getValue("FTracker.PingPong",false);
 	m_NearSwitchThreshold = EyelockConfig.getValue("FTracker.NearSwitchThreshold",35);
@@ -489,6 +494,17 @@ void FaceTracker::MainIrisSettings(int FaceWidth, int CameraState)
 	EyelockLog(logger, DEBUG, "Values in MainIrisSettings IrisLEDEnable:%d, IrisLEDVolt:%d, IrisLEDcurrentSet:%d, IrisLEDtrigger:%d, IrisLEDmaxTime:%d ", m_IrisLEDEnable, m_IrisLEDVolt, m_IrisLEDcurrentSet, m_IrisLEDtrigger, m_IrisLEDmaxTime);
 	if(m_AdaptiveGain){
 		AdaptiveGain(FaceWidth, CameraState);
+	}else{
+		
+		if(CameraState == STATE_MAIN_IRIS)
+		{
+			
+			sprintf(cmd,"set_cam_head(0x07,%d)", m_LeftMainIrisCamDigitalGain);
+			port_com_send(cmd);
+		}else{
+			sprintf(cmd,"set_cam_head(0x87,%d)", m_LeftAuxIrisCamDigitalGain);
+			port_com_send(cmd);
+		}
 	}
 }
 
@@ -633,6 +649,14 @@ void FaceTracker::AdaptiveGain(int faceWidth, int CameraState)
 	// printf("FaceTracker:: FaceWidth %d Gain %d\n", faceWidth, Gain);
 	sprintf(buff,"wcr(0x1B,0x305e,%d)", Gain);
 	port_com_send(buff);
+	if(m_EnableColumnNoiseReduction){
+		sprintf(buff, "wcr(0x1B,0x301e,0x0)");
+		port_com_send(buff);
+	
+		char buff1[512];
+		sprintf(buff1,"set_cam_head(0x1B,%d)", Gain);
+		port_com_send(buff1);
+	}
 }
 
 void FaceTracker::SwitchIrisCameras(float eye_size, bool mode)
@@ -1333,6 +1357,12 @@ void FaceTracker::DoStartCmd()
 	char cmd1[100];
 	sprintf(cmd1,"cam_set_seed(%i)", 0);		//Set the seed
 	port_com_send(cmd1);
+	if(m_EnableColumnNoiseReduction){
+		// port_com_send("wcr(0x1f,0x3044,0x1804)");
+		// port_com_send("wcr(0x17,0x3044,0x0004)");
+		port_com_send("wcr(0x1f,0x3044,0x0404)");
+		port_com_send("wcr(0x1f,0x30D4,0x0)");
+	}
 }
 
 float FaceTracker::CalcExposureLevel(int width, int height,unsigned char *dsty, int limit)
@@ -1540,6 +1570,8 @@ char* FaceTracker::StateText(int state)
 		case STATE_MAIN_IRIS: return ("MAIN");
 		case STATE_AUX_IRIS:  return ("AUX");
 		case STATE_MOVE_MOTOR:return ("MOVE");
+		case STATE_PINGPONG_IRIS:return ("PINGPONG");
+		case STATE_GET_DARK_IMAGE:return ("DARK");
 	}
 	return "none";
 }
@@ -1657,6 +1689,8 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	}
 	noFaceCounter = min(noFaceCounter,NO_FACE_SWITCH_FACE);
 
+	int pedestaloffset = PEDESTAL_OFFSET*16;
+
 	if (foundFace)
 		noFaceCounter=0;
 	last_system_state = system_state;
@@ -1666,6 +1700,41 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	// figure out our next state
 	switch(system_state)
 	{
+	if(m_EnableColumnNoiseReduction){
+	case STATE_GET_DARK_IMAGE:
+		   if(flag_dark_main == 0)
+		   {
+			   char buff[512];
+			   sprintf(buff,"wcr(0x87,0x305e,%d)", 255);
+			   port_com_send(buff);
+			   char cmd[512];
+
+			   sprintf(cmd, "psoc_write(4,0)");
+			   port_com_send(cmd);
+
+		
+
+			   sprintf(cmd,"set_cam_head(0x1B,0x100)"); // set leds off
+			   port_com_send(cmd);
+
+			   sprintf(cmd, "wcr(0x1B,0x301e,%d)", pedestaloffset);
+			   port_com_send(cmd);
+
+	   		   sprintf(cmd,"set_cam_mode(0x87, %d)",FRAME_DELAY);
+			   port_com_send(cmd);
+			   
+			   flag_dark_main = 1;
+			  // sprintf(cmd, "psoc_write(4,0)| set_cam_head(0x1B,0x100)"); // set leds off
+			  // port_com_send(cmd);
+		   }
+		   else{
+			   char cmd[512];
+			   sprintf(cmd,"set_cam_head(0x1f,0x0)"); // set leds off
+			   port_com_send(cmd);
+			   system_state = STATE_LOOK_FOR_FACE;
+		   }
+		   break;
+	}
 	case STATE_LOOK_FOR_FACE:
 							// we see eyes but need to move to them
 							if (eyesInDetect && !eyesInViewOfIriscam)
@@ -1681,6 +1750,18 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 							if(b_EnableFaceAGC)
 								SweepFaceBrightness();
 							//if (eyesInViewOfIriscam)
+							if(m_EnableColumnNoiseReduction){
+								if(m_DarkImageGenFrameCnt%10 == 0){									
+									system_state = STATE_GET_DARK_IMAGE;
+								}
+								else{
+									char cmd[512];
+									sprintf(cmd, "wcr(0x1f,0x301e,0x0)");
+									port_com_send(cmd);
+
+								}
+
+							}
 							break;
 
 	case STATE_MAIN_IRIS:
@@ -1743,6 +1824,33 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	case STATE_LOOK_FOR_FACE:
 					switch (system_state)
 					{
+					if(m_EnableColumnNoiseReduction){
+					case STATE_GET_DARK_IMAGE:
+					 // Turn on all cameras
+					 // turn off leds
+					 // set header to 100
+						char buff[512];
+						sprintf(buff,"wcr(0x07,0x305e,%d)", 255);
+						port_com_send(buff);
+
+						char cmd[512];
+						sprintf(cmd, "psoc_write(4,0)");
+						port_com_send(cmd);
+
+						
+
+						sprintf(cmd,"set_cam_head(0x1B,0x100)"); // set leds off
+						port_com_send(cmd);
+
+						sprintf(buff, "wcr(0x1B,0x301e,%d)", pedestaloffset);
+						port_com_send(buff);
+
+						sprintf(cmd,"set_cam_mode(0x07, %d)",FRAME_DELAY);
+						port_com_send(cmd);
+						
+						flag_dark_main = 0;
+						break;
+					}
 					case STATE_MOVE_MOTOR:
 						// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
 						//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
@@ -1770,6 +1878,20 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 				//DMOOUT	if(b_EnableFaceAGC)
 				//DMOOUT		DoAgc();
 					break;
+					if(m_EnableColumnNoiseReduction){
+					case STATE_GET_DARK_IMAGE:
+						switch (system_state)
+						{
+						case STATE_LOOK_FOR_FACE:
+						// disable iris camera set current for face camera
+						MoveTo(CENTER_POS);
+						SetFaceMode();
+						m_ProjPtr = false;
+						break;
+						}
+						break;
+					}
+				
 	case STATE_AUX_IRIS:
 					switch (system_state)
 					{
