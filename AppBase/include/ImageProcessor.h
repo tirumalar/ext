@@ -35,6 +35,9 @@
 #include "FileConfiguration.h"
 #include "FaceMap.h"
 
+#define FIXED_POINT_MULT 16
+#define PEDESTAL_OFFSET 8
+
 class IrisSelectServer;
 class EyeTracker;
 class Aquisition;
@@ -258,6 +261,17 @@ protected:
 	IplImage *m_OffsetOutputImage;
 	IplImage *m_ProcessImageFrame;
 
+	// Column Noise
+	cv::Mat darkImageFrame[4]; // Matrix to save dark Images
+	bool m_EnableColumnNoiseReduction;
+	bool m_ShowColumnNoiseImage;
+	bool m_SaveDarkImage;
+	float m_CNImagePercentage;
+	int m_DebugTestCNCamID;
+	bool m_NoCorrectionWhen255;
+	float m_MaxMeanOfDarkImageForAcc;
+
+	
 	// Calibration Parallex Correction
 	float baselineDistance;
 	float faceLensEFL;
@@ -372,6 +386,9 @@ private:
 	bool validateEyecrops_IrisToFaceMapping(cv::Rect projFace, cv::Point2i ptrI, int CameraId);
 	bool ValidateEyeCropUsingIrisToFaceMapping(FaceMapping sFaceMap, int cam_idd, int m_faceIndex, int eyeIdx);
 	int CalculateGainWithKH(int facewidth, int CameraId);
+	void ShowIrisCameraPreview(IplImage *frame, int cam_idd);
+	int GenerateDarkImage(IplImage *frame, int CameraId);
+	cv::Mat ColumnNoiseReduction(IplImage *frame, int cam_idd);
 	bool m_activeEyeSideLabeling;
 	bool m_IrisToFaceMapping;
 	bool bIrisToFaceMapDebug;

@@ -48,7 +48,8 @@
 #define STATE_MOVE_MOTOR    2
 #define STATE_MAIN_IRIS     3
 #define STATE_AUX_IRIS      4
-
+#define STATE_PINGPONG_IRIS 5
+#define STATE_GET_DARK_IMAGE 6
 #define minCalBrightness 40		//orignal 40
 #define maxCalBrightness 220
 
@@ -99,6 +100,7 @@ extern void *init_ec(void * arg);
 void *DoTamper(void *arg);
 
 
+#define PEDESTAL_OFFSET 8
 class FaceTracker{
 private:
 	int FRAME_DELAY;
@@ -256,6 +258,9 @@ private:
 	int m_AdaptiveGainFactor;
 	float m_AdaptiveGainAuxAdjust;
 	std::map<int,int> FaceWidthGainMap;
+	bool m_EnableColumnNoiseReduction;
+	int m_DarkImageGenFrameCnt;
+	bool flag_dark_main;
 
 	void SetExp(int cam, int val);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);

@@ -416,6 +416,18 @@ m_LedConsolidator = NULL;
 	m_EyelockIrisMode = pConf->getValue("Eyelock.IrisMode",1);
 	// printf("m_EyelockIrisModem_EyelockIrisMode...%d\n", m_EyelockIrisMode);
 
+	// Column Noise Correction
+	m_EnableColumnNoiseReduction = pConf->getValue("Eyelock.EnableColumnNoiseReduction", false);
+	m_ShowColumnNoiseImage = pConf->getValue("Eyelock.ShowColumnNoiseImage", false);
+	m_SaveDarkImage = pConf->getValue("Eyelock.DebugSaveDarkImage", false);
+	m_CNImagePercentage = pConf->getValue("Eyelock.CNImagePercentage", float(0.5));
+	m_DebugTestCNCamID = pConf->getValue("Eyelock.DebugTestCNCamID", 129);
+	m_NoCorrectionWhen255 = pConf->getValue("Eyelock.NoCorrectionWhen255", false);
+	m_MaxMeanOfDarkImageForAcc = pConf->getValue("Eyelock.MaxMeanOfDarkImage", float(12.0));
+
+	for(int i = 0; i < 4; i++)
+		darkImageFrame[i] = cv::Mat::zeros(cv::Size(m_Imagewidth, m_Imageheight), CV_16U);
+
 	// CreateFaceWidthGainMap();
 	// Calibration Parallax Correction
 	m_ParallaxCorrection = pConf->getValue("Eyelock.ParallexCorrection", false);
@@ -2558,25 +2570,154 @@ int ImageProcessor::CalculateGainWithKH(int facewidth, int CameraId)
 	return gain;
 }
 
+int CamIdLookup(int CameraId)
+{
+	switch(CameraId)
+	{
+		case IRISCAM_MAIN_LEFT:
+			return 0;
+		case IRISCAM_MAIN_RIGHT:
+			return 1;
+		case IRISCAM_AUX_LEFT:
+			return 2;
+		case IRISCAM_AUX_RIGHT:
+			return 3;
+	}
+}
+
+void ImageProcessor::ShowIrisCameraPreview(IplImage *frame, int cam_idd)
+{
+	// Won't work in this release
+	FaceImageQueue FaceInfo;
+	cv::Mat mateye = cv::cvarrToMat(frame);
+	std::ostringstream ssCoInfo;
+	if(m_AdaptiveGain){
+		if(FaceInfo.FaceWidth && FaceInfo.FoundFace){
+			cv::Mat ColorIrisImage;
+			cv::cvtColor(mateye, ColorIrisImage, CV_GRAY2BGR);
+			int Gain = CalculateGainWithKH(FaceInfo.FaceWidth, cam_idd);
+			// printf("ImageProcessor %d %d %d\n", cam_idd, FaceInfo.FaceWidth, Gain);
+			ssCoInfo << " CAM " << cam_idd  <<  (cam_idd & 0x80 ?  " AUX":" MAIN ") << " " << "FW=" << FaceInfo.FaceWidth << " " << "G=" << Gain;
+			putText(ColorIrisImage,ssCoInfo.str().c_str(),cv::Point(40,100), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
+			imshow("IrisCamera", ColorIrisImage);
+			cvWaitKey(1);
+		}
+	}else{
+		ssCoInfo << "CAM " <<  cam_idd  <<  (cam_idd & 0x80 ?  "AUX":"MAIN");
+		putText(mateye,ssCoInfo.str().c_str(),cv::Point(10,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
+		imshow("IrisCamera", mateye);
+		cvWaitKey(1);
+	}
+}
+
+int ImageProcessor::GenerateDarkImage(IplImage *frame, int CameraId)
+{
+	char cmd[512];
+	short int frame_header;
+	static int FrameIndex = 0;
+
+	frame_header = (frame->imageData[4]&0xff) | ((frame->imageData[5]<<8)&0xff00);
+	// printf("CameraId:%d frame header = %x\n", CameraId, frame_header);
+
+	if(frame_header == 0x100){
+		cv::Mat IrisImage = cv::cvarrToMat(frame);
+		cv::Scalar DarkImageMean = cv::mean(IrisImage);
+		if(DarkImageMean[0] < m_MaxMeanOfDarkImageForAcc){
+			// printf("Mean Ave....%f\n", DarkImageMean[0]);
+			add(darkImageFrame[CamIdLookup(CameraId)]*3, IrisImage*FIXED_POINT_MULT, darkImageFrame[CamIdLookup(CameraId)], cv::Mat(), CV_16U);
+			darkImageFrame[CamIdLookup(CameraId)] = darkImageFrame[CamIdLookup(CameraId)]/4;
+			// add(darkImageFrame[CamIdLookup(CameraId)]*(1-m_CNImagePercentage), IrisImage*m_CNImagePercentage, darkImageFrame[CamIdLookup(CameraId)], cv::Mat(), CV_16U);
+		}
+
+		if(m_ShowColumnNoiseImage && (CameraId == m_DebugTestCNCamID)){
+			cv::Scalar IrisImageAvg = cv::mean(IrisImage);
+			cv::Scalar m = cv::mean(darkImageFrame[CamIdLookup(CameraId)]);
+			cv::imshow("DarkImage", (darkImageFrame[CamIdLookup(CameraId)]*256));
+			cvWaitKey(1);
+		}
+		if(m_SaveDarkImage){
+			char filename[100];
+			cv::Scalar m1 = cv::mean(IrisImage);
+			std::ostringstream ssCoInfo1;
+			ssCoInfo1 << m1[0];
+			putText(IrisImage,ssCoInfo1.str().c_str(),cv::Point(60, 30), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(144,238,144),2);
+			sprintf(filename,"%d_%d_Dark.pgm", CameraId, m_faceIndex);
+			imwrite(filename, IrisImage);
+		}
+		return 0;
+	}
+	return 1;
+}
+
+cv::Mat ImageProcessor::ColumnNoiseReduction(IplImage *frame, int CameraId)
+{
+	int retDarkImageStatus=0;
+	char filename[150];
+	cv::Mat IrisImage = cv::cvarrToMat(frame);
+	int DigitalGain = (frame->imageData[4]&0xff) | ((frame->imageData[5]<<8)&0xff00);
+	retDarkImageStatus = GenerateDarkImage(frame, CameraId);
+	int MultiplyGain = (int)((DigitalGain+8)/16);
+	// printf("[ret]:%d Gain:%x MultiplyGain:%d\n", retDarkImageStatus, DigitalGain, MultiplyGain);
+	if(retDarkImageStatus == 1){
+		cv::Mat DarkImageScaled = cv::Mat::zeros(cv::Size(m_Imagewidth, m_Imageheight), CV_16S);
+		DarkImageScaled = darkImageFrame[CamIdLookup(CameraId)] * MultiplyGain;
+		DarkImageScaled = DarkImageScaled/(256);
+
+		if(m_NoCorrectionWhen255)
+		{
+			if(DigitalGain != 0x100){
+				for(int j=0;j<IrisImage.rows;j++)
+				{
+					for (int i=0;i<IrisImage.cols;i++)
+					{
+						if((IrisImage.at<uchar>(j,i)) == 255)
+							DarkImageScaled.at<short>(j,i) = 0;
+					}
+				}
+			}
+		}
+
+		cv::Mat CorrectedImage = cv::Mat::zeros(cv::Size(m_Imagewidth, m_Imageheight), CV_8U);
+		subtract(IrisImage, DarkImageScaled, CorrectedImage, cv::Mat(), CV_8U);
+
+		if(m_ShowColumnNoiseImage && (CameraId == m_DebugTestCNCamID)){
+			std::ostringstream ssCoInfo;
+			ssCoInfo << DigitalGain;
+			putText(DarkImageScaled,ssCoInfo.str().c_str(),cv::Point(320, 220), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(144,238,144),2);
+			cv::imshow("d scaled",DarkImageScaled(cv::Rect(300,200,640,480))*256*16);
+			cv::imshow("Iris",IrisImage(cv::Rect(300,200,640,480)));
+			cv::imshow("Corrected",CorrectedImage(cv::Rect(300,200,640,480)));
+		}
+
+		if(m_SaveDarkImage){
+			sprintf(filename,"%d_%d_AD.pgm", CameraId, m_faceIndex);
+			imwrite(filename, darkImageFrame[CamIdLookup(CameraId)]);
+
+			sprintf(filename,"%d_%d_Org.pgm", CameraId, m_faceIndex);
+			imwrite(filename, IrisImage);
+
+			sprintf(filename,"%d_%d_Corrected.pgm", CameraId, m_faceIndex);
+			imwrite(filename, CorrectedImage);
+
+			sprintf(filename,"%d_%d_DarkScaled.pgm", CameraId, m_faceIndex);
+			imwrite(filename, DarkImageScaled);
+		}
+
+		return CorrectedImage;
+	}else{
+		return IrisImage;
+	}
+}
 
 bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 {
 	char filename[150];
 	int cam_idd = 0;
 	unsigned char frame_number = 0;
-	// static unsigned int count = 0;
 	if(frame->imageData != NULL)
 	{
 		cam_idd = frame->imageData[2]&0xff;
 		frame_number = frame->imageData[3]&0xff;
-		/*
-		if(count % 4*5 == 0)
-		{
-			// Every 5 seconds
-			sprintf(filename,"Iris_%d.pgm", cam_idd);
-			cv::Mat mateye = cv::cvarrToMat(frame);
-			imwrite(filename, mateye);
-		}*/
 	}
 
 #ifdef DEBUG_SESSION
@@ -2599,27 +2740,7 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 	}
 	
 	if(m_IrisCameraPreview && (frame->imageData != NULL)){
-		// Won't work in this release
-		FaceImageQueue FaceInfo;
-		cv::Mat mateye = cv::cvarrToMat(frame);
-		std::ostringstream ssCoInfo;
-		if(m_AdaptiveGain){
-			if(FaceInfo.FaceWidth && FaceInfo.FoundFace){
-				cv::Mat ColorIrisImage;
-				cv::cvtColor(mateye, ColorIrisImage, CV_GRAY2BGR);
-				int Gain = CalculateGainWithKH(FaceInfo.FaceWidth, cam_idd);
-				// printf("ImageProcessor %d %d %d\n", cam_idd, FaceInfo.FaceWidth, Gain);
-				ssCoInfo << " CAM " << cam_idd  <<  (cam_idd & 0x80 ?  " AUX":" MAIN ") << " " << "FW=" << FaceInfo.FaceWidth << " " << "G=" << Gain;
-				putText(ColorIrisImage,ssCoInfo.str().c_str(),cv::Point(40,100), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
-				imshow("IrisCamera", ColorIrisImage);
-				cvWaitKey(1);
-			}
-		}else{
-			ssCoInfo << "CAM " <<  cam_idd  <<  (cam_idd & 0x80 ?  "AUX":"MAIN");
-			putText(mateye,ssCoInfo.str().c_str(),cv::Point(10,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
-			imshow("IrisCamera", mateye);
-			cvWaitKey(1);
-		}
+		ShowIrisCameraPreview(frame, cam_idd);
 	}
 
 	bool bSentSomething = false;
@@ -2628,9 +2749,80 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 	std::map<int,EyeInfo> eyeMap;
 	bool detect;
 	int NoOfHaarEyes = 0;
+#if 0
+	if(m_EnableColumnNoiseReduction && frame->imageData != NULL){
+		int retDarkImageStatus=0;
+			char filename[150];
+			cv::Mat IrisImage = cv::cvarrToMat(frame);
+			int DigitalGain = (frame->imageData[4]&0xff) | ((frame->imageData[5]<<8)&0xff00);
+			retDarkImageStatus = GenerateDarkImage(frame, cam_idd);
+			int MultiplyGain = (int)((DigitalGain+8)/16);
+			printf("[ret]:%d Gain:%x MultiplyGain:%d\n", retDarkImageStatus, DigitalGain, MultiplyGain);
+			if(retDarkImageStatus == 1){
+			#if 1 // Ilya code
+				cv::Mat DarkImageScaled = cv::Mat::zeros(cv::Size(m_Imagewidth, m_Imageheight), CV_16S);
+				// DarkImageScaled = darkImageFrame[CamIdLookup(cam_idd)] - (PEDESTAL_OFFSET*16);
+				DarkImageScaled = darkImageFrame[CamIdLookup(cam_idd)] * MultiplyGain;
+				DarkImageScaled = DarkImageScaled/(256);
 
+				if(m_NoCorrectionWhen255)
+				{
+					if(DigitalGain != 0x100){
+						for(int j=0;j<IrisImage.rows;j++)
+						{
+							for (int i=0;i<IrisImage.cols;i++)
+							{
+								if((IrisImage.at<uchar>(j,i)) == 255)
+									DarkImageScaled.at<short>(j,i) = 0;
+							}
+						}
+					}
+				}
 
-	// printf("Inside ProcessImage\n");
+				cv::Mat CorrectedImage = cv::Mat::zeros(cv::Size(m_Imagewidth, m_Imageheight), CV_8U);
+				subtract(IrisImage, DarkImageScaled, CorrectedImage, cv::Mat(), CV_8U);
+			#else
+				sprintf(filename,"DarkImage_%d_%d.pgm", cam_idd, m_faceIndex);
+				imwrite(filename, darkImageFrame[CamIdLookup(cam_idd)]);
+				cv::Mat CorrectedImage = cv::Mat::zeros(cv::Size(m_Imagewidth, m_Imageheight), CV_8U);
+				// subtract(IrisImage, darkImageFrame[CamIdLookup(cam_idd)], CorrectedImage, cv::Mat(), CV_8U);
+				subtract(IrisImage, darkImageFrame[CamIdLookup(cam_idd)]* (DigitalGain/255.0), CorrectedImage, cv::Mat(), CV_8U);
+			#endif
+
+				if(m_ShowColumnNoiseImage && (cam_idd == m_DebugTestCNCamID)){
+					std::ostringstream ssCoInfo;
+					ssCoInfo << DigitalGain;
+					putText(DarkImageScaled,ssCoInfo.str().c_str(),cv::Point(320, 220), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(144,238,144),2);
+					cv::imshow("d scaled",DarkImageScaled(cv::Rect(300,200,640,480))*256*16);
+					cv::imshow("Iris",IrisImage(cv::Rect(300,200,640,480)));
+					cv::imshow("Corrected",CorrectedImage(cv::Rect(300,200,640,480)));
+				}
+
+				if(m_SaveDarkImage){
+					sprintf(filename,"%d_%d_AD.pgm", cam_idd, m_faceIndex);
+					imwrite(filename, darkImageFrame[CamIdLookup(cam_idd)]);
+
+					sprintf(filename,"%d_%d_Org.pgm", cam_idd, m_faceIndex);
+					imwrite(filename, IrisImage);
+
+					sprintf(filename,"%d_%d_Corrected.pgm", cam_idd, m_faceIndex);
+					imwrite(filename, CorrectedImage);
+
+					sprintf(filename,"%d_%d_DarkScaled.pgm", cam_idd, m_faceIndex);
+					imwrite(filename, DarkImageScaled);
+				}
+
+				IplImage CNImage = CorrectedImage;
+				cvCopy(&CNImage, frame);
+			}
+	}
+#else
+	if(m_EnableColumnNoiseReduction && frame->imageData != NULL){
+		IplImage CNImage = ColumnNoiseReduction(frame, cam_idd);
+		cvCopy(&CNImage, frame);
+	}
+#endif
+
 	XTIME_OP("SetImage",
 		SetImage(frame)
 	);
@@ -3092,27 +3284,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		bool bSkipProcessingImage = false;
 
 		if(m_IrisCameraPreview && (frame->imageData != NULL)){
-			// Anita - Won't work in this release
-			cv::Mat mateye = cv::cvarrToMat(frame);
-			std::ostringstream ssCoInfo;
-			if(m_AdaptiveGain){
-				if(FaceInfo.FaceWidth && FaceInfo.FoundFace){
-					cv::Mat ColorIrisImage;
-					cv::cvtColor(mateye, ColorIrisImage, CV_GRAY2BGR);
-					int Gain = CalculateGainWithKH(FaceInfo.FaceWidth, cam_idd);
-					// printf("ImageProcessor %d %d %d\n", cam_idd, FaceInfo.FaceWidth, Gain);
-					ssCoInfo << " CAM " << cam_idd  <<  (cam_idd & 0x80 ?  " AUX":" MAIN ") << " " << "FW=" << FaceInfo.FaceWidth << " " << "G=" << Gain;
-					putText(ColorIrisImage,ssCoInfo.str().c_str(),cv::Point(40,100), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
-					imshow("IrisCamera", ColorIrisImage);
-					cvWaitKey(1);
-				}
-			}else{
-				ssCoInfo << "CAM " <<  cam_idd  <<  (cam_idd & 0x80 ?  "AUX":"MAIN");
-				putText(mateye,ssCoInfo.str().c_str(),cv::Point(10,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
-				imshow("IrisCamera", mateye);
-				cvWaitKey(1);
-			}
-
+			ShowIrisCameraPreview(frame, cam_idd);
 		}
 
 		bool detect;
@@ -3121,6 +3293,12 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		int left, top;
 		std::map<int,EyeInfo> eyeMap;
 		int maxEyes = 0;
+
+		// Column Noise Reduction
+		if(m_EnableColumnNoiseReduction && frame->imageData != NULL){
+			IplImage CNImage = ColumnNoiseReduction(frame, cam_idd);
+			cvCopy(&CNImage, frame);
+		}
 
 		if (!bSkipProcessingImage)
 		{
