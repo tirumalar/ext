@@ -3022,7 +3022,7 @@ void *leftCServer(void *arg)
 					// printf("CMx: seed in %d\n", ps->seed);
 					ps->syndrome = ps->seed;
 				}
-				printf("CMX: vs->cam_id %02x vs->frameId %d\n", cam_id, FrameNo);
+				// printf("CMX: vs->cam_id %02x vs->frameId %d\n", cam_id, FrameNo);
 				//printf("vs->cam_id %02x\n", vs->cam_id);
 				// printf("Sync\n");
 				// printf("\ncam_id...%d  FrameNo...%d\n", cam_id, FrameNo);
