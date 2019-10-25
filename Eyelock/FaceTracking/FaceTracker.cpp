@@ -1186,11 +1186,11 @@ void FaceTracker::DoStartCmd()
 	EyelockLog(logger, DEBUG, "capacitorChargeCurrent:%d", m_capacitorChargeCurrent);
 	port_com_send(cmd);	// charge cap for max current 60 < range < 95
 
-#if 1
-	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
+
+	port_com_send("wcr(0x1f,0x300C,1650)");		// Anita on 25Oct
+	// port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
 	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
 	EyelockLog(logger, DEBUG, "FLIPPING OF IRIS CAMERAS");
-#endif
 
 	//Face cameras configuration
 	EyelockLog(logger, DEBUG, "Configuring face Cameras");

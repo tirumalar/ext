@@ -2168,6 +2168,64 @@ IplImage* CmxHandler::GrabFramePG(int CameraIndex)
 }
 #endif
 #endif
+void CmxHandler::CameraStatus(bool bStatus)
+{
+	m_bStatus = bStatus;
+}
+
+void *middleCamera(void *arg)
+{
+	EyelockLog(logger, TRACE, "CmxHandler::MiddleCamera() start");
+
+    CmxHandler *me = (CmxHandler *) arg;
+    char filename[200];
+    static int index;
+    // int CamIndex = 1;
+    int CamSerialNo = me->m_SerialNoCamera2; // 12120566; Eyelock.PGSerialNoCamera2
+    static int firstEntry = 1;
+    if(firstEntry){
+       	me->CameraPowerOn(CamSerialNo);
+       	firstEntry = 0;
+    }
+    while (!me->ShouldIQuit())
+    {
+    	IplImage *img = me->GrabFramePG(CamSerialNo);
+    	// IplImage *img = me->GrabFramePGCAM1(CamIndex);
+    	if(me->m_SaveImages){
+    		sprintf(filename,"Cam_%d_%d.pgm",CamSerialNo, index++);
+    		cvSaveImage(filename, img);
+    	}
+		me->HandleReceiveImage(img->imageData, img->imageSize);
+		cvReleaseImage(&img);
+    }
+}
+
+void *rightCamera(void *arg)
+{
+	EyelockLog(logger, TRACE, "CmxHandler::RightCamera() start");
+	CmxHandler *me = (CmxHandler *) arg;
+    char filename[200];
+    static int Cnt;
+    // int CamIndex = 2;
+    int CamSerialNo = me->m_SerialNoCamera3; //12120579; PGSerialNoCamera3
+    static int firstEntry = 1;
+    if(firstEntry){
+    	me->CameraPowerOn(CamSerialNo);
+        firstEntry = 0;
+    }
+
+    while (!me->ShouldIQuit())
+    {
+    	IplImage *img = me->GrabFramePG(CamSerialNo);
+    	// IplImage *img = me->GrabFramePGCAM2(CamIndex);
+    	if(me->m_SaveImages){
+    		sprintf(filename,"Cam_%d_%d.pgm",CamSerialNo, Cnt++);
+    		cvSaveImage(filename, img);
+    	}
+		me->HandleReceiveImage(img->imageData, img->imageSize);
+		cvReleaseImage(&img);
+    }
+}
 #endif /* HBOX_PG */
 
 
@@ -2761,13 +2819,6 @@ bool CmxHandler::HandleReceiveMsg(Socket& client)
 		return true; //Close the socket
 }
 
-#ifdef HBOX_PG
-void CmxHandler::CameraStatus(bool bStatus)
-{
-	m_bStatus = bStatus;
-}
-#endif
-
 bool CmxHandler::HandleReceiveImage(char *buf, int length) {
 #if 0
 	if (m_debug)
@@ -2897,100 +2948,107 @@ cv::Rect CmxHandler::GetLatestFaceCoordRect()
 	ScopeLock lock(m_FaceRectLock);
 	return m_ScaledFaceRect;
 }
-void *leftCServer(void *arg) {
+#define IMAGE_START_OFFSET 2
+#define CAM_ID_OFFSET      2
+#define FRAME_ID_OFFSET    3
+
+void *leftCServer(void *arg)
+{
 	EyelockLog(logger, TRACE, "CmxHandler::leftCServer() start");
 	PortServerInfo *ps = (PortServerInfo*) arg;
 	CmxHandler *me = (CmxHandler *) ps->pCmxHandler;
 
-	if (me->m_ImageAuthentication) {
-		int length;
-		int pckcnt = 0;
-		char buf[me->m_ImageSize];
-		char dummy_buff[me->m_ImageSize];
-		int datalen = 0;
-		int bytes_to_get = me->m_ImageSize;
-		short *pShort = (short *) buf;
-		bool b_syncReceived = false;
-		struct sockaddr_in from;
-		int cam_id, FrameNo;
-		socklen_t fromlen = sizeof(struct sockaddr_in);
-		int bytes_to_read = me->m_ImageSize;
+	int length;
+	int pckcnt = 0;
+	char buf[me->m_ImageSize];
+	char dummy_buff[me->m_ImageSize];
+	int datalen = 0;
+	int bytes_to_get = me->m_ImageSize;
+	short *pShort = (short *) buf;
+	bool b_syncReceived = false;
+	struct sockaddr_in from;
+	int cam_id, FrameNo;
+	socklen_t fromlen = sizeof(struct sockaddr_in);
+	int bytes_to_read = me->m_ImageSize;
 
-		int pkgs_received = 0;
-		int pkgs_missed = 0;
-		int rx_idx = 0;
-		unsigned short *hash_data;
-		static int NoSyncCntr = 0;
-		ImageQueueItem queueItem;
-		// me->HandleReceiveImage(databuf, datalen);
+	int pkgs_received = 0;
+	int pkgs_missed = 0;
+	int rx_idx = 0;
+	unsigned short *hash_data;
+	static int NoSyncCntr = 0;
+	ImageQueueItem queueItem;
 
-		int leftCSock = me->CreateUDPServer(ps->port);
-		if (leftCSock < 0) {
-			EyelockLog(logger, ERROR, "Failed to create leftC Server()");
-			return NULL;
-		}
+	int leftCSock = me->CreateUDPServer(ps->port);
+	if (leftCSock < 0) {
+		EyelockLog(logger, ERROR, "Failed to create leftC Server()");
+		return NULL;
+	}
 
-		BufferBasedFrameGrabber *pFrameGrabber = (BufferBasedFrameGrabber*) me->pImageProcessor->GetFrameGrabber();
-		queueItem = pFrameGrabber->GetFreeBuffer();
-		queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
-		char * databuf = (char *) queueItem.m_ptr;
+	BufferBasedFrameGrabber *pFrameGrabber = (BufferBasedFrameGrabber*) me->pImageProcessor->GetFrameGrabber();
+	queueItem = pFrameGrabber->GetFreeBuffer();
+	queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
 
-		//  sleep(2);
-		while (!me->ShouldIQuit()) {
+	char * databuf = (char *) queueItem.m_ptr;
 
+	//  sleep(2);
+	while (!me->ShouldIQuit()) {
+		if(me->m_ImageAuthentication){
 			ps->seed = me->m_Randomseed;
+		}
+		length = recvfrom(leftCSock, &databuf[rx_idx],
+				min(1500, bytes_to_read), 0, (struct sockaddr *) &from,
+				&fromlen);
+		if (length < 0){
+			printf("recvfrom error in leftCServer()");
+			EyelockLog(logger, DEBUG, "socket error in receiving iris images! %s %d\n", strerror(length), ps->port);
+		}else {
+			pkgs_received++;
 
-			length = recvfrom(leftCSock, &databuf[rx_idx],
-					min(1500, bytes_to_read), 0, (struct sockaddr *) &from,
-					&fromlen);
-			if (length < 0){
-				printf("recvfrom error in leftCServer()");
-				EyelockLog(logger, DEBUG, "socket error in receiving iris images! %s %d\n", strerror(length), ps->port);
-			}else {
-				pkgs_received++;
-
-				if (!b_syncReceived && ((short *) databuf)[0] == 0x5555) {
-					//if(NoSyncCntr > 0){
-					//	printf("NoSyncCntr....%d\n", NoSyncCntr);
-					//	}
-					//NoSyncCntr = 0;
-					// unsigned long timems = ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
-					datalen = 0;
-					memcpy(databuf, &databuf[rx_idx + 2], length - 2);
-					rx_idx = length - 2;
-					datalen = length - 2;
-					b_syncReceived = true;
-					pckcnt = 1;
-					cam_id = databuf[2] & 0xff;
-					FrameNo = databuf[3] & 0xff;
+			if (!b_syncReceived && ((short *) databuf)[0] == 0x5555) {
+				//if(NoSyncCntr > 0){
+				//	printf("NoSyncCntr....%d\n", NoSyncCntr);
+				//	}
+				//NoSyncCntr = 0;
+				// unsigned long timems = ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
+				datalen = 0;
+				memcpy(databuf, &databuf[rx_idx + IMAGE_START_OFFSET], length - IMAGE_START_OFFSET);
+				rx_idx = length - IMAGE_START_OFFSET;
+				datalen = length; // - 2;
+				b_syncReceived = true;
+				pckcnt = 1;
+				cam_id = databuf[CAM_ID_OFFSET] & 0xff;
+				FrameNo = databuf[FRAME_ID_OFFSET] & 0xff;
+				if(me->m_ImageAuthentication){
 					// printf("CMx: seed in %d\n", ps->seed);
 					ps->syndrome = ps->seed;
-					//printf("vs->cam_id %02x\n", vs->cam_id);
-					// printf("Sync\n");
-					// printf("\ncam_id...%d  FrameNo...%d\n", cam_id, FrameNo);
-				} else if (b_syncReceived) {
+				}
+				printf("CMX: vs->cam_id %02x vs->frameId %d\n", cam_id, FrameNo);
+				//printf("vs->cam_id %02x\n", vs->cam_id);
+				// printf("Sync\n");
+				// printf("\ncam_id...%d  FrameNo...%d\n", cam_id, FrameNo);
+			} else if (b_syncReceived) {
+				if(me->m_ImageAuthentication)
 					hash_data = (unsigned short *) &databuf[rx_idx];
-					length =
-							(datalen + length <= me->m_ImageSize - 4) ?
-									length : me->m_ImageSize - 4 - datalen;
-					datalen += length;
-					pckcnt++;
 
+				length = (datalen + length <= me->m_ImageSize - 4) ? length : me->m_ImageSize - 4 - datalen;
+				datalen += length;
+				pckcnt++;
+
+				if(me->m_ImageAuthentication){
 					// dont do this on the last frame
 					if (datalen < me->m_ImageSize - 5)
 						ps->syndrome = me->calc_syndrome(ps->syndrome, *hash_data);
+				}
+				rx_idx += length;
 
-					// memcpy(databuf+datalen, buf, length);
-					rx_idx += length;
-
-				}/*else{
-				 // NoSyncCntr++;
-				 printf("CMX: No sync\n");
-				 continue;
-				 }*/
-				bytes_to_read -= length;
-				if (datalen >= me->m_ImageSize - 5) {
-					//me->HandleReceiveImage(databuf, datalen);
+			}/*else{
+			 // NoSyncCntr++;
+			 printf("CMX: No sync\n");
+			 continue;
+			 }*/
+			bytes_to_read -= length;
+			if (datalen >= me->m_ImageSize - 5) {
+				if(me->m_ImageAuthentication){
 					unsigned char valid_image;
 					// lets see if calculated matches received
 					valid_image = *hash_data == ps->syndrome ? 1 : 0;
@@ -3016,121 +3074,7 @@ void *leftCServer(void *arg) {
 						queueItem = pFrameGrabber->GetFreeBuffer();
 						queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
 					}
-
-					// if not put data into dummy buffer
-					if (!queueItem.m_ptr) {
-						pkgs_missed++;
-						// EyelockLog(logger, ERROR, "CMX: no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
-						databuf = dummy_buff;
-					} else {
-						databuf = queueItem.m_ptr;
-					}
-
-					// printf("Got image bytes to read = %d\n",bytes_to_read);
-					datalen = 0;
-					b_syncReceived = false;
-					bytes_to_read = me->m_ImageSize;
-					rx_idx = 0;
-				}
-				if (bytes_to_read <= 0)
-					bytes_to_read = me->m_ImageSize;
-			}
-		}
-		printf("closing socket...\n");
-		close(leftCSock);
-
-	} else {
-		int length;
-		int pckcnt = 0;
-		char buf[me->m_ImageSize];
-		char dummy_buff[me->m_ImageSize];
-		int datalen = 0;
-		int bytes_to_get = me->m_ImageSize;
-		short *pShort = (short *) buf;
-		bool b_syncReceived = false;
-		struct sockaddr_in from;
-		int cam_id;
-		socklen_t fromlen = sizeof(struct sockaddr_in);
-		int bytes_to_read = me->m_ImageSize;
-
-		int pkgs_received = 0;
-		int pkgs_missed = 0;
-		int rx_idx = 0;
-		static int NoSyncCntr = 0;
-		ImageQueueItem queueItem;
-		// me->HandleReceiveImage(databuf, datalen);
-
-		int leftCSock = me->CreateUDPServer(ps->port);
-		if (leftCSock < 0) {
-			EyelockLog(logger, ERROR, "Failed to create leftC Server()");
-			return NULL;
-		}
-
-		BufferBasedFrameGrabber *pFrameGrabber = (BufferBasedFrameGrabber*) me->pImageProcessor->GetFrameGrabber();
-		queueItem = pFrameGrabber->GetFreeBuffer();
-		queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
-		char * databuf = (char *) queueItem.m_ptr;
-
-		//  sleep(2);
-		// unsigned int count = 0;
-		char filename[100];
-		while (!me->ShouldIQuit()) {
-
-			length = recvfrom(leftCSock, &databuf[rx_idx],
-					min(1500, bytes_to_read), 0, (struct sockaddr *) &from,
-					&fromlen);
-			if (length < 0)
-				printf("recvfrom error in leftCServer()");
-			else {
-				pkgs_received++;
-
-#if 0
-				if (!b_syncReceived)
-				{
-					long long int pos = memmem(pShort,m_ImageSize/2,sync,1);
-					if (!pos)
-					{
-						printf("Sync bytes not FOUND\n");
-					}
-					else
-					{
-						//printf("Sync found at %llu\n", pos-(long long int)(&buf[0]));
-					}
-				}
-#endif
-
-				if (!b_syncReceived && ((short *) databuf)[0] == 0x5555) {
-					//if(NoSyncCntr > 0){
-					//	printf("NoSyncCntr....%d\n", NoSyncCntr);
-					//	}
-					//NoSyncCntr = 0;
-					// unsigned long timems = ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
-					datalen = 0;
-					memcpy(databuf, &databuf[rx_idx + 2], length - 2);
-					rx_idx = length - 2;
-					datalen = length - 2;
-					b_syncReceived = true;
-					pckcnt = 1;
-					cam_id = databuf[2] & 0xff;
-					//printf("vs->cam_id %02x\n", vs->cam_id);
-					// printf("Sync\n");
-				} else if (b_syncReceived) {
-					length =
-							(datalen + length <= me->m_ImageSize - 4) ?
-									length : me->m_ImageSize - 4 - datalen;
-					// memcpy(databuf+datalen, buf, length);
-					rx_idx += length;
-					datalen += length;
-					pckcnt++;
-				}/*else{
-				 // NoSyncCntr++;
-				 printf("CMX: No sync\n");
-				 continue;
-				 }*/
-				bytes_to_read -= length;
-				if (datalen >= me->m_ImageSize - 5) {
-					//me->HandleReceiveImage(databuf, datalen);
-
+				}else{
 					// dont push if its a dummy buffer
 					if (databuf != dummy_buff) {
 						/*
@@ -3141,7 +3085,6 @@ void *leftCServer(void *arg) {
 							const cv::Mat img(cv::Size(1200, 960), CV_8U, queueItem.m_ptr);
 							cv::imwrite(filename,img);
 						}*/
-
 						// printf("CMX: Pushing Frame No = %d\n", databuf[3] & 0xff);
 						pFrameGrabber->PushProcessBuffer(queueItem);
 						pkgs_missed = 0;
@@ -3153,29 +3096,28 @@ void *leftCServer(void *arg) {
 
 					queueItem = pFrameGrabber->GetFreeBuffer();
 					queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
-					// if not put data into dummy buffer
-					if (!queueItem.m_ptr) {
-						pkgs_missed++;
-						// printf("CMX: no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
-						databuf = dummy_buff;
-					} else {
-						databuf = queueItem.m_ptr;
-					}
-
-					// printf("Got image bytes to read = %d\n",bytes_to_read);
-					datalen = 0;
-					b_syncReceived = false;
-					bytes_to_read = me->m_ImageSize;
-					rx_idx = 0;
 				}
-				if (bytes_to_read <= 0)
-					bytes_to_read = me->m_ImageSize;
+				// if not put data into dummy buffer
+				if (!queueItem.m_ptr) {
+					pkgs_missed++;
+					// EyelockLog(logger, ERROR, "CMX: no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
+					databuf = dummy_buff;
+				} else {
+					databuf = queueItem.m_ptr;
+				}
+
+				// printf("Got image bytes to read = %d\n",bytes_to_read);
+				datalen = 0;
+				b_syncReceived = false;
+				bytes_to_read = me->m_ImageSize;
+				rx_idx = 0;
 			}
-			// count++;
+			if (bytes_to_read <= 0)
+				bytes_to_read = me->m_ImageSize;
 		}
-		printf("closing socket...\n");
-		close(leftCSock);
 	}
+	printf("closing socket...\n");
+	close(leftCSock);
 }
 
 #if 0 //Anita
@@ -3211,7 +3153,7 @@ void *Images(void *arg)
     {
     	if (databuf != dummy_buff)
     		pFrameGrabber->PushProcessBuffer(queueItem);
-#if 1 // Looping
+    	// Looping
     	queueItem = pFrameGrabber->GetFreeBuffer();
     	// if not put data into dummy buffer
     	if (!queueItem.m_ptr)
@@ -3222,264 +3164,14 @@ void *Images(void *arg)
     	{
     		databuf = queueItem.m_ptr;
     	}
-#endif
+
 
     }
 
 }
 #endif
-#ifdef HBOX_PG
-void *middleCamera(void *arg)
-{
-	EyelockLog(logger, TRACE, "CmxHandler::MiddleCamera() start");
 
-    CmxHandler *me = (CmxHandler *) arg;
-    char filename[200];
-    static int index;
-    // int CamIndex = 1;
-    int CamSerialNo = me->m_SerialNoCamera2; // 12120566; Eyelock.PGSerialNoCamera2
-    static int firstEntry = 1;
-    if(firstEntry){
-       	me->CameraPowerOn(CamSerialNo);
-       	firstEntry = 0;
-    }
-    while (!me->ShouldIQuit())
-    {
-    	IplImage *img = me->GrabFramePG(CamSerialNo);
-    	// IplImage *img = me->GrabFramePGCAM1(CamIndex);
-    	if(me->m_SaveImages){
-    		sprintf(filename,"Cam_%d_%d.pgm",CamSerialNo, index++);
-    		cvSaveImage(filename, img);
-    	}
-		me->HandleReceiveImage(img->imageData, img->imageSize);
-		cvReleaseImage(&img);
-    }
-}
-
-void *rightCamera(void *arg)
-{
-	EyelockLog(logger, TRACE, "CmxHandler::RightCamera() start");
-	CmxHandler *me = (CmxHandler *) arg;
-    char filename[200];
-    static int Cnt;
-    // int CamIndex = 2;
-    int CamSerialNo = me->m_SerialNoCamera3; //12120579; PGSerialNoCamera3
-    static int firstEntry = 1;
-    if(firstEntry){
-    	me->CameraPowerOn(CamSerialNo);
-        firstEntry = 0;
-    }
-
-    while (!me->ShouldIQuit())
-    {
-    	IplImage *img = me->GrabFramePG(CamSerialNo);
-    	// IplImage *img = me->GrabFramePGCAM2(CamIndex);
-    	if(me->m_SaveImages){
-    		sprintf(filename,"Cam_%d_%d.pgm",CamSerialNo, Cnt++);
-    		cvSaveImage(filename, img);
-    	}
-		me->HandleReceiveImage(img->imageData, img->imageSize);
-		cvReleaseImage(&img);
-    }
-}
-#endif
-
-
-void *rightCServer(void *arg)
-{
-    EyelockLog(logger, TRACE, "CmxHandler::leftCServer() start");
-
-
-
-      CmxHandler *me = (CmxHandler *) arg;
-      int length;
-      int pckcnt=0;
-      char buf[me->m_ImageSize];
-      char databuf[me->m_ImageSize];
-      int datalen = 0;
-      int bytes_to_get=me->m_ImageSize;
-      short *pShort = (short *)buf;
-      bool b_syncReceived = false;
-      struct sockaddr_in from;
-      int cam_id;
-      socklen_t fromlen = sizeof(struct sockaddr_in);
-      int bytes_to_read=me->m_ImageSize;
-
-      // me->HandleReceiveImage(databuf, datalen);
-
-      int leftCSock = me->CreateUDPServer(8193);
-      if (leftCSock < 0) {
-              EyelockLog(logger, ERROR, "Failed to create leftC Server()");
-              return NULL;
-      }
-
-     //  sleep(2);
-      while (!me->ShouldIQuit())
-      {
-
-      	 length = recvfrom(leftCSock, buf, min(1500,bytes_to_read), 0, (struct sockaddr *)&from, &fromlen);
-      	            if (length < 0)
-      	                printf("recvfrom error in leftCServer()");
-      	            else
-      	            {
-      	                if(!b_syncReceived && pShort[0] == 0x5555)
-      	                {
-      	                        datalen = 0;
-      	                        memcpy(databuf, buf+2, length-2);
-      	                        datalen = length - 2;
-      	                        b_syncReceived = true;
-      	                        pckcnt=1;
-      	                        cam_id=databuf[2]&0xff;
-      	                        //printf("vs->cam_id %02x\n", vs->cam_id);
-      	                       // printf("Sync\n");
-      	                }
-      	                else if(b_syncReceived)
-      	                {
-      	                        length = (datalen+length <= me->m_ImageSize-4) ? length : me->m_ImageSize-4-datalen;
-      	                        memcpy(databuf+datalen, buf, length);
-      	                        datalen += length;
-      	                        pckcnt++;
-      	                }
-      	                bytes_to_read-=  length;
-      	                if(datalen >= me->m_ImageSize-5)
-      	                {
-      	                    me->HandleReceiveImage(databuf, datalen);
-      	                   // printf("Got image bytes to read = %d\n",bytes_to_read);
-      	                   	datalen = 0;
-      	                   	b_syncReceived=false;
-      	                   	bytes_to_read=me->m_ImageSize;
-      	               }
-      	               if(bytes_to_read<=0)
-      	            	   bytes_to_read=me->m_ImageSize;
-      	            }
-      }
-      printf("closing socket...\n");
-    close(leftCSock);
-}
-
-#ifndef HBOX_PG
-void *rightCServer1(void *arg)
-{
-        EyelockLog(logger, TRACE, "CmxHandler::rightCServer() start");
-
-        CmxHandler *me = (CmxHandler *) arg;
-        int length;
-        int pckcnt=0;
-        char buf[me->m_ImageSize];
-        char databuf[me->m_ImageSize];
-        int datalen = 0;
-        short *pShort = (short *)buf;
-        bool b_syncReceived = false;
-        struct sockaddr_in from;
-        socklen_t fromlen = sizeof(struct sockaddr_in);
-        int leftCSock = me->CreateUDPServer(8193);
-        if (leftCSock < 0) {
-                EyelockLog(logger, ERROR, "Failed to create rightServer()");
-                return NULL;
-        }
-
-        while (!me->ShouldIQuit())
-        {
-
-#if 1
-            length = recvfrom(leftCSock, buf, 1500, 0, (struct sockaddr *)&from, &fromlen);
-            if (length < 0)
-                EyelockLog(logger, ERROR, "recvfrom error in rightCServer()");
-            else
-            {
-                if (me->m_debug)
- #if 1
-                if (pShort[0] == 0x5555)
-                {
-                    // the first package
-                	//printf("received the sync byte --- new frame\n");
-                        datalen = 0;
-                        memcpy(databuf, buf+2, length-2);
-                        databuf[0] = 1;
-                        datalen = length - 2;
-                        b_syncReceived = true;
-                       // printf("Sync\n");
-                        pckcnt=1;
-                }
-                else if(b_syncReceived)
-                {
-                        length = (datalen+length <= me->m_ImageSize-4) ? length : me->m_ImageSize-4-datalen;
-                        memcpy(databuf+datalen, buf, length);
-                        datalen += length;
-                        pckcnt++;
-                }
-         //       printf("leftCServer: received : total %d , in this packet %d of total 1152000 \n",datalen,length);
-                if (datalen >= me->m_ImageSize-5)
-                {
-                	//struct timeval te;
-                	//gettimeofday(&te, NULL); // get current time
-                	//long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // caculate milliseconds
-
-                //	printf("image:rightserver %llu\n",milliseconds);
-              		//FILE *fp = fopen("cmxRcvd.pgm","wb");
-                	//fwrite(databuf, 1, datalen,fp);
-                	//	fclose(fp);
-
-                    me->HandleReceiveImage(databuf, datalen);
-
-                    	datalen = 0;
-                    	b_syncReceived=false;
-                    	//printf("frame rcved 8193\n");
-
-                      /*buf[0] = CMX_SEND_CMD;
-                      me->HandleSendMsg(buf);
-                      unsigned char cmdbuf[256];
-                      cmdbuf[0] = CMX_SEND_CMD;
-                      me->HandleSendMsg((char *)cmdbuf);*/
-               }
-#endif
-          }
-#endif
-      }
-      close(leftCSock);
-}
-
-
-
-void *faceServer(void *arg)
-{
-	EyelockLog(logger, TRACE, "CmxHandler::faceServer() start");
-
-	CmxHandler *me = (CmxHandler *) arg;
-	int length;
-	char buf[me->m_ImageSize];
-	struct sockaddr_in from;
-	socklen_t fromlen = sizeof(struct sockaddr_in);
-	int faceSock = me->CreateUDPServer(8194);
-	if (faceSock < 0) {
-		EyelockLog(logger, ERROR, "Failed to create rightC Server()");
-		return NULL;
-	}
-
-	while (!me->ShouldIQuit()) {
-
-				int data_size=0;
-				printf("waiting for image\n");
-				while ( data_size <= 307210)
-				{
-					length = recvfrom(faceSock, buf+data_size, (me->m_ImageSize - data_size), 0, (struct sockaddr *)&from, &fromlen);
-					data_size = data_size + length;
-
-				}
-				if(data_size > 0)
-				{
-					printf("received image from left camera with size %d\n",data_size);
-					me->HandleReceiveImage(buf, data_size);
-					data_size = 0;
-				}
-				sleep(4);
-			}
-	close(faceSock);
-}
-
-#endif
-
-#endif
+#endif /* CMX_C1 */
 
 
 
