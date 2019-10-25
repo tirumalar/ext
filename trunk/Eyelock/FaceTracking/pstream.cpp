@@ -23,7 +23,6 @@
 #include "Synchronization.h"
 #include "pstream.h"
 #include <signal.h>
-// #include "logging.h"
 
 const char loggerp[30] = "pstream";
 void diep(char *s)
@@ -31,22 +30,7 @@ void diep(char *s)
     perror(s);
     exit(1);
 }
-/*
-struct sockaddr_in si_me, si_other;
-int s, i;
-unsigned int slen=sizeof(si_other);
-int ret;
-int bytes_to_get = WIDTH*(HEIGHT-1);
-char *s_ptr = buf;
-int x;
-int frames;
-int num_frames;
-int wr;
-int bytes_to_write;
-int wait_for_sync;
-pthread_t leftCThread;
-void *leftCServer(void *arg);
-*/
+
 int m_port;
 
 #define FREE_BUFF_SIZE 2
@@ -310,86 +294,91 @@ void VideoStream ::SetSeed(unsigned short sd)
 void *VideoStream::ThreadServer(void *arg)
 {
 	VideoStream *vs = (VideoStream *) arg;
-	if(vs->m_UseImageAuthentication){
+
+	int length;
+	int pckcnt = 0;
+	char buf[vs->m_ImageSize];
+	char dummy_buff[vs->m_ImageSize];
+	int datalen = 0;
+	bool b_syncReceived = false;
+	struct sockaddr_in from;
+	socklen_t fromlen = sizeof(struct sockaddr_in);
+	int bytes_to_read = vs->m_ImageSize;
+	int pkgs_received = 0;
+	int pkgs_missed = 0;
+	int rx_idx = 0;
+	unsigned short *hash_data;
+
+	if(vs->m_UseImageAuthentication)
 		printf("Image Authentication ThreadServer() start\n");
-		int length;
-		int pckcnt = 0;
-		char buf[vs->m_ImageSize];
-		char dummy_buff[vs->m_ImageSize];
+	else
+		printf("No Image Authentication ThreadServer() start\n");
 
-		int datalen = 0;
-		short *pShort = (short *) buf;
-		bool b_syncReceived = false;
-		struct sockaddr_in from;
-		socklen_t fromlen = sizeof(struct sockaddr_in);
-		int bytes_to_read = vs->m_ImageSize;
+	ImageQueueItemF queueItem = vs->GetFreeBuffer();
+	char *databuf = (char *) queueItem.m_ptr;
 
-		int pkgs_received = 0;
-		int pkgs_missed = 0;
-		int rx_idx = 0;
-		unsigned short *hash_data;
+	int leftCSock = CreateUDPServer(vs->m_port);
+	if (leftCSock < 0) {
+		printf("Failed to create leftC Server()\n");
+		return NULL;
+	}
 
-		ImageQueueItemF queueItem = vs->GetFreeBuffer();
-		char *databuf = (char *) queueItem.m_ptr;
+	vs->running = 1;
 
-		int leftCSock = CreateUDPServer(vs->m_port);
-		if (leftCSock < 0) {
-			printf("Failed to create leftC Server()\n");
-			return NULL;
-		}
-		vs->running = 1;
-		while (vs->running) {
-			length = recvfrom(leftCSock, &databuf[rx_idx], min(1500, bytes_to_read),
-					0, (struct sockaddr *) &from, &fromlen);
-			if (length < 0)
-			{
-				EyelockLog(loggerp, ERROR, "socket error in receiving face images! %s %d\n", strerror(length), vs->m_port);
-				 printf("recvfrom error in leftCServer()");
-				 perror;
-			}else {
-				pkgs_received++;
-				if (!b_syncReceived && ((short *) databuf)[0] == 0x5555) {
-					datalen = 0;
-					memcpy(databuf, &databuf[rx_idx + 2], length - 2);
-					rx_idx = length - 2;
-					datalen = length - 2;
-					b_syncReceived = true;
-					pckcnt = 1;
-					vs->cam_id = databuf[2] & 0xff;
-					vs->frameId = databuf[3] & 0xff;
+	while (vs->running) {
+		length = recvfrom(leftCSock, &databuf[rx_idx], min(1500, bytes_to_read),
+				0, (struct sockaddr *) &from, &fromlen);
+		if (length < 0)
+		{
+			EyelockLog(loggerp, ERROR, "socket error in receiving face images! %s %d\n", strerror(length), vs->m_port);
+			 printf("recvfrom error in leftCServer()");
+			 perror;
+		}else{
+			pkgs_received++;
+			if (!b_syncReceived && ((short *) databuf)[0] == 0x5555) {
+				datalen = 0;
+				
+				memcpy(databuf, &databuf[rx_idx + 2], length - 2);
+				rx_idx = length - 2;
+				datalen = length; // - 2;
+				b_syncReceived = true;
+				pckcnt = 1;
+				vs->cam_id = databuf[2] & 0xff;
+				vs->frameId = databuf[3] & 0xff;
+				if(vs->m_UseImageAuthentication){
 					// printf("pstream: seed in %d\n", vs->seed);
 					vs->syndrome = vs->seed;
-					//printf("vs->frameId %02x %02x %02x %02x\n", databuf[0]&0xff, databuf[1]&0xff, databuf[2]&0xff, databuf[3]&0xff);
-					//printf("vs->cam_id %02x\n", vs->cam_id);
-					// printf("Sync\n");
-				} else if (b_syncReceived) {
+				}
+				printf("FaceTracker: vs->cam_id %02x vs->frameId %d\n", vs->cam_id, vs->frameId);
+				//printf("vs->frameId %02x %02x %02x %02x\n", databuf[0]&0xff, databuf[1]&0xff, databuf[2]&0xff, databuf[3]&0xff);
+				//printf("vs->cam_id %02x\n", vs->cam_id);
+				// printf("Sync\n");
+			} else if (b_syncReceived) {
+				if(vs->m_UseImageAuthentication)
 					hash_data = (unsigned short *) &databuf[rx_idx];
 
-					length =
-							(datalen + length <= vs->m_ImageSize - 4) ?
-									length : vs->m_ImageSize - 4 - datalen;
-					datalen += length;
-					pckcnt++;
+				length = (datalen + length <= vs->m_ImageSize - 4) ? length : vs->m_ImageSize - 4 - datalen;
+				datalen += length;
+				pckcnt++;
 
-					// dont do this on the last frame
+				// dont do this on the last frame
+				if(vs->m_UseImageAuthentication){
 					if (datalen < vs->m_ImageSize - 5)
 						vs->syndrome = vs->calc_syndrome(vs->syndrome, *hash_data);
-
-	//                        memcpy(databuf+datalen, buf, length);
-					rx_idx += length;
 				}
-				bytes_to_read -= length;
-				if (datalen >= vs->m_ImageSize - 5) {
-					//vs->HandleReceiveImage(databuf, datalen);
+
+				rx_idx += length;
+			}
+			bytes_to_read -= length;
+			if (datalen >= vs->m_ImageSize - 5) {
+				if(vs->m_UseImageAuthentication){
 					unsigned char valid_image;
 					// lets see if calculated matches received
 					valid_image = *hash_data == vs->syndrome ? 1 : 0;
 
 					if (valid_image == 0)
 						printf("Pstream: Bad Image Calc %x got %x\n", vs->syndrome, *hash_data);
-					//else
-					//	printf ("Good image\n");
-					// if its good we push it
+
 					if (databuf != dummy_buff) {
 						 // printf("Pstream: Frame is valid\n");
 						if (valid_image)
@@ -397,141 +386,35 @@ void *VideoStream::ThreadServer(void *arg)
 					}
 					if (valid_image)
 						queueItem = vs->GetFreeBuffer();
-					if (!queueItem.m_ptr) {
-						pkgs_missed++;
-						// printf("no free buffers. Packages received: %d, packages missed: %d\n",	pkgs_received, pkgs_missed);
-						databuf = dummy_buff;
-					} else {
-						databuf = queueItem.m_ptr;
-					}
-
-					// if not put data into dummy buffer
-
-					// printf("Got image bytes to read = %d\n",bytes_to_read);
-					datalen = 0;
-					b_syncReceived = false;
-					bytes_to_read = vs->m_ImageSize;
-					rx_idx = 0;
-				}
-				if (bytes_to_read <= 0)
-					bytes_to_read = vs->m_ImageSize;
-			}
-		}
-		vs->running = -1;
-		close(leftCSock);
-	}else{
-        printf("No Image Authentication ThreadServer() start\n");
-        int length;
-        int pckcnt=0;
-        char buf[vs->m_ImageSize];
-        char dummy_buff[vs->m_ImageSize];
-
-        int datalen = 0;
-        short *pShort = (short *)buf;
-        bool b_syncReceived = false;
-        struct sockaddr_in from;
-        socklen_t fromlen = sizeof(struct sockaddr_in);
-        int bytes_to_read=vs->m_ImageSize;
-
-        int pkgs_received = 0;
-        int pkgs_missed = 0;
-        int rx_idx=0;
-
-        ImageQueueItemF queueItem = vs->GetFreeBuffer();
-        char *databuf = (char *)queueItem.m_ptr;
-
-
-        int leftCSock = CreateUDPServer(vs->m_port);
-        if (leftCSock < 0)
-        {
-                printf("Failed to create leftC Server()\n");
-                return NULL;
-        }
-        vs->running=1;
-        // unsigned int count = 0;
-        while (vs->running)
-        {
-            length = recvfrom(leftCSock, &databuf[rx_idx], min(1500,bytes_to_read), 0, (struct sockaddr *)&from, &fromlen);
-            if (length < 0)
-            {
-            	EyelockLog(loggerp, ERROR, "socket error in receiving face images! %s %d\n", strerror(length), vs->m_port);
-
-                printf("recvfrom error in leftCServer()");
-                perror;
-            }
-            else
-            {
-            	pkgs_received++;
-            	if(!b_syncReceived && ((short *)databuf)[0] == 0x5555)
-                {
-                        datalen = 0;
-                        memcpy(databuf, &databuf[rx_idx+2], length-2);
-                        rx_idx = length-2;
-                        datalen = length - 2;
-                        b_syncReceived = true;
-                        pckcnt=1;
-                        vs->cam_id=databuf[2]&0xff;
-                        vs->frameId=databuf[3]&0xff;
-                        //printf("vs->frameId %02x %02x %02x %02x\n", databuf[0]&0xff, databuf[1]&0xff, databuf[2]&0xff, databuf[3]&0xff);
-                        //printf("vs->cam_id %02x\n", vs->cam_id);
-                       // printf("Sync\n");
-                }
-                else if(b_syncReceived)
-                {
-                        length = (datalen+length <= vs->m_ImageSize-4) ? length : vs->m_ImageSize-4-datalen;
-//                        memcpy(databuf+datalen, buf, length);
-                        rx_idx+=length;
-                        datalen += length;
-                        pckcnt++;
-                }/*else{
-                	//printf("FaceTracker: No sync\n");
-                	continue;
-                }*/
-                bytes_to_read-=  length;
-                if(datalen >= vs->m_ImageSize-5)
-                {
-                    //vs->HandleReceiveImage(databuf, datalen);
-
-                	if (databuf != dummy_buff)
-                	{
+				}else{
+					if (databuf != dummy_buff) {
 						vs->PushProcessBuffer(queueItem);
-						/*
-						if(count % 4*5 == 0){ // Every 5 seconds
-							const cv::Mat img(cv::Size(1200, 960), CV_8U, queueItem.m_ptr);
-							cv::imwrite("FaceSocket.pgm",img);
-						}*/
 						pkgs_missed=0;
 						pkgs_received=0;
 						pckcnt = 0;
-                	}
-
+					}
 					queueItem = vs->GetFreeBuffer();
-					// if not put data into dummy buffer
-					if (!queueItem.m_ptr)
-					{
-						pkgs_missed++;
-						// printf("FaceTracker: no free buffers. Packages received: %d, packages missed: %d\n", pkgs_received, pkgs_missed);
-						databuf = dummy_buff;
-					}
-					else
-					{
-						databuf = queueItem.m_ptr;
-					}
-
-                   // printf("Got image bytes to read = %d\n",bytes_to_read);
-                   	datalen = 0;
-                   	b_syncReceived=false;
-                   	bytes_to_read=vs->m_ImageSize;
-                   	rx_idx=0;
-               }
-               if(bytes_to_read<=0)
-            	   bytes_to_read=vs->m_ImageSize;
-          }
-           // count ++;
-      }
-       vs->running =-1;
-      close(leftCSock);
-	}
+				}
+				if (!queueItem.m_ptr) {
+					pkgs_missed++;
+					// printf("no free buffers. Packages received: %d, packages missed: %d\n",	pkgs_received, pkgs_missed);
+					databuf = dummy_buff;
+				} else {
+					databuf = queueItem.m_ptr;
+				}
+				// if not put data into dummy buffer
+				// printf("Got image bytes to read = %d\n",bytes_to_read);
+				datalen = 0;
+				b_syncReceived = false;
+				bytes_to_read = vs->m_ImageSize;
+				rx_idx = 0;
+			}
+			if (bytes_to_read <= 0)
+				bytes_to_read = vs->m_ImageSize;
+		} // else loop
+	} // While
+	vs->running = -1;
+	close(leftCSock);
 }
 
 VideoStream ::VideoStream(int port, bool ImageAuthFlag) : frameId(0)
@@ -565,7 +448,6 @@ VideoStream ::VideoStream(int port, bool ImageAuthFlag) : frameId(0)
 		imageQueueItem.m_ptr = new unsigned char[m_ImageSize];
 		m_FreeBuffer->Push(imageQueueItem);
 	}
-
 
 	if (pthread_create (&Thread, NULL, ThreadServer, (void *)this))
 	{
