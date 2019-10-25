@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 			sprintf(fileName,"%d_%d.pgm",atoi(argv[1]), idx);
 			cv::imwrite(fileName,outImg);
 		}
-
+/*
 		//For testing image optimization (OFFset correction)
 		Mat DiffImage = imread("white.pgm",CV_LOAD_IMAGE_GRAYSCALE);
 		Mat dstImage;
@@ -82,17 +82,18 @@ int main(int argc, char **argv)
 			cv::resize(dstImage, smallImg, cv::Size(), 1, 1, INTER_NEAREST); //Time debug
 		}else
 			cv::resize(outImg, smallImg, cv::Size(), 1, 1, INTER_NEAREST); //Time debug
-
+*/
 		//MeasureSnr();
-		char text[10];
-		sprintf(text,"CAM %2x %s",s_canId,s_canId&0x80 ?  "AUX":"MAIN" );
+		char text[20];
+	 	sprintf(text,"CAM %2x %s",s_canId,s_canId&0x80 ?  "AUX":"MAIN" );
 		putText(smallImg,text,Point(10,60), FONT_HERSHEY_SIMPLEX, 1.5,Scalar(255,255,255),2);
 		putText(smallImg,text,Point(10+1,60+1), FONT_HERSHEY_SIMPLEX, 1.5,Scalar(0,0,0),2);
 		//	cv::resize(outImg, smallImg, cv::Size(), 0.25, 0.25, INTER_NEAREST); //Time debug
 
-		if(bShowFaceTracking)
-			imshow("FaceTracker", smallImg);  //Time debug
-
+		if(bShowFaceTracking){
+		// 	cv::resize(outImg, smallImg, cv::Size(320/2, 240/2), (1 / 2), (1 / 2), INTER_NEAREST);	//py level 3
+			imshow("FaceTracker", outImg);  //Time debug
+		}
 	    key = cv::waitKey(1);
 
 	    //For quit streaming
