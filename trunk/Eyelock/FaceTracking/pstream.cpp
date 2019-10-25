@@ -349,7 +349,7 @@ void *VideoStream::ThreadServer(void *arg)
 					// printf("pstream: seed in %d\n", vs->seed);
 					vs->syndrome = vs->seed;
 				}
-				printf("FaceTracker: vs->cam_id %02x vs->frameId %d\n", vs->cam_id, vs->frameId);
+				// printf("FaceTracker: vs->cam_id %02x vs->frameId %d\n", vs->cam_id, vs->frameId);
 				//printf("vs->frameId %02x %02x %02x %02x\n", databuf[0]&0xff, databuf[1]&0xff, databuf[2]&0xff, databuf[3]&0xff);
 				//printf("vs->cam_id %02x\n", vs->cam_id);
 				// printf("Sync\n");
