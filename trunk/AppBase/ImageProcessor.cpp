@@ -2749,7 +2749,7 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 	std::map<int,EyeInfo> eyeMap;
 	bool detect;
 	int NoOfHaarEyes = 0;
-#if 0
+#if 1
 	if(m_EnableColumnNoiseReduction && frame->imageData != NULL){
 		int retDarkImageStatus=0;
 			char filename[150];
@@ -2757,14 +2757,12 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 			int DigitalGain = (frame->imageData[4]&0xff) | ((frame->imageData[5]<<8)&0xff00);
 			retDarkImageStatus = GenerateDarkImage(frame, cam_idd);
 			int MultiplyGain = (int)((DigitalGain+8)/16);
-			printf("[ret]:%d Gain:%x MultiplyGain:%d\n", retDarkImageStatus, DigitalGain, MultiplyGain);
+			// printf("[ret]:%d Gain:%x MultiplyGain:%d\n", retDarkImageStatus, DigitalGain, MultiplyGain);
 			if(retDarkImageStatus == 1){
-			#if 1 // Ilya code
 				cv::Mat DarkImageScaled = cv::Mat::zeros(cv::Size(m_Imagewidth, m_Imageheight), CV_16S);
 				// DarkImageScaled = darkImageFrame[CamIdLookup(cam_idd)] - (PEDESTAL_OFFSET*16);
 				DarkImageScaled = darkImageFrame[CamIdLookup(cam_idd)] * MultiplyGain;
 				DarkImageScaled = DarkImageScaled/(256);
-
 				if(m_NoCorrectionWhen255)
 				{
 					if(DigitalGain != 0x100){
@@ -2781,13 +2779,6 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 
 				cv::Mat CorrectedImage = cv::Mat::zeros(cv::Size(m_Imagewidth, m_Imageheight), CV_8U);
 				subtract(IrisImage, DarkImageScaled, CorrectedImage, cv::Mat(), CV_8U);
-			#else
-				sprintf(filename,"DarkImage_%d_%d.pgm", cam_idd, m_faceIndex);
-				imwrite(filename, darkImageFrame[CamIdLookup(cam_idd)]);
-				cv::Mat CorrectedImage = cv::Mat::zeros(cv::Size(m_Imagewidth, m_Imageheight), CV_8U);
-				// subtract(IrisImage, darkImageFrame[CamIdLookup(cam_idd)], CorrectedImage, cv::Mat(), CV_8U);
-				subtract(IrisImage, darkImageFrame[CamIdLookup(cam_idd)]* (DigitalGain/255.0), CorrectedImage, cv::Mat(), CV_8U);
-			#endif
 
 				if(m_ShowColumnNoiseImage && (cam_idd == m_DebugTestCNCamID)){
 					std::ostringstream ssCoInfo;
@@ -2811,16 +2802,29 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 					sprintf(filename,"%d_%d_DarkScaled.pgm", cam_idd, m_faceIndex);
 					imwrite(filename, DarkImageScaled);
 				}
+				// IplImage CNImage = CorrectedImage;
+				// cvCopy(&CNImage, frame);
 
-				IplImage CNImage = CorrectedImage;
-				cvCopy(&CNImage, frame);
+				cvSetData(frame, CorrectedImage.data, frame->widthStep);
+
 			}
 	}
 #else
 	if(m_EnableColumnNoiseReduction && frame->imageData != NULL){
+		/*
 		IplImage CNImage = ColumnNoiseReduction(frame, cam_idd);
-		if(!&CNImage)
+		if(CNImage.imageData != NULL){
 			cvCopy(&CNImage, frame);
+		}else{
+			printf("Corrected Image is NULL\n");
+		}*/
+		cv::Mat CorrMat = ColumnNoiseReduction(frame, cam_idd);
+		cvSetData(frame, CorrMat.data, frame->widthStep);
+#if 1
+		sprintf(filename,"%d_%d_Frame.pgm", cam_idd, m_faceIndex);
+		cv::Mat mateye = cv::cvarrToMat(frame);
+		imwrite(filename, mateye);
+#endif
 	}
 #endif
 
@@ -3297,9 +3301,8 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 		// Column Noise Reduction
 		if(m_EnableColumnNoiseReduction && frame->imageData != NULL){
-			IplImage CNImage = ColumnNoiseReduction(frame, cam_idd);
-			if(!&CNImage)
-				cvCopy(&CNImage, frame);
+			cv::Mat CorrectedImage = ColumnNoiseReduction(frame, cam_idd);
+			cvSetData(frame, CorrectedImage.data, frame->widthStep);
 		}
 
 		if (!bSkipProcessingImage)

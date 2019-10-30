@@ -679,24 +679,10 @@ void FaceTracker::SwitchIrisCameras(float eye_size, bool mode)
 	EyelockLog(logger, TRACE, "SwitchIrisCameras");
 	char cmd[100];
 	if(mode){
-		if(m_EnableIrisCameraPingPong){
-			if((eye_size <= m_FarSwitchThreshold) && (eye_size >= m_NearSwitchThreshold))
-				sprintf(cmd,"set_cam_mode(0x47,%d)",FRAME_DELAY); // both Main and Aux
-			else
-				sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY); // --- Main
-		}else{
-			sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY); // --- Main
-		}
+		sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY); // --- Main
 	}
 	else{
-		if(m_EnableIrisCameraPingPong){
-			if((eye_size <= m_FarSwitchThreshold) && (eye_size >= m_NearSwitchThreshold))
-				sprintf(cmd,"set_cam_mode(0x47,%d)",FRAME_DELAY); // both main and aux
-			else
-				sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY); // --- Aux
-		}else{
-			sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY); // --- AUX
-		}
+		sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY); // --- AUX
 	}
 	port_com_send(cmd);
 }
@@ -1719,20 +1705,23 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 	case STATE_GET_DARK_IMAGE:
 		   if(flag_dark_main == 0)
 		   {
-			   char buff[512];
-			   sprintf(buff,"wcr(0x87,0x305e,%d)", 255);
-			   port_com_send(buff);
+
 			   char cmd[512];
 
 			   sprintf(cmd, "psoc_write(4,0)");
 			   port_com_send(cmd);
 
 		
+			   char buff[512];
+			   sprintf(buff,"wcr(0x87,0x305e,%d)", 255);
+			   port_com_send(buff);
 
-			   sprintf(cmd,"set_cam_head(0x1B,0x100)"); // set leds off
-			   port_com_send(cmd);
 
 			   sprintf(cmd, "wcr(0x1B,0x301e,%d)", pedestaloffset);
+			   port_com_send(cmd);
+
+
+			   sprintf(cmd,"set_cam_head(0x1B,0x100)"); // set leds off
 			   port_com_send(cmd);
 
 	   		   sprintf(cmd,"set_cam_mode(0x87, %d)",FRAME_DELAY);
@@ -1744,7 +1733,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 		   }
 		   else{
 			   char cmd[512];
-			   sprintf(cmd,"set_cam_head(0x1f,0x0)"); // set leds off
+			   sprintf(cmd,"set_cam_head(0x1f,0x0)");
 			   port_com_send(cmd);
 			   system_state = STATE_LOOK_FOR_FACE;
 		   }
@@ -1766,14 +1755,13 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 								SweepFaceBrightness();
 							//if (eyesInViewOfIriscam)
 							if(m_EnableColumnNoiseReduction){
-								if(m_DarkImageGenFrameCnt%10 == 0){									
+								if(FaceCameraFrameNo%m_DarkImageGenFrameCnt == 0){
 									system_state = STATE_GET_DARK_IMAGE;
 								}
 								else{
 									char cmd[512];
 									sprintf(cmd, "wcr(0x1f,0x301e,0x0)");
 									port_com_send(cmd);
-
 								}
 
 							}
@@ -1844,21 +1832,20 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					 // Turn on all cameras
 					 // turn off leds
 					 // set header to 100
-						char buff[512];
-						sprintf(buff,"wcr(0x07,0x305e,%d)", 255);
-						port_com_send(buff);
 
 						char cmd[512];
 						sprintf(cmd, "psoc_write(4,0)");
 						port_com_send(cmd);
-
 						
-
-						sprintf(cmd,"set_cam_head(0x1B,0x100)"); // set leds off
-						port_com_send(cmd);
+						char buff[512];
+						sprintf(buff,"wcr(0x07,0x305e,%d)", 255);
+						port_com_send(buff);
 
 						sprintf(buff, "wcr(0x1B,0x301e,%d)", pedestaloffset);
 						port_com_send(buff);
+
+						sprintf(cmd,"set_cam_head(0x1B,0x100)"); // set leds off
+						port_com_send(cmd);
 
 						sprintf(cmd,"set_cam_mode(0x07, %d)",FRAME_DELAY);
 						port_com_send(cmd);
@@ -1892,7 +1879,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 					}
 				//DMOOUT	if(b_EnableFaceAGC)
 				//DMOOUT		DoAgc();
-					break;
+
 					if(m_EnableColumnNoiseReduction){
 					case STATE_GET_DARK_IMAGE:
 						switch (system_state)
@@ -1906,7 +1893,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						}
 						break;
 					}
-				break;
+					break;
 	case STATE_AUX_IRIS:
 					switch (system_state)
 					{
