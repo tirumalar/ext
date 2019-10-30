@@ -2819,7 +2819,8 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 #else
 	if(m_EnableColumnNoiseReduction && frame->imageData != NULL){
 		IplImage CNImage = ColumnNoiseReduction(frame, cam_idd);
-		cvCopy(&CNImage, frame);
+		if(!&CNImage)
+			cvCopy(&CNImage, frame);
 	}
 #endif
 
@@ -3297,7 +3298,8 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		// Column Noise Reduction
 		if(m_EnableColumnNoiseReduction && frame->imageData != NULL){
 			IplImage CNImage = ColumnNoiseReduction(frame, cam_idd);
-			cvCopy(&CNImage, frame);
+			if(!&CNImage)
+				cvCopy(&CNImage, frame);
 		}
 
 		if (!bSkipProcessingImage)
