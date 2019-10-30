@@ -3782,6 +3782,10 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			if (m_pCMXHandler){
 				m_pCMXHandler->HandleSendMsg((char *)buf, m_pCMXHandler->m_Randomseed);
 			}
+
+			int len = sprintf((char *)buf, "play_snd(0)\n");
+			m_pCMXHandler->SendMessage((char *)buf, len, m_pCMXHandler->m_Randomseed);
+
 			printf("******************** sleeping for 1 sec**********\n");
 		}
 
@@ -3798,6 +3802,9 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			if (m_pCMXHandler) {
 				m_pCMXHandler->HandleSendMsg((char *) buf, m_pCMXHandler->m_Randomseed);
 			}
+
+			int len = sprintf((char *)buf, "play_snd(0)\n");
+			m_pCMXHandler->SendMessage((char *)buf, len, m_pCMXHandler->m_Randomseed);
 
 #if 0
 			Screen = cv::imread("/home/root/screens/Slide3.BMP", cv::IMREAD_COLOR);

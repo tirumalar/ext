@@ -105,9 +105,10 @@ public:
 	void SetSeed(unsigned short sd);
 	void SetLatestFaceCoordRect(cv::Rect ScaledFaceRect);
 	cv::Rect GetLatestFaceCoordRect();
+	void SendMessage(char *out_msg, int len, unsigned short randomseed);
 private:
     bool HandleReceiveMsg(Socket & client);
-    void SendMessage(char *out_msg, int len, unsigned short randomseed);
+
     bool do_serv_task(Socket& client);
 
 
