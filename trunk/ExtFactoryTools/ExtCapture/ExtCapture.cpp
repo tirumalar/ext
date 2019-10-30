@@ -48,7 +48,8 @@ int main(int argc, char **argv)
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");
 	int m_ImageWidth = EyelockConfig.getValue("FrameSize.width", 1200);
 	int m_ImageHeight = EyelockConfig.getValue("FrameSize.height", 960);
-	bool m_ImageAuthentication = EyelockConfig.getValue("Eyelock.ImageAuthentication", true);
+	bool m_ImageAuthentication = EyelockConfig.getValue("Eyelock.ImageAuthentication", false);
+	bool m_SaveCamImages = EyelockConfig.getValue("Eyelock.ExtCaptureAppSaveCamImages", false);
 
 	outImg = Mat(Size(m_ImageWidth, m_ImageHeight), CV_8U);
 	if (argc<2){
@@ -68,10 +69,12 @@ int main(int argc, char **argv)
 		vs->get(&w,&h,(char *)outImg.data, false);
 		s_canId=vs->cam_id;
 
-		for(int idx = 0; idx < 10; idx++){
-			char fileName[50];
-			sprintf(fileName,"%d_%d.pgm",atoi(argv[1]), idx);
-			cv::imwrite(fileName,outImg);
+		if(m_SaveCamImages){
+			for(int idx = 0; idx < 10; idx++){
+				char fileName[50];
+				sprintf(fileName,"%d_%d.pgm",atoi(argv[1]), idx);
+				cv::imwrite(fileName,outImg);
+			}
 		}
 /*
 		//For testing image optimization (OFFset correction)
