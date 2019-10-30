@@ -498,12 +498,27 @@ void FaceTracker::MainIrisSettings(int FaceWidth, int CameraState)
 		
 		if(CameraState == STATE_MAIN_IRIS)
 		{
-			
-			sprintf(cmd,"set_cam_head(0x07,%d)", m_LeftMainIrisCamDigitalGain);
-			port_com_send(cmd);
+			if(m_EnableColumnNoiseReduction){
+				sprintf(cmd, "wcr(0x03,0x301e,0x0)");
+				port_com_send(cmd);
+
+				sprintf(cmd,"set_cam_head(0x01,%d)", m_LeftMainIrisCamDigitalGain);
+				port_com_send(cmd);
+
+				sprintf(cmd,"set_cam_head(0x02,%d)", m_RightMainIrisCamDigitalGain);
+				port_com_send(cmd);
+			}
 		}else{
-			sprintf(cmd,"set_cam_head(0x87,%d)", m_LeftAuxIrisCamDigitalGain);
-			port_com_send(cmd);
+			if(m_EnableColumnNoiseReduction){
+				sprintf(cmd, "wcr(0x18,0x301e,0x0)");
+				port_com_send(cmd);
+
+				sprintf(cmd,"set_cam_head(0x08,%d)", m_LeftAuxIrisCamDigitalGain);
+				port_com_send(cmd);
+
+				sprintf(cmd,"set_cam_head(0x10,%d)", m_RightAuxIrisCamDigitalGain);
+				port_com_send(cmd);
+			}
 		}
 	}
 }
@@ -1891,7 +1906,7 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 						}
 						break;
 					}
-				
+				break;
 	case STATE_AUX_IRIS:
 					switch (system_state)
 					{
