@@ -2805,7 +2805,7 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 				// IplImage CNImage = CorrectedImage;
 				// cvCopy(&CNImage, frame);
 
-				cvSetData(frame, CorrectedImage.data, frame->widthStep);
+				memcpy(frame->imageData, CorrectedImage.data, (m_Imagewidth*m_Imageheight) );
 
 			}
 	}
@@ -2819,8 +2819,9 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 			printf("Corrected Image is NULL\n");
 		}*/
 		cv::Mat CorrMat = ColumnNoiseReduction(frame, cam_idd);
-		cvSetData(frame, CorrMat.data, frame->widthStep);
-#if 1
+		// cvSetData(frame, CorrMat.data, frame->widthStep);
+		memcpy(frame->imageData, CorrMat.data, (m_Imagewidth*m_Imageheight) );
+#if 0
 		sprintf(filename,"%d_%d_Frame.pgm", cam_idd, m_faceIndex);
 		cv::Mat mateye = cv::cvarrToMat(frame);
 		imwrite(filename, mateye);
@@ -3302,7 +3303,9 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		// Column Noise Reduction
 		if(m_EnableColumnNoiseReduction && frame->imageData != NULL){
 			cv::Mat CorrectedImage = ColumnNoiseReduction(frame, cam_idd);
-			cvSetData(frame, CorrectedImage.data, frame->widthStep);
+			// cvInitImageHeader(frame, cvSize(m_Imagewidth, m_Imageheight), IPL_DEPTH_8U, 1);
+			// cvSetData(frame, CorrectedImage.data, frame->widthStep);
+			memcpy(frame->imageData, CorrectedImage.data, (m_Imagewidth*m_Imageheight) );
 		}
 
 		if (!bSkipProcessingImage)
