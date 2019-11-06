@@ -134,7 +134,7 @@ void geomtericCalibration::DoStartCmd_CamCal(){
 
 	//Setting up cap current
 	port_com_send("psoc_write(9,80)");	// charge cap for max current 60 < range < 95
-	port_com_send("wcr(0x1B,0x300C,1650)");		// required before flipping the incoming images
+	port_com_send("wcr(0x1f,0x300C,1650)");		// required before flipping the incoming images
 	port_com_send("wcr(0x1B,0x3040,0xC000)"); //Flipping of iris and AUX images
 
 
