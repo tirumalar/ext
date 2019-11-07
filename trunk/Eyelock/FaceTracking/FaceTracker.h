@@ -50,6 +50,7 @@
 #define STATE_AUX_IRIS      4
 #define STATE_PINGPONG_IRIS 5
 #define STATE_GET_DARK_IMAGE 6
+enum CAMERAMODE{AUX_IRIS = 0, MAIN_IRIS = 1, PINGPONG_IRIS = 2};
 #define minCalBrightness 40		//orignal 40
 #define maxCalBrightness 220
 
@@ -267,7 +268,8 @@ private:
 	void SelLedDistance(int val); // val between 0 and 100
 
 	void MainIrisSettings(int FaceWidth, int CameraState);
-	void SwitchIrisCameras(float eye_size, bool mode);
+//	void SwitchIrisCameras(float eye_size, bool mode);
+	void SwitchIrisCameras(float eye_size, CAMERAMODE eCamMode);
 	void SetFaceMode();
 
 	void DimmFaceForIris();

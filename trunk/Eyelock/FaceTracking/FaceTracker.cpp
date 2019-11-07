@@ -674,15 +674,21 @@ void FaceTracker::AdaptiveGain(int faceWidth, int CameraState)
 	}
 }
 
-void FaceTracker::SwitchIrisCameras(float eye_size, bool mode)
+void FaceTracker::SwitchIrisCameras(float eye_size, CAMERAMODE eMode)
 {
 	EyelockLog(logger, TRACE, "SwitchIrisCameras");
 	char cmd[100];
-	if(mode){
+	if(eMode == MAIN_IRIS)
+	{
 		sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY); // --- Main
 	}
-	else{
+	else if (eMode == AUX_IRIS)
+	{
 		sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY); // --- AUX
+	}
+	else if(eMode == PINGPONG_IRIS)
+	{
+		sprintf(cmd,"set_cam_mode(0x47,%d)",FRAME_DELAY); // --- PINGPONG
 	}
 	port_com_send(cmd);
 }
@@ -1541,25 +1547,63 @@ int FaceTracker::SelectWhichIrisCam(float eye_size, int cur_state)
 {
 	EyelockLog(logger, TRACE, "Entering > SelectWhichIrisCam");
 
-	if ((cur_state != STATE_MAIN_IRIS) && (cur_state != STATE_AUX_IRIS)) {
-		// this is we are just getting into irises so hard decision not hysteresis
-		if (eye_size >= (switchThreshold))
+	if(m_EnableIrisCameraPingPong){
+		if ((cur_state != STATE_MAIN_IRIS) && (cur_state != STATE_AUX_IRIS) && (cur_state != STATE_PINGPONG_IRIS)){
+		if (eye_size > m_NearSwitchThreshold)
 			return STATE_MAIN_IRIS;
-		else
+		else if(eye_size < m_FarSwitchThreshold)
 			return STATE_AUX_IRIS;
+		else
+			return STATE_PINGPONG_IRIS;
+		}
 
+		if (cur_state == STATE_MAIN_IRIS){
+			if (eye_size < (m_NearSwitchThreshold - errSwitchThreshold))
+				return STATE_PINGPONG_IRIS;
+			else
+				return STATE_MAIN_IRIS;
+		}
+
+		if (cur_state == STATE_AUX_IRIS){
+			if (eye_size >= (m_FarSwitchThreshold + errSwitchThreshold))
+				return STATE_PINGPONG_IRIS;
+			else
+				return STATE_AUX_IRIS;
+		}
+
+		// Anita Note: Need to check if this check is needed, because we need the device to be in PINGPONG mode in mid-range
+		if (cur_state == STATE_PINGPONG_IRIS){
+			if (eye_size >= (m_NearSwitchThreshold + errSwitchThreshold))
+				return STATE_MAIN_IRIS;
+			else if(eye_size < (m_FarSwitchThreshold - errSwitchThreshold))
+				return STATE_AUX_IRIS;
+			else
+				return STATE_PINGPONG_IRIS;
+		}
 	}
-	if (cur_state == STATE_MAIN_IRIS)
-		if (eye_size < (switchThreshold - errSwitchThreshold))
-			return STATE_AUX_IRIS;
-		else
-			return STATE_MAIN_IRIS;
+	else{
+		if ((cur_state != STATE_MAIN_IRIS) && (cur_state != STATE_AUX_IRIS)) {
+			// this is we are just getting into irises so hard decision not hysteresis
+			if (eye_size >= (switchThreshold))
+				return STATE_MAIN_IRIS;
+			else
+				return STATE_AUX_IRIS;
 
-	if (cur_state == STATE_AUX_IRIS)
-		if (eye_size >= (switchThreshold + errSwitchThreshold))
-			return STATE_MAIN_IRIS;
-		else
-			return STATE_AUX_IRIS;
+		}
+		if (cur_state == STATE_MAIN_IRIS){
+			if (eye_size < (switchThreshold - errSwitchThreshold))
+				return STATE_AUX_IRIS;
+			else
+				return STATE_MAIN_IRIS;
+		}
+
+		if (cur_state == STATE_AUX_IRIS){
+			if (eye_size >= (switchThreshold + errSwitchThreshold))
+				return STATE_MAIN_IRIS;
+			else
+				return STATE_AUX_IRIS;
+		}
+	}
 }
 
 char* FaceTracker::StateText(int state)
@@ -1699,282 +1743,356 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 
 	// EyelockLog(logger, INFO, "FaceTracking SystemState = %d", system_state);
 	// figure out our next state
-	switch(system_state)
-	{
-	if(m_EnableColumnNoiseReduction){
-	case STATE_GET_DARK_IMAGE:
-		   if(flag_dark_main == 0)
-		   {
+	switch (system_state) {
+		if (m_EnableColumnNoiseReduction)
+		{
+		case STATE_GET_DARK_IMAGE:
+			if (flag_dark_main == 0) {
+				char cmd[512];
+				sprintf(cmd, "psoc_write(4,0)");
+				port_com_send(cmd);
 
-			   char cmd[512];
+				char buff[512];
+				sprintf(buff, "wcr(0x87,0x305e,%d)", 255);
+				port_com_send(buff);
 
-			   sprintf(cmd, "psoc_write(4,0)");
-			   port_com_send(cmd);
+				sprintf(cmd, "wcr(0x1B,0x301e,%d)", pedestaloffset);
+				port_com_send(cmd);
 
-		
-			   char buff[512];
-			   sprintf(buff,"wcr(0x87,0x305e,%d)", 255);
-			   port_com_send(buff);
+				sprintf(cmd, "set_cam_head(0x1B,0x100)"); // set leds off
+				port_com_send(cmd);
 
+				sprintf(cmd, "set_cam_mode(0x87, %d)", FRAME_DELAY);
+				port_com_send(cmd);
 
-			   sprintf(cmd, "wcr(0x1B,0x301e,%d)", pedestaloffset);
-			   port_com_send(cmd);
+				flag_dark_main = 1;
+				// sprintf(cmd, "psoc_write(4,0)| set_cam_head(0x1B,0x100)"); // set leds off
+				// port_com_send(cmd);
+			} else {
+				char cmd[512];
+				sprintf(cmd, "set_cam_head(0x1f,0x0)");
+				port_com_send(cmd);
+				system_state = STATE_LOOK_FOR_FACE;
+			}
+			break;
+		}
+		case STATE_LOOK_FOR_FACE:
+			// we see eyes but need to move to them
+			if (eyesInDetect && !eyesInViewOfIriscam) {
+				system_state = STATE_MOVE_MOTOR;//Setting up this state cause one extra move during face tracking
+				moveMotorToFaceTarget(eye_size, bShowFaceTracking, bDebugSessions);
+				break;
+			}
+			//if (eyesInDetect && eyesInViewOfIriscam)	//Very strict condition and slowing down the performance
+			//if (eyesInViewOfIriscamNoMove)			//Relax the the previous condition but still slowing down the performance
+			if (eyesInDetect)//No strict condition but there will be no face images in pipeline
+				system_state = SelectWhichIrisCam(eye_size, system_state);
+			if (b_EnableFaceAGC)
+				SweepFaceBrightness();
+			//if (eyesInViewOfIriscam)
+			if (m_EnableColumnNoiseReduction) {
+				if (FaceCameraFrameNo % m_DarkImageGenFrameCnt == 0) {
+					system_state = STATE_GET_DARK_IMAGE;
+				} else {
+					char cmd[512];
+					sprintf(cmd, "wcr(0x1f,0x301e,0x0)");
+					port_com_send(cmd);
+				}
 
+			}
+			break;
+		case STATE_MAIN_IRIS:
+			system_state = SelectWhichIrisCam(eye_size, system_state);
+			if (noFaceCounter >= NO_FACE_SWITCH_FACE) {
+				system_state = STATE_LOOK_FOR_FACE;
+				break;
+			}
+			if (eyesInDetect && !eyesInViewOfIriscam) {
+				moveMotorToFaceTarget(eye_size, bShowFaceTracking, bDebugSessions);
+				system_state = STATE_MOVE_MOTOR;//Setting up this state cause one extra move during face tracking
+			}
+			break;
+		case STATE_AUX_IRIS:
+			system_state = SelectWhichIrisCam(eye_size, system_state);
+			if (noFaceCounter >= NO_FACE_SWITCH_FACE) {
+				system_state = STATE_LOOK_FOR_FACE;
+				break;
+			}
+			if (eyesInDetect && !eyesInViewOfIriscam) {
+				moveMotorToFaceTarget(eye_size, bShowFaceTracking, bDebugSessions);
+				system_state = STATE_MOVE_MOTOR;//Setting up this state cause one extra move during face tracking
+			}
+			break;
+		case STATE_PINGPONG_IRIS:
+			if(m_EnableIrisCameraPingPong)
+			{
+				system_state = SelectWhichIrisCam(eye_size, system_state);
+				if (noFaceCounter >= NO_FACE_SWITCH_FACE) {
+					system_state = STATE_LOOK_FOR_FACE;
+					break;
+				}
+				if (eyesInDetect && !eyesInViewOfIriscam) {
+					moveMotorToFaceTarget(eye_size, bShowFaceTracking, bDebugSessions);
+					system_state = STATE_MOVE_MOTOR;//Setting up this state cause one extra move during face tracking
+				}
+			}
+			break;
+		case STATE_MOVE_MOTOR:
+			//if (eyesInDetect && eyesInViewOfIriscam)	//Very strict condition and slowing down the performance
+			//if (eyesInViewOfIriscamNoMove)			//Relax the the previous condition but still slowing down the performance
+			if (eyesInDetect)//No strict condition but there will be no face images in pipeline
+			{
+				system_state = SelectWhichIrisCam(eye_size, system_state);
+				break;
+			}
+			if (!foundFace) {
+				system_state = STATE_LOOK_FOR_FACE;
+				break;
+			}
+			if (b_EnableFaceAGC)
+				DoAgc();
+			moveMotorToFaceTarget(eye_size, bShowFaceTracking, bDebugSessions);
+		}
 
-			   sprintf(cmd,"set_cam_head(0x1B,0x100)"); // set leds off
-			   port_com_send(cmd);
-
-	   		   sprintf(cmd,"set_cam_mode(0x87, %d)",FRAME_DELAY);
-			   port_com_send(cmd);
-			   
-			   flag_dark_main = 1;
-			  // sprintf(cmd, "psoc_write(4,0)| set_cam_head(0x1B,0x100)"); // set leds off
-			  // port_com_send(cmd);
-		   }
-		   else{
-			   char cmd[512];
-			   sprintf(cmd,"set_cam_head(0x1f,0x0)");
-			   port_com_send(cmd);
-			   system_state = STATE_LOOK_FOR_FACE;
-		   }
-		   break;
-	}
-	case STATE_LOOK_FOR_FACE:
-							// we see eyes but need to move to them
-							if (eyesInDetect && !eyesInViewOfIriscam)
-								{
-								system_state = STATE_MOVE_MOTOR;		//Setting up this state cause one extra move during face tracking
-								moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-								break;
-								}
-							//if (eyesInDetect && eyesInViewOfIriscam)	//Very strict condition and slowing down the performance
-							//if (eyesInViewOfIriscamNoMove)			//Relax the the previous condition but still slowing down the performance
-							if (eyesInDetect)	//No strict condition but there will be no face images in pipeline
-									system_state = SelectWhichIrisCam(eye_size,system_state);
-							if(b_EnableFaceAGC)
-								SweepFaceBrightness();
-							//if (eyesInViewOfIriscam)
-							if(m_EnableColumnNoiseReduction){
-								if(FaceCameraFrameNo%m_DarkImageGenFrameCnt == 0){
-									system_state = STATE_GET_DARK_IMAGE;
-								}
-								else{
-									char cmd[512];
-									sprintf(cmd, "wcr(0x1f,0x301e,0x0)");
-									port_com_send(cmd);
-								}
-
-							}
-							break;
-
-	case STATE_MAIN_IRIS:
-						system_state = SelectWhichIrisCam(eye_size,system_state);
-						if (noFaceCounter >= NO_FACE_SWITCH_FACE)
-							{
-							system_state=STATE_LOOK_FOR_FACE;
-							break;
-							}
-						if (eyesInDetect &&  !eyesInViewOfIriscam){
-							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
-						}
-						break;
-	case STATE_AUX_IRIS:
-						system_state = SelectWhichIrisCam(eye_size,system_state);
-						if (noFaceCounter >= NO_FACE_SWITCH_FACE)
-							{
-							system_state=STATE_LOOK_FOR_FACE;
-							break;
-							}
-						if (eyesInDetect &&  !eyesInViewOfIriscam){
-							moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							system_state = STATE_MOVE_MOTOR;	//Setting up this state cause one extra move during face tracking
-						}
-						break;
-	case STATE_MOVE_MOTOR:
-						//if (eyesInDetect && eyesInViewOfIriscam)	//Very strict condition and slowing down the performance
-						//if (eyesInViewOfIriscamNoMove)			//Relax the the previous condition but still slowing down the performance
-						if (eyesInDetect)	//No strict condition but there will be no face images in pipeline
-							{
-							system_state = SelectWhichIrisCam(eye_size,system_state);
-							break;
-							}
-						if (!foundFace)
-							{
-							system_state = STATE_LOOK_FOR_FACE;
-							break;
-							}
-						if(b_EnableFaceAGC)
-							DoAgc();
-						moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-	}
-
-
-	currnet_mode = -1;		//This variable is needed for setFaceMode()
-	// handle switching state
-	//if (last_system_state != system_state)
-	// if(foundEyes)
+		currnet_mode = -1;		//This variable is needed for setFaceMode()
+		// handle switching state
+		//if (last_system_state != system_state)
+		// if(foundEyes)
 
 		if (g_MatchState)
-			g_MatchState=0;
-		last_angle_move=0;
+			g_MatchState = 0;
+		last_angle_move = 0;
 
-	int stateofIrisCameras = 0;
+		int stateofIrisCameras = 0;
 
 	if (last_system_state != system_state)
-	switch(last_system_state)
-	{
-	case STATE_LOOK_FOR_FACE:
-					switch (system_state)
-					{
-					if(m_EnableColumnNoiseReduction){
-					case STATE_GET_DARK_IMAGE:
-					 // Turn on all cameras
-					 // turn off leds
-					 // set header to 100
+		switch (last_system_state) {
+		case STATE_LOOK_FOR_FACE:
+		switch (system_state) {
+		if (m_EnableColumnNoiseReduction) {
+			case STATE_GET_DARK_IMAGE:
+			// Turn on all cameras
+			// turn off leds
+			// set header to 100
+			char cmd[512];
+			sprintf(cmd, "psoc_write(4,0)");
+			port_com_send(cmd);
 
-						char cmd[512];
-						sprintf(cmd, "psoc_write(4,0)");
-						port_com_send(cmd);
-						
-						char buff[512];
-						sprintf(buff,"wcr(0x07,0x305e,%d)", 255);
-						port_com_send(buff);
+			char buff[512];
+			sprintf(buff, "wcr(0x07,0x305e,%d)", 255);
+			port_com_send(buff);
 
-						sprintf(buff, "wcr(0x1B,0x301e,%d)", pedestaloffset);
-						port_com_send(buff);
+			sprintf(buff, "wcr(0x1B,0x301e,%d)", pedestaloffset);
+			port_com_send(buff);
 
-						sprintf(cmd,"set_cam_head(0x1B,0x100)"); // set leds off
-						port_com_send(cmd);
+			sprintf(cmd, "set_cam_head(0x1B,0x100)"); // set leds off
+			port_com_send(cmd);
 
-						sprintf(cmd,"set_cam_mode(0x07, %d)",FRAME_DELAY);
-						port_com_send(cmd);
-						
-						flag_dark_main = 0;
-						break;
-					}
-					case STATE_MOVE_MOTOR:
-						// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
-						//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-						// flush after moving to get more accurate motion on next loop
-						vs->flush();
-						m_ProjPtr = false;
-						break;
-					case STATE_MAIN_IRIS:
-						// enable main camera and set led currnet
-						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings(eye_size, STATE_MAIN_IRIS);											//change to Iris settings
-						SwitchIrisCameras(eye_size, true);									//switch cameras
-						stateofIrisCameras = STATE_MAIN_IRIS;
-						m_ProjPtr = true;		//Added by Mo
-						break;
-					case STATE_AUX_IRIS:
-						// enable aux camera and set led currnet
-						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings(eye_size, STATE_AUX_IRIS);											//change to Iris settings
-						SwitchIrisCameras(eye_size, false);									//switch cameras
-						stateofIrisCameras = STATE_AUX_IRIS;
-						m_ProjPtr = true;		//Added by Mo
-						break;
-					}
-				//DMOOUT	if(b_EnableFaceAGC)
-				//DMOOUT		DoAgc();
+			sprintf(cmd, "set_cam_mode(0x07, %d)", FRAME_DELAY);
+			port_com_send(cmd);
 
-					if(m_EnableColumnNoiseReduction){
-					case STATE_GET_DARK_IMAGE:
-						switch (system_state)
-						{
-						case STATE_LOOK_FOR_FACE:
-						// disable iris camera set current for face camera
-						MoveTo(CENTER_POS);
-						SetFaceMode();
-						m_ProjPtr = false;
-						break;
-						}
-						break;
-					}
-					break;
-	case STATE_AUX_IRIS:
-					switch (system_state)
-					{
-					case STATE_MOVE_MOTOR: // cannot happen
-						// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
-						//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-						m_ProjPtr = false;
-						break;
-					case STATE_LOOK_FOR_FACE:
-						// disable iris camera set current for face camera
-						MoveTo(CENTER_POS);
-						SetFaceMode();
-						m_ProjPtr = false;
-						break;
-					case STATE_MAIN_IRIS:
-						//if the switch happen from AUX to MAIN then we
-						//dont need to dim down the face cam settings because it is already
-						//dimmed down
-						//DimmFaceForIris();											//Dim face settings
-						MainIrisSettings(eye_size, STATE_MAIN_IRIS);											//change to Iris settings
-						SwitchIrisCameras(eye_size, true);									//switch cameras
-						stateofIrisCameras = STATE_MAIN_IRIS;
-						m_ProjPtr = true;		//Added by Mo
-						break;
-					}
-					break;
-	case STATE_MAIN_IRIS:
-						switch (system_state)
-						{
-						case STATE_MOVE_MOTOR:
-							// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
-							//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
-							m_ProjPtr = false;
-							break;
-						case STATE_LOOK_FOR_FACE:
-							// disable iris camera set current for face camera
-							MoveTo(CENTER_POS);
-							SetFaceMode();
-							m_ProjPtr = false;
-							break;
-						case STATE_AUX_IRIS:
-							//if the switch happen from AUX to MAIN then we
-							//dont need to dim down the face cam settings because it is already
-							//dimmed down
-							//DimmFaceForIris();
-							MainIrisSettings(eye_size, STATE_AUX_IRIS);											//change to Iris settings
-							SwitchIrisCameras(eye_size, false);									//switch cameras
-							stateofIrisCameras = STATE_AUX_IRIS;
-							m_ProjPtr = true;		//Added by Mo
-							break;
-						}
-						break;
-	case STATE_MOVE_MOTOR:
-					switch (system_state)
-					{
-					case STATE_LOOK_FOR_FACE:
-						// disable iris camera set current for face camera
-						MoveTo(CENTER_POS);
-						SetFaceMode();
-						m_ProjPtr = false;
-						break;
-					case STATE_AUX_IRIS:
-						// switch only the expusure and camera enables
-						// no need to change voltage or current
-						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings(eye_size, STATE_AUX_IRIS);											//change to Iris settings
-						SwitchIrisCameras(eye_size, false);									//switch cameras
-						stateofIrisCameras = STATE_AUX_IRIS;
-						m_ProjPtr = true;		//Added by Mo
-						break;
-					case STATE_MAIN_IRIS:
-						// enable main cameras and set
-						DimmFaceForIris();											//Dim face settings
-						MainIrisSettings(eye_size, STATE_MAIN_IRIS);											//change to Iris settings
-						SwitchIrisCameras(eye_size, true);									//switch cameras
-						stateofIrisCameras = STATE_MAIN_IRIS;
-						m_ProjPtr = true;		//Added by Mo
-						break;
-					}
-					break;
-	}
+			flag_dark_main = 0;
+			break;
+		}
+		case STATE_MOVE_MOTOR:
+			// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
+			//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+			// flush after moving to get more accurate motion on next loop
+			vs->flush();
+			m_ProjPtr = false;
+			break;
+		case STATE_MAIN_IRIS:
+			// enable main camera and set led currnet
+			DimmFaceForIris();								//Dim face settings
+			MainIrisSettings(eye_size, STATE_MAIN_IRIS);//change to Iris settings
+			SwitchIrisCameras(eye_size, MAIN_IRIS);					//switch cameras
+			stateofIrisCameras = STATE_MAIN_IRIS;
+			m_ProjPtr = true;		//Added by Mo
+			break;
+		case STATE_AUX_IRIS:
+			// enable aux camera and set led currnet
+			DimmFaceForIris();								//Dim face settings
+			MainIrisSettings(eye_size, STATE_AUX_IRIS);	//change to Iris settings
+			SwitchIrisCameras(eye_size, AUX_IRIS);					//switch cameras
+			stateofIrisCameras = STATE_AUX_IRIS;
+			m_ProjPtr = true;		//Added by Mo
+			break;
+		if(m_EnableIrisCameraPingPong){
+		case STATE_PINGPONG_IRIS:
+			DimmFaceForIris();
+			MainIrisSettings(eye_size, STATE_PINGPONG_IRIS);
+			SwitchIrisCameras(eye_size, PINGPONG_IRIS);
+			stateofIrisCameras = STATE_PINGPONG_IRIS;
+			m_ProjPtr = true;
+			break;
+			}
+		}
+		//DMOOUT	if(b_EnableFaceAGC)
+		//DMOOUT		DoAgc();
+		if (m_EnableColumnNoiseReduction) {
+			case STATE_GET_DARK_IMAGE:
+			switch (system_state) {
+			case STATE_LOOK_FOR_FACE:
+				// disable iris camera set current for face camera
+				MoveTo(CENTER_POS);
+				SetFaceMode();
+				m_ProjPtr = false;
+				break;
+			}
+			break;
+		}
+		break;
+		case STATE_AUX_IRIS:
+			switch (system_state) {
+			case STATE_MOVE_MOTOR: // cannot happen
+				// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
+				//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+				m_ProjPtr = false;
+				break;
+			case STATE_LOOK_FOR_FACE:
+				// disable iris camera set current for face camera
+				MoveTo(CENTER_POS);
+				SetFaceMode();
+				m_ProjPtr = false;
+				break;
+			case STATE_MAIN_IRIS:
+				//if the switch happen from AUX to MAIN then we
+				//dont need to dim down the face cam settings because it is already
+				//dimmed down
+				//DimmFaceForIris();											//Dim face settings
+				MainIrisSettings(eye_size, STATE_MAIN_IRIS);//change to Iris settings
+				SwitchIrisCameras(eye_size, MAIN_IRIS);				//switch cameras
+				stateofIrisCameras = STATE_MAIN_IRIS;
+				m_ProjPtr = true;		//Added by Mo
+				break;
+			if(m_EnableIrisCameraPingPong){
+			case STATE_PINGPONG_IRIS:
+				//if the switch happen from AUX to MAIN then we
+				//dont need to dim down the face cam settings because it is already
+				//dimmed down
+				//DimmFaceForIris();											//Dim face settings
+				MainIrisSettings(eye_size, STATE_PINGPONG_IRIS);//change to Iris settings
+				SwitchIrisCameras(eye_size, PINGPONG_IRIS);				//switch cameras
+				stateofIrisCameras = STATE_PINGPONG_IRIS;
+				m_ProjPtr = true;	
+				break;
+				}
+			}
+			break;
+		case STATE_MAIN_IRIS:
+			switch (system_state) {
+			case STATE_MOVE_MOTOR:
+				// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
+				//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+				m_ProjPtr = false;
+				break;
+			case STATE_LOOK_FOR_FACE:
+				// disable iris camera set current for face camera
+				MoveTo(CENTER_POS);
+				SetFaceMode();
+				m_ProjPtr = false;
+				break;
+			case STATE_AUX_IRIS:
+				//if the switch happen from AUX to MAIN then we
+				//dont need to dim down the face cam settings because it is already
+				//dimmed down
+				//DimmFaceForIris();
+				MainIrisSettings(eye_size, STATE_AUX_IRIS);	//change to Iris settings
+				SwitchIrisCameras(eye_size, AUX_IRIS);				//switch cameras
+				stateofIrisCameras = STATE_AUX_IRIS;
+				m_ProjPtr = true;		//Added by Mo
+				break;
+			if(m_EnableIrisCameraPingPong){
+			case STATE_PINGPONG_IRIS:
+				//if the switch happen from AUX to MAIN then we
+				//dont need to dim down the face cam settings because it is already
+				//dimmed down
+				//DimmFaceForIris();											//Dim face settings
+				MainIrisSettings(eye_size, STATE_PINGPONG_IRIS);//change to Iris settings
+				SwitchIrisCameras(eye_size, PINGPONG_IRIS);				//switch cameras
+				stateofIrisCameras = STATE_PINGPONG_IRIS;
+				m_ProjPtr = true;		//Added by Mo
+				break;
+				}
+			}
+			break;
+		case STATE_MOVE_MOTOR:
+			switch (system_state) {
+			case STATE_LOOK_FOR_FACE:
+				// disable iris camera set current for face camera
+				MoveTo(CENTER_POS);
+				SetFaceMode();
+				m_ProjPtr = false;
+				break;
+			case STATE_AUX_IRIS:
+				// switch only the expusure and camera enables
+				// no need to change voltage or current
+				DimmFaceForIris();							//Dim face settings
+				MainIrisSettings(eye_size, STATE_AUX_IRIS);	//change to Iris settings
+				SwitchIrisCameras(eye_size, AUX_IRIS);				//switch cameras
+				stateofIrisCameras = STATE_AUX_IRIS;
+				m_ProjPtr = true;		//Added by Mo
+				break;
+			case STATE_MAIN_IRIS:
+				// enable main cameras and set
+				DimmFaceForIris();							//Dim face settings
+				MainIrisSettings(eye_size, STATE_MAIN_IRIS);//change to Iris settings
+				SwitchIrisCameras(eye_size, MAIN_IRIS);				//switch cameras
+				stateofIrisCameras = STATE_MAIN_IRIS;
+				m_ProjPtr = true;		//Added by Mo
+				break;
+			if(m_EnableIrisCameraPingPong){
+			case STATE_PINGPONG_IRIS:
+				//if the switch happen from AUX to MAIN then we
+				//dont need to dim down the face cam settings because it is already
+				//dimmed down
+				//DimmFaceForIris();											//Dim face settings
+				MainIrisSettings(eye_size, STATE_PINGPONG_IRIS);//change to Iris settings
+				SwitchIrisCameras(eye_size, PINGPONG_IRIS);				//switch cameras
+				stateofIrisCameras = STATE_PINGPONG_IRIS;
+				m_ProjPtr = true;		//Added by Mo
+				break;
+				}
+			}
+			break;
+		if(m_EnableIrisCameraPingPong){
+		case STATE_PINGPONG_IRIS:
+			switch (system_state) {
+			case STATE_MOVE_MOTOR:
+				// Activate the following command line if system_state = STATE_MOVE_MOTOR is used in previous switch case
+				//moveMotorToFaceTarget(eye_size,bShowFaceTracking, bDebugSessions);
+				m_ProjPtr = false;
+				break;
+			case STATE_LOOK_FOR_FACE:
+				// disable iris camera set current for face camera
+				MoveTo(CENTER_POS);
+				SetFaceMode();
+				m_ProjPtr = false;
+				break;
+			case STATE_AUX_IRIS:
+				//if the switch happen from AUX to MAIN then we
+				//dont need to dim down the face cam settings because it is already
+				//dimmed down
+				//DimmFaceForIris();
+				MainIrisSettings(eye_size, STATE_AUX_IRIS);	//change to Iris settings
+				SwitchIrisCameras(eye_size, AUX_IRIS);				//switch cameras
+				stateofIrisCameras = STATE_AUX_IRIS;
+				m_ProjPtr = true;		//Added by Mo
+				break;
+			case STATE_MAIN_IRIS:
+				//if the switch happen from AUX to MAIN then we
+				//dont need to dim down the face cam settings because it is already
+				//dimmed down
+				//DimmFaceForIris();											//Dim face settings
+				MainIrisSettings(eye_size, STATE_MAIN_IRIS);//change to Iris settings
+				SwitchIrisCameras(eye_size, MAIN_IRIS);				//switch cameras
+				stateofIrisCameras = STATE_MAIN_IRIS;
+				m_ProjPtr = true;		//Added by Mo
+				break;
+				}
+			break;
+			}
+		}
 
 	// EyelockLog(logger, INFO, "End of last_system_state != system_state = %d", system_state);
 
