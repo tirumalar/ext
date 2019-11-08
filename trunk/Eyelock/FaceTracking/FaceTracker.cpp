@@ -301,8 +301,9 @@ FaceTracker::FaceTracker(char* filename)
 
 	// PingPong Parameters - 35-45
 	m_EnableIrisCameraPingPong=EyelockConfig.getValue("FTracker.PingPong",false);
-	m_NearSwitchThreshold = EyelockConfig.getValue("FTracker.NearSwitchThreshold",35);
-	m_FarSwitchThreshold = EyelockConfig.getValue("FTracker.FarSwitchThreshold",45);
+	m_NearSwitchThreshold = EyelockConfig.getValue("FTracker.NearSwitchThreshold",45);
+	m_FarSwitchThreshold = EyelockConfig.getValue("FTracker.FarSwitchThreshold",35);
+	m_NewPingPongDesign = EyelockConfig.getValue("FTracker.NewPingPongDesign", false);
 	
 	if (m_OIMFTPEnabled) {
 		// Calibration Parameters from CalRectFromOIM.ini
@@ -678,19 +679,37 @@ void FaceTracker::SwitchIrisCameras(float eye_size, CAMERAMODE eMode)
 {
 	EyelockLog(logger, TRACE, "SwitchIrisCameras");
 	char cmd[100];
-	if(eMode == MAIN_IRIS)
-	{
-		sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY); // --- Main
+	if(m_NewPingPongDesign){
+		if(eMode == MAIN_IRIS)
+		{
+			if (eye_size > m_NearSwitchThreshold)
+				sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY); // --- Main
+			else
+				sprintf(cmd,"set_cam_mode(0x47,%d)",FRAME_DELAY); // --- PINGPONG
+
+		}else if(eMode == AUX_IRIS)
+		{
+			if(eye_size < m_FarSwitchThreshold)
+				sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY); // --- AUX
+			else
+				sprintf(cmd,"set_cam_mode(0x47,%d)",FRAME_DELAY); // --- PINGPONG
+		}
+		port_com_send(cmd);
+	}else{
+		if(eMode == MAIN_IRIS)
+		{
+			sprintf(cmd,"set_cam_mode(0x07,%d)",FRAME_DELAY); // --- Main
+		}
+		else if (eMode == AUX_IRIS)
+		{
+			sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY); // --- AUX
+		}
+		else if(eMode == PINGPONG_IRIS)
+		{
+			sprintf(cmd,"set_cam_mode(0x47,%d)",FRAME_DELAY); // --- PINGPONG
+		}
+		port_com_send(cmd);
 	}
-	else if (eMode == AUX_IRIS)
-	{
-		sprintf(cmd,"set_cam_mode(0x87,%d)",FRAME_DELAY); // --- AUX
-	}
-	else if(eMode == PINGPONG_IRIS)
-	{
-		sprintf(cmd,"set_cam_mode(0x47,%d)",FRAME_DELAY); // --- PINGPONG
-	}
-	port_com_send(cmd);
 }
 
 void FaceTracker::readFaceAnalogGainReg(uint32_t Value)
