@@ -150,6 +150,7 @@ private:
 	int m_FarSwitchThreshold;
 	bool m_EnableIrisCameraPingPong;
 
+	bool m_NewPingPongDesign;
 	cv::Mat m_CroppedFaceImageForAGC; // For AGC
 	bool foundFace;
 	//AGC parameters
