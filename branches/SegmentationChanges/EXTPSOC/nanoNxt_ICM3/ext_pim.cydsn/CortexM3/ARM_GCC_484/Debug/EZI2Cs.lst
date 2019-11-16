@@ -1,0 +1,2145 @@
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"EZI2Cs.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.global	EZI2Cs_initVar
+  19              		.bss
+  20              		.type	EZI2Cs_initVar, %object
+  21              		.size	EZI2Cs_initVar, 1
+  22              	EZI2Cs_initVar:
+  23 0000 00       		.space	1
+  24              		.comm	EZI2Cs_curStatus,1,1
+  25              		.comm	EZI2Cs_curState,1,1
+  26              		.comm	EZI2Cs_dataPtrS1,4,4
+  27              		.comm	EZI2Cs_bufSizeS1,2,2
+  28              		.comm	EZI2Cs_wrProtectS1,2,2
+  29              		.comm	EZI2Cs_rwOffsetS1,1,1
+  30              		.comm	EZI2Cs_rwIndexS1,1,1
+  31              		.section	.text.EZI2Cs_Init,"ax",%progbits
+  32              		.align	2
+  33              		.global	EZI2Cs_Init
+  34              		.thumb
+  35              		.thumb_func
+  36              		.type	EZI2Cs_Init, %function
+  37              	EZI2Cs_Init:
+  38              	.LFB0:
+  39              		.file 1 ".\\Generated_Source\\PSoC5\\EZI2Cs.c"
+   1:.\Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+   2:.\Generated_Source\PSoC5/EZI2Cs.c **** * File Name: EZI2Cs.c
+   3:.\Generated_Source\PSoC5/EZI2Cs.c **** * Version 2.0
+   4:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+   5:.\Generated_Source\PSoC5/EZI2Cs.c **** * Description:
+   6:.\Generated_Source\PSoC5/EZI2Cs.c **** *  This file contains the setup, control and status commands for the EZI2C
+   7:.\Generated_Source\PSoC5/EZI2Cs.c **** *  component. The actual protocol and operation code resides in the interrupt
+   8:.\Generated_Source\PSoC5/EZI2Cs.c **** *  service routine file.
+   9:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  10:.\Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+  11:.\Generated_Source\PSoC5/EZI2Cs.c **** * Copyright 2008-2015, Cypress Semiconductor Corporation.  All rights reserved.
+  12:.\Generated_Source\PSoC5/EZI2Cs.c **** * You may use this file only in accordance with the license, terms, conditions,
+  13:.\Generated_Source\PSoC5/EZI2Cs.c **** * disclaimers, and limitations in the end user license agreement accompanying
+  14:.\Generated_Source\PSoC5/EZI2Cs.c **** * the software package with which this file was provided.
+  15:.\Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+  16:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+  17:.\Generated_Source\PSoC5/EZI2Cs.c **** #include "EZI2Cs_PVT.h"
+  18:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 2
+
+
+  19:.\Generated_Source\PSoC5/EZI2Cs.c **** /**********************************
+  20:.\Generated_Source\PSoC5/EZI2Cs.c **** *      System variables
+  21:.\Generated_Source\PSoC5/EZI2Cs.c **** **********************************/
+  22:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+  23:.\Generated_Source\PSoC5/EZI2Cs.c **** uint8 EZI2Cs_initVar = 0u; /* Defines if component was initialized */
+  24:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+  25:.\Generated_Source\PSoC5/EZI2Cs.c **** /* Status and state variables */
+  26:.\Generated_Source\PSoC5/EZI2Cs.c **** volatile uint8 EZI2Cs_curStatus; /* Current status of the component */
+  27:.\Generated_Source\PSoC5/EZI2Cs.c **** volatile uint8 EZI2Cs_curState;  /* Current state of state machine */
+  28:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+  29:.\Generated_Source\PSoC5/EZI2Cs.c **** /* Primary slave address variables */
+  30:.\Generated_Source\PSoC5/EZI2Cs.c **** volatile uint8* EZI2Cs_dataPtrS1; /* Pointer to data buffer 1 */
+  31:.\Generated_Source\PSoC5/EZI2Cs.c **** volatile uint16 EZI2Cs_bufSizeS1; /* Size of buffer 1 in bytes */
+  32:.\Generated_Source\PSoC5/EZI2Cs.c **** volatile uint16 EZI2Cs_wrProtectS1; /* Start index of write protected area in buffer 1 */
+  33:.\Generated_Source\PSoC5/EZI2Cs.c **** volatile uint8  EZI2Cs_rwOffsetS1; /* Current offset within buffer 1 */
+  34:.\Generated_Source\PSoC5/EZI2Cs.c **** volatile uint8  EZI2Cs_rwIndexS1;  /* Current index within buffer 1 */
+  35:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+  36:.\Generated_Source\PSoC5/EZI2Cs.c **** /* Secondary slave address variables */
+  37:.\Generated_Source\PSoC5/EZI2Cs.c **** #if(EZI2Cs_ADDRESSES == EZI2Cs_TWO_ADDRESSES)
+  38:.\Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint8  EZI2Cs_addrS1; /* Primary slave address: software comparison */
+  39:.\Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint8  EZI2Cs_addrS2; /* Secondary slave address: software comparison */
+  40:.\Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint8* EZI2Cs_dataPtrS2; /* Pointer to data buffer 1 */
+  41:.\Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint16 EZI2Cs_bufSizeS2; /* Size of buffer 2 in bytes */
+  42:.\Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint16 EZI2Cs_wrProtectS2; /* Start index of write protected area in buffer 2 */
+  43:.\Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint8 EZI2Cs_rwOffsetS2; /* Current offset within buffer 2 */
+  44:.\Generated_Source\PSoC5/EZI2Cs.c ****     volatile uint8 EZI2Cs_rwIndexS2;  /* Current index within buffer 2 */
+  45:.\Generated_Source\PSoC5/EZI2Cs.c **** #endif  /* (EZI2Cs_ADDRESSES == EZI2Cs_TWO_ADDRESSES) */
+  46:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+  47:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+  48:.\Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+  49:.\Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_Init
+  50:.\Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+  51:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  52:.\Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+  53:.\Generated_Source\PSoC5/EZI2Cs.c **** *  Initializes or restores the component according to the Configure dialog
+  54:.\Generated_Source\PSoC5/EZI2Cs.c **** *  settings. It is not necessary to call EZI2C_Init() because the EZI2C_Start()
+  55:.\Generated_Source\PSoC5/EZI2Cs.c **** *  API calls this function, which is the preferred method to begin component
+  56:.\Generated_Source\PSoC5/EZI2Cs.c **** *  operation.
+  57:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  58:.\Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+  59:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+  60:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  61:.\Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+  62:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+  63:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  64:.\Generated_Source\PSoC5/EZI2Cs.c **** * Global variables:
+  65:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar - It is used to indicate the initial configuration
+  66:.\Generated_Source\PSoC5/EZI2Cs.c **** *  of this component.  The variable is initialized to zero and set to 1
+  67:.\Generated_Source\PSoC5/EZI2Cs.c **** *  the first time EZI2Cs_Start() is called. This allows component  !
+  68:.\Generated_Source\PSoC5/EZI2Cs.c **** *  initialization without re-initialization in all subsequent calls
+  69:.\Generated_Source\PSoC5/EZI2Cs.c **** *  to the EZI2Cs_Start() routine.
+  70:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  71:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_curStatus - Stores the current status of the component.
+  72:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  73:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_curState- Stores the current state of an I2C state machine.
+  74:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  75:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwOffsetS1 - The global variable which stores an offset for read
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 3
+
+
+  76:.\Generated_Source\PSoC5/EZI2Cs.c **** *  and write operations, is set at each write sequence of the first slave
+  77:.\Generated_Source\PSoC5/EZI2Cs.c **** *  address is reset if EZI2Cs_initVar is 0, by
+  78:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar function call.
+  79:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  80:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwIndexS1 - The global variable which stores a pointer to the
+  81:.\Generated_Source\PSoC5/EZI2Cs.c **** *  next value to be read or written for the first slave address is reset if
+  82:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar is 0, by EZI2Cs_initVar function call.
+  83:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  84:.\Generated_Source\PSoC5/EZI2Cs.c **** * EZI2Cs_wrProtectS1 - The global variable which stores an offset where data
+  85:.\Generated_Source\PSoC5/EZI2Cs.c **** *  is read only for the first slave address is reset if
+  86:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar is 0, by EZI2Cs_initVar function call.
+  87:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  88:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwOffsetS2 - The global variable, which stores an offset for read
+  89:.\Generated_Source\PSoC5/EZI2Cs.c **** *  and write operations, is set at each write sequence of the second slave
+  90:.\Generated_Source\PSoC5/EZI2Cs.c **** *  device is reset if EZI2Cs_initVar is 0, by EZI2Cs_initVar
+  91:.\Generated_Source\PSoC5/EZI2Cs.c **** *  function call.
+  92:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  93:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwIndexS2 - The global variable which stores a pointer to the
+  94:.\Generated_Source\PSoC5/EZI2Cs.c **** *  next value to be read or written for the second slave address is reset if
+  95:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar is 0, by EZI2Cs_initVar function call.
+  96:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+  97:.\Generated_Source\PSoC5/EZI2Cs.c **** * EZI2Cs_wrProtectS2 - The global variable which stores an offset where data
+  98:.\Generated_Source\PSoC5/EZI2Cs.c **** *  is read only for the second slave address is reset if
+  99:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_initVar is 0, by EZI2Cs_initVar function call.
+ 100:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 101:.\Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 102:.\Generated_Source\PSoC5/EZI2Cs.c **** *  No.
+ 103:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 104:.\Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 105:.\Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_Init(void) 
+ 106:.\Generated_Source\PSoC5/EZI2Cs.c **** {
+  40              		.loc 1 106 0
+  41              		.cfi_startproc
+  42              		@ args = 0, pretend = 0, frame = 0
+  43              		@ frame_needed = 1, uses_anonymous_args = 0
+  44 0000 80B5     		push	{r7, lr}
+  45              		.cfi_def_cfa_offset 8
+  46              		.cfi_offset 7, -8
+  47              		.cfi_offset 14, -4
+  48 0002 00AF     		add	r7, sp, #0
+  49              		.cfi_def_cfa_register 7
+ 107:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Configure fixed function block */
+ 108:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CFG_REG  = EZI2Cs_DEFAULT_CFG;
+  50              		.loc 1 108 0
+  51 0004 154B     		ldr	r3, .L2
+  52 0006 0122     		movs	r2, #1
+  53 0008 1A70     		strb	r2, [r3]
+ 109:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_XCFG_REG = EZI2Cs_DEFAULT_XCFG;
+  54              		.loc 1 109 0
+  55 000a 154B     		ldr	r3, .L2+4
+  56 000c 8122     		movs	r2, #129
+  57 000e 1A70     		strb	r2, [r3]
+ 110:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_ADDR_REG = EZI2Cs_DEFAULT_ADDR;
+  58              		.loc 1 110 0
+  59 0010 144B     		ldr	r3, .L2+8
+  60 0012 3822     		movs	r2, #56
+  61 0014 1A70     		strb	r2, [r3]
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 4
+
+
+ 111:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CLKDIV1_REG = EZI2Cs_DEFAULT_CLKDIV1;
+  62              		.loc 1 111 0
+  63 0016 144B     		ldr	r3, .L2+12
+  64 0018 1E22     		movs	r2, #30
+  65 001a 1A70     		strb	r2, [r3]
+ 112:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CLKDIV2_REG = EZI2Cs_DEFAULT_CLKDIV2;
+  66              		.loc 1 112 0
+  67 001c 134B     		ldr	r3, .L2+16
+  68 001e 0022     		movs	r2, #0
+  69 0020 1A70     		strb	r2, [r3]
+ 113:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 114:.\Generated_Source\PSoC5/EZI2Cs.c **** #if (EZI2Cs_TWO_ADDRESSES == EZI2Cs_ADDRESSES)
+ 115:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Set address variables */
+ 116:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_SetAddress1(EZI2Cs_DEFAULT_ADDR1);
+ 117:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_SetAddress2(EZI2Cs_DEFAULT_ADDR2);
+ 118:.\Generated_Source\PSoC5/EZI2Cs.c **** #endif /* #if (EZI2Cs_TWO_ADDRESSES == EZI2Cs_ADDRESSES) */
+ 119:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 120:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Configure interrupt */
+ 121:.\Generated_Source\PSoC5/EZI2Cs.c ****     CyIntDisable         (EZI2Cs_ISR_NUMBER);
+  70              		.loc 1 121 0
+  71 0022 134B     		ldr	r3, .L2+20
+  72 0024 4FF40042 		mov	r2, #32768
+  73 0028 1A60     		str	r2, [r3]
+ 122:.\Generated_Source\PSoC5/EZI2Cs.c ****     CyIntSetPriority     (EZI2Cs_ISR_NUMBER, EZI2Cs_ISR_PRIORITY);
+  74              		.loc 1 122 0
+  75 002a 0F20     		movs	r0, #15
+  76 002c 0721     		movs	r1, #7
+  77 002e FFF7FEFF 		bl	CyIntSetPriority
+ 123:.\Generated_Source\PSoC5/EZI2Cs.c ****     (void) CyIntSetVector(EZI2Cs_ISR_NUMBER, &EZI2Cs_ISR);
+  78              		.loc 1 123 0
+  79 0032 0F20     		movs	r0, #15
+  80 0034 0F49     		ldr	r1, .L2+24
+  81 0036 FFF7FEFF 		bl	CyIntSetVector
+ 124:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 125:.\Generated_Source\PSoC5/EZI2Cs.c ****      /* Reset state and status to default */
+ 126:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_curState  = EZI2Cs_SM_IDLE;
+  82              		.loc 1 126 0
+  83 003a 0F4B     		ldr	r3, .L2+28
+  84 003c 0022     		movs	r2, #0
+  85 003e 1A70     		strb	r2, [r3]
+ 127:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_curStatus = 0u;
+  86              		.loc 1 127 0
+  87 0040 0E4B     		ldr	r3, .L2+32
+  88 0042 0022     		movs	r2, #0
+  89 0044 1A70     		strb	r2, [r3]
+ 128:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 129:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Reset all buffer 1 indexes (primary address) */
+ 130:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwOffsetS1  = 0u;
+  90              		.loc 1 130 0
+  91 0046 0E4B     		ldr	r3, .L2+36
+  92 0048 0022     		movs	r2, #0
+  93 004a 1A70     		strb	r2, [r3]
+ 131:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwIndexS1   = 0u;
+  94              		.loc 1 131 0
+  95 004c 0D4B     		ldr	r3, .L2+40
+  96 004e 0022     		movs	r2, #0
+  97 0050 1A70     		strb	r2, [r3]
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 5
+
+
+ 132:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_wrProtectS1 = 0u;
+  98              		.loc 1 132 0
+  99 0052 0D4B     		ldr	r3, .L2+44
+ 100 0054 0022     		movs	r2, #0
+ 101 0056 1A80     		strh	r2, [r3]	@ movhi
+ 133:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 134:.\Generated_Source\PSoC5/EZI2Cs.c **** #if (EZI2Cs_ADDRESSES == EZI2Cs_TWO_ADDRESSES)
+ 135:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Reset all buffer 2 indexes (secondary address) */
+ 136:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwOffsetS2  = 0u;
+ 137:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwIndexS2   = 0u;
+ 138:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_wrProtectS2 = 0u;
+ 139:.\Generated_Source\PSoC5/EZI2Cs.c **** #endif  /* (EZI2Cs_ADDRESSES == EZI2Cs_TWO_ADDRESSES) */
+ 140:.\Generated_Source\PSoC5/EZI2Cs.c **** }
+ 102              		.loc 1 140 0
+ 103 0058 80BD     		pop	{r7, pc}
+ 104              	.L3:
+ 105 005a 00BF     		.align	2
+ 106              	.L2:
+ 107 005c D6490040 		.word	1073760726
+ 108 0060 C8490040 		.word	1073760712
+ 109 0064 CA490040 		.word	1073760714
+ 110 0068 DB490040 		.word	1073760731
+ 111 006c DC490040 		.word	1073760732
+ 112 0070 80E100E0 		.word	-536813184
+ 113 0074 00000000 		.word	EZI2Cs_ISR
+ 114 0078 00000000 		.word	EZI2Cs_curState
+ 115 007c 00000000 		.word	EZI2Cs_curStatus
+ 116 0080 00000000 		.word	EZI2Cs_rwOffsetS1
+ 117 0084 00000000 		.word	EZI2Cs_rwIndexS1
+ 118 0088 00000000 		.word	EZI2Cs_wrProtectS1
+ 119              		.cfi_endproc
+ 120              	.LFE0:
+ 121              		.size	EZI2Cs_Init, .-EZI2Cs_Init
+ 122              		.section	.text.EZI2Cs_Enable,"ax",%progbits
+ 123              		.align	2
+ 124              		.global	EZI2Cs_Enable
+ 125              		.thumb
+ 126              		.thumb_func
+ 127              		.type	EZI2Cs_Enable, %function
+ 128              	EZI2Cs_Enable:
+ 129              	.LFB1:
+ 141:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 142:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 143:.\Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 144:.\Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_Enable
+ 145:.\Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 146:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 147:.\Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 148:.\Generated_Source\PSoC5/EZI2Cs.c **** *  Activates the hardware and begins component operation.Calls EZI2C_EnableInt()
+ 149:.\Generated_Source\PSoC5/EZI2Cs.c **** *  to enable the I2C component interrupt. It is not necessary to call
+ 150:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2C_Enable() because the EZI2C_Start() API calls this function, which is
+ 151:.\Generated_Source\PSoC5/EZI2Cs.c **** *  the preferred method to begin component operation.
+ 152:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 153:.\Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 154:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 155:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 156:.\Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 6
+
+
+ 157:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 158:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 159:.\Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 160:.\Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_Enable(void) 
+ 161:.\Generated_Source\PSoC5/EZI2Cs.c **** {
+ 130              		.loc 1 161 0
+ 131              		.cfi_startproc
+ 132              		@ args = 0, pretend = 0, frame = 8
+ 133              		@ frame_needed = 1, uses_anonymous_args = 0
+ 134 0000 80B5     		push	{r7, lr}
+ 135              		.cfi_def_cfa_offset 8
+ 136              		.cfi_offset 7, -8
+ 137              		.cfi_offset 14, -4
+ 138 0002 82B0     		sub	sp, sp, #8
+ 139              		.cfi_def_cfa_offset 16
+ 140 0004 00AF     		add	r7, sp, #0
+ 141              		.cfi_def_cfa_register 7
+ 162:.\Generated_Source\PSoC5/EZI2Cs.c ****     uint8 intState;
+ 163:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 164:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Enable power to block */
+ 165:.\Generated_Source\PSoC5/EZI2Cs.c ****     intState = CyEnterCriticalSection();
+ 142              		.loc 1 165 0
+ 143 0006 FFF7FEFF 		bl	CyEnterCriticalSection
+ 144 000a 0346     		mov	r3, r0
+ 145 000c FB71     		strb	r3, [r7, #7]
+ 166:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_PM_ACT_CFG_REG  |= EZI2Cs_ACT_PWR_EN;
+ 146              		.loc 1 166 0
+ 147 000e 0D4B     		ldr	r3, .L5
+ 148 0010 0C4A     		ldr	r2, .L5
+ 149 0012 1278     		ldrb	r2, [r2]
+ 150 0014 D2B2     		uxtb	r2, r2
+ 151 0016 42F00402 		orr	r2, r2, #4
+ 152 001a D2B2     		uxtb	r2, r2
+ 153 001c 1A70     		strb	r2, [r3]
+ 167:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_PM_STBY_CFG_REG |= EZI2Cs_STBY_PWR_EN;
+ 154              		.loc 1 167 0
+ 155 001e 0A4B     		ldr	r3, .L5+4
+ 156 0020 094A     		ldr	r2, .L5+4
+ 157 0022 1278     		ldrb	r2, [r2]
+ 158 0024 D2B2     		uxtb	r2, r2
+ 159 0026 42F00402 		orr	r2, r2, #4
+ 160 002a D2B2     		uxtb	r2, r2
+ 161 002c 1A70     		strb	r2, [r3]
+ 168:.\Generated_Source\PSoC5/EZI2Cs.c ****     CyExitCriticalSection(intState);
+ 162              		.loc 1 168 0
+ 163 002e FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 164 0030 1846     		mov	r0, r3
+ 165 0032 FFF7FEFF 		bl	CyExitCriticalSection
+ 169:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 170:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Enable interrupt to start operation */
+ 171:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_EnableInt();
+ 166              		.loc 1 171 0
+ 167 0036 054B     		ldr	r3, .L5+8
+ 168 0038 4FF40042 		mov	r2, #32768
+ 169 003c 1A60     		str	r2, [r3]
+ 172:.\Generated_Source\PSoC5/EZI2Cs.c **** }
+ 170              		.loc 1 172 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 7
+
+
+ 171 003e 0837     		adds	r7, r7, #8
+ 172 0040 BD46     		mov	sp, r7
+ 173              		@ sp needed
+ 174 0042 80BD     		pop	{r7, pc}
+ 175              	.L6:
+ 176              		.align	2
+ 177              	.L5:
+ 178 0044 A5430040 		.word	1073759141
+ 179 0048 B5430040 		.word	1073759157
+ 180 004c 00E100E0 		.word	-536813312
+ 181              		.cfi_endproc
+ 182              	.LFE1:
+ 183              		.size	EZI2Cs_Enable, .-EZI2Cs_Enable
+ 184              		.section	.text.EZI2Cs_Start,"ax",%progbits
+ 185              		.align	2
+ 186              		.global	EZI2Cs_Start
+ 187              		.thumb
+ 188              		.thumb_func
+ 189              		.type	EZI2Cs_Start, %function
+ 190              	EZI2Cs_Start:
+ 191              	.LFB2:
+ 173:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 174:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 175:.\Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 176:.\Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_Start
+ 177:.\Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 178:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 179:.\Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 180:.\Generated_Source\PSoC5/EZI2Cs.c **** *  This is the preferred method to begin component operation. EZI2C_Start(),
+ 181:.\Generated_Source\PSoC5/EZI2Cs.c **** *  calls the EZI2C_Init() function, and then calls the EZI2C_Enable() function.
+ 182:.\Generated_Source\PSoC5/EZI2Cs.c **** *  It must be executed before I2C bus operation.
+ 183:.\Generated_Source\PSoC5/EZI2Cs.c **** *  This function enables the component interrupt because interrupt is required
+ 184:.\Generated_Source\PSoC5/EZI2Cs.c **** *  for most component operations.
+ 185:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 186:.\Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 187:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 188:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 189:.\Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 190:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 191:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 192:.\Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 193:.\Generated_Source\PSoC5/EZI2Cs.c **** *  No.
+ 194:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 195:.\Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 196:.\Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_Start(void) 
+ 197:.\Generated_Source\PSoC5/EZI2Cs.c **** {
+ 192              		.loc 1 197 0
+ 193              		.cfi_startproc
+ 194              		@ args = 0, pretend = 0, frame = 0
+ 195              		@ frame_needed = 1, uses_anonymous_args = 0
+ 196 0000 80B5     		push	{r7, lr}
+ 197              		.cfi_def_cfa_offset 8
+ 198              		.cfi_offset 7, -8
+ 199              		.cfi_offset 14, -4
+ 200 0002 00AF     		add	r7, sp, #0
+ 201              		.cfi_def_cfa_register 7
+ 198:.\Generated_Source\PSoC5/EZI2Cs.c ****     if (0u == EZI2Cs_initVar)
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 8
+
+
+ 202              		.loc 1 198 0
+ 203 0004 054B     		ldr	r3, .L9
+ 204 0006 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 205 0008 002B     		cmp	r3, #0
+ 206 000a 04D1     		bne	.L8
+ 199:.\Generated_Source\PSoC5/EZI2Cs.c ****     {
+ 200:.\Generated_Source\PSoC5/EZI2Cs.c ****         EZI2Cs_Init();
+ 207              		.loc 1 200 0
+ 208 000c FFF7FEFF 		bl	EZI2Cs_Init
+ 201:.\Generated_Source\PSoC5/EZI2Cs.c ****         EZI2Cs_initVar = 1u; /* Component initialized */
+ 209              		.loc 1 201 0
+ 210 0010 024B     		ldr	r3, .L9
+ 211 0012 0122     		movs	r2, #1
+ 212 0014 1A70     		strb	r2, [r3]
+ 213              	.L8:
+ 202:.\Generated_Source\PSoC5/EZI2Cs.c ****     }
+ 203:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 204:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_Enable();
+ 214              		.loc 1 204 0
+ 215 0016 FFF7FEFF 		bl	EZI2Cs_Enable
+ 205:.\Generated_Source\PSoC5/EZI2Cs.c **** }
+ 216              		.loc 1 205 0
+ 217 001a 80BD     		pop	{r7, pc}
+ 218              	.L10:
+ 219              		.align	2
+ 220              	.L9:
+ 221 001c 00000000 		.word	EZI2Cs_initVar
+ 222              		.cfi_endproc
+ 223              	.LFE2:
+ 224              		.size	EZI2Cs_Start, .-EZI2Cs_Start
+ 225              		.section	.text.EZI2Cs_Stop,"ax",%progbits
+ 226              		.align	2
+ 227              		.global	EZI2Cs_Stop
+ 228              		.thumb
+ 229              		.thumb_func
+ 230              		.type	EZI2Cs_Stop, %function
+ 231              	EZI2Cs_Stop:
+ 232              	.LFB3:
+ 206:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 207:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 208:.\Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 209:.\Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_Stop
+ 210:.\Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 211:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 212:.\Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 213:.\Generated_Source\PSoC5/EZI2Cs.c **** *  Disables I2C hardware and component interrupt. The I2C bus is released if it
+ 214:.\Generated_Source\PSoC5/EZI2Cs.c **** *  was locked up by the component.
+ 215:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 216:.\Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 217:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 218:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 219:.\Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 220:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 221:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 222:.\Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 223:.\Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_Stop(void) 
+ 224:.\Generated_Source\PSoC5/EZI2Cs.c **** {
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 9
+
+
+ 233              		.loc 1 224 0
+ 234              		.cfi_startproc
+ 235              		@ args = 0, pretend = 0, frame = 8
+ 236              		@ frame_needed = 1, uses_anonymous_args = 0
+ 237 0000 80B5     		push	{r7, lr}
+ 238              		.cfi_def_cfa_offset 8
+ 239              		.cfi_offset 7, -8
+ 240              		.cfi_offset 14, -4
+ 241 0002 82B0     		sub	sp, sp, #8
+ 242              		.cfi_def_cfa_offset 16
+ 243 0004 00AF     		add	r7, sp, #0
+ 244              		.cfi_def_cfa_register 7
+ 225:.\Generated_Source\PSoC5/EZI2Cs.c ****     uint8  intState;
+ 226:.\Generated_Source\PSoC5/EZI2Cs.c ****     uint16 blockResetCycles;
+ 227:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 228:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_DisableInt();
+ 245              		.loc 1 228 0
+ 246 0006 344B     		ldr	r3, .L12
+ 247 0008 4FF40042 		mov	r2, #32768
+ 248 000c 1A60     		str	r2, [r3]
+ 229:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 230:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Store registers effected by block disable */
+ 231:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_backup.adr     = EZI2Cs_ADDR_REG;
+ 249              		.loc 1 231 0
+ 250 000e 334B     		ldr	r3, .L12+4
+ 251 0010 1B78     		ldrb	r3, [r3]
+ 252 0012 DAB2     		uxtb	r2, r3
+ 253 0014 324B     		ldr	r3, .L12+8
+ 254 0016 9A70     		strb	r2, [r3, #2]
+ 232:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_backup.clkDiv1 = EZI2Cs_CLKDIV1_REG;
+ 255              		.loc 1 232 0
+ 256 0018 324B     		ldr	r3, .L12+12
+ 257 001a 1B78     		ldrb	r3, [r3]
+ 258 001c DAB2     		uxtb	r2, r3
+ 259 001e 304B     		ldr	r3, .L12+8
+ 260 0020 1A71     		strb	r2, [r3, #4]
+ 233:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_backup.clkDiv2 = EZI2Cs_CLKDIV2_REG;
+ 261              		.loc 1 233 0
+ 262 0022 314B     		ldr	r3, .L12+16
+ 263 0024 1B78     		ldrb	r3, [r3]
+ 264 0026 DAB2     		uxtb	r2, r3
+ 265 0028 2D4B     		ldr	r3, .L12+8
+ 266 002a 5A71     		strb	r2, [r3, #5]
+ 234:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 235:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Calculate number of cycles to reset block */
+ 236:.\Generated_Source\PSoC5/EZI2Cs.c ****     blockResetCycles = ((uint16) ((uint16) EZI2Cs_CLKDIV2_REG << 8u) | EZI2Cs_CLKDIV1_REG) + 1u;
+ 267              		.loc 1 236 0
+ 268 002c 2E4B     		ldr	r3, .L12+16
+ 269 002e 1B78     		ldrb	r3, [r3]
+ 270 0030 DBB2     		uxtb	r3, r3
+ 271 0032 1B02     		lsls	r3, r3, #8
+ 272 0034 9AB2     		uxth	r2, r3
+ 273 0036 2B4B     		ldr	r3, .L12+12
+ 274 0038 1B78     		ldrb	r3, [r3]
+ 275 003a DBB2     		uxtb	r3, r3
+ 276 003c 1343     		orrs	r3, r3, r2
+ 277 003e 9BB2     		uxth	r3, r3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 10
+
+
+ 278 0040 0133     		adds	r3, r3, #1
+ 279 0042 FB80     		strh	r3, [r7, #6]	@ movhi
+ 237:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 238:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Disable block */
+ 239:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CFG_REG &= (uint8) ~EZI2Cs_CFG_EN_SLAVE;
+ 280              		.loc 1 239 0
+ 281 0044 294B     		ldr	r3, .L12+20
+ 282 0046 294A     		ldr	r2, .L12+20
+ 283 0048 1278     		ldrb	r2, [r2]
+ 284 004a D2B2     		uxtb	r2, r2
+ 285 004c 22F00102 		bic	r2, r2, #1
+ 286 0050 D2B2     		uxtb	r2, r2
+ 287 0052 1A70     		strb	r2, [r3]
+ 240:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Wait for block reset before disable power */
+ 241:.\Generated_Source\PSoC5/EZI2Cs.c ****     CyDelayCycles((uint32) blockResetCycles);
+ 288              		.loc 1 241 0
+ 289 0054 FB88     		ldrh	r3, [r7, #6]
+ 290 0056 1846     		mov	r0, r3
+ 291 0058 FFF7FEFF 		bl	CyDelayCycles
+ 242:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 243:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Disable power to block */
+ 244:.\Generated_Source\PSoC5/EZI2Cs.c ****     intState = CyEnterCriticalSection();
+ 292              		.loc 1 244 0
+ 293 005c FFF7FEFF 		bl	CyEnterCriticalSection
+ 294 0060 0346     		mov	r3, r0
+ 295 0062 7B71     		strb	r3, [r7, #5]
+ 245:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_PM_ACT_CFG_REG  &= (uint8) ~EZI2Cs_ACT_PWR_EN;
+ 296              		.loc 1 245 0
+ 297 0064 224B     		ldr	r3, .L12+24
+ 298 0066 224A     		ldr	r2, .L12+24
+ 299 0068 1278     		ldrb	r2, [r2]
+ 300 006a D2B2     		uxtb	r2, r2
+ 301 006c 22F00402 		bic	r2, r2, #4
+ 302 0070 D2B2     		uxtb	r2, r2
+ 303 0072 1A70     		strb	r2, [r3]
+ 246:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_PM_STBY_CFG_REG &= (uint8) ~EZI2Cs_STBY_PWR_EN;
+ 304              		.loc 1 246 0
+ 305 0074 1F4B     		ldr	r3, .L12+28
+ 306 0076 1F4A     		ldr	r2, .L12+28
+ 307 0078 1278     		ldrb	r2, [r2]
+ 308 007a D2B2     		uxtb	r2, r2
+ 309 007c 22F00402 		bic	r2, r2, #4
+ 310 0080 D2B2     		uxtb	r2, r2
+ 311 0082 1A70     		strb	r2, [r3]
+ 247:.\Generated_Source\PSoC5/EZI2Cs.c ****     CyExitCriticalSection(intState);
+ 312              		.loc 1 247 0
+ 313 0084 7B79     		ldrb	r3, [r7, #5]	@ zero_extendqisi2
+ 314 0086 1846     		mov	r0, r3
+ 315 0088 FFF7FEFF 		bl	CyExitCriticalSection
+ 248:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 249:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Enable block */
+ 250:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CFG_REG |= (uint8) EZI2Cs_CFG_EN_SLAVE;
+ 316              		.loc 1 250 0
+ 317 008c 174B     		ldr	r3, .L12+20
+ 318 008e 174A     		ldr	r2, .L12+20
+ 319 0090 1278     		ldrb	r2, [r2]
+ 320 0092 D2B2     		uxtb	r2, r2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 11
+
+
+ 321 0094 42F00102 		orr	r2, r2, #1
+ 322 0098 D2B2     		uxtb	r2, r2
+ 323 009a 1A70     		strb	r2, [r3]
+ 251:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 252:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Restore registers effected by block disable. Ticket ID#198004 */
+ 253:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_ADDR_REG    = EZI2Cs_backup.adr;
+ 324              		.loc 1 253 0
+ 325 009c 0F4B     		ldr	r3, .L12+4
+ 326 009e 104A     		ldr	r2, .L12+8
+ 327 00a0 9278     		ldrb	r2, [r2, #2]	@ zero_extendqisi2
+ 328 00a2 1A70     		strb	r2, [r3]
+ 254:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_ADDR_REG    = EZI2Cs_backup.adr;
+ 329              		.loc 1 254 0
+ 330 00a4 0D4B     		ldr	r3, .L12+4
+ 331 00a6 0E4A     		ldr	r2, .L12+8
+ 332 00a8 9278     		ldrb	r2, [r2, #2]	@ zero_extendqisi2
+ 333 00aa 1A70     		strb	r2, [r3]
+ 255:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CLKDIV1_REG = EZI2Cs_backup.clkDiv1;
+ 334              		.loc 1 255 0
+ 335 00ac 0D4B     		ldr	r3, .L12+12
+ 336 00ae 0C4A     		ldr	r2, .L12+8
+ 337 00b0 1279     		ldrb	r2, [r2, #4]	@ zero_extendqisi2
+ 338 00b2 1A70     		strb	r2, [r3]
+ 256:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_CLKDIV2_REG = EZI2Cs_backup.clkDiv2;
+ 339              		.loc 1 256 0
+ 340 00b4 0C4B     		ldr	r3, .L12+16
+ 341 00b6 0A4A     		ldr	r2, .L12+8
+ 342 00b8 5279     		ldrb	r2, [r2, #5]	@ zero_extendqisi2
+ 343 00ba 1A70     		strb	r2, [r3]
+ 257:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 258:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_ClearPendingInt();
+ 344              		.loc 1 258 0
+ 345 00bc 0E4B     		ldr	r3, .L12+32
+ 346 00be 4FF40042 		mov	r2, #32768
+ 347 00c2 1A60     		str	r2, [r3]
+ 259:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 260:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Reset state and status to default */
+ 261:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_curState  = EZI2Cs_SM_IDLE;
+ 348              		.loc 1 261 0
+ 349 00c4 0D4B     		ldr	r3, .L12+36
+ 350 00c6 0022     		movs	r2, #0
+ 351 00c8 1A70     		strb	r2, [r3]
+ 262:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_curStatus = 0u;
+ 352              		.loc 1 262 0
+ 353 00ca 0D4B     		ldr	r3, .L12+40
+ 354 00cc 0022     		movs	r2, #0
+ 355 00ce 1A70     		strb	r2, [r3]
+ 263:.\Generated_Source\PSoC5/EZI2Cs.c **** }
+ 356              		.loc 1 263 0
+ 357 00d0 0837     		adds	r7, r7, #8
+ 358 00d2 BD46     		mov	sp, r7
+ 359              		@ sp needed
+ 360 00d4 80BD     		pop	{r7, pc}
+ 361              	.L13:
+ 362 00d6 00BF     		.align	2
+ 363              	.L12:
+ 364 00d8 80E100E0 		.word	-536813184
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 12
+
+
+ 365 00dc CA490040 		.word	1073760714
+ 366 00e0 00000000 		.word	EZI2Cs_backup
+ 367 00e4 DB490040 		.word	1073760731
+ 368 00e8 DC490040 		.word	1073760732
+ 369 00ec D6490040 		.word	1073760726
+ 370 00f0 A5430040 		.word	1073759141
+ 371 00f4 B5430040 		.word	1073759157
+ 372 00f8 80E200E0 		.word	-536812928
+ 373 00fc 00000000 		.word	EZI2Cs_curState
+ 374 0100 00000000 		.word	EZI2Cs_curStatus
+ 375              		.cfi_endproc
+ 376              	.LFE3:
+ 377              		.size	EZI2Cs_Stop, .-EZI2Cs_Stop
+ 378              		.section	.text.EZI2Cs_SetAddress1,"ax",%progbits
+ 379              		.align	2
+ 380              		.global	EZI2Cs_SetAddress1
+ 381              		.thumb
+ 382              		.thumb_func
+ 383              		.type	EZI2Cs_SetAddress1, %function
+ 384              	EZI2Cs_SetAddress1:
+ 385              	.LFB4:
+ 264:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 265:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 266:.\Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 267:.\Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_SetAddress1
+ 268:.\Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 269:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 270:.\Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 271:.\Generated_Source\PSoC5/EZI2Cs.c **** *  Sets the primary I2C slave address. This address is used by the master to
+ 272:.\Generated_Source\PSoC5/EZI2Cs.c **** *  access the primary data buffer.
+ 273:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 274:.\Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 275:.\Generated_Source\PSoC5/EZI2Cs.c **** *  address: Primary I2C slave address.
+ 276:.\Generated_Source\PSoC5/EZI2Cs.c **** *           This address is the 7-bit right-justified slave address and does not
+ 277:.\Generated_Source\PSoC5/EZI2Cs.c **** *           include the R/W bit.
+ 278:.\Generated_Source\PSoC5/EZI2Cs.c **** *           This value can be any address between 0 and 127 (0x00 to 0x7F).
+ 279:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 280:.\Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 281:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 282:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 283:.\Generated_Source\PSoC5/EZI2Cs.c **** * Global variables:
+ 284:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_addrS1 - A new slave address for the first slave device is
+ 285:.\Generated_Source\PSoC5/EZI2Cs.c **** *  saved in it, if the component is configured to act as two slave devices.
+ 286:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 287:.\Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 288:.\Generated_Source\PSoC5/EZI2Cs.c **** *  No, if two addresses are used.
+ 289:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 290:.\Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 291:.\Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_SetAddress1(uint8 address) 
+ 292:.\Generated_Source\PSoC5/EZI2Cs.c **** {
+ 386              		.loc 1 292 0
+ 387              		.cfi_startproc
+ 388              		@ args = 0, pretend = 0, frame = 8
+ 389              		@ frame_needed = 1, uses_anonymous_args = 0
+ 390              		@ link register save eliminated.
+ 391 0000 80B4     		push	{r7}
+ 392              		.cfi_def_cfa_offset 4
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 13
+
+
+ 393              		.cfi_offset 7, -4
+ 394 0002 83B0     		sub	sp, sp, #12
+ 395              		.cfi_def_cfa_offset 16
+ 396 0004 00AF     		add	r7, sp, #0
+ 397              		.cfi_def_cfa_register 7
+ 398 0006 0346     		mov	r3, r0
+ 399 0008 FB71     		strb	r3, [r7, #7]
+ 293:.\Generated_Source\PSoC5/EZI2Cs.c **** #if (EZI2Cs_ONE_ADDRESS == EZI2Cs_ADDRESSES)
+ 294:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_ADDR_REG = (address & EZI2Cs_SADDR_MASK);
+ 400              		.loc 1 294 0
+ 401 000a 054B     		ldr	r3, .L15
+ 402 000c FA79     		ldrb	r2, [r7, #7]
+ 403 000e 02F07F02 		and	r2, r2, #127
+ 404 0012 D2B2     		uxtb	r2, r2
+ 405 0014 1A70     		strb	r2, [r3]
+ 295:.\Generated_Source\PSoC5/EZI2Cs.c **** #else
+ 296:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_addrS1   = (address & EZI2Cs_SADDR_MASK);
+ 297:.\Generated_Source\PSoC5/EZI2Cs.c **** #endif /* (EZI2Cs_ONE_ADDRESS == EZI2Cs_ADDRESSES) */
+ 298:.\Generated_Source\PSoC5/EZI2Cs.c **** }
+ 406              		.loc 1 298 0
+ 407 0016 0C37     		adds	r7, r7, #12
+ 408 0018 BD46     		mov	sp, r7
+ 409              		@ sp needed
+ 410 001a 5DF8047B 		ldr	r7, [sp], #4
+ 411 001e 7047     		bx	lr
+ 412              	.L16:
+ 413              		.align	2
+ 414              	.L15:
+ 415 0020 CA490040 		.word	1073760714
+ 416              		.cfi_endproc
+ 417              	.LFE4:
+ 418              		.size	EZI2Cs_SetAddress1, .-EZI2Cs_SetAddress1
+ 419              		.section	.text.EZI2Cs_GetAddress1,"ax",%progbits
+ 420              		.align	2
+ 421              		.global	EZI2Cs_GetAddress1
+ 422              		.thumb
+ 423              		.thumb_func
+ 424              		.type	EZI2Cs_GetAddress1, %function
+ 425              	EZI2Cs_GetAddress1:
+ 426              	.LFB5:
+ 299:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 300:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 301:.\Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 302:.\Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_GetAddress1
+ 303:.\Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 304:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 305:.\Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 306:.\Generated_Source\PSoC5/EZI2Cs.c **** *  Returns the primary I2C slave address.
+ 307:.\Generated_Source\PSoC5/EZI2Cs.c **** *  This address is the 7-bit right-justified slave address and does not include
+ 308:.\Generated_Source\PSoC5/EZI2Cs.c **** *  the R/W bit.
+ 309:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 310:.\Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 311:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 312:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 313:.\Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 314:.\Generated_Source\PSoC5/EZI2Cs.c **** *  Primary I2C slave address.
+ 315:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 14
+
+
+ 316:.\Generated_Source\PSoC5/EZI2Cs.c **** * Global variables:
+ 317:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_addrS1 - If component is configured to has two slave
+ 318:.\Generated_Source\PSoC5/EZI2Cs.c **** *  addresses than the primary address is saved here, otherwise the address is written to
+ 319:.\Generated_Source\PSoC5/EZI2Cs.c **** *  the register.
+ 320:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 321:.\Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 322:.\Generated_Source\PSoC5/EZI2Cs.c **** *  No.
+ 323:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 324:.\Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 325:.\Generated_Source\PSoC5/EZI2Cs.c **** uint8 EZI2Cs_GetAddress1(void) 
+ 326:.\Generated_Source\PSoC5/EZI2Cs.c **** {
+ 427              		.loc 1 326 0
+ 428              		.cfi_startproc
+ 429              		@ args = 0, pretend = 0, frame = 0
+ 430              		@ frame_needed = 1, uses_anonymous_args = 0
+ 431              		@ link register save eliminated.
+ 432 0000 80B4     		push	{r7}
+ 433              		.cfi_def_cfa_offset 4
+ 434              		.cfi_offset 7, -4
+ 435 0002 00AF     		add	r7, sp, #0
+ 436              		.cfi_def_cfa_register 7
+ 327:.\Generated_Source\PSoC5/EZI2Cs.c **** #if (EZI2Cs_ONE_ADDRESS == EZI2Cs_ADDRESSES)
+ 328:.\Generated_Source\PSoC5/EZI2Cs.c ****     return (EZI2Cs_ADDR_REG);
+ 437              		.loc 1 328 0
+ 438 0004 034B     		ldr	r3, .L19
+ 439 0006 1B78     		ldrb	r3, [r3]
+ 440 0008 DBB2     		uxtb	r3, r3
+ 329:.\Generated_Source\PSoC5/EZI2Cs.c **** #else
+ 330:.\Generated_Source\PSoC5/EZI2Cs.c ****     return (EZI2Cs_addrS1);
+ 331:.\Generated_Source\PSoC5/EZI2Cs.c **** #endif /* (EZI2Cs_ONE_ADDRESS == EZI2Cs_ADDRESSES) */
+ 332:.\Generated_Source\PSoC5/EZI2Cs.c **** }
+ 441              		.loc 1 332 0
+ 442 000a 1846     		mov	r0, r3
+ 443 000c BD46     		mov	sp, r7
+ 444              		@ sp needed
+ 445 000e 5DF8047B 		ldr	r7, [sp], #4
+ 446 0012 7047     		bx	lr
+ 447              	.L20:
+ 448              		.align	2
+ 449              	.L19:
+ 450 0014 CA490040 		.word	1073760714
+ 451              		.cfi_endproc
+ 452              	.LFE5:
+ 453              		.size	EZI2Cs_GetAddress1, .-EZI2Cs_GetAddress1
+ 454              		.section	.text.EZI2Cs_GetActivity,"ax",%progbits
+ 455              		.align	2
+ 456              		.global	EZI2Cs_GetActivity
+ 457              		.thumb
+ 458              		.thumb_func
+ 459              		.type	EZI2Cs_GetActivity, %function
+ 460              	EZI2Cs_GetActivity:
+ 461              	.LFB6:
+ 333:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 334:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 335:.\Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 336:.\Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_GetActivity
+ 337:.\Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 15
+
+
+ 338:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 339:.\Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 340:.\Generated_Source\PSoC5/EZI2Cs.c **** *  Returns a non-zero value if an I2C read or write cycle has occurred since
+ 341:.\Generated_Source\PSoC5/EZI2Cs.c **** *  the last time this function was called. The activity flag resets to zero at
+ 342:.\Generated_Source\PSoC5/EZI2Cs.c **** *  the end of this function call.
+ 343:.\Generated_Source\PSoC5/EZI2Cs.c **** *  The Read and Write busy flags are cleared when read, but the “BUSY” flag is
+ 344:.\Generated_Source\PSoC5/EZI2Cs.c **** *  only cleared when slave is free (i.e master finishes communication with
+ 345:.\Generated_Source\PSoC5/EZI2Cs.c **** *  slave generating Stop or repeated Start condition).
+ 346:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 347:.\Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 348:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None
+ 349:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 350:.\Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 351:.\Generated_Source\PSoC5/EZI2Cs.c **** *  Status of I2C activity.
+ 352:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 353:.\Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_READ1   Set if a Read sequence is detected for the first
+ 354:.\Generated_Source\PSoC5/EZI2Cs.c **** *                                   address. Cleared when the status is read.
+ 355:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 356:.\Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_WRITE1  Set if a Write sequence is detected for the first
+ 357:.\Generated_Source\PSoC5/EZI2Cs.c **** *                                   address. Cleared when the status is  read.
+ 358:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 359:.\Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_READ2   Set if a Read sequence is detected for the second
+ 360:.\Generated_Source\PSoC5/EZI2Cs.c **** *                                   address (if enabled). Cleared when the status
+ 361:.\Generated_Source\PSoC5/EZI2Cs.c **** *                                   read.
+ 362:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 363:.\Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_WRITE2  Set if a Write sequence is detected for the second
+ 364:.\Generated_Source\PSoC5/EZI2Cs.c **** *                                   address (if enabled). Cleared when the status is
+ 365:.\Generated_Source\PSoC5/EZI2Cs.c **** *                                   read.
+ 366:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 367:.\Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_BUSY    Set when the master starts communication with
+ 368:.\Generated_Source\PSoC5/EZI2Cs.c **** *                                   the slave (the slave is addressed with Start or
+ 369:.\Generated_Source\PSoC5/EZI2Cs.c **** *                                   repeated Start) and cleared when the master
+ 370:.\Generated_Source\PSoC5/EZI2Cs.c **** *                                   finishes communication (a Stop or repeated
+ 371:.\Generated_Source\PSoC5/EZI2Cs.c **** *                                   Start condition is generated).
+ 372:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 373:.\Generated_Source\PSoC5/EZI2Cs.c **** *   EZI2Cs_STATUS_ERR     Set when the I2C hardware is detected, cleared
+ 374:.\Generated_Source\PSoC5/EZI2Cs.c **** *                                   when the status is read.
+ 375:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 376:.\Generated_Source\PSoC5/EZI2Cs.c **** * Global variables:
+ 377:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_curStatus - The global variable which stores the current
+ 378:.\Generated_Source\PSoC5/EZI2Cs.c **** *  component status.
+ 379:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 380:.\Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 381:.\Generated_Source\PSoC5/EZI2Cs.c **** *  No.
+ 382:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 383:.\Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 384:.\Generated_Source\PSoC5/EZI2Cs.c **** uint8 EZI2Cs_GetActivity(void) 
+ 385:.\Generated_Source\PSoC5/EZI2Cs.c **** {
+ 462              		.loc 1 385 0
+ 463              		.cfi_startproc
+ 464              		@ args = 0, pretend = 0, frame = 8
+ 465              		@ frame_needed = 1, uses_anonymous_args = 0
+ 466              		@ link register save eliminated.
+ 467 0000 80B4     		push	{r7}
+ 468              		.cfi_def_cfa_offset 4
+ 469              		.cfi_offset 7, -4
+ 470 0002 83B0     		sub	sp, sp, #12
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 16
+
+
+ 471              		.cfi_def_cfa_offset 16
+ 472 0004 00AF     		add	r7, sp, #0
+ 473              		.cfi_def_cfa_register 7
+ 386:.\Generated_Source\PSoC5/EZI2Cs.c ****     uint8 tmpStatus;
+ 387:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 388:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_DisableInt(); /* Lock from component interrupt */
+ 474              		.loc 1 388 0
+ 475 0006 0D4B     		ldr	r3, .L23
+ 476 0008 4FF40042 		mov	r2, #32768
+ 477 000c 1A60     		str	r2, [r3]
+ 389:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 390:.\Generated_Source\PSoC5/EZI2Cs.c ****     tmpStatus = EZI2Cs_curStatus;
+ 478              		.loc 1 390 0
+ 479 000e 0C4B     		ldr	r3, .L23+4
+ 480 0010 1B78     		ldrb	r3, [r3]
+ 481 0012 FB71     		strb	r3, [r7, #7]
+ 391:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Clear status bits. Do not touch busy status */
+ 392:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_curStatus &= EZI2Cs_STATUS_BUSY;
+ 482              		.loc 1 392 0
+ 483 0014 0A4B     		ldr	r3, .L23+4
+ 484 0016 1B78     		ldrb	r3, [r3]
+ 485 0018 DBB2     		uxtb	r3, r3
+ 486 001a 03F01003 		and	r3, r3, #16
+ 487 001e DAB2     		uxtb	r2, r3
+ 488 0020 074B     		ldr	r3, .L23+4
+ 489 0022 1A70     		strb	r2, [r3]
+ 393:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 394:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_EnableInt(); /* Release lock */
+ 490              		.loc 1 394 0
+ 491 0024 074B     		ldr	r3, .L23+8
+ 492 0026 4FF40042 		mov	r2, #32768
+ 493 002a 1A60     		str	r2, [r3]
+ 395:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 396:.\Generated_Source\PSoC5/EZI2Cs.c ****     return (tmpStatus);
+ 494              		.loc 1 396 0
+ 495 002c FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 397:.\Generated_Source\PSoC5/EZI2Cs.c **** }
+ 496              		.loc 1 397 0
+ 497 002e 1846     		mov	r0, r3
+ 498 0030 0C37     		adds	r7, r7, #12
+ 499 0032 BD46     		mov	sp, r7
+ 500              		@ sp needed
+ 501 0034 5DF8047B 		ldr	r7, [sp], #4
+ 502 0038 7047     		bx	lr
+ 503              	.L24:
+ 504 003a 00BF     		.align	2
+ 505              	.L23:
+ 506 003c 80E100E0 		.word	-536813184
+ 507 0040 00000000 		.word	EZI2Cs_curStatus
+ 508 0044 00E100E0 		.word	-536813312
+ 509              		.cfi_endproc
+ 510              	.LFE6:
+ 511              		.size	EZI2Cs_GetActivity, .-EZI2Cs_GetActivity
+ 512              		.section	.text.EZI2Cs_SetBuffer1,"ax",%progbits
+ 513              		.align	2
+ 514              		.global	EZI2Cs_SetBuffer1
+ 515              		.thumb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 17
+
+
+ 516              		.thumb_func
+ 517              		.type	EZI2Cs_SetBuffer1, %function
+ 518              	EZI2Cs_SetBuffer1:
+ 519              	.LFB7:
+ 398:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 399:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 400:.\Generated_Source\PSoC5/EZI2Cs.c **** /*******************************************************************************
+ 401:.\Generated_Source\PSoC5/EZI2Cs.c **** * Function Name: EZI2Cs_SetBuffer1
+ 402:.\Generated_Source\PSoC5/EZI2Cs.c **** ********************************************************************************
+ 403:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 404:.\Generated_Source\PSoC5/EZI2Cs.c **** * Summary:
+ 405:.\Generated_Source\PSoC5/EZI2Cs.c **** *  Sets up the data buffer to be exposed to the master on a primary slave
+ 406:.\Generated_Source\PSoC5/EZI2Cs.c **** *  address request.
+ 407:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 408:.\Generated_Source\PSoC5/EZI2Cs.c **** * Parameters:
+ 409:.\Generated_Source\PSoC5/EZI2Cs.c **** *  bufSize:    Size of the buffer in bytes.
+ 410:.\Generated_Source\PSoC5/EZI2Cs.c **** *  rwBoundary: Number of data bytes starting from the beginning of the buffer
+ 411:.\Generated_Source\PSoC5/EZI2Cs.c **** *              with read and write access. Data bytes located at offset
+ 412:.\Generated_Source\PSoC5/EZI2Cs.c **** *              rwBoundary or greater are read only.
+ 413:.\Generated_Source\PSoC5/EZI2Cs.c **** *              This value must be less than or equal to the buffer size.
+ 414:.\Generated_Source\PSoC5/EZI2Cs.c **** *  dataPtr:    Pointer to the data buffer.
+ 415:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 416:.\Generated_Source\PSoC5/EZI2Cs.c **** * Return:
+ 417:.\Generated_Source\PSoC5/EZI2Cs.c **** *  None.
+ 418:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 419:.\Generated_Source\PSoC5/EZI2Cs.c **** * Global variables:
+ 420:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_dataPtrS1 - Stores the pointer to the data exposed to an I2C
+ 421:.\Generated_Source\PSoC5/EZI2Cs.c **** *  master for the first slave address, is modified with the the new pointer to    the    ?? no sens
+ 422:.\Generated_Source\PSoC5/EZI2Cs.c **** *  data passed by the function parameter.
+ 423:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 424:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwOffsetS1 - Stores an offset for read and write operations, is
+ 425:.\Generated_Source\PSoC5/EZI2Cs.c **** *  modified at each write sequence of the first slave address is?? reset.   ?
+ 426:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 427:.\Generated_Source\PSoC5/EZI2Cs.c **** *  EZI2Cs_rwIndexS1 - Stores the pointer to the next value to be read or
+ 428:.\Generated_Source\PSoC5/EZI2Cs.c **** *  written for the first slave address is?? set to 0.  ??
+ 429:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 430:.\Generated_Source\PSoC5/EZI2Cs.c **** * Reentrant:
+ 431:.\Generated_Source\PSoC5/EZI2Cs.c **** *  No.
+ 432:.\Generated_Source\PSoC5/EZI2Cs.c **** *
+ 433:.\Generated_Source\PSoC5/EZI2Cs.c **** *******************************************************************************/
+ 434:.\Generated_Source\PSoC5/EZI2Cs.c **** void EZI2Cs_SetBuffer1(uint16 bufSize, uint16 rwBoundary, volatile uint8 * dataPtr) 
+ 435:.\Generated_Source\PSoC5/EZI2Cs.c **** {
+ 520              		.loc 1 435 0
+ 521              		.cfi_startproc
+ 522              		@ args = 0, pretend = 0, frame = 8
+ 523              		@ frame_needed = 1, uses_anonymous_args = 0
+ 524              		@ link register save eliminated.
+ 525 0000 80B4     		push	{r7}
+ 526              		.cfi_def_cfa_offset 4
+ 527              		.cfi_offset 7, -4
+ 528 0002 83B0     		sub	sp, sp, #12
+ 529              		.cfi_def_cfa_offset 16
+ 530 0004 00AF     		add	r7, sp, #0
+ 531              		.cfi_def_cfa_register 7
+ 532 0006 0B46     		mov	r3, r1
+ 533 0008 3A60     		str	r2, [r7]
+ 534 000a 0246     		mov	r2, r0	@ movhi
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 18
+
+
+ 535 000c FA80     		strh	r2, [r7, #6]	@ movhi
+ 536 000e BB80     		strh	r3, [r7, #4]	@ movhi
+ 436:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_DisableInt(); /* Lock from component interrupt */
+ 537              		.loc 1 436 0
+ 538 0010 0F4B     		ldr	r3, .L27
+ 539 0012 4FF40042 		mov	r2, #32768
+ 540 0016 1A60     		str	r2, [r3]
+ 437:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 438:.\Generated_Source\PSoC5/EZI2Cs.c ****     if (NULL != dataPtr)
+ 541              		.loc 1 438 0
+ 542 0018 3B68     		ldr	r3, [r7]
+ 543 001a 002B     		cmp	r3, #0
+ 544 001c 08D0     		beq	.L26
+ 439:.\Generated_Source\PSoC5/EZI2Cs.c ****     {
+ 440:.\Generated_Source\PSoC5/EZI2Cs.c ****         /* Configure buffer 1 */
+ 441:.\Generated_Source\PSoC5/EZI2Cs.c ****         EZI2Cs_dataPtrS1   = dataPtr;
+ 545              		.loc 1 441 0
+ 546 001e 0D4B     		ldr	r3, .L27+4
+ 547 0020 3A68     		ldr	r2, [r7]
+ 548 0022 1A60     		str	r2, [r3]
+ 442:.\Generated_Source\PSoC5/EZI2Cs.c ****         EZI2Cs_bufSizeS1   = bufSize;
+ 549              		.loc 1 442 0
+ 550 0024 0C4B     		ldr	r3, .L27+8
+ 551 0026 FA88     		ldrh	r2, [r7, #6]	@ movhi
+ 552 0028 1A80     		strh	r2, [r3]	@ movhi
+ 443:.\Generated_Source\PSoC5/EZI2Cs.c ****         EZI2Cs_wrProtectS1 = rwBoundary;
+ 553              		.loc 1 443 0
+ 554 002a 0C4B     		ldr	r3, .L27+12
+ 555 002c BA88     		ldrh	r2, [r7, #4]	@ movhi
+ 556 002e 1A80     		strh	r2, [r3]	@ movhi
+ 557              	.L26:
+ 444:.\Generated_Source\PSoC5/EZI2Cs.c ****     }
+ 445:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 446:.\Generated_Source\PSoC5/EZI2Cs.c ****     /* Clear buffer offset and index */
+ 447:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwOffsetS1 = 0u;
+ 558              		.loc 1 447 0
+ 559 0030 0B4B     		ldr	r3, .L27+16
+ 560 0032 0022     		movs	r2, #0
+ 561 0034 1A70     		strb	r2, [r3]
+ 448:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_rwIndexS1  = 0u;
+ 562              		.loc 1 448 0
+ 563 0036 0B4B     		ldr	r3, .L27+20
+ 564 0038 0022     		movs	r2, #0
+ 565 003a 1A70     		strb	r2, [r3]
+ 449:.\Generated_Source\PSoC5/EZI2Cs.c **** 
+ 450:.\Generated_Source\PSoC5/EZI2Cs.c ****     EZI2Cs_EnableInt(); /* Release lock */
+ 566              		.loc 1 450 0
+ 567 003c 0A4B     		ldr	r3, .L27+24
+ 568 003e 4FF40042 		mov	r2, #32768
+ 569 0042 1A60     		str	r2, [r3]
+ 451:.\Generated_Source\PSoC5/EZI2Cs.c **** }
+ 570              		.loc 1 451 0
+ 571 0044 0C37     		adds	r7, r7, #12
+ 572 0046 BD46     		mov	sp, r7
+ 573              		@ sp needed
+ 574 0048 5DF8047B 		ldr	r7, [sp], #4
+ 575 004c 7047     		bx	lr
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 19
+
+
+ 576              	.L28:
+ 577 004e 00BF     		.align	2
+ 578              	.L27:
+ 579 0050 80E100E0 		.word	-536813184
+ 580 0054 00000000 		.word	EZI2Cs_dataPtrS1
+ 581 0058 00000000 		.word	EZI2Cs_bufSizeS1
+ 582 005c 00000000 		.word	EZI2Cs_wrProtectS1
+ 583 0060 00000000 		.word	EZI2Cs_rwOffsetS1
+ 584 0064 00000000 		.word	EZI2Cs_rwIndexS1
+ 585 0068 00E100E0 		.word	-536813312
+ 586              		.cfi_endproc
+ 587              	.LFE7:
+ 588              		.size	EZI2Cs_SetBuffer1, .-EZI2Cs_SetBuffer1
+ 589              		.text
+ 590              	.Letext0:
+ 591              		.file 2 ".\\Generated_Source\\PSoC5\\cytypes.h"
+ 592              		.file 3 ".\\Generated_Source\\PSoC5\\EZI2Cs.h"
+ 593              		.file 4 ".\\Generated_Source\\PSoC5\\EZI2Cs_PVT.h"
+ 594              		.section	.debug_info,"",%progbits
+ 595              	.Ldebug_info0:
+ 596 0000 E3020000 		.4byte	0x2e3
+ 597 0004 0400     		.2byte	0x4
+ 598 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 599 000a 04       		.byte	0x4
+ 600 000b 01       		.uleb128 0x1
+ 601 000c FF010000 		.4byte	.LASF45
+ 602 0010 01       		.byte	0x1
+ 603 0011 1F000000 		.4byte	.LASF46
+ 604 0015 DF000000 		.4byte	.LASF47
+ 605 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 606 001d 00000000 		.4byte	0
+ 607 0021 00000000 		.4byte	.Ldebug_line0
+ 608 0025 02       		.uleb128 0x2
+ 609 0026 01       		.byte	0x1
+ 610 0027 06       		.byte	0x6
+ 611 0028 07030000 		.4byte	.LASF0
+ 612 002c 02       		.uleb128 0x2
+ 613 002d 01       		.byte	0x1
+ 614 002e 08       		.byte	0x8
+ 615 002f CC000000 		.4byte	.LASF1
+ 616 0033 02       		.uleb128 0x2
+ 617 0034 02       		.byte	0x2
+ 618 0035 05       		.byte	0x5
+ 619 0036 CF020000 		.4byte	.LASF2
+ 620 003a 02       		.uleb128 0x2
+ 621 003b 02       		.byte	0x2
+ 622 003c 07       		.byte	0x7
+ 623 003d 41000000 		.4byte	.LASF3
+ 624 0041 02       		.uleb128 0x2
+ 625 0042 04       		.byte	0x4
+ 626 0043 05       		.byte	0x5
+ 627 0044 E1020000 		.4byte	.LASF4
+ 628 0048 02       		.uleb128 0x2
+ 629 0049 04       		.byte	0x4
+ 630 004a 07       		.byte	0x7
+ 631 004b 38010000 		.4byte	.LASF5
+ 632 004f 02       		.uleb128 0x2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 20
+
+
+ 633 0050 08       		.byte	0x8
+ 634 0051 05       		.byte	0x5
+ 635 0052 A6020000 		.4byte	.LASF6
+ 636 0056 02       		.uleb128 0x2
+ 637 0057 08       		.byte	0x8
+ 638 0058 07       		.byte	0x7
+ 639 0059 C5010000 		.4byte	.LASF7
+ 640 005d 03       		.uleb128 0x3
+ 641 005e 04       		.byte	0x4
+ 642 005f 05       		.byte	0x5
+ 643 0060 696E7400 		.ascii	"int\000"
+ 644 0064 02       		.uleb128 0x2
+ 645 0065 04       		.byte	0x4
+ 646 0066 07       		.byte	0x7
+ 647 0067 8B010000 		.4byte	.LASF8
+ 648 006b 04       		.uleb128 0x4
+ 649 006c 4A010000 		.4byte	.LASF9
+ 650 0070 02       		.byte	0x2
+ 651 0071 B3       		.byte	0xb3
+ 652 0072 2C000000 		.4byte	0x2c
+ 653 0076 04       		.uleb128 0x4
+ 654 0077 68010000 		.4byte	.LASF10
+ 655 007b 02       		.byte	0x2
+ 656 007c B4       		.byte	0xb4
+ 657 007d 3A000000 		.4byte	0x3a
+ 658 0081 04       		.uleb128 0x4
+ 659 0082 6F010000 		.4byte	.LASF11
+ 660 0086 02       		.byte	0x2
+ 661 0087 B5       		.byte	0xb5
+ 662 0088 48000000 		.4byte	0x48
+ 663 008c 02       		.uleb128 0x2
+ 664 008d 04       		.byte	0x4
+ 665 008e 04       		.byte	0x4
+ 666 008f A5000000 		.4byte	.LASF12
+ 667 0093 02       		.uleb128 0x2
+ 668 0094 08       		.byte	0x8
+ 669 0095 04       		.byte	0x4
+ 670 0096 61010000 		.4byte	.LASF13
+ 671 009a 02       		.uleb128 0x2
+ 672 009b 01       		.byte	0x1
+ 673 009c 08       		.byte	0x8
+ 674 009d B4020000 		.4byte	.LASF14
+ 675 00a1 05       		.uleb128 0x5
+ 676 00a2 DA000000 		.4byte	.LASF15
+ 677 00a6 02       		.byte	0x2
+ 678 00a7 5D01     		.2byte	0x15d
+ 679 00a9 AD000000 		.4byte	0xad
+ 680 00ad 06       		.uleb128 0x6
+ 681 00ae 6B000000 		.4byte	0x6b
+ 682 00b2 06       		.uleb128 0x6
+ 683 00b3 76000000 		.4byte	0x76
+ 684 00b7 05       		.uleb128 0x5
+ 685 00b8 0D000000 		.4byte	.LASF16
+ 686 00bc 02       		.byte	0x2
+ 687 00bd 5F01     		.2byte	0x15f
+ 688 00bf C3000000 		.4byte	0xc3
+ 689 00c3 06       		.uleb128 0x6
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 21
+
+
+ 690 00c4 81000000 		.4byte	0x81
+ 691 00c8 02       		.uleb128 0x2
+ 692 00c9 04       		.byte	0x4
+ 693 00ca 07       		.byte	0x7
+ 694 00cb 9D020000 		.4byte	.LASF17
+ 695 00cf 07       		.uleb128 0x7
+ 696 00d0 06       		.byte	0x6
+ 697 00d1 03       		.byte	0x3
+ 698 00d2 42       		.byte	0x42
+ 699 00d3 20010000 		.4byte	0x120
+ 700 00d7 08       		.uleb128 0x8
+ 701 00d8 76010000 		.4byte	.LASF18
+ 702 00dc 03       		.byte	0x3
+ 703 00dd 44       		.byte	0x44
+ 704 00de 6B000000 		.4byte	0x6b
+ 705 00e2 00       		.byte	0
+ 706 00e3 08       		.uleb128 0x8
+ 707 00e4 B9020000 		.4byte	.LASF19
+ 708 00e8 03       		.byte	0x3
+ 709 00e9 45       		.byte	0x45
+ 710 00ea 6B000000 		.4byte	0x6b
+ 711 00ee 01       		.byte	0x1
+ 712 00ef 09       		.uleb128 0x9
+ 713 00f0 61647200 		.ascii	"adr\000"
+ 714 00f4 03       		.byte	0x3
+ 715 00f5 46       		.byte	0x46
+ 716 00f6 6B000000 		.4byte	0x6b
+ 717 00fa 02       		.byte	0x2
+ 718 00fb 09       		.uleb128 0x9
+ 719 00fc 63666700 		.ascii	"cfg\000"
+ 720 0100 03       		.byte	0x3
+ 721 0101 47       		.byte	0x47
+ 722 0102 6B000000 		.4byte	0x6b
+ 723 0106 03       		.byte	0x3
+ 724 0107 08       		.uleb128 0x8
+ 725 0108 EF010000 		.4byte	.LASF20
+ 726 010c 03       		.byte	0x3
+ 727 010d 48       		.byte	0x48
+ 728 010e 6B000000 		.4byte	0x6b
+ 729 0112 04       		.byte	0x4
+ 730 0113 08       		.uleb128 0x8
+ 731 0114 F7010000 		.4byte	.LASF21
+ 732 0118 03       		.byte	0x3
+ 733 0119 49       		.byte	0x49
+ 734 011a 6B000000 		.4byte	0x6b
+ 735 011e 05       		.byte	0x5
+ 736 011f 00       		.byte	0
+ 737 0120 04       		.uleb128 0x4
+ 738 0121 70000000 		.4byte	.LASF22
+ 739 0125 03       		.byte	0x3
+ 740 0126 4B       		.byte	0x4b
+ 741 0127 CF000000 		.4byte	0xcf
+ 742 012b 0A       		.uleb128 0xa
+ 743 012c 91020000 		.4byte	.LASF23
+ 744 0130 01       		.byte	0x1
+ 745 0131 69       		.byte	0x69
+ 746 0132 00000000 		.4byte	.LFB0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 22
+
+
+ 747 0136 8C000000 		.4byte	.LFE0-.LFB0
+ 748 013a 01       		.uleb128 0x1
+ 749 013b 9C       		.byte	0x9c
+ 750 013c 0B       		.uleb128 0xb
+ 751 013d 83020000 		.4byte	.LASF25
+ 752 0141 01       		.byte	0x1
+ 753 0142 A0       		.byte	0xa0
+ 754 0143 00000000 		.4byte	.LFB1
+ 755 0147 50000000 		.4byte	.LFE1-.LFB1
+ 756 014b 01       		.uleb128 0x1
+ 757 014c 9C       		.byte	0x9c
+ 758 014d 60010000 		.4byte	0x160
+ 759 0151 0C       		.uleb128 0xc
+ 760 0152 82010000 		.4byte	.LASF27
+ 761 0156 01       		.byte	0x1
+ 762 0157 A2       		.byte	0xa2
+ 763 0158 6B000000 		.4byte	0x6b
+ 764 015c 02       		.uleb128 0x2
+ 765 015d 91       		.byte	0x91
+ 766 015e 77       		.sleb128 -9
+ 767 015f 00       		.byte	0
+ 768 0160 0A       		.uleb128 0xa
+ 769 0161 00000000 		.4byte	.LASF24
+ 770 0165 01       		.byte	0x1
+ 771 0166 C4       		.byte	0xc4
+ 772 0167 00000000 		.4byte	.LFB2
+ 773 016b 20000000 		.4byte	.LFE2-.LFB2
+ 774 016f 01       		.uleb128 0x1
+ 775 0170 9C       		.byte	0x9c
+ 776 0171 0B       		.uleb128 0xb
+ 777 0172 13000000 		.4byte	.LASF26
+ 778 0176 01       		.byte	0x1
+ 779 0177 DF       		.byte	0xdf
+ 780 0178 00000000 		.4byte	.LFB3
+ 781 017c 04010000 		.4byte	.LFE3-.LFB3
+ 782 0180 01       		.uleb128 0x1
+ 783 0181 9C       		.byte	0x9c
+ 784 0182 A3010000 		.4byte	0x1a3
+ 785 0186 0C       		.uleb128 0xc
+ 786 0187 82010000 		.4byte	.LASF27
+ 787 018b 01       		.byte	0x1
+ 788 018c E1       		.byte	0xe1
+ 789 018d 6B000000 		.4byte	0x6b
+ 790 0191 02       		.uleb128 0x2
+ 791 0192 91       		.byte	0x91
+ 792 0193 75       		.sleb128 -11
+ 793 0194 0C       		.uleb128 0xc
+ 794 0195 85000000 		.4byte	.LASF28
+ 795 0199 01       		.byte	0x1
+ 796 019a E2       		.byte	0xe2
+ 797 019b 76000000 		.4byte	0x76
+ 798 019f 02       		.uleb128 0x2
+ 799 01a0 91       		.byte	0x91
+ 800 01a1 76       		.sleb128 -10
+ 801 01a2 00       		.byte	0
+ 802 01a3 0D       		.uleb128 0xd
+ 803 01a4 F4020000 		.4byte	.LASF29
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 23
+
+
+ 804 01a8 01       		.byte	0x1
+ 805 01a9 2301     		.2byte	0x123
+ 806 01ab 00000000 		.4byte	.LFB4
+ 807 01af 24000000 		.4byte	.LFE4-.LFB4
+ 808 01b3 01       		.uleb128 0x1
+ 809 01b4 9C       		.byte	0x9c
+ 810 01b5 C9010000 		.4byte	0x1c9
+ 811 01b9 0E       		.uleb128 0xe
+ 812 01ba BD010000 		.4byte	.LASF32
+ 813 01be 01       		.byte	0x1
+ 814 01bf 2301     		.2byte	0x123
+ 815 01c1 6B000000 		.4byte	0x6b
+ 816 01c5 02       		.uleb128 0x2
+ 817 01c6 91       		.byte	0x91
+ 818 01c7 77       		.sleb128 -9
+ 819 01c8 00       		.byte	0
+ 820 01c9 0F       		.uleb128 0xf
+ 821 01ca AA010000 		.4byte	.LASF48
+ 822 01ce 01       		.byte	0x1
+ 823 01cf 4501     		.2byte	0x145
+ 824 01d1 6B000000 		.4byte	0x6b
+ 825 01d5 00000000 		.4byte	.LFB5
+ 826 01d9 18000000 		.4byte	.LFE5-.LFB5
+ 827 01dd 01       		.uleb128 0x1
+ 828 01de 9C       		.byte	0x9c
+ 829 01df 10       		.uleb128 0x10
+ 830 01e0 DC010000 		.4byte	.LASF49
+ 831 01e4 01       		.byte	0x1
+ 832 01e5 8001     		.2byte	0x180
+ 833 01e7 6B000000 		.4byte	0x6b
+ 834 01eb 00000000 		.4byte	.LFB6
+ 835 01ef 48000000 		.4byte	.LFE6-.LFB6
+ 836 01f3 01       		.uleb128 0x1
+ 837 01f4 9C       		.byte	0x9c
+ 838 01f5 09020000 		.4byte	0x209
+ 839 01f9 11       		.uleb128 0x11
+ 840 01fa EA020000 		.4byte	.LASF30
+ 841 01fe 01       		.byte	0x1
+ 842 01ff 8201     		.2byte	0x182
+ 843 0201 6B000000 		.4byte	0x6b
+ 844 0205 02       		.uleb128 0x2
+ 845 0206 91       		.byte	0x91
+ 846 0207 77       		.sleb128 -9
+ 847 0208 00       		.byte	0
+ 848 0209 0D       		.uleb128 0xd
+ 849 020a 34030000 		.4byte	.LASF31
+ 850 020e 01       		.byte	0x1
+ 851 020f B201     		.2byte	0x1b2
+ 852 0211 00000000 		.4byte	.LFB7
+ 853 0215 6C000000 		.4byte	.LFE7-.LFB7
+ 854 0219 01       		.uleb128 0x1
+ 855 021a 9C       		.byte	0x9c
+ 856 021b 4D020000 		.4byte	0x24d
+ 857 021f 0E       		.uleb128 0xe
+ 858 0220 D9020000 		.4byte	.LASF33
+ 859 0224 01       		.byte	0x1
+ 860 0225 B201     		.2byte	0x1b2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 24
+
+
+ 861 0227 76000000 		.4byte	0x76
+ 862 022b 02       		.uleb128 0x2
+ 863 022c 91       		.byte	0x91
+ 864 022d 76       		.sleb128 -10
+ 865 022e 0E       		.uleb128 0xe
+ 866 022f 54000000 		.4byte	.LASF34
+ 867 0233 01       		.byte	0x1
+ 868 0234 B201     		.2byte	0x1b2
+ 869 0236 76000000 		.4byte	0x76
+ 870 023a 02       		.uleb128 0x2
+ 871 023b 91       		.byte	0x91
+ 872 023c 74       		.sleb128 -12
+ 873 023d 0E       		.uleb128 0xe
+ 874 023e 7B020000 		.4byte	.LASF35
+ 875 0242 01       		.byte	0x1
+ 876 0243 B201     		.2byte	0x1b2
+ 877 0245 4D020000 		.4byte	0x24d
+ 878 0249 02       		.uleb128 0x2
+ 879 024a 91       		.byte	0x91
+ 880 024b 70       		.sleb128 -16
+ 881 024c 00       		.byte	0
+ 882 024d 12       		.uleb128 0x12
+ 883 024e 04       		.byte	0x4
+ 884 024f AD000000 		.4byte	0xad
+ 885 0253 13       		.uleb128 0x13
+ 886 0254 96000000 		.4byte	.LASF36
+ 887 0258 01       		.byte	0x1
+ 888 0259 17       		.byte	0x17
+ 889 025a 6B000000 		.4byte	0x6b
+ 890 025e 05       		.uleb128 0x5
+ 891 025f 03       		.byte	0x3
+ 892 0260 00000000 		.4byte	EZI2Cs_initVar
+ 893 0264 14       		.uleb128 0x14
+ 894 0265 BE000000 		.4byte	.LASF37
+ 895 0269 04       		.byte	0x4
+ 896 026a 1A       		.byte	0x1a
+ 897 026b 20010000 		.4byte	0x120
+ 898 026f 13       		.uleb128 0x13
+ 899 0270 13030000 		.4byte	.LASF38
+ 900 0274 01       		.byte	0x1
+ 901 0275 1A       		.byte	0x1a
+ 902 0276 AD000000 		.4byte	0xad
+ 903 027a 05       		.uleb128 0x5
+ 904 027b 03       		.byte	0x3
+ 905 027c 00000000 		.4byte	EZI2Cs_curStatus
+ 906 0280 13       		.uleb128 0x13
+ 907 0281 24030000 		.4byte	.LASF39
+ 908 0285 01       		.byte	0x1
+ 909 0286 1B       		.byte	0x1b
+ 910 0287 AD000000 		.4byte	0xad
+ 911 028b 05       		.uleb128 0x5
+ 912 028c 03       		.byte	0x3
+ 913 028d 00000000 		.4byte	EZI2Cs_curState
+ 914 0291 13       		.uleb128 0x13
+ 915 0292 BE020000 		.4byte	.LASF40
+ 916 0296 01       		.byte	0x1
+ 917 0297 1E       		.byte	0x1e
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 25
+
+
+ 918 0298 4D020000 		.4byte	0x24d
+ 919 029c 05       		.uleb128 0x5
+ 920 029d 03       		.byte	0x3
+ 921 029e 00000000 		.4byte	EZI2Cs_dataPtrS1
+ 922 02a2 13       		.uleb128 0x13
+ 923 02a3 50010000 		.4byte	.LASF41
+ 924 02a7 01       		.byte	0x1
+ 925 02a8 1F       		.byte	0x1f
+ 926 02a9 B2000000 		.4byte	0xb2
+ 927 02ad 05       		.uleb128 0x5
+ 928 02ae 03       		.byte	0x3
+ 929 02af 00000000 		.4byte	EZI2Cs_bufSizeS1
+ 930 02b3 13       		.uleb128 0x13
+ 931 02b4 AB000000 		.4byte	.LASF42
+ 932 02b8 01       		.byte	0x1
+ 933 02b9 20       		.byte	0x20
+ 934 02ba B2000000 		.4byte	0xb2
+ 935 02be 05       		.uleb128 0x5
+ 936 02bf 03       		.byte	0x3
+ 937 02c0 00000000 		.4byte	EZI2Cs_wrProtectS1
+ 938 02c4 13       		.uleb128 0x13
+ 939 02c5 98010000 		.4byte	.LASF43
+ 940 02c9 01       		.byte	0x1
+ 941 02ca 21       		.byte	0x21
+ 942 02cb AD000000 		.4byte	0xad
+ 943 02cf 05       		.uleb128 0x5
+ 944 02d0 03       		.byte	0x3
+ 945 02d1 00000000 		.4byte	EZI2Cs_rwOffsetS1
+ 946 02d5 13       		.uleb128 0x13
+ 947 02d6 5F000000 		.4byte	.LASF44
+ 948 02da 01       		.byte	0x1
+ 949 02db 22       		.byte	0x22
+ 950 02dc AD000000 		.4byte	0xad
+ 951 02e0 05       		.uleb128 0x5
+ 952 02e1 03       		.byte	0x3
+ 953 02e2 00000000 		.4byte	EZI2Cs_rwIndexS1
+ 954 02e6 00       		.byte	0
+ 955              		.section	.debug_abbrev,"",%progbits
+ 956              	.Ldebug_abbrev0:
+ 957 0000 01       		.uleb128 0x1
+ 958 0001 11       		.uleb128 0x11
+ 959 0002 01       		.byte	0x1
+ 960 0003 25       		.uleb128 0x25
+ 961 0004 0E       		.uleb128 0xe
+ 962 0005 13       		.uleb128 0x13
+ 963 0006 0B       		.uleb128 0xb
+ 964 0007 03       		.uleb128 0x3
+ 965 0008 0E       		.uleb128 0xe
+ 966 0009 1B       		.uleb128 0x1b
+ 967 000a 0E       		.uleb128 0xe
+ 968 000b 55       		.uleb128 0x55
+ 969 000c 17       		.uleb128 0x17
+ 970 000d 11       		.uleb128 0x11
+ 971 000e 01       		.uleb128 0x1
+ 972 000f 10       		.uleb128 0x10
+ 973 0010 17       		.uleb128 0x17
+ 974 0011 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 26
+
+
+ 975 0012 00       		.byte	0
+ 976 0013 02       		.uleb128 0x2
+ 977 0014 24       		.uleb128 0x24
+ 978 0015 00       		.byte	0
+ 979 0016 0B       		.uleb128 0xb
+ 980 0017 0B       		.uleb128 0xb
+ 981 0018 3E       		.uleb128 0x3e
+ 982 0019 0B       		.uleb128 0xb
+ 983 001a 03       		.uleb128 0x3
+ 984 001b 0E       		.uleb128 0xe
+ 985 001c 00       		.byte	0
+ 986 001d 00       		.byte	0
+ 987 001e 03       		.uleb128 0x3
+ 988 001f 24       		.uleb128 0x24
+ 989 0020 00       		.byte	0
+ 990 0021 0B       		.uleb128 0xb
+ 991 0022 0B       		.uleb128 0xb
+ 992 0023 3E       		.uleb128 0x3e
+ 993 0024 0B       		.uleb128 0xb
+ 994 0025 03       		.uleb128 0x3
+ 995 0026 08       		.uleb128 0x8
+ 996 0027 00       		.byte	0
+ 997 0028 00       		.byte	0
+ 998 0029 04       		.uleb128 0x4
+ 999 002a 16       		.uleb128 0x16
+ 1000 002b 00       		.byte	0
+ 1001 002c 03       		.uleb128 0x3
+ 1002 002d 0E       		.uleb128 0xe
+ 1003 002e 3A       		.uleb128 0x3a
+ 1004 002f 0B       		.uleb128 0xb
+ 1005 0030 3B       		.uleb128 0x3b
+ 1006 0031 0B       		.uleb128 0xb
+ 1007 0032 49       		.uleb128 0x49
+ 1008 0033 13       		.uleb128 0x13
+ 1009 0034 00       		.byte	0
+ 1010 0035 00       		.byte	0
+ 1011 0036 05       		.uleb128 0x5
+ 1012 0037 16       		.uleb128 0x16
+ 1013 0038 00       		.byte	0
+ 1014 0039 03       		.uleb128 0x3
+ 1015 003a 0E       		.uleb128 0xe
+ 1016 003b 3A       		.uleb128 0x3a
+ 1017 003c 0B       		.uleb128 0xb
+ 1018 003d 3B       		.uleb128 0x3b
+ 1019 003e 05       		.uleb128 0x5
+ 1020 003f 49       		.uleb128 0x49
+ 1021 0040 13       		.uleb128 0x13
+ 1022 0041 00       		.byte	0
+ 1023 0042 00       		.byte	0
+ 1024 0043 06       		.uleb128 0x6
+ 1025 0044 35       		.uleb128 0x35
+ 1026 0045 00       		.byte	0
+ 1027 0046 49       		.uleb128 0x49
+ 1028 0047 13       		.uleb128 0x13
+ 1029 0048 00       		.byte	0
+ 1030 0049 00       		.byte	0
+ 1031 004a 07       		.uleb128 0x7
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 27
+
+
+ 1032 004b 13       		.uleb128 0x13
+ 1033 004c 01       		.byte	0x1
+ 1034 004d 0B       		.uleb128 0xb
+ 1035 004e 0B       		.uleb128 0xb
+ 1036 004f 3A       		.uleb128 0x3a
+ 1037 0050 0B       		.uleb128 0xb
+ 1038 0051 3B       		.uleb128 0x3b
+ 1039 0052 0B       		.uleb128 0xb
+ 1040 0053 01       		.uleb128 0x1
+ 1041 0054 13       		.uleb128 0x13
+ 1042 0055 00       		.byte	0
+ 1043 0056 00       		.byte	0
+ 1044 0057 08       		.uleb128 0x8
+ 1045 0058 0D       		.uleb128 0xd
+ 1046 0059 00       		.byte	0
+ 1047 005a 03       		.uleb128 0x3
+ 1048 005b 0E       		.uleb128 0xe
+ 1049 005c 3A       		.uleb128 0x3a
+ 1050 005d 0B       		.uleb128 0xb
+ 1051 005e 3B       		.uleb128 0x3b
+ 1052 005f 0B       		.uleb128 0xb
+ 1053 0060 49       		.uleb128 0x49
+ 1054 0061 13       		.uleb128 0x13
+ 1055 0062 38       		.uleb128 0x38
+ 1056 0063 0B       		.uleb128 0xb
+ 1057 0064 00       		.byte	0
+ 1058 0065 00       		.byte	0
+ 1059 0066 09       		.uleb128 0x9
+ 1060 0067 0D       		.uleb128 0xd
+ 1061 0068 00       		.byte	0
+ 1062 0069 03       		.uleb128 0x3
+ 1063 006a 08       		.uleb128 0x8
+ 1064 006b 3A       		.uleb128 0x3a
+ 1065 006c 0B       		.uleb128 0xb
+ 1066 006d 3B       		.uleb128 0x3b
+ 1067 006e 0B       		.uleb128 0xb
+ 1068 006f 49       		.uleb128 0x49
+ 1069 0070 13       		.uleb128 0x13
+ 1070 0071 38       		.uleb128 0x38
+ 1071 0072 0B       		.uleb128 0xb
+ 1072 0073 00       		.byte	0
+ 1073 0074 00       		.byte	0
+ 1074 0075 0A       		.uleb128 0xa
+ 1075 0076 2E       		.uleb128 0x2e
+ 1076 0077 00       		.byte	0
+ 1077 0078 3F       		.uleb128 0x3f
+ 1078 0079 19       		.uleb128 0x19
+ 1079 007a 03       		.uleb128 0x3
+ 1080 007b 0E       		.uleb128 0xe
+ 1081 007c 3A       		.uleb128 0x3a
+ 1082 007d 0B       		.uleb128 0xb
+ 1083 007e 3B       		.uleb128 0x3b
+ 1084 007f 0B       		.uleb128 0xb
+ 1085 0080 27       		.uleb128 0x27
+ 1086 0081 19       		.uleb128 0x19
+ 1087 0082 11       		.uleb128 0x11
+ 1088 0083 01       		.uleb128 0x1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 28
+
+
+ 1089 0084 12       		.uleb128 0x12
+ 1090 0085 06       		.uleb128 0x6
+ 1091 0086 40       		.uleb128 0x40
+ 1092 0087 18       		.uleb128 0x18
+ 1093 0088 9642     		.uleb128 0x2116
+ 1094 008a 19       		.uleb128 0x19
+ 1095 008b 00       		.byte	0
+ 1096 008c 00       		.byte	0
+ 1097 008d 0B       		.uleb128 0xb
+ 1098 008e 2E       		.uleb128 0x2e
+ 1099 008f 01       		.byte	0x1
+ 1100 0090 3F       		.uleb128 0x3f
+ 1101 0091 19       		.uleb128 0x19
+ 1102 0092 03       		.uleb128 0x3
+ 1103 0093 0E       		.uleb128 0xe
+ 1104 0094 3A       		.uleb128 0x3a
+ 1105 0095 0B       		.uleb128 0xb
+ 1106 0096 3B       		.uleb128 0x3b
+ 1107 0097 0B       		.uleb128 0xb
+ 1108 0098 27       		.uleb128 0x27
+ 1109 0099 19       		.uleb128 0x19
+ 1110 009a 11       		.uleb128 0x11
+ 1111 009b 01       		.uleb128 0x1
+ 1112 009c 12       		.uleb128 0x12
+ 1113 009d 06       		.uleb128 0x6
+ 1114 009e 40       		.uleb128 0x40
+ 1115 009f 18       		.uleb128 0x18
+ 1116 00a0 9642     		.uleb128 0x2116
+ 1117 00a2 19       		.uleb128 0x19
+ 1118 00a3 01       		.uleb128 0x1
+ 1119 00a4 13       		.uleb128 0x13
+ 1120 00a5 00       		.byte	0
+ 1121 00a6 00       		.byte	0
+ 1122 00a7 0C       		.uleb128 0xc
+ 1123 00a8 34       		.uleb128 0x34
+ 1124 00a9 00       		.byte	0
+ 1125 00aa 03       		.uleb128 0x3
+ 1126 00ab 0E       		.uleb128 0xe
+ 1127 00ac 3A       		.uleb128 0x3a
+ 1128 00ad 0B       		.uleb128 0xb
+ 1129 00ae 3B       		.uleb128 0x3b
+ 1130 00af 0B       		.uleb128 0xb
+ 1131 00b0 49       		.uleb128 0x49
+ 1132 00b1 13       		.uleb128 0x13
+ 1133 00b2 02       		.uleb128 0x2
+ 1134 00b3 18       		.uleb128 0x18
+ 1135 00b4 00       		.byte	0
+ 1136 00b5 00       		.byte	0
+ 1137 00b6 0D       		.uleb128 0xd
+ 1138 00b7 2E       		.uleb128 0x2e
+ 1139 00b8 01       		.byte	0x1
+ 1140 00b9 3F       		.uleb128 0x3f
+ 1141 00ba 19       		.uleb128 0x19
+ 1142 00bb 03       		.uleb128 0x3
+ 1143 00bc 0E       		.uleb128 0xe
+ 1144 00bd 3A       		.uleb128 0x3a
+ 1145 00be 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 29
+
+
+ 1146 00bf 3B       		.uleb128 0x3b
+ 1147 00c0 05       		.uleb128 0x5
+ 1148 00c1 27       		.uleb128 0x27
+ 1149 00c2 19       		.uleb128 0x19
+ 1150 00c3 11       		.uleb128 0x11
+ 1151 00c4 01       		.uleb128 0x1
+ 1152 00c5 12       		.uleb128 0x12
+ 1153 00c6 06       		.uleb128 0x6
+ 1154 00c7 40       		.uleb128 0x40
+ 1155 00c8 18       		.uleb128 0x18
+ 1156 00c9 9742     		.uleb128 0x2117
+ 1157 00cb 19       		.uleb128 0x19
+ 1158 00cc 01       		.uleb128 0x1
+ 1159 00cd 13       		.uleb128 0x13
+ 1160 00ce 00       		.byte	0
+ 1161 00cf 00       		.byte	0
+ 1162 00d0 0E       		.uleb128 0xe
+ 1163 00d1 05       		.uleb128 0x5
+ 1164 00d2 00       		.byte	0
+ 1165 00d3 03       		.uleb128 0x3
+ 1166 00d4 0E       		.uleb128 0xe
+ 1167 00d5 3A       		.uleb128 0x3a
+ 1168 00d6 0B       		.uleb128 0xb
+ 1169 00d7 3B       		.uleb128 0x3b
+ 1170 00d8 05       		.uleb128 0x5
+ 1171 00d9 49       		.uleb128 0x49
+ 1172 00da 13       		.uleb128 0x13
+ 1173 00db 02       		.uleb128 0x2
+ 1174 00dc 18       		.uleb128 0x18
+ 1175 00dd 00       		.byte	0
+ 1176 00de 00       		.byte	0
+ 1177 00df 0F       		.uleb128 0xf
+ 1178 00e0 2E       		.uleb128 0x2e
+ 1179 00e1 00       		.byte	0
+ 1180 00e2 3F       		.uleb128 0x3f
+ 1181 00e3 19       		.uleb128 0x19
+ 1182 00e4 03       		.uleb128 0x3
+ 1183 00e5 0E       		.uleb128 0xe
+ 1184 00e6 3A       		.uleb128 0x3a
+ 1185 00e7 0B       		.uleb128 0xb
+ 1186 00e8 3B       		.uleb128 0x3b
+ 1187 00e9 05       		.uleb128 0x5
+ 1188 00ea 27       		.uleb128 0x27
+ 1189 00eb 19       		.uleb128 0x19
+ 1190 00ec 49       		.uleb128 0x49
+ 1191 00ed 13       		.uleb128 0x13
+ 1192 00ee 11       		.uleb128 0x11
+ 1193 00ef 01       		.uleb128 0x1
+ 1194 00f0 12       		.uleb128 0x12
+ 1195 00f1 06       		.uleb128 0x6
+ 1196 00f2 40       		.uleb128 0x40
+ 1197 00f3 18       		.uleb128 0x18
+ 1198 00f4 9742     		.uleb128 0x2117
+ 1199 00f6 19       		.uleb128 0x19
+ 1200 00f7 00       		.byte	0
+ 1201 00f8 00       		.byte	0
+ 1202 00f9 10       		.uleb128 0x10
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 30
+
+
+ 1203 00fa 2E       		.uleb128 0x2e
+ 1204 00fb 01       		.byte	0x1
+ 1205 00fc 3F       		.uleb128 0x3f
+ 1206 00fd 19       		.uleb128 0x19
+ 1207 00fe 03       		.uleb128 0x3
+ 1208 00ff 0E       		.uleb128 0xe
+ 1209 0100 3A       		.uleb128 0x3a
+ 1210 0101 0B       		.uleb128 0xb
+ 1211 0102 3B       		.uleb128 0x3b
+ 1212 0103 05       		.uleb128 0x5
+ 1213 0104 27       		.uleb128 0x27
+ 1214 0105 19       		.uleb128 0x19
+ 1215 0106 49       		.uleb128 0x49
+ 1216 0107 13       		.uleb128 0x13
+ 1217 0108 11       		.uleb128 0x11
+ 1218 0109 01       		.uleb128 0x1
+ 1219 010a 12       		.uleb128 0x12
+ 1220 010b 06       		.uleb128 0x6
+ 1221 010c 40       		.uleb128 0x40
+ 1222 010d 18       		.uleb128 0x18
+ 1223 010e 9742     		.uleb128 0x2117
+ 1224 0110 19       		.uleb128 0x19
+ 1225 0111 01       		.uleb128 0x1
+ 1226 0112 13       		.uleb128 0x13
+ 1227 0113 00       		.byte	0
+ 1228 0114 00       		.byte	0
+ 1229 0115 11       		.uleb128 0x11
+ 1230 0116 34       		.uleb128 0x34
+ 1231 0117 00       		.byte	0
+ 1232 0118 03       		.uleb128 0x3
+ 1233 0119 0E       		.uleb128 0xe
+ 1234 011a 3A       		.uleb128 0x3a
+ 1235 011b 0B       		.uleb128 0xb
+ 1236 011c 3B       		.uleb128 0x3b
+ 1237 011d 05       		.uleb128 0x5
+ 1238 011e 49       		.uleb128 0x49
+ 1239 011f 13       		.uleb128 0x13
+ 1240 0120 02       		.uleb128 0x2
+ 1241 0121 18       		.uleb128 0x18
+ 1242 0122 00       		.byte	0
+ 1243 0123 00       		.byte	0
+ 1244 0124 12       		.uleb128 0x12
+ 1245 0125 0F       		.uleb128 0xf
+ 1246 0126 00       		.byte	0
+ 1247 0127 0B       		.uleb128 0xb
+ 1248 0128 0B       		.uleb128 0xb
+ 1249 0129 49       		.uleb128 0x49
+ 1250 012a 13       		.uleb128 0x13
+ 1251 012b 00       		.byte	0
+ 1252 012c 00       		.byte	0
+ 1253 012d 13       		.uleb128 0x13
+ 1254 012e 34       		.uleb128 0x34
+ 1255 012f 00       		.byte	0
+ 1256 0130 03       		.uleb128 0x3
+ 1257 0131 0E       		.uleb128 0xe
+ 1258 0132 3A       		.uleb128 0x3a
+ 1259 0133 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 31
+
+
+ 1260 0134 3B       		.uleb128 0x3b
+ 1261 0135 0B       		.uleb128 0xb
+ 1262 0136 49       		.uleb128 0x49
+ 1263 0137 13       		.uleb128 0x13
+ 1264 0138 3F       		.uleb128 0x3f
+ 1265 0139 19       		.uleb128 0x19
+ 1266 013a 02       		.uleb128 0x2
+ 1267 013b 18       		.uleb128 0x18
+ 1268 013c 00       		.byte	0
+ 1269 013d 00       		.byte	0
+ 1270 013e 14       		.uleb128 0x14
+ 1271 013f 34       		.uleb128 0x34
+ 1272 0140 00       		.byte	0
+ 1273 0141 03       		.uleb128 0x3
+ 1274 0142 0E       		.uleb128 0xe
+ 1275 0143 3A       		.uleb128 0x3a
+ 1276 0144 0B       		.uleb128 0xb
+ 1277 0145 3B       		.uleb128 0x3b
+ 1278 0146 0B       		.uleb128 0xb
+ 1279 0147 49       		.uleb128 0x49
+ 1280 0148 13       		.uleb128 0x13
+ 1281 0149 3F       		.uleb128 0x3f
+ 1282 014a 19       		.uleb128 0x19
+ 1283 014b 3C       		.uleb128 0x3c
+ 1284 014c 19       		.uleb128 0x19
+ 1285 014d 00       		.byte	0
+ 1286 014e 00       		.byte	0
+ 1287 014f 00       		.byte	0
+ 1288              		.section	.debug_aranges,"",%progbits
+ 1289 0000 54000000 		.4byte	0x54
+ 1290 0004 0200     		.2byte	0x2
+ 1291 0006 00000000 		.4byte	.Ldebug_info0
+ 1292 000a 04       		.byte	0x4
+ 1293 000b 00       		.byte	0
+ 1294 000c 0000     		.2byte	0
+ 1295 000e 0000     		.2byte	0
+ 1296 0010 00000000 		.4byte	.LFB0
+ 1297 0014 8C000000 		.4byte	.LFE0-.LFB0
+ 1298 0018 00000000 		.4byte	.LFB1
+ 1299 001c 50000000 		.4byte	.LFE1-.LFB1
+ 1300 0020 00000000 		.4byte	.LFB2
+ 1301 0024 20000000 		.4byte	.LFE2-.LFB2
+ 1302 0028 00000000 		.4byte	.LFB3
+ 1303 002c 04010000 		.4byte	.LFE3-.LFB3
+ 1304 0030 00000000 		.4byte	.LFB4
+ 1305 0034 24000000 		.4byte	.LFE4-.LFB4
+ 1306 0038 00000000 		.4byte	.LFB5
+ 1307 003c 18000000 		.4byte	.LFE5-.LFB5
+ 1308 0040 00000000 		.4byte	.LFB6
+ 1309 0044 48000000 		.4byte	.LFE6-.LFB6
+ 1310 0048 00000000 		.4byte	.LFB7
+ 1311 004c 6C000000 		.4byte	.LFE7-.LFB7
+ 1312 0050 00000000 		.4byte	0
+ 1313 0054 00000000 		.4byte	0
+ 1314              		.section	.debug_ranges,"",%progbits
+ 1315              	.Ldebug_ranges0:
+ 1316 0000 00000000 		.4byte	.LFB0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 32
+
+
+ 1317 0004 8C000000 		.4byte	.LFE0
+ 1318 0008 00000000 		.4byte	.LFB1
+ 1319 000c 50000000 		.4byte	.LFE1
+ 1320 0010 00000000 		.4byte	.LFB2
+ 1321 0014 20000000 		.4byte	.LFE2
+ 1322 0018 00000000 		.4byte	.LFB3
+ 1323 001c 04010000 		.4byte	.LFE3
+ 1324 0020 00000000 		.4byte	.LFB4
+ 1325 0024 24000000 		.4byte	.LFE4
+ 1326 0028 00000000 		.4byte	.LFB5
+ 1327 002c 18000000 		.4byte	.LFE5
+ 1328 0030 00000000 		.4byte	.LFB6
+ 1329 0034 48000000 		.4byte	.LFE6
+ 1330 0038 00000000 		.4byte	.LFB7
+ 1331 003c 6C000000 		.4byte	.LFE7
+ 1332 0040 00000000 		.4byte	0
+ 1333 0044 00000000 		.4byte	0
+ 1334              		.section	.debug_line,"",%progbits
+ 1335              	.Ldebug_line0:
+ 1336 0000 29010000 		.section	.debug_str,"MS",%progbits,1
+ 1336      02006100 
+ 1336      00000201 
+ 1336      FB0E0D00 
+ 1336      01010101 
+ 1337              	.LASF24:
+ 1338 0000 455A4932 		.ascii	"EZI2Cs_Start\000"
+ 1338      43735F53 
+ 1338      74617274 
+ 1338      00
+ 1339              	.LASF16:
+ 1340 000d 72656733 		.ascii	"reg32\000"
+ 1340      3200
+ 1341              	.LASF26:
+ 1342 0013 455A4932 		.ascii	"EZI2Cs_Stop\000"
+ 1342      43735F53 
+ 1342      746F7000 
+ 1343              	.LASF46:
+ 1344 001f 2E5C4765 		.ascii	".\\Generated_Source\\PSoC5\\EZI2Cs.c\000"
+ 1344      6E657261 
+ 1344      7465645F 
+ 1344      536F7572 
+ 1344      63655C50 
+ 1345              	.LASF3:
+ 1346 0041 73686F72 		.ascii	"short unsigned int\000"
+ 1346      7420756E 
+ 1346      7369676E 
+ 1346      65642069 
+ 1346      6E7400
+ 1347              	.LASF34:
+ 1348 0054 7277426F 		.ascii	"rwBoundary\000"
+ 1348      756E6461 
+ 1348      727900
+ 1349              	.LASF44:
+ 1350 005f 455A4932 		.ascii	"EZI2Cs_rwIndexS1\000"
+ 1350      43735F72 
+ 1350      77496E64 
+ 1350      65785331 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 33
+
+
+ 1350      00
+ 1351              	.LASF22:
+ 1352 0070 455A4932 		.ascii	"EZI2Cs_BACKUP_STRUCT\000"
+ 1352      43735F42 
+ 1352      41434B55 
+ 1352      505F5354 
+ 1352      52554354 
+ 1353              	.LASF28:
+ 1354 0085 626C6F63 		.ascii	"blockResetCycles\000"
+ 1354      6B526573 
+ 1354      65744379 
+ 1354      636C6573 
+ 1354      00
+ 1355              	.LASF36:
+ 1356 0096 455A4932 		.ascii	"EZI2Cs_initVar\000"
+ 1356      43735F69 
+ 1356      6E697456 
+ 1356      617200
+ 1357              	.LASF12:
+ 1358 00a5 666C6F61 		.ascii	"float\000"
+ 1358      7400
+ 1359              	.LASF42:
+ 1360 00ab 455A4932 		.ascii	"EZI2Cs_wrProtectS1\000"
+ 1360      43735F77 
+ 1360      7250726F 
+ 1360      74656374 
+ 1360      533100
+ 1361              	.LASF37:
+ 1362 00be 455A4932 		.ascii	"EZI2Cs_backup\000"
+ 1362      43735F62 
+ 1362      61636B75 
+ 1362      7000
+ 1363              	.LASF1:
+ 1364 00cc 756E7369 		.ascii	"unsigned char\000"
+ 1364      676E6564 
+ 1364      20636861 
+ 1364      7200
+ 1365              	.LASF15:
+ 1366 00da 72656738 		.ascii	"reg8\000"
+ 1366      00
+ 1367              	.LASF47:
+ 1368 00df 433A5C55 		.ascii	"C:\\Users\\Yiquing\\Documents\\works\\NanoNXT\\osdp"
+ 1368      73657273 
+ 1368      5C596971 
+ 1368      75696E67 
+ 1368      5C446F63 
+ 1369 010c 20746573 		.ascii	" testing\\YQ\\nanoNxt_ICM3\\nanoNxt_ICM3.cydsn\000"
+ 1369      74696E67 
+ 1369      5C59515C 
+ 1369      6E616E6F 
+ 1369      4E78745F 
+ 1370              	.LASF5:
+ 1371 0138 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1371      20756E73 
+ 1371      69676E65 
+ 1371      6420696E 
+ 1371      7400
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 34
+
+
+ 1372              	.LASF9:
+ 1373 014a 75696E74 		.ascii	"uint8\000"
+ 1373      3800
+ 1374              	.LASF41:
+ 1375 0150 455A4932 		.ascii	"EZI2Cs_bufSizeS1\000"
+ 1375      43735F62 
+ 1375      75665369 
+ 1375      7A655331 
+ 1375      00
+ 1376              	.LASF13:
+ 1377 0161 646F7562 		.ascii	"double\000"
+ 1377      6C6500
+ 1378              	.LASF10:
+ 1379 0168 75696E74 		.ascii	"uint16\000"
+ 1379      313600
+ 1380              	.LASF11:
+ 1381 016f 75696E74 		.ascii	"uint32\000"
+ 1381      333200
+ 1382              	.LASF18:
+ 1383 0176 656E6162 		.ascii	"enableState\000"
+ 1383      6C655374 
+ 1383      61746500 
+ 1384              	.LASF27:
+ 1385 0182 696E7453 		.ascii	"intState\000"
+ 1385      74617465 
+ 1385      00
+ 1386              	.LASF8:
+ 1387 018b 756E7369 		.ascii	"unsigned int\000"
+ 1387      676E6564 
+ 1387      20696E74 
+ 1387      00
+ 1388              	.LASF43:
+ 1389 0198 455A4932 		.ascii	"EZI2Cs_rwOffsetS1\000"
+ 1389      43735F72 
+ 1389      774F6666 
+ 1389      73657453 
+ 1389      3100
+ 1390              	.LASF48:
+ 1391 01aa 455A4932 		.ascii	"EZI2Cs_GetAddress1\000"
+ 1391      43735F47 
+ 1391      65744164 
+ 1391      64726573 
+ 1391      733100
+ 1392              	.LASF32:
+ 1393 01bd 61646472 		.ascii	"address\000"
+ 1393      65737300 
+ 1394              	.LASF7:
+ 1395 01c5 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1395      206C6F6E 
+ 1395      6720756E 
+ 1395      7369676E 
+ 1395      65642069 
+ 1396              	.LASF49:
+ 1397 01dc 455A4932 		.ascii	"EZI2Cs_GetActivity\000"
+ 1397      43735F47 
+ 1397      65744163 
+ 1397      74697669 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 35
+
+
+ 1397      747900
+ 1398              	.LASF20:
+ 1399 01ef 636C6B44 		.ascii	"clkDiv1\000"
+ 1399      69763100 
+ 1400              	.LASF21:
+ 1401 01f7 636C6B44 		.ascii	"clkDiv2\000"
+ 1401      69763200 
+ 1402              	.LASF45:
+ 1403 01ff 474E5520 		.ascii	"GNU C 4.8.4 20140526 (release) [ARM/embedded-4_8-br"
+ 1403      4320342E 
+ 1403      382E3420 
+ 1403      32303134 
+ 1403      30353236 
+ 1404 0232 616E6368 		.ascii	"anch revision 211358] -mcpu=cortex-m3 -mthumb -g -O"
+ 1404      20726576 
+ 1404      6973696F 
+ 1404      6E203231 
+ 1404      31333538 
+ 1405 0265 30202D66 		.ascii	"0 -ffunction-sections\000"
+ 1405      66756E63 
+ 1405      74696F6E 
+ 1405      2D736563 
+ 1405      74696F6E 
+ 1406              	.LASF35:
+ 1407 027b 64617461 		.ascii	"dataPtr\000"
+ 1407      50747200 
+ 1408              	.LASF25:
+ 1409 0283 455A4932 		.ascii	"EZI2Cs_Enable\000"
+ 1409      43735F45 
+ 1409      6E61626C 
+ 1409      6500
+ 1410              	.LASF23:
+ 1411 0291 455A4932 		.ascii	"EZI2Cs_Init\000"
+ 1411      43735F49 
+ 1411      6E697400 
+ 1412              	.LASF17:
+ 1413 029d 73697A65 		.ascii	"sizetype\000"
+ 1413      74797065 
+ 1413      00
+ 1414              	.LASF6:
+ 1415 02a6 6C6F6E67 		.ascii	"long long int\000"
+ 1415      206C6F6E 
+ 1415      6720696E 
+ 1415      7400
+ 1416              	.LASF14:
+ 1417 02b4 63686172 		.ascii	"char\000"
+ 1417      00
+ 1418              	.LASF19:
+ 1419 02b9 78636667 		.ascii	"xcfg\000"
+ 1419      00
+ 1420              	.LASF40:
+ 1421 02be 455A4932 		.ascii	"EZI2Cs_dataPtrS1\000"
+ 1421      43735F64 
+ 1421      61746150 
+ 1421      74725331 
+ 1421      00
+ 1422              	.LASF2:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccEfvc5F.s 			page 36
+
+
+ 1423 02cf 73686F72 		.ascii	"short int\000"
+ 1423      7420696E 
+ 1423      7400
+ 1424              	.LASF33:
+ 1425 02d9 62756653 		.ascii	"bufSize\000"
+ 1425      697A6500 
+ 1426              	.LASF4:
+ 1427 02e1 6C6F6E67 		.ascii	"long int\000"
+ 1427      20696E74 
+ 1427      00
+ 1428              	.LASF30:
+ 1429 02ea 746D7053 		.ascii	"tmpStatus\000"
+ 1429      74617475 
+ 1429      7300
+ 1430              	.LASF29:
+ 1431 02f4 455A4932 		.ascii	"EZI2Cs_SetAddress1\000"
+ 1431      43735F53 
+ 1431      65744164 
+ 1431      64726573 
+ 1431      733100
+ 1432              	.LASF0:
+ 1433 0307 7369676E 		.ascii	"signed char\000"
+ 1433      65642063 
+ 1433      68617200 
+ 1434              	.LASF38:
+ 1435 0313 455A4932 		.ascii	"EZI2Cs_curStatus\000"
+ 1435      43735F63 
+ 1435      75725374 
+ 1435      61747573 
+ 1435      00
+ 1436              	.LASF39:
+ 1437 0324 455A4932 		.ascii	"EZI2Cs_curState\000"
+ 1437      43735F63 
+ 1437      75725374 
+ 1437      61746500 
+ 1438              	.LASF31:
+ 1439 0334 455A4932 		.ascii	"EZI2Cs_SetBuffer1\000"
+ 1439      43735F53 
+ 1439      65744275 
+ 1439      66666572 
+ 1439      3100
+ 1440              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.8.4 20140526 (release) [ARM/embedded-4_8-br

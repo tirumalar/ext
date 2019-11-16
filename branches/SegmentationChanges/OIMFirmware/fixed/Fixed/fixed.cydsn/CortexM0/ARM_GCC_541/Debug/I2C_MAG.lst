@@ -1,0 +1,2862 @@
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m0
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 0
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"I2C_MAG.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.bss
+  20              		.align	2
+  21              	bitCounter:
+  22 0000 00000000 		.space	4
+  23              		.align	2
+  24              	byteCounter:
+  25 0004 00000000 		.space	4
+  26              		.align	2
+  27              	packetSize:
+  28 0008 00000000 		.space	4
+  29              		.align	2
+  30              	masterStatus:
+  31 000c 00000000 		.space	4
+  32              		.align	2
+  33              	masterControl:
+  34 0010 00000000 		.space	4
+  35              		.align	2
+  36              	masterState:
+  37 0014 00000000 		.space	4
+  38              		.align	2
+  39              	outBuffer:
+  40 0018 00000000 		.space	4
+  41              		.align	2
+  42              	inBuffer:
+  43 001c 00000000 		.space	4
+  44              	theByte:
+  45 0020 00       		.space	1
+  46 0021 000000   		.align	2
+  47              	internalAddress:
+  48 0024 00000000 		.space	4
+  49              		.section	.text.I2C_MAG_WriteBuf,"ax",%progbits
+  50              		.align	2
+  51              		.global	I2C_MAG_WriteBuf
+  52              		.code	16
+  53              		.thumb_func
+  54              		.type	I2C_MAG_WriteBuf, %function
+  55              	I2C_MAG_WriteBuf:
+  56              	.LFB0:
+  57              		.file 1 "Generated_Source\\PSoC4\\I2C_MAG.c"
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 2
+
+
+   1:Generated_Source\PSoC4/I2C_MAG.c **** /* ========================================
+   2:Generated_Source\PSoC4/I2C_MAG.c ****  *
+   3:Generated_Source\PSoC4/I2C_MAG.c ****  * Copyright YOUR COMPANY, THE YEAR
+   4:Generated_Source\PSoC4/I2C_MAG.c ****  * All Rights Reserved
+   5:Generated_Source\PSoC4/I2C_MAG.c ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:Generated_Source\PSoC4/I2C_MAG.c ****  *
+   7:Generated_Source\PSoC4/I2C_MAG.c ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:Generated_Source\PSoC4/I2C_MAG.c ****  * WHICH IS THE PROPERTY OF your company.
+   9:Generated_Source\PSoC4/I2C_MAG.c ****  *
+  10:Generated_Source\PSoC4/I2C_MAG.c ****  * ========================================
+  11:Generated_Source\PSoC4/I2C_MAG.c **** */
+  12:Generated_Source\PSoC4/I2C_MAG.c **** 
+  13:Generated_Source\PSoC4/I2C_MAG.c **** #include "I2C_MAG.h"
+  14:Generated_Source\PSoC4/I2C_MAG.c **** #include "CyLib.h"
+  15:Generated_Source\PSoC4/I2C_MAG.c ****   
+  16:Generated_Source\PSoC4/I2C_MAG.c **** static uint32 bitCounter;
+  17:Generated_Source\PSoC4/I2C_MAG.c **** static uint32 byteCounter;
+  18:Generated_Source\PSoC4/I2C_MAG.c **** static uint32 packetSize;
+  19:Generated_Source\PSoC4/I2C_MAG.c **** static uint32 masterStatus;
+  20:Generated_Source\PSoC4/I2C_MAG.c **** static uint32 masterControl;
+  21:Generated_Source\PSoC4/I2C_MAG.c **** static uint32 masterState = I2C_MAG_STATE_IDLE;
+  22:Generated_Source\PSoC4/I2C_MAG.c **** 
+  23:Generated_Source\PSoC4/I2C_MAG.c **** static uint8 *outBuffer;
+  24:Generated_Source\PSoC4/I2C_MAG.c **** static uint8 *inBuffer;
+  25:Generated_Source\PSoC4/I2C_MAG.c **** static uint8 theByte;
+  26:Generated_Source\PSoC4/I2C_MAG.c **** 
+  27:Generated_Source\PSoC4/I2C_MAG.c **** static uint32 internalAddress;
+  28:Generated_Source\PSoC4/I2C_MAG.c **** 
+  29:Generated_Source\PSoC4/I2C_MAG.c **** /*******************************************************************************
+  30:Generated_Source\PSoC4/I2C_MAG.c **** * Function Name: I2C_MAG_WriteBuf
+  31:Generated_Source\PSoC4/I2C_MAG.c **** ********************************************************************************
+  32:Generated_Source\PSoC4/I2C_MAG.c **** *
+  33:Generated_Source\PSoC4/I2C_MAG.c **** * Summary:
+  34:Generated_Source\PSoC4/I2C_MAG.c **** *  Automatically writes an entire buffer of data to a slave device.
+  35:Generated_Source\PSoC4/I2C_MAG.c **** *  This function is non-blocking. The Process() API should be called periodically
+  36:Generated_Source\PSoC4/I2C_MAG.c **** *  to complete the transmission. If the frame cannot be started, this function
+  37:Generated_Source\PSoC4/I2C_MAG.c **** *  returns an error.
+  38:Generated_Source\PSoC4/I2C_MAG.c **** *
+  39:Generated_Source\PSoC4/I2C_MAG.c **** * Parameters:
+  40:Generated_Source\PSoC4/I2C_MAG.c **** *  slaveAddr: 7-bit slave address.
+  41:Generated_Source\PSoC4/I2C_MAG.c **** *  wrData:    Pointer to buffer of data to be sent.
+  42:Generated_Source\PSoC4/I2C_MAG.c **** *  cnt:       Size of buffer to send.
+  43:Generated_Source\PSoC4/I2C_MAG.c **** *  mode:      Transfer mode defines: start or restart condition generation at
+  44:Generated_Source\PSoC4/I2C_MAG.c **** *             begin of the transfer and complete the transfer or halt before
+  45:Generated_Source\PSoC4/I2C_MAG.c **** *             generating a stop.
+  46:Generated_Source\PSoC4/I2C_MAG.c **** *
+  47:Generated_Source\PSoC4/I2C_MAG.c **** * Return:
+  48:Generated_Source\PSoC4/I2C_MAG.c **** *  - I2C_MAG_I2C_MSTR_NO_ERROR - Function complete without error. 
+  49:Generated_Source\PSoC4/I2C_MAG.c **** *    The master started the transfer.
+  50:Generated_Source\PSoC4/I2C_MAG.c **** *  - I2C_MAG_I2C_MSTR_BUS_BUSY - Bus is busy. Nothing was sent on
+  51:Generated_Source\PSoC4/I2C_MAG.c **** *    the bus. The attempt has to be retried.
+  52:Generated_Source\PSoC4/I2C_MAG.c **** *  - I2C_MAG_I2C_MSTR_NOT_READY - Master is not ready for to start
+  53:Generated_Source\PSoC4/I2C_MAG.c **** *    transfer. A master still has not completed previous transaction or a 
+  54:Generated_Source\PSoC4/I2C_MAG.c **** *    slave operation is in progress (in multi-master-slave configuration).
+  55:Generated_Source\PSoC4/I2C_MAG.c **** *    Nothing was sent on the bus. The attempt has to be retried.
+  56:Generated_Source\PSoC4/I2C_MAG.c **** *******************************************************************************/
+  57:Generated_Source\PSoC4/I2C_MAG.c **** uint32 I2C_MAG_WriteBuf(uint32 slaveAddress, uint8 * wrData, uint32 cnt, uint32 mode)
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 3
+
+
+  58:Generated_Source\PSoC4/I2C_MAG.c **** {
+  58              		.loc 1 58 0
+  59              		.cfi_startproc
+  60              		@ args = 0, pretend = 0, frame = 24
+  61              		@ frame_needed = 1, uses_anonymous_args = 0
+  62 0000 80B5     		push	{r7, lr}
+  63              		.cfi_def_cfa_offset 8
+  64              		.cfi_offset 7, -8
+  65              		.cfi_offset 14, -4
+  66 0002 86B0     		sub	sp, sp, #24
+  67              		.cfi_def_cfa_offset 32
+  68 0004 00AF     		add	r7, sp, #0
+  69              		.cfi_def_cfa_register 7
+  70 0006 F860     		str	r0, [r7, #12]
+  71 0008 B960     		str	r1, [r7, #8]
+  72 000a 7A60     		str	r2, [r7, #4]
+  73 000c 3B60     		str	r3, [r7]
+  59:Generated_Source\PSoC4/I2C_MAG.c ****     uint32 ret = I2C_MAG_MSTR_NO_ERROR;
+  74              		.loc 1 59 0
+  75 000e 0023     		movs	r3, #0
+  76 0010 7B61     		str	r3, [r7, #20]
+  60:Generated_Source\PSoC4/I2C_MAG.c ****     
+  61:Generated_Source\PSoC4/I2C_MAG.c ****     /* Only process the command if the bus is not busy */
+  62:Generated_Source\PSoC4/I2C_MAG.c ****     if ((masterStatus & I2C_MAG_MSTAT_XFER_INP) == 0)
+  77              		.loc 1 62 0
+  78 0012 194B     		ldr	r3, .L7
+  79 0014 1B68     		ldr	r3, [r3]
+  80 0016 0422     		movs	r2, #4
+  81 0018 1340     		ands	r3, r2
+  82 001a 25D1     		bne	.L2
+  63:Generated_Source\PSoC4/I2C_MAG.c ****     {
+  64:Generated_Source\PSoC4/I2C_MAG.c ****         /* Check if SDA and SCL are HIGH */
+  65:Generated_Source\PSoC4/I2C_MAG.c ****         if (GetSDA && GetSCL)
+  83              		.loc 1 65 0
+  84 001c 174B     		ldr	r3, .L7+4
+  85 001e 1B68     		ldr	r3, [r3]
+  86 0020 0422     		movs	r2, #4
+  87 0022 1340     		ands	r3, r2
+  88 0024 1DD0     		beq	.L3
+  89              		.loc 1 65 0 is_stmt 0 discriminator 1
+  90 0026 154B     		ldr	r3, .L7+4
+  91 0028 1B68     		ldr	r3, [r3]
+  92 002a 0822     		movs	r2, #8
+  93 002c 1340     		ands	r3, r2
+  94 002e 18D0     		beq	.L3
+  66:Generated_Source\PSoC4/I2C_MAG.c ****         {
+  67:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set the control to start a frame based on the mode */
+  68:Generated_Source\PSoC4/I2C_MAG.c ****             masterControl = mode | I2C_MAG_WRITE_FRAME;
+  95              		.loc 1 68 0 is_stmt 1
+  96 0030 3B68     		ldr	r3, [r7]
+  97 0032 0422     		movs	r2, #4
+  98 0034 1A43     		orrs	r2, r3
+  99 0036 124B     		ldr	r3, .L7+8
+ 100 0038 1A60     		str	r2, [r3]
+  69:Generated_Source\PSoC4/I2C_MAG.c ****             
+  70:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set the number of bytes to be sent */
+  71:Generated_Source\PSoC4/I2C_MAG.c ****             packetSize = cnt;
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 4
+
+
+ 101              		.loc 1 71 0
+ 102 003a 124B     		ldr	r3, .L7+12
+ 103 003c 7A68     		ldr	r2, [r7, #4]
+ 104 003e 1A60     		str	r2, [r3]
+  72:Generated_Source\PSoC4/I2C_MAG.c ****             
+  73:Generated_Source\PSoC4/I2C_MAG.c ****             /* Reset the internal counters */
+  74:Generated_Source\PSoC4/I2C_MAG.c ****             bitCounter = 0;
+ 105              		.loc 1 74 0
+ 106 0040 114B     		ldr	r3, .L7+16
+ 107 0042 0022     		movs	r2, #0
+ 108 0044 1A60     		str	r2, [r3]
+  75:Generated_Source\PSoC4/I2C_MAG.c ****             byteCounter = 0;
+ 109              		.loc 1 75 0
+ 110 0046 114B     		ldr	r3, .L7+20
+ 111 0048 0022     		movs	r2, #0
+ 112 004a 1A60     		str	r2, [r3]
+  76:Generated_Source\PSoC4/I2C_MAG.c ****                         
+  77:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set the pointer to the correct buffer */
+  78:Generated_Source\PSoC4/I2C_MAG.c ****             outBuffer = wrData;
+ 113              		.loc 1 78 0
+ 114 004c 104B     		ldr	r3, .L7+24
+ 115 004e BA68     		ldr	r2, [r7, #8]
+ 116 0050 1A60     		str	r2, [r3]
+  79:Generated_Source\PSoC4/I2C_MAG.c ****             
+  80:Generated_Source\PSoC4/I2C_MAG.c ****             /* Store the I2C slave address as 8-bit + read/write bit */
+  81:Generated_Source\PSoC4/I2C_MAG.c ****             internalAddress = (slaveAddress << 1);      
+ 117              		.loc 1 81 0
+ 118 0052 FB68     		ldr	r3, [r7, #12]
+ 119 0054 5A00     		lsls	r2, r3, #1
+ 120 0056 0F4B     		ldr	r3, .L7+28
+ 121 0058 1A60     		str	r2, [r3]
+  82:Generated_Source\PSoC4/I2C_MAG.c ****             
+  83:Generated_Source\PSoC4/I2C_MAG.c ****             /* Clear Master status */
+  84:Generated_Source\PSoC4/I2C_MAG.c ****             masterStatus = 0;
+ 122              		.loc 1 84 0
+ 123 005a 074B     		ldr	r3, .L7
+ 124 005c 0022     		movs	r2, #0
+ 125 005e 1A60     		str	r2, [r3]
+ 126 0060 04E0     		b	.L5
+ 127              	.L3:
+  85:Generated_Source\PSoC4/I2C_MAG.c ****         }
+  86:Generated_Source\PSoC4/I2C_MAG.c ****         else
+  87:Generated_Source\PSoC4/I2C_MAG.c ****         {
+  88:Generated_Source\PSoC4/I2C_MAG.c ****             /* Bus is busy, return error */
+  89:Generated_Source\PSoC4/I2C_MAG.c ****             ret = I2C_MAG_MSTR_BUS_BUSY;
+ 128              		.loc 1 89 0
+ 129 0062 0823     		movs	r3, #8
+ 130 0064 7B61     		str	r3, [r7, #20]
+ 131 0066 01E0     		b	.L5
+ 132              	.L2:
+  90:Generated_Source\PSoC4/I2C_MAG.c ****         }
+  91:Generated_Source\PSoC4/I2C_MAG.c ****     }
+  92:Generated_Source\PSoC4/I2C_MAG.c ****     else
+  93:Generated_Source\PSoC4/I2C_MAG.c ****     {
+  94:Generated_Source\PSoC4/I2C_MAG.c ****         /* Transmission in progress, return error */
+  95:Generated_Source\PSoC4/I2C_MAG.c ****         ret = I2C_MAG_MSTR_NOT_READY;
+ 133              		.loc 1 95 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 5
+
+
+ 134 0068 0423     		movs	r3, #4
+ 135 006a 7B61     		str	r3, [r7, #20]
+ 136              	.L5:
+  96:Generated_Source\PSoC4/I2C_MAG.c ****     }
+  97:Generated_Source\PSoC4/I2C_MAG.c ****     
+  98:Generated_Source\PSoC4/I2C_MAG.c ****     return ret;
+ 137              		.loc 1 98 0
+ 138 006c 7B69     		ldr	r3, [r7, #20]
+  99:Generated_Source\PSoC4/I2C_MAG.c **** }
+ 139              		.loc 1 99 0
+ 140 006e 1800     		movs	r0, r3
+ 141 0070 BD46     		mov	sp, r7
+ 142 0072 06B0     		add	sp, sp, #24
+ 143              		@ sp needed
+ 144 0074 80BD     		pop	{r7, pc}
+ 145              	.L8:
+ 146 0076 C046     		.align	2
+ 147              	.L7:
+ 148 0078 0C000000 		.word	masterStatus
+ 149 007c 04040440 		.word	1074004996
+ 150 0080 10000000 		.word	masterControl
+ 151 0084 08000000 		.word	packetSize
+ 152 0088 00000000 		.word	bitCounter
+ 153 008c 04000000 		.word	byteCounter
+ 154 0090 18000000 		.word	outBuffer
+ 155 0094 24000000 		.word	internalAddress
+ 156              		.cfi_endproc
+ 157              	.LFE0:
+ 158              		.size	I2C_MAG_WriteBuf, .-I2C_MAG_WriteBuf
+ 159              		.section	.text.I2C_MAG_ReadBuf,"ax",%progbits
+ 160              		.align	2
+ 161              		.global	I2C_MAG_ReadBuf
+ 162              		.code	16
+ 163              		.thumb_func
+ 164              		.type	I2C_MAG_ReadBuf, %function
+ 165              	I2C_MAG_ReadBuf:
+ 166              	.LFB1:
+ 100:Generated_Source\PSoC4/I2C_MAG.c **** 
+ 101:Generated_Source\PSoC4/I2C_MAG.c **** /*******************************************************************************
+ 102:Generated_Source\PSoC4/I2C_MAG.c **** * Function Name: I2C_MAG_ReadBuf
+ 103:Generated_Source\PSoC4/I2C_MAG.c **** ********************************************************************************
+ 104:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 105:Generated_Source\PSoC4/I2C_MAG.c **** * Summary:
+ 106:Generated_Source\PSoC4/I2C_MAG.c **** *  Automatically reads an entire buffer of data from a slave device.
+ 107:Generated_Source\PSoC4/I2C_MAG.c **** *  This function is non-blocking. The Process() API should be called periodically
+ 108:Generated_Source\PSoC4/I2C_MAG.c **** *  to complete the transmission. If the frame cannot be started, this function
+ 109:Generated_Source\PSoC4/I2C_MAG.c **** *  returns an error.
+ 110:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 111:Generated_Source\PSoC4/I2C_MAG.c **** * Parameters:
+ 112:Generated_Source\PSoC4/I2C_MAG.c **** *  slaveAddr: 7-bit slave address.
+ 113:Generated_Source\PSoC4/I2C_MAG.c **** *  rdData:    Pointer to buffer where to put data from slave.
+ 114:Generated_Source\PSoC4/I2C_MAG.c **** *  cnt:       Size of buffer to read.
+ 115:Generated_Source\PSoC4/I2C_MAG.c **** *  mode:      Transfer mode defines: start or restart condition generation at
+ 116:Generated_Source\PSoC4/I2C_MAG.c **** *             begin of the transfer and complete the transfer or halt before
+ 117:Generated_Source\PSoC4/I2C_MAG.c **** *             generating a stop.
+ 118:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 119:Generated_Source\PSoC4/I2C_MAG.c **** * Return:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 6
+
+
+ 120:Generated_Source\PSoC4/I2C_MAG.c **** *  - I2C_MAG_I2C_MSTR_NO_ERROR - Function complete without error. 
+ 121:Generated_Source\PSoC4/I2C_MAG.c **** *    The master started the transfer.
+ 122:Generated_Source\PSoC4/I2C_MAG.c **** *  - I2C_MAG_I2C_MSTR_BUS_BUSY - Bus is busy. Nothing was sent on
+ 123:Generated_Source\PSoC4/I2C_MAG.c **** *    the bus. The attempt has to be retried.
+ 124:Generated_Source\PSoC4/I2C_MAG.c **** *  - I2C_MAG_I2C_MSTR_NOT_READY - Master is not ready for to start
+ 125:Generated_Source\PSoC4/I2C_MAG.c **** *    transfer. A master still has not completed previous transaction or a 
+ 126:Generated_Source\PSoC4/I2C_MAG.c **** *    slave operation is in progress (in multi-master-slave configuration).
+ 127:Generated_Source\PSoC4/I2C_MAG.c **** *    Nothing was sent on the bus. The attempt has to be retried.
+ 128:Generated_Source\PSoC4/I2C_MAG.c **** *******************************************************************************/
+ 129:Generated_Source\PSoC4/I2C_MAG.c **** uint32 I2C_MAG_ReadBuf(uint32 slaveAddress, uint8 * rdData, uint32 cnt, uint32 mode)
+ 130:Generated_Source\PSoC4/I2C_MAG.c **** {
+ 167              		.loc 1 130 0
+ 168              		.cfi_startproc
+ 169              		@ args = 0, pretend = 0, frame = 24
+ 170              		@ frame_needed = 1, uses_anonymous_args = 0
+ 171 0000 80B5     		push	{r7, lr}
+ 172              		.cfi_def_cfa_offset 8
+ 173              		.cfi_offset 7, -8
+ 174              		.cfi_offset 14, -4
+ 175 0002 86B0     		sub	sp, sp, #24
+ 176              		.cfi_def_cfa_offset 32
+ 177 0004 00AF     		add	r7, sp, #0
+ 178              		.cfi_def_cfa_register 7
+ 179 0006 F860     		str	r0, [r7, #12]
+ 180 0008 B960     		str	r1, [r7, #8]
+ 181 000a 7A60     		str	r2, [r7, #4]
+ 182 000c 3B60     		str	r3, [r7]
+ 131:Generated_Source\PSoC4/I2C_MAG.c ****     uint32 ret = I2C_MAG_MSTR_NO_ERROR;
+ 183              		.loc 1 131 0
+ 184 000e 0023     		movs	r3, #0
+ 185 0010 7B61     		str	r3, [r7, #20]
+ 132:Generated_Source\PSoC4/I2C_MAG.c ****     
+ 133:Generated_Source\PSoC4/I2C_MAG.c ****     /* Only process the command if the bus is not busy */
+ 134:Generated_Source\PSoC4/I2C_MAG.c ****     if ((masterStatus & I2C_MAG_MSTAT_XFER_INP) == 0)
+ 186              		.loc 1 134 0
+ 187 0012 1A4B     		ldr	r3, .L15
+ 188 0014 1B68     		ldr	r3, [r3]
+ 189 0016 0422     		movs	r2, #4
+ 190 0018 1340     		ands	r3, r2
+ 191 001a 27D1     		bne	.L10
+ 135:Generated_Source\PSoC4/I2C_MAG.c ****     {
+ 136:Generated_Source\PSoC4/I2C_MAG.c ****         /* Check if SDA and SCL are HIGH */
+ 137:Generated_Source\PSoC4/I2C_MAG.c ****         if (GetSDA && GetSCL)
+ 192              		.loc 1 137 0
+ 193 001c 184B     		ldr	r3, .L15+4
+ 194 001e 1B68     		ldr	r3, [r3]
+ 195 0020 0422     		movs	r2, #4
+ 196 0022 1340     		ands	r3, r2
+ 197 0024 1FD0     		beq	.L11
+ 198              		.loc 1 137 0 is_stmt 0 discriminator 1
+ 199 0026 164B     		ldr	r3, .L15+4
+ 200 0028 1B68     		ldr	r3, [r3]
+ 201 002a 0822     		movs	r2, #8
+ 202 002c 1340     		ands	r3, r2
+ 203 002e 1AD0     		beq	.L11
+ 138:Generated_Source\PSoC4/I2C_MAG.c ****         {
+ 139:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set the control to start a frame based on the mode */
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 7
+
+
+ 140:Generated_Source\PSoC4/I2C_MAG.c ****             masterControl = mode | I2C_MAG_READ_FRAME;
+ 204              		.loc 1 140 0 is_stmt 1
+ 205 0030 3B68     		ldr	r3, [r7]
+ 206 0032 0822     		movs	r2, #8
+ 207 0034 1A43     		orrs	r2, r3
+ 208 0036 134B     		ldr	r3, .L15+8
+ 209 0038 1A60     		str	r2, [r3]
+ 141:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 142:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set the number of bytes to be sent */
+ 143:Generated_Source\PSoC4/I2C_MAG.c ****             packetSize = cnt;
+ 210              		.loc 1 143 0
+ 211 003a 134B     		ldr	r3, .L15+12
+ 212 003c 7A68     		ldr	r2, [r7, #4]
+ 213 003e 1A60     		str	r2, [r3]
+ 144:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 145:Generated_Source\PSoC4/I2C_MAG.c ****             /* Reset the internal counters */
+ 146:Generated_Source\PSoC4/I2C_MAG.c ****             bitCounter = 0;
+ 214              		.loc 1 146 0
+ 215 0040 124B     		ldr	r3, .L15+16
+ 216 0042 0022     		movs	r2, #0
+ 217 0044 1A60     		str	r2, [r3]
+ 147:Generated_Source\PSoC4/I2C_MAG.c ****             byteCounter = 0;
+ 218              		.loc 1 147 0
+ 219 0046 124B     		ldr	r3, .L15+20
+ 220 0048 0022     		movs	r2, #0
+ 221 004a 1A60     		str	r2, [r3]
+ 148:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 149:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set the pointer to the correct buffer */
+ 150:Generated_Source\PSoC4/I2C_MAG.c ****             inBuffer = rdData;
+ 222              		.loc 1 150 0
+ 223 004c 114B     		ldr	r3, .L15+24
+ 224 004e BA68     		ldr	r2, [r7, #8]
+ 225 0050 1A60     		str	r2, [r3]
+ 151:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 152:Generated_Source\PSoC4/I2C_MAG.c ****             /* Store the I2C slave address as 8-bit + read/write bit */
+ 153:Generated_Source\PSoC4/I2C_MAG.c ****             internalAddress = (slaveAddress << 1) | 0x01;        
+ 226              		.loc 1 153 0
+ 227 0052 FB68     		ldr	r3, [r7, #12]
+ 228 0054 5B00     		lsls	r3, r3, #1
+ 229 0056 0122     		movs	r2, #1
+ 230 0058 1A43     		orrs	r2, r3
+ 231 005a 0F4B     		ldr	r3, .L15+28
+ 232 005c 1A60     		str	r2, [r3]
+ 154:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 155:Generated_Source\PSoC4/I2C_MAG.c ****             /* Clear Master status */
+ 156:Generated_Source\PSoC4/I2C_MAG.c ****             masterStatus = 0;
+ 233              		.loc 1 156 0
+ 234 005e 074B     		ldr	r3, .L15
+ 235 0060 0022     		movs	r2, #0
+ 236 0062 1A60     		str	r2, [r3]
+ 237 0064 04E0     		b	.L13
+ 238              	.L11:
+ 157:Generated_Source\PSoC4/I2C_MAG.c ****         }
+ 158:Generated_Source\PSoC4/I2C_MAG.c ****         else
+ 159:Generated_Source\PSoC4/I2C_MAG.c ****         {
+ 160:Generated_Source\PSoC4/I2C_MAG.c ****             /* Bus is busy, return error */
+ 161:Generated_Source\PSoC4/I2C_MAG.c ****             ret = I2C_MAG_MSTR_BUS_BUSY;
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 8
+
+
+ 239              		.loc 1 161 0
+ 240 0066 0823     		movs	r3, #8
+ 241 0068 7B61     		str	r3, [r7, #20]
+ 242 006a 01E0     		b	.L13
+ 243              	.L10:
+ 162:Generated_Source\PSoC4/I2C_MAG.c ****         }
+ 163:Generated_Source\PSoC4/I2C_MAG.c ****     }
+ 164:Generated_Source\PSoC4/I2C_MAG.c ****     else
+ 165:Generated_Source\PSoC4/I2C_MAG.c ****     {
+ 166:Generated_Source\PSoC4/I2C_MAG.c ****         /* Transmission in progress, return error */
+ 167:Generated_Source\PSoC4/I2C_MAG.c ****         ret = I2C_MAG_MSTR_NOT_READY;
+ 244              		.loc 1 167 0
+ 245 006c 0423     		movs	r3, #4
+ 246 006e 7B61     		str	r3, [r7, #20]
+ 247              	.L13:
+ 168:Generated_Source\PSoC4/I2C_MAG.c ****     }
+ 169:Generated_Source\PSoC4/I2C_MAG.c ****     
+ 170:Generated_Source\PSoC4/I2C_MAG.c ****     return ret;
+ 248              		.loc 1 170 0
+ 249 0070 7B69     		ldr	r3, [r7, #20]
+ 171:Generated_Source\PSoC4/I2C_MAG.c **** }
+ 250              		.loc 1 171 0
+ 251 0072 1800     		movs	r0, r3
+ 252 0074 BD46     		mov	sp, r7
+ 253 0076 06B0     		add	sp, sp, #24
+ 254              		@ sp needed
+ 255 0078 80BD     		pop	{r7, pc}
+ 256              	.L16:
+ 257 007a C046     		.align	2
+ 258              	.L15:
+ 259 007c 0C000000 		.word	masterStatus
+ 260 0080 04040440 		.word	1074004996
+ 261 0084 10000000 		.word	masterControl
+ 262 0088 08000000 		.word	packetSize
+ 263 008c 00000000 		.word	bitCounter
+ 264 0090 04000000 		.word	byteCounter
+ 265 0094 1C000000 		.word	inBuffer
+ 266 0098 24000000 		.word	internalAddress
+ 267              		.cfi_endproc
+ 268              	.LFE1:
+ 269              		.size	I2C_MAG_ReadBuf, .-I2C_MAG_ReadBuf
+ 270              		.section	.text.I2C_MAG_SendStart,"ax",%progbits
+ 271              		.align	2
+ 272              		.global	I2C_MAG_SendStart
+ 273              		.code	16
+ 274              		.thumb_func
+ 275              		.type	I2C_MAG_SendStart, %function
+ 276              	I2C_MAG_SendStart:
+ 277              	.LFB2:
+ 172:Generated_Source\PSoC4/I2C_MAG.c **** 
+ 173:Generated_Source\PSoC4/I2C_MAG.c **** /*******************************************************************************
+ 174:Generated_Source\PSoC4/I2C_MAG.c **** * Function Name: I2C_MAG_SendStart
+ 175:Generated_Source\PSoC4/I2C_MAG.c **** ********************************************************************************
+ 176:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 177:Generated_Source\PSoC4/I2C_MAG.c **** * Summary:
+ 178:Generated_Source\PSoC4/I2C_MAG.c **** *  Generates Start condition and sends slave address with read/write bit.
+ 179:Generated_Source\PSoC4/I2C_MAG.c **** *  This function is blocking and does not return until start condition and
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 9
+
+
+ 180:Generated_Source\PSoC4/I2C_MAG.c **** *  address byte are sent and ACK/NACK response is received or errors occurred.
+ 181:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 182:Generated_Source\PSoC4/I2C_MAG.c **** * Parameters:
+ 183:Generated_Source\PSoC4/I2C_MAG.c **** *  slaveAddress: Right justified 8-bit Slave address with R/W LSB bit
+ 184:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 185:Generated_Source\PSoC4/I2C_MAG.c **** * Return:
+ 186:Generated_Source\PSoC4/I2C_MAG.c **** *  - I2C_MAG_I2C_MSTR_NO_ERROR - Function complete without error. 
+ 187:Generated_Source\PSoC4/I2C_MAG.c **** *    The master started the transfer.
+ 188:Generated_Source\PSoC4/I2C_MAG.c **** *  - I2C_MAG_I2C_MSTR_BUS_BUSY - Bus is busy. Nothing was sent on
+ 189:Generated_Source\PSoC4/I2C_MAG.c **** *    the bus. The attempt has to be retried.
+ 190:Generated_Source\PSoC4/I2C_MAG.c **** *  - I2C_MAG_I2C_MSTR_NOT_READY - Master is not ready for to start
+ 191:Generated_Source\PSoC4/I2C_MAG.c **** *    transfer. A master still has not completed previous transaction or a 
+ 192:Generated_Source\PSoC4/I2C_MAG.c **** *    slave operation is in progress (in multi-master-slave configuration).
+ 193:Generated_Source\PSoC4/I2C_MAG.c **** *    Nothing was sent on the bus. The attempt has to be retried.
+ 194:Generated_Source\PSoC4/I2C_MAG.c **** *******************************************************************************/
+ 195:Generated_Source\PSoC4/I2C_MAG.c **** uint32 I2C_MAG_SendStart(uint32 slaveAddress_RW)
+ 196:Generated_Source\PSoC4/I2C_MAG.c **** {
+ 278              		.loc 1 196 0
+ 279              		.cfi_startproc
+ 280              		@ args = 0, pretend = 0, frame = 16
+ 281              		@ frame_needed = 1, uses_anonymous_args = 0
+ 282 0000 80B5     		push	{r7, lr}
+ 283              		.cfi_def_cfa_offset 8
+ 284              		.cfi_offset 7, -8
+ 285              		.cfi_offset 14, -4
+ 286 0002 84B0     		sub	sp, sp, #16
+ 287              		.cfi_def_cfa_offset 24
+ 288 0004 00AF     		add	r7, sp, #0
+ 289              		.cfi_def_cfa_register 7
+ 290 0006 7860     		str	r0, [r7, #4]
+ 197:Generated_Source\PSoC4/I2C_MAG.c ****     uint32 ret;
+ 198:Generated_Source\PSoC4/I2C_MAG.c ****     
+ 199:Generated_Source\PSoC4/I2C_MAG.c ****     /* Only process the command if the bus is not busy */
+ 200:Generated_Source\PSoC4/I2C_MAG.c ****     if ((masterStatus & I2C_MAG_MSTAT_XFER_INP) == 0)
+ 291              		.loc 1 200 0
+ 292 0008 154B     		ldr	r3, .L23
+ 293 000a 1B68     		ldr	r3, [r3]
+ 294 000c 0422     		movs	r2, #4
+ 295 000e 1340     		ands	r3, r2
+ 296 0010 1FD1     		bne	.L18
+ 201:Generated_Source\PSoC4/I2C_MAG.c ****     {
+ 202:Generated_Source\PSoC4/I2C_MAG.c ****         /* Check if SDA and SCL are HIGH */
+ 203:Generated_Source\PSoC4/I2C_MAG.c ****         if (GetSDA && GetSCL)
+ 297              		.loc 1 203 0
+ 298 0012 144B     		ldr	r3, .L23+4
+ 299 0014 1B68     		ldr	r3, [r3]
+ 300 0016 0422     		movs	r2, #4
+ 301 0018 1340     		ands	r3, r2
+ 302 001a 17D0     		beq	.L19
+ 303              		.loc 1 203 0 is_stmt 0 discriminator 1
+ 304 001c 114B     		ldr	r3, .L23+4
+ 305 001e 1B68     		ldr	r3, [r3]
+ 306 0020 0822     		movs	r2, #8
+ 307 0022 1340     		ands	r3, r2
+ 308 0024 12D0     		beq	.L19
+ 204:Generated_Source\PSoC4/I2C_MAG.c ****         {
+ 205:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set the control to start a frame based on the mode */
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 10
+
+
+ 206:Generated_Source\PSoC4/I2C_MAG.c ****             masterControl = I2C_MAG_MODE_NO_STOP | I2C_MAG_WRITE_FRAME;
+ 309              		.loc 1 206 0 is_stmt 1
+ 310 0026 104B     		ldr	r3, .L23+8
+ 311 0028 0622     		movs	r2, #6
+ 312 002a 1A60     		str	r2, [r3]
+ 207:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 208:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set the number of bytes to be sent */
+ 209:Generated_Source\PSoC4/I2C_MAG.c ****             packetSize = 0;
+ 313              		.loc 1 209 0
+ 314 002c 0F4B     		ldr	r3, .L23+12
+ 315 002e 0022     		movs	r2, #0
+ 316 0030 1A60     		str	r2, [r3]
+ 210:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 211:Generated_Source\PSoC4/I2C_MAG.c ****             /* Reset the internal counters */
+ 212:Generated_Source\PSoC4/I2C_MAG.c ****             bitCounter = 0;
+ 317              		.loc 1 212 0
+ 318 0032 0F4B     		ldr	r3, .L23+16
+ 319 0034 0022     		movs	r2, #0
+ 320 0036 1A60     		str	r2, [r3]
+ 213:Generated_Source\PSoC4/I2C_MAG.c ****             byteCounter = 0;
+ 321              		.loc 1 213 0
+ 322 0038 0E4B     		ldr	r3, .L23+20
+ 323 003a 0022     		movs	r2, #0
+ 324 003c 1A60     		str	r2, [r3]
+ 214:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 215:Generated_Source\PSoC4/I2C_MAG.c ****             /* Store the I2C slave address as 8-bit + read/write bit */
+ 216:Generated_Source\PSoC4/I2C_MAG.c ****             internalAddress = slaveAddress_RW;     
+ 325              		.loc 1 216 0
+ 326 003e 0E4B     		ldr	r3, .L23+24
+ 327 0040 7A68     		ldr	r2, [r7, #4]
+ 328 0042 1A60     		str	r2, [r3]
+ 217:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 218:Generated_Source\PSoC4/I2C_MAG.c ****             /* Clear Master status */
+ 219:Generated_Source\PSoC4/I2C_MAG.c ****             masterStatus = 0;
+ 329              		.loc 1 219 0
+ 330 0044 064B     		ldr	r3, .L23
+ 331 0046 0022     		movs	r2, #0
+ 332 0048 1A60     		str	r2, [r3]
+ 333 004a 04E0     		b	.L21
+ 334              	.L19:
+ 220:Generated_Source\PSoC4/I2C_MAG.c ****         }
+ 221:Generated_Source\PSoC4/I2C_MAG.c ****         else
+ 222:Generated_Source\PSoC4/I2C_MAG.c ****         {
+ 223:Generated_Source\PSoC4/I2C_MAG.c ****             /* Bus is busy, return error */
+ 224:Generated_Source\PSoC4/I2C_MAG.c ****             ret = I2C_MAG_MSTR_BUS_BUSY;
+ 335              		.loc 1 224 0
+ 336 004c 0823     		movs	r3, #8
+ 337 004e FB60     		str	r3, [r7, #12]
+ 338 0050 01E0     		b	.L21
+ 339              	.L18:
+ 225:Generated_Source\PSoC4/I2C_MAG.c ****         }
+ 226:Generated_Source\PSoC4/I2C_MAG.c ****     }
+ 227:Generated_Source\PSoC4/I2C_MAG.c ****     else
+ 228:Generated_Source\PSoC4/I2C_MAG.c ****     {
+ 229:Generated_Source\PSoC4/I2C_MAG.c ****         /* Transmission in progress, return error */
+ 230:Generated_Source\PSoC4/I2C_MAG.c ****         ret = I2C_MAG_MSTR_NOT_READY;
+ 340              		.loc 1 230 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 11
+
+
+ 341 0052 0423     		movs	r3, #4
+ 342 0054 FB60     		str	r3, [r7, #12]
+ 343              	.L21:
+ 231:Generated_Source\PSoC4/I2C_MAG.c ****     }
+ 232:Generated_Source\PSoC4/I2C_MAG.c ****     
+ 233:Generated_Source\PSoC4/I2C_MAG.c ****     return ret;
+ 344              		.loc 1 233 0
+ 345 0056 FB68     		ldr	r3, [r7, #12]
+ 234:Generated_Source\PSoC4/I2C_MAG.c **** }
+ 346              		.loc 1 234 0
+ 347 0058 1800     		movs	r0, r3
+ 348 005a BD46     		mov	sp, r7
+ 349 005c 04B0     		add	sp, sp, #16
+ 350              		@ sp needed
+ 351 005e 80BD     		pop	{r7, pc}
+ 352              	.L24:
+ 353              		.align	2
+ 354              	.L23:
+ 355 0060 0C000000 		.word	masterStatus
+ 356 0064 04040440 		.word	1074004996
+ 357 0068 10000000 		.word	masterControl
+ 358 006c 08000000 		.word	packetSize
+ 359 0070 00000000 		.word	bitCounter
+ 360 0074 04000000 		.word	byteCounter
+ 361 0078 24000000 		.word	internalAddress
+ 362              		.cfi_endproc
+ 363              	.LFE2:
+ 364              		.size	I2C_MAG_SendStart, .-I2C_MAG_SendStart
+ 365              		.section	.text.I2C_MAG_SendStop,"ax",%progbits
+ 366              		.align	2
+ 367              		.global	I2C_MAG_SendStop
+ 368              		.code	16
+ 369              		.thumb_func
+ 370              		.type	I2C_MAG_SendStop, %function
+ 371              	I2C_MAG_SendStop:
+ 372              	.LFB3:
+ 235:Generated_Source\PSoC4/I2C_MAG.c **** 
+ 236:Generated_Source\PSoC4/I2C_MAG.c **** /*******************************************************************************
+ 237:Generated_Source\PSoC4/I2C_MAG.c **** * Function Name: I2C_MAG_SendStop
+ 238:Generated_Source\PSoC4/I2C_MAG.c **** ********************************************************************************
+ 239:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 240:Generated_Source\PSoC4/I2C_MAG.c **** * Summary:
+ 241:Generated_Source\PSoC4/I2C_MAG.c **** *  Generates Stop condition on the bus.
+ 242:Generated_Source\PSoC4/I2C_MAG.c **** *  At least one byte has to be read if start or restart condition with read
+ 243:Generated_Source\PSoC4/I2C_MAG.c **** *  direction was generated before.
+ 244:Generated_Source\PSoC4/I2C_MAG.c **** *  This function is blocking and does not return until a stop condition
+ 245:Generated_Source\PSoC4/I2C_MAG.c **** *  is generated or error occurred.
+ 246:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 247:Generated_Source\PSoC4/I2C_MAG.c **** * Parameters:
+ 248:Generated_Source\PSoC4/I2C_MAG.c **** *  None
+ 249:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 250:Generated_Source\PSoC4/I2C_MAG.c **** * Return:
+ 251:Generated_Source\PSoC4/I2C_MAG.c **** *  Error status
+ 252:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 253:Generated_Source\PSoC4/I2C_MAG.c **** * Side Effects:
+ 254:Generated_Source\PSoC4/I2C_MAG.c **** *  A valid Start or ReStart condition shall be generated before calling
+ 255:Generated_Source\PSoC4/I2C_MAG.c **** *  this function. 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 12
+
+
+ 256:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 257:Generated_Source\PSoC4/I2C_MAG.c **** *******************************************************************************/
+ 258:Generated_Source\PSoC4/I2C_MAG.c **** uint32 I2C_MAG_SendStop(void)
+ 259:Generated_Source\PSoC4/I2C_MAG.c **** {
+ 373              		.loc 1 259 0
+ 374              		.cfi_startproc
+ 375              		@ args = 0, pretend = 0, frame = 0
+ 376              		@ frame_needed = 1, uses_anonymous_args = 0
+ 377 0000 80B5     		push	{r7, lr}
+ 378              		.cfi_def_cfa_offset 8
+ 379              		.cfi_offset 7, -8
+ 380              		.cfi_offset 14, -4
+ 381 0002 00AF     		add	r7, sp, #0
+ 382              		.cfi_def_cfa_register 7
+ 260:Generated_Source\PSoC4/I2C_MAG.c ****     ClrSCL;
+ 383              		.loc 1 260 0
+ 384 0004 094B     		ldr	r3, .L27
+ 385 0006 094A     		ldr	r2, .L27
+ 386 0008 1268     		ldr	r2, [r2]
+ 387 000a 0821     		movs	r1, #8
+ 388 000c 8A43     		bics	r2, r1
+ 389 000e 1A60     		str	r2, [r3]
+ 261:Generated_Source\PSoC4/I2C_MAG.c ****     ClrSDA;
+ 390              		.loc 1 261 0
+ 391 0010 064B     		ldr	r3, .L27
+ 392 0012 064A     		ldr	r2, .L27
+ 393 0014 1268     		ldr	r2, [r2]
+ 394 0016 0421     		movs	r1, #4
+ 395 0018 8A43     		bics	r2, r1
+ 396 001a 1A60     		str	r2, [r3]
+ 262:Generated_Source\PSoC4/I2C_MAG.c **** 
+ 263:Generated_Source\PSoC4/I2C_MAG.c ****     masterState = I2C_MAG_STATE_STOP;
+ 397              		.loc 1 263 0
+ 398 001c 044B     		ldr	r3, .L27+4
+ 399 001e 0D22     		movs	r2, #13
+ 400 0020 1A60     		str	r2, [r3]
+ 264:Generated_Source\PSoC4/I2C_MAG.c ****     
+ 265:Generated_Source\PSoC4/I2C_MAG.c ****     return I2C_MAG_MSTR_NO_ERROR;
+ 401              		.loc 1 265 0
+ 402 0022 0023     		movs	r3, #0
+ 266:Generated_Source\PSoC4/I2C_MAG.c **** }
+ 403              		.loc 1 266 0
+ 404 0024 1800     		movs	r0, r3
+ 405 0026 BD46     		mov	sp, r7
+ 406              		@ sp needed
+ 407 0028 80BD     		pop	{r7, pc}
+ 408              	.L28:
+ 409 002a C046     		.align	2
+ 410              	.L27:
+ 411 002c 00040440 		.word	1074004992
+ 412 0030 14000000 		.word	masterState
+ 413              		.cfi_endproc
+ 414              	.LFE3:
+ 415              		.size	I2C_MAG_SendStop, .-I2C_MAG_SendStop
+ 416              		.section	.text.I2C_MAG_Process,"ax",%progbits
+ 417              		.align	2
+ 418              		.global	I2C_MAG_Process
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 13
+
+
+ 419              		.code	16
+ 420              		.thumb_func
+ 421              		.type	I2C_MAG_Process, %function
+ 422              	I2C_MAG_Process:
+ 423              	.LFB4:
+ 267:Generated_Source\PSoC4/I2C_MAG.c **** 
+ 268:Generated_Source\PSoC4/I2C_MAG.c **** /*******************************************************************************
+ 269:Generated_Source\PSoC4/I2C_MAG.c **** * Function Name: I2C_MAG_Process
+ 270:Generated_Source\PSoC4/I2C_MAG.c **** ********************************************************************************
+ 271:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 272:Generated_Source\PSoC4/I2C_MAG.c **** * Summary:
+ 273:Generated_Source\PSoC4/I2C_MAG.c **** *  Process one step of the I2C transmission. This API should be called 
+ 274:Generated_Source\PSoC4/I2C_MAG.c **** *  constantly, so the transmission can proceed. It returns the state of the 
+ 275:Generated_Source\PSoC4/I2C_MAG.c **** *  transmission.
+ 276:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 277:Generated_Source\PSoC4/I2C_MAG.c **** * Return:
+ 278:Generated_Source\PSoC4/I2C_MAG.c **** *  State of the transmission.
+ 279:Generated_Source\PSoC4/I2C_MAG.c **** *  
+ 280:Generated_Source\PSoC4/I2C_MAG.c **** *******************************************************************************/
+ 281:Generated_Source\PSoC4/I2C_MAG.c **** uint32 I2C_MAG_Process(void)
+ 282:Generated_Source\PSoC4/I2C_MAG.c **** {    
+ 424              		.loc 1 282 0
+ 425              		.cfi_startproc
+ 426              		@ args = 0, pretend = 0, frame = 0
+ 427              		@ frame_needed = 1, uses_anonymous_args = 0
+ 428 0000 80B5     		push	{r7, lr}
+ 429              		.cfi_def_cfa_offset 8
+ 430              		.cfi_offset 7, -8
+ 431              		.cfi_offset 14, -4
+ 432 0002 00AF     		add	r7, sp, #0
+ 433              		.cfi_def_cfa_register 7
+ 283:Generated_Source\PSoC4/I2C_MAG.c ****     /* Run the I2C state machine */
+ 284:Generated_Source\PSoC4/I2C_MAG.c ****     switch (masterState)
+ 434              		.loc 1 284 0
+ 435 0004 CE4B     		ldr	r3, .L80
+ 436 0006 1B68     		ldr	r3, [r3]
+ 437 0008 0F2B     		cmp	r3, #15
+ 438 000a 00D9     		bls	.LCB346
+ 439 000c 2AE2     		b	.L30	@long jump
+ 440              	.LCB346:
+ 441 000e 9A00     		lsls	r2, r3, #2
+ 442 0010 CC4B     		ldr	r3, .L80+4
+ 443 0012 D318     		adds	r3, r2, r3
+ 444 0014 1B68     		ldr	r3, [r3]
+ 445 0016 9F46     		mov	pc, r3
+ 446              		.section	.rodata
+ 447              		.align	2
+ 448              	.L32:
+ 449 0000 18000000 		.word	.L31
+ 450 0004 48000000 		.word	.L33
+ 451 0008 B2000000 		.word	.L34
+ 452 000c C6000000 		.word	.L35
+ 453 0010 3A010000 		.word	.L36
+ 454 0014 64040000 		.word	.L30
+ 455 0018 64040000 		.word	.L30
+ 456 001c 4E010000 		.word	.L37
+ 457 0020 AA010000 		.word	.L38
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 14
+
+
+ 458 0024 FC010000 		.word	.L39
+ 459 0028 64040000 		.word	.L30
+ 460 002c 28020000 		.word	.L40
+ 461 0030 BE030000 		.word	.L41
+ 462 0034 D2030000 		.word	.L42
+ 463 0038 E6030000 		.word	.L43
+ 464 003c 32040000 		.word	.L44
+ 465              		.section	.text.I2C_MAG_Process
+ 466              	.L31:
+ 285:Generated_Source\PSoC4/I2C_MAG.c ****     {
+ 286:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_IDLE:
+ 287:Generated_Source\PSoC4/I2C_MAG.c ****             /* Check if a request to send data was received */
+ 288:Generated_Source\PSoC4/I2C_MAG.c ****             if (masterControl)
+ 467              		.loc 1 288 0
+ 468 0018 CB4B     		ldr	r3, .L80+8
+ 469 001a 1B68     		ldr	r3, [r3]
+ 470 001c 002B     		cmp	r3, #0
+ 471 001e 00D1     		bne	.LCB361
+ 472 0020 1DE2     		b	.L78	@long jump
+ 473              	.LCB361:
+ 289:Generated_Source\PSoC4/I2C_MAG.c ****             {
+ 290:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Drive I2C lines high */
+ 291:Generated_Source\PSoC4/I2C_MAG.c ****                 SetSDA;
+ 474              		.loc 1 291 0
+ 475 0022 CA4B     		ldr	r3, .L80+12
+ 476 0024 C94A     		ldr	r2, .L80+12
+ 477 0026 1268     		ldr	r2, [r2]
+ 478 0028 0421     		movs	r1, #4
+ 479 002a 0A43     		orrs	r2, r1
+ 480 002c 1A60     		str	r2, [r3]
+ 292:Generated_Source\PSoC4/I2C_MAG.c ****                 SetSCL;
+ 481              		.loc 1 292 0
+ 482 002e C74B     		ldr	r3, .L80+12
+ 483 0030 C64A     		ldr	r2, .L80+12
+ 484 0032 1268     		ldr	r2, [r2]
+ 485 0034 0821     		movs	r1, #8
+ 486 0036 0A43     		orrs	r2, r1
+ 487 0038 1A60     		str	r2, [r3]
+ 293:Generated_Source\PSoC4/I2C_MAG.c ****                                                 
+ 294:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Update the status */
+ 295:Generated_Source\PSoC4/I2C_MAG.c ****                 masterStatus = I2C_MAG_MSTAT_XFER_INP;
+ 488              		.loc 1 295 0
+ 489 003a C54B     		ldr	r3, .L80+16
+ 490 003c 0422     		movs	r2, #4
+ 491 003e 1A60     		str	r2, [r3]
+ 296:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 297:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Move to the next state */
+ 298:Generated_Source\PSoC4/I2C_MAG.c ****                 masterState = I2C_MAG_STATE_START;
+ 492              		.loc 1 298 0
+ 493 0040 BF4B     		ldr	r3, .L80
+ 494 0042 0122     		movs	r2, #1
+ 495 0044 1A60     		str	r2, [r3]
+ 299:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 300:Generated_Source\PSoC4/I2C_MAG.c **** 
+ 301:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 496              		.loc 1 301 0
+ 497 0046 0AE2     		b	.L78
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 15
+
+
+ 498              	.L33:
+ 302:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 303:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_START:
+ 304:Generated_Source\PSoC4/I2C_MAG.c ****             /* Check if the I2C bus is busy */
+ 305:Generated_Source\PSoC4/I2C_MAG.c ****             if ((GetSDA) && (GetSCL))
+ 499              		.loc 1 305 0
+ 500 0048 C24B     		ldr	r3, .L80+20
+ 501 004a 1B68     		ldr	r3, [r3]
+ 502 004c 0422     		movs	r2, #4
+ 503 004e 1340     		ands	r3, r2
+ 504 0050 0ED0     		beq	.L46
+ 505              		.loc 1 305 0 is_stmt 0 discriminator 1
+ 506 0052 C04B     		ldr	r3, .L80+20
+ 507 0054 1B68     		ldr	r3, [r3]
+ 508 0056 0822     		movs	r2, #8
+ 509 0058 1340     		ands	r3, r2
+ 510 005a 09D0     		beq	.L46
+ 306:Generated_Source\PSoC4/I2C_MAG.c ****             {
+ 307:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Start bit. Drive Data Line Low */
+ 308:Generated_Source\PSoC4/I2C_MAG.c ****                 ClrSDA;
+ 511              		.loc 1 308 0 is_stmt 1
+ 512 005c BB4B     		ldr	r3, .L80+12
+ 513 005e BB4A     		ldr	r2, .L80+12
+ 514 0060 1268     		ldr	r2, [r2]
+ 515 0062 0421     		movs	r1, #4
+ 516 0064 8A43     		bics	r2, r1
+ 517 0066 1A60     		str	r2, [r3]
+ 309:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 310:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Move to the next state */
+ 311:Generated_Source\PSoC4/I2C_MAG.c ****                 masterState = I2C_MAG_STATE_START_CLK;
+ 518              		.loc 1 311 0
+ 519 0068 B54B     		ldr	r3, .L80
+ 520 006a 0222     		movs	r2, #2
+ 521 006c 1A60     		str	r2, [r3]
+ 312:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 313:Generated_Source\PSoC4/I2C_MAG.c ****             else
+ 314:Generated_Source\PSoC4/I2C_MAG.c ****             {
+ 315:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Bus is busy, finish the transmission */
+ 316:Generated_Source\PSoC4/I2C_MAG.c ****                 if (masterControl & I2C_MAG_WRITE_FRAME)
+ 317:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 318:Generated_Source\PSoC4/I2C_MAG.c ****                     masterStatus = I2C_MAG_MSTAT_WR_CMPLT;
+ 319:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 320:Generated_Source\PSoC4/I2C_MAG.c ****                 else
+ 321:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 322:Generated_Source\PSoC4/I2C_MAG.c ****                     masterStatus = I2C_MAG_MSTAT_RD_CMPLT;
+ 323:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 324:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 325:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Clear busy bit */
+ 326:Generated_Source\PSoC4/I2C_MAG.c ****                 masterStatus &= ~(I2C_MAG_MSTAT_XFER_INP);
+ 327:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 328:Generated_Source\PSoC4/I2C_MAG.c ****                 masterStatus |= I2C_MAG_MSTAT_ERR_BUS_ERROR;
+ 329:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 330:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Clear master control */
+ 331:Generated_Source\PSoC4/I2C_MAG.c ****                 masterControl = 0;
+ 332:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 333:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Go to IDLE state */
+ 334:Generated_Source\PSoC4/I2C_MAG.c ****                 masterState = I2C_MAG_STATE_IDLE;
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 16
+
+
+ 335:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 336:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 522              		.loc 1 336 0
+ 523 006e F9E1     		b	.L30
+ 524              	.L46:
+ 316:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 525              		.loc 1 316 0
+ 526 0070 B54B     		ldr	r3, .L80+8
+ 527 0072 1B68     		ldr	r3, [r3]
+ 528 0074 0422     		movs	r2, #4
+ 529 0076 1340     		ands	r3, r2
+ 530 0078 03D0     		beq	.L48
+ 318:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 531              		.loc 1 318 0
+ 532 007a B54B     		ldr	r3, .L80+16
+ 533 007c 0222     		movs	r2, #2
+ 534 007e 1A60     		str	r2, [r3]
+ 535 0080 02E0     		b	.L49
+ 536              	.L48:
+ 322:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 537              		.loc 1 322 0
+ 538 0082 B34B     		ldr	r3, .L80+16
+ 539 0084 0122     		movs	r2, #1
+ 540 0086 1A60     		str	r2, [r3]
+ 541              	.L49:
+ 326:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 542              		.loc 1 326 0
+ 543 0088 B14B     		ldr	r3, .L80+16
+ 544 008a 1B68     		ldr	r3, [r3]
+ 545 008c 0422     		movs	r2, #4
+ 546 008e 9343     		bics	r3, r2
+ 547 0090 1A00     		movs	r2, r3
+ 548 0092 AF4B     		ldr	r3, .L80+16
+ 549 0094 1A60     		str	r2, [r3]
+ 328:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 550              		.loc 1 328 0
+ 551 0096 AE4B     		ldr	r3, .L80+16
+ 552 0098 1B68     		ldr	r3, [r3]
+ 553 009a 8022     		movs	r2, #128
+ 554 009c 5200     		lsls	r2, r2, #1
+ 555 009e 1A43     		orrs	r2, r3
+ 556 00a0 AB4B     		ldr	r3, .L80+16
+ 557 00a2 1A60     		str	r2, [r3]
+ 331:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 558              		.loc 1 331 0
+ 559 00a4 A84B     		ldr	r3, .L80+8
+ 560 00a6 0022     		movs	r2, #0
+ 561 00a8 1A60     		str	r2, [r3]
+ 334:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 562              		.loc 1 334 0
+ 563 00aa A54B     		ldr	r3, .L80
+ 564 00ac 0022     		movs	r2, #0
+ 565 00ae 1A60     		str	r2, [r3]
+ 566              		.loc 1 336 0
+ 567 00b0 D8E1     		b	.L30
+ 568              	.L34:
+ 337:Generated_Source\PSoC4/I2C_MAG.c ****             
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 17
+
+
+ 338:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_START_CLK:
+ 339:Generated_Source\PSoC4/I2C_MAG.c ****             /* Start bit. Drive Clock Line low */
+ 340:Generated_Source\PSoC4/I2C_MAG.c ****             ClrSCL;
+ 569              		.loc 1 340 0
+ 570 00b2 A64B     		ldr	r3, .L80+12
+ 571 00b4 A54A     		ldr	r2, .L80+12
+ 572 00b6 1268     		ldr	r2, [r2]
+ 573 00b8 0821     		movs	r1, #8
+ 574 00ba 8A43     		bics	r2, r1
+ 575 00bc 1A60     		str	r2, [r3]
+ 341:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 342:Generated_Source\PSoC4/I2C_MAG.c ****             /* Move to the next state */
+ 343:Generated_Source\PSoC4/I2C_MAG.c ****             masterState = I2C_MAG_STATE_ADDRESS;
+ 576              		.loc 1 343 0
+ 577 00be A04B     		ldr	r3, .L80
+ 578 00c0 0322     		movs	r2, #3
+ 579 00c2 1A60     		str	r2, [r3]
+ 344:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 580              		.loc 1 344 0
+ 581 00c4 CEE1     		b	.L30
+ 582              	.L35:
+ 345:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 346:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_ADDRESS:
+ 347:Generated_Source\PSoC4/I2C_MAG.c ****             if (bitCounter < 8)
+ 583              		.loc 1 347 0
+ 584 00c6 A44B     		ldr	r3, .L80+24
+ 585 00c8 1B68     		ldr	r3, [r3]
+ 586 00ca 072B     		cmp	r3, #7
+ 587 00cc 25D8     		bhi	.L50
+ 348:Generated_Source\PSoC4/I2C_MAG.c ****             {
+ 349:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Process the slave addresses bits */
+ 350:Generated_Source\PSoC4/I2C_MAG.c ****                 if (internalAddress & 0x80)
+ 588              		.loc 1 350 0
+ 589 00ce A34B     		ldr	r3, .L80+28
+ 590 00d0 1B68     		ldr	r3, [r3]
+ 591 00d2 8022     		movs	r2, #128
+ 592 00d4 1340     		ands	r3, r2
+ 593 00d6 06D0     		beq	.L51
+ 351:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 352:Generated_Source\PSoC4/I2C_MAG.c ****                     SetSDA;
+ 594              		.loc 1 352 0
+ 595 00d8 9C4B     		ldr	r3, .L80+12
+ 596 00da 9C4A     		ldr	r2, .L80+12
+ 597 00dc 1268     		ldr	r2, [r2]
+ 598 00de 0421     		movs	r1, #4
+ 599 00e0 0A43     		orrs	r2, r1
+ 600 00e2 1A60     		str	r2, [r3]
+ 601 00e4 05E0     		b	.L52
+ 602              	.L51:
+ 353:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 354:Generated_Source\PSoC4/I2C_MAG.c ****                 else
+ 355:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 356:Generated_Source\PSoC4/I2C_MAG.c ****                     ClrSDA;
+ 603              		.loc 1 356 0
+ 604 00e6 994B     		ldr	r3, .L80+12
+ 605 00e8 984A     		ldr	r2, .L80+12
+ 606 00ea 1268     		ldr	r2, [r2]
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 18
+
+
+ 607 00ec 0421     		movs	r1, #4
+ 608 00ee 8A43     		bics	r2, r1
+ 609 00f0 1A60     		str	r2, [r3]
+ 610              	.L52:
+ 357:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 358:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Shift the address to prepare next bit */
+ 359:Generated_Source\PSoC4/I2C_MAG.c ****                 internalAddress <<= 1;
+ 611              		.loc 1 359 0
+ 612 00f2 9A4B     		ldr	r3, .L80+28
+ 613 00f4 1B68     		ldr	r3, [r3]
+ 614 00f6 5A00     		lsls	r2, r3, #1
+ 615 00f8 984B     		ldr	r3, .L80+28
+ 616 00fa 1A60     		str	r2, [r3]
+ 360:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 361:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Clock SCL */
+ 362:Generated_Source\PSoC4/I2C_MAG.c ****                 SetSCL;
+ 617              		.loc 1 362 0
+ 618 00fc 934B     		ldr	r3, .L80+12
+ 619 00fe 934A     		ldr	r2, .L80+12
+ 620 0100 1268     		ldr	r2, [r2]
+ 621 0102 0821     		movs	r1, #8
+ 622 0104 0A43     		orrs	r2, r1
+ 623 0106 1A60     		str	r2, [r3]
+ 363:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 364:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Increment bit counter */
+ 365:Generated_Source\PSoC4/I2C_MAG.c ****                 bitCounter++;
+ 624              		.loc 1 365 0
+ 625 0108 934B     		ldr	r3, .L80+24
+ 626 010a 1B68     		ldr	r3, [r3]
+ 627 010c 5A1C     		adds	r2, r3, #1
+ 628 010e 924B     		ldr	r3, .L80+24
+ 629 0110 1A60     		str	r2, [r3]
+ 366:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 367:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Move the next state */
+ 368:Generated_Source\PSoC4/I2C_MAG.c ****                 masterState = I2C_MAG_STATE_ADDRESS_CLK;
+ 630              		.loc 1 368 0
+ 631 0112 8B4B     		ldr	r3, .L80
+ 632 0114 0422     		movs	r2, #4
+ 633 0116 1A60     		str	r2, [r3]
+ 369:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 370:Generated_Source\PSoC4/I2C_MAG.c ****             else
+ 371:Generated_Source\PSoC4/I2C_MAG.c ****             {
+ 372:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Set SDA high to check if NAK */
+ 373:Generated_Source\PSoC4/I2C_MAG.c ****                 SetSDA;
+ 374:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 375:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Set Initial address ack bit */
+ 376:Generated_Source\PSoC4/I2C_MAG.c ****                 masterControl |= I2C_MAG_INITIAL_ADDR_ACK;
+ 377:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 378:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Move to the next state */
+ 379:Generated_Source\PSoC4/I2C_MAG.c ****                 masterState = I2C_MAG_STATE_ACK;
+ 380:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 381:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 634              		.loc 1 381 0
+ 635 0118 A4E1     		b	.L30
+ 636              	.L50:
+ 373:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 637              		.loc 1 373 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 19
+
+
+ 638 011a 8C4B     		ldr	r3, .L80+12
+ 639 011c 8B4A     		ldr	r2, .L80+12
+ 640 011e 1268     		ldr	r2, [r2]
+ 641 0120 0421     		movs	r1, #4
+ 642 0122 0A43     		orrs	r2, r1
+ 643 0124 1A60     		str	r2, [r3]
+ 376:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 644              		.loc 1 376 0
+ 645 0126 884B     		ldr	r3, .L80+8
+ 646 0128 1B68     		ldr	r3, [r3]
+ 647 012a 1022     		movs	r2, #16
+ 648 012c 1A43     		orrs	r2, r3
+ 649 012e 864B     		ldr	r3, .L80+8
+ 650 0130 1A60     		str	r2, [r3]
+ 379:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 651              		.loc 1 379 0
+ 652 0132 834B     		ldr	r3, .L80
+ 653 0134 0722     		movs	r2, #7
+ 654 0136 1A60     		str	r2, [r3]
+ 655              		.loc 1 381 0
+ 656 0138 94E1     		b	.L30
+ 657              	.L36:
+ 382:Generated_Source\PSoC4/I2C_MAG.c ****              
+ 383:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_ADDRESS_CLK:
+ 384:Generated_Source\PSoC4/I2C_MAG.c ****             /* Drives clock Low */
+ 385:Generated_Source\PSoC4/I2C_MAG.c ****             ClrSCL;
+ 658              		.loc 1 385 0
+ 659 013a 844B     		ldr	r3, .L80+12
+ 660 013c 834A     		ldr	r2, .L80+12
+ 661 013e 1268     		ldr	r2, [r2]
+ 662 0140 0821     		movs	r1, #8
+ 663 0142 8A43     		bics	r2, r1
+ 664 0144 1A60     		str	r2, [r3]
+ 386:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 387:Generated_Source\PSoC4/I2C_MAG.c ****             /* Go back to the previous address */
+ 388:Generated_Source\PSoC4/I2C_MAG.c ****             masterState = I2C_MAG_STATE_ADDRESS;
+ 665              		.loc 1 388 0
+ 666 0146 7E4B     		ldr	r3, .L80
+ 667 0148 0322     		movs	r2, #3
+ 668 014a 1A60     		str	r2, [r3]
+ 389:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 669              		.loc 1 389 0
+ 670 014c 8AE1     		b	.L30
+ 671              	.L37:
+ 390:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 391:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_ACK:
+ 392:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set CLK high */
+ 393:Generated_Source\PSoC4/I2C_MAG.c ****             SetSCL;
+ 672              		.loc 1 393 0
+ 673 014e 7F4B     		ldr	r3, .L80+12
+ 674 0150 7E4A     		ldr	r2, .L80+12
+ 675 0152 1268     		ldr	r2, [r2]
+ 676 0154 0821     		movs	r1, #8
+ 677 0156 0A43     		orrs	r2, r1
+ 678 0158 1A60     		str	r2, [r3]
+ 394:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 395:Generated_Source\PSoC4/I2C_MAG.c ****             /* Check if it is a write command */
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 20
+
+
+ 396:Generated_Source\PSoC4/I2C_MAG.c ****             if ((masterControl & I2C_MAG_WRITE_FRAME) ||
+ 679              		.loc 1 396 0
+ 680 015a 7B4B     		ldr	r3, .L80+8
+ 681 015c 1B68     		ldr	r3, [r3]
+ 682 015e 0422     		movs	r2, #4
+ 683 0160 1340     		ands	r3, r2
+ 684 0162 04D1     		bne	.L54
+ 397:Generated_Source\PSoC4/I2C_MAG.c ****                  masterControl & I2C_MAG_INITIAL_ADDR_ACK)
+ 685              		.loc 1 397 0 discriminator 1
+ 686 0164 784B     		ldr	r3, .L80+8
+ 687 0166 1B68     		ldr	r3, [r3]
+ 688 0168 1022     		movs	r2, #16
+ 689 016a 1340     		ands	r3, r2
+ 396:Generated_Source\PSoC4/I2C_MAG.c ****                  masterControl & I2C_MAG_INITIAL_ADDR_ACK)
+ 690              		.loc 1 396 0 discriminator 1
+ 691 016c 18D0     		beq	.L55
+ 692              	.L54:
+ 398:Generated_Source\PSoC4/I2C_MAG.c ****             {                           
+ 399:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Check if slave is stretching the clock */
+ 400:Generated_Source\PSoC4/I2C_MAG.c ****                 if (GetSCL == 0)
+ 693              		.loc 1 400 0
+ 694 016e 794B     		ldr	r3, .L80+20
+ 695 0170 1B68     		ldr	r3, [r3]
+ 696 0172 0822     		movs	r2, #8
+ 697 0174 1340     		ands	r3, r2
+ 698 0176 17D0     		beq	.L58
+ 401:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 402:Generated_Source\PSoC4/I2C_MAG.c ****                     /* Stay here, slave is stretching the clock */
+ 403:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 404:Generated_Source\PSoC4/I2C_MAG.c ****                 else
+ 405:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 406:Generated_Source\PSoC4/I2C_MAG.c ****                     /* Clear initial address ack bit */
+ 407:Generated_Source\PSoC4/I2C_MAG.c ****                     masterControl &= ~(I2C_MAG_INITIAL_ADDR_ACK);
+ 699              		.loc 1 407 0
+ 700 0178 734B     		ldr	r3, .L80+8
+ 701 017a 1B68     		ldr	r3, [r3]
+ 702 017c 1022     		movs	r2, #16
+ 703 017e 9343     		bics	r3, r2
+ 704 0180 1A00     		movs	r2, r3
+ 705 0182 714B     		ldr	r3, .L80+8
+ 706 0184 1A60     		str	r2, [r3]
+ 408:Generated_Source\PSoC4/I2C_MAG.c ****                     
+ 409:Generated_Source\PSoC4/I2C_MAG.c ****                     /* Check if slave acked */
+ 410:Generated_Source\PSoC4/I2C_MAG.c ****                     if (GetSDA)
+ 707              		.loc 1 410 0
+ 708 0186 734B     		ldr	r3, .L80+20
+ 709 0188 1B68     		ldr	r3, [r3]
+ 710 018a 0422     		movs	r2, #4
+ 711 018c 1340     		ands	r3, r2
+ 712 018e 03D0     		beq	.L57
+ 411:Generated_Source\PSoC4/I2C_MAG.c ****                     {
+ 412:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Slave didn't ACK, go to the NACK state */
+ 413:Generated_Source\PSoC4/I2C_MAG.c ****                         masterState = I2C_MAG_STATE_NACK;
+ 713              		.loc 1 413 0
+ 714 0190 6B4B     		ldr	r3, .L80
+ 715 0192 0922     		movs	r2, #9
+ 716 0194 1A60     		str	r2, [r3]
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 21
+
+
+ 400:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 717              		.loc 1 400 0
+ 718 0196 07E0     		b	.L58
+ 719              	.L57:
+ 414:Generated_Source\PSoC4/I2C_MAG.c ****                     }
+ 415:Generated_Source\PSoC4/I2C_MAG.c ****                     else
+ 416:Generated_Source\PSoC4/I2C_MAG.c ****                     {
+ 417:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Slave ACKed, go to the next state */
+ 418:Generated_Source\PSoC4/I2C_MAG.c ****                         masterState = I2C_MAG_STATE_ACK_CLK;
+ 720              		.loc 1 418 0
+ 721 0198 694B     		ldr	r3, .L80
+ 722 019a 0822     		movs	r2, #8
+ 723 019c 1A60     		str	r2, [r3]
+ 400:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 724              		.loc 1 400 0
+ 725 019e 03E0     		b	.L58
+ 726              	.L55:
+ 419:Generated_Source\PSoC4/I2C_MAG.c ****                     }
+ 420:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 421:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 422:Generated_Source\PSoC4/I2C_MAG.c ****             else /* Read command */
+ 423:Generated_Source\PSoC4/I2C_MAG.c ****             {
+ 424:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Go to the next state */
+ 425:Generated_Source\PSoC4/I2C_MAG.c ****                 masterState = I2C_MAG_STATE_ACK_CLK;
+ 727              		.loc 1 425 0
+ 728 01a0 674B     		ldr	r3, .L80
+ 729 01a2 0822     		movs	r2, #8
+ 730 01a4 1A60     		str	r2, [r3]
+ 426:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 427:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 731              		.loc 1 427 0
+ 732 01a6 5DE1     		b	.L30
+ 733              	.L58:
+ 734              		.loc 1 427 0 is_stmt 0 discriminator 2
+ 735 01a8 5CE1     		b	.L30
+ 736              	.L38:
+ 428:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 429:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_ACK_CLK:
+ 430:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set Clock Low */
+ 431:Generated_Source\PSoC4/I2C_MAG.c ****             ClrSCL;
+ 737              		.loc 1 431 0 is_stmt 1
+ 738 01aa 684B     		ldr	r3, .L80+12
+ 739 01ac 674A     		ldr	r2, .L80+12
+ 740 01ae 1268     		ldr	r2, [r2]
+ 741 01b0 0821     		movs	r1, #8
+ 742 01b2 8A43     		bics	r2, r1
+ 743 01b4 1A60     		str	r2, [r3]
+ 432:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 433:Generated_Source\PSoC4/I2C_MAG.c ****             /* Check if any data to be transmitted */
+ 434:Generated_Source\PSoC4/I2C_MAG.c ****             if (byteCounter == packetSize)
+ 744              		.loc 1 434 0
+ 745 01b6 6A4B     		ldr	r3, .L80+32
+ 746 01b8 1A68     		ldr	r2, [r3]
+ 747 01ba 6A4B     		ldr	r3, .L80+36
+ 748 01bc 1B68     		ldr	r3, [r3]
+ 749 01be 9A42     		cmp	r2, r3
+ 750 01c0 12D1     		bne	.L59
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 22
+
+
+ 435:Generated_Source\PSoC4/I2C_MAG.c ****             {   
+ 436:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Check if should send a stop */
+ 437:Generated_Source\PSoC4/I2C_MAG.c ****                 if (masterControl & I2C_MAG_MODE_NO_STOP)
+ 751              		.loc 1 437 0
+ 752 01c2 614B     		ldr	r3, .L80+8
+ 753 01c4 1B68     		ldr	r3, [r3]
+ 754 01c6 0222     		movs	r2, #2
+ 755 01c8 1340     		ands	r3, r2
+ 756 01ca 03D0     		beq	.L60
+ 438:Generated_Source\PSoC4/I2C_MAG.c ****                 {                    
+ 439:Generated_Source\PSoC4/I2C_MAG.c ****                     /* Go to NO STOP state */
+ 440:Generated_Source\PSoC4/I2C_MAG.c ****                     masterState = I2C_MAG_STATE_NO_STOP;
+ 757              		.loc 1 440 0
+ 758 01cc 5C4B     		ldr	r3, .L80
+ 759 01ce 0F22     		movs	r2, #15
+ 760 01d0 1A60     		str	r2, [r3]
+ 441:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 442:Generated_Source\PSoC4/I2C_MAG.c ****                 else
+ 443:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 444:Generated_Source\PSoC4/I2C_MAG.c ****                     /* Set SDA Low */
+ 445:Generated_Source\PSoC4/I2C_MAG.c ****                     ClrSDA;
+ 446:Generated_Source\PSoC4/I2C_MAG.c ****                     
+ 447:Generated_Source\PSoC4/I2C_MAG.c ****                     /* Go to the stop state */
+ 448:Generated_Source\PSoC4/I2C_MAG.c ****                     masterState = I2C_MAG_STATE_STOP;
+ 449:Generated_Source\PSoC4/I2C_MAG.c ****                 }    
+ 450:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 451:Generated_Source\PSoC4/I2C_MAG.c ****             else
+ 452:Generated_Source\PSoC4/I2C_MAG.c ****             {              
+ 453:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Reset the bit counter */
+ 454:Generated_Source\PSoC4/I2C_MAG.c ****                 bitCounter = 0;
+ 455:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 456:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Reset the read byte */
+ 457:Generated_Source\PSoC4/I2C_MAG.c ****                 theByte = 0;
+ 458:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 459:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Go to the next state */
+ 460:Generated_Source\PSoC4/I2C_MAG.c ****                 masterState = I2C_MAG_STATE_DATA;
+ 461:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 462:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 761              		.loc 1 462 0
+ 762 01d2 47E1     		b	.L30
+ 763              	.L60:
+ 445:Generated_Source\PSoC4/I2C_MAG.c ****                     
+ 764              		.loc 1 445 0
+ 765 01d4 5D4B     		ldr	r3, .L80+12
+ 766 01d6 5D4A     		ldr	r2, .L80+12
+ 767 01d8 1268     		ldr	r2, [r2]
+ 768 01da 0421     		movs	r1, #4
+ 769 01dc 8A43     		bics	r2, r1
+ 770 01de 1A60     		str	r2, [r3]
+ 448:Generated_Source\PSoC4/I2C_MAG.c ****                 }    
+ 771              		.loc 1 448 0
+ 772 01e0 574B     		ldr	r3, .L80
+ 773 01e2 0D22     		movs	r2, #13
+ 774 01e4 1A60     		str	r2, [r3]
+ 775              		.loc 1 462 0
+ 776 01e6 3DE1     		b	.L30
+ 777              	.L59:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 23
+
+
+ 454:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 778              		.loc 1 454 0
+ 779 01e8 5B4B     		ldr	r3, .L80+24
+ 780 01ea 0022     		movs	r2, #0
+ 781 01ec 1A60     		str	r2, [r3]
+ 457:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 782              		.loc 1 457 0
+ 783 01ee 5E4B     		ldr	r3, .L80+40
+ 784 01f0 0022     		movs	r2, #0
+ 785 01f2 1A70     		strb	r2, [r3]
+ 460:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 786              		.loc 1 460 0
+ 787 01f4 524B     		ldr	r3, .L80
+ 788 01f6 0B22     		movs	r2, #11
+ 789 01f8 1A60     		str	r2, [r3]
+ 790              		.loc 1 462 0
+ 791 01fa 33E1     		b	.L30
+ 792              	.L39:
+ 463:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 464:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_NACK:
+ 465:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set SCL and SDA to LOW */
+ 466:Generated_Source\PSoC4/I2C_MAG.c ****             ClrSCL;     
+ 793              		.loc 1 466 0
+ 794 01fc 534B     		ldr	r3, .L80+12
+ 795 01fe 534A     		ldr	r2, .L80+12
+ 796 0200 1268     		ldr	r2, [r2]
+ 797 0202 0821     		movs	r1, #8
+ 798 0204 8A43     		bics	r2, r1
+ 799 0206 1A60     		str	r2, [r3]
+ 467:Generated_Source\PSoC4/I2C_MAG.c ****             ClrSDA;
+ 800              		.loc 1 467 0
+ 801 0208 504B     		ldr	r3, .L80+12
+ 802 020a 504A     		ldr	r2, .L80+12
+ 803 020c 1268     		ldr	r2, [r2]
+ 804 020e 0421     		movs	r1, #4
+ 805 0210 8A43     		bics	r2, r1
+ 806 0212 1A60     		str	r2, [r3]
+ 468:Generated_Source\PSoC4/I2C_MAG.c ****     
+ 469:Generated_Source\PSoC4/I2C_MAG.c ****             /* Return error */
+ 470:Generated_Source\PSoC4/I2C_MAG.c ****             masterStatus |= I2C_MAG_MSTAT_ERR_ADDR_NAK;
+ 807              		.loc 1 470 0
+ 808 0214 4E4B     		ldr	r3, .L80+16
+ 809 0216 1B68     		ldr	r3, [r3]
+ 810 0218 2022     		movs	r2, #32
+ 811 021a 1A43     		orrs	r2, r3
+ 812 021c 4C4B     		ldr	r3, .L80+16
+ 813 021e 1A60     		str	r2, [r3]
+ 471:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 472:Generated_Source\PSoC4/I2C_MAG.c ****             /* Go to the next state */
+ 473:Generated_Source\PSoC4/I2C_MAG.c ****             masterState = I2C_MAG_STATE_STOP;
+ 814              		.loc 1 473 0
+ 815 0220 474B     		ldr	r3, .L80
+ 816 0222 0D22     		movs	r2, #13
+ 817 0224 1A60     		str	r2, [r3]
+ 474:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 818              		.loc 1 474 0
+ 819 0226 1DE1     		b	.L30
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 24
+
+
+ 820              	.L40:
+ 475:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 476:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_DATA:
+ 477:Generated_Source\PSoC4/I2C_MAG.c ****             /* Check if it is a write command */
+ 478:Generated_Source\PSoC4/I2C_MAG.c ****             if (masterControl & I2C_MAG_WRITE_FRAME)
+ 821              		.loc 1 478 0
+ 822 0228 474B     		ldr	r3, .L80+8
+ 823 022a 1B68     		ldr	r3, [r3]
+ 824 022c 0422     		movs	r2, #4
+ 825 022e 1340     		ands	r3, r2
+ 826 0230 54D0     		beq	.L63
+ 479:Generated_Source\PSoC4/I2C_MAG.c ****             {           
+ 480:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Check if all bytes were sent */
+ 481:Generated_Source\PSoC4/I2C_MAG.c ****                 if (byteCounter < packetSize)
+ 827              		.loc 1 481 0
+ 828 0232 4B4B     		ldr	r3, .L80+32
+ 829 0234 1A68     		ldr	r2, [r3]
+ 830 0236 4B4B     		ldr	r3, .L80+36
+ 831 0238 1B68     		ldr	r3, [r3]
+ 832 023a 9A42     		cmp	r2, r3
+ 833 023c 3ED2     		bcs	.L64
+ 482:Generated_Source\PSoC4/I2C_MAG.c ****                 {            
+ 483:Generated_Source\PSoC4/I2C_MAG.c ****                     if (bitCounter < 8)
+ 834              		.loc 1 483 0
+ 835 023e 464B     		ldr	r3, .L80+24
+ 836 0240 1B68     		ldr	r3, [r3]
+ 837 0242 072B     		cmp	r3, #7
+ 838 0244 2BD8     		bhi	.L65
+ 484:Generated_Source\PSoC4/I2C_MAG.c ****                     {
+ 485:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Process the bit from outBuffer */
+ 486:Generated_Source\PSoC4/I2C_MAG.c ****                         if (outBuffer[byteCounter] & (0x80 >> (bitCounter % 8)))
+ 839              		.loc 1 486 0
+ 840 0246 494B     		ldr	r3, .L80+44
+ 841 0248 1A68     		ldr	r2, [r3]
+ 842 024a 454B     		ldr	r3, .L80+32
+ 843 024c 1B68     		ldr	r3, [r3]
+ 844 024e D318     		adds	r3, r2, r3
+ 845 0250 1B78     		ldrb	r3, [r3]
+ 846 0252 1900     		movs	r1, r3
+ 847 0254 404B     		ldr	r3, .L80+24
+ 848 0256 1B68     		ldr	r3, [r3]
+ 849 0258 0722     		movs	r2, #7
+ 850 025a 1340     		ands	r3, r2
+ 851 025c 8022     		movs	r2, #128
+ 852 025e 1A41     		asrs	r2, r2, r3
+ 853 0260 1300     		movs	r3, r2
+ 854 0262 0B40     		ands	r3, r1
+ 855 0264 06D0     		beq	.L66
+ 487:Generated_Source\PSoC4/I2C_MAG.c ****                         {
+ 488:Generated_Source\PSoC4/I2C_MAG.c ****                             SetSDA;
+ 856              		.loc 1 488 0
+ 857 0266 394B     		ldr	r3, .L80+12
+ 858 0268 384A     		ldr	r2, .L80+12
+ 859 026a 1268     		ldr	r2, [r2]
+ 860 026c 0421     		movs	r1, #4
+ 861 026e 0A43     		orrs	r2, r1
+ 862 0270 1A60     		str	r2, [r3]
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 25
+
+
+ 863 0272 05E0     		b	.L67
+ 864              	.L66:
+ 489:Generated_Source\PSoC4/I2C_MAG.c ****                         }
+ 490:Generated_Source\PSoC4/I2C_MAG.c ****                         else
+ 491:Generated_Source\PSoC4/I2C_MAG.c ****                         {
+ 492:Generated_Source\PSoC4/I2C_MAG.c ****                             ClrSDA;
+ 865              		.loc 1 492 0
+ 866 0274 354B     		ldr	r3, .L80+12
+ 867 0276 354A     		ldr	r2, .L80+12
+ 868 0278 1268     		ldr	r2, [r2]
+ 869 027a 0421     		movs	r1, #4
+ 870 027c 8A43     		bics	r2, r1
+ 871 027e 1A60     		str	r2, [r3]
+ 872              	.L67:
+ 493:Generated_Source\PSoC4/I2C_MAG.c ****                         }
+ 494:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 495:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Increment bit counter */
+ 496:Generated_Source\PSoC4/I2C_MAG.c ****                         bitCounter++;
+ 873              		.loc 1 496 0
+ 874 0280 354B     		ldr	r3, .L80+24
+ 875 0282 1B68     		ldr	r3, [r3]
+ 876 0284 5A1C     		adds	r2, r3, #1
+ 877 0286 344B     		ldr	r3, .L80+24
+ 878 0288 1A60     		str	r2, [r3]
+ 497:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 498:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Set SCL to HIGH*/
+ 499:Generated_Source\PSoC4/I2C_MAG.c ****                         SetSCL;
+ 879              		.loc 1 499 0
+ 880 028a 304B     		ldr	r3, .L80+12
+ 881 028c 2F4A     		ldr	r2, .L80+12
+ 882 028e 1268     		ldr	r2, [r2]
+ 883 0290 0821     		movs	r1, #8
+ 884 0292 0A43     		orrs	r2, r1
+ 885 0294 1A60     		str	r2, [r3]
+ 500:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 501:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Go to the next state */
+ 502:Generated_Source\PSoC4/I2C_MAG.c ****                         masterState = I2C_MAG_STATE_DATA_CLK;
+ 886              		.loc 1 502 0
+ 887 0296 2A4B     		ldr	r3, .L80
+ 888 0298 0C22     		movs	r2, #12
+ 889 029a 1A60     		str	r2, [r3]
+ 503:Generated_Source\PSoC4/I2C_MAG.c ****                     }
+ 504:Generated_Source\PSoC4/I2C_MAG.c ****                     else
+ 505:Generated_Source\PSoC4/I2C_MAG.c ****                     {
+ 506:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Set SDA high to check if NAK */
+ 507:Generated_Source\PSoC4/I2C_MAG.c ****                         SetSDA;
+ 508:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 509:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Decrement byte counter */
+ 510:Generated_Source\PSoC4/I2C_MAG.c ****                         byteCounter++;
+ 511:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 512:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Move to the next state */
+ 513:Generated_Source\PSoC4/I2C_MAG.c ****                         masterState = I2C_MAG_STATE_ACK;
+ 514:Generated_Source\PSoC4/I2C_MAG.c ****                     }
+ 515:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 516:Generated_Source\PSoC4/I2C_MAG.c ****                 else
+ 517:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 518:Generated_Source\PSoC4/I2C_MAG.c ****                     /* Set SCL and SDA to LOW */
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 26
+
+
+ 519:Generated_Source\PSoC4/I2C_MAG.c ****                     ClrSCL;     
+ 520:Generated_Source\PSoC4/I2C_MAG.c ****                     ClrSDA;         
+ 521:Generated_Source\PSoC4/I2C_MAG.c ****                     
+ 522:Generated_Source\PSoC4/I2C_MAG.c ****                     /* Transmission completed */
+ 523:Generated_Source\PSoC4/I2C_MAG.c ****                     masterState = I2C_MAG_STATE_STOP;
+ 524:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 525:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 526:Generated_Source\PSoC4/I2C_MAG.c ****             else /* Process a Read command */
+ 527:Generated_Source\PSoC4/I2C_MAG.c ****             {
+ 528:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Release the SDA line */
+ 529:Generated_Source\PSoC4/I2C_MAG.c ****                 SetSDA;
+ 530:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 531:Generated_Source\PSoC4/I2C_MAG.c ****                 /* Check if all bytes were read */
+ 532:Generated_Source\PSoC4/I2C_MAG.c ****                 if (byteCounter < packetSize)
+ 533:Generated_Source\PSoC4/I2C_MAG.c ****                 {            
+ 534:Generated_Source\PSoC4/I2C_MAG.c ****                     if (bitCounter < 8)
+ 535:Generated_Source\PSoC4/I2C_MAG.c ****                     {
+ 536:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Shift the byte to set the current bit */
+ 537:Generated_Source\PSoC4/I2C_MAG.c ****                         theByte <<= 1;
+ 538:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 539:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Set SCL to High */
+ 540:Generated_Source\PSoC4/I2C_MAG.c ****                         SetSCL;
+ 541:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 542:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Capture the bit */
+ 543:Generated_Source\PSoC4/I2C_MAG.c ****                         if (GetSDA)
+ 544:Generated_Source\PSoC4/I2C_MAG.c ****                         {
+ 545:Generated_Source\PSoC4/I2C_MAG.c ****                             theByte |= 1;
+ 546:Generated_Source\PSoC4/I2C_MAG.c ****                         }
+ 547:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 548:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Increment the bit counter */
+ 549:Generated_Source\PSoC4/I2C_MAG.c ****                         bitCounter++;
+ 550:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 551:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Go to the next state */
+ 552:Generated_Source\PSoC4/I2C_MAG.c ****                         masterState = I2C_MAG_STATE_DATA_CLK;
+ 553:Generated_Source\PSoC4/I2C_MAG.c ****                     }
+ 554:Generated_Source\PSoC4/I2C_MAG.c ****                     else
+ 555:Generated_Source\PSoC4/I2C_MAG.c ****                     {
+ 556:Generated_Source\PSoC4/I2C_MAG.c ****                         /* One byte complete, update buffer */
+ 557:Generated_Source\PSoC4/I2C_MAG.c ****                         inBuffer[byteCounter] = theByte;
+ 558:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 559:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Increment the byte counter */
+ 560:Generated_Source\PSoC4/I2C_MAG.c ****                         byteCounter++;
+ 561:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 562:Generated_Source\PSoC4/I2C_MAG.c ****                         /* Check if it is the last byte */
+ 563:Generated_Source\PSoC4/I2C_MAG.c ****                         if (byteCounter == packetSize)
+ 564:Generated_Source\PSoC4/I2C_MAG.c ****                         {
+ 565:Generated_Source\PSoC4/I2C_MAG.c ****                             /* Last byte, so NACK it */
+ 566:Generated_Source\PSoC4/I2C_MAG.c ****                             SetSDA;
+ 567:Generated_Source\PSoC4/I2C_MAG.c ****                             
+ 568:Generated_Source\PSoC4/I2C_MAG.c ****                             /* Move to the next state */
+ 569:Generated_Source\PSoC4/I2C_MAG.c ****                             masterState = I2C_MAG_STATE_ACK;
+ 570:Generated_Source\PSoC4/I2C_MAG.c ****                         }
+ 571:Generated_Source\PSoC4/I2C_MAG.c ****                         else
+ 572:Generated_Source\PSoC4/I2C_MAG.c ****                         {
+ 573:Generated_Source\PSoC4/I2C_MAG.c ****                             /* Not yet, so ACK it */
+ 574:Generated_Source\PSoC4/I2C_MAG.c ****                             ClrSDA;
+ 575:Generated_Source\PSoC4/I2C_MAG.c ****                             
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 27
+
+
+ 576:Generated_Source\PSoC4/I2C_MAG.c ****                             /* Move to the next state */
+ 577:Generated_Source\PSoC4/I2C_MAG.c ****                             masterState = I2C_MAG_STATE_ACK;
+ 578:Generated_Source\PSoC4/I2C_MAG.c ****                         }
+ 579:Generated_Source\PSoC4/I2C_MAG.c ****                     }
+ 580:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 581:Generated_Source\PSoC4/I2C_MAG.c ****                 else
+ 582:Generated_Source\PSoC4/I2C_MAG.c ****                 {
+ 583:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 584:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 585:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 890              		.loc 1 585 0
+ 891 029c E1E0     		b	.L79
+ 892              	.L65:
+ 507:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 893              		.loc 1 507 0
+ 894 029e 2B4B     		ldr	r3, .L80+12
+ 895 02a0 2A4A     		ldr	r2, .L80+12
+ 896 02a2 1268     		ldr	r2, [r2]
+ 897 02a4 0421     		movs	r1, #4
+ 898 02a6 0A43     		orrs	r2, r1
+ 899 02a8 1A60     		str	r2, [r3]
+ 510:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 900              		.loc 1 510 0
+ 901 02aa 2D4B     		ldr	r3, .L80+32
+ 902 02ac 1B68     		ldr	r3, [r3]
+ 903 02ae 5A1C     		adds	r2, r3, #1
+ 904 02b0 2B4B     		ldr	r3, .L80+32
+ 905 02b2 1A60     		str	r2, [r3]
+ 513:Generated_Source\PSoC4/I2C_MAG.c ****                     }
+ 906              		.loc 1 513 0
+ 907 02b4 224B     		ldr	r3, .L80
+ 908 02b6 0722     		movs	r2, #7
+ 909 02b8 1A60     		str	r2, [r3]
+ 910              		.loc 1 585 0
+ 911 02ba D2E0     		b	.L79
+ 912              	.L64:
+ 519:Generated_Source\PSoC4/I2C_MAG.c ****                     ClrSDA;         
+ 913              		.loc 1 519 0
+ 914 02bc 234B     		ldr	r3, .L80+12
+ 915 02be 234A     		ldr	r2, .L80+12
+ 916 02c0 1268     		ldr	r2, [r2]
+ 917 02c2 0821     		movs	r1, #8
+ 918 02c4 8A43     		bics	r2, r1
+ 919 02c6 1A60     		str	r2, [r3]
+ 520:Generated_Source\PSoC4/I2C_MAG.c ****                     
+ 920              		.loc 1 520 0
+ 921 02c8 204B     		ldr	r3, .L80+12
+ 922 02ca 204A     		ldr	r2, .L80+12
+ 923 02cc 1268     		ldr	r2, [r2]
+ 924 02ce 0421     		movs	r1, #4
+ 925 02d0 8A43     		bics	r2, r1
+ 926 02d2 1A60     		str	r2, [r3]
+ 523:Generated_Source\PSoC4/I2C_MAG.c ****                 }
+ 927              		.loc 1 523 0
+ 928 02d4 1A4B     		ldr	r3, .L80
+ 929 02d6 0D22     		movs	r2, #13
+ 930 02d8 1A60     		str	r2, [r3]
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 28
+
+
+ 931              		.loc 1 585 0
+ 932 02da C2E0     		b	.L79
+ 933              	.L63:
+ 529:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 934              		.loc 1 529 0
+ 935 02dc 1B4B     		ldr	r3, .L80+12
+ 936 02de 1B4A     		ldr	r2, .L80+12
+ 937 02e0 1268     		ldr	r2, [r2]
+ 938 02e2 0421     		movs	r1, #4
+ 939 02e4 0A43     		orrs	r2, r1
+ 940 02e6 1A60     		str	r2, [r3]
+ 532:Generated_Source\PSoC4/I2C_MAG.c ****                 {            
+ 941              		.loc 1 532 0
+ 942 02e8 1D4B     		ldr	r3, .L80+32
+ 943 02ea 1A68     		ldr	r2, [r3]
+ 944 02ec 1D4B     		ldr	r3, .L80+36
+ 945 02ee 1B68     		ldr	r3, [r3]
+ 946 02f0 9A42     		cmp	r2, r3
+ 947 02f2 00D3     		bcc	.LCB803
+ 948 02f4 B5E0     		b	.L79	@long jump
+ 949              	.LCB803:
+ 534:Generated_Source\PSoC4/I2C_MAG.c ****                     {
+ 950              		.loc 1 534 0
+ 951 02f6 184B     		ldr	r3, .L80+24
+ 952 02f8 1B68     		ldr	r3, [r3]
+ 953 02fa 072B     		cmp	r3, #7
+ 954 02fc 38D8     		bhi	.L71
+ 537:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 955              		.loc 1 537 0
+ 956 02fe 1A4B     		ldr	r3, .L80+40
+ 957 0300 1B78     		ldrb	r3, [r3]
+ 958 0302 DB18     		adds	r3, r3, r3
+ 959 0304 DAB2     		uxtb	r2, r3
+ 960 0306 184B     		ldr	r3, .L80+40
+ 961 0308 1A70     		strb	r2, [r3]
+ 540:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 962              		.loc 1 540 0
+ 963 030a 104B     		ldr	r3, .L80+12
+ 964 030c 0F4A     		ldr	r2, .L80+12
+ 965 030e 1268     		ldr	r2, [r2]
+ 966 0310 0821     		movs	r1, #8
+ 967 0312 0A43     		orrs	r2, r1
+ 968 0314 1A60     		str	r2, [r3]
+ 543:Generated_Source\PSoC4/I2C_MAG.c ****                         {
+ 969              		.loc 1 543 0
+ 970 0316 0F4B     		ldr	r3, .L80+20
+ 971 0318 1B68     		ldr	r3, [r3]
+ 972 031a 0422     		movs	r2, #4
+ 973 031c 1340     		ands	r3, r2
+ 974 031e 06D0     		beq	.L72
+ 545:Generated_Source\PSoC4/I2C_MAG.c ****                         }
+ 975              		.loc 1 545 0
+ 976 0320 114B     		ldr	r3, .L80+40
+ 977 0322 1B78     		ldrb	r3, [r3]
+ 978 0324 0122     		movs	r2, #1
+ 979 0326 1343     		orrs	r3, r2
+ 980 0328 DAB2     		uxtb	r2, r3
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 29
+
+
+ 981 032a 0F4B     		ldr	r3, .L80+40
+ 982 032c 1A70     		strb	r2, [r3]
+ 983              	.L72:
+ 549:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 984              		.loc 1 549 0
+ 985 032e 0A4B     		ldr	r3, .L80+24
+ 986 0330 1B68     		ldr	r3, [r3]
+ 987 0332 5A1C     		adds	r2, r3, #1
+ 988 0334 084B     		ldr	r3, .L80+24
+ 989 0336 1A60     		str	r2, [r3]
+ 552:Generated_Source\PSoC4/I2C_MAG.c ****                     }
+ 990              		.loc 1 552 0
+ 991 0338 014B     		ldr	r3, .L80
+ 992 033a 0C22     		movs	r2, #12
+ 993 033c 1A60     		str	r2, [r3]
+ 994              		.loc 1 585 0
+ 995 033e 90E0     		b	.L79
+ 996              	.L81:
+ 997              		.align	2
+ 998              	.L80:
+ 999 0340 14000000 		.word	masterState
+ 1000 0344 00000000 		.word	.L32
+ 1001 0348 10000000 		.word	masterControl
+ 1002 034c 00040440 		.word	1074004992
+ 1003 0350 0C000000 		.word	masterStatus
+ 1004 0354 04040440 		.word	1074004996
+ 1005 0358 00000000 		.word	bitCounter
+ 1006 035c 24000000 		.word	internalAddress
+ 1007 0360 04000000 		.word	byteCounter
+ 1008 0364 08000000 		.word	packetSize
+ 1009 0368 20000000 		.word	theByte
+ 1010 036c 18000000 		.word	outBuffer
+ 1011              	.L71:
+ 557:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 1012              		.loc 1 557 0
+ 1013 0370 3F4B     		ldr	r3, .L82
+ 1014 0372 1A68     		ldr	r2, [r3]
+ 1015 0374 3F4B     		ldr	r3, .L82+4
+ 1016 0376 1B68     		ldr	r3, [r3]
+ 1017 0378 D318     		adds	r3, r2, r3
+ 1018 037a 3F4A     		ldr	r2, .L82+8
+ 1019 037c 1278     		ldrb	r2, [r2]
+ 1020 037e 1A70     		strb	r2, [r3]
+ 560:Generated_Source\PSoC4/I2C_MAG.c ****                         
+ 1021              		.loc 1 560 0
+ 1022 0380 3C4B     		ldr	r3, .L82+4
+ 1023 0382 1B68     		ldr	r3, [r3]
+ 1024 0384 5A1C     		adds	r2, r3, #1
+ 1025 0386 3B4B     		ldr	r3, .L82+4
+ 1026 0388 1A60     		str	r2, [r3]
+ 563:Generated_Source\PSoC4/I2C_MAG.c ****                         {
+ 1027              		.loc 1 563 0
+ 1028 038a 3A4B     		ldr	r3, .L82+4
+ 1029 038c 1A68     		ldr	r2, [r3]
+ 1030 038e 3B4B     		ldr	r3, .L82+12
+ 1031 0390 1B68     		ldr	r3, [r3]
+ 1032 0392 9A42     		cmp	r2, r3
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 30
+
+
+ 1033 0394 09D1     		bne	.L74
+ 566:Generated_Source\PSoC4/I2C_MAG.c ****                             
+ 1034              		.loc 1 566 0
+ 1035 0396 3A4B     		ldr	r3, .L82+16
+ 1036 0398 394A     		ldr	r2, .L82+16
+ 1037 039a 1268     		ldr	r2, [r2]
+ 1038 039c 0421     		movs	r1, #4
+ 1039 039e 0A43     		orrs	r2, r1
+ 1040 03a0 1A60     		str	r2, [r3]
+ 569:Generated_Source\PSoC4/I2C_MAG.c ****                         }
+ 1041              		.loc 1 569 0
+ 1042 03a2 384B     		ldr	r3, .L82+20
+ 1043 03a4 0722     		movs	r2, #7
+ 1044 03a6 1A60     		str	r2, [r3]
+ 1045              		.loc 1 585 0
+ 1046 03a8 5BE0     		b	.L79
+ 1047              	.L74:
+ 574:Generated_Source\PSoC4/I2C_MAG.c ****                             
+ 1048              		.loc 1 574 0
+ 1049 03aa 354B     		ldr	r3, .L82+16
+ 1050 03ac 344A     		ldr	r2, .L82+16
+ 1051 03ae 1268     		ldr	r2, [r2]
+ 1052 03b0 0421     		movs	r1, #4
+ 1053 03b2 8A43     		bics	r2, r1
+ 1054 03b4 1A60     		str	r2, [r3]
+ 577:Generated_Source\PSoC4/I2C_MAG.c ****                         }
+ 1055              		.loc 1 577 0
+ 1056 03b6 334B     		ldr	r3, .L82+20
+ 1057 03b8 0722     		movs	r2, #7
+ 1058 03ba 1A60     		str	r2, [r3]
+ 1059              		.loc 1 585 0
+ 1060 03bc 51E0     		b	.L79
+ 1061              	.L41:
+ 586:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 587:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_DATA_CLK:
+ 588:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set SCL to LOW */
+ 589:Generated_Source\PSoC4/I2C_MAG.c ****             ClrSCL;
+ 1062              		.loc 1 589 0
+ 1063 03be 304B     		ldr	r3, .L82+16
+ 1064 03c0 2F4A     		ldr	r2, .L82+16
+ 1065 03c2 1268     		ldr	r2, [r2]
+ 1066 03c4 0821     		movs	r1, #8
+ 1067 03c6 8A43     		bics	r2, r1
+ 1068 03c8 1A60     		str	r2, [r3]
+ 590:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 591:Generated_Source\PSoC4/I2C_MAG.c ****             /* Go to the next state */
+ 592:Generated_Source\PSoC4/I2C_MAG.c ****             masterState = I2C_MAG_STATE_DATA;
+ 1069              		.loc 1 592 0
+ 1070 03ca 2E4B     		ldr	r3, .L82+20
+ 1071 03cc 0B22     		movs	r2, #11
+ 1072 03ce 1A60     		str	r2, [r3]
+ 593:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 1073              		.loc 1 593 0
+ 1074 03d0 48E0     		b	.L30
+ 1075              	.L42:
+ 594:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 595:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_STOP:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 31
+
+
+ 596:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set Clock High */
+ 597:Generated_Source\PSoC4/I2C_MAG.c ****             SetSCL;
+ 1076              		.loc 1 597 0
+ 1077 03d2 2B4B     		ldr	r3, .L82+16
+ 1078 03d4 2A4A     		ldr	r2, .L82+16
+ 1079 03d6 1268     		ldr	r2, [r2]
+ 1080 03d8 0821     		movs	r1, #8
+ 1081 03da 0A43     		orrs	r2, r1
+ 1082 03dc 1A60     		str	r2, [r3]
+ 598:Generated_Source\PSoC4/I2C_MAG.c ****                        
+ 599:Generated_Source\PSoC4/I2C_MAG.c ****             /* Go to IDLE state */
+ 600:Generated_Source\PSoC4/I2C_MAG.c ****             masterState = I2C_MAG_STATE_STOP_CLK;
+ 1083              		.loc 1 600 0
+ 1084 03de 294B     		ldr	r3, .L82+20
+ 1085 03e0 0E22     		movs	r2, #14
+ 1086 03e2 1A60     		str	r2, [r3]
+ 601:Generated_Source\PSoC4/I2C_MAG.c ****             break;    
+ 1087              		.loc 1 601 0
+ 1088 03e4 3EE0     		b	.L30
+ 1089              	.L43:
+ 602:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 603:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_STOP_CLK:
+ 604:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set SDA High */
+ 605:Generated_Source\PSoC4/I2C_MAG.c ****             SetSDA;
+ 1090              		.loc 1 605 0
+ 1091 03e6 264B     		ldr	r3, .L82+16
+ 1092 03e8 254A     		ldr	r2, .L82+16
+ 1093 03ea 1268     		ldr	r2, [r2]
+ 1094 03ec 0421     		movs	r1, #4
+ 1095 03ee 0A43     		orrs	r2, r1
+ 1096 03f0 1A60     		str	r2, [r3]
+ 606:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 607:Generated_Source\PSoC4/I2C_MAG.c ****             /* Return completion */
+ 608:Generated_Source\PSoC4/I2C_MAG.c ****             if (masterControl & I2C_MAG_WRITE_FRAME)
+ 1097              		.loc 1 608 0
+ 1098 03f2 254B     		ldr	r3, .L82+24
+ 1099 03f4 1B68     		ldr	r3, [r3]
+ 1100 03f6 0422     		movs	r2, #4
+ 1101 03f8 1340     		ands	r3, r2
+ 1102 03fa 06D0     		beq	.L75
+ 609:Generated_Source\PSoC4/I2C_MAG.c ****             {
+ 610:Generated_Source\PSoC4/I2C_MAG.c ****                 masterStatus |= I2C_MAG_MSTAT_WR_CMPLT;
+ 1103              		.loc 1 610 0
+ 1104 03fc 234B     		ldr	r3, .L82+28
+ 1105 03fe 1B68     		ldr	r3, [r3]
+ 1106 0400 0222     		movs	r2, #2
+ 1107 0402 1A43     		orrs	r2, r3
+ 1108 0404 214B     		ldr	r3, .L82+28
+ 1109 0406 1A60     		str	r2, [r3]
+ 1110 0408 05E0     		b	.L76
+ 1111              	.L75:
+ 611:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 612:Generated_Source\PSoC4/I2C_MAG.c ****             else
+ 613:Generated_Source\PSoC4/I2C_MAG.c ****             {
+ 614:Generated_Source\PSoC4/I2C_MAG.c ****                 masterStatus |= I2C_MAG_MSTAT_RD_CMPLT;
+ 1112              		.loc 1 614 0
+ 1113 040a 204B     		ldr	r3, .L82+28
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 32
+
+
+ 1114 040c 1B68     		ldr	r3, [r3]
+ 1115 040e 0122     		movs	r2, #1
+ 1116 0410 1A43     		orrs	r2, r3
+ 1117 0412 1E4B     		ldr	r3, .L82+28
+ 1118 0414 1A60     		str	r2, [r3]
+ 1119              	.L76:
+ 615:Generated_Source\PSoC4/I2C_MAG.c ****             }
+ 616:Generated_Source\PSoC4/I2C_MAG.c ****                 
+ 617:Generated_Source\PSoC4/I2C_MAG.c ****             /* Clear busy bit */
+ 618:Generated_Source\PSoC4/I2C_MAG.c ****             masterStatus &= ~(I2C_MAG_MSTAT_XFER_INP);
+ 1120              		.loc 1 618 0
+ 1121 0416 1D4B     		ldr	r3, .L82+28
+ 1122 0418 1B68     		ldr	r3, [r3]
+ 1123 041a 0422     		movs	r2, #4
+ 1124 041c 9343     		bics	r3, r2
+ 1125 041e 1A00     		movs	r2, r3
+ 1126 0420 1A4B     		ldr	r3, .L82+28
+ 1127 0422 1A60     		str	r2, [r3]
+ 619:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 620:Generated_Source\PSoC4/I2C_MAG.c ****             /* Clear the master control */
+ 621:Generated_Source\PSoC4/I2C_MAG.c ****             masterControl = 0;
+ 1128              		.loc 1 621 0
+ 1129 0424 184B     		ldr	r3, .L82+24
+ 1130 0426 0022     		movs	r2, #0
+ 1131 0428 1A60     		str	r2, [r3]
+ 622:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 623:Generated_Source\PSoC4/I2C_MAG.c ****             /* Go to IDLE state */
+ 624:Generated_Source\PSoC4/I2C_MAG.c ****             masterState = I2C_MAG_STATE_IDLE;
+ 1132              		.loc 1 624 0
+ 1133 042a 164B     		ldr	r3, .L82+20
+ 1134 042c 0022     		movs	r2, #0
+ 1135 042e 1A60     		str	r2, [r3]
+ 625:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 1136              		.loc 1 625 0
+ 1137 0430 18E0     		b	.L30
+ 1138              	.L44:
+ 626:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 627:Generated_Source\PSoC4/I2C_MAG.c ****         case I2C_MAG_STATE_NO_STOP:
+ 628:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set SDA and SCL High */
+ 629:Generated_Source\PSoC4/I2C_MAG.c ****             SetSDA;
+ 1139              		.loc 1 629 0
+ 1140 0432 134B     		ldr	r3, .L82+16
+ 1141 0434 124A     		ldr	r2, .L82+16
+ 1142 0436 1268     		ldr	r2, [r2]
+ 1143 0438 0421     		movs	r1, #4
+ 1144 043a 0A43     		orrs	r2, r1
+ 1145 043c 1A60     		str	r2, [r3]
+ 630:Generated_Source\PSoC4/I2C_MAG.c ****             SetSCL;
+ 1146              		.loc 1 630 0
+ 1147 043e 104B     		ldr	r3, .L82+16
+ 1148 0440 0F4A     		ldr	r2, .L82+16
+ 1149 0442 1268     		ldr	r2, [r2]
+ 1150 0444 0821     		movs	r1, #8
+ 1151 0446 0A43     		orrs	r2, r1
+ 1152 0448 1A60     		str	r2, [r3]
+ 631:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 632:Generated_Source\PSoC4/I2C_MAG.c ****             /* Set transmission completed */
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 33
+
+
+ 633:Generated_Source\PSoC4/I2C_MAG.c ****             masterStatus = I2C_MAG_MSTAT_XFER_HALT;
+ 1153              		.loc 1 633 0
+ 1154 044a 104B     		ldr	r3, .L82+28
+ 1155 044c 0822     		movs	r2, #8
+ 1156 044e 1A60     		str	r2, [r3]
+ 634:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 635:Generated_Source\PSoC4/I2C_MAG.c ****             /* Clear master control */
+ 636:Generated_Source\PSoC4/I2C_MAG.c ****             masterControl = 0;
+ 1157              		.loc 1 636 0
+ 1158 0450 0D4B     		ldr	r3, .L82+24
+ 1159 0452 0022     		movs	r2, #0
+ 1160 0454 1A60     		str	r2, [r3]
+ 637:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 638:Generated_Source\PSoC4/I2C_MAG.c ****             /* Go to IDLE state */
+ 639:Generated_Source\PSoC4/I2C_MAG.c ****             masterState = I2C_MAG_STATE_IDLE;            
+ 1161              		.loc 1 639 0
+ 1162 0456 0B4B     		ldr	r3, .L82+20
+ 1163 0458 0022     		movs	r2, #0
+ 1164 045a 1A60     		str	r2, [r3]
+ 640:Generated_Source\PSoC4/I2C_MAG.c ****             break;
+ 1165              		.loc 1 640 0
+ 1166 045c 02E0     		b	.L30
+ 1167              	.L78:
+ 301:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 1168              		.loc 1 301 0
+ 1169 045e C046     		nop
+ 1170 0460 00E0     		b	.L30
+ 1171              	.L79:
+ 585:Generated_Source\PSoC4/I2C_MAG.c ****             
+ 1172              		.loc 1 585 0
+ 1173 0462 C046     		nop
+ 1174              	.L30:
+ 641:Generated_Source\PSoC4/I2C_MAG.c ****     }
+ 642:Generated_Source\PSoC4/I2C_MAG.c ****     
+ 643:Generated_Source\PSoC4/I2C_MAG.c ****     return masterStatus;
+ 1175              		.loc 1 643 0
+ 1176 0464 094B     		ldr	r3, .L82+28
+ 1177 0466 1B68     		ldr	r3, [r3]
+ 644:Generated_Source\PSoC4/I2C_MAG.c **** }
+ 1178              		.loc 1 644 0
+ 1179 0468 1800     		movs	r0, r3
+ 1180 046a BD46     		mov	sp, r7
+ 1181              		@ sp needed
+ 1182 046c 80BD     		pop	{r7, pc}
+ 1183              	.L83:
+ 1184 046e C046     		.align	2
+ 1185              	.L82:
+ 1186 0470 1C000000 		.word	inBuffer
+ 1187 0474 04000000 		.word	byteCounter
+ 1188 0478 20000000 		.word	theByte
+ 1189 047c 08000000 		.word	packetSize
+ 1190 0480 00040440 		.word	1074004992
+ 1191 0484 14000000 		.word	masterState
+ 1192 0488 10000000 		.word	masterControl
+ 1193 048c 0C000000 		.word	masterStatus
+ 1194              		.cfi_endproc
+ 1195              	.LFE4:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 34
+
+
+ 1196              		.size	I2C_MAG_Process, .-I2C_MAG_Process
+ 1197              		.section	.text.I2C_MAG_ClearStatus,"ax",%progbits
+ 1198              		.align	2
+ 1199              		.global	I2C_MAG_ClearStatus
+ 1200              		.code	16
+ 1201              		.thumb_func
+ 1202              		.type	I2C_MAG_ClearStatus, %function
+ 1203              	I2C_MAG_ClearStatus:
+ 1204              	.LFB5:
+ 645:Generated_Source\PSoC4/I2C_MAG.c **** 
+ 646:Generated_Source\PSoC4/I2C_MAG.c **** /*******************************************************************************
+ 647:Generated_Source\PSoC4/I2C_MAG.c **** * Function Name: I2C_MAG_ClearStatus
+ 648:Generated_Source\PSoC4/I2C_MAG.c **** ********************************************************************************
+ 649:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 650:Generated_Source\PSoC4/I2C_MAG.c **** * Summary:
+ 651:Generated_Source\PSoC4/I2C_MAG.c **** *  Clear internal status
+ 652:Generated_Source\PSoC4/I2C_MAG.c **** *
+ 653:Generated_Source\PSoC4/I2C_MAG.c **** *******************************************************************************/
+ 654:Generated_Source\PSoC4/I2C_MAG.c **** void   I2C_MAG_ClearStatus(void)
+ 655:Generated_Source\PSoC4/I2C_MAG.c **** {
+ 1205              		.loc 1 655 0
+ 1206              		.cfi_startproc
+ 1207              		@ args = 0, pretend = 0, frame = 0
+ 1208              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1209 0000 80B5     		push	{r7, lr}
+ 1210              		.cfi_def_cfa_offset 8
+ 1211              		.cfi_offset 7, -8
+ 1212              		.cfi_offset 14, -4
+ 1213 0002 00AF     		add	r7, sp, #0
+ 1214              		.cfi_def_cfa_register 7
+ 656:Generated_Source\PSoC4/I2C_MAG.c ****     masterStatus = 0;
+ 1215              		.loc 1 656 0
+ 1216 0004 024B     		ldr	r3, .L85
+ 1217 0006 0022     		movs	r2, #0
+ 1218 0008 1A60     		str	r2, [r3]
+ 657:Generated_Source\PSoC4/I2C_MAG.c **** }
+ 1219              		.loc 1 657 0
+ 1220 000a C046     		nop
+ 1221 000c BD46     		mov	sp, r7
+ 1222              		@ sp needed
+ 1223 000e 80BD     		pop	{r7, pc}
+ 1224              	.L86:
+ 1225              		.align	2
+ 1226              	.L85:
+ 1227 0010 0C000000 		.word	masterStatus
+ 1228              		.cfi_endproc
+ 1229              	.LFE5:
+ 1230              		.size	I2C_MAG_ClearStatus, .-I2C_MAG_ClearStatus
+ 1231              		.text
+ 1232              	.Letext0:
+ 1233              		.file 2 "Generated_Source\\PSoC4\\cytypes.h"
+ 1234              		.section	.debug_info,"",%progbits
+ 1235              	.Ldebug_info0:
+ 1236 0000 A4020000 		.4byte	0x2a4
+ 1237 0004 0400     		.2byte	0x4
+ 1238 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 1239 000a 04       		.byte	0x4
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 35
+
+
+ 1240 000b 01       		.uleb128 0x1
+ 1241 000c 9E000000 		.4byte	.LASF38
+ 1242 0010 0C       		.byte	0xc
+ 1243 0011 7A020000 		.4byte	.LASF39
+ 1244 0015 4D010000 		.4byte	.LASF40
+ 1245 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 1246 001d 00000000 		.4byte	0
+ 1247 0021 00000000 		.4byte	.Ldebug_line0
+ 1248 0025 02       		.uleb128 0x2
+ 1249 0026 01       		.byte	0x1
+ 1250 0027 06       		.byte	0x6
+ 1251 0028 65020000 		.4byte	.LASF0
+ 1252 002c 02       		.uleb128 0x2
+ 1253 002d 01       		.byte	0x1
+ 1254 002e 08       		.byte	0x8
+ 1255 002f 2C010000 		.4byte	.LASF1
+ 1256 0033 02       		.uleb128 0x2
+ 1257 0034 02       		.byte	0x2
+ 1258 0035 05       		.byte	0x5
+ 1259 0036 2F020000 		.4byte	.LASF2
+ 1260 003a 02       		.uleb128 0x2
+ 1261 003b 02       		.byte	0x2
+ 1262 003c 07       		.byte	0x7
+ 1263 003d 21000000 		.4byte	.LASF3
+ 1264 0041 02       		.uleb128 0x2
+ 1265 0042 04       		.byte	0x4
+ 1266 0043 05       		.byte	0x5
+ 1267 0044 41020000 		.4byte	.LASF4
+ 1268 0048 02       		.uleb128 0x2
+ 1269 0049 04       		.byte	0x4
+ 1270 004a 07       		.byte	0x7
+ 1271 004b 74000000 		.4byte	.LASF5
+ 1272 004f 02       		.uleb128 0x2
+ 1273 0050 08       		.byte	0x8
+ 1274 0051 05       		.byte	0x5
+ 1275 0052 0C020000 		.4byte	.LASF6
+ 1276 0056 02       		.uleb128 0x2
+ 1277 0057 08       		.byte	0x8
+ 1278 0058 07       		.byte	0x7
+ 1279 0059 BE010000 		.4byte	.LASF7
+ 1280 005d 03       		.uleb128 0x3
+ 1281 005e 04       		.byte	0x4
+ 1282 005f 05       		.byte	0x5
+ 1283 0060 696E7400 		.ascii	"int\000"
+ 1284 0064 02       		.uleb128 0x2
+ 1285 0065 04       		.byte	0x4
+ 1286 0066 07       		.byte	0x7
+ 1287 0067 34000000 		.4byte	.LASF8
+ 1288 006b 04       		.uleb128 0x4
+ 1289 006c 86000000 		.4byte	.LASF9
+ 1290 0070 02       		.byte	0x2
+ 1291 0071 B901     		.2byte	0x1b9
+ 1292 0073 2C000000 		.4byte	0x2c
+ 1293 0077 04       		.uleb128 0x4
+ 1294 0078 76010000 		.4byte	.LASF10
+ 1295 007c 02       		.byte	0x2
+ 1296 007d BA01     		.2byte	0x1ba
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 36
+
+
+ 1297 007f 3A000000 		.4byte	0x3a
+ 1298 0083 04       		.uleb128 0x4
+ 1299 0084 8A010000 		.4byte	.LASF11
+ 1300 0088 02       		.byte	0x2
+ 1301 0089 BB01     		.2byte	0x1bb
+ 1302 008b 48000000 		.4byte	0x48
+ 1303 008f 02       		.uleb128 0x2
+ 1304 0090 04       		.byte	0x4
+ 1305 0091 04       		.byte	0x4
+ 1306 0092 41000000 		.4byte	.LASF12
+ 1307 0096 02       		.uleb128 0x2
+ 1308 0097 08       		.byte	0x8
+ 1309 0098 04       		.byte	0x4
+ 1310 0099 46010000 		.4byte	.LASF13
+ 1311 009d 02       		.uleb128 0x2
+ 1312 009e 01       		.byte	0x1
+ 1313 009f 08       		.byte	0x8
+ 1314 00a0 1A020000 		.4byte	.LASF14
+ 1315 00a4 04       		.uleb128 0x4
+ 1316 00a5 07000000 		.4byte	.LASF15
+ 1317 00a9 02       		.byte	0x2
+ 1318 00aa 6502     		.2byte	0x265
+ 1319 00ac B0000000 		.4byte	0xb0
+ 1320 00b0 05       		.uleb128 0x5
+ 1321 00b1 83000000 		.4byte	0x83
+ 1322 00b5 02       		.uleb128 0x2
+ 1323 00b6 08       		.byte	0x8
+ 1324 00b7 04       		.byte	0x4
+ 1325 00b8 F7010000 		.4byte	.LASF16
+ 1326 00bc 02       		.uleb128 0x2
+ 1327 00bd 04       		.byte	0x4
+ 1328 00be 07       		.byte	0x7
+ 1329 00bf 03020000 		.4byte	.LASF17
+ 1330 00c3 06       		.uleb128 0x6
+ 1331 00c4 9B010000 		.4byte	.LASF21
+ 1332 00c8 01       		.byte	0x1
+ 1333 00c9 39       		.byte	0x39
+ 1334 00ca 83000000 		.4byte	0x83
+ 1335 00ce 00000000 		.4byte	.LFB0
+ 1336 00d2 98000000 		.4byte	.LFE0-.LFB0
+ 1337 00d6 01       		.uleb128 0x1
+ 1338 00d7 9C       		.byte	0x9c
+ 1339 00d8 23010000 		.4byte	0x123
+ 1340 00dc 07       		.uleb128 0x7
+ 1341 00dd DA010000 		.4byte	.LASF18
+ 1342 00e1 01       		.byte	0x1
+ 1343 00e2 39       		.byte	0x39
+ 1344 00e3 83000000 		.4byte	0x83
+ 1345 00e7 02       		.uleb128 0x2
+ 1346 00e8 91       		.byte	0x91
+ 1347 00e9 6C       		.sleb128 -20
+ 1348 00ea 07       		.uleb128 0x7
+ 1349 00eb B7010000 		.4byte	.LASF19
+ 1350 00ef 01       		.byte	0x1
+ 1351 00f0 39       		.byte	0x39
+ 1352 00f1 23010000 		.4byte	0x123
+ 1353 00f5 02       		.uleb128 0x2
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 37
+
+
+ 1354 00f6 91       		.byte	0x91
+ 1355 00f7 68       		.sleb128 -24
+ 1356 00f8 08       		.uleb128 0x8
+ 1357 00f9 636E7400 		.ascii	"cnt\000"
+ 1358 00fd 01       		.byte	0x1
+ 1359 00fe 39       		.byte	0x39
+ 1360 00ff 83000000 		.4byte	0x83
+ 1361 0103 02       		.uleb128 0x2
+ 1362 0104 91       		.byte	0x91
+ 1363 0105 64       		.sleb128 -28
+ 1364 0106 07       		.uleb128 0x7
+ 1365 0107 D5010000 		.4byte	.LASF20
+ 1366 010b 01       		.byte	0x1
+ 1367 010c 39       		.byte	0x39
+ 1368 010d 83000000 		.4byte	0x83
+ 1369 0111 02       		.uleb128 0x2
+ 1370 0112 91       		.byte	0x91
+ 1371 0113 60       		.sleb128 -32
+ 1372 0114 09       		.uleb128 0x9
+ 1373 0115 72657400 		.ascii	"ret\000"
+ 1374 0119 01       		.byte	0x1
+ 1375 011a 3B       		.byte	0x3b
+ 1376 011b 83000000 		.4byte	0x83
+ 1377 011f 02       		.uleb128 0x2
+ 1378 0120 91       		.byte	0x91
+ 1379 0121 74       		.sleb128 -12
+ 1380 0122 00       		.byte	0
+ 1381 0123 0A       		.uleb128 0xa
+ 1382 0124 04       		.byte	0x4
+ 1383 0125 6B000000 		.4byte	0x6b
+ 1384 0129 06       		.uleb128 0x6
+ 1385 012a 64000000 		.4byte	.LASF22
+ 1386 012e 01       		.byte	0x1
+ 1387 012f 81       		.byte	0x81
+ 1388 0130 83000000 		.4byte	0x83
+ 1389 0134 00000000 		.4byte	.LFB1
+ 1390 0138 9C000000 		.4byte	.LFE1-.LFB1
+ 1391 013c 01       		.uleb128 0x1
+ 1392 013d 9C       		.byte	0x9c
+ 1393 013e 89010000 		.4byte	0x189
+ 1394 0142 07       		.uleb128 0x7
+ 1395 0143 DA010000 		.4byte	.LASF18
+ 1396 0147 01       		.byte	0x1
+ 1397 0148 81       		.byte	0x81
+ 1398 0149 83000000 		.4byte	0x83
+ 1399 014d 02       		.uleb128 0x2
+ 1400 014e 91       		.byte	0x91
+ 1401 014f 6C       		.sleb128 -20
+ 1402 0150 07       		.uleb128 0x7
+ 1403 0151 00000000 		.4byte	.LASF23
+ 1404 0155 01       		.byte	0x1
+ 1405 0156 81       		.byte	0x81
+ 1406 0157 23010000 		.4byte	0x123
+ 1407 015b 02       		.uleb128 0x2
+ 1408 015c 91       		.byte	0x91
+ 1409 015d 68       		.sleb128 -24
+ 1410 015e 08       		.uleb128 0x8
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 38
+
+
+ 1411 015f 636E7400 		.ascii	"cnt\000"
+ 1412 0163 01       		.byte	0x1
+ 1413 0164 81       		.byte	0x81
+ 1414 0165 83000000 		.4byte	0x83
+ 1415 0169 02       		.uleb128 0x2
+ 1416 016a 91       		.byte	0x91
+ 1417 016b 64       		.sleb128 -28
+ 1418 016c 07       		.uleb128 0x7
+ 1419 016d D5010000 		.4byte	.LASF20
+ 1420 0171 01       		.byte	0x1
+ 1421 0172 81       		.byte	0x81
+ 1422 0173 83000000 		.4byte	0x83
+ 1423 0177 02       		.uleb128 0x2
+ 1424 0178 91       		.byte	0x91
+ 1425 0179 60       		.sleb128 -32
+ 1426 017a 09       		.uleb128 0x9
+ 1427 017b 72657400 		.ascii	"ret\000"
+ 1428 017f 01       		.byte	0x1
+ 1429 0180 83       		.byte	0x83
+ 1430 0181 83000000 		.4byte	0x83
+ 1431 0185 02       		.uleb128 0x2
+ 1432 0186 91       		.byte	0x91
+ 1433 0187 74       		.sleb128 -12
+ 1434 0188 00       		.byte	0
+ 1435 0189 06       		.uleb128 0x6
+ 1436 018a 8C000000 		.4byte	.LASF24
+ 1437 018e 01       		.byte	0x1
+ 1438 018f C3       		.byte	0xc3
+ 1439 0190 83000000 		.4byte	0x83
+ 1440 0194 00000000 		.4byte	.LFB2
+ 1441 0198 7C000000 		.4byte	.LFE2-.LFB2
+ 1442 019c 01       		.uleb128 0x1
+ 1443 019d 9C       		.byte	0x9c
+ 1444 019e BF010000 		.4byte	0x1bf
+ 1445 01a2 07       		.uleb128 0x7
+ 1446 01a3 55020000 		.4byte	.LASF25
+ 1447 01a7 01       		.byte	0x1
+ 1448 01a8 C3       		.byte	0xc3
+ 1449 01a9 83000000 		.4byte	0x83
+ 1450 01ad 02       		.uleb128 0x2
+ 1451 01ae 91       		.byte	0x91
+ 1452 01af 6C       		.sleb128 -20
+ 1453 01b0 09       		.uleb128 0x9
+ 1454 01b1 72657400 		.ascii	"ret\000"
+ 1455 01b5 01       		.byte	0x1
+ 1456 01b6 C5       		.byte	0xc5
+ 1457 01b7 83000000 		.4byte	0x83
+ 1458 01bb 02       		.uleb128 0x2
+ 1459 01bc 91       		.byte	0x91
+ 1460 01bd 74       		.sleb128 -12
+ 1461 01be 00       		.byte	0
+ 1462 01bf 0B       		.uleb128 0xb
+ 1463 01c0 47000000 		.4byte	.LASF26
+ 1464 01c4 01       		.byte	0x1
+ 1465 01c5 0201     		.2byte	0x102
+ 1466 01c7 83000000 		.4byte	0x83
+ 1467 01cb 00000000 		.4byte	.LFB3
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 39
+
+
+ 1468 01cf 34000000 		.4byte	.LFE3-.LFB3
+ 1469 01d3 01       		.uleb128 0x1
+ 1470 01d4 9C       		.byte	0x9c
+ 1471 01d5 0B       		.uleb128 0xb
+ 1472 01d6 E7010000 		.4byte	.LASF27
+ 1473 01da 01       		.byte	0x1
+ 1474 01db 1901     		.2byte	0x119
+ 1475 01dd 83000000 		.4byte	0x83
+ 1476 01e1 00000000 		.4byte	.LFB4
+ 1477 01e5 90040000 		.4byte	.LFE4-.LFB4
+ 1478 01e9 01       		.uleb128 0x1
+ 1479 01ea 9C       		.byte	0x9c
+ 1480 01eb 0C       		.uleb128 0xc
+ 1481 01ec 0D000000 		.4byte	.LASF41
+ 1482 01f0 01       		.byte	0x1
+ 1483 01f1 8E02     		.2byte	0x28e
+ 1484 01f3 00000000 		.4byte	.LFB5
+ 1485 01f7 14000000 		.4byte	.LFE5-.LFB5
+ 1486 01fb 01       		.uleb128 0x1
+ 1487 01fc 9C       		.byte	0x9c
+ 1488 01fd 0D       		.uleb128 0xd
+ 1489 01fe 4A020000 		.4byte	.LASF28
+ 1490 0202 01       		.byte	0x1
+ 1491 0203 10       		.byte	0x10
+ 1492 0204 83000000 		.4byte	0x83
+ 1493 0208 05       		.uleb128 0x5
+ 1494 0209 03       		.byte	0x3
+ 1495 020a 00000000 		.4byte	bitCounter
+ 1496 020e 0D       		.uleb128 0xd
+ 1497 020f 3A010000 		.4byte	.LASF29
+ 1498 0213 01       		.byte	0x1
+ 1499 0214 11       		.byte	0x11
+ 1500 0215 83000000 		.4byte	0x83
+ 1501 0219 05       		.uleb128 0x5
+ 1502 021a 03       		.byte	0x3
+ 1503 021b 04000000 		.4byte	byteCounter
+ 1504 021f 0D       		.uleb128 0xd
+ 1505 0220 AC010000 		.4byte	.LASF30
+ 1506 0224 01       		.byte	0x1
+ 1507 0225 12       		.byte	0x12
+ 1508 0226 83000000 		.4byte	0x83
+ 1509 022a 05       		.uleb128 0x5
+ 1510 022b 03       		.byte	0x3
+ 1511 022c 08000000 		.4byte	packetSize
+ 1512 0230 0D       		.uleb128 0xd
+ 1513 0231 7D010000 		.4byte	.LASF31
+ 1514 0235 01       		.byte	0x1
+ 1515 0236 13       		.byte	0x13
+ 1516 0237 83000000 		.4byte	0x83
+ 1517 023b 05       		.uleb128 0x5
+ 1518 023c 03       		.byte	0x3
+ 1519 023d 0C000000 		.4byte	masterStatus
+ 1520 0241 0D       		.uleb128 0xd
+ 1521 0242 9B020000 		.4byte	.LASF32
+ 1522 0246 01       		.byte	0x1
+ 1523 0247 14       		.byte	0x14
+ 1524 0248 83000000 		.4byte	0x83
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 40
+
+
+ 1525 024c 05       		.uleb128 0x5
+ 1526 024d 03       		.byte	0x3
+ 1527 024e 10000000 		.4byte	masterControl
+ 1528 0252 0D       		.uleb128 0xd
+ 1529 0253 58000000 		.4byte	.LASF33
+ 1530 0257 01       		.byte	0x1
+ 1531 0258 15       		.byte	0x15
+ 1532 0259 83000000 		.4byte	0x83
+ 1533 025d 05       		.uleb128 0x5
+ 1534 025e 03       		.byte	0x3
+ 1535 025f 14000000 		.4byte	masterState
+ 1536 0263 0D       		.uleb128 0xd
+ 1537 0264 91010000 		.4byte	.LASF34
+ 1538 0268 01       		.byte	0x1
+ 1539 0269 17       		.byte	0x17
+ 1540 026a 23010000 		.4byte	0x123
+ 1541 026e 05       		.uleb128 0x5
+ 1542 026f 03       		.byte	0x3
+ 1543 0270 18000000 		.4byte	outBuffer
+ 1544 0274 0D       		.uleb128 0xd
+ 1545 0275 71020000 		.4byte	.LASF35
+ 1546 0279 01       		.byte	0x1
+ 1547 027a 18       		.byte	0x18
+ 1548 027b 23010000 		.4byte	0x123
+ 1549 027f 05       		.uleb128 0x5
+ 1550 0280 03       		.byte	0x3
+ 1551 0281 1C000000 		.4byte	inBuffer
+ 1552 0285 0D       		.uleb128 0xd
+ 1553 0286 39020000 		.4byte	.LASF36
+ 1554 028a 01       		.byte	0x1
+ 1555 028b 19       		.byte	0x19
+ 1556 028c 6B000000 		.4byte	0x6b
+ 1557 0290 05       		.uleb128 0x5
+ 1558 0291 03       		.byte	0x3
+ 1559 0292 20000000 		.4byte	theByte
+ 1560 0296 0D       		.uleb128 0xd
+ 1561 0297 1F020000 		.4byte	.LASF37
+ 1562 029b 01       		.byte	0x1
+ 1563 029c 1B       		.byte	0x1b
+ 1564 029d 83000000 		.4byte	0x83
+ 1565 02a1 05       		.uleb128 0x5
+ 1566 02a2 03       		.byte	0x3
+ 1567 02a3 24000000 		.4byte	internalAddress
+ 1568 02a7 00       		.byte	0
+ 1569              		.section	.debug_abbrev,"",%progbits
+ 1570              	.Ldebug_abbrev0:
+ 1571 0000 01       		.uleb128 0x1
+ 1572 0001 11       		.uleb128 0x11
+ 1573 0002 01       		.byte	0x1
+ 1574 0003 25       		.uleb128 0x25
+ 1575 0004 0E       		.uleb128 0xe
+ 1576 0005 13       		.uleb128 0x13
+ 1577 0006 0B       		.uleb128 0xb
+ 1578 0007 03       		.uleb128 0x3
+ 1579 0008 0E       		.uleb128 0xe
+ 1580 0009 1B       		.uleb128 0x1b
+ 1581 000a 0E       		.uleb128 0xe
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 41
+
+
+ 1582 000b 55       		.uleb128 0x55
+ 1583 000c 17       		.uleb128 0x17
+ 1584 000d 11       		.uleb128 0x11
+ 1585 000e 01       		.uleb128 0x1
+ 1586 000f 10       		.uleb128 0x10
+ 1587 0010 17       		.uleb128 0x17
+ 1588 0011 00       		.byte	0
+ 1589 0012 00       		.byte	0
+ 1590 0013 02       		.uleb128 0x2
+ 1591 0014 24       		.uleb128 0x24
+ 1592 0015 00       		.byte	0
+ 1593 0016 0B       		.uleb128 0xb
+ 1594 0017 0B       		.uleb128 0xb
+ 1595 0018 3E       		.uleb128 0x3e
+ 1596 0019 0B       		.uleb128 0xb
+ 1597 001a 03       		.uleb128 0x3
+ 1598 001b 0E       		.uleb128 0xe
+ 1599 001c 00       		.byte	0
+ 1600 001d 00       		.byte	0
+ 1601 001e 03       		.uleb128 0x3
+ 1602 001f 24       		.uleb128 0x24
+ 1603 0020 00       		.byte	0
+ 1604 0021 0B       		.uleb128 0xb
+ 1605 0022 0B       		.uleb128 0xb
+ 1606 0023 3E       		.uleb128 0x3e
+ 1607 0024 0B       		.uleb128 0xb
+ 1608 0025 03       		.uleb128 0x3
+ 1609 0026 08       		.uleb128 0x8
+ 1610 0027 00       		.byte	0
+ 1611 0028 00       		.byte	0
+ 1612 0029 04       		.uleb128 0x4
+ 1613 002a 16       		.uleb128 0x16
+ 1614 002b 00       		.byte	0
+ 1615 002c 03       		.uleb128 0x3
+ 1616 002d 0E       		.uleb128 0xe
+ 1617 002e 3A       		.uleb128 0x3a
+ 1618 002f 0B       		.uleb128 0xb
+ 1619 0030 3B       		.uleb128 0x3b
+ 1620 0031 05       		.uleb128 0x5
+ 1621 0032 49       		.uleb128 0x49
+ 1622 0033 13       		.uleb128 0x13
+ 1623 0034 00       		.byte	0
+ 1624 0035 00       		.byte	0
+ 1625 0036 05       		.uleb128 0x5
+ 1626 0037 35       		.uleb128 0x35
+ 1627 0038 00       		.byte	0
+ 1628 0039 49       		.uleb128 0x49
+ 1629 003a 13       		.uleb128 0x13
+ 1630 003b 00       		.byte	0
+ 1631 003c 00       		.byte	0
+ 1632 003d 06       		.uleb128 0x6
+ 1633 003e 2E       		.uleb128 0x2e
+ 1634 003f 01       		.byte	0x1
+ 1635 0040 3F       		.uleb128 0x3f
+ 1636 0041 19       		.uleb128 0x19
+ 1637 0042 03       		.uleb128 0x3
+ 1638 0043 0E       		.uleb128 0xe
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 42
+
+
+ 1639 0044 3A       		.uleb128 0x3a
+ 1640 0045 0B       		.uleb128 0xb
+ 1641 0046 3B       		.uleb128 0x3b
+ 1642 0047 0B       		.uleb128 0xb
+ 1643 0048 27       		.uleb128 0x27
+ 1644 0049 19       		.uleb128 0x19
+ 1645 004a 49       		.uleb128 0x49
+ 1646 004b 13       		.uleb128 0x13
+ 1647 004c 11       		.uleb128 0x11
+ 1648 004d 01       		.uleb128 0x1
+ 1649 004e 12       		.uleb128 0x12
+ 1650 004f 06       		.uleb128 0x6
+ 1651 0050 40       		.uleb128 0x40
+ 1652 0051 18       		.uleb128 0x18
+ 1653 0052 9742     		.uleb128 0x2117
+ 1654 0054 19       		.uleb128 0x19
+ 1655 0055 01       		.uleb128 0x1
+ 1656 0056 13       		.uleb128 0x13
+ 1657 0057 00       		.byte	0
+ 1658 0058 00       		.byte	0
+ 1659 0059 07       		.uleb128 0x7
+ 1660 005a 05       		.uleb128 0x5
+ 1661 005b 00       		.byte	0
+ 1662 005c 03       		.uleb128 0x3
+ 1663 005d 0E       		.uleb128 0xe
+ 1664 005e 3A       		.uleb128 0x3a
+ 1665 005f 0B       		.uleb128 0xb
+ 1666 0060 3B       		.uleb128 0x3b
+ 1667 0061 0B       		.uleb128 0xb
+ 1668 0062 49       		.uleb128 0x49
+ 1669 0063 13       		.uleb128 0x13
+ 1670 0064 02       		.uleb128 0x2
+ 1671 0065 18       		.uleb128 0x18
+ 1672 0066 00       		.byte	0
+ 1673 0067 00       		.byte	0
+ 1674 0068 08       		.uleb128 0x8
+ 1675 0069 05       		.uleb128 0x5
+ 1676 006a 00       		.byte	0
+ 1677 006b 03       		.uleb128 0x3
+ 1678 006c 08       		.uleb128 0x8
+ 1679 006d 3A       		.uleb128 0x3a
+ 1680 006e 0B       		.uleb128 0xb
+ 1681 006f 3B       		.uleb128 0x3b
+ 1682 0070 0B       		.uleb128 0xb
+ 1683 0071 49       		.uleb128 0x49
+ 1684 0072 13       		.uleb128 0x13
+ 1685 0073 02       		.uleb128 0x2
+ 1686 0074 18       		.uleb128 0x18
+ 1687 0075 00       		.byte	0
+ 1688 0076 00       		.byte	0
+ 1689 0077 09       		.uleb128 0x9
+ 1690 0078 34       		.uleb128 0x34
+ 1691 0079 00       		.byte	0
+ 1692 007a 03       		.uleb128 0x3
+ 1693 007b 08       		.uleb128 0x8
+ 1694 007c 3A       		.uleb128 0x3a
+ 1695 007d 0B       		.uleb128 0xb
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 43
+
+
+ 1696 007e 3B       		.uleb128 0x3b
+ 1697 007f 0B       		.uleb128 0xb
+ 1698 0080 49       		.uleb128 0x49
+ 1699 0081 13       		.uleb128 0x13
+ 1700 0082 02       		.uleb128 0x2
+ 1701 0083 18       		.uleb128 0x18
+ 1702 0084 00       		.byte	0
+ 1703 0085 00       		.byte	0
+ 1704 0086 0A       		.uleb128 0xa
+ 1705 0087 0F       		.uleb128 0xf
+ 1706 0088 00       		.byte	0
+ 1707 0089 0B       		.uleb128 0xb
+ 1708 008a 0B       		.uleb128 0xb
+ 1709 008b 49       		.uleb128 0x49
+ 1710 008c 13       		.uleb128 0x13
+ 1711 008d 00       		.byte	0
+ 1712 008e 00       		.byte	0
+ 1713 008f 0B       		.uleb128 0xb
+ 1714 0090 2E       		.uleb128 0x2e
+ 1715 0091 00       		.byte	0
+ 1716 0092 3F       		.uleb128 0x3f
+ 1717 0093 19       		.uleb128 0x19
+ 1718 0094 03       		.uleb128 0x3
+ 1719 0095 0E       		.uleb128 0xe
+ 1720 0096 3A       		.uleb128 0x3a
+ 1721 0097 0B       		.uleb128 0xb
+ 1722 0098 3B       		.uleb128 0x3b
+ 1723 0099 05       		.uleb128 0x5
+ 1724 009a 27       		.uleb128 0x27
+ 1725 009b 19       		.uleb128 0x19
+ 1726 009c 49       		.uleb128 0x49
+ 1727 009d 13       		.uleb128 0x13
+ 1728 009e 11       		.uleb128 0x11
+ 1729 009f 01       		.uleb128 0x1
+ 1730 00a0 12       		.uleb128 0x12
+ 1731 00a1 06       		.uleb128 0x6
+ 1732 00a2 40       		.uleb128 0x40
+ 1733 00a3 18       		.uleb128 0x18
+ 1734 00a4 9742     		.uleb128 0x2117
+ 1735 00a6 19       		.uleb128 0x19
+ 1736 00a7 00       		.byte	0
+ 1737 00a8 00       		.byte	0
+ 1738 00a9 0C       		.uleb128 0xc
+ 1739 00aa 2E       		.uleb128 0x2e
+ 1740 00ab 00       		.byte	0
+ 1741 00ac 3F       		.uleb128 0x3f
+ 1742 00ad 19       		.uleb128 0x19
+ 1743 00ae 03       		.uleb128 0x3
+ 1744 00af 0E       		.uleb128 0xe
+ 1745 00b0 3A       		.uleb128 0x3a
+ 1746 00b1 0B       		.uleb128 0xb
+ 1747 00b2 3B       		.uleb128 0x3b
+ 1748 00b3 05       		.uleb128 0x5
+ 1749 00b4 27       		.uleb128 0x27
+ 1750 00b5 19       		.uleb128 0x19
+ 1751 00b6 11       		.uleb128 0x11
+ 1752 00b7 01       		.uleb128 0x1
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 44
+
+
+ 1753 00b8 12       		.uleb128 0x12
+ 1754 00b9 06       		.uleb128 0x6
+ 1755 00ba 40       		.uleb128 0x40
+ 1756 00bb 18       		.uleb128 0x18
+ 1757 00bc 9742     		.uleb128 0x2117
+ 1758 00be 19       		.uleb128 0x19
+ 1759 00bf 00       		.byte	0
+ 1760 00c0 00       		.byte	0
+ 1761 00c1 0D       		.uleb128 0xd
+ 1762 00c2 34       		.uleb128 0x34
+ 1763 00c3 00       		.byte	0
+ 1764 00c4 03       		.uleb128 0x3
+ 1765 00c5 0E       		.uleb128 0xe
+ 1766 00c6 3A       		.uleb128 0x3a
+ 1767 00c7 0B       		.uleb128 0xb
+ 1768 00c8 3B       		.uleb128 0x3b
+ 1769 00c9 0B       		.uleb128 0xb
+ 1770 00ca 49       		.uleb128 0x49
+ 1771 00cb 13       		.uleb128 0x13
+ 1772 00cc 02       		.uleb128 0x2
+ 1773 00cd 18       		.uleb128 0x18
+ 1774 00ce 00       		.byte	0
+ 1775 00cf 00       		.byte	0
+ 1776 00d0 00       		.byte	0
+ 1777              		.section	.debug_aranges,"",%progbits
+ 1778 0000 44000000 		.4byte	0x44
+ 1779 0004 0200     		.2byte	0x2
+ 1780 0006 00000000 		.4byte	.Ldebug_info0
+ 1781 000a 04       		.byte	0x4
+ 1782 000b 00       		.byte	0
+ 1783 000c 0000     		.2byte	0
+ 1784 000e 0000     		.2byte	0
+ 1785 0010 00000000 		.4byte	.LFB0
+ 1786 0014 98000000 		.4byte	.LFE0-.LFB0
+ 1787 0018 00000000 		.4byte	.LFB1
+ 1788 001c 9C000000 		.4byte	.LFE1-.LFB1
+ 1789 0020 00000000 		.4byte	.LFB2
+ 1790 0024 7C000000 		.4byte	.LFE2-.LFB2
+ 1791 0028 00000000 		.4byte	.LFB3
+ 1792 002c 34000000 		.4byte	.LFE3-.LFB3
+ 1793 0030 00000000 		.4byte	.LFB4
+ 1794 0034 90040000 		.4byte	.LFE4-.LFB4
+ 1795 0038 00000000 		.4byte	.LFB5
+ 1796 003c 14000000 		.4byte	.LFE5-.LFB5
+ 1797 0040 00000000 		.4byte	0
+ 1798 0044 00000000 		.4byte	0
+ 1799              		.section	.debug_ranges,"",%progbits
+ 1800              	.Ldebug_ranges0:
+ 1801 0000 00000000 		.4byte	.LFB0
+ 1802 0004 98000000 		.4byte	.LFE0
+ 1803 0008 00000000 		.4byte	.LFB1
+ 1804 000c 9C000000 		.4byte	.LFE1
+ 1805 0010 00000000 		.4byte	.LFB2
+ 1806 0014 7C000000 		.4byte	.LFE2
+ 1807 0018 00000000 		.4byte	.LFB3
+ 1808 001c 34000000 		.4byte	.LFE3
+ 1809 0020 00000000 		.4byte	.LFB4
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 45
+
+
+ 1810 0024 90040000 		.4byte	.LFE4
+ 1811 0028 00000000 		.4byte	.LFB5
+ 1812 002c 14000000 		.4byte	.LFE5
+ 1813 0030 00000000 		.4byte	0
+ 1814 0034 00000000 		.4byte	0
+ 1815              		.section	.debug_line,"",%progbits
+ 1816              	.Ldebug_line0:
+ 1817 0000 BD010000 		.section	.debug_str,"MS",%progbits,1
+ 1817      02004400 
+ 1817      00000201 
+ 1817      FB0E0D00 
+ 1817      01010101 
+ 1818              	.LASF23:
+ 1819 0000 72644461 		.ascii	"rdData\000"
+ 1819      746100
+ 1820              	.LASF15:
+ 1821 0007 72656733 		.ascii	"reg32\000"
+ 1821      3200
+ 1822              	.LASF41:
+ 1823 000d 4932435F 		.ascii	"I2C_MAG_ClearStatus\000"
+ 1823      4D41475F 
+ 1823      436C6561 
+ 1823      72537461 
+ 1823      74757300 
+ 1824              	.LASF3:
+ 1825 0021 73686F72 		.ascii	"short unsigned int\000"
+ 1825      7420756E 
+ 1825      7369676E 
+ 1825      65642069 
+ 1825      6E7400
+ 1826              	.LASF8:
+ 1827 0034 756E7369 		.ascii	"unsigned int\000"
+ 1827      676E6564 
+ 1827      20696E74 
+ 1827      00
+ 1828              	.LASF12:
+ 1829 0041 666C6F61 		.ascii	"float\000"
+ 1829      7400
+ 1830              	.LASF26:
+ 1831 0047 4932435F 		.ascii	"I2C_MAG_SendStop\000"
+ 1831      4D41475F 
+ 1831      53656E64 
+ 1831      53746F70 
+ 1831      00
+ 1832              	.LASF33:
+ 1833 0058 6D617374 		.ascii	"masterState\000"
+ 1833      65725374 
+ 1833      61746500 
+ 1834              	.LASF22:
+ 1835 0064 4932435F 		.ascii	"I2C_MAG_ReadBuf\000"
+ 1835      4D41475F 
+ 1835      52656164 
+ 1835      42756600 
+ 1836              	.LASF5:
+ 1837 0074 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1837      20756E73 
+ 1837      69676E65 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 46
+
+
+ 1837      6420696E 
+ 1837      7400
+ 1838              	.LASF9:
+ 1839 0086 75696E74 		.ascii	"uint8\000"
+ 1839      3800
+ 1840              	.LASF24:
+ 1841 008c 4932435F 		.ascii	"I2C_MAG_SendStart\000"
+ 1841      4D41475F 
+ 1841      53656E64 
+ 1841      53746172 
+ 1841      7400
+ 1842              	.LASF38:
+ 1843 009e 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1843      43313120 
+ 1843      352E342E 
+ 1843      31203230 
+ 1843      31363036 
+ 1844 00d1 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m0 -mthumb -g -O"
+ 1844      20726576 
+ 1844      6973696F 
+ 1844      6E203233 
+ 1844      37373135 
+ 1845 0104 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 1845      66756E63 
+ 1845      74696F6E 
+ 1845      2D736563 
+ 1845      74696F6E 
+ 1846              	.LASF1:
+ 1847 012c 756E7369 		.ascii	"unsigned char\000"
+ 1847      676E6564 
+ 1847      20636861 
+ 1847      7200
+ 1848              	.LASF29:
+ 1849 013a 62797465 		.ascii	"byteCounter\000"
+ 1849      436F756E 
+ 1849      74657200 
+ 1850              	.LASF13:
+ 1851 0146 646F7562 		.ascii	"double\000"
+ 1851      6C6500
+ 1852              	.LASF40:
+ 1853 014d 433A5C70 		.ascii	"C:\\psoc\\chamonix\\fixed\\Fixed\\fixed.cydsn\000"
+ 1853      736F635C 
+ 1853      6368616D 
+ 1853      6F6E6978 
+ 1853      5C666978 
+ 1854              	.LASF10:
+ 1855 0176 75696E74 		.ascii	"uint16\000"
+ 1855      313600
+ 1856              	.LASF31:
+ 1857 017d 6D617374 		.ascii	"masterStatus\000"
+ 1857      65725374 
+ 1857      61747573 
+ 1857      00
+ 1858              	.LASF11:
+ 1859 018a 75696E74 		.ascii	"uint32\000"
+ 1859      333200
+ 1860              	.LASF34:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 47
+
+
+ 1861 0191 6F757442 		.ascii	"outBuffer\000"
+ 1861      75666665 
+ 1861      7200
+ 1862              	.LASF21:
+ 1863 019b 4932435F 		.ascii	"I2C_MAG_WriteBuf\000"
+ 1863      4D41475F 
+ 1863      57726974 
+ 1863      65427566 
+ 1863      00
+ 1864              	.LASF30:
+ 1865 01ac 7061636B 		.ascii	"packetSize\000"
+ 1865      65745369 
+ 1865      7A6500
+ 1866              	.LASF19:
+ 1867 01b7 77724461 		.ascii	"wrData\000"
+ 1867      746100
+ 1868              	.LASF7:
+ 1869 01be 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1869      206C6F6E 
+ 1869      6720756E 
+ 1869      7369676E 
+ 1869      65642069 
+ 1870              	.LASF20:
+ 1871 01d5 6D6F6465 		.ascii	"mode\000"
+ 1871      00
+ 1872              	.LASF18:
+ 1873 01da 736C6176 		.ascii	"slaveAddress\000"
+ 1873      65416464 
+ 1873      72657373 
+ 1873      00
+ 1874              	.LASF27:
+ 1875 01e7 4932435F 		.ascii	"I2C_MAG_Process\000"
+ 1875      4D41475F 
+ 1875      50726F63 
+ 1875      65737300 
+ 1876              	.LASF16:
+ 1877 01f7 6C6F6E67 		.ascii	"long double\000"
+ 1877      20646F75 
+ 1877      626C6500 
+ 1878              	.LASF17:
+ 1879 0203 73697A65 		.ascii	"sizetype\000"
+ 1879      74797065 
+ 1879      00
+ 1880              	.LASF6:
+ 1881 020c 6C6F6E67 		.ascii	"long long int\000"
+ 1881      206C6F6E 
+ 1881      6720696E 
+ 1881      7400
+ 1882              	.LASF14:
+ 1883 021a 63686172 		.ascii	"char\000"
+ 1883      00
+ 1884              	.LASF37:
+ 1885 021f 696E7465 		.ascii	"internalAddress\000"
+ 1885      726E616C 
+ 1885      41646472 
+ 1885      65737300 
+ 1886              	.LASF2:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\ccDgYluk.s 			page 48
+
+
+ 1887 022f 73686F72 		.ascii	"short int\000"
+ 1887      7420696E 
+ 1887      7400
+ 1888              	.LASF36:
+ 1889 0239 74686542 		.ascii	"theByte\000"
+ 1889      79746500 
+ 1890              	.LASF4:
+ 1891 0241 6C6F6E67 		.ascii	"long int\000"
+ 1891      20696E74 
+ 1891      00
+ 1892              	.LASF28:
+ 1893 024a 62697443 		.ascii	"bitCounter\000"
+ 1893      6F756E74 
+ 1893      657200
+ 1894              	.LASF25:
+ 1895 0255 736C6176 		.ascii	"slaveAddress_RW\000"
+ 1895      65416464 
+ 1895      72657373 
+ 1895      5F525700 
+ 1896              	.LASF0:
+ 1897 0265 7369676E 		.ascii	"signed char\000"
+ 1897      65642063 
+ 1897      68617200 
+ 1898              	.LASF35:
+ 1899 0271 696E4275 		.ascii	"inBuffer\000"
+ 1899      66666572 
+ 1899      00
+ 1900              	.LASF39:
+ 1901 027a 47656E65 		.ascii	"Generated_Source\\PSoC4\\I2C_MAG.c\000"
+ 1901      72617465 
+ 1901      645F536F 
+ 1901      75726365 
+ 1901      5C50536F 
+ 1902              	.LASF32:
+ 1903 029b 6D617374 		.ascii	"masterControl\000"
+ 1903      6572436F 
+ 1903      6E74726F 
+ 1903      6C00
+ 1904              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

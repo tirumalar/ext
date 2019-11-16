@@ -1,0 +1,16 @@
+
+quartus_pgm prog_all.cdf
+elf2flash --input=chmx_cntrl.elf --output=chmx_cntrl.flash --base=0x0 --end=0x80000 --epcs
+
+flash2dat --infile=chmx_cntrl.flash --outfile=chmx_cntrl.bflash --base=0x0 --end=0x50000 --width=8
+
+nios2-flash-programmer -b 100 -e '--cable=USB-Blaster [USB-0]' --debug --override=my_override.txt  chmx_cntrl.flash
+
+
+nios2-elf-objcopy -I srec -O binary chmx_cntrl.flash output.bin
+
+nios2-elf-objcopy -I srec -O binary test.bin output2.bin
+
+nios2-flash-programmer -b 100 -e '--cable=USB-Blaster [USB-0]' --debug --override=my_override.txt  --read show.bin -B0-0x50000
+
+nios2-flash-programmer -b 100 -e '--cable=USB-Blaster [USB-0]' --debug --override=my_override.txt show.bin

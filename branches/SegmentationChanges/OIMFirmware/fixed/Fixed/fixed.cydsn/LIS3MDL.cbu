@@ -1,0 +1,259 @@
+#include "project.h"
+
+#include "LIS3MDL.h"
+#include <math.h>
+
+#define ICM_RWn 0x80
+//https://community.cypress.com/docs/DOC-15334
+
+void CS_MAG_Write(char val)
+{
+	///if (val)
+	//	HAL_GPIO_WritePin(CS2_GPIO_Port, CS2_Pin, GPIO_PIN_SET);
+	//else
+	//	HAL_GPIO_WritePin(CS2_GPIO_Port, CS2_Pin, GPIO_PIN_RESET);
+}
+
+void MagSensorSettings(void)
+{
+	// Magnetometer Settings
+	/* uint8 Mscale; = LIS3MDL_FULLSCALE_16GAUSS;  // Select magnetometer full-scale resolution
+	 uint8 Mopmode = MOM_hiperf; // Select magnetometer perfomance mode
+	 uint8 Modr = MODR_10Hz;     // Select magnetometer ODR when in MAX21100 bypass mode
+	 uint8 MSodr = MODR_div16;   // Select magnetometer ODR as Aodr/MODR_divx
+	 uint8 powerSelect = 0x00;   // no DSYNC enable or usage
+	 uint8 powerMode = accelnormalgyronormalmode;  // specify power mode for accel + gyro
+	 uint8 status;               // MAX21100 data status register
+	 float aRes, gRes, mRes;       // scale resolutions per LSB for the sensors
+	 int16 magCount[3];    // Stores the 16-bit signed magnetometer sensor output
+	 int16 magCount[3];    // Stores the 16-bit signed magnetometer sensor output
+	 float magBias[3] = {0, 0, 0};  // Bias corrections for gyro, accelerometer, mag
+	 int16 tempMCount;      // temperature raw count output of mag and gyro
+	 float   Mtemperature; // Stores the MAX21100 gyro and LIS3MDL mag internal chip temperatures in degrees Celsius
+	 */
+}
+
+void LIS3MDL(struct MagSensorSettings *settings)
+{
+	//Initialize with these default settings
+	settings->TempSensorEnable = 1;
+	settings->FastOdrEnable = 1;
+	settings->SelfTestEnable = 1;
+	settings->RebootMemory = 1;
+	settings->SoftwareReset = 1;
+	settings->LowPowerEnable = 1;
+	settings->SpiInterfaceMode = 1;
+	settings->OperatingMode = 1;
+	settings->EndianData = 1;
+	settings->FastDataEnable = 1;
+	settings->BlockDataUpdate = 1;
+	settings->XInterruptEnable = 1;
+	settings->YInterruptEnable = 1;
+	settings->ZInterruptEnable = 1;
+	settings->InterruptPolarity = 1;
+	settings->InterruptLatch = 1;
+	settings->InterruptOnPin = 1;
+	settings->FullScale = 1;
+	settings->XYPerformanceMode = 1;
+	settings->ZPerformanceMode = 1;
+	settings->OdrDivisor = 1;
+	settings->OutputDataRate = 1;
+}
+
+/*
+ Enables the LIS3MDL's magnetometer. Also:
+ - Selects ultra-high-performance mode for all axes
+ - Sets ODR (output data rate) to default power-on value of 10 Hz
+ - Sets magnetometer full scale (gain) to default power-on value of +/- 4 gauss
+ - Enables continuous conversion mode
+ Note that this function will also reset other settings controlled by
+ the registers it writes to.
+ */
+void enableDefault(void)
+{
+	// 0x70 = 0b01110000
+	// OM = 11 (ultra-high-performance mode for X and Y); DO = 100 (10 Hz ODR)
+	writeReg(CTRL_REG1, 0x70);
+
+	// 0x00 = 0b00000000
+	// FS = 00 (+/- 4 gauss full scale)
+	writeReg(CTRL_REG2, 0x00);
+
+	// 0x00 = 0b00000000
+	// MD = 00 (continuous-conversion mode)
+	writeReg(CTRL_REG3, 0x00);
+
+	// 0x0C = 0b00001100
+	// OMZ = 11 (ultra-high-performance mode for Z)
+	writeReg(CTRL_REG4, 0x0C);
+
+}
+
+void LIS3MDLInit(void)
+{
+	enableDefault();
+	//  CyDelay(200u);
+}
+
+magStatus_t readRegRegion(uint8 *buffer, uint8 reg, uint8 len)
+{
+	/*
+    magStatus_t returnError = MAG_SUCCESS;
+
+	unsigned char rxData[2];
+	unsigned char txData[2];
+
+	//   SPI_2_SpiUartClearTxBuffer() ;
+	//   SPI_2_SpiUartClearRxBuffer() ;
+	CS_MAG_Write(0);
+
+	txData[0] = reg | 0xc0;
+
+	HAL_SPI_TransmitReceive(&hspi1, txData, rxData, 1, 1000);
+	HAL_SPI_TransmitReceive(&hspi1, buffer, buffer, len, 1000);
+
+	CS_MAG_Write(1);
+
+	returnError = MAG_ALL_ONES_WARNING;
+
+	return returnError;
+    */
+}
+
+// Writes a mag register
+
+
+
+
+magStatus_t readRegInt16( int16* outputPointer, uint8 offset)
+{
+	uint8 myBuffer[2];
+	magStatus_t returnError = readRegRegion(myBuffer, offset, 2); //Does memory transfer
+	int16 output = (int16) myBuffer[0] | (int16) (myBuffer[1] << 8);
+
+	*outputPointer = output;
+	return returnError;
+}
+
+// Reads the 3 mag channels and stores them in vector m
+void readMagData(struct vector *m)
+{
+	uint8 outputPointer[6];
+	uint8 offset;
+	uint8 length;
+	uint8 xlm, xhm;
+	uint8 ylm, yhm;
+	uint8 zlm, zhm;
+
+	offset = OUT_X_L;
+	length = 6;
+
+	// uint16_t millis_start = millis();
+
+	readRegRegion(outputPointer, offset, length);
+
+	xlm = outputPointer[0];
+	xhm = outputPointer[1];
+	ylm = outputPointer[2];
+	yhm = outputPointer[3];
+	zlm = outputPointer[4];
+	zhm = outputPointer[5];
+
+	// combine high and low bytes
+	m->x = (int16) (xhm << 8 | xlm);
+	m->y = (int16) (yhm << 8 | ylm);
+	m->z = (int16) (zhm << 8 | zlm);
+}
+
+void readMagDataF(float *res)
+{
+	uint8 outputPointer[6];
+	uint8 offset;
+	uint8 length;
+	uint8 xlm, xhm;
+	uint8 ylm, yhm;
+	uint8 zlm, zhm;
+
+	offset = OUT_X_L;
+	length = 6;
+
+	// uint16_t millis_start = millis();
+
+	readRegRegion(outputPointer, offset, length);
+
+	xlm = outputPointer[0];
+	xhm = outputPointer[1];
+	ylm = outputPointer[2];
+	yhm = outputPointer[3];
+	zlm = outputPointer[4];
+	zhm = outputPointer[5];
+
+	// combine high and low bytes
+	res[0] = (float) ((int16) (xhm << 8 | xlm)) * 4.0f / 32.768f / 1000.0;
+	res[1] = (float) ((int16) (yhm << 8 | ylm)) * 4.0f / 32.768f / 1000.0;
+	res[2] = (float) ((int16) (zhm << 8 | zlm)) * 4.0f / 32.768f / 1000.0;
+}
+
+int16 readMagTempData()
+{
+	uint8 outputPointer[2];
+	uint8 offset;
+	uint8 length;
+
+	offset = LIS3MDL_TEMP_OUT_L;
+	length = 2;
+
+	readRegRegion(outputPointer, offset, length);
+
+	return ((int16) outputPointer[1] << 8) | outputPointer[0]; // combine high and low bytes
+}
+
+float vector_normalize(struct vector *a)
+{
+	struct vector out;
+	vector_dot(a, a, &out);
+
+	a->x /= out.T;
+	a->y /= out.T;
+	a->z /= out.T;
+
+	return out.T;
+}
+
+void vector_cross(struct vector *a, struct vector *b, struct vector *out)
+{
+	out->x = (a->y * b->z) - (a->z * b->y);
+	out->y = (a->z * b->x) - (a->x * b->z);
+	out->z = (a->x * b->y) - (a->y * b->x);
+}
+
+void vector_dot(struct vector *a, struct vector *b, struct vector *out)
+{
+	out->T = (a->x * b->x) + (a->y * b->y) + (a->z * b->z);
+}
+
+float getMres(uint8 Mscale)
+{
+	float mRes;
+
+	switch (Mscale)
+	{
+	// Possible magnetometer scales (and their register bit settings)are:
+	default:
+	case LIS3MDL_FULLSCALE_4GAUSS:
+		mRes = 4.0f / 32.768f; // Proper scale to return milliGauss
+		break;
+	case LIS3MDL_FULLSCALE_8GAUSS:
+		mRes = 8.0f / 32.768f; // Proper scale to return milliGauss
+		break;
+	case LIS3MDL_FULLSCALE_12GAUSS:
+		mRes = 12.0f / 32.768f; // Proper scale to return milliGauss
+		break;
+	case LIS3MDL_FULLSCALE_16GAUSS:
+		mRes = 16.0f / 32.768f; // Proper scale to return milliGauss
+		break;
+	}
+
+	return mRes;
+}
+

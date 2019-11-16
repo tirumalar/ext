@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+ 
+ 
+ 
+<html lang="en">
+    <head>
+	<meta http-equiv="X-UA-Compatible" content="IE=9; IE=EDGE" />
+        <meta HTTP-EQUIV="Content-Type" content="text/html; X-Content-Type-Options: nosniff; charset=<? echo CHARSET; ?>">
+        <meta HTTP-EQUIV="Content-Language" content="<? echo LANGCODE; ?>">
+        <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, private" /> 
+		<meta http-equiv="Pragma" content="no-cache" />
+        <title><?php echo TITLE_LICENSE_KEY; ?></title>
+
+        <script type="text/javascript" src="/scripts/jquery-1.10.2.js"></script>
+        <script type="text/javascript" src="/scripts/jquery-ui-1.11.1.js"></script>
+        <script type="text/javascript" src="/scripts/jquery.tooltipster.min.js"></script>
+
+
+        <script type="text/javascript" src="/scripts/jquery.bvalidator.js"></script>
+       
+
+        <link rel="stylesheet" type="text/css" href="/css/sitetheme.css" />
+        <link rel="stylesheet" type="text/css" href="/css/empty.css" />
+
+    <script>
+     var systemUpdate = false;
+$(document).ready(function()
+{
+	$('#tbLicenseKey').change(fixdash);
+	$('#tbLicenseKey').keyup(fixdash);
+}
+);
+		
+function removeChar( string, index)
+		{
+			return string.slice(0, index) + string.slice(index+1);
+			
+		}
+		function insert( string,value, index)
+		{
+			return string.slice(0, index) + value+ string.slice(index);
+			
+		}
+		function select(pos)
+		{
+			var tb = document.getElementById("tbLicenseKey");
+			if(tb == null) return;
+			
+                tb.selectionStart = pos;
+					tb.selectionEnd = pos; 
+		}
+function fixdash(event)
+  
+        {
+			if(systemUpdate) return; //we're changing the text, don't need to loop
+			var tb = document.getElementById("tbLicenseKey");
+			if(tb == null) return;
+			
+            systemUpdate = true;
+            var dashfix = false;
+            //string longer than 3 must contain a dash
+            if (tb.value.length > 3 && tb.value.indexOf("-") < 0)
+            {
+               
+                //xxx-xxx
+                //0123456
+                tb.value = insert(tb.value, "-", 3);
+                dashfix = true;
+               
+            }
+            //the dash must be in position 3
+
+            if (tb.value.indexOf("-") != 3 && tb.value.indexOf("-") >= 0)
+            {
+                var dashloc = tb.value.indexOf("-");
+                if (tb.value.length <= 3)
+                {
+                    tb.value = removeChar(tb.value, dashloc );
+                    dashfix = true;
+                }
+                else if (tb.value[3] == '-')//there is already a dash
+                {
+                    tb.value = removeChar(tb.value, dashloc );
+                    dashfix = true;
+                }
+                else
+                {
+                    tb.value = removeChar(tb.value, dashloc ); //if the dash was before position 
+                    tb.value = insert(tb.value, "-", 3);
+
+                    dashfix = true;
+
+
+                }
+            }
+            //there can be only one dash
+            if(tb.value.length >3 && tb.value[3] == '-' && tb.value.indexOf('-', 4) >=0)
+            {
+                var dashloc = tb.value.indexOf('-', 4);
+                tb.value = removeChar(tb.value, dashloc );
+                dashfix = true;
+            }
+
+            if (tb.value.indexOf("-")>=0 && tb.value.length < 3)
+            {
+                tb.value = tb.value.Replace("-", "");
+                dashfix = true;
+
+            }
+            if (tb.value.length > 7)
+                tb.value = removeChar(tb.value, 7);
+            systemUpdate = false;
+            var acceptableCharacters = "01234567890-";
+            var selectpos = tb.selectionStart;
+            for (var i = 0; i <tb.value.length;i++ )
+            {
+                var c = tb.value[i];
+                if (acceptableCharacters.indexOf(c) < 0) 
+                {
+                    tb.value = removeChar(tb.value, i);
+                    i = -1;
+                }
+            }
+            if (selectpos > tb.value.length)
+                selectpos = tb.value.length;
+            select(selectpos); //move the cursor to the location it was last in
+            if(dashfix)
+				{
+               select(tb.value.length);
+				 }//move the user input to the end of the line
+        }
+
+$(document).ready(function () {
+    $("#submit").click(function (event) {
+			event.preventDefault();
+		tb = document.getElementById("tbLicenseKey");
+		 var sdata = new FormData();
+		sdata.append("tbLicenseKey", tb.value);
+		
+		 $.ajax({
+         cache: false,
+        url: '/scripts/validateLicense.php',
+        type: 'POST',
+		data:  sdata,
+    	processData: false,
+			  contentType: false, 
+        success: function (data, textStatus, jqXHR) {
+            //data - response from server
+           if(data == "ok")
+			   location.href = "./index.php";
+			else
+				$('#invalidLicense').show();
+        },
+        complete: function (xhr, status) {
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+			$('#invalidLicense').text = textStatus;
+           $('#invalidLicense').show();
+        }
+    });
+		
+		
+		
+		
+	});
+		 
+});
+
+    </script>
+
+    </head>
+    
+    <body>
+        <form id='userlogin' class='login' style="height:350px; width:400px;" action  ='/scripts/validateLicense.php' method='POST'>
+            <h1 style="padding-bottom:10px; font-size: 1.6em;"><?php echo LK_ENTER_LICENSE_KEY_HEADER; ?></h1>
+		  <fieldset class="gradientfieldset" style="margin-top:  1em !important; height:190px; width:400px; !important; margin-bottom: 1em;">  
+            <div id="cookieDisplayLabel" style="text-align: center;display : none" >Cookies must be enabled to use Web Config.</div> 
+            <img src="/img/NXT-LIC-CARD-V02.png" width="275" height="145" alt="" style="margin-left:80px"/>
+          
+            <a><br></a>
+            <center><a><?php echo LK_ENTER_KEY_TEXT; ?></a></center>
+            </fieldset>
+          	
+            <fieldset id='inputs' style="margin: 1.5em 0 0 0; padding: 0;  float: left;  width: 100%;  margin: 0 0 1.5em 0;  padding: 0;  clear: left;">
+                <input id='tbLicenseKey' name='tbLicenseKey' maxlength="7"  autocomplete="off" style="width:360px !important;" placeholder='<?php echo LK_DEFAULT_TEXT; ?>'>
+            </fieldset>
+             <div id="invalidLicense" style="float:left; color:#ff0000;text-align: center;display : none" ><?php echo LK_INVALID_LICENSE; ?></div> 
+            <fieldset id='actions'>
+                <input name='action'style ="float: right" type='submit' id='submit' value='<?php echo LK_BTN_ACTIVATE_TEXT; ?>'>
+               <input name='action' type=hidden value='<?php echo LK_BTN_ACTIVATE_TEXT; ?>'>
+              
+              <!--  <a href=''><?php echo LOGIN_FORGOTPASSWORD;?></a> -->
+            </fieldset>
+        </form>
+    </body>
+</html>

@@ -1,0 +1,1595 @@
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"I2CSlave_BOOT.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.bss
+  19              		.align	2
+  20              	I2CSlave_slReadBuf:
+  21 0000 00000000 		.space	128
+  21      00000000 
+  21      00000000 
+  21      00000000 
+  21      00000000 
+  22              		.align	2
+  23              	I2CSlave_slWriteBuf:
+  24 0080 00000000 		.space	128
+  24      00000000 
+  24      00000000 
+  24      00000000 
+  24      00000000 
+  25              		.section	.text.I2CSlave_CyBtldrCommStart,"ax",%progbits
+  26              		.align	2
+  27              		.global	I2CSlave_CyBtldrCommStart
+  28              		.thumb
+  29              		.thumb_func
+  30              		.type	I2CSlave_CyBtldrCommStart, %function
+  31              	I2CSlave_CyBtldrCommStart:
+  32              	.LFB0:
+  33              		.file 1 ".\\Generated_Source\\PSoC5\\I2CSlave_BOOT.c"
+   1:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** /*******************************************************************************
+   2:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * File Name: I2CSlave_BOOT.c
+   3:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Version 3.30
+   4:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+   5:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Description:
+   6:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  This file provides the source code of bootloader communication APIs for the
+   7:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  I2C component.
+   8:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+   9:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Note:
+  10:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  11:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** ********************************************************************************
+  12:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Copyright 2008-2012, Cypress Semiconductor Corporation.  All rights reserved.
+  13:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * You may use this file only in accordance with the license, terms, conditions,
+  14:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * disclaimers, and limitations in the end user license agreement accompanying
+  15:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * the software package with which this file was provided.
+  16:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *******************************************************************************/
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 2
+
+
+  17:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  18:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** #include "I2CSlave_PVT.h"
+  19:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  20:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** #if defined(CYDEV_BOOTLOADER_IO_COMP) && (I2CSlave_BOOTLOADER_INTERFACE_ENABLED)
+  21:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  22:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  23:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** /***************************************
+  24:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *    Bootloader Internal Variables
+  25:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** ***************************************/
+  26:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  27:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** /* I2C write buffer: Host writes command here */
+  28:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** static uint8 XDATA I2CSlave_slReadBuf[I2CSlave_BTLDR_SIZEOF_READ_BUFFER];
+  29:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  30:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** /* I2C read buffer: Host reads responses from it */
+  31:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** static uint8 XDATA I2CSlave_slWriteBuf[I2CSlave_BTLDR_SIZEOF_WRITE_BUFFER];
+  32:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  33:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  34:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** /*******************************************************************************
+  35:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Function Name: I2CSlave_CyBtldrCommStart
+  36:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** ********************************************************************************
+  37:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  38:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Summary:
+  39:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  Starts the communication component and enables the interrupt.
+  40:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  The read buffer initial state is full and the read always is 0xFFu.
+  41:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  The write buffer is clear and ready to receive a commmand.
+  42:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  43:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Parameters:
+  44:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  None
+  45:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  46:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Return:
+  47:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  None
+  48:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  49:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Side Effects:
+  50:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  This fucntion enables component interrupt. If I2C is enabled
+  51:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  without the interrupt enabled, it could lock up the I2C bus.
+  52:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  53:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Global variables:
+  54:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  I2CSlave_slWriteBuf - used to store received command.
+  55:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  I2CSlave_slReadBuf - used to store response.
+  56:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  I2CSlave_slRdBufIndex - used to store current index within slave
+  57:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  read buffer.
+  58:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  59:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *******************************************************************************/
+  60:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** void I2CSlave_CyBtldrCommStart(void) CYSMALL 
+  61:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** {
+  34              		.loc 1 61 0
+  35              		.cfi_startproc
+  36              		@ args = 0, pretend = 0, frame = 0
+  37              		@ frame_needed = 1, uses_anonymous_args = 0
+  38 0000 80B5     		push	{r7, lr}
+  39              	.LCFI0:
+  40              		.cfi_def_cfa_offset 8
+  41              		.cfi_offset 7, -8
+  42              		.cfi_offset 14, -4
+  43 0002 00AF     		add	r7, sp, #0
+  44              	.LCFI1:
+  45              		.cfi_def_cfa_register 7
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 3
+
+
+  62:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     /* Set Write buffer */
+  63:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     I2CSlave_SlaveInitWriteBuf(I2CSlave_slWriteBuf, I2CSlave_BTLDR_SIZEOF_WRITE_BUFFER);
+  46              		.loc 1 63 0
+  47 0004 40F20000 		movw	r0, #:lower16:I2CSlave_slWriteBuf
+  48 0008 C0F20000 		movt	r0, #:upper16:I2CSlave_slWriteBuf
+  49 000c 4FF08001 		mov	r1, #128
+  50 0010 FFF7FEFF 		bl	I2CSlave_SlaveInitWriteBuf
+  64:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  65:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     /* Set Read buffer which has zero elements */
+  66:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     I2CSlave_SlaveInitReadBuf(I2CSlave_slReadBuf, 0u);
+  51              		.loc 1 66 0
+  52 0014 40F20000 		movw	r0, #:lower16:I2CSlave_slReadBuf
+  53 0018 C0F20000 		movt	r0, #:upper16:I2CSlave_slReadBuf
+  54 001c 4FF00001 		mov	r1, #0
+  55 0020 FFF7FEFF 		bl	I2CSlave_SlaveInitReadBuf
+  67:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  68:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     /* Enable power to I2C Module */
+  69:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     I2CSlave_Start();
+  56              		.loc 1 69 0
+  57 0024 FFF7FEFF 		bl	I2CSlave_Start
+  70:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** }
+  58              		.loc 1 70 0
+  59 0028 80BD     		pop	{r7, pc}
+  60              		.cfi_endproc
+  61              	.LFE0:
+  62              		.size	I2CSlave_CyBtldrCommStart, .-I2CSlave_CyBtldrCommStart
+  63 002a 00BF     		.section	.text.I2CSlave_CyBtldrCommStop,"ax",%progbits
+  64              		.align	2
+  65              		.global	I2CSlave_CyBtldrCommStop
+  66              		.thumb
+  67              		.thumb_func
+  68              		.type	I2CSlave_CyBtldrCommStop, %function
+  69              	I2CSlave_CyBtldrCommStop:
+  70              	.LFB1:
+  71:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  72:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  73:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** /*******************************************************************************
+  74:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Function Name: I2CSlave_CyBtldrCommStop
+  75:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** ********************************************************************************
+  76:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  77:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Summary:
+  78:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  Disables the communication component and disables the interrupt.
+  79:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  80:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Parameters:
+  81:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  None
+  82:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  83:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Return:
+  84:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  None
+  85:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  86:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *******************************************************************************/
+  87:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** void I2CSlave_CyBtldrCommStop(void) CYSMALL 
+  88:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** {
+  71              		.loc 1 88 0
+  72              		.cfi_startproc
+  73              		@ args = 0, pretend = 0, frame = 0
+  74              		@ frame_needed = 1, uses_anonymous_args = 0
+  75 0000 80B5     		push	{r7, lr}
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 4
+
+
+  76              	.LCFI2:
+  77              		.cfi_def_cfa_offset 8
+  78              		.cfi_offset 7, -8
+  79              		.cfi_offset 14, -4
+  80 0002 00AF     		add	r7, sp, #0
+  81              	.LCFI3:
+  82              		.cfi_def_cfa_register 7
+  89:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     /* Stop I2C component */
+  90:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     I2CSlave_Stop();
+  83              		.loc 1 90 0
+  84 0004 FFF7FEFF 		bl	I2CSlave_Stop
+  91:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** }
+  85              		.loc 1 91 0
+  86 0008 80BD     		pop	{r7, pc}
+  87              		.cfi_endproc
+  88              	.LFE1:
+  89              		.size	I2CSlave_CyBtldrCommStop, .-I2CSlave_CyBtldrCommStop
+  90 000a 00BF     		.section	.text.I2CSlave_CyBtldrCommReset,"ax",%progbits
+  91              		.align	2
+  92              		.global	I2CSlave_CyBtldrCommReset
+  93              		.thumb
+  94              		.thumb_func
+  95              		.type	I2CSlave_CyBtldrCommReset, %function
+  96              	I2CSlave_CyBtldrCommReset:
+  97              	.LFB2:
+  92:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  93:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+  94:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** /*******************************************************************************
+  95:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Function Name: I2CSlave_CyBtldrCommReset
+  96:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** ********************************************************************************
+  97:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+  98:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Summary:
+  99:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  Set buffers to the initial state and reset the statuses.
+ 100:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  The read buffer initial state is full and the read always is 0xFFu.
+ 101:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  The write buffer is clear and ready to receive a commmand.
+ 102:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 103:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Parameters:
+ 104:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  None
+ 105:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 106:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Return:
+ 107:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  None
+ 108:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 109:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Global variables:
+ 110:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  I2CSlave_slRdBufIndex - used to store current index within slave
+ 111:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  read buffer.
+ 112:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 113:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *******************************************************************************/
+ 114:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** void I2CSlave_CyBtldrCommReset(void) CYSMALL 
+ 115:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** {
+  98              		.loc 1 115 0
+  99              		.cfi_startproc
+ 100              		@ args = 0, pretend = 0, frame = 0
+ 101              		@ frame_needed = 1, uses_anonymous_args = 0
+ 102              		@ link register save eliminated.
+ 103 0000 80B4     		push	{r7}
+ 104              	.LCFI4:
+ 105              		.cfi_def_cfa_offset 4
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 5
+
+
+ 106              		.cfi_offset 7, -4
+ 107 0002 00AF     		add	r7, sp, #0
+ 108              	.LCFI5:
+ 109              		.cfi_def_cfa_register 7
+ 116:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     /* Make the Read buffer full */
+ 117:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     I2CSlave_slRdBufSize = 0u;
+ 110              		.loc 1 117 0
+ 111 0004 40F20003 		movw	r3, #:lower16:I2CSlave_slRdBufSize
+ 112 0008 C0F20003 		movt	r3, #:upper16:I2CSlave_slRdBufSize
+ 113 000c 4FF00002 		mov	r2, #0
+ 114 0010 1A70     		strb	r2, [r3, #0]
+ 118:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 119:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     /* Reset Write buffer and Read buffer */
+ 120:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     I2CSlave_slRdBufIndex = 0u;
+ 115              		.loc 1 120 0
+ 116 0012 40F20003 		movw	r3, #:lower16:I2CSlave_slRdBufIndex
+ 117 0016 C0F20003 		movt	r3, #:upper16:I2CSlave_slRdBufIndex
+ 118 001a 4FF00002 		mov	r2, #0
+ 119 001e 1A70     		strb	r2, [r3, #0]
+ 121:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     I2CSlave_slWrBufIndex = 0u;
+ 120              		.loc 1 121 0
+ 121 0020 40F20003 		movw	r3, #:lower16:I2CSlave_slWrBufIndex
+ 122 0024 C0F20003 		movt	r3, #:upper16:I2CSlave_slWrBufIndex
+ 123 0028 4FF00002 		mov	r2, #0
+ 124 002c 1A70     		strb	r2, [r3, #0]
+ 122:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 123:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     /* Clear read and write status */
+ 124:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     I2CSlave_slStatus = 0u;
+ 125              		.loc 1 124 0
+ 126 002e 40F20003 		movw	r3, #:lower16:I2CSlave_slStatus
+ 127 0032 C0F20003 		movt	r3, #:upper16:I2CSlave_slStatus
+ 128 0036 4FF00002 		mov	r2, #0
+ 129 003a 1A70     		strb	r2, [r3, #0]
+ 125:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** }
+ 130              		.loc 1 125 0
+ 131 003c BD46     		mov	sp, r7
+ 132 003e 80BC     		pop	{r7}
+ 133 0040 7047     		bx	lr
+ 134              		.cfi_endproc
+ 135              	.LFE2:
+ 136              		.size	I2CSlave_CyBtldrCommReset, .-I2CSlave_CyBtldrCommReset
+ 137 0042 00BF     		.section	.text.I2CSlave_CyBtldrCommWrite,"ax",%progbits
+ 138              		.align	2
+ 139              		.global	I2CSlave_CyBtldrCommWrite
+ 140              		.thumb
+ 141              		.thumb_func
+ 142              		.type	I2CSlave_CyBtldrCommWrite, %function
+ 143              	I2CSlave_CyBtldrCommWrite:
+ 144              	.LFB3:
+ 126:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 127:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 128:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** /*******************************************************************************
+ 129:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Function Name: I2CSlave_CyBtldrCommWrite
+ 130:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** ********************************************************************************
+ 131:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 132:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Summary:
+ 133:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  Transmits the status of executed command to the Host.
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 6
+
+
+ 134:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  The function updates the I2C read buffer with response and realeases it to
+ 135:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  the host. All reads return 0xFF till the buffer will be released. All bytes
+ 136:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  are transfered by the I2C ISR.
+ 137:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  The function waits with timeout till all bytes will be read.
+ 138:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  After exist this function the reads return 0xFF.
+ 139:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 140:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Parameters:
+ 141:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  pData:    pointer to data buffer with response command.
+ 142:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  size:     number of bytes required to be transmitted.
+ 143:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  count:    actual size of data was transmitted.
+ 144:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  timeOut:  timeout value in tries of 10uS.
+ 145:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 146:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Return:
+ 147:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  Status of transmit operation.
+ 148:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 149:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Global variables:
+ 150:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  I2CSlave_slReadBuf - used to store response.
+ 151:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  I2CSlave_slRdBufIndex - used to store current index within slave
+ 152:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  read buffer.
+ 153:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 154:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *******************************************************************************/
+ 155:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** cystatus I2CSlave_CyBtldrCommWrite(const uint8 pData[], uint16 size, uint16 * count, uint8 timeOut)
+ 156:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****          
+ 157:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** {
+ 145              		.loc 1 157 0
+ 146              		.cfi_startproc
+ 147              		@ args = 0, pretend = 0, frame = 24
+ 148              		@ frame_needed = 1, uses_anonymous_args = 0
+ 149 0000 80B5     		push	{r7, lr}
+ 150              	.LCFI6:
+ 151              		.cfi_def_cfa_offset 8
+ 152              		.cfi_offset 7, -8
+ 153              		.cfi_offset 14, -4
+ 154 0002 86B0     		sub	sp, sp, #24
+ 155              	.LCFI7:
+ 156              		.cfi_def_cfa_offset 32
+ 157 0004 00AF     		add	r7, sp, #0
+ 158              	.LCFI8:
+ 159              		.cfi_def_cfa_register 7
+ 160 0006 F860     		str	r0, [r7, #12]
+ 161 0008 7A60     		str	r2, [r7, #4]
+ 162 000a 0A46     		mov	r2, r1	@ movhi
+ 163 000c 7A81     		strh	r2, [r7, #10]	@ movhi
+ 164 000e 7B72     		strb	r3, [r7, #9]
+ 158:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     cystatus status;
+ 159:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     uint16 timeoutMs;
+ 160:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 161:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     status = CYRET_BAD_PARAM;
+ 165              		.loc 1 161 0
+ 166 0010 4FF00103 		mov	r3, #1
+ 167 0014 7B61     		str	r3, [r7, #20]
+ 162:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 163:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     if((NULL != pData) && (size > 0u))
+ 168              		.loc 1 163 0
+ 169 0016 FB68     		ldr	r3, [r7, #12]
+ 170 0018 002B     		cmp	r3, #0
+ 171 001a 49D0     		beq	.L5
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 7
+
+
+ 172              		.loc 1 163 0 is_stmt 0 discriminator 1
+ 173 001c 7B89     		ldrh	r3, [r7, #10]
+ 174 001e 002B     		cmp	r3, #0
+ 175 0020 46D0     		beq	.L5
+ 164:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     {
+ 165:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         status = CYRET_TIMEOUT;
+ 176              		.loc 1 165 0 is_stmt 1
+ 177 0022 4FF01003 		mov	r3, #16
+ 178 0026 7B61     		str	r3, [r7, #20]
+ 166:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         timeoutMs = ((uint16) 10u * timeOut);  /* Convert from 10mS check to 1mS checks */
+ 179              		.loc 1 166 0
+ 180 0028 7B7A     		ldrb	r3, [r7, #9]	@ zero_extendqisi2
+ 181 002a 9BB2     		uxth	r3, r3
+ 182 002c 1A46     		mov	r2, r3	@ movhi
+ 183 002e 4FEA8202 		lsl	r2, r2, #2
+ 184 0032 D318     		adds	r3, r2, r3
+ 185 0034 4FEA4303 		lsl	r3, r3, #1
+ 186 0038 7B82     		strh	r3, [r7, #18]	@ movhi
+ 167:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 168:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         /* Copy pData to component buffer */
+ 169:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         (void) memcpy((void *) I2CSlave_slReadBuf, (void *) pData, size);
+ 187              		.loc 1 169 0
+ 188 003a 7B89     		ldrh	r3, [r7, #10]
+ 189 003c 40F20000 		movw	r0, #:lower16:I2CSlave_slReadBuf
+ 190 0040 C0F20000 		movt	r0, #:upper16:I2CSlave_slReadBuf
+ 191 0044 F968     		ldr	r1, [r7, #12]
+ 192 0046 1A46     		mov	r2, r3
+ 193 0048 FFF7FEFF 		bl	memcpy
+ 170:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         *count = size;  /* Buffer was copied to I2C buffer */
+ 194              		.loc 1 170 0
+ 195 004c 7B68     		ldr	r3, [r7, #4]
+ 196 004e 7A89     		ldrh	r2, [r7, #10]	@ movhi
+ 197 0050 1A80     		strh	r2, [r3, #0]	@ movhi
+ 171:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 172:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         /* The buffer is free to be read */
+ 173:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         I2CSlave_slRdBufSize = ((uint8) size);
+ 198              		.loc 1 173 0
+ 199 0052 7B89     		ldrh	r3, [r7, #10]	@ movhi
+ 200 0054 DAB2     		uxtb	r2, r3
+ 201 0056 40F20003 		movw	r3, #:lower16:I2CSlave_slRdBufSize
+ 202 005a C0F20003 		movt	r3, #:upper16:I2CSlave_slRdBufSize
+ 203 005e 1A70     		strb	r2, [r3, #0]
+ 174:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 175:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         while(0u != timeoutMs)  /* Wait till response will be read */
+ 204              		.loc 1 175 0
+ 205 0060 23E0     		b	.L6
+ 206              	.L8:
+ 176:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         {
+ 177:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             /* Check if host complete read */
+ 178:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             if(I2CSlave_slRdBufIndex == ((uint8) size))
+ 207              		.loc 1 178 0
+ 208 0062 7B89     		ldrh	r3, [r7, #10]	@ movhi
+ 209 0064 DAB2     		uxtb	r2, r3
+ 210 0066 40F20003 		movw	r3, #:lower16:I2CSlave_slRdBufIndex
+ 211 006a C0F20003 		movt	r3, #:upper16:I2CSlave_slRdBufIndex
+ 212 006e 1B78     		ldrb	r3, [r3, #0]
+ 213 0070 DBB2     		uxtb	r3, r3
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 8
+
+
+ 214 0072 9A42     		cmp	r2, r3
+ 215 0074 11D1     		bne	.L7
+ 179:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             {
+ 180:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 I2CSlave_slRdBufSize  = 0u;
+ 216              		.loc 1 180 0
+ 217 0076 40F20003 		movw	r3, #:lower16:I2CSlave_slRdBufSize
+ 218 007a C0F20003 		movt	r3, #:upper16:I2CSlave_slRdBufSize
+ 219 007e 4FF00002 		mov	r2, #0
+ 220 0082 1A70     		strb	r2, [r3, #0]
+ 181:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 I2CSlave_slRdBufIndex = 0u;
+ 221              		.loc 1 181 0
+ 222 0084 40F20003 		movw	r3, #:lower16:I2CSlave_slRdBufIndex
+ 223 0088 C0F20003 		movt	r3, #:upper16:I2CSlave_slRdBufIndex
+ 224 008c 4FF00002 		mov	r2, #0
+ 225 0090 1A70     		strb	r2, [r3, #0]
+ 182:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 183:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 status = CYRET_SUCCESS;
+ 226              		.loc 1 183 0
+ 227 0092 4FF00003 		mov	r3, #0
+ 228 0096 7B61     		str	r3, [r7, #20]
+ 184:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 break;
+ 229              		.loc 1 184 0
+ 230 0098 0AE0     		b	.L5
+ 231              	.L7:
+ 185:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             }
+ 186:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 187:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             CyDelay(I2CSlave_WAIT_1_MS);
+ 232              		.loc 1 187 0
+ 233 009a 4FF00100 		mov	r0, #1
+ 234 009e FFF7FEFF 		bl	CyDelay
+ 188:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             timeoutMs--;
+ 235              		.loc 1 188 0
+ 236 00a2 7B8A     		ldrh	r3, [r7, #18]	@ movhi
+ 237 00a4 03F1FF33 		add	r3, r3, #-1
+ 238 00a8 7B82     		strh	r3, [r7, #18]	@ movhi
+ 239              	.L6:
+ 175:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         while(0u != timeoutMs)  /* Wait till response will be read */
+ 240              		.loc 1 175 0 discriminator 1
+ 241 00aa 7B8A     		ldrh	r3, [r7, #18]
+ 242 00ac 002B     		cmp	r3, #0
+ 243 00ae D8D1     		bne	.L8
+ 244              	.L5:
+ 189:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         }
+ 190:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     }
+ 191:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 192:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     return(status);
+ 245              		.loc 1 192 0
+ 246 00b0 7B69     		ldr	r3, [r7, #20]
+ 193:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** }
+ 247              		.loc 1 193 0
+ 248 00b2 1846     		mov	r0, r3
+ 249 00b4 07F11807 		add	r7, r7, #24
+ 250 00b8 BD46     		mov	sp, r7
+ 251 00ba 80BD     		pop	{r7, pc}
+ 252              		.cfi_endproc
+ 253              	.LFE3:
+ 254              		.size	I2CSlave_CyBtldrCommWrite, .-I2CSlave_CyBtldrCommWrite
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 9
+
+
+ 255              		.section	.text.I2CSlave_CyBtldrCommRead,"ax",%progbits
+ 256              		.align	2
+ 257              		.global	I2CSlave_CyBtldrCommRead
+ 258              		.thumb
+ 259              		.thumb_func
+ 260              		.type	I2CSlave_CyBtldrCommRead, %function
+ 261              	I2CSlave_CyBtldrCommRead:
+ 262              	.LFB4:
+ 194:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 195:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 196:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** /*******************************************************************************
+ 197:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Function Name: I2CSlave_CyBtldrCommRead
+ 198:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** ********************************************************************************
+ 199:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 200:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Summary:
+ 201:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  Receives the command from the Host.
+ 202:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  All bytes are received by the I2C ISR and stored in internal I2C buffer. The
+ 203:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  function checks status with timeout to detemine the end of transfer and
+ 204:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  then copy data to bootloader buffer.
+ 205:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  After exist this function the I2C ISR is able to receive more data.
+ 206:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 207:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Parameters:
+ 208:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  pData:    pointer to data buffer to store command.
+ 209:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  size:     maximum number of bytes which could to be passed back.
+ 210:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  count:    actual size of data was received.
+ 211:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  timeOut:  timeout value in tries of 10uS.
+ 212:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 213:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Return:
+ 214:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  Status of receive operation.
+ 215:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 216:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** * Global variables:
+ 217:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *  I2CSlave_slWriteBuf - used to store received command.
+ 218:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *
+ 219:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** *******************************************************************************/
+ 220:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** cystatus I2CSlave_CyBtldrCommRead(uint8 pData[], uint16 size, uint16 * count, uint8 timeOut) CYSMAL
+ 221:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****          
+ 222:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** {
+ 263              		.loc 1 222 0
+ 264              		.cfi_startproc
+ 265              		@ args = 0, pretend = 0, frame = 24
+ 266              		@ frame_needed = 1, uses_anonymous_args = 0
+ 267 0000 80B5     		push	{r7, lr}
+ 268              	.LCFI9:
+ 269              		.cfi_def_cfa_offset 8
+ 270              		.cfi_offset 7, -8
+ 271              		.cfi_offset 14, -4
+ 272 0002 86B0     		sub	sp, sp, #24
+ 273              	.LCFI10:
+ 274              		.cfi_def_cfa_offset 32
+ 275 0004 00AF     		add	r7, sp, #0
+ 276              	.LCFI11:
+ 277              		.cfi_def_cfa_register 7
+ 278 0006 F860     		str	r0, [r7, #12]
+ 279 0008 7A60     		str	r2, [r7, #4]
+ 280 000a 0A46     		mov	r2, r1	@ movhi
+ 281 000c 7A81     		strh	r2, [r7, #10]	@ movhi
+ 282 000e 7B72     		strb	r3, [r7, #9]
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 10
+
+
+ 223:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     cystatus status;
+ 224:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     uint16 timeoutMs;
+ 225:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     uint8 byteCount;
+ 226:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 227:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     status = CYRET_BAD_PARAM;
+ 283              		.loc 1 227 0
+ 284 0010 4FF00103 		mov	r3, #1
+ 285 0014 7B61     		str	r3, [r7, #20]
+ 228:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 229:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     if((NULL != pData) && (size > 0u))
+ 286              		.loc 1 229 0
+ 287 0016 FB68     		ldr	r3, [r7, #12]
+ 288 0018 002B     		cmp	r3, #0
+ 289 001a 4FD0     		beq	.L11
+ 290              		.loc 1 229 0 is_stmt 0 discriminator 1
+ 291 001c 7B89     		ldrh	r3, [r7, #10]
+ 292 001e 002B     		cmp	r3, #0
+ 293 0020 4CD0     		beq	.L11
+ 230:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     {
+ 231:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         status = CYRET_TIMEOUT;
+ 294              		.loc 1 231 0 is_stmt 1
+ 295 0022 4FF01003 		mov	r3, #16
+ 296 0026 7B61     		str	r3, [r7, #20]
+ 232:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         timeoutMs = ((uint16) 10u * timeOut);  /* Convert from 10mS checks to 1mS checks */
+ 297              		.loc 1 232 0
+ 298 0028 7B7A     		ldrb	r3, [r7, #9]	@ zero_extendqisi2
+ 299 002a 9BB2     		uxth	r3, r3
+ 300 002c 1A46     		mov	r2, r3	@ movhi
+ 301 002e 4FEA8202 		lsl	r2, r2, #2
+ 302 0032 D318     		adds	r3, r2, r3
+ 303 0034 4FEA4303 		lsl	r3, r3, #1
+ 304 0038 7B82     		strh	r3, [r7, #18]	@ movhi
+ 233:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 234:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         while(0u != timeoutMs)  /* Wait for command from the host */
+ 305              		.loc 1 234 0
+ 306 003a 3CE0     		b	.L12
+ 307              	.L14:
+ 235:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         {
+ 236:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             /* Check if the host complete write */
+ 237:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             if(0u != (I2CSlave_slStatus & I2CSlave_SSTAT_WR_CMPLT))
+ 308              		.loc 1 237 0
+ 309 003c 40F20003 		movw	r3, #:lower16:I2CSlave_slStatus
+ 310 0040 C0F20003 		movt	r3, #:upper16:I2CSlave_slStatus
+ 311 0044 1B78     		ldrb	r3, [r3, #0]
+ 312 0046 DBB2     		uxtb	r3, r3
+ 313 0048 03F01003 		and	r3, r3, #16
+ 314 004c 002B     		cmp	r3, #0
+ 315 004e 2AD0     		beq	.L13
+ 238:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             {
+ 239:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 /* How many bytes the host has been written */
+ 240:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 byteCount = I2CSlave_slWrBufIndex;
+ 316              		.loc 1 240 0
+ 317 0050 40F20003 		movw	r3, #:lower16:I2CSlave_slWrBufIndex
+ 318 0054 C0F20003 		movt	r3, #:upper16:I2CSlave_slWrBufIndex
+ 319 0058 1B78     		ldrb	r3, [r3, #0]
+ 320 005a 7B74     		strb	r3, [r7, #17]
+ 241:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 *count = (uint16) byteCount;
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 11
+
+
+ 321              		.loc 1 241 0
+ 322 005c 7B7C     		ldrb	r3, [r7, #17]	@ zero_extendqisi2
+ 323 005e 9AB2     		uxth	r2, r3
+ 324 0060 7B68     		ldr	r3, [r7, #4]
+ 325 0062 1A80     		strh	r2, [r3, #0]	@ movhi
+ 242:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 243:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 /* Copy command to pData buffer */
+ 244:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 (void) memcpy((void *) pData, (void *) I2CSlave_slWriteBuf,
+ 245:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                               I2CSlave_MIN_UNT16(byteCount, size));
+ 326              		.loc 1 245 0
+ 327 0064 7B7C     		ldrb	r3, [r7, #17]	@ zero_extendqisi2
+ 328 0066 9AB2     		uxth	r2, r3
+ 329 0068 7B89     		ldrh	r3, [r7, #10]
+ 330 006a 9A42     		cmp	r2, r3
+ 331 006c 38BF     		it	cc
+ 332 006e 1346     		movcc	r3, r2
+ 333 0070 9BB2     		uxth	r3, r3
+ 244:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 (void) memcpy((void *) pData, (void *) I2CSlave_slWriteBuf,
+ 334              		.loc 1 244 0
+ 335 0072 F868     		ldr	r0, [r7, #12]
+ 336 0074 40F20001 		movw	r1, #:lower16:I2CSlave_slWriteBuf
+ 337 0078 C0F20001 		movt	r1, #:upper16:I2CSlave_slWriteBuf
+ 338 007c 1A46     		mov	r2, r3
+ 339 007e FFF7FEFF 		bl	memcpy
+ 246:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 247:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 /* Clear I2C write buffer and status */
+ 248:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 I2CSlave_slStatus     = 0u;
+ 340              		.loc 1 248 0
+ 341 0082 40F20003 		movw	r3, #:lower16:I2CSlave_slStatus
+ 342 0086 C0F20003 		movt	r3, #:upper16:I2CSlave_slStatus
+ 343 008a 4FF00002 		mov	r2, #0
+ 344 008e 1A70     		strb	r2, [r3, #0]
+ 249:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 I2CSlave_slWrBufIndex = 0u;
+ 345              		.loc 1 249 0
+ 346 0090 40F20003 		movw	r3, #:lower16:I2CSlave_slWrBufIndex
+ 347 0094 C0F20003 		movt	r3, #:upper16:I2CSlave_slWrBufIndex
+ 348 0098 4FF00002 		mov	r2, #0
+ 349 009c 1A70     		strb	r2, [r3, #0]
+ 250:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 251:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 status = CYRET_SUCCESS;
+ 350              		.loc 1 251 0
+ 351 009e 4FF00003 		mov	r3, #0
+ 352 00a2 7B61     		str	r3, [r7, #20]
+ 252:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****                 break;
+ 353              		.loc 1 252 0
+ 354 00a4 0AE0     		b	.L11
+ 355              	.L13:
+ 253:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             }
+ 254:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 255:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             CyDelay(I2CSlave_WAIT_1_MS);
+ 356              		.loc 1 255 0
+ 357 00a6 4FF00100 		mov	r0, #1
+ 358 00aa FFF7FEFF 		bl	CyDelay
+ 256:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****             timeoutMs--;
+ 359              		.loc 1 256 0
+ 360 00ae 7B8A     		ldrh	r3, [r7, #18]	@ movhi
+ 361 00b0 03F1FF33 		add	r3, r3, #-1
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 12
+
+
+ 362 00b4 7B82     		strh	r3, [r7, #18]	@ movhi
+ 363              	.L12:
+ 234:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         while(0u != timeoutMs)  /* Wait for command from the host */
+ 364              		.loc 1 234 0 discriminator 1
+ 365 00b6 7B8A     		ldrh	r3, [r7, #18]
+ 366 00b8 002B     		cmp	r3, #0
+ 367 00ba BFD1     		bne	.L14
+ 368              	.L11:
+ 257:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****         }
+ 258:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     }
+ 259:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** 
+ 260:.\Generated_Source\PSoC5/I2CSlave_BOOT.c ****     return(status);
+ 369              		.loc 1 260 0
+ 370 00bc 7B69     		ldr	r3, [r7, #20]
+ 261:.\Generated_Source\PSoC5/I2CSlave_BOOT.c **** }
+ 371              		.loc 1 261 0
+ 372 00be 1846     		mov	r0, r3
+ 373 00c0 07F11807 		add	r7, r7, #24
+ 374 00c4 BD46     		mov	sp, r7
+ 375 00c6 80BD     		pop	{r7, pc}
+ 376              		.cfi_endproc
+ 377              	.LFE4:
+ 378              		.size	I2CSlave_CyBtldrCommRead, .-I2CSlave_CyBtldrCommRead
+ 379              		.text
+ 380              	.Letext0:
+ 381              		.file 2 ".\\Generated_Source\\PSoC5\\cytypes.h"
+ 382              		.file 3 ".\\Generated_Source\\PSoC5\\I2CSlave_PVT.h"
+ 383              		.section	.debug_info,"",%progbits
+ 384              	.Ldebug_info0:
+ 385 0000 61020000 		.4byte	0x261
+ 386 0004 0200     		.2byte	0x2
+ 387 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 388 000a 04       		.byte	0x4
+ 389 000b 01       		.uleb128 0x1
+ 390 000c E3010000 		.4byte	.LASF34
+ 391 0010 01       		.byte	0x1
+ 392 0011 65020000 		.4byte	.LASF35
+ 393 0015 94010000 		.4byte	.LASF36
+ 394 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 395 001d 00000000 		.4byte	0
+ 396 0021 00000000 		.4byte	0
+ 397 0025 00000000 		.4byte	.Ldebug_line0
+ 398 0029 02       		.uleb128 0x2
+ 399 002a 01       		.byte	0x1
+ 400 002b 06       		.byte	0x6
+ 401 002c 8E020000 		.4byte	.LASF0
+ 402 0030 02       		.uleb128 0x2
+ 403 0031 01       		.byte	0x1
+ 404 0032 08       		.byte	0x8
+ 405 0033 B8000000 		.4byte	.LASF1
+ 406 0037 02       		.uleb128 0x2
+ 407 0038 02       		.byte	0x2
+ 408 0039 05       		.byte	0x5
+ 409 003a 8A010000 		.4byte	.LASF2
+ 410 003e 02       		.uleb128 0x2
+ 411 003f 02       		.byte	0x2
+ 412 0040 07       		.byte	0x7
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 13
+
+
+ 413 0041 24000000 		.4byte	.LASF3
+ 414 0045 02       		.uleb128 0x2
+ 415 0046 04       		.byte	0x4
+ 416 0047 05       		.byte	0x5
+ 417 0048 5C020000 		.4byte	.LASF4
+ 418 004c 02       		.uleb128 0x2
+ 419 004d 04       		.byte	0x4
+ 420 004e 07       		.byte	0x7
+ 421 004f 96000000 		.4byte	.LASF5
+ 422 0053 02       		.uleb128 0x2
+ 423 0054 08       		.byte	0x8
+ 424 0055 05       		.byte	0x5
+ 425 0056 77010000 		.4byte	.LASF6
+ 426 005a 02       		.uleb128 0x2
+ 427 005b 08       		.byte	0x8
+ 428 005c 07       		.byte	0x7
+ 429 005d 36010000 		.4byte	.LASF7
+ 430 0061 03       		.uleb128 0x3
+ 431 0062 04       		.byte	0x4
+ 432 0063 05       		.byte	0x5
+ 433 0064 696E7400 		.ascii	"int\000"
+ 434 0068 02       		.uleb128 0x2
+ 435 0069 04       		.byte	0x4
+ 436 006a 07       		.byte	0x7
+ 437 006b 10010000 		.4byte	.LASF8
+ 438 006f 04       		.uleb128 0x4
+ 439 0070 A8000000 		.4byte	.LASF9
+ 440 0074 02       		.byte	0x2
+ 441 0075 5B       		.byte	0x5b
+ 442 0076 30000000 		.4byte	0x30
+ 443 007a 04       		.uleb128 0x4
+ 444 007b F5000000 		.4byte	.LASF10
+ 445 007f 02       		.byte	0x2
+ 446 0080 5C       		.byte	0x5c
+ 447 0081 3E000000 		.4byte	0x3e
+ 448 0085 02       		.uleb128 0x2
+ 449 0086 04       		.byte	0x4
+ 450 0087 04       		.byte	0x4
+ 451 0088 78000000 		.4byte	.LASF11
+ 452 008c 02       		.uleb128 0x2
+ 453 008d 08       		.byte	0x8
+ 454 008e 04       		.byte	0x4
+ 455 008f DC000000 		.4byte	.LASF12
+ 456 0093 02       		.uleb128 0x2
+ 457 0094 01       		.byte	0x1
+ 458 0095 08       		.byte	0x8
+ 459 0096 85010000 		.4byte	.LASF13
+ 460 009a 04       		.uleb128 0x4
+ 461 009b 00000000 		.4byte	.LASF14
+ 462 009f 02       		.byte	0x2
+ 463 00a0 E8       		.byte	0xe8
+ 464 00a1 4C000000 		.4byte	0x4c
+ 465 00a5 05       		.uleb128 0x5
+ 466 00a6 6F000000 		.4byte	0x6f
+ 467 00aa 02       		.uleb128 0x2
+ 468 00ab 04       		.byte	0x4
+ 469 00ac 07       		.byte	0x7
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 14
+
+
+ 470 00ad 6E010000 		.4byte	.LASF15
+ 471 00b1 06       		.uleb128 0x6
+ 472 00b2 01       		.byte	0x1
+ 473 00b3 58000000 		.4byte	.LASF16
+ 474 00b7 01       		.byte	0x1
+ 475 00b8 3C       		.byte	0x3c
+ 476 00b9 01       		.byte	0x1
+ 477 00ba 00000000 		.4byte	.LFB0
+ 478 00be 2A000000 		.4byte	.LFE0
+ 479 00c2 00000000 		.4byte	.LLST0
+ 480 00c6 01       		.byte	0x1
+ 481 00c7 06       		.uleb128 0x6
+ 482 00c8 01       		.byte	0x1
+ 483 00c9 1D010000 		.4byte	.LASF17
+ 484 00cd 01       		.byte	0x1
+ 485 00ce 57       		.byte	0x57
+ 486 00cf 01       		.byte	0x1
+ 487 00d0 00000000 		.4byte	.LFB1
+ 488 00d4 0A000000 		.4byte	.LFE1
+ 489 00d8 2C000000 		.4byte	.LLST1
+ 490 00dc 01       		.byte	0x1
+ 491 00dd 07       		.uleb128 0x7
+ 492 00de 01       		.byte	0x1
+ 493 00df 37000000 		.4byte	.LASF18
+ 494 00e3 01       		.byte	0x1
+ 495 00e4 72       		.byte	0x72
+ 496 00e5 01       		.byte	0x1
+ 497 00e6 00000000 		.4byte	.LFB2
+ 498 00ea 42000000 		.4byte	.LFE2
+ 499 00ee 58000000 		.4byte	.LLST2
+ 500 00f2 01       		.byte	0x1
+ 501 00f3 08       		.uleb128 0x8
+ 502 00f4 01       		.byte	0x1
+ 503 00f5 2C020000 		.4byte	.LASF25
+ 504 00f9 01       		.byte	0x1
+ 505 00fa 9B       		.byte	0x9b
+ 506 00fb 01       		.byte	0x1
+ 507 00fc 9A000000 		.4byte	0x9a
+ 508 0100 00000000 		.4byte	.LFB3
+ 509 0104 BC000000 		.4byte	.LFE3
+ 510 0108 84000000 		.4byte	.LLST3
+ 511 010c 01       		.byte	0x1
+ 512 010d 66010000 		.4byte	0x166
+ 513 0111 09       		.uleb128 0x9
+ 514 0112 72000000 		.4byte	.LASF19
+ 515 0116 01       		.byte	0x1
+ 516 0117 9B       		.byte	0x9b
+ 517 0118 66010000 		.4byte	0x166
+ 518 011c 02       		.byte	0x2
+ 519 011d 91       		.byte	0x91
+ 520 011e 6C       		.sleb128 -20
+ 521 011f 09       		.uleb128 0x9
+ 522 0120 91000000 		.4byte	.LASF20
+ 523 0124 01       		.byte	0x1
+ 524 0125 9B       		.byte	0x9b
+ 525 0126 7A000000 		.4byte	0x7a
+ 526 012a 02       		.byte	0x2
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 15
+
+
+ 527 012b 91       		.byte	0x91
+ 528 012c 6A       		.sleb128 -22
+ 529 012d 09       		.uleb128 0x9
+ 530 012e 1E000000 		.4byte	.LASF21
+ 531 0132 01       		.byte	0x1
+ 532 0133 9B       		.byte	0x9b
+ 533 0134 71010000 		.4byte	0x171
+ 534 0138 02       		.byte	0x2
+ 535 0139 91       		.byte	0x91
+ 536 013a 64       		.sleb128 -28
+ 537 013b 09       		.uleb128 0x9
+ 538 013c 4D010000 		.4byte	.LASF22
+ 539 0140 01       		.byte	0x1
+ 540 0141 9B       		.byte	0x9b
+ 541 0142 6F000000 		.4byte	0x6f
+ 542 0146 02       		.byte	0x2
+ 543 0147 91       		.byte	0x91
+ 544 0148 69       		.sleb128 -23
+ 545 0149 0A       		.uleb128 0xa
+ 546 014a 51000000 		.4byte	.LASF23
+ 547 014e 01       		.byte	0x1
+ 548 014f 9E       		.byte	0x9e
+ 549 0150 9A000000 		.4byte	0x9a
+ 550 0154 02       		.byte	0x2
+ 551 0155 91       		.byte	0x91
+ 552 0156 74       		.sleb128 -12
+ 553 0157 0A       		.uleb128 0xa
+ 554 0158 9A020000 		.4byte	.LASF24
+ 555 015c 01       		.byte	0x1
+ 556 015d 9F       		.byte	0x9f
+ 557 015e 7A000000 		.4byte	0x7a
+ 558 0162 02       		.byte	0x2
+ 559 0163 91       		.byte	0x91
+ 560 0164 72       		.sleb128 -14
+ 561 0165 00       		.byte	0
+ 562 0166 0B       		.uleb128 0xb
+ 563 0167 04       		.byte	0x4
+ 564 0168 6C010000 		.4byte	0x16c
+ 565 016c 0C       		.uleb128 0xc
+ 566 016d 6F000000 		.4byte	0x6f
+ 567 0171 0B       		.uleb128 0xb
+ 568 0172 04       		.byte	0x4
+ 569 0173 7A000000 		.4byte	0x7a
+ 570 0177 08       		.uleb128 0x8
+ 571 0178 01       		.byte	0x1
+ 572 0179 55010000 		.4byte	.LASF26
+ 573 017d 01       		.byte	0x1
+ 574 017e DC       		.byte	0xdc
+ 575 017f 01       		.byte	0x1
+ 576 0180 9A000000 		.4byte	0x9a
+ 577 0184 00000000 		.4byte	.LFB4
+ 578 0188 C8000000 		.4byte	.LFE4
+ 579 018c BC000000 		.4byte	.LLST4
+ 580 0190 01       		.byte	0x1
+ 581 0191 F8010000 		.4byte	0x1f8
+ 582 0195 09       		.uleb128 0x9
+ 583 0196 72000000 		.4byte	.LASF19
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 16
+
+
+ 584 019a 01       		.byte	0x1
+ 585 019b DC       		.byte	0xdc
+ 586 019c F8010000 		.4byte	0x1f8
+ 587 01a0 02       		.byte	0x2
+ 588 01a1 91       		.byte	0x91
+ 589 01a2 6C       		.sleb128 -20
+ 590 01a3 09       		.uleb128 0x9
+ 591 01a4 91000000 		.4byte	.LASF20
+ 592 01a8 01       		.byte	0x1
+ 593 01a9 DC       		.byte	0xdc
+ 594 01aa 7A000000 		.4byte	0x7a
+ 595 01ae 02       		.byte	0x2
+ 596 01af 91       		.byte	0x91
+ 597 01b0 6A       		.sleb128 -22
+ 598 01b1 09       		.uleb128 0x9
+ 599 01b2 1E000000 		.4byte	.LASF21
+ 600 01b6 01       		.byte	0x1
+ 601 01b7 DC       		.byte	0xdc
+ 602 01b8 71010000 		.4byte	0x171
+ 603 01bc 02       		.byte	0x2
+ 604 01bd 91       		.byte	0x91
+ 605 01be 64       		.sleb128 -28
+ 606 01bf 09       		.uleb128 0x9
+ 607 01c0 4D010000 		.4byte	.LASF22
+ 608 01c4 01       		.byte	0x1
+ 609 01c5 DC       		.byte	0xdc
+ 610 01c6 6F000000 		.4byte	0x6f
+ 611 01ca 02       		.byte	0x2
+ 612 01cb 91       		.byte	0x91
+ 613 01cc 69       		.sleb128 -23
+ 614 01cd 0A       		.uleb128 0xa
+ 615 01ce 51000000 		.4byte	.LASF23
+ 616 01d2 01       		.byte	0x1
+ 617 01d3 DF       		.byte	0xdf
+ 618 01d4 9A000000 		.4byte	0x9a
+ 619 01d8 02       		.byte	0x2
+ 620 01d9 91       		.byte	0x91
+ 621 01da 74       		.sleb128 -12
+ 622 01db 0A       		.uleb128 0xa
+ 623 01dc 9A020000 		.4byte	.LASF24
+ 624 01e0 01       		.byte	0x1
+ 625 01e1 E0       		.byte	0xe0
+ 626 01e2 7A000000 		.4byte	0x7a
+ 627 01e6 02       		.byte	0x2
+ 628 01e7 91       		.byte	0x91
+ 629 01e8 72       		.sleb128 -14
+ 630 01e9 0A       		.uleb128 0xa
+ 631 01ea AE000000 		.4byte	.LASF27
+ 632 01ee 01       		.byte	0x1
+ 633 01ef E1       		.byte	0xe1
+ 634 01f0 6F000000 		.4byte	0x6f
+ 635 01f4 02       		.byte	0x2
+ 636 01f5 91       		.byte	0x91
+ 637 01f6 71       		.sleb128 -15
+ 638 01f7 00       		.byte	0
+ 639 01f8 0B       		.uleb128 0xb
+ 640 01f9 04       		.byte	0x4
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 17
+
+
+ 641 01fa 6F000000 		.4byte	0x6f
+ 642 01fe 0D       		.uleb128 0xd
+ 643 01ff 6F000000 		.4byte	0x6f
+ 644 0203 0E020000 		.4byte	0x20e
+ 645 0207 0E       		.uleb128 0xe
+ 646 0208 AA000000 		.4byte	0xaa
+ 647 020c 7F       		.byte	0x7f
+ 648 020d 00       		.byte	0
+ 649 020e 0A       		.uleb128 0xa
+ 650 020f 7E000000 		.4byte	.LASF28
+ 651 0213 01       		.byte	0x1
+ 652 0214 1C       		.byte	0x1c
+ 653 0215 FE010000 		.4byte	0x1fe
+ 654 0219 05       		.byte	0x5
+ 655 021a 03       		.byte	0x3
+ 656 021b 00000000 		.4byte	I2CSlave_slReadBuf
+ 657 021f 0A       		.uleb128 0xa
+ 658 0220 FC000000 		.4byte	.LASF29
+ 659 0224 01       		.byte	0x1
+ 660 0225 1F       		.byte	0x1f
+ 661 0226 FE010000 		.4byte	0x1fe
+ 662 022a 05       		.byte	0x5
+ 663 022b 03       		.byte	0x3
+ 664 022c 80000000 		.4byte	I2CSlave_slWriteBuf
+ 665 0230 0F       		.uleb128 0xf
+ 666 0231 E3000000 		.4byte	.LASF30
+ 667 0235 03       		.byte	0x3
+ 668 0236 38       		.byte	0x38
+ 669 0237 A5000000 		.4byte	0xa5
+ 670 023b 01       		.byte	0x1
+ 671 023c 01       		.byte	0x1
+ 672 023d 0F       		.uleb128 0xf
+ 673 023e 09000000 		.4byte	.LASF31
+ 674 0242 03       		.byte	0x3
+ 675 0243 3C       		.byte	0x3c
+ 676 0244 A5000000 		.4byte	0xa5
+ 677 0248 01       		.byte	0x1
+ 678 0249 01       		.byte	0x1
+ 679 024a 0F       		.uleb128 0xf
+ 680 024b 46020000 		.4byte	.LASF32
+ 681 024f 03       		.byte	0x3
+ 682 0250 3D       		.byte	0x3d
+ 683 0251 A5000000 		.4byte	0xa5
+ 684 0255 01       		.byte	0x1
+ 685 0256 01       		.byte	0x1
+ 686 0257 0F       		.uleb128 0xf
+ 687 0258 C6000000 		.4byte	.LASF33
+ 688 025c 03       		.byte	0x3
+ 689 025d 42       		.byte	0x42
+ 690 025e A5000000 		.4byte	0xa5
+ 691 0262 01       		.byte	0x1
+ 692 0263 01       		.byte	0x1
+ 693 0264 00       		.byte	0
+ 694              		.section	.debug_abbrev,"",%progbits
+ 695              	.Ldebug_abbrev0:
+ 696 0000 01       		.uleb128 0x1
+ 697 0001 11       		.uleb128 0x11
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 18
+
+
+ 698 0002 01       		.byte	0x1
+ 699 0003 25       		.uleb128 0x25
+ 700 0004 0E       		.uleb128 0xe
+ 701 0005 13       		.uleb128 0x13
+ 702 0006 0B       		.uleb128 0xb
+ 703 0007 03       		.uleb128 0x3
+ 704 0008 0E       		.uleb128 0xe
+ 705 0009 1B       		.uleb128 0x1b
+ 706 000a 0E       		.uleb128 0xe
+ 707 000b 55       		.uleb128 0x55
+ 708 000c 06       		.uleb128 0x6
+ 709 000d 11       		.uleb128 0x11
+ 710 000e 01       		.uleb128 0x1
+ 711 000f 52       		.uleb128 0x52
+ 712 0010 01       		.uleb128 0x1
+ 713 0011 10       		.uleb128 0x10
+ 714 0012 06       		.uleb128 0x6
+ 715 0013 00       		.byte	0
+ 716 0014 00       		.byte	0
+ 717 0015 02       		.uleb128 0x2
+ 718 0016 24       		.uleb128 0x24
+ 719 0017 00       		.byte	0
+ 720 0018 0B       		.uleb128 0xb
+ 721 0019 0B       		.uleb128 0xb
+ 722 001a 3E       		.uleb128 0x3e
+ 723 001b 0B       		.uleb128 0xb
+ 724 001c 03       		.uleb128 0x3
+ 725 001d 0E       		.uleb128 0xe
+ 726 001e 00       		.byte	0
+ 727 001f 00       		.byte	0
+ 728 0020 03       		.uleb128 0x3
+ 729 0021 24       		.uleb128 0x24
+ 730 0022 00       		.byte	0
+ 731 0023 0B       		.uleb128 0xb
+ 732 0024 0B       		.uleb128 0xb
+ 733 0025 3E       		.uleb128 0x3e
+ 734 0026 0B       		.uleb128 0xb
+ 735 0027 03       		.uleb128 0x3
+ 736 0028 08       		.uleb128 0x8
+ 737 0029 00       		.byte	0
+ 738 002a 00       		.byte	0
+ 739 002b 04       		.uleb128 0x4
+ 740 002c 16       		.uleb128 0x16
+ 741 002d 00       		.byte	0
+ 742 002e 03       		.uleb128 0x3
+ 743 002f 0E       		.uleb128 0xe
+ 744 0030 3A       		.uleb128 0x3a
+ 745 0031 0B       		.uleb128 0xb
+ 746 0032 3B       		.uleb128 0x3b
+ 747 0033 0B       		.uleb128 0xb
+ 748 0034 49       		.uleb128 0x49
+ 749 0035 13       		.uleb128 0x13
+ 750 0036 00       		.byte	0
+ 751 0037 00       		.byte	0
+ 752 0038 05       		.uleb128 0x5
+ 753 0039 35       		.uleb128 0x35
+ 754 003a 00       		.byte	0
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 19
+
+
+ 755 003b 49       		.uleb128 0x49
+ 756 003c 13       		.uleb128 0x13
+ 757 003d 00       		.byte	0
+ 758 003e 00       		.byte	0
+ 759 003f 06       		.uleb128 0x6
+ 760 0040 2E       		.uleb128 0x2e
+ 761 0041 00       		.byte	0
+ 762 0042 3F       		.uleb128 0x3f
+ 763 0043 0C       		.uleb128 0xc
+ 764 0044 03       		.uleb128 0x3
+ 765 0045 0E       		.uleb128 0xe
+ 766 0046 3A       		.uleb128 0x3a
+ 767 0047 0B       		.uleb128 0xb
+ 768 0048 3B       		.uleb128 0x3b
+ 769 0049 0B       		.uleb128 0xb
+ 770 004a 27       		.uleb128 0x27
+ 771 004b 0C       		.uleb128 0xc
+ 772 004c 11       		.uleb128 0x11
+ 773 004d 01       		.uleb128 0x1
+ 774 004e 12       		.uleb128 0x12
+ 775 004f 01       		.uleb128 0x1
+ 776 0050 40       		.uleb128 0x40
+ 777 0051 06       		.uleb128 0x6
+ 778 0052 9642     		.uleb128 0x2116
+ 779 0054 0C       		.uleb128 0xc
+ 780 0055 00       		.byte	0
+ 781 0056 00       		.byte	0
+ 782 0057 07       		.uleb128 0x7
+ 783 0058 2E       		.uleb128 0x2e
+ 784 0059 00       		.byte	0
+ 785 005a 3F       		.uleb128 0x3f
+ 786 005b 0C       		.uleb128 0xc
+ 787 005c 03       		.uleb128 0x3
+ 788 005d 0E       		.uleb128 0xe
+ 789 005e 3A       		.uleb128 0x3a
+ 790 005f 0B       		.uleb128 0xb
+ 791 0060 3B       		.uleb128 0x3b
+ 792 0061 0B       		.uleb128 0xb
+ 793 0062 27       		.uleb128 0x27
+ 794 0063 0C       		.uleb128 0xc
+ 795 0064 11       		.uleb128 0x11
+ 796 0065 01       		.uleb128 0x1
+ 797 0066 12       		.uleb128 0x12
+ 798 0067 01       		.uleb128 0x1
+ 799 0068 40       		.uleb128 0x40
+ 800 0069 06       		.uleb128 0x6
+ 801 006a 9742     		.uleb128 0x2117
+ 802 006c 0C       		.uleb128 0xc
+ 803 006d 00       		.byte	0
+ 804 006e 00       		.byte	0
+ 805 006f 08       		.uleb128 0x8
+ 806 0070 2E       		.uleb128 0x2e
+ 807 0071 01       		.byte	0x1
+ 808 0072 3F       		.uleb128 0x3f
+ 809 0073 0C       		.uleb128 0xc
+ 810 0074 03       		.uleb128 0x3
+ 811 0075 0E       		.uleb128 0xe
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 20
+
+
+ 812 0076 3A       		.uleb128 0x3a
+ 813 0077 0B       		.uleb128 0xb
+ 814 0078 3B       		.uleb128 0x3b
+ 815 0079 0B       		.uleb128 0xb
+ 816 007a 27       		.uleb128 0x27
+ 817 007b 0C       		.uleb128 0xc
+ 818 007c 49       		.uleb128 0x49
+ 819 007d 13       		.uleb128 0x13
+ 820 007e 11       		.uleb128 0x11
+ 821 007f 01       		.uleb128 0x1
+ 822 0080 12       		.uleb128 0x12
+ 823 0081 01       		.uleb128 0x1
+ 824 0082 40       		.uleb128 0x40
+ 825 0083 06       		.uleb128 0x6
+ 826 0084 9642     		.uleb128 0x2116
+ 827 0086 0C       		.uleb128 0xc
+ 828 0087 01       		.uleb128 0x1
+ 829 0088 13       		.uleb128 0x13
+ 830 0089 00       		.byte	0
+ 831 008a 00       		.byte	0
+ 832 008b 09       		.uleb128 0x9
+ 833 008c 05       		.uleb128 0x5
+ 834 008d 00       		.byte	0
+ 835 008e 03       		.uleb128 0x3
+ 836 008f 0E       		.uleb128 0xe
+ 837 0090 3A       		.uleb128 0x3a
+ 838 0091 0B       		.uleb128 0xb
+ 839 0092 3B       		.uleb128 0x3b
+ 840 0093 0B       		.uleb128 0xb
+ 841 0094 49       		.uleb128 0x49
+ 842 0095 13       		.uleb128 0x13
+ 843 0096 02       		.uleb128 0x2
+ 844 0097 0A       		.uleb128 0xa
+ 845 0098 00       		.byte	0
+ 846 0099 00       		.byte	0
+ 847 009a 0A       		.uleb128 0xa
+ 848 009b 34       		.uleb128 0x34
+ 849 009c 00       		.byte	0
+ 850 009d 03       		.uleb128 0x3
+ 851 009e 0E       		.uleb128 0xe
+ 852 009f 3A       		.uleb128 0x3a
+ 853 00a0 0B       		.uleb128 0xb
+ 854 00a1 3B       		.uleb128 0x3b
+ 855 00a2 0B       		.uleb128 0xb
+ 856 00a3 49       		.uleb128 0x49
+ 857 00a4 13       		.uleb128 0x13
+ 858 00a5 02       		.uleb128 0x2
+ 859 00a6 0A       		.uleb128 0xa
+ 860 00a7 00       		.byte	0
+ 861 00a8 00       		.byte	0
+ 862 00a9 0B       		.uleb128 0xb
+ 863 00aa 0F       		.uleb128 0xf
+ 864 00ab 00       		.byte	0
+ 865 00ac 0B       		.uleb128 0xb
+ 866 00ad 0B       		.uleb128 0xb
+ 867 00ae 49       		.uleb128 0x49
+ 868 00af 13       		.uleb128 0x13
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 21
+
+
+ 869 00b0 00       		.byte	0
+ 870 00b1 00       		.byte	0
+ 871 00b2 0C       		.uleb128 0xc
+ 872 00b3 26       		.uleb128 0x26
+ 873 00b4 00       		.byte	0
+ 874 00b5 49       		.uleb128 0x49
+ 875 00b6 13       		.uleb128 0x13
+ 876 00b7 00       		.byte	0
+ 877 00b8 00       		.byte	0
+ 878 00b9 0D       		.uleb128 0xd
+ 879 00ba 01       		.uleb128 0x1
+ 880 00bb 01       		.byte	0x1
+ 881 00bc 49       		.uleb128 0x49
+ 882 00bd 13       		.uleb128 0x13
+ 883 00be 01       		.uleb128 0x1
+ 884 00bf 13       		.uleb128 0x13
+ 885 00c0 00       		.byte	0
+ 886 00c1 00       		.byte	0
+ 887 00c2 0E       		.uleb128 0xe
+ 888 00c3 21       		.uleb128 0x21
+ 889 00c4 00       		.byte	0
+ 890 00c5 49       		.uleb128 0x49
+ 891 00c6 13       		.uleb128 0x13
+ 892 00c7 2F       		.uleb128 0x2f
+ 893 00c8 0B       		.uleb128 0xb
+ 894 00c9 00       		.byte	0
+ 895 00ca 00       		.byte	0
+ 896 00cb 0F       		.uleb128 0xf
+ 897 00cc 34       		.uleb128 0x34
+ 898 00cd 00       		.byte	0
+ 899 00ce 03       		.uleb128 0x3
+ 900 00cf 0E       		.uleb128 0xe
+ 901 00d0 3A       		.uleb128 0x3a
+ 902 00d1 0B       		.uleb128 0xb
+ 903 00d2 3B       		.uleb128 0x3b
+ 904 00d3 0B       		.uleb128 0xb
+ 905 00d4 49       		.uleb128 0x49
+ 906 00d5 13       		.uleb128 0x13
+ 907 00d6 3F       		.uleb128 0x3f
+ 908 00d7 0C       		.uleb128 0xc
+ 909 00d8 3C       		.uleb128 0x3c
+ 910 00d9 0C       		.uleb128 0xc
+ 911 00da 00       		.byte	0
+ 912 00db 00       		.byte	0
+ 913 00dc 00       		.byte	0
+ 914              		.section	.debug_loc,"",%progbits
+ 915              	.Ldebug_loc0:
+ 916              	.LLST0:
+ 917 0000 00000000 		.4byte	.LFB0
+ 918 0004 02000000 		.4byte	.LCFI0
+ 919 0008 0200     		.2byte	0x2
+ 920 000a 7D       		.byte	0x7d
+ 921 000b 00       		.sleb128 0
+ 922 000c 02000000 		.4byte	.LCFI0
+ 923 0010 04000000 		.4byte	.LCFI1
+ 924 0014 0200     		.2byte	0x2
+ 925 0016 7D       		.byte	0x7d
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 22
+
+
+ 926 0017 08       		.sleb128 8
+ 927 0018 04000000 		.4byte	.LCFI1
+ 928 001c 2A000000 		.4byte	.LFE0
+ 929 0020 0200     		.2byte	0x2
+ 930 0022 77       		.byte	0x77
+ 931 0023 08       		.sleb128 8
+ 932 0024 00000000 		.4byte	0
+ 933 0028 00000000 		.4byte	0
+ 934              	.LLST1:
+ 935 002c 00000000 		.4byte	.LFB1
+ 936 0030 02000000 		.4byte	.LCFI2
+ 937 0034 0200     		.2byte	0x2
+ 938 0036 7D       		.byte	0x7d
+ 939 0037 00       		.sleb128 0
+ 940 0038 02000000 		.4byte	.LCFI2
+ 941 003c 04000000 		.4byte	.LCFI3
+ 942 0040 0200     		.2byte	0x2
+ 943 0042 7D       		.byte	0x7d
+ 944 0043 08       		.sleb128 8
+ 945 0044 04000000 		.4byte	.LCFI3
+ 946 0048 0A000000 		.4byte	.LFE1
+ 947 004c 0200     		.2byte	0x2
+ 948 004e 77       		.byte	0x77
+ 949 004f 08       		.sleb128 8
+ 950 0050 00000000 		.4byte	0
+ 951 0054 00000000 		.4byte	0
+ 952              	.LLST2:
+ 953 0058 00000000 		.4byte	.LFB2
+ 954 005c 02000000 		.4byte	.LCFI4
+ 955 0060 0200     		.2byte	0x2
+ 956 0062 7D       		.byte	0x7d
+ 957 0063 00       		.sleb128 0
+ 958 0064 02000000 		.4byte	.LCFI4
+ 959 0068 04000000 		.4byte	.LCFI5
+ 960 006c 0200     		.2byte	0x2
+ 961 006e 7D       		.byte	0x7d
+ 962 006f 04       		.sleb128 4
+ 963 0070 04000000 		.4byte	.LCFI5
+ 964 0074 42000000 		.4byte	.LFE2
+ 965 0078 0200     		.2byte	0x2
+ 966 007a 77       		.byte	0x77
+ 967 007b 04       		.sleb128 4
+ 968 007c 00000000 		.4byte	0
+ 969 0080 00000000 		.4byte	0
+ 970              	.LLST3:
+ 971 0084 00000000 		.4byte	.LFB3
+ 972 0088 02000000 		.4byte	.LCFI6
+ 973 008c 0200     		.2byte	0x2
+ 974 008e 7D       		.byte	0x7d
+ 975 008f 00       		.sleb128 0
+ 976 0090 02000000 		.4byte	.LCFI6
+ 977 0094 04000000 		.4byte	.LCFI7
+ 978 0098 0200     		.2byte	0x2
+ 979 009a 7D       		.byte	0x7d
+ 980 009b 08       		.sleb128 8
+ 981 009c 04000000 		.4byte	.LCFI7
+ 982 00a0 06000000 		.4byte	.LCFI8
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 23
+
+
+ 983 00a4 0200     		.2byte	0x2
+ 984 00a6 7D       		.byte	0x7d
+ 985 00a7 20       		.sleb128 32
+ 986 00a8 06000000 		.4byte	.LCFI8
+ 987 00ac BC000000 		.4byte	.LFE3
+ 988 00b0 0200     		.2byte	0x2
+ 989 00b2 77       		.byte	0x77
+ 990 00b3 20       		.sleb128 32
+ 991 00b4 00000000 		.4byte	0
+ 992 00b8 00000000 		.4byte	0
+ 993              	.LLST4:
+ 994 00bc 00000000 		.4byte	.LFB4
+ 995 00c0 02000000 		.4byte	.LCFI9
+ 996 00c4 0200     		.2byte	0x2
+ 997 00c6 7D       		.byte	0x7d
+ 998 00c7 00       		.sleb128 0
+ 999 00c8 02000000 		.4byte	.LCFI9
+ 1000 00cc 04000000 		.4byte	.LCFI10
+ 1001 00d0 0200     		.2byte	0x2
+ 1002 00d2 7D       		.byte	0x7d
+ 1003 00d3 08       		.sleb128 8
+ 1004 00d4 04000000 		.4byte	.LCFI10
+ 1005 00d8 06000000 		.4byte	.LCFI11
+ 1006 00dc 0200     		.2byte	0x2
+ 1007 00de 7D       		.byte	0x7d
+ 1008 00df 20       		.sleb128 32
+ 1009 00e0 06000000 		.4byte	.LCFI11
+ 1010 00e4 C8000000 		.4byte	.LFE4
+ 1011 00e8 0200     		.2byte	0x2
+ 1012 00ea 77       		.byte	0x77
+ 1013 00eb 20       		.sleb128 32
+ 1014 00ec 00000000 		.4byte	0
+ 1015 00f0 00000000 		.4byte	0
+ 1016              		.section	.debug_aranges,"",%progbits
+ 1017 0000 3C000000 		.4byte	0x3c
+ 1018 0004 0200     		.2byte	0x2
+ 1019 0006 00000000 		.4byte	.Ldebug_info0
+ 1020 000a 04       		.byte	0x4
+ 1021 000b 00       		.byte	0
+ 1022 000c 0000     		.2byte	0
+ 1023 000e 0000     		.2byte	0
+ 1024 0010 00000000 		.4byte	.LFB0
+ 1025 0014 2A000000 		.4byte	.LFE0-.LFB0
+ 1026 0018 00000000 		.4byte	.LFB1
+ 1027 001c 0A000000 		.4byte	.LFE1-.LFB1
+ 1028 0020 00000000 		.4byte	.LFB2
+ 1029 0024 42000000 		.4byte	.LFE2-.LFB2
+ 1030 0028 00000000 		.4byte	.LFB3
+ 1031 002c BC000000 		.4byte	.LFE3-.LFB3
+ 1032 0030 00000000 		.4byte	.LFB4
+ 1033 0034 C8000000 		.4byte	.LFE4-.LFB4
+ 1034 0038 00000000 		.4byte	0
+ 1035 003c 00000000 		.4byte	0
+ 1036              		.section	.debug_ranges,"",%progbits
+ 1037              	.Ldebug_ranges0:
+ 1038 0000 00000000 		.4byte	.LFB0
+ 1039 0004 2A000000 		.4byte	.LFE0
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 24
+
+
+ 1040 0008 00000000 		.4byte	.LFB1
+ 1041 000c 0A000000 		.4byte	.LFE1
+ 1042 0010 00000000 		.4byte	.LFB2
+ 1043 0014 42000000 		.4byte	.LFE2
+ 1044 0018 00000000 		.4byte	.LFB3
+ 1045 001c BC000000 		.4byte	.LFE3
+ 1046 0020 00000000 		.4byte	.LFB4
+ 1047 0024 C8000000 		.4byte	.LFE4
+ 1048 0028 00000000 		.4byte	0
+ 1049 002c 00000000 		.4byte	0
+ 1050              		.section	.debug_line,"",%progbits
+ 1051              	.Ldebug_line0:
+ 1052 0000 01010000 		.section	.debug_str,"MS",%progbits,1
+ 1052      02005E00 
+ 1052      00000201 
+ 1052      FB0E0D00 
+ 1052      01010101 
+ 1053              	.LASF14:
+ 1054 0000 63797374 		.ascii	"cystatus\000"
+ 1054      61747573 
+ 1054      00
+ 1055              	.LASF31:
+ 1056 0009 49324353 		.ascii	"I2CSlave_slRdBufSize\000"
+ 1056      6C617665 
+ 1056      5F736C52 
+ 1056      64427566 
+ 1056      53697A65 
+ 1057              	.LASF21:
+ 1058 001e 636F756E 		.ascii	"count\000"
+ 1058      7400
+ 1059              	.LASF3:
+ 1060 0024 73686F72 		.ascii	"short unsigned int\000"
+ 1060      7420756E 
+ 1060      7369676E 
+ 1060      65642069 
+ 1060      6E7400
+ 1061              	.LASF18:
+ 1062 0037 49324353 		.ascii	"I2CSlave_CyBtldrCommReset\000"
+ 1062      6C617665 
+ 1062      5F437942 
+ 1062      746C6472 
+ 1062      436F6D6D 
+ 1063              	.LASF23:
+ 1064 0051 73746174 		.ascii	"status\000"
+ 1064      757300
+ 1065              	.LASF16:
+ 1066 0058 49324353 		.ascii	"I2CSlave_CyBtldrCommStart\000"
+ 1066      6C617665 
+ 1066      5F437942 
+ 1066      746C6472 
+ 1066      436F6D6D 
+ 1067              	.LASF19:
+ 1068 0072 70446174 		.ascii	"pData\000"
+ 1068      6100
+ 1069              	.LASF11:
+ 1070 0078 666C6F61 		.ascii	"float\000"
+ 1070      7400
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 25
+
+
+ 1071              	.LASF28:
+ 1072 007e 49324353 		.ascii	"I2CSlave_slReadBuf\000"
+ 1072      6C617665 
+ 1072      5F736C52 
+ 1072      65616442 
+ 1072      756600
+ 1073              	.LASF20:
+ 1074 0091 73697A65 		.ascii	"size\000"
+ 1074      00
+ 1075              	.LASF5:
+ 1076 0096 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1076      20756E73 
+ 1076      69676E65 
+ 1076      6420696E 
+ 1076      7400
+ 1077              	.LASF9:
+ 1078 00a8 75696E74 		.ascii	"uint8\000"
+ 1078      3800
+ 1079              	.LASF27:
+ 1080 00ae 62797465 		.ascii	"byteCount\000"
+ 1080      436F756E 
+ 1080      7400
+ 1081              	.LASF1:
+ 1082 00b8 756E7369 		.ascii	"unsigned char\000"
+ 1082      676E6564 
+ 1082      20636861 
+ 1082      7200
+ 1083              	.LASF33:
+ 1084 00c6 49324353 		.ascii	"I2CSlave_slWrBufIndex\000"
+ 1084      6C617665 
+ 1084      5F736C57 
+ 1084      72427566 
+ 1084      496E6465 
+ 1085              	.LASF12:
+ 1086 00dc 646F7562 		.ascii	"double\000"
+ 1086      6C6500
+ 1087              	.LASF30:
+ 1088 00e3 49324353 		.ascii	"I2CSlave_slStatus\000"
+ 1088      6C617665 
+ 1088      5F736C53 
+ 1088      74617475 
+ 1088      7300
+ 1089              	.LASF10:
+ 1090 00f5 75696E74 		.ascii	"uint16\000"
+ 1090      313600
+ 1091              	.LASF29:
+ 1092 00fc 49324353 		.ascii	"I2CSlave_slWriteBuf\000"
+ 1092      6C617665 
+ 1092      5F736C57 
+ 1092      72697465 
+ 1092      42756600 
+ 1093              	.LASF8:
+ 1094 0110 756E7369 		.ascii	"unsigned int\000"
+ 1094      676E6564 
+ 1094      20696E74 
+ 1094      00
+ 1095              	.LASF17:
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 26
+
+
+ 1096 011d 49324353 		.ascii	"I2CSlave_CyBtldrCommStop\000"
+ 1096      6C617665 
+ 1096      5F437942 
+ 1096      746C6472 
+ 1096      436F6D6D 
+ 1097              	.LASF7:
+ 1098 0136 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1098      206C6F6E 
+ 1098      6720756E 
+ 1098      7369676E 
+ 1098      65642069 
+ 1099              	.LASF22:
+ 1100 014d 74696D65 		.ascii	"timeOut\000"
+ 1100      4F757400 
+ 1101              	.LASF26:
+ 1102 0155 49324353 		.ascii	"I2CSlave_CyBtldrCommRead\000"
+ 1102      6C617665 
+ 1102      5F437942 
+ 1102      746C6472 
+ 1102      436F6D6D 
+ 1103              	.LASF15:
+ 1104 016e 73697A65 		.ascii	"sizetype\000"
+ 1104      74797065 
+ 1104      00
+ 1105              	.LASF6:
+ 1106 0177 6C6F6E67 		.ascii	"long long int\000"
+ 1106      206C6F6E 
+ 1106      6720696E 
+ 1106      7400
+ 1107              	.LASF13:
+ 1108 0185 63686172 		.ascii	"char\000"
+ 1108      00
+ 1109              	.LASF2:
+ 1110 018a 73686F72 		.ascii	"short int\000"
+ 1110      7420696E 
+ 1110      7400
+ 1111              	.LASF36:
+ 1112 0194 433A5C55 		.ascii	"C:\\Users\\bramamu\\Desktop\\nanoNxt_ICM3_Bootlaode"
+ 1112      73657273 
+ 1112      5C627261 
+ 1112      6D616D75 
+ 1112      5C446573 
+ 1113 01c3 725C6E61 		.ascii	"r\\nanoNxt_ICM3_Bootlaoder.cydsn\000"
+ 1113      6E6F4E78 
+ 1113      745F4943 
+ 1113      4D335F42 
+ 1113      6F6F746C 
+ 1114              	.LASF34:
+ 1115 01e3 474E5520 		.ascii	"GNU C 4.7.3 20130312 (release) [ARM/embedded-4_7-br"
+ 1115      4320342E 
+ 1115      372E3320 
+ 1115      32303133 
+ 1115      30333132 
+ 1116 0216 616E6368 		.ascii	"anch revision 196615]\000"
+ 1116      20726576 
+ 1116      6973696F 
+ 1116      6E203139 
+ARM GAS  C:\Users\bramamu\AppData\Local\Temp\ccyH9rZc.s 			page 27
+
+
+ 1116      36363135 
+ 1117              	.LASF25:
+ 1118 022c 49324353 		.ascii	"I2CSlave_CyBtldrCommWrite\000"
+ 1118      6C617665 
+ 1118      5F437942 
+ 1118      746C6472 
+ 1118      436F6D6D 
+ 1119              	.LASF32:
+ 1120 0246 49324353 		.ascii	"I2CSlave_slRdBufIndex\000"
+ 1120      6C617665 
+ 1120      5F736C52 
+ 1120      64427566 
+ 1120      496E6465 
+ 1121              	.LASF4:
+ 1122 025c 6C6F6E67 		.ascii	"long int\000"
+ 1122      20696E74 
+ 1122      00
+ 1123              	.LASF35:
+ 1124 0265 2E5C4765 		.ascii	".\\Generated_Source\\PSoC5\\I2CSlave_BOOT.c\000"
+ 1124      6E657261 
+ 1124      7465645F 
+ 1124      536F7572 
+ 1124      63655C50 
+ 1125              	.LASF0:
+ 1126 028e 7369676E 		.ascii	"signed char\000"
+ 1126      65642063 
+ 1126      68617200 
+ 1127              	.LASF24:
+ 1128 029a 74696D65 		.ascii	"timeoutMs\000"
+ 1128      6F75744D 
+ 1128      7300
+ 1129              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.7.3 20130312 (release) [ARM/embedded-4_7-br

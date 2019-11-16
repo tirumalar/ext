@@ -1,0 +1,2397 @@
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"Tamper_Timer_ISR.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	s,40,4
+  19              		.comm	currentAccessType,1,1
+  20              		.comm	old,1,1
+  21              		.comm	TAMPERCR_POLARITY,4,4
+  22              		.comm	card_ack,4,4
+  23              		.comm	card_in_buf,4,4
+  24              		.comm	got_pulse,1,1
+  25              		.comm	f2f_pulsewidth,4,4
+  26              		.comm	timeout_cnt,4,4
+  27              		.comm	activate_f2ftimer,1,1
+  28              		.section	.text.Tamper_Timer_ISR_Start,"ax",%progbits
+  29              		.align	2
+  30              		.global	Tamper_Timer_ISR_Start
+  31              		.thumb
+  32              		.thumb_func
+  33              		.type	Tamper_Timer_ISR_Start, %function
+  34              	Tamper_Timer_ISR_Start:
+  35              	.LFB0:
+  36              		.file 1 ".\\Generated_Source\\PSoC5\\Tamper_Timer_ISR.c"
+   1:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+   2:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * File Name: Tamper_Timer_ISR.c  
+   3:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Version 1.70
+   4:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+   5:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  Description:
+   6:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   API for controlling the state of an interrupt.
+   7:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+   8:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+   9:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  Note:
+  10:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+  11:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+  12:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Copyright 2008-2015, Cypress Semiconductor Corporation.  All rights reserved.
+  13:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * You may use this file only in accordance with the license, terms, conditions, 
+  14:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * disclaimers, and limitations in the end user license agreement accompanying 
+  15:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * the software package with which this file was provided.
+  16:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+  17:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  18:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  19:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #include <cydevice_trm.h>
+  20:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #include <CyLib.h>
+  21:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #include <Tamper_Timer_ISR.h>
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 2
+
+
+  22:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  23:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #if !defined(Tamper_Timer_ISR__REMOVED) /* Check for removal by optimization */
+  24:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  25:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+  26:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  Place your includes, defines and code here 
+  27:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************/
+  28:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /* `#START Tamper_Timer_ISR_intc` */
+  29:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #include <PS_D1.h>
+  30:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #include "Tamper_Timer.h"
+  31:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #include "inout.h"
+  32:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #include "system.h"
+  33:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /* `#END` */
+  34:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  35:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #ifndef CYINT_IRQ_BASE
+  36:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #define CYINT_IRQ_BASE      16
+  37:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #endif /* CYINT_IRQ_BASE */
+  38:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #ifndef CYINT_VECT_TABLE
+  39:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #define CYINT_VECT_TABLE    ((cyisraddress **) CYREG_NVIC_VECT_OFFSET)
+  40:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** #endif /* CYINT_VECT_TABLE */
+  41:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  42:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /* Declared in startup, used to set unused interrupts to. */
+  43:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** CY_ISR_PROTO(IntDefaultHandler);
+  44:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  45:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  46:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+  47:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_Start
+  48:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+  49:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+  50:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+  51:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  Set up the interrupt and enable it. This function disables the interrupt, 
+  52:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  sets the default interrupt vector, sets the priority from the value in the
+  53:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  Design Wide Resources Interrupt Editor, then enables the interrupt to the 
+  54:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  interrupt controller.
+  55:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+  56:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:  
+  57:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+  58:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+  59:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+  60:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+  61:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+  62:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+  63:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** void Tamper_Timer_ISR_Start(void)
+  64:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+  37              		.loc 1 64 0
+  38              		.cfi_startproc
+  39              		@ args = 0, pretend = 0, frame = 0
+  40              		@ frame_needed = 1, uses_anonymous_args = 0
+  41 0000 80B5     		push	{r7, lr}
+  42              		.cfi_def_cfa_offset 8
+  43              		.cfi_offset 7, -8
+  44              		.cfi_offset 14, -4
+  45 0002 00AF     		add	r7, sp, #0
+  46              		.cfi_def_cfa_register 7
+  65:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* For all we know the interrupt is active. */
+  66:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     Tamper_Timer_ISR_Disable();
+  47              		.loc 1 66 0
+  48 0004 FFF7FEFF 		bl	Tamper_Timer_ISR_Disable
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 3
+
+
+  67:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  68:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* Set the ISR to point to the Tamper_Timer_ISR Interrupt. */
+  69:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     Tamper_Timer_ISR_SetVector(&Tamper_Timer_ISR_Interrupt);
+  49              		.loc 1 69 0
+  50 0008 0448     		ldr	r0, .L2
+  51 000a FFF7FEFF 		bl	Tamper_Timer_ISR_SetVector
+  70:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  71:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* Set the priority. */
+  72:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     Tamper_Timer_ISR_SetPriority((uint8)Tamper_Timer_ISR_INTC_PRIOR_NUMBER);
+  52              		.loc 1 72 0
+  53 000e 0720     		movs	r0, #7
+  54 0010 FFF7FEFF 		bl	Tamper_Timer_ISR_SetPriority
+  73:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  74:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* Enable it. */
+  75:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     Tamper_Timer_ISR_Enable();
+  55              		.loc 1 75 0
+  56 0014 FFF7FEFF 		bl	Tamper_Timer_ISR_Enable
+  76:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+  57              		.loc 1 76 0
+  58 0018 80BD     		pop	{r7, pc}
+  59              	.L3:
+  60 001a 00BF     		.align	2
+  61              	.L2:
+  62 001c 00000000 		.word	Tamper_Timer_ISR_Interrupt
+  63              		.cfi_endproc
+  64              	.LFE0:
+  65              		.size	Tamper_Timer_ISR_Start, .-Tamper_Timer_ISR_Start
+  66              		.section	.text.Tamper_Timer_ISR_StartEx,"ax",%progbits
+  67              		.align	2
+  68              		.global	Tamper_Timer_ISR_StartEx
+  69              		.thumb
+  70              		.thumb_func
+  71              		.type	Tamper_Timer_ISR_StartEx, %function
+  72              	Tamper_Timer_ISR_StartEx:
+  73              	.LFB1:
+  77:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  78:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+  79:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+  80:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_StartEx
+  81:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+  82:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+  83:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+  84:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  Sets up the interrupt and enables it. This function disables the interrupt,
+  85:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  sets the interrupt vector based on the address passed in, sets the priority 
+  86:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  from the value in the Design Wide Resources Interrupt Editor, then enables 
+  87:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  the interrupt to the interrupt controller.
+  88:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  
+  89:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
+  90:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  used to provide consistent definition across compilers:
+  91:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  
+  92:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *  Function definition example:
+  93:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   CY_ISR(MyISR)
+  94:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   {
+  95:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   }
+  96:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Function prototype example:
+  97:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   CY_ISR_PROTO(MyISR);
+  98:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 4
+
+
+  99:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:  
+ 100:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   address: Address of the ISR to set in the interrupt vector table.
+ 101:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 102:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ 103:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 104:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 105:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 106:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** void Tamper_Timer_ISR_StartEx(cyisraddress address)
+ 107:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+  74              		.loc 1 107 0
+  75              		.cfi_startproc
+  76              		@ args = 0, pretend = 0, frame = 8
+  77              		@ frame_needed = 1, uses_anonymous_args = 0
+  78 0000 80B5     		push	{r7, lr}
+  79              		.cfi_def_cfa_offset 8
+  80              		.cfi_offset 7, -8
+  81              		.cfi_offset 14, -4
+  82 0002 82B0     		sub	sp, sp, #8
+  83              		.cfi_def_cfa_offset 16
+  84 0004 00AF     		add	r7, sp, #0
+  85              		.cfi_def_cfa_register 7
+  86 0006 7860     		str	r0, [r7, #4]
+ 108:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* For all we know the interrupt is active. */
+ 109:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     Tamper_Timer_ISR_Disable();
+  87              		.loc 1 109 0
+  88 0008 FFF7FEFF 		bl	Tamper_Timer_ISR_Disable
+ 110:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 111:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* Set the ISR to point to the Tamper_Timer_ISR Interrupt. */
+ 112:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     Tamper_Timer_ISR_SetVector(address);
+  89              		.loc 1 112 0
+  90 000c 7868     		ldr	r0, [r7, #4]
+  91 000e FFF7FEFF 		bl	Tamper_Timer_ISR_SetVector
+ 113:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 114:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* Set the priority. */
+ 115:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     Tamper_Timer_ISR_SetPriority((uint8)Tamper_Timer_ISR_INTC_PRIOR_NUMBER);
+  92              		.loc 1 115 0
+  93 0012 0720     		movs	r0, #7
+  94 0014 FFF7FEFF 		bl	Tamper_Timer_ISR_SetPriority
+ 116:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 117:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* Enable it. */
+ 118:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     Tamper_Timer_ISR_Enable();
+  95              		.loc 1 118 0
+  96 0018 FFF7FEFF 		bl	Tamper_Timer_ISR_Enable
+ 119:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+  97              		.loc 1 119 0
+  98 001c 0837     		adds	r7, r7, #8
+  99 001e BD46     		mov	sp, r7
+ 100              		@ sp needed
+ 101 0020 80BD     		pop	{r7, pc}
+ 102              		.cfi_endproc
+ 103              	.LFE1:
+ 104              		.size	Tamper_Timer_ISR_StartEx, .-Tamper_Timer_ISR_StartEx
+ 105 0022 00BF     		.section	.text.Tamper_Timer_ISR_Stop,"ax",%progbits
+ 106              		.align	2
+ 107              		.global	Tamper_Timer_ISR_Stop
+ 108              		.thumb
+ 109              		.thumb_func
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 5
+
+
+ 110              		.type	Tamper_Timer_ISR_Stop, %function
+ 111              	Tamper_Timer_ISR_Stop:
+ 112              	.LFB2:
+ 120:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 121:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 122:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+ 123:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_Stop
+ 124:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+ 125:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 126:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+ 127:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Disables and removes the interrupt.
+ 128:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 129:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:  
+ 130:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 131:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 132:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ 133:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 134:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 135:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 136:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** void Tamper_Timer_ISR_Stop(void)
+ 137:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+ 113              		.loc 1 137 0
+ 114              		.cfi_startproc
+ 115              		@ args = 0, pretend = 0, frame = 0
+ 116              		@ frame_needed = 1, uses_anonymous_args = 0
+ 117 0000 80B5     		push	{r7, lr}
+ 118              		.cfi_def_cfa_offset 8
+ 119              		.cfi_offset 7, -8
+ 120              		.cfi_offset 14, -4
+ 121 0002 00AF     		add	r7, sp, #0
+ 122              		.cfi_def_cfa_register 7
+ 138:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* Disable this interrupt. */
+ 139:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     Tamper_Timer_ISR_Disable();
+ 123              		.loc 1 139 0
+ 124 0004 FFF7FEFF 		bl	Tamper_Timer_ISR_Disable
+ 140:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 141:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* Set the ISR to point to the passive one. */
+ 142:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     Tamper_Timer_ISR_SetVector(&IntDefaultHandler);
+ 125              		.loc 1 142 0
+ 126 0008 0148     		ldr	r0, .L6
+ 127 000a FFF7FEFF 		bl	Tamper_Timer_ISR_SetVector
+ 143:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+ 128              		.loc 1 143 0
+ 129 000e 80BD     		pop	{r7, pc}
+ 130              	.L7:
+ 131              		.align	2
+ 132              	.L6:
+ 133 0010 00000000 		.word	IntDefaultHandler
+ 134              		.cfi_endproc
+ 135              	.LFE2:
+ 136              		.size	Tamper_Timer_ISR_Stop, .-Tamper_Timer_ISR_Stop
+ 137              		.section	.text.Tamper_Timer_ISR_Interrupt,"ax",%progbits
+ 138              		.align	2
+ 139              		.global	Tamper_Timer_ISR_Interrupt
+ 140              		.thumb
+ 141              		.thumb_func
+ 142              		.type	Tamper_Timer_ISR_Interrupt, %function
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 6
+
+
+ 143              	Tamper_Timer_ISR_Interrupt:
+ 144              	.LFB3:
+ 144:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 145:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 146:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+ 147:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_Interrupt
+ 148:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+ 149:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 150:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+ 151:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   The default Interrupt Service Routine for Tamper_Timer_ISR.
+ 152:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 153:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Add custom code between the coments to keep the next version of this file
+ 154:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   from over writting your code.
+ 155:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 156:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:  
+ 157:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 158:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ 159:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 160:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 161:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 162:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** CY_ISR(Tamper_Timer_ISR_Interrupt)
+ 163:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+ 145              		.loc 1 163 0
+ 146              		.cfi_startproc
+ 147              		@ args = 0, pretend = 0, frame = 0
+ 148              		@ frame_needed = 1, uses_anonymous_args = 0
+ 149 0000 80B5     		push	{r7, lr}
+ 150              		.cfi_def_cfa_offset 8
+ 151              		.cfi_offset 7, -8
+ 152              		.cfi_offset 14, -4
+ 153 0002 00AF     		add	r7, sp, #0
+ 154              		.cfi_def_cfa_register 7
+ 164:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /*  Place your Interrupt code here. */
+ 165:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* `#START Tamper_Timer_ISR_Interrupt` */
+ 166:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     //This is a 1 ms timer interrupt
+ 167:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     
+ 168:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     if ( f2f_acknowledge_active ){
+ 155              		.loc 1 168 0
+ 156 0004 174B     		ldr	r3, .L14
+ 157 0006 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 158 0008 002B     		cmp	r3, #0
+ 159 000a 17D0     		beq	.L9
+ 169:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****         f2f_ack_delay_cnt++;
+ 160              		.loc 1 169 0
+ 161 000c 164B     		ldr	r3, .L14+4
+ 162 000e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 163 0010 0133     		adds	r3, r3, #1
+ 164 0012 DAB2     		uxtb	r2, r3
+ 165 0014 144B     		ldr	r3, .L14+4
+ 166 0016 1A70     		strb	r2, [r3]
+ 170:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****         if (f2f_ack_delay_cnt == 30){
+ 167              		.loc 1 170 0
+ 168 0018 134B     		ldr	r3, .L14+4
+ 169 001a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 170 001c 1E2B     		cmp	r3, #30
+ 171 001e 02D1     		bne	.L10
+ 171:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****             PS_D1_Write(1);
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 7
+
+
+ 172              		.loc 1 171 0
+ 173 0020 0120     		movs	r0, #1
+ 174 0022 FFF7FEFF 		bl	PS_D1_Write
+ 175              	.L10:
+ 172:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****         }
+ 173:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****         if (f2f_ack_delay_cnt == 35){
+ 176              		.loc 1 173 0
+ 177 0026 104B     		ldr	r3, .L14+4
+ 178 0028 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 179 002a 232B     		cmp	r3, #35
+ 180 002c 09D1     		bne	.L12
+ 174:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****             PS_D1_Write(0);
+ 181              		.loc 1 174 0
+ 182 002e 0020     		movs	r0, #0
+ 183 0030 FFF7FEFF 		bl	PS_D1_Write
+ 175:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****             f2f_acknowledge_active = 0;
+ 184              		.loc 1 175 0
+ 185 0034 0B4B     		ldr	r3, .L14
+ 186 0036 0022     		movs	r2, #0
+ 187 0038 1A70     		strb	r2, [r3]
+ 188 003a 02E0     		b	.L12
+ 189              	.L9:
+ 176:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****         }
+ 177:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     }else{
+ 178:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****         PS_D1_Write(0);
+ 190              		.loc 1 178 0
+ 191 003c 0020     		movs	r0, #0
+ 192 003e FFF7FEFF 		bl	PS_D1_Write
+ 193              	.L12:
+ 179:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     }
+ 180:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     
+ 181:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     if (buttonPressed){
+ 194              		.loc 1 181 0
+ 195 0042 0A4B     		ldr	r3, .L14+8
+ 196 0044 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 197 0046 002B     		cmp	r3, #0
+ 198 0048 04D0     		beq	.L13
+ 182:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****         buttonDuration++;
+ 199              		.loc 1 182 0
+ 200 004a 094B     		ldr	r3, .L14+12
+ 201 004c 1B68     		ldr	r3, [r3]
+ 202 004e 5A1C     		adds	r2, r3, #1
+ 203 0050 074B     		ldr	r3, .L14+12
+ 204 0052 1A60     		str	r2, [r3]
+ 205              	.L13:
+ 183:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     }    
+ 184:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     Tamper_Timer_ReadStatusRegister();
+ 206              		.loc 1 184 0
+ 207 0054 FFF7FEFF 		bl	Tamper_Timer_ReadStatusRegister
+ 185:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     HandleOutputs();
+ 208              		.loc 1 185 0
+ 209 0058 FFF7FEFF 		bl	HandleOutputs
+ 186:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     HandleInputs();
+ 210              		.loc 1 186 0
+ 211 005c FFF7FEFF 		bl	HandleInputs
+ 187:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****    
+ 188:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* `#END` */
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 8
+
+
+ 189:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+ 212              		.loc 1 189 0
+ 213 0060 80BD     		pop	{r7, pc}
+ 214              	.L15:
+ 215 0062 00BF     		.align	2
+ 216              	.L14:
+ 217 0064 00000000 		.word	f2f_acknowledge_active
+ 218 0068 00000000 		.word	f2f_ack_delay_cnt
+ 219 006c 00000000 		.word	buttonPressed
+ 220 0070 00000000 		.word	buttonDuration
+ 221              		.cfi_endproc
+ 222              	.LFE3:
+ 223              		.size	Tamper_Timer_ISR_Interrupt, .-Tamper_Timer_ISR_Interrupt
+ 224              		.section	.text.Tamper_Timer_ISR_SetVector,"ax",%progbits
+ 225              		.align	2
+ 226              		.global	Tamper_Timer_ISR_SetVector
+ 227              		.thumb
+ 228              		.thumb_func
+ 229              		.type	Tamper_Timer_ISR_SetVector, %function
+ 230              	Tamper_Timer_ISR_SetVector:
+ 231              	.LFB4:
+ 190:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 191:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 192:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+ 193:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_SetVector
+ 194:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+ 195:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 196:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+ 197:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Change the ISR vector for the Interrupt. Note calling Tamper_Timer_ISR_Start
+ 198:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   will override any effect this method would have had. To set the vector 
+ 199:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   before the component has been started use Tamper_Timer_ISR_StartEx instead.
+ 200:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * 
+ 201:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   When defining ISR functions, the CY_ISR and CY_ISR_PROTO macros should be 
+ 202:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   used to provide consistent definition across compilers:
+ 203:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 204:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Function definition example:
+ 205:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   CY_ISR(MyISR)
+ 206:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   {
+ 207:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   }
+ 208:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 209:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Function prototype example:
+ 210:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *     CY_ISR_PROTO(MyISR);
+ 211:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 212:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:
+ 213:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   address: Address of the ISR to set in the interrupt vector table.
+ 214:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 215:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ 216:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 217:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 218:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 219:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** void Tamper_Timer_ISR_SetVector(cyisraddress address)
+ 220:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+ 232              		.loc 1 220 0
+ 233              		.cfi_startproc
+ 234              		@ args = 0, pretend = 0, frame = 16
+ 235              		@ frame_needed = 1, uses_anonymous_args = 0
+ 236              		@ link register save eliminated.
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 9
+
+
+ 237 0000 80B4     		push	{r7}
+ 238              		.cfi_def_cfa_offset 4
+ 239              		.cfi_offset 7, -4
+ 240 0002 85B0     		sub	sp, sp, #20
+ 241              		.cfi_def_cfa_offset 24
+ 242 0004 00AF     		add	r7, sp, #0
+ 243              		.cfi_def_cfa_register 7
+ 244 0006 7860     		str	r0, [r7, #4]
+ 221:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     cyisraddress * ramVectorTable;
+ 222:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 223:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
+ 245              		.loc 1 223 0
+ 246 0008 054B     		ldr	r3, .L17
+ 247 000a 1B68     		ldr	r3, [r3]
+ 248 000c FB60     		str	r3, [r7, #12]
+ 224:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 225:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     ramVectorTable[CYINT_IRQ_BASE + (uint32)Tamper_Timer_ISR__INTC_NUMBER] = address;
+ 249              		.loc 1 225 0
+ 250 000e FB68     		ldr	r3, [r7, #12]
+ 251 0010 8433     		adds	r3, r3, #132
+ 252 0012 7A68     		ldr	r2, [r7, #4]
+ 253 0014 1A60     		str	r2, [r3]
+ 226:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+ 254              		.loc 1 226 0
+ 255 0016 1437     		adds	r7, r7, #20
+ 256 0018 BD46     		mov	sp, r7
+ 257              		@ sp needed
+ 258 001a 5DF8047B 		ldr	r7, [sp], #4
+ 259 001e 7047     		bx	lr
+ 260              	.L18:
+ 261              		.align	2
+ 262              	.L17:
+ 263 0020 08ED00E0 		.word	-536810232
+ 264              		.cfi_endproc
+ 265              	.LFE4:
+ 266              		.size	Tamper_Timer_ISR_SetVector, .-Tamper_Timer_ISR_SetVector
+ 267              		.section	.text.Tamper_Timer_ISR_GetVector,"ax",%progbits
+ 268              		.align	2
+ 269              		.global	Tamper_Timer_ISR_GetVector
+ 270              		.thumb
+ 271              		.thumb_func
+ 272              		.type	Tamper_Timer_ISR_GetVector, %function
+ 273              	Tamper_Timer_ISR_GetVector:
+ 274              	.LFB5:
+ 227:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 228:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 229:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+ 230:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_GetVector
+ 231:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+ 232:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 233:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+ 234:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Gets the "address" of the current ISR vector for the Interrupt.
+ 235:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 236:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:
+ 237:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 238:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 239:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 10
+
+
+ 240:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Address of the ISR in the interrupt vector table.
+ 241:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 242:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 243:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** cyisraddress Tamper_Timer_ISR_GetVector(void)
+ 244:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+ 275              		.loc 1 244 0
+ 276              		.cfi_startproc
+ 277              		@ args = 0, pretend = 0, frame = 8
+ 278              		@ frame_needed = 1, uses_anonymous_args = 0
+ 279              		@ link register save eliminated.
+ 280 0000 80B4     		push	{r7}
+ 281              		.cfi_def_cfa_offset 4
+ 282              		.cfi_offset 7, -4
+ 283 0002 83B0     		sub	sp, sp, #12
+ 284              		.cfi_def_cfa_offset 16
+ 285 0004 00AF     		add	r7, sp, #0
+ 286              		.cfi_def_cfa_register 7
+ 245:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     cyisraddress * ramVectorTable;
+ 246:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 247:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     ramVectorTable = (cyisraddress *) *CYINT_VECT_TABLE;
+ 287              		.loc 1 247 0
+ 288 0006 064B     		ldr	r3, .L21
+ 289 0008 1B68     		ldr	r3, [r3]
+ 290 000a 7B60     		str	r3, [r7, #4]
+ 248:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 249:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     return ramVectorTable[CYINT_IRQ_BASE + (uint32)Tamper_Timer_ISR__INTC_NUMBER];
+ 291              		.loc 1 249 0
+ 292 000c 7B68     		ldr	r3, [r7, #4]
+ 293 000e D3F88430 		ldr	r3, [r3, #132]
+ 250:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+ 294              		.loc 1 250 0
+ 295 0012 1846     		mov	r0, r3
+ 296 0014 0C37     		adds	r7, r7, #12
+ 297 0016 BD46     		mov	sp, r7
+ 298              		@ sp needed
+ 299 0018 5DF8047B 		ldr	r7, [sp], #4
+ 300 001c 7047     		bx	lr
+ 301              	.L22:
+ 302 001e 00BF     		.align	2
+ 303              	.L21:
+ 304 0020 08ED00E0 		.word	-536810232
+ 305              		.cfi_endproc
+ 306              	.LFE5:
+ 307              		.size	Tamper_Timer_ISR_GetVector, .-Tamper_Timer_ISR_GetVector
+ 308              		.section	.text.Tamper_Timer_ISR_SetPriority,"ax",%progbits
+ 309              		.align	2
+ 310              		.global	Tamper_Timer_ISR_SetPriority
+ 311              		.thumb
+ 312              		.thumb_func
+ 313              		.type	Tamper_Timer_ISR_SetPriority, %function
+ 314              	Tamper_Timer_ISR_SetPriority:
+ 315              	.LFB6:
+ 251:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 252:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 253:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+ 254:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_SetPriority
+ 255:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 11
+
+
+ 256:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 257:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+ 258:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Sets the Priority of the Interrupt. 
+ 259:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 260:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Note calling Tamper_Timer_ISR_Start or Tamper_Timer_ISR_StartEx will 
+ 261:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   override any effect this API would have had. This API should only be called
+ 262:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   after Tamper_Timer_ISR_Start or Tamper_Timer_ISR_StartEx has been called. 
+ 263:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   To set the initial priority for the component, use the Design-Wide Resources
+ 264:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Interrupt Editor.
+ 265:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 266:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Note This API has no effect on Non-maskable interrupt NMI).
+ 267:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 268:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:
+ 269:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   priority: Priority of the interrupt, 0 being the highest priority
+ 270:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *             PSoC 3 and PSoC 5LP: Priority is from 0 to 7.
+ 271:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *             PSoC 4: Priority is from 0 to 3.
+ 272:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 273:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ 274:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 275:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 276:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 277:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** void Tamper_Timer_ISR_SetPriority(uint8 priority)
+ 278:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+ 316              		.loc 1 278 0
+ 317              		.cfi_startproc
+ 318              		@ args = 0, pretend = 0, frame = 8
+ 319              		@ frame_needed = 1, uses_anonymous_args = 0
+ 320              		@ link register save eliminated.
+ 321 0000 80B4     		push	{r7}
+ 322              		.cfi_def_cfa_offset 4
+ 323              		.cfi_offset 7, -4
+ 324 0002 83B0     		sub	sp, sp, #12
+ 325              		.cfi_def_cfa_offset 16
+ 326 0004 00AF     		add	r7, sp, #0
+ 327              		.cfi_def_cfa_register 7
+ 328 0006 0346     		mov	r3, r0
+ 329 0008 FB71     		strb	r3, [r7, #7]
+ 279:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     *Tamper_Timer_ISR_INTC_PRIOR = priority << 5;
+ 330              		.loc 1 279 0
+ 331 000a 054B     		ldr	r3, .L24
+ 332 000c FA79     		ldrb	r2, [r7, #7]
+ 333 000e 5201     		lsls	r2, r2, #5
+ 334 0010 D2B2     		uxtb	r2, r2
+ 335 0012 1A70     		strb	r2, [r3]
+ 280:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+ 336              		.loc 1 280 0
+ 337 0014 0C37     		adds	r7, r7, #12
+ 338 0016 BD46     		mov	sp, r7
+ 339              		@ sp needed
+ 340 0018 5DF8047B 		ldr	r7, [sp], #4
+ 341 001c 7047     		bx	lr
+ 342              	.L25:
+ 343 001e 00BF     		.align	2
+ 344              	.L24:
+ 345 0020 11E400E0 		.word	-536812527
+ 346              		.cfi_endproc
+ 347              	.LFE6:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 12
+
+
+ 348              		.size	Tamper_Timer_ISR_SetPriority, .-Tamper_Timer_ISR_SetPriority
+ 349              		.section	.text.Tamper_Timer_ISR_GetPriority,"ax",%progbits
+ 350              		.align	2
+ 351              		.global	Tamper_Timer_ISR_GetPriority
+ 352              		.thumb
+ 353              		.thumb_func
+ 354              		.type	Tamper_Timer_ISR_GetPriority, %function
+ 355              	Tamper_Timer_ISR_GetPriority:
+ 356              	.LFB7:
+ 281:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 282:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 283:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+ 284:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_GetPriority
+ 285:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+ 286:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 287:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+ 288:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Gets the Priority of the Interrupt.
+ 289:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 290:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:
+ 291:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 292:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 293:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ 294:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Priority of the interrupt, 0 being the highest priority
+ 295:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *    PSoC 3 and PSoC 5LP: Priority is from 0 to 7.
+ 296:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *    PSoC 4: Priority is from 0 to 3.
+ 297:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 298:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 299:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** uint8 Tamper_Timer_ISR_GetPriority(void)
+ 300:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+ 357              		.loc 1 300 0
+ 358              		.cfi_startproc
+ 359              		@ args = 0, pretend = 0, frame = 8
+ 360              		@ frame_needed = 1, uses_anonymous_args = 0
+ 361              		@ link register save eliminated.
+ 362 0000 80B4     		push	{r7}
+ 363              		.cfi_def_cfa_offset 4
+ 364              		.cfi_offset 7, -4
+ 365 0002 83B0     		sub	sp, sp, #12
+ 366              		.cfi_def_cfa_offset 16
+ 367 0004 00AF     		add	r7, sp, #0
+ 368              		.cfi_def_cfa_register 7
+ 301:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     uint8 priority;
+ 302:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 303:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 304:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     priority = *Tamper_Timer_ISR_INTC_PRIOR >> 5;
+ 369              		.loc 1 304 0
+ 370 0006 064B     		ldr	r3, .L28
+ 371 0008 1B78     		ldrb	r3, [r3]
+ 372 000a DBB2     		uxtb	r3, r3
+ 373 000c 5B09     		lsrs	r3, r3, #5
+ 374 000e FB71     		strb	r3, [r7, #7]
+ 305:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 306:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     return priority;
+ 375              		.loc 1 306 0
+ 376 0010 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 307:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+ 377              		.loc 1 307 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 13
+
+
+ 378 0012 1846     		mov	r0, r3
+ 379 0014 0C37     		adds	r7, r7, #12
+ 380 0016 BD46     		mov	sp, r7
+ 381              		@ sp needed
+ 382 0018 5DF8047B 		ldr	r7, [sp], #4
+ 383 001c 7047     		bx	lr
+ 384              	.L29:
+ 385 001e 00BF     		.align	2
+ 386              	.L28:
+ 387 0020 11E400E0 		.word	-536812527
+ 388              		.cfi_endproc
+ 389              	.LFE7:
+ 390              		.size	Tamper_Timer_ISR_GetPriority, .-Tamper_Timer_ISR_GetPriority
+ 391              		.section	.text.Tamper_Timer_ISR_Enable,"ax",%progbits
+ 392              		.align	2
+ 393              		.global	Tamper_Timer_ISR_Enable
+ 394              		.thumb
+ 395              		.thumb_func
+ 396              		.type	Tamper_Timer_ISR_Enable, %function
+ 397              	Tamper_Timer_ISR_Enable:
+ 398              	.LFB8:
+ 308:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 309:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 310:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+ 311:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_Enable
+ 312:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+ 313:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 314:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+ 315:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Enables the interrupt to the interrupt controller. Do not call this function
+ 316:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   unless ISR_Start() has been called or the functionality of the ISR_Start() 
+ 317:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   function, which sets the vector and the priority, has been called.
+ 318:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 319:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:
+ 320:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 321:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 322:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ 323:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 324:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 325:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 326:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** void Tamper_Timer_ISR_Enable(void)
+ 327:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+ 399              		.loc 1 327 0
+ 400              		.cfi_startproc
+ 401              		@ args = 0, pretend = 0, frame = 0
+ 402              		@ frame_needed = 1, uses_anonymous_args = 0
+ 403              		@ link register save eliminated.
+ 404 0000 80B4     		push	{r7}
+ 405              		.cfi_def_cfa_offset 4
+ 406              		.cfi_offset 7, -4
+ 407 0002 00AF     		add	r7, sp, #0
+ 408              		.cfi_def_cfa_register 7
+ 328:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* Enable the general interrupt. */
+ 329:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     *Tamper_Timer_ISR_INTC_SET_EN = Tamper_Timer_ISR__INTC_MASK;
+ 409              		.loc 1 329 0
+ 410 0004 034B     		ldr	r3, .L31
+ 411 0006 4FF40032 		mov	r2, #131072
+ 412 000a 1A60     		str	r2, [r3]
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 14
+
+
+ 330:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+ 413              		.loc 1 330 0
+ 414 000c BD46     		mov	sp, r7
+ 415              		@ sp needed
+ 416 000e 5DF8047B 		ldr	r7, [sp], #4
+ 417 0012 7047     		bx	lr
+ 418              	.L32:
+ 419              		.align	2
+ 420              	.L31:
+ 421 0014 00E100E0 		.word	-536813312
+ 422              		.cfi_endproc
+ 423              	.LFE8:
+ 424              		.size	Tamper_Timer_ISR_Enable, .-Tamper_Timer_ISR_Enable
+ 425              		.section	.text.Tamper_Timer_ISR_GetState,"ax",%progbits
+ 426              		.align	2
+ 427              		.global	Tamper_Timer_ISR_GetState
+ 428              		.thumb
+ 429              		.thumb_func
+ 430              		.type	Tamper_Timer_ISR_GetState, %function
+ 431              	Tamper_Timer_ISR_GetState:
+ 432              	.LFB9:
+ 331:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 332:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 333:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+ 334:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_GetState
+ 335:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+ 336:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 337:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+ 338:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Gets the state (enabled, disabled) of the Interrupt.
+ 339:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 340:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:
+ 341:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 342:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 343:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ 344:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   1 if enabled, 0 if disabled.
+ 345:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 346:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 347:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** uint8 Tamper_Timer_ISR_GetState(void)
+ 348:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+ 433              		.loc 1 348 0
+ 434              		.cfi_startproc
+ 435              		@ args = 0, pretend = 0, frame = 0
+ 436              		@ frame_needed = 1, uses_anonymous_args = 0
+ 437              		@ link register save eliminated.
+ 438 0000 80B4     		push	{r7}
+ 439              		.cfi_def_cfa_offset 4
+ 440              		.cfi_offset 7, -4
+ 441 0002 00AF     		add	r7, sp, #0
+ 442              		.cfi_def_cfa_register 7
+ 349:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* Get the state of the general interrupt. */
+ 350:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     return ((*Tamper_Timer_ISR_INTC_SET_EN & (uint32)Tamper_Timer_ISR__INTC_MASK) != 0u) ? 1u:0u;
+ 443              		.loc 1 350 0
+ 444 0004 064B     		ldr	r3, .L37
+ 445 0006 1B68     		ldr	r3, [r3]
+ 446 0008 03F40033 		and	r3, r3, #131072
+ 447 000c 002B     		cmp	r3, #0
+ 448 000e 01D0     		beq	.L34
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 15
+
+
+ 449              		.loc 1 350 0 is_stmt 0 discriminator 1
+ 450 0010 0123     		movs	r3, #1
+ 451 0012 00E0     		b	.L35
+ 452              	.L34:
+ 453              		.loc 1 350 0 discriminator 2
+ 454 0014 0023     		movs	r3, #0
+ 455              	.L35:
+ 351:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+ 456              		.loc 1 351 0 is_stmt 1 discriminator 3
+ 457 0016 1846     		mov	r0, r3
+ 458 0018 BD46     		mov	sp, r7
+ 459              		@ sp needed
+ 460 001a 5DF8047B 		ldr	r7, [sp], #4
+ 461 001e 7047     		bx	lr
+ 462              	.L38:
+ 463              		.align	2
+ 464              	.L37:
+ 465 0020 00E100E0 		.word	-536813312
+ 466              		.cfi_endproc
+ 467              	.LFE9:
+ 468              		.size	Tamper_Timer_ISR_GetState, .-Tamper_Timer_ISR_GetState
+ 469              		.section	.text.Tamper_Timer_ISR_Disable,"ax",%progbits
+ 470              		.align	2
+ 471              		.global	Tamper_Timer_ISR_Disable
+ 472              		.thumb
+ 473              		.thumb_func
+ 474              		.type	Tamper_Timer_ISR_Disable, %function
+ 475              	Tamper_Timer_ISR_Disable:
+ 476              	.LFB10:
+ 352:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 353:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 354:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+ 355:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_Disable
+ 356:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+ 357:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 358:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+ 359:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Disables the Interrupt in the interrupt controller.
+ 360:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 361:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:
+ 362:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 363:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 364:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ 365:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 366:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 367:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 368:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** void Tamper_Timer_ISR_Disable(void)
+ 369:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+ 477              		.loc 1 369 0
+ 478              		.cfi_startproc
+ 479              		@ args = 0, pretend = 0, frame = 0
+ 480              		@ frame_needed = 1, uses_anonymous_args = 0
+ 481              		@ link register save eliminated.
+ 482 0000 80B4     		push	{r7}
+ 483              		.cfi_def_cfa_offset 4
+ 484              		.cfi_offset 7, -4
+ 485 0002 00AF     		add	r7, sp, #0
+ 486              		.cfi_def_cfa_register 7
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 16
+
+
+ 370:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     /* Disable the general interrupt. */
+ 371:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     *Tamper_Timer_ISR_INTC_CLR_EN = Tamper_Timer_ISR__INTC_MASK;
+ 487              		.loc 1 371 0
+ 488 0004 034B     		ldr	r3, .L40
+ 489 0006 4FF40032 		mov	r2, #131072
+ 490 000a 1A60     		str	r2, [r3]
+ 372:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+ 491              		.loc 1 372 0
+ 492 000c BD46     		mov	sp, r7
+ 493              		@ sp needed
+ 494 000e 5DF8047B 		ldr	r7, [sp], #4
+ 495 0012 7047     		bx	lr
+ 496              	.L41:
+ 497              		.align	2
+ 498              	.L40:
+ 499 0014 80E100E0 		.word	-536813184
+ 500              		.cfi_endproc
+ 501              	.LFE10:
+ 502              		.size	Tamper_Timer_ISR_Disable, .-Tamper_Timer_ISR_Disable
+ 503              		.section	.text.Tamper_Timer_ISR_SetPending,"ax",%progbits
+ 504              		.align	2
+ 505              		.global	Tamper_Timer_ISR_SetPending
+ 506              		.thumb
+ 507              		.thumb_func
+ 508              		.type	Tamper_Timer_ISR_SetPending, %function
+ 509              	Tamper_Timer_ISR_SetPending:
+ 510              	.LFB11:
+ 373:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 374:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 375:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+ 376:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_SetPending
+ 377:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+ 378:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 379:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+ 380:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Causes the Interrupt to enter the pending state, a software method of
+ 381:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   generating the interrupt.
+ 382:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 383:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:
+ 384:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 385:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 386:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ 387:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 388:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 389:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Side Effects:
+ 390:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   If interrupts are enabled and the interrupt is set up properly, the ISR is
+ 391:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   entered (depending on the priority of this interrupt and other pending 
+ 392:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   interrupts).
+ 393:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 394:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 395:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** void Tamper_Timer_ISR_SetPending(void)
+ 396:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+ 511              		.loc 1 396 0
+ 512              		.cfi_startproc
+ 513              		@ args = 0, pretend = 0, frame = 0
+ 514              		@ frame_needed = 1, uses_anonymous_args = 0
+ 515              		@ link register save eliminated.
+ 516 0000 80B4     		push	{r7}
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 17
+
+
+ 517              		.cfi_def_cfa_offset 4
+ 518              		.cfi_offset 7, -4
+ 519 0002 00AF     		add	r7, sp, #0
+ 520              		.cfi_def_cfa_register 7
+ 397:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     *Tamper_Timer_ISR_INTC_SET_PD = Tamper_Timer_ISR__INTC_MASK;
+ 521              		.loc 1 397 0
+ 522 0004 034B     		ldr	r3, .L43
+ 523 0006 4FF40032 		mov	r2, #131072
+ 524 000a 1A60     		str	r2, [r3]
+ 398:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+ 525              		.loc 1 398 0
+ 526 000c BD46     		mov	sp, r7
+ 527              		@ sp needed
+ 528 000e 5DF8047B 		ldr	r7, [sp], #4
+ 529 0012 7047     		bx	lr
+ 530              	.L44:
+ 531              		.align	2
+ 532              	.L43:
+ 533 0014 00E200E0 		.word	-536813056
+ 534              		.cfi_endproc
+ 535              	.LFE11:
+ 536              		.size	Tamper_Timer_ISR_SetPending, .-Tamper_Timer_ISR_SetPending
+ 537              		.section	.text.Tamper_Timer_ISR_ClearPending,"ax",%progbits
+ 538              		.align	2
+ 539              		.global	Tamper_Timer_ISR_ClearPending
+ 540              		.thumb
+ 541              		.thumb_func
+ 542              		.type	Tamper_Timer_ISR_ClearPending, %function
+ 543              	Tamper_Timer_ISR_ClearPending:
+ 544              	.LFB12:
+ 399:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 400:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** 
+ 401:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** /*******************************************************************************
+ 402:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Function Name: Tamper_Timer_ISR_ClearPending
+ 403:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** ********************************************************************************
+ 404:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 405:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Summary:
+ 406:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Clears a pending interrupt in the interrupt controller.
+ 407:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 408:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   Note Some interrupt sources are clear-on-read and require the block 
+ 409:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   interrupt/status register to be read/cleared with the appropriate block API 
+ 410:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   (GPIO, UART, and so on). Otherwise the ISR will continue to remain in 
+ 411:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   pending state even though the interrupt itself is cleared using this API.
+ 412:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 413:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Parameters:
+ 414:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 415:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 416:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** * Return:
+ 417:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *   None
+ 418:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *
+ 419:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** *******************************************************************************/
+ 420:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** void Tamper_Timer_ISR_ClearPending(void)
+ 421:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** {
+ 545              		.loc 1 421 0
+ 546              		.cfi_startproc
+ 547              		@ args = 0, pretend = 0, frame = 0
+ 548              		@ frame_needed = 1, uses_anonymous_args = 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 18
+
+
+ 549              		@ link register save eliminated.
+ 550 0000 80B4     		push	{r7}
+ 551              		.cfi_def_cfa_offset 4
+ 552              		.cfi_offset 7, -4
+ 553 0002 00AF     		add	r7, sp, #0
+ 554              		.cfi_def_cfa_register 7
+ 422:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c ****     *Tamper_Timer_ISR_INTC_CLR_PD = Tamper_Timer_ISR__INTC_MASK;
+ 555              		.loc 1 422 0
+ 556 0004 034B     		ldr	r3, .L46
+ 557 0006 4FF40032 		mov	r2, #131072
+ 558 000a 1A60     		str	r2, [r3]
+ 423:.\Generated_Source\PSoC5/Tamper_Timer_ISR.c **** }
+ 559              		.loc 1 423 0
+ 560 000c BD46     		mov	sp, r7
+ 561              		@ sp needed
+ 562 000e 5DF8047B 		ldr	r7, [sp], #4
+ 563 0012 7047     		bx	lr
+ 564              	.L47:
+ 565              		.align	2
+ 566              	.L46:
+ 567 0014 80E200E0 		.word	-536812928
+ 568              		.cfi_endproc
+ 569              	.LFE12:
+ 570              		.size	Tamper_Timer_ISR_ClearPending, .-Tamper_Timer_ISR_ClearPending
+ 571              		.text
+ 572              	.Letext0:
+ 573              		.file 2 "Generated_Source\\PSoC5/cytypes.h"
+ 574              		.file 3 "./softuart.h"
+ 575              		.file 4 "./system.h"
+ 576              		.section	.debug_info,"",%progbits
+ 577              	.Ldebug_info0:
+ 578 0000 C1030000 		.4byte	0x3c1
+ 579 0004 0400     		.2byte	0x4
+ 580 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 581 000a 04       		.byte	0x4
+ 582 000b 01       		.uleb128 0x1
+ 583 000c 73020000 		.4byte	.LASF59
+ 584 0010 01       		.byte	0x1
+ 585 0011 E9000000 		.4byte	.LASF60
+ 586 0015 16000000 		.4byte	.LASF61
+ 587 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 588 001d 00000000 		.4byte	0
+ 589 0021 00000000 		.4byte	.Ldebug_line0
+ 590 0025 02       		.uleb128 0x2
+ 591 0026 04       		.byte	0x4
+ 592 0027 05       		.byte	0x5
+ 593 0028 696E7400 		.ascii	"int\000"
+ 594 002c 03       		.uleb128 0x3
+ 595 002d 04       		.byte	0x4
+ 596 002e 07       		.byte	0x7
+ 597 002f 89010000 		.4byte	.LASF0
+ 598 0033 03       		.uleb128 0x3
+ 599 0034 01       		.byte	0x1
+ 600 0035 06       		.byte	0x6
+ 601 0036 CD000000 		.4byte	.LASF1
+ 602 003a 03       		.uleb128 0x3
+ 603 003b 01       		.byte	0x1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 19
+
+
+ 604 003c 08       		.byte	0x8
+ 605 003d 4C030000 		.4byte	.LASF2
+ 606 0041 03       		.uleb128 0x3
+ 607 0042 02       		.byte	0x2
+ 608 0043 05       		.byte	0x5
+ 609 0044 5A030000 		.4byte	.LASF3
+ 610 0048 03       		.uleb128 0x3
+ 611 0049 02       		.byte	0x2
+ 612 004a 07       		.byte	0x7
+ 613 004b D0010000 		.4byte	.LASF4
+ 614 004f 03       		.uleb128 0x3
+ 615 0050 04       		.byte	0x4
+ 616 0051 05       		.byte	0x5
+ 617 0052 1A010000 		.4byte	.LASF5
+ 618 0056 03       		.uleb128 0x3
+ 619 0057 04       		.byte	0x4
+ 620 0058 07       		.byte	0x7
+ 621 0059 96010000 		.4byte	.LASF6
+ 622 005d 03       		.uleb128 0x3
+ 623 005e 08       		.byte	0x8
+ 624 005f 05       		.byte	0x5
+ 625 0060 BF000000 		.4byte	.LASF7
+ 626 0064 03       		.uleb128 0x3
+ 627 0065 08       		.byte	0x8
+ 628 0066 07       		.byte	0x7
+ 629 0067 86000000 		.4byte	.LASF8
+ 630 006b 03       		.uleb128 0x3
+ 631 006c 04       		.byte	0x4
+ 632 006d 07       		.byte	0x7
+ 633 006e 47020000 		.4byte	.LASF9
+ 634 0072 04       		.uleb128 0x4
+ 635 0073 04       		.byte	0x4
+ 636 0074 78000000 		.4byte	0x78
+ 637 0078 05       		.uleb128 0x5
+ 638 0079 03       		.uleb128 0x3
+ 639 007a 01       		.byte	0x1
+ 640 007b 08       		.byte	0x8
+ 641 007c 99030000 		.4byte	.LASF10
+ 642 0080 06       		.uleb128 0x6
+ 643 0081 35010000 		.4byte	.LASF11
+ 644 0085 02       		.byte	0x2
+ 645 0086 B3       		.byte	0xb3
+ 646 0087 3A000000 		.4byte	0x3a
+ 647 008b 06       		.uleb128 0x6
+ 648 008c 0F000000 		.4byte	.LASF12
+ 649 0090 02       		.byte	0x2
+ 650 0091 B4       		.byte	0xb4
+ 651 0092 48000000 		.4byte	0x48
+ 652 0096 06       		.uleb128 0x6
+ 653 0097 70010000 		.4byte	.LASF13
+ 654 009b 02       		.byte	0x2
+ 655 009c B5       		.byte	0xb5
+ 656 009d 56000000 		.4byte	0x56
+ 657 00a1 03       		.uleb128 0x3
+ 658 00a2 04       		.byte	0x4
+ 659 00a3 04       		.byte	0x4
+ 660 00a4 2F030000 		.4byte	.LASF14
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 20
+
+
+ 661 00a8 03       		.uleb128 0x3
+ 662 00a9 08       		.byte	0x8
+ 663 00aa 04       		.byte	0x4
+ 664 00ab 61010000 		.4byte	.LASF15
+ 665 00af 07       		.uleb128 0x7
+ 666 00b0 47030000 		.4byte	.LASF16
+ 667 00b4 02       		.byte	0x2
+ 668 00b5 5D01     		.2byte	0x15d
+ 669 00b7 BB000000 		.4byte	0xbb
+ 670 00bb 08       		.uleb128 0x8
+ 671 00bc 80000000 		.4byte	0x80
+ 672 00c0 08       		.uleb128 0x8
+ 673 00c1 8B000000 		.4byte	0x8b
+ 674 00c5 07       		.uleb128 0x7
+ 675 00c6 1D020000 		.4byte	.LASF17
+ 676 00ca 02       		.byte	0x2
+ 677 00cb 5F01     		.2byte	0x15f
+ 678 00cd D1000000 		.4byte	0xd1
+ 679 00d1 08       		.uleb128 0x8
+ 680 00d2 96000000 		.4byte	0x96
+ 681 00d6 07       		.uleb128 0x7
+ 682 00d7 9E030000 		.4byte	.LASF18
+ 683 00db 02       		.byte	0x2
+ 684 00dc 6F01     		.2byte	0x16f
+ 685 00de 72000000 		.4byte	0x72
+ 686 00e2 09       		.uleb128 0x9
+ 687 00e3 28       		.byte	0x28
+ 688 00e4 03       		.byte	0x3
+ 689 00e5 0D       		.byte	0xd
+ 690 00e6 7B010000 		.4byte	0x17b
+ 691 00ea 0A       		.uleb128 0xa
+ 692 00eb 94030000 		.4byte	.LASF19
+ 693 00ef 03       		.byte	0x3
+ 694 00f0 0F       		.byte	0xf
+ 695 00f1 25000000 		.4byte	0x25
+ 696 00f5 00       		.byte	0
+ 697 00f6 0A       		.uleb128 0xa
+ 698 00f7 23020000 		.4byte	.LASF20
+ 699 00fb 03       		.byte	0x3
+ 700 00fc 10       		.byte	0x10
+ 701 00fd 25000000 		.4byte	0x25
+ 702 0101 04       		.byte	0x4
+ 703 0102 0A       		.uleb128 0xa
+ 704 0103 B5000000 		.4byte	.LASF21
+ 705 0107 03       		.byte	0x3
+ 706 0108 11       		.byte	0x11
+ 707 0109 25000000 		.4byte	0x25
+ 708 010d 08       		.byte	0x8
+ 709 010e 0A       		.uleb128 0xa
+ 710 010f 15010000 		.4byte	.LASF22
+ 711 0113 03       		.byte	0x3
+ 712 0114 12       		.byte	0x12
+ 713 0115 25000000 		.4byte	0x25
+ 714 0119 0C       		.byte	0xc
+ 715 011a 0A       		.uleb128 0xa
+ 716 011b 59010000 		.4byte	.LASF23
+ 717 011f 03       		.byte	0x3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 21
+
+
+ 718 0120 13       		.byte	0x13
+ 719 0121 8B000000 		.4byte	0x8b
+ 720 0125 10       		.byte	0x10
+ 721 0126 0A       		.uleb128 0xa
+ 722 0127 68010000 		.4byte	.LASF24
+ 723 012b 03       		.byte	0x3
+ 724 012c 14       		.byte	0x14
+ 725 012d C0000000 		.4byte	0xc0
+ 726 0131 12       		.byte	0x12
+ 727 0132 0A       		.uleb128 0xa
+ 728 0133 E1000000 		.4byte	.LASF25
+ 729 0137 03       		.byte	0x3
+ 730 0138 15       		.byte	0x15
+ 731 0139 C0000000 		.4byte	0xc0
+ 732 013d 14       		.byte	0x14
+ 733 013e 0A       		.uleb128 0xa
+ 734 013f D9000000 		.4byte	.LASF26
+ 735 0143 03       		.byte	0x3
+ 736 0144 16       		.byte	0x16
+ 737 0145 8B000000 		.4byte	0x8b
+ 738 0149 16       		.byte	0x16
+ 739 014a 0A       		.uleb128 0xa
+ 740 014b 0E040000 		.4byte	.LASF27
+ 741 014f 03       		.byte	0x3
+ 742 0150 17       		.byte	0x17
+ 743 0151 7B010000 		.4byte	0x17b
+ 744 0155 18       		.byte	0x18
+ 745 0156 0A       		.uleb128 0xa
+ 746 0157 01040000 		.4byte	.LASF28
+ 747 015b 03       		.byte	0x3
+ 748 015c 18       		.byte	0x18
+ 749 015d 7B010000 		.4byte	0x17b
+ 750 0161 1C       		.byte	0x1c
+ 751 0162 0A       		.uleb128 0xa
+ 752 0163 A8010000 		.4byte	.LASF29
+ 753 0167 03       		.byte	0x3
+ 754 0168 19       		.byte	0x19
+ 755 0169 7B010000 		.4byte	0x17b
+ 756 016d 20       		.byte	0x20
+ 757 016e 0A       		.uleb128 0xa
+ 758 016f F9030000 		.4byte	.LASF30
+ 759 0173 03       		.byte	0x3
+ 760 0174 1A       		.byte	0x1a
+ 761 0175 7B010000 		.4byte	0x17b
+ 762 0179 24       		.byte	0x24
+ 763 017a 00       		.byte	0
+ 764 017b 08       		.uleb128 0x8
+ 765 017c 25000000 		.4byte	0x25
+ 766 0180 06       		.uleb128 0x6
+ 767 0181 BD030000 		.4byte	.LASF31
+ 768 0185 03       		.byte	0x3
+ 769 0186 1B       		.byte	0x1b
+ 770 0187 E2000000 		.4byte	0xe2
+ 771 018b 0B       		.uleb128 0xb
+ 772 018c 6F000000 		.4byte	.LASF32
+ 773 0190 01       		.byte	0x1
+ 774 0191 3F       		.byte	0x3f
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 22
+
+
+ 775 0192 00000000 		.4byte	.LFB0
+ 776 0196 20000000 		.4byte	.LFE0-.LFB0
+ 777 019a 01       		.uleb128 0x1
+ 778 019b 9C       		.byte	0x9c
+ 779 019c 0C       		.uleb128 0xc
+ 780 019d 53040000 		.4byte	.LASF35
+ 781 01a1 01       		.byte	0x1
+ 782 01a2 6A       		.byte	0x6a
+ 783 01a3 00000000 		.4byte	.LFB1
+ 784 01a7 22000000 		.4byte	.LFE1-.LFB1
+ 785 01ab 01       		.uleb128 0x1
+ 786 01ac 9C       		.byte	0x9c
+ 787 01ad C0010000 		.4byte	0x1c0
+ 788 01b1 0D       		.uleb128 0xd
+ 789 01b2 50020000 		.4byte	.LASF37
+ 790 01b6 01       		.byte	0x1
+ 791 01b7 6A       		.byte	0x6a
+ 792 01b8 D6000000 		.4byte	0xd6
+ 793 01bc 02       		.uleb128 0x2
+ 794 01bd 91       		.byte	0x91
+ 795 01be 74       		.sleb128 -12
+ 796 01bf 00       		.byte	0
+ 797 01c0 0B       		.uleb128 0xb
+ 798 01c1 E3010000 		.4byte	.LASF33
+ 799 01c5 01       		.byte	0x1
+ 800 01c6 88       		.byte	0x88
+ 801 01c7 00000000 		.4byte	.LFB2
+ 802 01cb 14000000 		.4byte	.LFE2-.LFB2
+ 803 01cf 01       		.uleb128 0x1
+ 804 01d0 9C       		.byte	0x9c
+ 805 01d1 0B       		.uleb128 0xb
+ 806 01d2 02020000 		.4byte	.LASF34
+ 807 01d6 01       		.byte	0x1
+ 808 01d7 A2       		.byte	0xa2
+ 809 01d8 00000000 		.4byte	.LFB3
+ 810 01dc 74000000 		.4byte	.LFE3-.LFB3
+ 811 01e0 01       		.uleb128 0x1
+ 812 01e1 9C       		.byte	0x9c
+ 813 01e2 0E       		.uleb128 0xe
+ 814 01e3 58020000 		.4byte	.LASF36
+ 815 01e7 01       		.byte	0x1
+ 816 01e8 DB       		.byte	0xdb
+ 817 01e9 00000000 		.4byte	.LFB4
+ 818 01ed 24000000 		.4byte	.LFE4-.LFB4
+ 819 01f1 01       		.uleb128 0x1
+ 820 01f2 9C       		.byte	0x9c
+ 821 01f3 14020000 		.4byte	0x214
+ 822 01f7 0D       		.uleb128 0xd
+ 823 01f8 50020000 		.4byte	.LASF37
+ 824 01fc 01       		.byte	0x1
+ 825 01fd DB       		.byte	0xdb
+ 826 01fe D6000000 		.4byte	0xd6
+ 827 0202 02       		.uleb128 0x2
+ 828 0203 91       		.byte	0x91
+ 829 0204 6C       		.sleb128 -20
+ 830 0205 0F       		.uleb128 0xf
+ 831 0206 00000000 		.4byte	.LASF38
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 23
+
+
+ 832 020a 01       		.byte	0x1
+ 833 020b DD       		.byte	0xdd
+ 834 020c 14020000 		.4byte	0x214
+ 835 0210 02       		.uleb128 0x2
+ 836 0211 91       		.byte	0x91
+ 837 0212 74       		.sleb128 -12
+ 838 0213 00       		.byte	0
+ 839 0214 04       		.uleb128 0x4
+ 840 0215 04       		.byte	0x4
+ 841 0216 D6000000 		.4byte	0xd6
+ 842 021a 10       		.uleb128 0x10
+ 843 021b B5010000 		.4byte	.LASF41
+ 844 021f 01       		.byte	0x1
+ 845 0220 F3       		.byte	0xf3
+ 846 0221 D6000000 		.4byte	0xd6
+ 847 0225 00000000 		.4byte	.LFB5
+ 848 0229 24000000 		.4byte	.LFE5-.LFB5
+ 849 022d 01       		.uleb128 0x1
+ 850 022e 9C       		.byte	0x9c
+ 851 022f 42020000 		.4byte	0x242
+ 852 0233 0F       		.uleb128 0xf
+ 853 0234 00000000 		.4byte	.LASF38
+ 854 0238 01       		.byte	0x1
+ 855 0239 F5       		.byte	0xf5
+ 856 023a 14020000 		.4byte	0x214
+ 857 023e 02       		.uleb128 0x2
+ 858 023f 91       		.byte	0x91
+ 859 0240 74       		.sleb128 -12
+ 860 0241 00       		.byte	0
+ 861 0242 11       		.uleb128 0x11
+ 862 0243 2A020000 		.4byte	.LASF39
+ 863 0247 01       		.byte	0x1
+ 864 0248 1501     		.2byte	0x115
+ 865 024a 00000000 		.4byte	.LFB6
+ 866 024e 24000000 		.4byte	.LFE6-.LFB6
+ 867 0252 01       		.uleb128 0x1
+ 868 0253 9C       		.byte	0x9c
+ 869 0254 68020000 		.4byte	0x268
+ 870 0258 12       		.uleb128 0x12
+ 871 0259 F9010000 		.4byte	.LASF40
+ 872 025d 01       		.byte	0x1
+ 873 025e 1501     		.2byte	0x115
+ 874 0260 80000000 		.4byte	0x80
+ 875 0264 02       		.uleb128 0x2
+ 876 0265 91       		.byte	0x91
+ 877 0266 77       		.sleb128 -9
+ 878 0267 00       		.byte	0
+ 879 0268 13       		.uleb128 0x13
+ 880 0269 14040000 		.4byte	.LASF42
+ 881 026d 01       		.byte	0x1
+ 882 026e 2B01     		.2byte	0x12b
+ 883 0270 80000000 		.4byte	0x80
+ 884 0274 00000000 		.4byte	.LFB7
+ 885 0278 24000000 		.4byte	.LFE7-.LFB7
+ 886 027c 01       		.uleb128 0x1
+ 887 027d 9C       		.byte	0x9c
+ 888 027e 92020000 		.4byte	0x292
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 24
+
+
+ 889 0282 14       		.uleb128 0x14
+ 890 0283 F9010000 		.4byte	.LASF40
+ 891 0287 01       		.byte	0x1
+ 892 0288 2D01     		.2byte	0x12d
+ 893 028a 80000000 		.4byte	0x80
+ 894 028e 02       		.uleb128 0x2
+ 895 028f 91       		.byte	0x91
+ 896 0290 77       		.sleb128 -9
+ 897 0291 00       		.byte	0
+ 898 0292 15       		.uleb128 0x15
+ 899 0293 72030000 		.4byte	.LASF43
+ 900 0297 01       		.byte	0x1
+ 901 0298 4601     		.2byte	0x146
+ 902 029a 00000000 		.4byte	.LFB8
+ 903 029e 18000000 		.4byte	.LFE8-.LFB8
+ 904 02a2 01       		.uleb128 0x1
+ 905 02a3 9C       		.byte	0x9c
+ 906 02a4 16       		.uleb128 0x16
+ 907 02a5 EF020000 		.4byte	.LASF62
+ 908 02a9 01       		.byte	0x1
+ 909 02aa 5B01     		.2byte	0x15b
+ 910 02ac 80000000 		.4byte	0x80
+ 911 02b0 00000000 		.4byte	.LFB9
+ 912 02b4 24000000 		.4byte	.LFE9-.LFB9
+ 913 02b8 01       		.uleb128 0x1
+ 914 02b9 9C       		.byte	0x9c
+ 915 02ba 15       		.uleb128 0x15
+ 916 02bb 31040000 		.4byte	.LASF44
+ 917 02bf 01       		.byte	0x1
+ 918 02c0 7001     		.2byte	0x170
+ 919 02c2 00000000 		.4byte	.LFB10
+ 920 02c6 18000000 		.4byte	.LFE10-.LFB10
+ 921 02ca 01       		.uleb128 0x1
+ 922 02cb 9C       		.byte	0x9c
+ 923 02cc 15       		.uleb128 0x15
+ 924 02cd DD030000 		.4byte	.LASF45
+ 925 02d1 01       		.byte	0x1
+ 926 02d2 8B01     		.2byte	0x18b
+ 927 02d4 00000000 		.4byte	.LFB11
+ 928 02d8 18000000 		.4byte	.LFE11-.LFB11
+ 929 02dc 01       		.uleb128 0x1
+ 930 02dd 9C       		.byte	0x9c
+ 931 02de 15       		.uleb128 0x15
+ 932 02df 3B010000 		.4byte	.LASF46
+ 933 02e3 01       		.byte	0x1
+ 934 02e4 A401     		.2byte	0x1a4
+ 935 02e6 00000000 		.4byte	.LFB12
+ 936 02ea 18000000 		.4byte	.LFE12-.LFB12
+ 937 02ee 01       		.uleb128 0x1
+ 938 02ef 9C       		.byte	0x9c
+ 939 02f0 17       		.uleb128 0x17
+ 940 02f1 7300     		.ascii	"s\000"
+ 941 02f3 04       		.byte	0x4
+ 942 02f4 30       		.byte	0x30
+ 943 02f5 80010000 		.4byte	0x180
+ 944 02f9 05       		.uleb128 0x5
+ 945 02fa 03       		.byte	0x3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 25
+
+
+ 946 02fb 00000000 		.4byte	s
+ 947 02ff 18       		.uleb128 0x18
+ 948 0300 35030000 		.4byte	.LASF47
+ 949 0304 04       		.byte	0x4
+ 950 0305 33       		.byte	0x33
+ 951 0306 79000000 		.4byte	0x79
+ 952 030a 05       		.uleb128 0x5
+ 953 030b 03       		.byte	0x3
+ 954 030c 00000000 		.4byte	currentAccessType
+ 955 0310 17       		.uleb128 0x17
+ 956 0311 6F6C6400 		.ascii	"old\000"
+ 957 0315 04       		.byte	0x4
+ 958 0316 34       		.byte	0x34
+ 959 0317 79000000 		.4byte	0x79
+ 960 031b 05       		.uleb128 0x5
+ 961 031c 03       		.byte	0x3
+ 962 031d 00000000 		.4byte	old
+ 963 0321 18       		.uleb128 0x18
+ 964 0322 AB030000 		.4byte	.LASF48
+ 965 0326 04       		.byte	0x4
+ 966 0327 35       		.byte	0x35
+ 967 0328 25000000 		.4byte	0x25
+ 968 032c 05       		.uleb128 0x5
+ 969 032d 03       		.byte	0x3
+ 970 032e 00000000 		.4byte	TAMPERCR_POLARITY
+ 971 0332 18       		.uleb128 0x18
+ 972 0333 4A040000 		.4byte	.LASF49
+ 973 0337 04       		.byte	0x4
+ 974 0338 38       		.byte	0x38
+ 975 0339 25000000 		.4byte	0x25
+ 976 033d 05       		.uleb128 0x5
+ 977 033e 03       		.byte	0x3
+ 978 033f 00000000 		.4byte	card_ack
+ 979 0343 18       		.uleb128 0x18
+ 980 0344 9D000000 		.4byte	.LASF50
+ 981 0348 04       		.byte	0x4
+ 982 0349 39       		.byte	0x39
+ 983 034a 25000000 		.4byte	0x25
+ 984 034e 05       		.uleb128 0x5
+ 985 034f 03       		.byte	0x3
+ 986 0350 00000000 		.4byte	card_in_buf
+ 987 0354 18       		.uleb128 0x18
+ 988 0355 8A030000 		.4byte	.LASF51
+ 989 0359 04       		.byte	0x4
+ 990 035a 3C       		.byte	0x3c
+ 991 035b 79000000 		.4byte	0x79
+ 992 035f 05       		.uleb128 0x5
+ 993 0360 03       		.byte	0x3
+ 994 0361 00000000 		.4byte	got_pulse
+ 995 0365 18       		.uleb128 0x18
+ 996 0366 20030000 		.4byte	.LASF52
+ 997 036a 04       		.byte	0x4
+ 998 036b 3D       		.byte	0x3d
+ 999 036c 25000000 		.4byte	0x25
+ 1000 0370 05       		.uleb128 0x5
+ 1001 0371 03       		.byte	0x3
+ 1002 0372 00000000 		.4byte	f2f_pulsewidth
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 26
+
+
+ 1003 0376 18       		.uleb128 0x18
+ 1004 0377 A9000000 		.4byte	.LASF53
+ 1005 037b 04       		.byte	0x4
+ 1006 037c 3E       		.byte	0x3e
+ 1007 037d 25000000 		.4byte	0x25
+ 1008 0381 05       		.uleb128 0x5
+ 1009 0382 03       		.byte	0x3
+ 1010 0383 00000000 		.4byte	timeout_cnt
+ 1011 0387 18       		.uleb128 0x18
+ 1012 0388 23010000 		.4byte	.LASF54
+ 1013 038c 04       		.byte	0x4
+ 1014 038d 3F       		.byte	0x3f
+ 1015 038e 79000000 		.4byte	0x79
+ 1016 0392 05       		.uleb128 0x5
+ 1017 0393 03       		.byte	0x3
+ 1018 0394 00000000 		.4byte	activate_f2ftimer
+ 1019 0398 19       		.uleb128 0x19
+ 1020 0399 09030000 		.4byte	.LASF55
+ 1021 039d 04       		.byte	0x4
+ 1022 039e 42       		.byte	0x42
+ 1023 039f 79000000 		.4byte	0x79
+ 1024 03a3 19       		.uleb128 0x19
+ 1025 03a4 77010000 		.4byte	.LASF56
+ 1026 03a8 04       		.byte	0x4
+ 1027 03a9 43       		.byte	0x43
+ 1028 03aa 79000000 		.4byte	0x79
+ 1029 03ae 19       		.uleb128 0x19
+ 1030 03af 64030000 		.4byte	.LASF57
+ 1031 03b3 04       		.byte	0x4
+ 1032 03b4 4A       		.byte	0x4a
+ 1033 03b5 79000000 		.4byte	0x79
+ 1034 03b9 19       		.uleb128 0x19
+ 1035 03ba CE030000 		.4byte	.LASF58
+ 1036 03be 04       		.byte	0x4
+ 1037 03bf 4C       		.byte	0x4c
+ 1038 03c0 4F000000 		.4byte	0x4f
+ 1039 03c4 00       		.byte	0
+ 1040              		.section	.debug_abbrev,"",%progbits
+ 1041              	.Ldebug_abbrev0:
+ 1042 0000 01       		.uleb128 0x1
+ 1043 0001 11       		.uleb128 0x11
+ 1044 0002 01       		.byte	0x1
+ 1045 0003 25       		.uleb128 0x25
+ 1046 0004 0E       		.uleb128 0xe
+ 1047 0005 13       		.uleb128 0x13
+ 1048 0006 0B       		.uleb128 0xb
+ 1049 0007 03       		.uleb128 0x3
+ 1050 0008 0E       		.uleb128 0xe
+ 1051 0009 1B       		.uleb128 0x1b
+ 1052 000a 0E       		.uleb128 0xe
+ 1053 000b 55       		.uleb128 0x55
+ 1054 000c 17       		.uleb128 0x17
+ 1055 000d 11       		.uleb128 0x11
+ 1056 000e 01       		.uleb128 0x1
+ 1057 000f 10       		.uleb128 0x10
+ 1058 0010 17       		.uleb128 0x17
+ 1059 0011 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 27
+
+
+ 1060 0012 00       		.byte	0
+ 1061 0013 02       		.uleb128 0x2
+ 1062 0014 24       		.uleb128 0x24
+ 1063 0015 00       		.byte	0
+ 1064 0016 0B       		.uleb128 0xb
+ 1065 0017 0B       		.uleb128 0xb
+ 1066 0018 3E       		.uleb128 0x3e
+ 1067 0019 0B       		.uleb128 0xb
+ 1068 001a 03       		.uleb128 0x3
+ 1069 001b 08       		.uleb128 0x8
+ 1070 001c 00       		.byte	0
+ 1071 001d 00       		.byte	0
+ 1072 001e 03       		.uleb128 0x3
+ 1073 001f 24       		.uleb128 0x24
+ 1074 0020 00       		.byte	0
+ 1075 0021 0B       		.uleb128 0xb
+ 1076 0022 0B       		.uleb128 0xb
+ 1077 0023 3E       		.uleb128 0x3e
+ 1078 0024 0B       		.uleb128 0xb
+ 1079 0025 03       		.uleb128 0x3
+ 1080 0026 0E       		.uleb128 0xe
+ 1081 0027 00       		.byte	0
+ 1082 0028 00       		.byte	0
+ 1083 0029 04       		.uleb128 0x4
+ 1084 002a 0F       		.uleb128 0xf
+ 1085 002b 00       		.byte	0
+ 1086 002c 0B       		.uleb128 0xb
+ 1087 002d 0B       		.uleb128 0xb
+ 1088 002e 49       		.uleb128 0x49
+ 1089 002f 13       		.uleb128 0x13
+ 1090 0030 00       		.byte	0
+ 1091 0031 00       		.byte	0
+ 1092 0032 05       		.uleb128 0x5
+ 1093 0033 15       		.uleb128 0x15
+ 1094 0034 00       		.byte	0
+ 1095 0035 27       		.uleb128 0x27
+ 1096 0036 19       		.uleb128 0x19
+ 1097 0037 00       		.byte	0
+ 1098 0038 00       		.byte	0
+ 1099 0039 06       		.uleb128 0x6
+ 1100 003a 16       		.uleb128 0x16
+ 1101 003b 00       		.byte	0
+ 1102 003c 03       		.uleb128 0x3
+ 1103 003d 0E       		.uleb128 0xe
+ 1104 003e 3A       		.uleb128 0x3a
+ 1105 003f 0B       		.uleb128 0xb
+ 1106 0040 3B       		.uleb128 0x3b
+ 1107 0041 0B       		.uleb128 0xb
+ 1108 0042 49       		.uleb128 0x49
+ 1109 0043 13       		.uleb128 0x13
+ 1110 0044 00       		.byte	0
+ 1111 0045 00       		.byte	0
+ 1112 0046 07       		.uleb128 0x7
+ 1113 0047 16       		.uleb128 0x16
+ 1114 0048 00       		.byte	0
+ 1115 0049 03       		.uleb128 0x3
+ 1116 004a 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 28
+
+
+ 1117 004b 3A       		.uleb128 0x3a
+ 1118 004c 0B       		.uleb128 0xb
+ 1119 004d 3B       		.uleb128 0x3b
+ 1120 004e 05       		.uleb128 0x5
+ 1121 004f 49       		.uleb128 0x49
+ 1122 0050 13       		.uleb128 0x13
+ 1123 0051 00       		.byte	0
+ 1124 0052 00       		.byte	0
+ 1125 0053 08       		.uleb128 0x8
+ 1126 0054 35       		.uleb128 0x35
+ 1127 0055 00       		.byte	0
+ 1128 0056 49       		.uleb128 0x49
+ 1129 0057 13       		.uleb128 0x13
+ 1130 0058 00       		.byte	0
+ 1131 0059 00       		.byte	0
+ 1132 005a 09       		.uleb128 0x9
+ 1133 005b 13       		.uleb128 0x13
+ 1134 005c 01       		.byte	0x1
+ 1135 005d 0B       		.uleb128 0xb
+ 1136 005e 0B       		.uleb128 0xb
+ 1137 005f 3A       		.uleb128 0x3a
+ 1138 0060 0B       		.uleb128 0xb
+ 1139 0061 3B       		.uleb128 0x3b
+ 1140 0062 0B       		.uleb128 0xb
+ 1141 0063 01       		.uleb128 0x1
+ 1142 0064 13       		.uleb128 0x13
+ 1143 0065 00       		.byte	0
+ 1144 0066 00       		.byte	0
+ 1145 0067 0A       		.uleb128 0xa
+ 1146 0068 0D       		.uleb128 0xd
+ 1147 0069 00       		.byte	0
+ 1148 006a 03       		.uleb128 0x3
+ 1149 006b 0E       		.uleb128 0xe
+ 1150 006c 3A       		.uleb128 0x3a
+ 1151 006d 0B       		.uleb128 0xb
+ 1152 006e 3B       		.uleb128 0x3b
+ 1153 006f 0B       		.uleb128 0xb
+ 1154 0070 49       		.uleb128 0x49
+ 1155 0071 13       		.uleb128 0x13
+ 1156 0072 38       		.uleb128 0x38
+ 1157 0073 0B       		.uleb128 0xb
+ 1158 0074 00       		.byte	0
+ 1159 0075 00       		.byte	0
+ 1160 0076 0B       		.uleb128 0xb
+ 1161 0077 2E       		.uleb128 0x2e
+ 1162 0078 00       		.byte	0
+ 1163 0079 3F       		.uleb128 0x3f
+ 1164 007a 19       		.uleb128 0x19
+ 1165 007b 03       		.uleb128 0x3
+ 1166 007c 0E       		.uleb128 0xe
+ 1167 007d 3A       		.uleb128 0x3a
+ 1168 007e 0B       		.uleb128 0xb
+ 1169 007f 3B       		.uleb128 0x3b
+ 1170 0080 0B       		.uleb128 0xb
+ 1171 0081 27       		.uleb128 0x27
+ 1172 0082 19       		.uleb128 0x19
+ 1173 0083 11       		.uleb128 0x11
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 29
+
+
+ 1174 0084 01       		.uleb128 0x1
+ 1175 0085 12       		.uleb128 0x12
+ 1176 0086 06       		.uleb128 0x6
+ 1177 0087 40       		.uleb128 0x40
+ 1178 0088 18       		.uleb128 0x18
+ 1179 0089 9642     		.uleb128 0x2116
+ 1180 008b 19       		.uleb128 0x19
+ 1181 008c 00       		.byte	0
+ 1182 008d 00       		.byte	0
+ 1183 008e 0C       		.uleb128 0xc
+ 1184 008f 2E       		.uleb128 0x2e
+ 1185 0090 01       		.byte	0x1
+ 1186 0091 3F       		.uleb128 0x3f
+ 1187 0092 19       		.uleb128 0x19
+ 1188 0093 03       		.uleb128 0x3
+ 1189 0094 0E       		.uleb128 0xe
+ 1190 0095 3A       		.uleb128 0x3a
+ 1191 0096 0B       		.uleb128 0xb
+ 1192 0097 3B       		.uleb128 0x3b
+ 1193 0098 0B       		.uleb128 0xb
+ 1194 0099 27       		.uleb128 0x27
+ 1195 009a 19       		.uleb128 0x19
+ 1196 009b 11       		.uleb128 0x11
+ 1197 009c 01       		.uleb128 0x1
+ 1198 009d 12       		.uleb128 0x12
+ 1199 009e 06       		.uleb128 0x6
+ 1200 009f 40       		.uleb128 0x40
+ 1201 00a0 18       		.uleb128 0x18
+ 1202 00a1 9642     		.uleb128 0x2116
+ 1203 00a3 19       		.uleb128 0x19
+ 1204 00a4 01       		.uleb128 0x1
+ 1205 00a5 13       		.uleb128 0x13
+ 1206 00a6 00       		.byte	0
+ 1207 00a7 00       		.byte	0
+ 1208 00a8 0D       		.uleb128 0xd
+ 1209 00a9 05       		.uleb128 0x5
+ 1210 00aa 00       		.byte	0
+ 1211 00ab 03       		.uleb128 0x3
+ 1212 00ac 0E       		.uleb128 0xe
+ 1213 00ad 3A       		.uleb128 0x3a
+ 1214 00ae 0B       		.uleb128 0xb
+ 1215 00af 3B       		.uleb128 0x3b
+ 1216 00b0 0B       		.uleb128 0xb
+ 1217 00b1 49       		.uleb128 0x49
+ 1218 00b2 13       		.uleb128 0x13
+ 1219 00b3 02       		.uleb128 0x2
+ 1220 00b4 18       		.uleb128 0x18
+ 1221 00b5 00       		.byte	0
+ 1222 00b6 00       		.byte	0
+ 1223 00b7 0E       		.uleb128 0xe
+ 1224 00b8 2E       		.uleb128 0x2e
+ 1225 00b9 01       		.byte	0x1
+ 1226 00ba 3F       		.uleb128 0x3f
+ 1227 00bb 19       		.uleb128 0x19
+ 1228 00bc 03       		.uleb128 0x3
+ 1229 00bd 0E       		.uleb128 0xe
+ 1230 00be 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 30
+
+
+ 1231 00bf 0B       		.uleb128 0xb
+ 1232 00c0 3B       		.uleb128 0x3b
+ 1233 00c1 0B       		.uleb128 0xb
+ 1234 00c2 27       		.uleb128 0x27
+ 1235 00c3 19       		.uleb128 0x19
+ 1236 00c4 11       		.uleb128 0x11
+ 1237 00c5 01       		.uleb128 0x1
+ 1238 00c6 12       		.uleb128 0x12
+ 1239 00c7 06       		.uleb128 0x6
+ 1240 00c8 40       		.uleb128 0x40
+ 1241 00c9 18       		.uleb128 0x18
+ 1242 00ca 9742     		.uleb128 0x2117
+ 1243 00cc 19       		.uleb128 0x19
+ 1244 00cd 01       		.uleb128 0x1
+ 1245 00ce 13       		.uleb128 0x13
+ 1246 00cf 00       		.byte	0
+ 1247 00d0 00       		.byte	0
+ 1248 00d1 0F       		.uleb128 0xf
+ 1249 00d2 34       		.uleb128 0x34
+ 1250 00d3 00       		.byte	0
+ 1251 00d4 03       		.uleb128 0x3
+ 1252 00d5 0E       		.uleb128 0xe
+ 1253 00d6 3A       		.uleb128 0x3a
+ 1254 00d7 0B       		.uleb128 0xb
+ 1255 00d8 3B       		.uleb128 0x3b
+ 1256 00d9 0B       		.uleb128 0xb
+ 1257 00da 49       		.uleb128 0x49
+ 1258 00db 13       		.uleb128 0x13
+ 1259 00dc 02       		.uleb128 0x2
+ 1260 00dd 18       		.uleb128 0x18
+ 1261 00de 00       		.byte	0
+ 1262 00df 00       		.byte	0
+ 1263 00e0 10       		.uleb128 0x10
+ 1264 00e1 2E       		.uleb128 0x2e
+ 1265 00e2 01       		.byte	0x1
+ 1266 00e3 3F       		.uleb128 0x3f
+ 1267 00e4 19       		.uleb128 0x19
+ 1268 00e5 03       		.uleb128 0x3
+ 1269 00e6 0E       		.uleb128 0xe
+ 1270 00e7 3A       		.uleb128 0x3a
+ 1271 00e8 0B       		.uleb128 0xb
+ 1272 00e9 3B       		.uleb128 0x3b
+ 1273 00ea 0B       		.uleb128 0xb
+ 1274 00eb 27       		.uleb128 0x27
+ 1275 00ec 19       		.uleb128 0x19
+ 1276 00ed 49       		.uleb128 0x49
+ 1277 00ee 13       		.uleb128 0x13
+ 1278 00ef 11       		.uleb128 0x11
+ 1279 00f0 01       		.uleb128 0x1
+ 1280 00f1 12       		.uleb128 0x12
+ 1281 00f2 06       		.uleb128 0x6
+ 1282 00f3 40       		.uleb128 0x40
+ 1283 00f4 18       		.uleb128 0x18
+ 1284 00f5 9742     		.uleb128 0x2117
+ 1285 00f7 19       		.uleb128 0x19
+ 1286 00f8 01       		.uleb128 0x1
+ 1287 00f9 13       		.uleb128 0x13
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 31
+
+
+ 1288 00fa 00       		.byte	0
+ 1289 00fb 00       		.byte	0
+ 1290 00fc 11       		.uleb128 0x11
+ 1291 00fd 2E       		.uleb128 0x2e
+ 1292 00fe 01       		.byte	0x1
+ 1293 00ff 3F       		.uleb128 0x3f
+ 1294 0100 19       		.uleb128 0x19
+ 1295 0101 03       		.uleb128 0x3
+ 1296 0102 0E       		.uleb128 0xe
+ 1297 0103 3A       		.uleb128 0x3a
+ 1298 0104 0B       		.uleb128 0xb
+ 1299 0105 3B       		.uleb128 0x3b
+ 1300 0106 05       		.uleb128 0x5
+ 1301 0107 27       		.uleb128 0x27
+ 1302 0108 19       		.uleb128 0x19
+ 1303 0109 11       		.uleb128 0x11
+ 1304 010a 01       		.uleb128 0x1
+ 1305 010b 12       		.uleb128 0x12
+ 1306 010c 06       		.uleb128 0x6
+ 1307 010d 40       		.uleb128 0x40
+ 1308 010e 18       		.uleb128 0x18
+ 1309 010f 9742     		.uleb128 0x2117
+ 1310 0111 19       		.uleb128 0x19
+ 1311 0112 01       		.uleb128 0x1
+ 1312 0113 13       		.uleb128 0x13
+ 1313 0114 00       		.byte	0
+ 1314 0115 00       		.byte	0
+ 1315 0116 12       		.uleb128 0x12
+ 1316 0117 05       		.uleb128 0x5
+ 1317 0118 00       		.byte	0
+ 1318 0119 03       		.uleb128 0x3
+ 1319 011a 0E       		.uleb128 0xe
+ 1320 011b 3A       		.uleb128 0x3a
+ 1321 011c 0B       		.uleb128 0xb
+ 1322 011d 3B       		.uleb128 0x3b
+ 1323 011e 05       		.uleb128 0x5
+ 1324 011f 49       		.uleb128 0x49
+ 1325 0120 13       		.uleb128 0x13
+ 1326 0121 02       		.uleb128 0x2
+ 1327 0122 18       		.uleb128 0x18
+ 1328 0123 00       		.byte	0
+ 1329 0124 00       		.byte	0
+ 1330 0125 13       		.uleb128 0x13
+ 1331 0126 2E       		.uleb128 0x2e
+ 1332 0127 01       		.byte	0x1
+ 1333 0128 3F       		.uleb128 0x3f
+ 1334 0129 19       		.uleb128 0x19
+ 1335 012a 03       		.uleb128 0x3
+ 1336 012b 0E       		.uleb128 0xe
+ 1337 012c 3A       		.uleb128 0x3a
+ 1338 012d 0B       		.uleb128 0xb
+ 1339 012e 3B       		.uleb128 0x3b
+ 1340 012f 05       		.uleb128 0x5
+ 1341 0130 27       		.uleb128 0x27
+ 1342 0131 19       		.uleb128 0x19
+ 1343 0132 49       		.uleb128 0x49
+ 1344 0133 13       		.uleb128 0x13
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 32
+
+
+ 1345 0134 11       		.uleb128 0x11
+ 1346 0135 01       		.uleb128 0x1
+ 1347 0136 12       		.uleb128 0x12
+ 1348 0137 06       		.uleb128 0x6
+ 1349 0138 40       		.uleb128 0x40
+ 1350 0139 18       		.uleb128 0x18
+ 1351 013a 9742     		.uleb128 0x2117
+ 1352 013c 19       		.uleb128 0x19
+ 1353 013d 01       		.uleb128 0x1
+ 1354 013e 13       		.uleb128 0x13
+ 1355 013f 00       		.byte	0
+ 1356 0140 00       		.byte	0
+ 1357 0141 14       		.uleb128 0x14
+ 1358 0142 34       		.uleb128 0x34
+ 1359 0143 00       		.byte	0
+ 1360 0144 03       		.uleb128 0x3
+ 1361 0145 0E       		.uleb128 0xe
+ 1362 0146 3A       		.uleb128 0x3a
+ 1363 0147 0B       		.uleb128 0xb
+ 1364 0148 3B       		.uleb128 0x3b
+ 1365 0149 05       		.uleb128 0x5
+ 1366 014a 49       		.uleb128 0x49
+ 1367 014b 13       		.uleb128 0x13
+ 1368 014c 02       		.uleb128 0x2
+ 1369 014d 18       		.uleb128 0x18
+ 1370 014e 00       		.byte	0
+ 1371 014f 00       		.byte	0
+ 1372 0150 15       		.uleb128 0x15
+ 1373 0151 2E       		.uleb128 0x2e
+ 1374 0152 00       		.byte	0
+ 1375 0153 3F       		.uleb128 0x3f
+ 1376 0154 19       		.uleb128 0x19
+ 1377 0155 03       		.uleb128 0x3
+ 1378 0156 0E       		.uleb128 0xe
+ 1379 0157 3A       		.uleb128 0x3a
+ 1380 0158 0B       		.uleb128 0xb
+ 1381 0159 3B       		.uleb128 0x3b
+ 1382 015a 05       		.uleb128 0x5
+ 1383 015b 27       		.uleb128 0x27
+ 1384 015c 19       		.uleb128 0x19
+ 1385 015d 11       		.uleb128 0x11
+ 1386 015e 01       		.uleb128 0x1
+ 1387 015f 12       		.uleb128 0x12
+ 1388 0160 06       		.uleb128 0x6
+ 1389 0161 40       		.uleb128 0x40
+ 1390 0162 18       		.uleb128 0x18
+ 1391 0163 9742     		.uleb128 0x2117
+ 1392 0165 19       		.uleb128 0x19
+ 1393 0166 00       		.byte	0
+ 1394 0167 00       		.byte	0
+ 1395 0168 16       		.uleb128 0x16
+ 1396 0169 2E       		.uleb128 0x2e
+ 1397 016a 00       		.byte	0
+ 1398 016b 3F       		.uleb128 0x3f
+ 1399 016c 19       		.uleb128 0x19
+ 1400 016d 03       		.uleb128 0x3
+ 1401 016e 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 33
+
+
+ 1402 016f 3A       		.uleb128 0x3a
+ 1403 0170 0B       		.uleb128 0xb
+ 1404 0171 3B       		.uleb128 0x3b
+ 1405 0172 05       		.uleb128 0x5
+ 1406 0173 27       		.uleb128 0x27
+ 1407 0174 19       		.uleb128 0x19
+ 1408 0175 49       		.uleb128 0x49
+ 1409 0176 13       		.uleb128 0x13
+ 1410 0177 11       		.uleb128 0x11
+ 1411 0178 01       		.uleb128 0x1
+ 1412 0179 12       		.uleb128 0x12
+ 1413 017a 06       		.uleb128 0x6
+ 1414 017b 40       		.uleb128 0x40
+ 1415 017c 18       		.uleb128 0x18
+ 1416 017d 9742     		.uleb128 0x2117
+ 1417 017f 19       		.uleb128 0x19
+ 1418 0180 00       		.byte	0
+ 1419 0181 00       		.byte	0
+ 1420 0182 17       		.uleb128 0x17
+ 1421 0183 34       		.uleb128 0x34
+ 1422 0184 00       		.byte	0
+ 1423 0185 03       		.uleb128 0x3
+ 1424 0186 08       		.uleb128 0x8
+ 1425 0187 3A       		.uleb128 0x3a
+ 1426 0188 0B       		.uleb128 0xb
+ 1427 0189 3B       		.uleb128 0x3b
+ 1428 018a 0B       		.uleb128 0xb
+ 1429 018b 49       		.uleb128 0x49
+ 1430 018c 13       		.uleb128 0x13
+ 1431 018d 3F       		.uleb128 0x3f
+ 1432 018e 19       		.uleb128 0x19
+ 1433 018f 02       		.uleb128 0x2
+ 1434 0190 18       		.uleb128 0x18
+ 1435 0191 00       		.byte	0
+ 1436 0192 00       		.byte	0
+ 1437 0193 18       		.uleb128 0x18
+ 1438 0194 34       		.uleb128 0x34
+ 1439 0195 00       		.byte	0
+ 1440 0196 03       		.uleb128 0x3
+ 1441 0197 0E       		.uleb128 0xe
+ 1442 0198 3A       		.uleb128 0x3a
+ 1443 0199 0B       		.uleb128 0xb
+ 1444 019a 3B       		.uleb128 0x3b
+ 1445 019b 0B       		.uleb128 0xb
+ 1446 019c 49       		.uleb128 0x49
+ 1447 019d 13       		.uleb128 0x13
+ 1448 019e 3F       		.uleb128 0x3f
+ 1449 019f 19       		.uleb128 0x19
+ 1450 01a0 02       		.uleb128 0x2
+ 1451 01a1 18       		.uleb128 0x18
+ 1452 01a2 00       		.byte	0
+ 1453 01a3 00       		.byte	0
+ 1454 01a4 19       		.uleb128 0x19
+ 1455 01a5 34       		.uleb128 0x34
+ 1456 01a6 00       		.byte	0
+ 1457 01a7 03       		.uleb128 0x3
+ 1458 01a8 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 34
+
+
+ 1459 01a9 3A       		.uleb128 0x3a
+ 1460 01aa 0B       		.uleb128 0xb
+ 1461 01ab 3B       		.uleb128 0x3b
+ 1462 01ac 0B       		.uleb128 0xb
+ 1463 01ad 49       		.uleb128 0x49
+ 1464 01ae 13       		.uleb128 0x13
+ 1465 01af 3F       		.uleb128 0x3f
+ 1466 01b0 19       		.uleb128 0x19
+ 1467 01b1 3C       		.uleb128 0x3c
+ 1468 01b2 19       		.uleb128 0x19
+ 1469 01b3 00       		.byte	0
+ 1470 01b4 00       		.byte	0
+ 1471 01b5 00       		.byte	0
+ 1472              		.section	.debug_aranges,"",%progbits
+ 1473 0000 7C000000 		.4byte	0x7c
+ 1474 0004 0200     		.2byte	0x2
+ 1475 0006 00000000 		.4byte	.Ldebug_info0
+ 1476 000a 04       		.byte	0x4
+ 1477 000b 00       		.byte	0
+ 1478 000c 0000     		.2byte	0
+ 1479 000e 0000     		.2byte	0
+ 1480 0010 00000000 		.4byte	.LFB0
+ 1481 0014 20000000 		.4byte	.LFE0-.LFB0
+ 1482 0018 00000000 		.4byte	.LFB1
+ 1483 001c 22000000 		.4byte	.LFE1-.LFB1
+ 1484 0020 00000000 		.4byte	.LFB2
+ 1485 0024 14000000 		.4byte	.LFE2-.LFB2
+ 1486 0028 00000000 		.4byte	.LFB3
+ 1487 002c 74000000 		.4byte	.LFE3-.LFB3
+ 1488 0030 00000000 		.4byte	.LFB4
+ 1489 0034 24000000 		.4byte	.LFE4-.LFB4
+ 1490 0038 00000000 		.4byte	.LFB5
+ 1491 003c 24000000 		.4byte	.LFE5-.LFB5
+ 1492 0040 00000000 		.4byte	.LFB6
+ 1493 0044 24000000 		.4byte	.LFE6-.LFB6
+ 1494 0048 00000000 		.4byte	.LFB7
+ 1495 004c 24000000 		.4byte	.LFE7-.LFB7
+ 1496 0050 00000000 		.4byte	.LFB8
+ 1497 0054 18000000 		.4byte	.LFE8-.LFB8
+ 1498 0058 00000000 		.4byte	.LFB9
+ 1499 005c 24000000 		.4byte	.LFE9-.LFB9
+ 1500 0060 00000000 		.4byte	.LFB10
+ 1501 0064 18000000 		.4byte	.LFE10-.LFB10
+ 1502 0068 00000000 		.4byte	.LFB11
+ 1503 006c 18000000 		.4byte	.LFE11-.LFB11
+ 1504 0070 00000000 		.4byte	.LFB12
+ 1505 0074 18000000 		.4byte	.LFE12-.LFB12
+ 1506 0078 00000000 		.4byte	0
+ 1507 007c 00000000 		.4byte	0
+ 1508              		.section	.debug_ranges,"",%progbits
+ 1509              	.Ldebug_ranges0:
+ 1510 0000 00000000 		.4byte	.LFB0
+ 1511 0004 20000000 		.4byte	.LFE0
+ 1512 0008 00000000 		.4byte	.LFB1
+ 1513 000c 22000000 		.4byte	.LFE1
+ 1514 0010 00000000 		.4byte	.LFB2
+ 1515 0014 14000000 		.4byte	.LFE2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 35
+
+
+ 1516 0018 00000000 		.4byte	.LFB3
+ 1517 001c 74000000 		.4byte	.LFE3
+ 1518 0020 00000000 		.4byte	.LFB4
+ 1519 0024 24000000 		.4byte	.LFE4
+ 1520 0028 00000000 		.4byte	.LFB5
+ 1521 002c 24000000 		.4byte	.LFE5
+ 1522 0030 00000000 		.4byte	.LFB6
+ 1523 0034 24000000 		.4byte	.LFE6
+ 1524 0038 00000000 		.4byte	.LFB7
+ 1525 003c 24000000 		.4byte	.LFE7
+ 1526 0040 00000000 		.4byte	.LFB8
+ 1527 0044 18000000 		.4byte	.LFE8
+ 1528 0048 00000000 		.4byte	.LFB9
+ 1529 004c 24000000 		.4byte	.LFE9
+ 1530 0050 00000000 		.4byte	.LFB10
+ 1531 0054 18000000 		.4byte	.LFE10
+ 1532 0058 00000000 		.4byte	.LFB11
+ 1533 005c 18000000 		.4byte	.LFE11
+ 1534 0060 00000000 		.4byte	.LFB12
+ 1535 0064 18000000 		.4byte	.LFE12
+ 1536 0068 00000000 		.4byte	0
+ 1537 006c 00000000 		.4byte	0
+ 1538              		.section	.debug_line,"",%progbits
+ 1539              	.Ldebug_line0:
+ 1540 0000 99010000 		.section	.debug_str,"MS",%progbits,1
+ 1540      02008400 
+ 1540      00000201 
+ 1540      FB0E0D00 
+ 1540      01010101 
+ 1541              	.LASF38:
+ 1542 0000 72616D56 		.ascii	"ramVectorTable\000"
+ 1542      6563746F 
+ 1542      72546162 
+ 1542      6C6500
+ 1543              	.LASF12:
+ 1544 000f 75696E74 		.ascii	"uint16\000"
+ 1544      313600
+ 1545              	.LASF61:
+ 1546 0016 433A5C55 		.ascii	"C:\\Users\\Yiquing\\Documents\\works\\NanoNXT\\osdp"
+ 1546      73657273 
+ 1546      5C596971 
+ 1546      75696E67 
+ 1546      5C446F63 
+ 1547 0043 20746573 		.ascii	" testing\\YQ\\nanoNxt_ICM3\\nanoNxt_ICM3.cydsn\000"
+ 1547      74696E67 
+ 1547      5C59515C 
+ 1547      6E616E6F 
+ 1547      4E78745F 
+ 1548              	.LASF32:
+ 1549 006f 54616D70 		.ascii	"Tamper_Timer_ISR_Start\000"
+ 1549      65725F54 
+ 1549      696D6572 
+ 1549      5F495352 
+ 1549      5F537461 
+ 1550              	.LASF8:
+ 1551 0086 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1551      206C6F6E 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 36
+
+
+ 1551      6720756E 
+ 1551      7369676E 
+ 1551      65642069 
+ 1552              	.LASF50:
+ 1553 009d 63617264 		.ascii	"card_in_buf\000"
+ 1553      5F696E5F 
+ 1553      62756600 
+ 1554              	.LASF53:
+ 1555 00a9 74696D65 		.ascii	"timeout_cnt\000"
+ 1555      6F75745F 
+ 1555      636E7400 
+ 1556              	.LASF21:
+ 1557 00b5 73746F70 		.ascii	"stop_bits\000"
+ 1557      5F626974 
+ 1557      7300
+ 1558              	.LASF7:
+ 1559 00bf 6C6F6E67 		.ascii	"long long int\000"
+ 1559      206C6F6E 
+ 1559      6720696E 
+ 1559      7400
+ 1560              	.LASF1:
+ 1561 00cd 7369676E 		.ascii	"signed char\000"
+ 1561      65642063 
+ 1561      68617200 
+ 1562              	.LASF26:
+ 1563 00d9 72785F62 		.ascii	"rx_bits\000"
+ 1563      69747300 
+ 1564              	.LASF25:
+ 1565 00e1 74785F62 		.ascii	"tx_bits\000"
+ 1565      69747300 
+ 1566              	.LASF60:
+ 1567 00e9 2E5C4765 		.ascii	".\\Generated_Source\\PSoC5\\Tamper_Timer_ISR.c\000"
+ 1567      6E657261 
+ 1567      7465645F 
+ 1567      536F7572 
+ 1567      63655C50 
+ 1568              	.LASF22:
+ 1569 0115 62697473 		.ascii	"bits\000"
+ 1569      00
+ 1570              	.LASF5:
+ 1571 011a 6C6F6E67 		.ascii	"long int\000"
+ 1571      20696E74 
+ 1571      00
+ 1572              	.LASF54:
+ 1573 0123 61637469 		.ascii	"activate_f2ftimer\000"
+ 1573      76617465 
+ 1573      5F663266 
+ 1573      74696D65 
+ 1573      7200
+ 1574              	.LASF11:
+ 1575 0135 75696E74 		.ascii	"uint8\000"
+ 1575      3800
+ 1576              	.LASF46:
+ 1577 013b 54616D70 		.ascii	"Tamper_Timer_ISR_ClearPending\000"
+ 1577      65725F54 
+ 1577      696D6572 
+ 1577      5F495352 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 37
+
+
+ 1577      5F436C65 
+ 1578              	.LASF23:
+ 1579 0159 72785F62 		.ascii	"rx_byte\000"
+ 1579      79746500 
+ 1580              	.LASF15:
+ 1581 0161 646F7562 		.ascii	"double\000"
+ 1581      6C6500
+ 1582              	.LASF24:
+ 1583 0168 74785F62 		.ascii	"tx_byte\000"
+ 1583      79746500 
+ 1584              	.LASF13:
+ 1585 0170 75696E74 		.ascii	"uint32\000"
+ 1585      333200
+ 1586              	.LASF56:
+ 1587 0177 6632665F 		.ascii	"f2f_ack_delay_cnt\000"
+ 1587      61636B5F 
+ 1587      64656C61 
+ 1587      795F636E 
+ 1587      7400
+ 1588              	.LASF0:
+ 1589 0189 756E7369 		.ascii	"unsigned int\000"
+ 1589      676E6564 
+ 1589      20696E74 
+ 1589      00
+ 1590              	.LASF6:
+ 1591 0196 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1591      20756E73 
+ 1591      69676E65 
+ 1591      6420696E 
+ 1591      7400
+ 1592              	.LASF29:
+ 1593 01a8 74696D65 		.ascii	"timer_rx_ctr\000"
+ 1593      725F7278 
+ 1593      5F637472 
+ 1593      00
+ 1594              	.LASF41:
+ 1595 01b5 54616D70 		.ascii	"Tamper_Timer_ISR_GetVector\000"
+ 1595      65725F54 
+ 1595      696D6572 
+ 1595      5F495352 
+ 1595      5F476574 
+ 1596              	.LASF4:
+ 1597 01d0 73686F72 		.ascii	"short unsigned int\000"
+ 1597      7420756E 
+ 1597      7369676E 
+ 1597      65642069 
+ 1597      6E7400
+ 1598              	.LASF33:
+ 1599 01e3 54616D70 		.ascii	"Tamper_Timer_ISR_Stop\000"
+ 1599      65725F54 
+ 1599      696D6572 
+ 1599      5F495352 
+ 1599      5F53746F 
+ 1600              	.LASF40:
+ 1601 01f9 7072696F 		.ascii	"priority\000"
+ 1601      72697479 
+ 1601      00
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 38
+
+
+ 1602              	.LASF34:
+ 1603 0202 54616D70 		.ascii	"Tamper_Timer_ISR_Interrupt\000"
+ 1603      65725F54 
+ 1603      696D6572 
+ 1603      5F495352 
+ 1603      5F496E74 
+ 1604              	.LASF17:
+ 1605 021d 72656733 		.ascii	"reg32\000"
+ 1605      3200
+ 1606              	.LASF20:
+ 1607 0223 70617269 		.ascii	"parity\000"
+ 1607      747900
+ 1608              	.LASF39:
+ 1609 022a 54616D70 		.ascii	"Tamper_Timer_ISR_SetPriority\000"
+ 1609      65725F54 
+ 1609      696D6572 
+ 1609      5F495352 
+ 1609      5F536574 
+ 1610              	.LASF9:
+ 1611 0247 73697A65 		.ascii	"sizetype\000"
+ 1611      74797065 
+ 1611      00
+ 1612              	.LASF37:
+ 1613 0250 61646472 		.ascii	"address\000"
+ 1613      65737300 
+ 1614              	.LASF36:
+ 1615 0258 54616D70 		.ascii	"Tamper_Timer_ISR_SetVector\000"
+ 1615      65725F54 
+ 1615      696D6572 
+ 1615      5F495352 
+ 1615      5F536574 
+ 1616              	.LASF59:
+ 1617 0273 474E5520 		.ascii	"GNU C 4.8.4 20140526 (release) [ARM/embedded-4_8-br"
+ 1617      4320342E 
+ 1617      382E3420 
+ 1617      32303134 
+ 1617      30353236 
+ 1618 02a6 616E6368 		.ascii	"anch revision 211358] -mcpu=cortex-m3 -mthumb -g -O"
+ 1618      20726576 
+ 1618      6973696F 
+ 1618      6E203231 
+ 1618      31333538 
+ 1619 02d9 30202D66 		.ascii	"0 -ffunction-sections\000"
+ 1619      66756E63 
+ 1619      74696F6E 
+ 1619      2D736563 
+ 1619      74696F6E 
+ 1620              	.LASF62:
+ 1621 02ef 54616D70 		.ascii	"Tamper_Timer_ISR_GetState\000"
+ 1621      65725F54 
+ 1621      696D6572 
+ 1621      5F495352 
+ 1621      5F476574 
+ 1622              	.LASF55:
+ 1623 0309 6632665F 		.ascii	"f2f_acknowledge_active\000"
+ 1623      61636B6E 
+ 1623      6F776C65 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 39
+
+
+ 1623      6467655F 
+ 1623      61637469 
+ 1624              	.LASF52:
+ 1625 0320 6632665F 		.ascii	"f2f_pulsewidth\000"
+ 1625      70756C73 
+ 1625      65776964 
+ 1625      746800
+ 1626              	.LASF14:
+ 1627 032f 666C6F61 		.ascii	"float\000"
+ 1627      7400
+ 1628              	.LASF47:
+ 1629 0335 63757272 		.ascii	"currentAccessType\000"
+ 1629      656E7441 
+ 1629      63636573 
+ 1629      73547970 
+ 1629      6500
+ 1630              	.LASF16:
+ 1631 0347 72656738 		.ascii	"reg8\000"
+ 1631      00
+ 1632              	.LASF2:
+ 1633 034c 756E7369 		.ascii	"unsigned char\000"
+ 1633      676E6564 
+ 1633      20636861 
+ 1633      7200
+ 1634              	.LASF3:
+ 1635 035a 73686F72 		.ascii	"short int\000"
+ 1635      7420696E 
+ 1635      7400
+ 1636              	.LASF57:
+ 1637 0364 62757474 		.ascii	"buttonPressed\000"
+ 1637      6F6E5072 
+ 1637      65737365 
+ 1637      6400
+ 1638              	.LASF43:
+ 1639 0372 54616D70 		.ascii	"Tamper_Timer_ISR_Enable\000"
+ 1639      65725F54 
+ 1639      696D6572 
+ 1639      5F495352 
+ 1639      5F456E61 
+ 1640              	.LASF51:
+ 1641 038a 676F745F 		.ascii	"got_pulse\000"
+ 1641      70756C73 
+ 1641      6500
+ 1642              	.LASF19:
+ 1643 0394 62617564 		.ascii	"baud\000"
+ 1643      00
+ 1644              	.LASF10:
+ 1645 0399 63686172 		.ascii	"char\000"
+ 1645      00
+ 1646              	.LASF18:
+ 1647 039e 63796973 		.ascii	"cyisraddress\000"
+ 1647      72616464 
+ 1647      72657373 
+ 1647      00
+ 1648              	.LASF48:
+ 1649 03ab 54414D50 		.ascii	"TAMPERCR_POLARITY\000"
+ 1649      45524352 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cc1Tlk1W.s 			page 40
+
+
+ 1649      5F504F4C 
+ 1649      41524954 
+ 1649      5900
+ 1650              	.LASF31:
+ 1651 03bd 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 1651      5F554152 
+ 1651      545F5354 
+ 1651      52554354 
+ 1651      00
+ 1652              	.LASF58:
+ 1653 03ce 62757474 		.ascii	"buttonDuration\000"
+ 1653      6F6E4475 
+ 1653      72617469 
+ 1653      6F6E00
+ 1654              	.LASF45:
+ 1655 03dd 54616D70 		.ascii	"Tamper_Timer_ISR_SetPending\000"
+ 1655      65725F54 
+ 1655      696D6572 
+ 1655      5F495352 
+ 1655      5F536574 
+ 1656              	.LASF30:
+ 1657 03f9 72785F72 		.ascii	"rx_recv\000"
+ 1657      65637600 
+ 1658              	.LASF28:
+ 1659 0401 74696D65 		.ascii	"timer_tx_ctr\000"
+ 1659      725F7478 
+ 1659      5F637472 
+ 1659      00
+ 1660              	.LASF27:
+ 1661 040e 666C6167 		.ascii	"flags\000"
+ 1661      7300
+ 1662              	.LASF42:
+ 1663 0414 54616D70 		.ascii	"Tamper_Timer_ISR_GetPriority\000"
+ 1663      65725F54 
+ 1663      696D6572 
+ 1663      5F495352 
+ 1663      5F476574 
+ 1664              	.LASF44:
+ 1665 0431 54616D70 		.ascii	"Tamper_Timer_ISR_Disable\000"
+ 1665      65725F54 
+ 1665      696D6572 
+ 1665      5F495352 
+ 1665      5F446973 
+ 1666              	.LASF49:
+ 1667 044a 63617264 		.ascii	"card_ack\000"
+ 1667      5F61636B 
+ 1667      00
+ 1668              	.LASF35:
+ 1669 0453 54616D70 		.ascii	"Tamper_Timer_ISR_StartEx\000"
+ 1669      65725F54 
+ 1669      696D6572 
+ 1669      5F495352 
+ 1669      5F537461 
+ 1670              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.8.4 20140526 (release) [ARM/embedded-4_8-br

@@ -1,0 +1,2010 @@
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 1
+
+
+   1              		.cpu cortex-m0
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 6
+  10              		.eabi_attribute 34, 0
+  11              		.eabi_attribute 18, 4
+  12              		.code	16
+  13              		.file	"main.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.comm	set,27,4
+  18              		.global	__aeabi_idiv
+  19              		.section	.text.DoVLoop,"ax",%progbits
+  20              		.align	2
+  21              		.global	DoVLoop
+  22              		.code	16
+  23              		.thumb_func
+  24              		.type	DoVLoop, %function
+  25              	DoVLoop:
+  26              	.LFB36:
+  27              		.file 1 "main.c"
+   1:main.c        **** /* ========================================
+   2:main.c        ****  *
+   3:main.c        ****  * Copyright YOUR COMPANY, THE YEAR
+   4:main.c        ****  * All Rights Reserved
+   5:main.c        ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:main.c        ****  *
+   7:main.c        ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:main.c        ****  * WHICH IS THE PROPERTY OF your company.
+   9:main.c        ****  *
+  10:main.c        ****  * ========================================
+  11:main.c        **** */
+  12:main.c        **** #include <project.h>
+  13:main.c        **** 
+  14:main.c        **** #define SET_V 40000
+  15:main.c        **** #define MAX_DUTY 60
+  16:main.c        **** //95
+  17:main.c        **** 
+  18:main.c        **** 
+  19:main.c        **** #define I_TERM_DIV 2000 
+  20:main.c        **** #define P_TERM_DIV 1000
+  21:main.c        **** #define MAX_I_TERM ((MAX_DUTY-5)*I_TERM_DIV)
+  22:main.c        **** 
+  23:main.c        **** typedef struct
+  24:main.c        **** {
+  25:main.c        ****     unsigned char action;
+  26:main.c        ****     unsigned char hv_enable;
+  27:main.c        ****     unsigned char hv_volt;
+  28:main.c        ****     unsigned char led_enable;
+  29:main.c        ****     unsigned char trig_source;
+  30:main.c        ****     unsigned char i_set;
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 2
+
+
+  31:main.c        ****     unsigned char max_time;
+  32:main.c        ****     unsigned char fill[20];
+  33:main.c        ****     
+  34:main.c        **** }SETTINGS;
+  35:main.c        **** 
+  36:main.c        **** 
+  37:main.c        **** #define LED_LEFT 1
+  38:main.c        **** #define LED_RIGHT 2
+  39:main.c        **** #define LED_FACE  4
+  40:main.c        **** 
+  41:main.c        **** volatile SETTINGS set;
+  42:main.c        **** void DoVLoop(int v_set)
+  43:main.c        **** {
+  28              		.loc 1 43 0
+  29              		.cfi_startproc
+  30 0000 90B5     		push	{r4, r7, lr}
+  31              		.cfi_def_cfa_offset 12
+  32              		.cfi_offset 4, -12
+  33              		.cfi_offset 7, -8
+  34              		.cfi_offset 14, -4
+  35 0002 87B0     		sub	sp, sp, #28
+  36              		.cfi_def_cfa_offset 40
+  37 0004 00AF     		add	r7, sp, #0
+  38              		.cfi_def_cfa_register 7
+  39 0006 7860     		str	r0, [r7, #4]
+  44:main.c        ****     int v;
+  45:main.c        ****     int err;
+  46:main.c        ****     static int i_term=0;
+  47:main.c        ****     int set_val;
+  48:main.c        ****     int val;
+  49:main.c        **** 
+  50:main.c        ****     // ADC_IsEndConversion(ADC_WAIT_FOR_RESULT);
+  51:main.c        ****     val = ADC_GetResult16(0) ;
+  40              		.loc 1 51 0
+  41 0008 0020     		mov	r0, #0
+  42 000a FFF7FEFF 		bl	ADC_GetResult16
+  43 000e 031C     		mov	r3, r0
+  44 0010 3B61     		str	r3, [r7, #16]
+  52:main.c        ****     v = ADC_CountsTo_mVolts(0,val)*30;
+  45              		.loc 1 52 0
+  46 0012 3B69     		ldr	r3, [r7, #16]
+  47 0014 9BB2     		uxth	r3, r3
+  48 0016 1BB2     		sxth	r3, r3
+  49 0018 0020     		mov	r0, #0
+  50 001a 191C     		mov	r1, r3
+  51 001c FFF7FEFF 		bl	ADC_CountsTo_mVolts
+  52 0020 031C     		mov	r3, r0
+  53 0022 1A1C     		mov	r2, r3
+  54 0024 131C     		mov	r3, r2
+  55 0026 1B01     		lsl	r3, r3, #4
+  56 0028 9B1A     		sub	r3, r3, r2
+  57 002a 5B00     		lsl	r3, r3, #1
+  58 002c FB60     		str	r3, [r7, #12]
+  53:main.c        ****     
+  54:main.c        ****     // calculate the error in voltage
+  55:main.c        ****     err = v_set - v;
+  59              		.loc 1 55 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 3
+
+
+  60 002e 7A68     		ldr	r2, [r7, #4]
+  61 0030 FB68     		ldr	r3, [r7, #12]
+  62 0032 D31A     		sub	r3, r2, r3
+  63 0034 BB60     		str	r3, [r7, #8]
+  56:main.c        ****     
+  57:main.c        ****     // calculate the integral term
+  58:main.c        ****     i_term = i_term+err;
+  64              		.loc 1 58 0
+  65 0036 1C4B     		ldr	r3, .L6
+  66 0038 1A68     		ldr	r2, [r3]
+  67 003a BB68     		ldr	r3, [r7, #8]
+  68 003c D218     		add	r2, r2, r3
+  69 003e 1A4B     		ldr	r3, .L6
+  70 0040 1A60     		str	r2, [r3]
+  59:main.c        ****     if (i_term>MAX_I_TERM)
+  71              		.loc 1 59 0
+  72 0042 194B     		ldr	r3, .L6
+  73 0044 1B68     		ldr	r3, [r3]
+  74 0046 194A     		ldr	r2, .L6+4
+  75 0048 9342     		cmp	r3, r2
+  76 004a 02DD     		ble	.L2
+  60:main.c        ****        i_term = MAX_I_TERM;
+  77              		.loc 1 60 0
+  78 004c 164B     		ldr	r3, .L6
+  79 004e 174A     		ldr	r2, .L6+4
+  80 0050 1A60     		str	r2, [r3]
+  81              	.L2:
+  61:main.c        ****     if (i_term<0)
+  82              		.loc 1 61 0
+  83 0052 154B     		ldr	r3, .L6
+  84 0054 1B68     		ldr	r3, [r3]
+  85 0056 002B     		cmp	r3, #0
+  86 0058 02DA     		bge	.L3
+  62:main.c        ****       i_term=0;
+  87              		.loc 1 62 0
+  88 005a 134B     		ldr	r3, .L6
+  89 005c 0022     		mov	r2, #0
+  90 005e 1A60     		str	r2, [r3]
+  91              	.L3:
+  63:main.c        ****     
+  64:main.c        ****     // calculate the value
+  65:main.c        ****     set_val = i_term/I_TERM_DIV + err/P_TERM_DIV;
+  92              		.loc 1 65 0
+  93 0060 114B     		ldr	r3, .L6
+  94 0062 1B68     		ldr	r3, [r3]
+  95 0064 181C     		mov	r0, r3
+  96 0066 FA23     		mov	r3, #250
+  97 0068 D900     		lsl	r1, r3, #3
+  98 006a FFF7FEFF 		bl	__aeabi_idiv
+  99 006e 031C     		mov	r3, r0
+ 100 0070 1C1C     		mov	r4, r3
+ 101 0072 BB68     		ldr	r3, [r7, #8]
+ 102 0074 181C     		mov	r0, r3
+ 103 0076 FA23     		mov	r3, #250
+ 104 0078 9900     		lsl	r1, r3, #2
+ 105 007a FFF7FEFF 		bl	__aeabi_idiv
+ 106 007e 031C     		mov	r3, r0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 4
+
+
+ 107 0080 E318     		add	r3, r4, r3
+ 108 0082 7B61     		str	r3, [r7, #20]
+  66:main.c        ****     
+  67:main.c        ****     if (set_val>MAX_DUTY)
+ 109              		.loc 1 67 0
+ 110 0084 7B69     		ldr	r3, [r7, #20]
+ 111 0086 3C2B     		cmp	r3, #60
+ 112 0088 01DD     		ble	.L4
+  68:main.c        ****        set_val = MAX_DUTY;
+ 113              		.loc 1 68 0
+ 114 008a 3C23     		mov	r3, #60
+ 115 008c 7B61     		str	r3, [r7, #20]
+ 116              	.L4:
+  69:main.c        ****     if (set_val<1)
+ 117              		.loc 1 69 0
+ 118 008e 7B69     		ldr	r3, [r7, #20]
+ 119 0090 002B     		cmp	r3, #0
+ 120 0092 01DC     		bgt	.L5
+  70:main.c        ****         set_val=1;
+ 121              		.loc 1 70 0
+ 122 0094 0123     		mov	r3, #1
+ 123 0096 7B61     		str	r3, [r7, #20]
+ 124              	.L5:
+  71:main.c        **** 
+  72:main.c        ****     PWM_CHARGE_WriteCompare(set_val);
+ 125              		.loc 1 72 0
+ 126 0098 7B69     		ldr	r3, [r7, #20]
+ 127 009a 181C     		mov	r0, r3
+ 128 009c FFF7FEFF 		bl	PWM_CHARGE_WriteCompare
+  73:main.c        **** }
+ 129              		.loc 1 73 0
+ 130 00a0 BD46     		mov	sp, r7
+ 131 00a2 07B0     		add	sp, sp, #28
+ 132              		@ sp needed
+ 133 00a4 90BD     		pop	{r4, r7, pc}
+ 134              	.L7:
+ 135 00a6 C046     		.align	2
+ 136              	.L6:
+ 137 00a8 08000000 		.word	i_term.5819
+ 138 00ac B0AD0100 		.word	110000
+ 139              		.cfi_endproc
+ 140              	.LFE36:
+ 141              		.size	DoVLoop, .-DoVLoop
+ 142              		.comm	comBuff,32,4
+ 143              		.global	t_count
+ 144              		.bss
+ 145              		.align	2
+ 146              		.type	t_count, %object
+ 147              		.size	t_count, 4
+ 148              	t_count:
+ 149 0000 00000000 		.space	4
+ 150              		.global	tick
+ 151              		.type	tick, %object
+ 152              		.size	tick, 1
+ 153              	tick:
+ 154 0004 00       		.space	1
+ 155              		.section	.text.isr_MYTIMER_Interrupt,"ax",%progbits
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 5
+
+
+ 156              		.align	2
+ 157              		.global	isr_MYTIMER_Interrupt
+ 158              		.code	16
+ 159              		.thumb_func
+ 160              		.type	isr_MYTIMER_Interrupt, %function
+ 161              	isr_MYTIMER_Interrupt:
+ 162              	.LFB37:
+  74:main.c        **** 
+  75:main.c        **** 
+  76:main.c        **** #define UA_PER_BIT 2.4
+  77:main.c        **** #define VI_RESISTOR 1000.0
+  78:main.c        **** #define CS_RESISTOR 0.2
+  79:main.c        **** 
+  80:main.c        **** #define V_PER_BIT UA_PER_BIT*VI_RESISTOR/1000000.0
+  81:main.c        **** #define DAC_I(i) ((float)i*CS_RESISTOR)/(V_PER_BIT)/10
+  82:main.c        **** 
+  83:main.c        **** 
+  84:main.c        **** volatile uint8 comBuff[32];
+  85:main.c        **** 
+  86:main.c        **** int t_count=0;
+  87:main.c        **** volatile uint8_t tick =0;
+  88:main.c        **** CY_ISR(isr_MYTIMER_Interrupt)
+  89:main.c        **** {
+ 163              		.loc 1 89 0
+ 164              		.cfi_startproc
+ 165 0000 80B5     		push	{r7, lr}
+ 166              		.cfi_def_cfa_offset 8
+ 167              		.cfi_offset 7, -8
+ 168              		.cfi_offset 14, -4
+ 169 0002 00AF     		add	r7, sp, #0
+ 170              		.cfi_def_cfa_register 7
+  90:main.c        ****     TIMER_ClearInterrupt(TIMER_INTR_MASK_TC);
+ 171              		.loc 1 90 0
+ 172 0004 0120     		mov	r0, #1
+ 173 0006 FFF7FEFF 		bl	TIMER_ClearInterrupt
+  91:main.c        ****     tick=1;
+ 174              		.loc 1 91 0
+ 175 000a 0E4B     		ldr	r3, .L11
+ 176 000c 0122     		mov	r2, #1
+ 177 000e 1A70     		strb	r2, [r3]
+  92:main.c        ****     t_count++;
+ 178              		.loc 1 92 0
+ 179 0010 0D4B     		ldr	r3, .L11+4
+ 180 0012 1B68     		ldr	r3, [r3]
+ 181 0014 5A1C     		add	r2, r3, #1
+ 182 0016 0C4B     		ldr	r3, .L11+4
+ 183 0018 1A60     		str	r2, [r3]
+  93:main.c        ****               if (set.hv_enable)
+ 184              		.loc 1 93 0
+ 185 001a 0C4B     		ldr	r3, .L11+8
+ 186 001c 5B78     		ldrb	r3, [r3, #1]
+ 187 001e DBB2     		uxtb	r3, r3
+ 188 0020 002B     		cmp	r3, #0
+ 189 0022 0AD0     		beq	.L9
+  94:main.c        ****            DoVLoop(set.hv_volt*1000);
+ 190              		.loc 1 94 0
+ 191 0024 094B     		ldr	r3, .L11+8
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 6
+
+
+ 192 0026 9B78     		ldrb	r3, [r3, #2]
+ 193 0028 DBB2     		uxtb	r3, r3
+ 194 002a 1A1C     		mov	r2, r3
+ 195 002c FA23     		mov	r3, #250
+ 196 002e 9B00     		lsl	r3, r3, #2
+ 197 0030 5343     		mul	r3, r2
+ 198 0032 181C     		mov	r0, r3
+ 199 0034 FFF7FEFF 		bl	DoVLoop
+ 200 0038 02E0     		b	.L8
+ 201              	.L9:
+  95:main.c        ****          else
+  96:main.c        ****            PWM_CHARGE_WriteCompare(0);
+ 202              		.loc 1 96 0
+ 203 003a 0020     		mov	r0, #0
+ 204 003c FFF7FEFF 		bl	PWM_CHARGE_WriteCompare
+ 205              	.L8:
+  97:main.c        **** }
+ 206              		.loc 1 97 0
+ 207 0040 BD46     		mov	sp, r7
+ 208              		@ sp needed
+ 209 0042 80BD     		pop	{r7, pc}
+ 210              	.L12:
+ 211              		.align	2
+ 212              	.L11:
+ 213 0044 00000000 		.word	tick
+ 214 0048 00000000 		.word	t_count
+ 215 004c 00000000 		.word	set
+ 216              		.cfi_endproc
+ 217              	.LFE37:
+ 218              		.size	isr_MYTIMER_Interrupt, .-isr_MYTIMER_Interrupt
+ 219              		.section	.text.GetTrig,"ax",%progbits
+ 220              		.align	2
+ 221              		.global	GetTrig
+ 222              		.code	16
+ 223              		.thumb_func
+ 224              		.type	GetTrig, %function
+ 225              	GetTrig:
+ 226              	.LFB38:
+  98:main.c        **** 
+  99:main.c        **** 
+ 100:main.c        **** 
+ 101:main.c        **** // opamp 2 is the right one
+ 102:main.c        **** 
+ 103:main.c        **** 
+ 104:main.c        **** uint8 GetTrig(void)
+ 105:main.c        **** {
+ 227              		.loc 1 105 0
+ 228              		.cfi_startproc
+ 229 0000 80B5     		push	{r7, lr}
+ 230              		.cfi_def_cfa_offset 8
+ 231              		.cfi_offset 7, -8
+ 232              		.cfi_offset 14, -4
+ 233 0002 00AF     		add	r7, sp, #0
+ 234              		.cfi_def_cfa_register 7
+ 106:main.c        ****        if (
+ 107:main.c        ****             (set.trig_source&LED_FACE && TRIG_FACE_Read()) ||
+ 235              		.loc 1 107 0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 7
+
+
+ 236 0004 134B     		ldr	r3, .L19
+ 237 0006 1B79     		ldrb	r3, [r3, #4]
+ 238 0008 DBB2     		uxtb	r3, r3
+ 239 000a 1A1C     		mov	r2, r3
+ 240 000c 0423     		mov	r3, #4
+ 241 000e 1340     		and	r3, r2
+ 106:main.c        ****        if (
+ 242              		.loc 1 106 0
+ 243 0010 03D0     		beq	.L14
+ 244              		.loc 1 107 0
+ 245 0012 FFF7FEFF 		bl	TRIG_FACE_Read
+ 246 0016 031E     		sub	r3, r0, #0
+ 247 0018 15D1     		bne	.L15
+ 248              	.L14:
+ 108:main.c        ****             (set.trig_source&LED_RIGHT && TRIG_RIGHT_Read()) ||
+ 249              		.loc 1 108 0 discriminator 1
+ 250 001a 0E4B     		ldr	r3, .L19
+ 251 001c 1B79     		ldrb	r3, [r3, #4]
+ 252 001e DBB2     		uxtb	r3, r3
+ 253 0020 1A1C     		mov	r2, r3
+ 254 0022 0223     		mov	r3, #2
+ 255 0024 1340     		and	r3, r2
+ 107:main.c        ****             (set.trig_source&LED_RIGHT && TRIG_RIGHT_Read()) ||
+ 256              		.loc 1 107 0 discriminator 1
+ 257 0026 03D0     		beq	.L16
+ 258              		.loc 1 108 0
+ 259 0028 FFF7FEFF 		bl	TRIG_RIGHT_Read
+ 260 002c 031E     		sub	r3, r0, #0
+ 261 002e 0AD1     		bne	.L15
+ 262              	.L16:
+ 109:main.c        ****             (set.trig_source&LED_LEFT && TRIG_LEFT_Read())  
+ 263              		.loc 1 109 0 discriminator 1
+ 264 0030 084B     		ldr	r3, .L19
+ 265 0032 1B79     		ldrb	r3, [r3, #4]
+ 266 0034 DBB2     		uxtb	r3, r3
+ 267 0036 1A1C     		mov	r2, r3
+ 268 0038 0123     		mov	r3, #1
+ 269 003a 1340     		and	r3, r2
+ 108:main.c        ****             (set.trig_source&LED_RIGHT && TRIG_RIGHT_Read()) ||
+ 270              		.loc 1 108 0 discriminator 1
+ 271 003c 05D0     		beq	.L17
+ 272              		.loc 1 109 0
+ 273 003e FFF7FEFF 		bl	TRIG_LEFT_Read
+ 274 0042 031E     		sub	r3, r0, #0
+ 275 0044 01D0     		beq	.L17
+ 276              	.L15:
+ 110:main.c        ****           )
+ 111:main.c        ****         return 1;
+ 277              		.loc 1 111 0
+ 278 0046 0123     		mov	r3, #1
+ 279 0048 00E0     		b	.L18
+ 280              	.L17:
+ 112:main.c        ****     else
+ 113:main.c        ****        return 0;
+ 281              		.loc 1 113 0
+ 282 004a 0023     		mov	r3, #0
+ 283              	.L18:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 8
+
+
+ 114:main.c        ****  }
+ 284              		.loc 1 114 0
+ 285 004c 181C     		mov	r0, r3
+ 286 004e BD46     		mov	sp, r7
+ 287              		@ sp needed
+ 288 0050 80BD     		pop	{r7, pc}
+ 289              	.L20:
+ 290 0052 C046     		.align	2
+ 291              	.L19:
+ 292 0054 00000000 		.word	set
+ 293              		.cfi_endproc
+ 294              	.LFE38:
+ 295              		.size	GetTrig, .-GetTrig
+ 296              		.section	.text.DriveLeft,"ax",%progbits
+ 297              		.align	2
+ 298              		.global	DriveLeft
+ 299              		.code	16
+ 300              		.thumb_func
+ 301              		.type	DriveLeft, %function
+ 302              	DriveLeft:
+ 303              	.LFB39:
+ 115:main.c        **** 
+ 116:main.c        **** void Init_bb_i2c(uint8 *space);
+ 117:main.c        **** void DriveLeft(uint8 on)
+ 118:main.c        **** {
+ 304              		.loc 1 118 0
+ 305              		.cfi_startproc
+ 306 0000 80B5     		push	{r7, lr}
+ 307              		.cfi_def_cfa_offset 8
+ 308              		.cfi_offset 7, -8
+ 309              		.cfi_offset 14, -4
+ 310 0002 82B0     		sub	sp, sp, #8
+ 311              		.cfi_def_cfa_offset 16
+ 312 0004 00AF     		add	r7, sp, #0
+ 313              		.cfi_def_cfa_register 7
+ 314 0006 021C     		mov	r2, r0
+ 315 0008 FB1D     		add	r3, r7, #7
+ 316 000a 1A70     		strb	r2, [r3]
+ 119:main.c        ****     if (on)
+ 317              		.loc 1 119 0
+ 318 000c FB1D     		add	r3, r7, #7
+ 319 000e 1B78     		ldrb	r3, [r3]
+ 320 0010 002B     		cmp	r3, #0
+ 321 0012 05D0     		beq	.L22
+ 120:main.c        ****       {
+ 121:main.c        ****       VREF_A_SetDriveMode(VREF_A_DM_ALG_HIZ);
+ 322              		.loc 1 121 0
+ 323 0014 0020     		mov	r0, #0
+ 324 0016 FFF7FEFF 		bl	VREF_A_SetDriveMode
+ 122:main.c        ****       Opamp_1_Start();
+ 325              		.loc 1 122 0
+ 326 001a FFF7FEFF 		bl	Opamp_1_Start
+ 327 001e 04E0     		b	.L21
+ 328              	.L22:
+ 123:main.c        ****      }
+ 124:main.c        ****     else
+ 125:main.c        ****     {
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 9
+
+
+ 126:main.c        ****       VREF_A_SetDriveMode(VREF_A_DM_STRONG);
+ 329              		.loc 1 126 0
+ 330 0020 0620     		mov	r0, #6
+ 331 0022 FFF7FEFF 		bl	VREF_A_SetDriveMode
+ 127:main.c        ****       Opamp_1_Stop();
+ 332              		.loc 1 127 0
+ 333 0026 FFF7FEFF 		bl	Opamp_1_Stop
+ 334              	.L21:
+ 128:main.c        ****     }
+ 129:main.c        **** }
+ 335              		.loc 1 129 0
+ 336 002a BD46     		mov	sp, r7
+ 337 002c 02B0     		add	sp, sp, #8
+ 338              		@ sp needed
+ 339 002e 80BD     		pop	{r7, pc}
+ 340              		.cfi_endproc
+ 341              	.LFE39:
+ 342              		.size	DriveLeft, .-DriveLeft
+ 343              		.section	.text.DriveRight,"ax",%progbits
+ 344              		.align	2
+ 345              		.global	DriveRight
+ 346              		.code	16
+ 347              		.thumb_func
+ 348              		.type	DriveRight, %function
+ 349              	DriveRight:
+ 350              	.LFB40:
+ 130:main.c        **** void DriveRight(uint8 on)
+ 131:main.c        **** {
+ 351              		.loc 1 131 0
+ 352              		.cfi_startproc
+ 353 0000 80B5     		push	{r7, lr}
+ 354              		.cfi_def_cfa_offset 8
+ 355              		.cfi_offset 7, -8
+ 356              		.cfi_offset 14, -4
+ 357 0002 82B0     		sub	sp, sp, #8
+ 358              		.cfi_def_cfa_offset 16
+ 359 0004 00AF     		add	r7, sp, #0
+ 360              		.cfi_def_cfa_register 7
+ 361 0006 021C     		mov	r2, r0
+ 362 0008 FB1D     		add	r3, r7, #7
+ 363 000a 1A70     		strb	r2, [r3]
+ 132:main.c        ****     if (on)
+ 364              		.loc 1 132 0
+ 365 000c FB1D     		add	r3, r7, #7
+ 366 000e 1B78     		ldrb	r3, [r3]
+ 367 0010 002B     		cmp	r3, #0
+ 368 0012 05D0     		beq	.L25
+ 133:main.c        ****       {
+ 134:main.c        ****       VREF_B_SetDriveMode(VREF_B_DM_ALG_HIZ);
+ 369              		.loc 1 134 0
+ 370 0014 0020     		mov	r0, #0
+ 371 0016 FFF7FEFF 		bl	VREF_B_SetDriveMode
+ 135:main.c        ****       Opamp_2_Start();
+ 372              		.loc 1 135 0
+ 373 001a FFF7FEFF 		bl	Opamp_2_Start
+ 374 001e 04E0     		b	.L24
+ 375              	.L25:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 10
+
+
+ 136:main.c        ****      }
+ 137:main.c        ****     else
+ 138:main.c        ****     {
+ 139:main.c        ****       VREF_B_SetDriveMode(VREF_B_DM_STRONG);
+ 376              		.loc 1 139 0
+ 377 0020 0620     		mov	r0, #6
+ 378 0022 FFF7FEFF 		bl	VREF_B_SetDriveMode
+ 140:main.c        ****       Opamp_2_Stop();
+ 379              		.loc 1 140 0
+ 380 0026 FFF7FEFF 		bl	Opamp_2_Stop
+ 381              	.L24:
+ 141:main.c        ****     }
+ 142:main.c        **** }
+ 382              		.loc 1 142 0
+ 383 002a BD46     		mov	sp, r7
+ 384 002c 02B0     		add	sp, sp, #8
+ 385              		@ sp needed
+ 386 002e 80BD     		pop	{r7, pc}
+ 387              		.cfi_endproc
+ 388              	.LFE40:
+ 389              		.size	DriveRight, .-DriveRight
+ 390              		.global	__aeabi_ui2f
+ 391              		.global	__aeabi_f2d
+ 392              		.global	__aeabi_dmul
+ 393              		.global	__aeabi_ddiv
+ 394              		.global	__aeabi_d2uiz
+ 395              		.section	.text.main,"ax",%progbits
+ 396              		.align	2
+ 397              		.global	main
+ 398              		.code	16
+ 399              		.thumb_func
+ 400              		.type	main, %function
+ 401              	main:
+ 402              	.LFB41:
+ 143:main.c        **** int main()
+ 144:main.c        **** {
+ 403              		.loc 1 144 0
+ 404              		.cfi_startproc
+ 405 0000 90B5     		push	{r4, r7, lr}
+ 406              		.cfi_def_cfa_offset 12
+ 407              		.cfi_offset 4, -12
+ 408              		.cfi_offset 7, -8
+ 409              		.cfi_offset 14, -4
+ 410 0002 85B0     		sub	sp, sp, #20
+ 411              		.cfi_def_cfa_offset 32
+ 412 0004 00AF     		add	r7, sp, #0
+ 413              		.cfi_def_cfa_register 7
+ 145:main.c        ****     CyGlobalIntEnable; /* Enable global interrupts. */
+ 414              		.loc 1 145 0
+ 415              	@ 145 "main.c" 1
+ 416 0006 62B6     		CPSIE   i
+ 417              	@ 0 "" 2
+ 146:main.c        ****     int x;
+ 147:main.c        ****     int16 val;
+ 148:main.c        ****     int v;
+ 149:main.c        ****     int err;
+ 150:main.c        ****     int i_term=0;
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 11
+
+
+ 418              		.loc 1 150 0
+ 419              		.code	16
+ 420 0008 0023     		mov	r3, #0
+ 421 000a 7B60     		str	r3, [r7, #4]
+ 151:main.c        ****     int set_val;
+ 152:main.c        ****     int z;
+ 153:main.c        ****     
+ 154:main.c        ****     
+ 155:main.c        ****     PWM_CHARGE_Start();
+ 422              		.loc 1 155 0
+ 423 000c FFF7FEFF 		bl	PWM_CHARGE_Start
+ 156:main.c        ****     IDAC_1_Start();
+ 424              		.loc 1 156 0
+ 425 0010 FFF7FEFF 		bl	IDAC_1_Start
+ 157:main.c        **** 
+ 158:main.c        ****     ADC_Start();
+ 426              		.loc 1 158 0
+ 427 0014 FFF7FEFF 		bl	ADC_Start
+ 159:main.c        ****     ADC_StartConvert();
+ 428              		.loc 1 159 0
+ 429 0018 FFF7FEFF 		bl	ADC_StartConvert
+ 160:main.c        ****     z = DAC_I(4.0);
+ 430              		.loc 1 160 0
+ 431 001c 2123     		mov	r3, #33
+ 432 001e BB60     		str	r3, [r7, #8]
+ 161:main.c        ****     
+ 162:main.c        ****     
+ 163:main.c        ****     // initial settings
+ 164:main.c        ****     
+ 165:main.c        ****     set.hv_enable=0;
+ 433              		.loc 1 165 0
+ 434 0020 744B     		ldr	r3, .L41
+ 435 0022 0022     		mov	r2, #0
+ 436 0024 5A70     		strb	r2, [r3, #1]
+ 166:main.c        ****     set.hv_volt=16;
+ 437              		.loc 1 166 0
+ 438 0026 734B     		ldr	r3, .L41
+ 439 0028 1022     		mov	r2, #16
+ 440 002a 9A70     		strb	r2, [r3, #2]
+ 167:main.c        ****     set.max_time=5;
+ 441              		.loc 1 167 0
+ 442 002c 714B     		ldr	r3, .L41
+ 443 002e 0522     		mov	r2, #5
+ 444 0030 9A71     		strb	r2, [r3, #6]
+ 168:main.c        ****     set.led_enable=LED_LEFT;
+ 445              		.loc 1 168 0
+ 446 0032 704B     		ldr	r3, .L41
+ 447 0034 0122     		mov	r2, #1
+ 448 0036 DA70     		strb	r2, [r3, #3]
+ 169:main.c        ****     set.trig_source=LED_LEFT;
+ 449              		.loc 1 169 0
+ 450 0038 6E4B     		ldr	r3, .L41
+ 451 003a 0122     		mov	r2, #1
+ 452 003c 1A71     		strb	r2, [r3, #4]
+ 170:main.c        ****     set.i_set=4;
+ 453              		.loc 1 170 0
+ 454 003e 6D4B     		ldr	r3, .L41
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 12
+
+
+ 455 0040 0422     		mov	r2, #4
+ 456 0042 5A71     		strb	r2, [r3, #5]
+ 171:main.c        ****     z=10;
+ 457              		.loc 1 171 0
+ 458 0044 0A23     		mov	r3, #10
+ 459 0046 BB60     		str	r3, [r7, #8]
+ 172:main.c        ****     Opamp_1_Start();
+ 460              		.loc 1 172 0
+ 461 0048 FFF7FEFF 		bl	Opamp_1_Start
+ 173:main.c        ****     IDAC_1_SetValue(200);
+ 462              		.loc 1 173 0
+ 463 004c C820     		mov	r0, #200
+ 464 004e FFF7FEFF 		bl	IDAC_1_SetValue
+ 174:main.c        ****     
+ 175:main.c        ****     VREF_A_SetDriveMode(VREF_A_DM_STRONG);
+ 465              		.loc 1 175 0
+ 466 0052 0620     		mov	r0, #6
+ 467 0054 FFF7FEFF 		bl	VREF_A_SetDriveMode
+ 176:main.c        ****     VREF_B_SetDriveMode(VREF_B_DM_STRONG);
+ 468              		.loc 1 176 0
+ 469 0058 0620     		mov	r0, #6
+ 470 005a FFF7FEFF 		bl	VREF_B_SetDriveMode
+ 177:main.c        ****     z=DAC_I(4);
+ 471              		.loc 1 177 0
+ 472 005e 2123     		mov	r3, #33
+ 473 0060 BB60     		str	r3, [r7, #8]
+ 178:main.c        ****     IDAC_1_SetValue(z);
+ 474              		.loc 1 178 0
+ 475 0062 BB68     		ldr	r3, [r7, #8]
+ 476 0064 181C     		mov	r0, r3
+ 477 0066 FFF7FEFF 		bl	IDAC_1_SetValue
+ 179:main.c        **** 
+ 180:main.c        ****   
+ 181:main.c        **** 
+ 182:main.c        ****     
+ 183:main.c        ****     /* Place your initialization/startup code here (e.g. MyInst_Start()) */
+ 184:main.c        ****     DriveLeft(0);
+ 478              		.loc 1 184 0
+ 479 006a 0020     		mov	r0, #0
+ 480 006c FFF7FEFF 		bl	DriveLeft
+ 185:main.c        ****     DriveRight(0);
+ 481              		.loc 1 185 0
+ 482 0070 0020     		mov	r0, #0
+ 483 0072 FFF7FEFF 		bl	DriveRight
+ 186:main.c        ****    
+ 187:main.c        ****     ADC_Start();
+ 484              		.loc 1 187 0
+ 485 0076 FFF7FEFF 		bl	ADC_Start
+ 188:main.c        ****     TIMER_Start();
+ 486              		.loc 1 188 0
+ 487 007a FFF7FEFF 		bl	TIMER_Start
+ 189:main.c        ****     isr_TIMER_Start();
+ 488              		.loc 1 189 0
+ 489 007e FFF7FEFF 		bl	isr_TIMER_Start
+ 190:main.c        ****     isr_TIMER_SetVector(isr_MYTIMER_Interrupt);
+ 490              		.loc 1 190 0
+ 491 0082 5D4B     		ldr	r3, .L41+4
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 13
+
+
+ 492 0084 181C     		mov	r0, r3
+ 493 0086 FFF7FEFF 		bl	isr_TIMER_SetVector
+ 191:main.c        ****     
+ 192:main.c        ****     for (z=0;z< 32;z++)
+ 494              		.loc 1 192 0
+ 495 008a 0023     		mov	r3, #0
+ 496 008c BB60     		str	r3, [r7, #8]
+ 497 008e 0CE0     		b	.L28
+ 498              	.L29:
+ 193:main.c        ****      comBuff[z]=z*2+10;
+ 499              		.loc 1 193 0 discriminator 3
+ 500 0090 BB68     		ldr	r3, [r7, #8]
+ 501 0092 0533     		add	r3, r3, #5
+ 502 0094 DBB2     		uxtb	r3, r3
+ 503 0096 DB18     		add	r3, r3, r3
+ 504 0098 D9B2     		uxtb	r1, r3
+ 505 009a 584A     		ldr	r2, .L41+8
+ 506 009c BB68     		ldr	r3, [r7, #8]
+ 507 009e D318     		add	r3, r2, r3
+ 508 00a0 0A1C     		add	r2, r1, #0
+ 509 00a2 1A70     		strb	r2, [r3]
+ 192:main.c        ****      comBuff[z]=z*2+10;
+ 510              		.loc 1 192 0 discriminator 3
+ 511 00a4 BB68     		ldr	r3, [r7, #8]
+ 512 00a6 0133     		add	r3, r3, #1
+ 513 00a8 BB60     		str	r3, [r7, #8]
+ 514              	.L28:
+ 192:main.c        ****      comBuff[z]=z*2+10;
+ 515              		.loc 1 192 0 is_stmt 0 discriminator 1
+ 516 00aa BB68     		ldr	r3, [r7, #8]
+ 517 00ac 1F2B     		cmp	r3, #31
+ 518 00ae EFDD     		ble	.L29
+ 194:main.c        ****     
+ 195:main.c        ****     //EZI2C_EzI2CSetBuffer1(32, 16, &set.action);
+ 196:main.c        ****     //EZI2C_Start();
+ 197:main.c        ****     //EZI2C_EzI2CSetBuffer1(32, 16, &set.action);
+ 198:main.c        ****      isr_bbi2c_Start();
+ 519              		.loc 1 198 0 is_stmt 1
+ 520 00b0 FFF7FEFF 		bl	isr_bbi2c_Start
+ 199:main.c        ****     isr_bbi2c_Enable();
+ 521              		.loc 1 199 0
+ 522 00b4 FFF7FEFF 		bl	isr_bbi2c_Enable
+ 200:main.c        **** //    IDAC8_1_Start();
+ 201:main.c        ****  
+ 202:main.c        ****     OLD_SDA_Write(1);
+ 523              		.loc 1 202 0
+ 524 00b8 0120     		mov	r0, #1
+ 525 00ba FFF7FEFF 		bl	OLD_SDA_Write
+ 203:main.c        ****     Init_bb_i2c((uint8 *)&set.action);
+ 526              		.loc 1 203 0
+ 527 00be 4D4B     		ldr	r3, .L41
+ 528 00c0 181C     		mov	r0, r3
+ 529 00c2 FFF7FEFF 		bl	Init_bb_i2c
+ 204:main.c        ****     while(0)
+ 530              		.loc 1 204 0
+ 531 00c6 C046     		mov	r8, r8
+ 532              	.L40:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 14
+
+
+ 205:main.c        ****     {
+ 206:main.c        ****     CyDelayUs(60000);   
+ 207:main.c        ****     CyDelayUs(60000);
+ 208:main.c        ****     DriveLeft(1);
+ 209:main.c        ****     CyDelayUs(4000);  
+ 210:main.c        ****     DriveLeft(0);
+ 211:main.c        ****     CyDelayUs(60000);   
+ 212:main.c        ****     CyDelayUs(60000);
+ 213:main.c        ****     DriveRight(1);
+ 214:main.c        ****     CyDelayUs(4000);  
+ 215:main.c        ****     DriveRight(0);
+ 216:main.c        ****     }
+ 217:main.c        ****     for(;;)
+ 218:main.c        ****     {
+ 219:main.c        ****         /* Place your application code here. */
+ 220:main.c        ****         if (tick)
+ 533              		.loc 1 220 0
+ 534 00c8 4D4B     		ldr	r3, .L41+12
+ 535 00ca 1B78     		ldrb	r3, [r3]
+ 536 00cc DBB2     		uxtb	r3, r3
+ 537 00ce 002B     		cmp	r3, #0
+ 538 00d0 02D0     		beq	.L30
+ 221:main.c        ****          {
+ 222:main.c        ****           tick=0;
+ 539              		.loc 1 222 0
+ 540 00d2 4B4B     		ldr	r3, .L41+12
+ 541 00d4 0022     		mov	r2, #0
+ 542 00d6 1A70     		strb	r2, [r3]
+ 543              	.L30:
+ 223:main.c        ****         }
+ 224:main.c        ****         if (GetTrig())
+ 544              		.loc 1 224 0
+ 545 00d8 FFF7FEFF 		bl	GetTrig
+ 546 00dc 031E     		sub	r3, r0, #0
+ 547 00de 00D1     		bne	.LCB430
+ 548 00e0 87E0     		b	.L31	@long jump
+ 549              	.LCB430:
+ 225:main.c        ****             {           
+ 226:main.c        ****             IDAC_1_SetValue(DAC_I((float)set.i_set));
+ 550              		.loc 1 226 0
+ 551 00e2 444B     		ldr	r3, .L41
+ 552 00e4 5B79     		ldrb	r3, [r3, #5]
+ 553 00e6 DBB2     		uxtb	r3, r3
+ 554 00e8 181C     		mov	r0, r3
+ 555 00ea FFF7FEFF 		bl	__aeabi_ui2f
+ 556 00ee 031C     		add	r3, r0, #0
+ 557 00f0 181C     		add	r0, r3, #0
+ 558 00f2 FFF7FEFF 		bl	__aeabi_f2d
+ 559 00f6 031C     		mov	r3, r0
+ 560 00f8 0C1C     		mov	r4, r1
+ 561 00fa 181C     		mov	r0, r3
+ 562 00fc 211C     		mov	r1, r4
+ 563 00fe 414A     		ldr	r2, .L41+16
+ 564 0100 414B     		ldr	r3, .L41+20
+ 565 0102 FFF7FEFF 		bl	__aeabi_dmul
+ 566 0106 031C     		mov	r3, r0
+ 567 0108 0C1C     		mov	r4, r1
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 15
+
+
+ 568 010a 181C     		mov	r0, r3
+ 569 010c 211C     		mov	r1, r4
+ 570 010e 3F4A     		ldr	r2, .L41+24
+ 571 0110 3F4B     		ldr	r3, .L41+28
+ 572 0112 FFF7FEFF 		bl	__aeabi_ddiv
+ 573 0116 031C     		mov	r3, r0
+ 574 0118 0C1C     		mov	r4, r1
+ 575 011a 181C     		mov	r0, r3
+ 576 011c 211C     		mov	r1, r4
+ 577 011e 0022     		mov	r2, #0
+ 578 0120 3C4B     		ldr	r3, .L41+32
+ 579 0122 FFF7FEFF 		bl	__aeabi_ddiv
+ 580 0126 031C     		mov	r3, r0
+ 581 0128 0C1C     		mov	r4, r1
+ 582 012a 181C     		mov	r0, r3
+ 583 012c 211C     		mov	r1, r4
+ 584 012e FFF7FEFF 		bl	__aeabi_d2uiz
+ 585 0132 031C     		mov	r3, r0
+ 586 0134 181C     		mov	r0, r3
+ 587 0136 FFF7FEFF 		bl	IDAC_1_SetValue
+ 227:main.c        ****  
+ 228:main.c        ****             if (set.led_enable&LED_LEFT)
+ 588              		.loc 1 228 0
+ 589 013a 2E4B     		ldr	r3, .L41
+ 590 013c DB78     		ldrb	r3, [r3, #3]
+ 591 013e DBB2     		uxtb	r3, r3
+ 592 0140 1A1C     		mov	r2, r3
+ 593 0142 0123     		mov	r3, #1
+ 594 0144 1340     		and	r3, r2
+ 595 0146 02D0     		beq	.L32
+ 229:main.c        ****                 DriveLeft(1);
+ 596              		.loc 1 229 0
+ 597 0148 0120     		mov	r0, #1
+ 598 014a FFF7FEFF 		bl	DriveLeft
+ 599              	.L32:
+ 230:main.c        ****             if (set.led_enable&LED_RIGHT)
+ 600              		.loc 1 230 0
+ 601 014e 294B     		ldr	r3, .L41
+ 602 0150 DB78     		ldrb	r3, [r3, #3]
+ 603 0152 DBB2     		uxtb	r3, r3
+ 604 0154 1A1C     		mov	r2, r3
+ 605 0156 0223     		mov	r3, #2
+ 606 0158 1340     		and	r3, r2
+ 607 015a 02D0     		beq	.L33
+ 231:main.c        ****                 DriveRight(1);
+ 608              		.loc 1 231 0
+ 609 015c 0120     		mov	r0, #1
+ 610 015e FFF7FEFF 		bl	DriveRight
+ 611              	.L33:
+ 232:main.c        ****             
+ 233:main.c        ****             if (set.led_enable&LED_FACE)
+ 612              		.loc 1 233 0
+ 613 0162 244B     		ldr	r3, .L41
+ 614 0164 DB78     		ldrb	r3, [r3, #3]
+ 615 0166 DBB2     		uxtb	r3, r3
+ 616 0168 1A1C     		mov	r2, r3
+ 617 016a 0423     		mov	r3, #4
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 16
+
+
+ 618 016c 1340     		and	r3, r2
+ 619 016e 01D0     		beq	.L34
+ 234:main.c        ****                 Opamp_FACE_Start();
+ 620              		.loc 1 234 0
+ 621 0170 FFF7FEFF 		bl	Opamp_FACE_Start
+ 622              	.L34:
+ 235:main.c        ****             for (x=0;x<set.max_time*100;x++)
+ 623              		.loc 1 235 0
+ 624 0174 0023     		mov	r3, #0
+ 625 0176 FB60     		str	r3, [r7, #12]
+ 626 0178 07E0     		b	.L35
+ 627              	.L38:
+ 236:main.c        ****                 if (GetTrig()==0)
+ 628              		.loc 1 236 0
+ 629 017a FFF7FEFF 		bl	GetTrig
+ 630 017e 031E     		sub	r3, r0, #0
+ 631 0180 00D1     		bne	.L36
+ 237:main.c        ****                    break;
+ 632              		.loc 1 237 0
+ 633 0182 0BE0     		b	.L37
+ 634              	.L36:
+ 235:main.c        ****             for (x=0;x<set.max_time*100;x++)
+ 635              		.loc 1 235 0 discriminator 2
+ 636 0184 FB68     		ldr	r3, [r7, #12]
+ 637 0186 0133     		add	r3, r3, #1
+ 638 0188 FB60     		str	r3, [r7, #12]
+ 639              	.L35:
+ 235:main.c        ****             for (x=0;x<set.max_time*100;x++)
+ 640              		.loc 1 235 0 is_stmt 0 discriminator 1
+ 641 018a 1A4B     		ldr	r3, .L41
+ 642 018c 9B79     		ldrb	r3, [r3, #6]
+ 643 018e DBB2     		uxtb	r3, r3
+ 644 0190 1A1C     		mov	r2, r3
+ 645 0192 6423     		mov	r3, #100
+ 646 0194 5A43     		mul	r2, r3
+ 647 0196 FB68     		ldr	r3, [r7, #12]
+ 648 0198 9A42     		cmp	r2, r3
+ 649 019a EEDC     		bgt	.L38
+ 650              	.L37:
+ 238:main.c        ****             Opamp_FACE_Stop();
+ 651              		.loc 1 238 0 is_stmt 1
+ 652 019c FFF7FEFF 		bl	Opamp_FACE_Stop
+ 239:main.c        ****             DriveLeft(0);
+ 653              		.loc 1 239 0
+ 654 01a0 0020     		mov	r0, #0
+ 655 01a2 FFF7FEFF 		bl	DriveLeft
+ 240:main.c        ****             DriveRight(0);
+ 656              		.loc 1 240 0
+ 657 01a6 0020     		mov	r0, #0
+ 658 01a8 FFF7FEFF 		bl	DriveRight
+ 241:main.c        ****              while(GetTrig());
+ 659              		.loc 1 241 0
+ 660 01ac C046     		mov	r8, r8
+ 661              	.L39:
+ 662              		.loc 1 241 0 is_stmt 0 discriminator 1
+ 663 01ae FFF7FEFF 		bl	GetTrig
+ 664 01b2 031E     		sub	r3, r0, #0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 17
+
+
+ 665 01b4 FBD1     		bne	.L39
+ 242:main.c        ****             // use the upper 4 bits to enable the toggle mode
+ 243:main.c        ****             set.led_enable=(set.led_enable&0xf0) | ( (set.led_enable^(set.led_enable>>4))&0xf);
+ 666              		.loc 1 243 0 is_stmt 1
+ 667 01b6 0F4B     		ldr	r3, .L41
+ 668 01b8 DB78     		ldrb	r3, [r3, #3]
+ 669 01ba DBB2     		uxtb	r3, r3
+ 670 01bc DBB2     		uxtb	r3, r3
+ 671 01be 1A1C     		add	r2, r3, #0
+ 672 01c0 0F23     		mov	r3, #15
+ 673 01c2 9A43     		bic	r2, r3
+ 674 01c4 131C     		mov	r3, r2
+ 675 01c6 D9B2     		uxtb	r1, r3
+ 676 01c8 0A4B     		ldr	r3, .L41
+ 677 01ca DB78     		ldrb	r3, [r3, #3]
+ 678 01cc DAB2     		uxtb	r2, r3
+ 679 01ce 094B     		ldr	r3, .L41
+ 680 01d0 DB78     		ldrb	r3, [r3, #3]
+ 681 01d2 DBB2     		uxtb	r3, r3
+ 682 01d4 1B09     		lsr	r3, r3, #4
+ 683 01d6 DBB2     		uxtb	r3, r3
+ 684 01d8 5340     		eor	r3, r2
+ 685 01da DBB2     		uxtb	r3, r3
+ 686 01dc DBB2     		uxtb	r3, r3
+ 687 01de 1A1C     		add	r2, r3, #0
+ 688 01e0 0F23     		mov	r3, #15
+ 689 01e2 1340     		and	r3, r2
+ 690 01e4 DBB2     		uxtb	r3, r3
+ 691 01e6 0A1C     		add	r2, r1, #0
+ 692 01e8 1343     		orr	r3, r2
+ 693 01ea DBB2     		uxtb	r3, r3
+ 694 01ec DAB2     		uxtb	r2, r3
+ 695 01ee 014B     		ldr	r3, .L41
+ 696 01f0 DA70     		strb	r2, [r3, #3]
+ 697              	.L31:
+ 244:main.c        ****             }
+ 245:main.c        ****     }
+ 698              		.loc 1 245 0
+ 699 01f2 69E7     		b	.L40
+ 700              	.L42:
+ 701              		.align	2
+ 702              	.L41:
+ 703 01f4 00000000 		.word	set
+ 704 01f8 00000000 		.word	isr_MYTIMER_Interrupt
+ 705 01fc 00000000 		.word	comBuff
+ 706 0200 00000000 		.word	tick
+ 707 0204 9A999999 		.word	-1717986918
+ 708 0208 9999C93F 		.word	1070176665
+ 709 020c 61325530 		.word	810889825
+ 710 0210 2AA9633F 		.word	1063495978
+ 711 0214 00002440 		.word	1076101120
+ 712              		.cfi_endproc
+ 713              	.LFE41:
+ 714              		.size	main, .-main
+ 715              		.bss
+ 716 0005 000000   		.align	2
+ 717              	i_term.5819:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 18
+
+
+ 718 0008 00000000 		.space	4
+ 719              		.text
+ 720              	.Letext0:
+ 721              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.0\\psoc creator\\import\\gnu\\arm\\4.9.
+ 722              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.0\\psoc creator\\import\\gnu\\arm\\4.9.
+ 723              		.file 4 "Generated_Source\\PSoC4/cytypes.h"
+ 724              		.section	.debug_info,"",%progbits
+ 725              	.Ldebug_info0:
+ 726 0000 E6020000 		.4byte	0x2e6
+ 727 0004 0400     		.2byte	0x4
+ 728 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 729 000a 04       		.byte	0x4
+ 730 000b 01       		.uleb128 0x1
+ 731 000c F7000000 		.4byte	.LASF37
+ 732 0010 01       		.byte	0x1
+ 733 0011 EF010000 		.4byte	.LASF38
+ 734 0015 4A000000 		.4byte	.LASF39
+ 735 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 736 001d 00000000 		.4byte	0
+ 737 0021 00000000 		.4byte	.Ldebug_line0
+ 738 0025 02       		.uleb128 0x2
+ 739 0026 01       		.byte	0x1
+ 740 0027 06       		.byte	0x6
+ 741 0028 2C020000 		.4byte	.LASF0
+ 742 002c 03       		.uleb128 0x3
+ 743 002d 1E000000 		.4byte	.LASF9
+ 744 0031 02       		.byte	0x2
+ 745 0032 1D       		.byte	0x1d
+ 746 0033 37000000 		.4byte	0x37
+ 747 0037 02       		.uleb128 0x2
+ 748 0038 01       		.byte	0x1
+ 749 0039 08       		.byte	0x8
+ 750 003a 9C000000 		.4byte	.LASF1
+ 751 003e 02       		.uleb128 0x2
+ 752 003f 02       		.byte	0x2
+ 753 0040 05       		.byte	0x5
+ 754 0041 09020000 		.4byte	.LASF2
+ 755 0045 02       		.uleb128 0x2
+ 756 0046 02       		.byte	0x2
+ 757 0047 07       		.byte	0x7
+ 758 0048 37000000 		.4byte	.LASF3
+ 759 004c 02       		.uleb128 0x2
+ 760 004d 04       		.byte	0x4
+ 761 004e 05       		.byte	0x5
+ 762 004f 13020000 		.4byte	.LASF4
+ 763 0053 02       		.uleb128 0x2
+ 764 0054 04       		.byte	0x4
+ 765 0055 07       		.byte	0x7
+ 766 0056 BC000000 		.4byte	.LASF5
+ 767 005a 02       		.uleb128 0x2
+ 768 005b 08       		.byte	0x8
+ 769 005c 05       		.byte	0x5
+ 770 005d D5010000 		.4byte	.LASF6
+ 771 0061 02       		.uleb128 0x2
+ 772 0062 08       		.byte	0x8
+ 773 0063 07       		.byte	0x7
+ 774 0064 92010000 		.4byte	.LASF7
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 19
+
+
+ 775 0068 04       		.uleb128 0x4
+ 776 0069 04       		.byte	0x4
+ 777 006a 05       		.byte	0x5
+ 778 006b 696E7400 		.ascii	"int\000"
+ 779 006f 02       		.uleb128 0x2
+ 780 0070 04       		.byte	0x4
+ 781 0071 07       		.byte	0x7
+ 782 0072 85010000 		.4byte	.LASF8
+ 783 0076 03       		.uleb128 0x3
+ 784 0077 A9010000 		.4byte	.LASF10
+ 785 007b 03       		.byte	0x3
+ 786 007c 15       		.byte	0x15
+ 787 007d 2C000000 		.4byte	0x2c
+ 788 0081 05       		.uleb128 0x5
+ 789 0082 CE000000 		.4byte	.LASF11
+ 790 0086 04       		.byte	0x4
+ 791 0087 B901     		.2byte	0x1b9
+ 792 0089 37000000 		.4byte	0x37
+ 793 008d 05       		.uleb128 0x5
+ 794 008e F0000000 		.4byte	.LASF12
+ 795 0092 04       		.byte	0x4
+ 796 0093 BB01     		.2byte	0x1bb
+ 797 0095 53000000 		.4byte	0x53
+ 798 0099 05       		.uleb128 0x5
+ 799 009a B6000000 		.4byte	.LASF13
+ 800 009e 04       		.byte	0x4
+ 801 009f BD01     		.2byte	0x1bd
+ 802 00a1 3E000000 		.4byte	0x3e
+ 803 00a5 02       		.uleb128 0x2
+ 804 00a6 04       		.byte	0x4
+ 805 00a7 04       		.byte	0x4
+ 806 00a8 86000000 		.4byte	.LASF14
+ 807 00ac 02       		.uleb128 0x2
+ 808 00ad 08       		.byte	0x8
+ 809 00ae 04       		.byte	0x4
+ 810 00af E4000000 		.4byte	.LASF15
+ 811 00b3 02       		.uleb128 0x2
+ 812 00b4 01       		.byte	0x1
+ 813 00b5 08       		.byte	0x8
+ 814 00b6 F6010000 		.4byte	.LASF16
+ 815 00ba 02       		.uleb128 0x2
+ 816 00bb 04       		.byte	0x4
+ 817 00bc 07       		.byte	0x7
+ 818 00bd CC010000 		.4byte	.LASF17
+ 819 00c1 06       		.uleb128 0x6
+ 820 00c2 1B       		.byte	0x1b
+ 821 00c3 01       		.byte	0x1
+ 822 00c4 17       		.byte	0x17
+ 823 00c5 2A010000 		.4byte	0x12a
+ 824 00c9 07       		.uleb128 0x7
+ 825 00ca AA000000 		.4byte	.LASF18
+ 826 00ce 01       		.byte	0x1
+ 827 00cf 19       		.byte	0x19
+ 828 00d0 37000000 		.4byte	0x37
+ 829 00d4 00       		.byte	0
+ 830 00d5 07       		.uleb128 0x7
+ 831 00d6 1C020000 		.4byte	.LASF19
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 20
+
+
+ 832 00da 01       		.byte	0x1
+ 833 00db 1A       		.byte	0x1a
+ 834 00dc 37000000 		.4byte	0x37
+ 835 00e0 01       		.byte	0x1
+ 836 00e1 07       		.uleb128 0x7
+ 837 00e2 94000000 		.4byte	.LASF20
+ 838 00e6 01       		.byte	0x1
+ 839 00e7 1B       		.byte	0x1b
+ 840 00e8 37000000 		.4byte	0x37
+ 841 00ec 02       		.byte	0x2
+ 842 00ed 07       		.uleb128 0x7
+ 843 00ee 7B000000 		.4byte	.LASF21
+ 844 00f2 01       		.byte	0x1
+ 845 00f3 1C       		.byte	0x1c
+ 846 00f4 37000000 		.4byte	0x37
+ 847 00f8 03       		.byte	0x3
+ 848 00f9 07       		.uleb128 0x7
+ 849 00fa E3010000 		.4byte	.LASF22
+ 850 00fe 01       		.byte	0x1
+ 851 00ff 1D       		.byte	0x1d
+ 852 0100 37000000 		.4byte	0x37
+ 853 0104 04       		.byte	0x4
+ 854 0105 07       		.uleb128 0x7
+ 855 0106 26020000 		.4byte	.LASF23
+ 856 010a 01       		.byte	0x1
+ 857 010b 1E       		.byte	0x1e
+ 858 010c 37000000 		.4byte	0x37
+ 859 0110 05       		.byte	0x5
+ 860 0111 07       		.uleb128 0x7
+ 861 0112 38020000 		.4byte	.LASF24
+ 862 0116 01       		.byte	0x1
+ 863 0117 1F       		.byte	0x1f
+ 864 0118 37000000 		.4byte	0x37
+ 865 011c 06       		.byte	0x6
+ 866 011d 07       		.uleb128 0x7
+ 867 011e B1000000 		.4byte	.LASF25
+ 868 0122 01       		.byte	0x1
+ 869 0123 20       		.byte	0x20
+ 870 0124 2A010000 		.4byte	0x12a
+ 871 0128 07       		.byte	0x7
+ 872 0129 00       		.byte	0
+ 873 012a 08       		.uleb128 0x8
+ 874 012b 37000000 		.4byte	0x37
+ 875 012f 3A010000 		.4byte	0x13a
+ 876 0133 09       		.uleb128 0x9
+ 877 0134 BA000000 		.4byte	0xba
+ 878 0138 13       		.byte	0x13
+ 879 0139 00       		.byte	0
+ 880 013a 03       		.uleb128 0x3
+ 881 013b C3010000 		.4byte	.LASF26
+ 882 013f 01       		.byte	0x1
+ 883 0140 22       		.byte	0x22
+ 884 0141 C1000000 		.4byte	0xc1
+ 885 0145 0A       		.uleb128 0xa
+ 886 0146 28000000 		.4byte	.LASF29
+ 887 014a 01       		.byte	0x1
+ 888 014b 2A       		.byte	0x2a
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 21
+
+
+ 889 014c 00000000 		.4byte	.LFB36
+ 890 0150 B0000000 		.4byte	.LFE36-.LFB36
+ 891 0154 01       		.uleb128 0x1
+ 892 0155 9C       		.byte	0x9c
+ 893 0156 B0010000 		.4byte	0x1b0
+ 894 015a 0B       		.uleb128 0xb
+ 895 015b 03020000 		.4byte	.LASF31
+ 896 015f 01       		.byte	0x1
+ 897 0160 2A       		.byte	0x2a
+ 898 0161 68000000 		.4byte	0x68
+ 899 0165 02       		.uleb128 0x2
+ 900 0166 91       		.byte	0x91
+ 901 0167 5C       		.sleb128 -36
+ 902 0168 0C       		.uleb128 0xc
+ 903 0169 7600     		.ascii	"v\000"
+ 904 016b 01       		.byte	0x1
+ 905 016c 2C       		.byte	0x2c
+ 906 016d 68000000 		.4byte	0x68
+ 907 0171 02       		.uleb128 0x2
+ 908 0172 91       		.byte	0x91
+ 909 0173 64       		.sleb128 -28
+ 910 0174 0C       		.uleb128 0xc
+ 911 0175 65727200 		.ascii	"err\000"
+ 912 0179 01       		.byte	0x1
+ 913 017a 2D       		.byte	0x2d
+ 914 017b 68000000 		.4byte	0x68
+ 915 017f 02       		.uleb128 0x2
+ 916 0180 91       		.byte	0x91
+ 917 0181 60       		.sleb128 -32
+ 918 0182 0D       		.uleb128 0xd
+ 919 0183 30000000 		.4byte	.LASF27
+ 920 0187 01       		.byte	0x1
+ 921 0188 2E       		.byte	0x2e
+ 922 0189 68000000 		.4byte	0x68
+ 923 018d 05       		.uleb128 0x5
+ 924 018e 03       		.byte	0x3
+ 925 018f 08000000 		.4byte	i_term.5819
+ 926 0193 0D       		.uleb128 0xd
+ 927 0194 16000000 		.4byte	.LASF28
+ 928 0198 01       		.byte	0x1
+ 929 0199 2F       		.byte	0x2f
+ 930 019a 68000000 		.4byte	0x68
+ 931 019e 02       		.uleb128 0x2
+ 932 019f 91       		.byte	0x91
+ 933 01a0 6C       		.sleb128 -20
+ 934 01a1 0C       		.uleb128 0xc
+ 935 01a2 76616C00 		.ascii	"val\000"
+ 936 01a6 01       		.byte	0x1
+ 937 01a7 30       		.byte	0x30
+ 938 01a8 68000000 		.4byte	0x68
+ 939 01ac 02       		.uleb128 0x2
+ 940 01ad 91       		.byte	0x91
+ 941 01ae 68       		.sleb128 -24
+ 942 01af 00       		.byte	0
+ 943 01b0 0E       		.uleb128 0xe
+ 944 01b1 00000000 		.4byte	.LASF40
+ 945 01b5 01       		.byte	0x1
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 22
+
+
+ 946 01b6 58       		.byte	0x58
+ 947 01b7 00000000 		.4byte	.LFB37
+ 948 01bb 50000000 		.4byte	.LFE37-.LFB37
+ 949 01bf 01       		.uleb128 0x1
+ 950 01c0 9C       		.byte	0x9c
+ 951 01c1 0F       		.uleb128 0xf
+ 952 01c2 8C000000 		.4byte	.LASF41
+ 953 01c6 01       		.byte	0x1
+ 954 01c7 68       		.byte	0x68
+ 955 01c8 81000000 		.4byte	0x81
+ 956 01cc 00000000 		.4byte	.LFB38
+ 957 01d0 58000000 		.4byte	.LFE38-.LFB38
+ 958 01d4 01       		.uleb128 0x1
+ 959 01d5 9C       		.byte	0x9c
+ 960 01d6 0A       		.uleb128 0xa
+ 961 01d7 B1010000 		.4byte	.LASF30
+ 962 01db 01       		.byte	0x1
+ 963 01dc 75       		.byte	0x75
+ 964 01dd 00000000 		.4byte	.LFB39
+ 965 01e1 30000000 		.4byte	.LFE39-.LFB39
+ 966 01e5 01       		.uleb128 0x1
+ 967 01e6 9C       		.byte	0x9c
+ 968 01e7 F9010000 		.4byte	0x1f9
+ 969 01eb 10       		.uleb128 0x10
+ 970 01ec 6F6E00   		.ascii	"on\000"
+ 971 01ef 01       		.byte	0x1
+ 972 01f0 75       		.byte	0x75
+ 973 01f1 81000000 		.4byte	0x81
+ 974 01f5 02       		.uleb128 0x2
+ 975 01f6 91       		.byte	0x91
+ 976 01f7 77       		.sleb128 -9
+ 977 01f8 00       		.byte	0
+ 978 01f9 0A       		.uleb128 0xa
+ 979 01fa D4000000 		.4byte	.LASF32
+ 980 01fe 01       		.byte	0x1
+ 981 01ff 82       		.byte	0x82
+ 982 0200 00000000 		.4byte	.LFB40
+ 983 0204 30000000 		.4byte	.LFE40-.LFB40
+ 984 0208 01       		.uleb128 0x1
+ 985 0209 9C       		.byte	0x9c
+ 986 020a 1C020000 		.4byte	0x21c
+ 987 020e 10       		.uleb128 0x10
+ 988 020f 6F6E00   		.ascii	"on\000"
+ 989 0212 01       		.byte	0x1
+ 990 0213 82       		.byte	0x82
+ 991 0214 81000000 		.4byte	0x81
+ 992 0218 02       		.uleb128 0x2
+ 993 0219 91       		.byte	0x91
+ 994 021a 77       		.sleb128 -9
+ 995 021b 00       		.byte	0
+ 996 021c 11       		.uleb128 0x11
+ 997 021d EB000000 		.4byte	.LASF33
+ 998 0221 01       		.byte	0x1
+ 999 0222 8F       		.byte	0x8f
+ 1000 0223 68000000 		.4byte	0x68
+ 1001 0227 00000000 		.4byte	.LFB41
+ 1002 022b 18020000 		.4byte	.LFE41-.LFB41
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 23
+
+
+ 1003 022f 01       		.uleb128 0x1
+ 1004 0230 9C       		.byte	0x9c
+ 1005 0231 86020000 		.4byte	0x286
+ 1006 0235 0C       		.uleb128 0xc
+ 1007 0236 7800     		.ascii	"x\000"
+ 1008 0238 01       		.byte	0x1
+ 1009 0239 92       		.byte	0x92
+ 1010 023a 68000000 		.4byte	0x68
+ 1011 023e 02       		.uleb128 0x2
+ 1012 023f 91       		.byte	0x91
+ 1013 0240 6C       		.sleb128 -20
+ 1014 0241 12       		.uleb128 0x12
+ 1015 0242 76616C00 		.ascii	"val\000"
+ 1016 0246 01       		.byte	0x1
+ 1017 0247 93       		.byte	0x93
+ 1018 0248 99000000 		.4byte	0x99
+ 1019 024c 12       		.uleb128 0x12
+ 1020 024d 7600     		.ascii	"v\000"
+ 1021 024f 01       		.byte	0x1
+ 1022 0250 94       		.byte	0x94
+ 1023 0251 68000000 		.4byte	0x68
+ 1024 0255 12       		.uleb128 0x12
+ 1025 0256 65727200 		.ascii	"err\000"
+ 1026 025a 01       		.byte	0x1
+ 1027 025b 95       		.byte	0x95
+ 1028 025c 68000000 		.4byte	0x68
+ 1029 0260 0D       		.uleb128 0xd
+ 1030 0261 30000000 		.4byte	.LASF27
+ 1031 0265 01       		.byte	0x1
+ 1032 0266 96       		.byte	0x96
+ 1033 0267 68000000 		.4byte	0x68
+ 1034 026b 02       		.uleb128 0x2
+ 1035 026c 91       		.byte	0x91
+ 1036 026d 64       		.sleb128 -28
+ 1037 026e 13       		.uleb128 0x13
+ 1038 026f 16000000 		.4byte	.LASF28
+ 1039 0273 01       		.byte	0x1
+ 1040 0274 97       		.byte	0x97
+ 1041 0275 68000000 		.4byte	0x68
+ 1042 0279 0C       		.uleb128 0xc
+ 1043 027a 7A00     		.ascii	"z\000"
+ 1044 027c 01       		.byte	0x1
+ 1045 027d 98       		.byte	0x98
+ 1046 027e 68000000 		.4byte	0x68
+ 1047 0282 02       		.uleb128 0x2
+ 1048 0283 91       		.byte	0x91
+ 1049 0284 68       		.sleb128 -24
+ 1050 0285 00       		.byte	0
+ 1051 0286 14       		.uleb128 0x14
+ 1052 0287 73657400 		.ascii	"set\000"
+ 1053 028b 01       		.byte	0x1
+ 1054 028c 29       		.byte	0x29
+ 1055 028d 97020000 		.4byte	0x297
+ 1056 0291 05       		.uleb128 0x5
+ 1057 0292 03       		.byte	0x3
+ 1058 0293 00000000 		.4byte	set
+ 1059 0297 15       		.uleb128 0x15
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 24
+
+
+ 1060 0298 3A010000 		.4byte	0x13a
+ 1061 029c 08       		.uleb128 0x8
+ 1062 029d 81000000 		.4byte	0x81
+ 1063 02a1 AC020000 		.4byte	0x2ac
+ 1064 02a5 09       		.uleb128 0x9
+ 1065 02a6 BA000000 		.4byte	0xba
+ 1066 02aa 1F       		.byte	0x1f
+ 1067 02ab 00       		.byte	0
+ 1068 02ac 16       		.uleb128 0x16
+ 1069 02ad FB010000 		.4byte	.LASF34
+ 1070 02b1 01       		.byte	0x1
+ 1071 02b2 54       		.byte	0x54
+ 1072 02b3 BD020000 		.4byte	0x2bd
+ 1073 02b7 05       		.uleb128 0x5
+ 1074 02b8 03       		.byte	0x3
+ 1075 02b9 00000000 		.4byte	comBuff
+ 1076 02bd 15       		.uleb128 0x15
+ 1077 02be 9C020000 		.4byte	0x29c
+ 1078 02c2 16       		.uleb128 0x16
+ 1079 02c3 BB010000 		.4byte	.LASF35
+ 1080 02c7 01       		.byte	0x1
+ 1081 02c8 56       		.byte	0x56
+ 1082 02c9 68000000 		.4byte	0x68
+ 1083 02cd 05       		.uleb128 0x5
+ 1084 02ce 03       		.byte	0x3
+ 1085 02cf 00000000 		.4byte	t_count
+ 1086 02d3 16       		.uleb128 0x16
+ 1087 02d4 DF000000 		.4byte	.LASF36
+ 1088 02d8 01       		.byte	0x1
+ 1089 02d9 57       		.byte	0x57
+ 1090 02da E4020000 		.4byte	0x2e4
+ 1091 02de 05       		.uleb128 0x5
+ 1092 02df 03       		.byte	0x3
+ 1093 02e0 00000000 		.4byte	tick
+ 1094 02e4 15       		.uleb128 0x15
+ 1095 02e5 76000000 		.4byte	0x76
+ 1096 02e9 00       		.byte	0
+ 1097              		.section	.debug_abbrev,"",%progbits
+ 1098              	.Ldebug_abbrev0:
+ 1099 0000 01       		.uleb128 0x1
+ 1100 0001 11       		.uleb128 0x11
+ 1101 0002 01       		.byte	0x1
+ 1102 0003 25       		.uleb128 0x25
+ 1103 0004 0E       		.uleb128 0xe
+ 1104 0005 13       		.uleb128 0x13
+ 1105 0006 0B       		.uleb128 0xb
+ 1106 0007 03       		.uleb128 0x3
+ 1107 0008 0E       		.uleb128 0xe
+ 1108 0009 1B       		.uleb128 0x1b
+ 1109 000a 0E       		.uleb128 0xe
+ 1110 000b 55       		.uleb128 0x55
+ 1111 000c 17       		.uleb128 0x17
+ 1112 000d 11       		.uleb128 0x11
+ 1113 000e 01       		.uleb128 0x1
+ 1114 000f 10       		.uleb128 0x10
+ 1115 0010 17       		.uleb128 0x17
+ 1116 0011 00       		.byte	0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 25
+
+
+ 1117 0012 00       		.byte	0
+ 1118 0013 02       		.uleb128 0x2
+ 1119 0014 24       		.uleb128 0x24
+ 1120 0015 00       		.byte	0
+ 1121 0016 0B       		.uleb128 0xb
+ 1122 0017 0B       		.uleb128 0xb
+ 1123 0018 3E       		.uleb128 0x3e
+ 1124 0019 0B       		.uleb128 0xb
+ 1125 001a 03       		.uleb128 0x3
+ 1126 001b 0E       		.uleb128 0xe
+ 1127 001c 00       		.byte	0
+ 1128 001d 00       		.byte	0
+ 1129 001e 03       		.uleb128 0x3
+ 1130 001f 16       		.uleb128 0x16
+ 1131 0020 00       		.byte	0
+ 1132 0021 03       		.uleb128 0x3
+ 1133 0022 0E       		.uleb128 0xe
+ 1134 0023 3A       		.uleb128 0x3a
+ 1135 0024 0B       		.uleb128 0xb
+ 1136 0025 3B       		.uleb128 0x3b
+ 1137 0026 0B       		.uleb128 0xb
+ 1138 0027 49       		.uleb128 0x49
+ 1139 0028 13       		.uleb128 0x13
+ 1140 0029 00       		.byte	0
+ 1141 002a 00       		.byte	0
+ 1142 002b 04       		.uleb128 0x4
+ 1143 002c 24       		.uleb128 0x24
+ 1144 002d 00       		.byte	0
+ 1145 002e 0B       		.uleb128 0xb
+ 1146 002f 0B       		.uleb128 0xb
+ 1147 0030 3E       		.uleb128 0x3e
+ 1148 0031 0B       		.uleb128 0xb
+ 1149 0032 03       		.uleb128 0x3
+ 1150 0033 08       		.uleb128 0x8
+ 1151 0034 00       		.byte	0
+ 1152 0035 00       		.byte	0
+ 1153 0036 05       		.uleb128 0x5
+ 1154 0037 16       		.uleb128 0x16
+ 1155 0038 00       		.byte	0
+ 1156 0039 03       		.uleb128 0x3
+ 1157 003a 0E       		.uleb128 0xe
+ 1158 003b 3A       		.uleb128 0x3a
+ 1159 003c 0B       		.uleb128 0xb
+ 1160 003d 3B       		.uleb128 0x3b
+ 1161 003e 05       		.uleb128 0x5
+ 1162 003f 49       		.uleb128 0x49
+ 1163 0040 13       		.uleb128 0x13
+ 1164 0041 00       		.byte	0
+ 1165 0042 00       		.byte	0
+ 1166 0043 06       		.uleb128 0x6
+ 1167 0044 13       		.uleb128 0x13
+ 1168 0045 01       		.byte	0x1
+ 1169 0046 0B       		.uleb128 0xb
+ 1170 0047 0B       		.uleb128 0xb
+ 1171 0048 3A       		.uleb128 0x3a
+ 1172 0049 0B       		.uleb128 0xb
+ 1173 004a 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 26
+
+
+ 1174 004b 0B       		.uleb128 0xb
+ 1175 004c 01       		.uleb128 0x1
+ 1176 004d 13       		.uleb128 0x13
+ 1177 004e 00       		.byte	0
+ 1178 004f 00       		.byte	0
+ 1179 0050 07       		.uleb128 0x7
+ 1180 0051 0D       		.uleb128 0xd
+ 1181 0052 00       		.byte	0
+ 1182 0053 03       		.uleb128 0x3
+ 1183 0054 0E       		.uleb128 0xe
+ 1184 0055 3A       		.uleb128 0x3a
+ 1185 0056 0B       		.uleb128 0xb
+ 1186 0057 3B       		.uleb128 0x3b
+ 1187 0058 0B       		.uleb128 0xb
+ 1188 0059 49       		.uleb128 0x49
+ 1189 005a 13       		.uleb128 0x13
+ 1190 005b 38       		.uleb128 0x38
+ 1191 005c 0B       		.uleb128 0xb
+ 1192 005d 00       		.byte	0
+ 1193 005e 00       		.byte	0
+ 1194 005f 08       		.uleb128 0x8
+ 1195 0060 01       		.uleb128 0x1
+ 1196 0061 01       		.byte	0x1
+ 1197 0062 49       		.uleb128 0x49
+ 1198 0063 13       		.uleb128 0x13
+ 1199 0064 01       		.uleb128 0x1
+ 1200 0065 13       		.uleb128 0x13
+ 1201 0066 00       		.byte	0
+ 1202 0067 00       		.byte	0
+ 1203 0068 09       		.uleb128 0x9
+ 1204 0069 21       		.uleb128 0x21
+ 1205 006a 00       		.byte	0
+ 1206 006b 49       		.uleb128 0x49
+ 1207 006c 13       		.uleb128 0x13
+ 1208 006d 2F       		.uleb128 0x2f
+ 1209 006e 0B       		.uleb128 0xb
+ 1210 006f 00       		.byte	0
+ 1211 0070 00       		.byte	0
+ 1212 0071 0A       		.uleb128 0xa
+ 1213 0072 2E       		.uleb128 0x2e
+ 1214 0073 01       		.byte	0x1
+ 1215 0074 3F       		.uleb128 0x3f
+ 1216 0075 19       		.uleb128 0x19
+ 1217 0076 03       		.uleb128 0x3
+ 1218 0077 0E       		.uleb128 0xe
+ 1219 0078 3A       		.uleb128 0x3a
+ 1220 0079 0B       		.uleb128 0xb
+ 1221 007a 3B       		.uleb128 0x3b
+ 1222 007b 0B       		.uleb128 0xb
+ 1223 007c 27       		.uleb128 0x27
+ 1224 007d 19       		.uleb128 0x19
+ 1225 007e 11       		.uleb128 0x11
+ 1226 007f 01       		.uleb128 0x1
+ 1227 0080 12       		.uleb128 0x12
+ 1228 0081 06       		.uleb128 0x6
+ 1229 0082 40       		.uleb128 0x40
+ 1230 0083 18       		.uleb128 0x18
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 27
+
+
+ 1231 0084 9642     		.uleb128 0x2116
+ 1232 0086 19       		.uleb128 0x19
+ 1233 0087 01       		.uleb128 0x1
+ 1234 0088 13       		.uleb128 0x13
+ 1235 0089 00       		.byte	0
+ 1236 008a 00       		.byte	0
+ 1237 008b 0B       		.uleb128 0xb
+ 1238 008c 05       		.uleb128 0x5
+ 1239 008d 00       		.byte	0
+ 1240 008e 03       		.uleb128 0x3
+ 1241 008f 0E       		.uleb128 0xe
+ 1242 0090 3A       		.uleb128 0x3a
+ 1243 0091 0B       		.uleb128 0xb
+ 1244 0092 3B       		.uleb128 0x3b
+ 1245 0093 0B       		.uleb128 0xb
+ 1246 0094 49       		.uleb128 0x49
+ 1247 0095 13       		.uleb128 0x13
+ 1248 0096 02       		.uleb128 0x2
+ 1249 0097 18       		.uleb128 0x18
+ 1250 0098 00       		.byte	0
+ 1251 0099 00       		.byte	0
+ 1252 009a 0C       		.uleb128 0xc
+ 1253 009b 34       		.uleb128 0x34
+ 1254 009c 00       		.byte	0
+ 1255 009d 03       		.uleb128 0x3
+ 1256 009e 08       		.uleb128 0x8
+ 1257 009f 3A       		.uleb128 0x3a
+ 1258 00a0 0B       		.uleb128 0xb
+ 1259 00a1 3B       		.uleb128 0x3b
+ 1260 00a2 0B       		.uleb128 0xb
+ 1261 00a3 49       		.uleb128 0x49
+ 1262 00a4 13       		.uleb128 0x13
+ 1263 00a5 02       		.uleb128 0x2
+ 1264 00a6 18       		.uleb128 0x18
+ 1265 00a7 00       		.byte	0
+ 1266 00a8 00       		.byte	0
+ 1267 00a9 0D       		.uleb128 0xd
+ 1268 00aa 34       		.uleb128 0x34
+ 1269 00ab 00       		.byte	0
+ 1270 00ac 03       		.uleb128 0x3
+ 1271 00ad 0E       		.uleb128 0xe
+ 1272 00ae 3A       		.uleb128 0x3a
+ 1273 00af 0B       		.uleb128 0xb
+ 1274 00b0 3B       		.uleb128 0x3b
+ 1275 00b1 0B       		.uleb128 0xb
+ 1276 00b2 49       		.uleb128 0x49
+ 1277 00b3 13       		.uleb128 0x13
+ 1278 00b4 02       		.uleb128 0x2
+ 1279 00b5 18       		.uleb128 0x18
+ 1280 00b6 00       		.byte	0
+ 1281 00b7 00       		.byte	0
+ 1282 00b8 0E       		.uleb128 0xe
+ 1283 00b9 2E       		.uleb128 0x2e
+ 1284 00ba 00       		.byte	0
+ 1285 00bb 3F       		.uleb128 0x3f
+ 1286 00bc 19       		.uleb128 0x19
+ 1287 00bd 03       		.uleb128 0x3
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 28
+
+
+ 1288 00be 0E       		.uleb128 0xe
+ 1289 00bf 3A       		.uleb128 0x3a
+ 1290 00c0 0B       		.uleb128 0xb
+ 1291 00c1 3B       		.uleb128 0x3b
+ 1292 00c2 0B       		.uleb128 0xb
+ 1293 00c3 27       		.uleb128 0x27
+ 1294 00c4 19       		.uleb128 0x19
+ 1295 00c5 11       		.uleb128 0x11
+ 1296 00c6 01       		.uleb128 0x1
+ 1297 00c7 12       		.uleb128 0x12
+ 1298 00c8 06       		.uleb128 0x6
+ 1299 00c9 40       		.uleb128 0x40
+ 1300 00ca 18       		.uleb128 0x18
+ 1301 00cb 9642     		.uleb128 0x2116
+ 1302 00cd 19       		.uleb128 0x19
+ 1303 00ce 00       		.byte	0
+ 1304 00cf 00       		.byte	0
+ 1305 00d0 0F       		.uleb128 0xf
+ 1306 00d1 2E       		.uleb128 0x2e
+ 1307 00d2 00       		.byte	0
+ 1308 00d3 3F       		.uleb128 0x3f
+ 1309 00d4 19       		.uleb128 0x19
+ 1310 00d5 03       		.uleb128 0x3
+ 1311 00d6 0E       		.uleb128 0xe
+ 1312 00d7 3A       		.uleb128 0x3a
+ 1313 00d8 0B       		.uleb128 0xb
+ 1314 00d9 3B       		.uleb128 0x3b
+ 1315 00da 0B       		.uleb128 0xb
+ 1316 00db 27       		.uleb128 0x27
+ 1317 00dc 19       		.uleb128 0x19
+ 1318 00dd 49       		.uleb128 0x49
+ 1319 00de 13       		.uleb128 0x13
+ 1320 00df 11       		.uleb128 0x11
+ 1321 00e0 01       		.uleb128 0x1
+ 1322 00e1 12       		.uleb128 0x12
+ 1323 00e2 06       		.uleb128 0x6
+ 1324 00e3 40       		.uleb128 0x40
+ 1325 00e4 18       		.uleb128 0x18
+ 1326 00e5 9642     		.uleb128 0x2116
+ 1327 00e7 19       		.uleb128 0x19
+ 1328 00e8 00       		.byte	0
+ 1329 00e9 00       		.byte	0
+ 1330 00ea 10       		.uleb128 0x10
+ 1331 00eb 05       		.uleb128 0x5
+ 1332 00ec 00       		.byte	0
+ 1333 00ed 03       		.uleb128 0x3
+ 1334 00ee 08       		.uleb128 0x8
+ 1335 00ef 3A       		.uleb128 0x3a
+ 1336 00f0 0B       		.uleb128 0xb
+ 1337 00f1 3B       		.uleb128 0x3b
+ 1338 00f2 0B       		.uleb128 0xb
+ 1339 00f3 49       		.uleb128 0x49
+ 1340 00f4 13       		.uleb128 0x13
+ 1341 00f5 02       		.uleb128 0x2
+ 1342 00f6 18       		.uleb128 0x18
+ 1343 00f7 00       		.byte	0
+ 1344 00f8 00       		.byte	0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 29
+
+
+ 1345 00f9 11       		.uleb128 0x11
+ 1346 00fa 2E       		.uleb128 0x2e
+ 1347 00fb 01       		.byte	0x1
+ 1348 00fc 3F       		.uleb128 0x3f
+ 1349 00fd 19       		.uleb128 0x19
+ 1350 00fe 03       		.uleb128 0x3
+ 1351 00ff 0E       		.uleb128 0xe
+ 1352 0100 3A       		.uleb128 0x3a
+ 1353 0101 0B       		.uleb128 0xb
+ 1354 0102 3B       		.uleb128 0x3b
+ 1355 0103 0B       		.uleb128 0xb
+ 1356 0104 49       		.uleb128 0x49
+ 1357 0105 13       		.uleb128 0x13
+ 1358 0106 11       		.uleb128 0x11
+ 1359 0107 01       		.uleb128 0x1
+ 1360 0108 12       		.uleb128 0x12
+ 1361 0109 06       		.uleb128 0x6
+ 1362 010a 40       		.uleb128 0x40
+ 1363 010b 18       		.uleb128 0x18
+ 1364 010c 9642     		.uleb128 0x2116
+ 1365 010e 19       		.uleb128 0x19
+ 1366 010f 01       		.uleb128 0x1
+ 1367 0110 13       		.uleb128 0x13
+ 1368 0111 00       		.byte	0
+ 1369 0112 00       		.byte	0
+ 1370 0113 12       		.uleb128 0x12
+ 1371 0114 34       		.uleb128 0x34
+ 1372 0115 00       		.byte	0
+ 1373 0116 03       		.uleb128 0x3
+ 1374 0117 08       		.uleb128 0x8
+ 1375 0118 3A       		.uleb128 0x3a
+ 1376 0119 0B       		.uleb128 0xb
+ 1377 011a 3B       		.uleb128 0x3b
+ 1378 011b 0B       		.uleb128 0xb
+ 1379 011c 49       		.uleb128 0x49
+ 1380 011d 13       		.uleb128 0x13
+ 1381 011e 00       		.byte	0
+ 1382 011f 00       		.byte	0
+ 1383 0120 13       		.uleb128 0x13
+ 1384 0121 34       		.uleb128 0x34
+ 1385 0122 00       		.byte	0
+ 1386 0123 03       		.uleb128 0x3
+ 1387 0124 0E       		.uleb128 0xe
+ 1388 0125 3A       		.uleb128 0x3a
+ 1389 0126 0B       		.uleb128 0xb
+ 1390 0127 3B       		.uleb128 0x3b
+ 1391 0128 0B       		.uleb128 0xb
+ 1392 0129 49       		.uleb128 0x49
+ 1393 012a 13       		.uleb128 0x13
+ 1394 012b 00       		.byte	0
+ 1395 012c 00       		.byte	0
+ 1396 012d 14       		.uleb128 0x14
+ 1397 012e 34       		.uleb128 0x34
+ 1398 012f 00       		.byte	0
+ 1399 0130 03       		.uleb128 0x3
+ 1400 0131 08       		.uleb128 0x8
+ 1401 0132 3A       		.uleb128 0x3a
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 30
+
+
+ 1402 0133 0B       		.uleb128 0xb
+ 1403 0134 3B       		.uleb128 0x3b
+ 1404 0135 0B       		.uleb128 0xb
+ 1405 0136 49       		.uleb128 0x49
+ 1406 0137 13       		.uleb128 0x13
+ 1407 0138 3F       		.uleb128 0x3f
+ 1408 0139 19       		.uleb128 0x19
+ 1409 013a 02       		.uleb128 0x2
+ 1410 013b 18       		.uleb128 0x18
+ 1411 013c 00       		.byte	0
+ 1412 013d 00       		.byte	0
+ 1413 013e 15       		.uleb128 0x15
+ 1414 013f 35       		.uleb128 0x35
+ 1415 0140 00       		.byte	0
+ 1416 0141 49       		.uleb128 0x49
+ 1417 0142 13       		.uleb128 0x13
+ 1418 0143 00       		.byte	0
+ 1419 0144 00       		.byte	0
+ 1420 0145 16       		.uleb128 0x16
+ 1421 0146 34       		.uleb128 0x34
+ 1422 0147 00       		.byte	0
+ 1423 0148 03       		.uleb128 0x3
+ 1424 0149 0E       		.uleb128 0xe
+ 1425 014a 3A       		.uleb128 0x3a
+ 1426 014b 0B       		.uleb128 0xb
+ 1427 014c 3B       		.uleb128 0x3b
+ 1428 014d 0B       		.uleb128 0xb
+ 1429 014e 49       		.uleb128 0x49
+ 1430 014f 13       		.uleb128 0x13
+ 1431 0150 3F       		.uleb128 0x3f
+ 1432 0151 19       		.uleb128 0x19
+ 1433 0152 02       		.uleb128 0x2
+ 1434 0153 18       		.uleb128 0x18
+ 1435 0154 00       		.byte	0
+ 1436 0155 00       		.byte	0
+ 1437 0156 00       		.byte	0
+ 1438              		.section	.debug_aranges,"",%progbits
+ 1439 0000 44000000 		.4byte	0x44
+ 1440 0004 0200     		.2byte	0x2
+ 1441 0006 00000000 		.4byte	.Ldebug_info0
+ 1442 000a 04       		.byte	0x4
+ 1443 000b 00       		.byte	0
+ 1444 000c 0000     		.2byte	0
+ 1445 000e 0000     		.2byte	0
+ 1446 0010 00000000 		.4byte	.LFB36
+ 1447 0014 B0000000 		.4byte	.LFE36-.LFB36
+ 1448 0018 00000000 		.4byte	.LFB37
+ 1449 001c 50000000 		.4byte	.LFE37-.LFB37
+ 1450 0020 00000000 		.4byte	.LFB38
+ 1451 0024 58000000 		.4byte	.LFE38-.LFB38
+ 1452 0028 00000000 		.4byte	.LFB39
+ 1453 002c 30000000 		.4byte	.LFE39-.LFB39
+ 1454 0030 00000000 		.4byte	.LFB40
+ 1455 0034 30000000 		.4byte	.LFE40-.LFB40
+ 1456 0038 00000000 		.4byte	.LFB41
+ 1457 003c 18020000 		.4byte	.LFE41-.LFB41
+ 1458 0040 00000000 		.4byte	0
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 31
+
+
+ 1459 0044 00000000 		.4byte	0
+ 1460              		.section	.debug_ranges,"",%progbits
+ 1461              	.Ldebug_ranges0:
+ 1462 0000 00000000 		.4byte	.LFB36
+ 1463 0004 B0000000 		.4byte	.LFE36
+ 1464 0008 00000000 		.4byte	.LFB37
+ 1465 000c 50000000 		.4byte	.LFE37
+ 1466 0010 00000000 		.4byte	.LFB38
+ 1467 0014 58000000 		.4byte	.LFE38
+ 1468 0018 00000000 		.4byte	.LFB39
+ 1469 001c 30000000 		.4byte	.LFE39
+ 1470 0020 00000000 		.4byte	.LFB40
+ 1471 0024 30000000 		.4byte	.LFE40
+ 1472 0028 00000000 		.4byte	.LFB41
+ 1473 002c 18020000 		.4byte	.LFE41
+ 1474 0030 00000000 		.4byte	0
+ 1475 0034 00000000 		.4byte	0
+ 1476              		.section	.debug_line,"",%progbits
+ 1477              	.Ldebug_line0:
+ 1478 0000 39020000 		.section	.debug_str,"MS",%progbits,1
+ 1478      02003901 
+ 1478      00000201 
+ 1478      FB0E0D00 
+ 1478      01010101 
+ 1479              	.LASF40:
+ 1480 0000 6973725F 		.ascii	"isr_MYTIMER_Interrupt\000"
+ 1480      4D595449 
+ 1480      4D45525F 
+ 1480      496E7465 
+ 1480      72727570 
+ 1481              	.LASF28:
+ 1482 0016 7365745F 		.ascii	"set_val\000"
+ 1482      76616C00 
+ 1483              	.LASF9:
+ 1484 001e 5F5F7569 		.ascii	"__uint8_t\000"
+ 1484      6E74385F 
+ 1484      7400
+ 1485              	.LASF29:
+ 1486 0028 446F564C 		.ascii	"DoVLoop\000"
+ 1486      6F6F7000 
+ 1487              	.LASF27:
+ 1488 0030 695F7465 		.ascii	"i_term\000"
+ 1488      726D00
+ 1489              	.LASF3:
+ 1490 0037 73686F72 		.ascii	"short unsigned int\000"
+ 1490      7420756E 
+ 1490      7369676E 
+ 1490      65642069 
+ 1490      6E7400
+ 1491              	.LASF39:
+ 1492 004a 433A5C70 		.ascii	"C:\\psoc\\chamonix\\camera\\Workspace01\\camera.cyd"
+ 1492      736F635C 
+ 1492      6368616D 
+ 1492      6F6E6978 
+ 1492      5C63616D 
+ 1493 0078 736E00   		.ascii	"sn\000"
+ 1494              	.LASF21:
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 32
+
+
+ 1495 007b 6C65645F 		.ascii	"led_enable\000"
+ 1495      656E6162 
+ 1495      6C6500
+ 1496              	.LASF14:
+ 1497 0086 666C6F61 		.ascii	"float\000"
+ 1497      7400
+ 1498              	.LASF41:
+ 1499 008c 47657454 		.ascii	"GetTrig\000"
+ 1499      72696700 
+ 1500              	.LASF20:
+ 1501 0094 68765F76 		.ascii	"hv_volt\000"
+ 1501      6F6C7400 
+ 1502              	.LASF1:
+ 1503 009c 756E7369 		.ascii	"unsigned char\000"
+ 1503      676E6564 
+ 1503      20636861 
+ 1503      7200
+ 1504              	.LASF18:
+ 1505 00aa 61637469 		.ascii	"action\000"
+ 1505      6F6E00
+ 1506              	.LASF25:
+ 1507 00b1 66696C6C 		.ascii	"fill\000"
+ 1507      00
+ 1508              	.LASF13:
+ 1509 00b6 696E7431 		.ascii	"int16\000"
+ 1509      3600
+ 1510              	.LASF5:
+ 1511 00bc 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1511      20756E73 
+ 1511      69676E65 
+ 1511      6420696E 
+ 1511      7400
+ 1512              	.LASF11:
+ 1513 00ce 75696E74 		.ascii	"uint8\000"
+ 1513      3800
+ 1514              	.LASF32:
+ 1515 00d4 44726976 		.ascii	"DriveRight\000"
+ 1515      65526967 
+ 1515      687400
+ 1516              	.LASF36:
+ 1517 00df 7469636B 		.ascii	"tick\000"
+ 1517      00
+ 1518              	.LASF15:
+ 1519 00e4 646F7562 		.ascii	"double\000"
+ 1519      6C6500
+ 1520              	.LASF33:
+ 1521 00eb 6D61696E 		.ascii	"main\000"
+ 1521      00
+ 1522              	.LASF12:
+ 1523 00f0 75696E74 		.ascii	"uint32\000"
+ 1523      333200
+ 1524              	.LASF37:
+ 1525 00f7 474E5520 		.ascii	"GNU C 4.9.3 20150303 (release) [ARM/embedded-4_9-br"
+ 1525      4320342E 
+ 1525      392E3320 
+ 1525      32303135 
+ 1525      30333033 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 33
+
+
+ 1526 012a 616E6368 		.ascii	"anch revision 221220] -mcpu=cortex-m0 -mthumb -g -O"
+ 1526      20726576 
+ 1526      6973696F 
+ 1526      6E203232 
+ 1526      31323230 
+ 1527 015d 30202D66 		.ascii	"0 -ffunction-sections -ffat-lto-objects\000"
+ 1527      66756E63 
+ 1527      74696F6E 
+ 1527      2D736563 
+ 1527      74696F6E 
+ 1528              	.LASF8:
+ 1529 0185 756E7369 		.ascii	"unsigned int\000"
+ 1529      676E6564 
+ 1529      20696E74 
+ 1529      00
+ 1530              	.LASF7:
+ 1531 0192 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1531      206C6F6E 
+ 1531      6720756E 
+ 1531      7369676E 
+ 1531      65642069 
+ 1532              	.LASF10:
+ 1533 01a9 75696E74 		.ascii	"uint8_t\000"
+ 1533      385F7400 
+ 1534              	.LASF30:
+ 1535 01b1 44726976 		.ascii	"DriveLeft\000"
+ 1535      654C6566 
+ 1535      7400
+ 1536              	.LASF35:
+ 1537 01bb 745F636F 		.ascii	"t_count\000"
+ 1537      756E7400 
+ 1538              	.LASF26:
+ 1539 01c3 53455454 		.ascii	"SETTINGS\000"
+ 1539      494E4753 
+ 1539      00
+ 1540              	.LASF17:
+ 1541 01cc 73697A65 		.ascii	"sizetype\000"
+ 1541      74797065 
+ 1541      00
+ 1542              	.LASF6:
+ 1543 01d5 6C6F6E67 		.ascii	"long long int\000"
+ 1543      206C6F6E 
+ 1543      6720696E 
+ 1543      7400
+ 1544              	.LASF22:
+ 1545 01e3 74726967 		.ascii	"trig_source\000"
+ 1545      5F736F75 
+ 1545      72636500 
+ 1546              	.LASF38:
+ 1547 01ef 6D61696E 		.ascii	"main.c\000"
+ 1547      2E6300
+ 1548              	.LASF16:
+ 1549 01f6 63686172 		.ascii	"char\000"
+ 1549      00
+ 1550              	.LASF34:
+ 1551 01fb 636F6D42 		.ascii	"comBuff\000"
+ 1551      75666600 
+ARM GAS  C:\Users\ilya\AppData\Local\Temp\cc0LO5vV.s 			page 34
+
+
+ 1552              	.LASF31:
+ 1553 0203 765F7365 		.ascii	"v_set\000"
+ 1553      7400
+ 1554              	.LASF2:
+ 1555 0209 73686F72 		.ascii	"short int\000"
+ 1555      7420696E 
+ 1555      7400
+ 1556              	.LASF4:
+ 1557 0213 6C6F6E67 		.ascii	"long int\000"
+ 1557      20696E74 
+ 1557      00
+ 1558              	.LASF19:
+ 1559 021c 68765F65 		.ascii	"hv_enable\000"
+ 1559      6E61626C 
+ 1559      6500
+ 1560              	.LASF23:
+ 1561 0226 695F7365 		.ascii	"i_set\000"
+ 1561      7400
+ 1562              	.LASF0:
+ 1563 022c 7369676E 		.ascii	"signed char\000"
+ 1563      65642063 
+ 1563      68617200 
+ 1564              	.LASF24:
+ 1565 0238 6D61785F 		.ascii	"max_time\000"
+ 1565      74696D65 
+ 1565      00
+ 1566              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.9.3 20150303 (release) [ARM/embedded-4_9-br

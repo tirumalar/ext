@@ -1,0 +1,76 @@
+/*
+ * CmxFrameGrabber.h
+ *
+ *  Created on: January 18, 2017
+ *      Author: fjia
+ */
+
+#ifndef CMXFRAMEGRABBER_H_
+#define CMXFRAMEGRABBER_H_
+
+#include "FrameGrabber.h"
+#include "CamConfig.h"
+
+#include <pthread.h>
+#include <vector>
+#include <deque>
+#include "HThread.h"
+#include "Synchronization.h"
+
+
+
+#define MEM_SIZE 32 * 1024 * 1024
+
+typedef RingBuffer<ImageProp> RingBufferImage;
+typedef RingBuffer<int> RingBufferOffset;
+//enum FGSTATE{eREQUIREFRAME=0,eDUMMYCAPTURE};
+
+class CmxFrameGrabber: public FrameGrabber, public HThread
+{
+public:
+	CmxFrameGrabber();
+	virtual ~CmxFrameGrabber();
+	virtual void init(Configuration *pCfg=0);
+	virtual void term();
+	virtual bool start(bool bStillFrames=false){return true;}
+	virtual bool stop(){return true;}
+	virtual bool isRunning(){ return true;}
+	virtual void getDims(int& width, int& height) const;
+	virtual char *getLatestFrame_raw();
+	void setLatestFrame_raw(char *ptr);
+	void SetState(FGSTATE state);
+	FGSTATE GetState();
+protected :
+	int m_Width,m_Height,m_WidthStep;
+	char *m_Ptr;
+	unsigned char *m_pImageBuffer;
+	RingBufferImage *m_pRingBuffer;
+	RingBufferOffset *m_RingBufferOffset;
+	unsigned char *m_Map_base;
+	int m_numbits;
+	bool m_Debug;
+	int m_BufferSize;
+	int m_ImageSize;
+	int m_dummyOffset;
+	bool m_DummyOffsetFullyAllocated;
+	FGSTATE m_state;
+	Mutex m_ShiftAndDCLock;
+	Mutex m_stateLock;
+
+	Mutex m_grabLock;
+	bool m_dograb;
+	void  Epilog();
+	unsigned int process(int& index, int& i,int& recipeIndex );
+	std::vector<std::pair<unsigned short, unsigned short> > m_shiftAndOffset;
+	int m_NextShiftAndDCSec;
+	bool m_diffIllumination;
+	//int m_masterExposure;
+	//int m_slaveExposure;
+	//bool m_resetusingpsoc;
+
+	virtual const char* getName() { return "CmxFrameGrabber"; }
+	unsigned int MainLoop(); // iFrameGrabbermplement virtual
+	void GetShiftAndOffset(unsigned short& dc,int& shift);
+};
+
+#endif /* CMXFRAMEGRABBER_H_ */
