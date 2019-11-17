@@ -58,7 +58,7 @@
 #define SCS_18				0x18
 
 
-typedef unsigned int uint16;
+// typedef unsigned int uint16;
 
 
 enum SECURETYPE{RAND=0, SCBK, DERIVEKEY, CRYPTOGRAM, MAC_I};

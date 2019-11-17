@@ -49,6 +49,11 @@ void BiOmega::SetEnableEyelidSegmentation(bool val){
 		m_pEyeSegmentInterface->EnableEyelidSegmentation(val);
 }
 
+void BiOmega::SetEXTAusSegmentationFlag(bool val){
+	if(m_pEyeSegmentInterface)
+		m_pEyeSegmentInterface->EnableAusSegmentation(val);
+}
+
 void BiOmega::SetUpperEyelidCenterandRadius(CvPoint cenPt,float rad ){
 	if(m_pEyeSegmentInterface)
 		m_pEyeSegmentInterface->SetUpperEyelidCenterandRadius(cenPt,rad);

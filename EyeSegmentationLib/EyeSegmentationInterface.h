@@ -14,6 +14,36 @@ struct _IplImage;
 
 // #define SEG
 
+#include "Iris.h"
+#include "Encode.h"
+
+class AusSegment {
+
+private:
+  int input_image_rotation_TEMP;
+  int baseline_margin_TEMP;
+public:
+  AusIris* m_Iris;
+  Encode* m_Encode;
+  IplImage *EyeCropHeader_640_480;
+  IplImage *EyeCropHeader_320_240;
+  IplImage *m_flatIris;
+  IplImage *m_flatMask;
+  AusSegment();
+
+  int GenerateTemplate(uint8_t* face_image, uint8_t* left_template_encode,
+                       uint8_t* left_template_mask,
+                       uint8_t* right_template_encode,
+                       uint8_t* right_template_mask);
+  int GenerateEyecrops(uint8_t* face_image, uint8_t* left_eyecrop,
+                       uint8_t* right_eyecrop);
+  int GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris,
+                       uint8_t* partial_mask);
+  int GenerateEncodedTemplate(uint8_t* flat_iris, uint8_t* partial_mask,
+                              uint8_t* template_encode, uint8_t* template_mask);
+  ~AusSegment();
+};
+
 typedef struct
 {
 	float x;
@@ -56,6 +86,7 @@ public:
 	void SetEyelidSearchSampling(double sampling);
 	void SetCoarseSearchSampling(double sampling);
 	void EnableEyelidSegmentation(bool enable=true);
+	void EnableAusSegmentation(bool bEnableAusSeg);
 	void SetUpperEyelidCenterandRadius(CvPoint cenPt,float rad);
 	void SetLowerEyelidCenterandRadius(CvPoint cenPt,float rad);
 
@@ -82,6 +113,7 @@ public:
 	float GetCorruptBitsPerc(){ return m_corruptBitcountPerc;}
 	// EyeSegmentationOutput GetFlatIrisMask(unsigned char *imageBuffer, int w, int h, int stride, unsigned char *Iriscode, unsigned char *Maskcode, IrisPupilCircles *pCircles);
 private:
+	bool m_bEnableAusSeg;
 	EyeSegmentServer *m_pEyeSegmentServer;
 	EyeFeatureServer *m_pEyeFeatureServer;
 	EyeSegmentationOutput *m_eso;
@@ -90,6 +122,10 @@ private:
 	int m_index;
 	int m_maxCorruptBitsPercAllowed;
 	float m_corruptBitcountPerc;
+
+	// To Enable Austin Segmentation Code
+	AusSegment* m_AusSegment;
+
 };
 
 class EYESEGMENTATIONLIB_EXPORTS_DLL_EXPORT IrisMatchInterface
