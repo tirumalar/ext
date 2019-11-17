@@ -73,13 +73,18 @@ void EyeSegmentationInterface::term()
 	if(m_pEyeFeatureServer) delete m_pEyeFeatureServer; m_pEyeFeatureServer = 0;
 }
 
-EyeSegmentationInterface::EyeSegmentationInterface():m_index(0),m_maxCorruptBitsPercAllowed(70)
+EyeSegmentationInterface::EyeSegmentationInterface():m_index(0),m_maxCorruptBitsPercAllowed(70),m_bEnableAusSeg(false)
 {
 //	m_rng = cvRNG();
+
+
+
 	m_eso = new EyeSegmentationOutput;
 	m_flatMask = cvCreateImage(cvSize(480, 64), IPL_DEPTH_8U, 1);
 	m_flatMaskIntegral = cvCreateImage(cvSize(480+1, 64+1), IPL_DEPTH_32S, 1);
 	cvSetZero(m_flatMask);
+
+	m_AusSegment = new AusSegment();
 }
 
 EyeSegmentationInterface::~EyeSegmentationInterface()
@@ -142,6 +147,11 @@ void EyeSegmentationInterface::SetLowerEyelidCenterandRadius(CvPoint cenPt,float
 void EyeSegmentationInterface::EnableEyelidSegmentation(bool enable)
 {
 	m_pEyeSegmentServer->EnableEyelidSegmentation(enable);
+}
+
+void EyeSegmentationInterface::EnableAusSegmentation(bool bEnableAusSeg)
+{
+	m_bEnableAusSeg = bEnableAusSeg;
 }
 void EyeSegmentationInterface::EnableEyeQualityAssessment(bool enable)
 {
@@ -323,189 +333,247 @@ int LoadEyelockConfigINIFile(){
 	return saveSegImages;
 }
 
+AusSegment::AusSegment() {
+  size_t image_height = 1944;
+  size_t image_width = 2592;
+  size_t eyecrop_height = 240;
+  size_t eyecrop_width = 320;
+  size_t flat_iris_height = 64;
+  size_t flat_iris_width = 480;
+  size_t template_height = 8;
+  size_t template_width = 160;
+  int base_scale = 6;
+
+  EyeCropHeader_640_480 = cvCreateImageHeader(cvSize(640, 480), IPL_DEPTH_8U, 1);
+  EyeCropHeader_320_240 = cvCreateImage(cvSize(320, 240), IPL_DEPTH_8U, 1);
+  m_flatIris = cvCreateImage(cvSize(480, 64), IPL_DEPTH_8U, 1);
+  m_flatMask = cvCreateImage(cvSize(480, 64), IPL_DEPTH_8U, 1);
+
+  m_Iris = new AusIris(eyecrop_width, eyecrop_height, flat_iris_width,
+                  flat_iris_height);
+
+  m_Encode = new Encode(base_scale, flat_iris_width, flat_iris_height,
+                       template_width, template_height);
+  // TODO: Take as input fullsize image buffer size
+  m_Iris->AusIris_init();
+}
+
+AusSegment::~AusSegment() {
+	std::cout << "Pipeline Deconstructed\n" << std::endl;
+
+	if(EyeCropHeader_640_480)
+		cvReleaseImage(&EyeCropHeader_640_480);
+	if(EyeCropHeader_320_240)
+		cvReleaseImage(&EyeCropHeader_320_240);
+	if(m_flatIris)
+		cvReleaseImage(&m_flatIris);
+	if(m_flatMask)
+		cvReleaseImage(&m_flatMask);
+}
+
 bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, int h, int stride, unsigned char *Iriscode, unsigned char *Maskcode, IrisPupilCircles *pCircles)
 {
-	////printf("*********entering GetIrisCode *************\n");
-	m_corruptBitcountPerc = 0.0f;
-	IplImage *image = cvCreateImageHeader(cvSize(w, h), IPL_DEPTH_8U, 1);
+	if(m_bEnableAusSeg){
+		CvRect rect = {160, 120, 320, 240};
+		printf("1\n");
+		cvSetData(m_AusSegment->EyeCropHeader_640_480, imageBuffer, 640);
+		printf("2\n");
+		cvSetImageROI(m_AusSegment->EyeCropHeader_640_480,rect);
+		printf("3\n");
+		cvCopy(m_AusSegment->EyeCropHeader_640_480,m_AusSegment->EyeCropHeader_320_240);
+		printf("4\n");
+		cvResetImageROI(m_AusSegment->EyeCropHeader_640_480);
+		printf("5\n");
+		m_AusSegment->m_Iris->GenerateFlatIris((unsigned char*)m_AusSegment->EyeCropHeader_320_240->imageData,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData);
+		printf("6\n");
+		cv::Mat mateye1 = cv::cvarrToMat(m_AusSegment->EyeCropHeader_320_240);
+		cv::imshow("Test1", mateye1);
+		cvWaitKey(1);
+		m_AusSegment->m_Encode->EncodeFlatIris((unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, Iriscode, Maskcode);
+		printf("7\n");
+	}else{
+		////printf("*********entering GetIrisCode *************\n");
+		m_corruptBitcountPerc = 0.0f;
+		IplImage *image = cvCreateImageHeader(cvSize(w, h), IPL_DEPTH_8U, 1);
 
-	cvSetData(image, imageBuffer, stride);
+		cvSetData(image, imageBuffer, stride);
 
-	PROFILE_START(PROCESSIMAGE)
-	memcpy(m_eso, &(m_pEyeSegmentServer->Process(image, m_index++)), sizeof(EyeSegmentationOutput));
+		PROFILE_START(PROCESSIMAGE)
+		memcpy(m_eso, &(m_pEyeSegmentServer->Process(image, m_index++)), sizeof(EyeSegmentationOutput));
 
-	// printf("After Process m_eso->ip.x value %f\n", m_eso->ip.x);
-	PROFILE_END(PROCESSIMAGE)
-
-	CvScalar color = cvRealScalar(255);
-#if 0 //Anita
-	if( m_eso->ip.x > 0 )
-	{
-		EyeSegmentationOutput tmp1 = *m_eso;
+		// printf("After Process m_eso->ip.x value %f\n", m_eso->ip.x);
+		PROFILE_END(PROCESSIMAGE)
 	
-		draw( image, tmp1.pp, color );
-		draw( image, tmp1.ip, color );
-		cvSaveImage("segmented_Image.pgm",image);
-	}
-#endif
-#if 0
-	if( m_eso->ip.x > 0 )
-	{
-		draw( image, m_eso->pp, color );
-		draw( image, m_eso->ip, color );
-	}
-	char fName[100];
-	sprintf(fName,"eye_%d.pgm",m_index-1);
-	cvSaveImage(fName,image);
-
-#endif
-
-
-
-	//cvReleaseImageHeader(&image);
-
-	memset( Iriscode, 0, m_pEyeFeatureServer->GetFeatureLength() );
-	memset( Maskcode, -1, m_pEyeFeatureServer->GetFeatureLength() );
-#ifdef SEG
-	printf("m_eso->ip.x...%d", m_eso->ip.x);
-#endif
-
-	if( m_eso->ip.x < 0 )
-	{
-		cvSet( m_eso->flatIris, cvScalar(0) );
-        cvSet( m_eso->flatMask, cvScalar(0) );
-		return false;
-	}
-
-	// printf("Before pCircles\n");
-
-	if(pCircles)
-	{
-		pCircles->ip.x = m_eso->ip.x;
-		pCircles->ip.y = m_eso->ip.y;
-		pCircles->ip.r = m_eso->ip.z;
-
-		pCircles->pp.x = m_eso->pp.x;
-		pCircles->pp.y = m_eso->pp.y;
-		pCircles->pp.r = m_eso->pp.z;
-    }
-
-
-
-
-	// TO BE REMOVED _ JUST FOR TEST - IMPORTANT
-//	cvRandArr(&m_rng, m_eso->flatIris, CV_RAND_UNI, cvRealScalar(0), cvRealScalar(256));
-
-
-	//SAVE_NAME_INDX(m_eso->flatIris,"flatIris",m_index);
-	//SAVE_NAME_INDX(m_eso->flatMask,"flatMask",m_index);
-	// printf("Before Extract Features\n");
-	PROFILE_START(EXTRACTFEAT)
-	XTIME_OP("ExtractFeatures",
-	m_pEyeFeatureServer->ExtractFeatures(m_eso->flatIris, m_eso->flatMask, Iriscode, Maskcode)
-	);
-	PROFILE_END(EXTRACTFEAT)
-	// printf("After Extract Features\n");
-	/*char fName[100];
-	sprintf(fName,"Iris_%d.pgm",m_index-1);
-	cvSaveImage(fName,m_eso->flatIris);
-	sprintf(fName,"Mask_%d.pgm",m_index-1);
-	cvSaveImage(fName,m_eso->flatMask);*/
-
-
-	PROFILE_START(GOODSEG)
-
-	double corruptBitcount = m_pEyeFeatureServer->checkBitCorruption(Maskcode);
-	corruptBitcount /= m_pEyeFeatureServer->GetFeatureLength() << 3;		// << 3 consequence of making iris code a byte
-	corruptBitcount *=100;
-
-	m_corruptBitcountPerc = (float)corruptBitcount;
-	//Validation for Annular region
-	int AnnularCheck = 0;
-	float cdist = sqrt((m_eso->ip.x - m_eso->pp.x)*(m_eso->ip.x - m_eso->pp.x) + (m_eso->ip.y - m_eso->pp.y)*(m_eso->ip.y - m_eso->pp.y));
-	if((m_eso->pp.z + cdist) > m_eso->ip.z - 10 || cdist > 30 )
-		AnnularCheck = 0; //Failed
-	else
-		AnnularCheck = 1;
-
-	CvPoint2D32f SegmentationCheck = m_pEyeSegmentServer->m_SegmentationCheck;
-	PROFILE_END(GOODSEG)
-
-	if(corruptBitcount > m_maxCorruptBitsPercAllowed)
-		printf("Too many Bits Corrupted\n");
-
-	char name[100];
-	static int segmented_count;
-	//char filename[100];
-	//FILE *fp;
-	// static int i;
-	int SaveSegImages = LoadEyelockConfigINIFile();
-	bool segresult = false;
-
-	if(corruptBitcount <= m_maxCorruptBitsPercAllowed && (AnnularCheck==1)) // && Getiseye() ) // Original Check
-	{
+		CvScalar color = cvRealScalar(255);
+	#if 0 //Anita
 		if( m_eso->ip.x > 0 )
 		{
-
 			EyeSegmentationOutput tmp1 = *m_eso;
-			// segmentation(unsigned char *data, int w, int h, float pupilX, float pupilY, float pupilR, float irisX, float irisY, float irisR)
-			// bool status = (bool)segmentation((unsigned char*)imageBuffer, 640,480, m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
 
-			double centerError = sqrt(abs((int)pCircles->ip.x-(int)pCircles->pp.x)*abs((int)pCircles->ip.x-(int)pCircles->pp.x) + abs((int)pCircles->ip.y-(int)pCircles->pp.y)*abs((int)pCircles->ip.y-(int)pCircles->pp.y));
-			double imageCenterError = sqrt(abs(320-(int)pCircles->pp.x)*abs(320-(int)pCircles->pp.x) + abs(240-(int)pCircles->pp.y)*abs(240-(int)pCircles->pp.y));
+			draw( image, tmp1.pp, color );
+			draw( image, tmp1.ip, color );
+			cvSaveImage("segmented_Image.pgm",image);
+		}
+	#endif
+	#if 0
+		if( m_eso->ip.x > 0 )
+		{
+			draw( image, m_eso->pp, color );
+			draw( image, m_eso->ip, color );
+		}
+		char fName[100];
+		sprintf(fName,"eye_%d.pgm",m_index-1);
+		cvSaveImage(fName,image);
 
-			if ((centerError < 8) && (imageCenterError < 25) && (pCircles->ip.r/pCircles->pp.r > 2))
-				segresult = true;
-			else
-		       segresult = false;
+	#endif
 
-			int fontFace = CV_FONT_HERSHEY_SIMPLEX;
-			double fontScale = 1;
-			if(SaveSegImages){
-				if (segresult)
-				{
-					draw( image, tmp1.pp, color );
-					draw( image, tmp1.ip, color );
-					sprintf(name, "Good_segmented_image_%d.bmp",segmented_count++);
-					cv::Mat mateye = cv::cvarrToMat(image);
-					std::ostringstream ssCoInfo;
-					ssCoInfo << "pp=" << tmp1.pp.z << "ip" << tmp1.ip.z;
-					putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cvScalar(0,122,122), 3, 4);
-					imwrite(name, mateye);
-					mateye.release();
-					// cvSaveImage(name,image);
-					//sprintf(filename,"text_%d.txt",segmented_count++);
-					//fp = fopen(filename, "wb");
-					//fprintf(fp, "%f %f %f %f %f %f %f", m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
-					//fclose(fp);
-					// cvSaveImage("segmented_Image.pgm",image);
-				}
+
+
+		//cvReleaseImageHeader(&image);
+
+		memset( Iriscode, 0, m_pEyeFeatureServer->GetFeatureLength() );
+		memset( Maskcode, -1, m_pEyeFeatureServer->GetFeatureLength() );
+	#ifdef SEG
+		printf("m_eso->ip.x...%d", m_eso->ip.x);
+	#endif
+
+		if( m_eso->ip.x < 0 )
+		{
+			cvSet( m_eso->flatIris, cvScalar(0) );
+			cvSet( m_eso->flatMask, cvScalar(0) );
+			return false;
+		}
+
+		// printf("Before pCircles\n");
+
+		if(pCircles)
+		{
+			pCircles->ip.x = m_eso->ip.x;
+			pCircles->ip.y = m_eso->ip.y;
+			pCircles->ip.r = m_eso->ip.z;
+
+			pCircles->pp.x = m_eso->pp.x;
+			pCircles->pp.y = m_eso->pp.y;
+			pCircles->pp.r = m_eso->pp.z;
+		}
+
+
+
+
+		// TO BE REMOVED _ JUST FOR TEST - IMPORTANT
+	//	cvRandArr(&m_rng, m_eso->flatIris, CV_RAND_UNI, cvRealScalar(0), cvRealScalar(256));
+
+
+		//SAVE_NAME_INDX(m_eso->flatIris,"flatIris",m_index);
+		//SAVE_NAME_INDX(m_eso->flatMask,"flatMask",m_index);
+		// printf("Before Extract Features\n");
+		PROFILE_START(EXTRACTFEAT)
+		XTIME_OP("ExtractFeatures",
+		m_pEyeFeatureServer->ExtractFeatures(m_eso->flatIris, m_eso->flatMask, Iriscode, Maskcode)
+		);
+		PROFILE_END(EXTRACTFEAT)
+		// printf("After Extract Features\n");
+		/*char fName[100];
+		sprintf(fName,"Iris_%d.pgm",m_index-1);
+		cvSaveImage(fName,m_eso->flatIris);
+		sprintf(fName,"Mask_%d.pgm",m_index-1);
+		cvSaveImage(fName,m_eso->flatMask);*/
+
+
+		PROFILE_START(GOODSEG)
+
+		double corruptBitcount = m_pEyeFeatureServer->checkBitCorruption(Maskcode);
+		corruptBitcount /= m_pEyeFeatureServer->GetFeatureLength() << 3;		// << 3 consequence of making iris code a byte
+		corruptBitcount *=100;
+
+		m_corruptBitcountPerc = (float)corruptBitcount;
+		//Validation for Annular region
+		int AnnularCheck = 0;
+		float cdist = sqrt((m_eso->ip.x - m_eso->pp.x)*(m_eso->ip.x - m_eso->pp.x) + (m_eso->ip.y - m_eso->pp.y)*(m_eso->ip.y - m_eso->pp.y));
+		if((m_eso->pp.z + cdist) > m_eso->ip.z - 10 || cdist > 30 )
+			AnnularCheck = 0; //Failed
+		else
+			AnnularCheck = 1;
+
+		CvPoint2D32f SegmentationCheck = m_pEyeSegmentServer->m_SegmentationCheck;
+		PROFILE_END(GOODSEG)
+
+		if(corruptBitcount > m_maxCorruptBitsPercAllowed)
+			printf("Too many Bits Corrupted\n");
+
+		char name[100];
+		static int segmented_count;
+		//char filename[100];
+		//FILE *fp;
+		// static int i;
+		int SaveSegImages = LoadEyelockConfigINIFile();
+		bool segresult = false;
+
+		if(corruptBitcount <= m_maxCorruptBitsPercAllowed && (AnnularCheck==1)) // && Getiseye() ) // Original Check
+		{
+			if( m_eso->ip.x > 0 )
+			{
+
+				EyeSegmentationOutput tmp1 = *m_eso;
+				// segmentation(unsigned char *data, int w, int h, float pupilX, float pupilY, float pupilR, float irisX, float irisY, float irisR)
+				// bool status = (bool)segmentation((unsigned char*)imageBuffer, 640,480, m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
+
+				double centerError = sqrt(abs((int)pCircles->ip.x-(int)pCircles->pp.x)*abs((int)pCircles->ip.x-(int)pCircles->pp.x) + abs((int)pCircles->ip.y-(int)pCircles->pp.y)*abs((int)pCircles->ip.y-(int)pCircles->pp.y));
+				double imageCenterError = sqrt(abs(320-(int)pCircles->pp.x)*abs(320-(int)pCircles->pp.x) + abs(240-(int)pCircles->pp.y)*abs(240-(int)pCircles->pp.y));
+
+				if ((centerError < 8) && (imageCenterError < 25) && (pCircles->ip.r/pCircles->pp.r > 2))
+					segresult = true;
 				else
-				{
-					draw( image, tmp1.pp, color );
-					draw( image, tmp1.ip, color );
-					sprintf(name, "Bad_segmented_image_%d.bmp",segmented_count++);
-					cv::Mat mateye = cv::cvarrToMat(image);
-					std::ostringstream ssCoInfo;
-					ssCoInfo << "pp=" << tmp1.pp.z << "ip=" << tmp1.ip.z;
-					putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cvScalar(0,122,122), 3, 4);
-					imwrite(name, mateye);
-					mateye.release();
-					// cvSaveImage(name,image);
-					//sprintf(filename,"text_%d.txt",segmented_count++);
-					//fp = fopen(filename, "wb");
-					//fprintf(fp, "%f %f %f %f %f %f %f", m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
-					//fclose(fp);
+				   segresult = false;
+
+				int fontFace = CV_FONT_HERSHEY_SIMPLEX;
+				double fontScale = 1;
+				if(SaveSegImages){
+					if (segresult)
+					{
+						draw( image, tmp1.pp, color );
+						draw( image, tmp1.ip, color );
+						sprintf(name, "Good_segmented_image_%d.bmp",segmented_count++);
+						cv::Mat mateye = cv::cvarrToMat(image);
+						std::ostringstream ssCoInfo;
+						ssCoInfo << "pp=" << tmp1.pp.z << "ip" << tmp1.ip.z;
+						putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cvScalar(0,122,122), 3, 4);
+						imwrite(name, mateye);
+						mateye.release();
+						// cvSaveImage(name,image);
+						//sprintf(filename,"text_%d.txt",segmented_count++);
+						//fp = fopen(filename, "wb");
+						//fprintf(fp, "%f %f %f %f %f %f %f", m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
+						//fclose(fp);
+						// cvSaveImage("segmented_Image.pgm",image);
+					}
+					else
+					{
+						draw( image, tmp1.pp, color );
+						draw( image, tmp1.ip, color );
+						sprintf(name, "Bad_segmented_image_%d.bmp",segmented_count++);
+						cv::Mat mateye = cv::cvarrToMat(image);
+						std::ostringstream ssCoInfo;
+						ssCoInfo << "pp=" << tmp1.pp.z << "ip=" << tmp1.ip.z;
+						putText(mateye, ssCoInfo.str().c_str(), cvPoint(30,30), fontFace, fontScale, cvScalar(0,122,122), 3, 4);
+						imwrite(name, mateye);
+						mateye.release();
+						// cvSaveImage(name,image);
+						//sprintf(filename,"text_%d.txt",segmented_count++);
+						//fp = fopen(filename, "wb");
+						//fprintf(fp, "%f %f %f %f %f %f %f", m_eso->pp.x, m_eso->pp.y, m_eso->pp.z, m_eso->ip.x, m_eso->ip.y, m_eso->ip.z);
+						//fclose(fp);
+					}
 				}
 			}
+			cvReleaseImageHeader(&image);
+			return segresult; // Iris and Segmentation is OK
 		}
-		cvReleaseImageHeader(&image);
-		return segresult; // Iris and Segmentation is OK
-	}
-	else{
-		printf("Inside GetIrisCode bad Seg\n");
-		cvReleaseImageHeader(&image);
-		return segresult; // Iris or Segmentation is NOT OK
+		else{
+			printf("Inside GetIrisCode bad Seg\n");
+			cvReleaseImageHeader(&image);
+			return segresult; // Iris or Segmentation is NOT OK
+		}
 	}
 
 }

@@ -116,13 +116,14 @@ public:
 	virtual void PrintGUIDs(){}
 	virtual bool SendPCMatchMsg(char *msg, int len){return 0;}
 	char *GetCardMatchName(){return m_cardMatchName;}
+	int m_numIris;
 #ifndef UNITTEST
 protected:
 #endif
 	MatchManagerInterface *m_pMatchManagerInterface;
 	IrisMatchInterface *m_pIrisMatchInterface;
 	IrisMatchInterface *m_pIrisMatchInterfaceCoarse;
-	int m_numIris;
+
 	int m_startIndx;
 	int m_ID;
 	int m_size;

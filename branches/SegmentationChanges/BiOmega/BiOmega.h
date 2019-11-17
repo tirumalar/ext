@@ -39,6 +39,7 @@ public:
 	int GetMaxCorruptBitsPercAllowed();
 	void SetMaxCorruptBitsPercAllowed(int perc);
 	float GetCorruptBitsPerc(void);
+	void SetEXTAusSegmentationFlag(bool Val);
 	bool GetIrisCode(unsigned char *imageBuffer, int w, int h, int stride, char *Iriscode,IrisPupilCircles *pCircles=NULL, float *robustFetaureVariance=NULL );
 	bool GetDefaultMaskCode(unsigned char *IrisCode);
 	std::pair<int, float> MatchIris(unsigned char *imageBuffer, int w, int h, int stride, char *irisCodeDatabase, int numberOfEyes,IrisPupilCircles *pCircles=NULL,CvPoint2D32f *pRefCentre=NULL,CvPoint2D32f *pVar=NULL,int specrad =14);
