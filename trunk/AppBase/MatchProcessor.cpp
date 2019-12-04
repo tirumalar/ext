@@ -62,6 +62,10 @@ MatchProcessor::MatchProcessor(Configuration& conf) :
 	if(fine) scale = 0;
 	EyelockLog(logger, DEBUG, "Width %d  Height %d  ",m_width,m_height);
 	m_bioInstance = new BiOmega(m_width, m_height,scale);
+	// Initialize Aus Segment Code
+	m_EnableAusSeg = conf.getValue("Eyelock.AusSegmentationCode", false);
+	m_bioInstance->SetEXTAusSegmentationFlag(m_EnableAusSeg);
+
 #ifdef __ANDROID__
 	int pupilmin5 = conf.getValue("GRI.minPupilLutValue", 2);
 #else
@@ -246,6 +250,7 @@ MatchProcessor::MatchProcessor(Configuration& conf) :
 
  	m_SaveMatchInfo = conf.getValue("Eyelock.SaveMatchInfo", false);
  	m_EyeCrop = cvCreateImageHeader(cvSize(640, 480), IPL_DEPTH_8U, 1);
+
 }
 
 MatchProcessor::~MatchProcessor() {
@@ -559,9 +564,11 @@ void MatchProcessor::process(HTTPPOSTMsg *msg) {
 	    	m_matchManager->ExtractLogData(msg);
 	    }
 
-		XTIME_OP("Resize",
-			frame = ResizeFrame(width, height, frame)
-			);
+	    if(!m_EnableAusSeg){
+			XTIME_OP("Resize",
+				frame = ResizeFrame(width, height, frame)
+				);
+	    }
 
 		mr.setState(FAILED);
 		mr.setVar(-1);
@@ -628,9 +635,11 @@ IrisData * MatchProcessor::SegmentEye(HTTPPOSTMsg *msg,float *variance){
 		throw "could not determine Image dims";
 	}
 
-	XTIME_OP("Resize",
-		frame = ResizeFrame(width, height, frame)
-		);
+	if(!m_EnableAusSeg){
+		XTIME_OP("Resize",
+			frame = ResizeFrame(width, height, frame)
+			);
+	}
 	mr.setState(FAILED);
 	mr.setVar(-1);
 
