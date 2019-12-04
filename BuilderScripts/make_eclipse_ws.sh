@@ -6,6 +6,7 @@ rm -rf "${EYELOCK_WS_EXT}/.metadata"
 
 projects=(
 AppBase
+AusSegmentLib
 BiOmega
 EdgeImage
 EyeDetection

@@ -153,6 +153,8 @@ protected:
 	float m_pupilzz;
 	IplImage *m_EyeCrop;
 	SoftwareType m_softwareType;
+	bool m_EnableAusSeg;
+
 };
 
 

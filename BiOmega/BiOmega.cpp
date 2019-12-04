@@ -1,7 +1,7 @@
 #include "EyeSegmentationInterface.h"
 #include "BiOmega.h"
 #include "IrisSelectServer.h"
-
+#include "FileConfiguration.h"
 
 extern "C" {
 	#include "test_fw.h"
@@ -13,6 +13,23 @@ char *BiOmega::m_softwareVersion = "BiOmega 1.41 Build 3480";
 BiOmega::BiOmega(int w, int h, int scale): m_pEyeSegmentInterface(new EyeSegmentationInterface()), m_pIrisMatchInterface(0){
 	if(m_pEyeSegmentInterface)
 	{
+		// Iris, Pupil and Spec diameters
+		FileConfiguration conf("/home/root/Eyelock.ini");
+		int AusEyeCropWidth = conf.getValue("Eyelock.AusEyeCropWidth", 640);
+		int AusEyeCropHeight = conf.getValue("Eyelock.AusEyeCropHeight", 480);
+		unsigned short int Irisfind_min_Iris_Diameter = conf.getValue("Eyelock.AusSegMinIrisDiameter", 60);
+		unsigned short int Irisfind_max_Iris_Diameter = conf.getValue("Eyelock.AusSegMaxIrisDiameter", 180);
+
+		unsigned short int Irisfind_min_pupil_Diameter = conf.getValue("Eyelock.AusSegMinPupilDiameter", 16);
+		unsigned short int Irisfind_max_pupil_Diameter = conf.getValue("Eyelock.AusSegMaxPupilDiameter", 60);
+
+		unsigned short int Irisfind_min_spec_Diameter = conf.getValue("Eyelock.AusSegMinSpecDiameter", 8);
+		unsigned short int Irisfind_max_spec_Diameter = conf.getValue("Eyelock.AusSegMaxSpecDiameter", 20);
+	
+		SetAusIrisfind_Iris_Diameter(Irisfind_min_Iris_Diameter, Irisfind_max_Iris_Diameter);
+		SetAusIrisfind_Pupil_Diameter(Irisfind_min_pupil_Diameter, Irisfind_max_pupil_Diameter);
+		SetAusIrisfind_Spec_Diameter(Irisfind_min_spec_Diameter, Irisfind_max_spec_Diameter);
+		SetAusIrisfind_EyeCorpSize(AusEyeCropWidth, AusEyeCropHeight);
 		m_pEyeSegmentInterface->init(scale,w,h);
 //22 Jun2011		m_pEyeSegmentInterface->EnableEyelidSegmentation(true);
 		// modifying the default to accommodate the huge eye displacements in the ICE database
@@ -47,6 +64,11 @@ void BiOmega::SetMinCommonBits(int commonBits)
 void BiOmega::SetEnableEyelidSegmentation(bool val){
 	if(m_pEyeSegmentInterface)
 		m_pEyeSegmentInterface->EnableEyelidSegmentation(val);
+}
+
+void BiOmega::SetEXTAusSegmentationFlag(bool val){
+	if(m_pEyeSegmentInterface)
+		m_pEyeSegmentInterface->EnableAusSegmentation(val);
 }
 
 void BiOmega::SetUpperEyelidCenterandRadius(CvPoint cenPt,float rad ){
@@ -287,3 +309,29 @@ bool BiOmega::ProcessIris(unsigned char *imageBuffer, int w, int h, int stride,c
 	}
 	return status;
 }
+
+void BiOmega::SetAusIrisfind_Iris_Diameter(unsigned short int MinIrisDiameter, unsigned short int MaxIrisDiameter)
+{
+	if(m_pEyeSegmentInterface)
+		m_pEyeSegmentInterface->SetAusIrisfind_Iris_Diameter(MinIrisDiameter, MaxIrisDiameter);
+}
+
+void BiOmega::SetAusIrisfind_Pupil_Diameter(unsigned short int MinPupilDiameter, unsigned short int MaxPupilDiameter)
+{
+	if(m_pEyeSegmentInterface)
+		m_pEyeSegmentInterface->SetAusIrisfind_Pupil_Diameter(MinPupilDiameter, MaxPupilDiameter);	 // 70, was 60 (faster), but missed eyes too close to camera
+}
+
+void BiOmega::SetAusIrisfind_Spec_Diameter(unsigned short int MinSpecDiameter, unsigned short int MaxSpecDiameter)
+{
+	if(m_pEyeSegmentInterface)
+		m_pEyeSegmentInterface->SetAusIrisfind_Spec_Diameter(MinSpecDiameter, MaxSpecDiameter);
+}
+
+void BiOmega::SetAusIrisfind_EyeCorpSize(int Width, int Height)
+{
+	if(m_pEyeSegmentInterface)
+			m_pEyeSegmentInterface->SetAusIrisfind_EyeCorpSize(Width, Height);
+}
+
+

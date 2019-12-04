@@ -7,6 +7,8 @@ class EyeSegmentationInterface;
 
 #include "BiOmega_def.h"
 #include "EyeSegmentationInterface.h"
+#include <stdint.h>
+
 struct _IplImage;
 struct CvPoint2D32f;
 struct CvPoint3D32f;
@@ -35,10 +37,15 @@ public:
 	bool SetIrisRadiusSearchRange(int min, int max);
 	bool SetPupilRadiusSearchRange(int min, int max);
 	bool SetPupilAngleSearchRange(int min, int max);
+	void SetAusIrisfind_Iris_Diameter(unsigned short int MinIrisDiameter, unsigned short int MaxIrisDiameter);
+	void SetAusIrisfind_Pupil_Diameter(unsigned short int MinPupilDiameter, unsigned short int MaxPupilDiameter);
+	void SetAusIrisfind_Spec_Diameter(unsigned short int MinSpecDiameter, unsigned short int MaxSpecDiameter);
+	void SetAusIrisfind_EyeCorpSize(int Width, int Height);
 	bool GetPupilAngleSearchRange(float& min, float& max);
 	int GetMaxCorruptBitsPercAllowed();
 	void SetMaxCorruptBitsPercAllowed(int perc);
 	float GetCorruptBitsPerc(void);
+	void SetEXTAusSegmentationFlag(bool Val);
 	bool GetIrisCode(unsigned char *imageBuffer, int w, int h, int stride, char *Iriscode,IrisPupilCircles *pCircles=NULL, float *robustFetaureVariance=NULL );
 	bool GetDefaultMaskCode(unsigned char *IrisCode);
 	std::pair<int, float> MatchIris(unsigned char *imageBuffer, int w, int h, int stride, char *irisCodeDatabase, int numberOfEyes,IrisPupilCircles *pCircles=NULL,CvPoint2D32f *pRefCentre=NULL,CvPoint2D32f *pVar=NULL,int specrad =14);
@@ -64,4 +71,5 @@ private:
 	int m_MatchKeyBitLen;
 	int m_IrisIDByteLen;
 	static char *m_softwareVersion;
+
 };
