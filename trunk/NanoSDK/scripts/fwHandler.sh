@@ -808,6 +808,15 @@ upgrade()
 			exit 5
 		fi
 		${logger} -L"Master upgrade done."
+		
+		${logger} -L"Upgrading linux packages..."
+		PKG_UPD_DIR='/home/root/packages_updates'
+		if [[ -d ${PKG_UPD_DIR} ]]
+		then		
+			dpkg -i "${PKG_UPD_DIR}/*.deb"
+			rm -r "${PKG_UPD_DIR}"
+		fi
+		${logger} -L"Upgrading linux packages done."
 	
 		# format is different from WebConfig. Is it OK?
 		NOW=$(date -u)
