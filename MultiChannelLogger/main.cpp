@@ -397,7 +397,7 @@ protected:
 	 	   return "";
 	    }
 
-	    string deviceTypeStr = "DEVICETYPE:1;";
+	    string deviceTypeStr = "DEVICETYPE:2;";
 	    string deviceIdStr = "DEVICEID:" + string(myID) + ";";
 	    return deviceTypeStr + deviceIdStr;
 	}
