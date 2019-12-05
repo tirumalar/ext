@@ -767,8 +767,6 @@ upgrade()
 
 		${logger} -L"FW validation done."
 
-		printf 'fixed_set_rgb(100,80,0)\n' | nc -q 1 192.168.4.172 50
-	
 		${logger} -L"Restore point creation..."
 		touch /home/createrestorepoint.txt
 		createRestorePoint
@@ -793,6 +791,8 @@ upgrade()
 		killApplication
 		${logger} -L"Terminating done."
 		checkApplicationTermination
+		
+		oimctl 'fixed_set_rgb(100,80,0)' 2
 
 		${logger} -L"Upgrading master..."
 		upgradeMaster ${masterFileName}
@@ -813,7 +813,11 @@ upgrade()
 		PKG_UPD_DIR='/home/root/packages_updates'
 		if [[ -d ${PKG_UPD_DIR} ]]
 		then		
-			dpkg -i "${PKG_UPD_DIR}/*.deb"
+			if [[ $(ls -A ${PKG_UPD_DIR}) ]]
+			then
+				dpkg -i --force-confold "${PKG_UPD_DIR}/"*.deb
+			fi
+			
 			rm -r "${PKG_UPD_DIR}"
 		fi
 		${logger} -L"Upgrading linux packages done."
