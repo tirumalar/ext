@@ -193,7 +193,8 @@ then
 		ifconfig "${IFACE}:${DEFAULT_IP_LABEL}" hw ether "${MAC}"
 		sleep 1
 		ifconfig "${IFACE}:${DEFAULT_IP_LABEL}" inet "169.254.1.1" netmask "255.255.0.0" up
-		configureDhcp
+		killall -KILL dhclient
+		bash -c "dhclient -d -v -4 ${IFACE}" &
 	fi
 fi
 
