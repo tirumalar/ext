@@ -815,7 +815,10 @@ upgrade()
 		then		
 			if [[ $(ls -A ${PKG_UPD_DIR}) ]]
 			then
+				printf '#!/bin/sh\n\nexit 101\n' > /usr/sbin/policy-rc.d # disabling automatic services restart
+				chmod +x /usr/sbin/policy-rc.d
 				dpkg -i --force-confold "${PKG_UPD_DIR}/"*.deb
+				rm /usr/sbin/policy-rc.d
 			fi
 			
 			rm -r "${PKG_UPD_DIR}"
