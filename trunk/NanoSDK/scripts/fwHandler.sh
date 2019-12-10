@@ -792,7 +792,9 @@ upgrade()
 		${logger} -L"Terminating done."
 		checkApplicationTermination
 		
-		oimctl 'fixed_set_rgb(100,80,0)' 2
+		sleep 5
+		oimctl '' 5
+		oimctl 'fixed_set_rgb(100,80,0)' 5
 
 		${logger} -L"Upgrading master..."
 		upgradeMaster ${masterFileName}
