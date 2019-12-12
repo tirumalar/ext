@@ -787,14 +787,14 @@ upgrade()
 		rm /home/restoreSoftware.txt
 		rm /home/nanoupdate.txt
 
+		printf "fixed_set_rgb(100,80,0)\n" | nc -q "3" -w 10 192.168.4.170 48
+		sleep 2
+
 		${logger} -L"Terminating current FW processes..."
 		killApplication
 		${logger} -L"Terminating done."
 		checkApplicationTermination
 		
-		sleep 5
-		oimctl '' 5
-		oimctl 'fixed_set_rgb(100,80,0)' 5
 
 		${logger} -L"Upgrading master..."
 		upgradeMaster ${masterFileName}
