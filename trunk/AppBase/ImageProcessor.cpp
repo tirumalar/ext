@@ -534,6 +534,7 @@ m_LedConsolidator = NULL;
 	m_AdaptiveGain = pConf->getValue("FTracker.AdaptiveGain", false);
 	m_AdaptiveGainFactor = pConf->getValue("FTracker.AdaptiveGainFactor",20000);
 	m_AdaptiveGainAuxAdjust = pConf->getValue("FTracker.AdaptiveGainAuxAdjust",float(1.25));
+	m_AdaptiveGainKG = pConf->getValue("FTracker.AdaptiveGainKG",float(0.000173)); // The value is 0.0005 for DHS Unit
 
 #ifdef IRIS_CAPTURE
 	// bool bIrisMode = pConf->getValue("Eyelock.IrisMode", 1) == 2; // DMOTODO default to capture for now...
@@ -2554,7 +2555,8 @@ int ImageProcessor::CalculateGainWithKH(int facewidth, int CameraId)
 	else{
 		gain =43;
 	}
-	float KG = 0.000173;
+
+	float KG = m_AdaptiveGainKG; //0.000173;
 	int KH = 8;
 
 	// gain = KG * (KF/facewidth + KH)2
