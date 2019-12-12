@@ -409,6 +409,7 @@ private:
     bool m_AdaptiveGain;
     int m_AdaptiveGainFactor;
     float m_AdaptiveGainAuxAdjust;
+    float m_AdaptiveGainKG;
     std::map<int,int> FaceWidthGainMap;
     void CreateFaceWidthGainMap();
 

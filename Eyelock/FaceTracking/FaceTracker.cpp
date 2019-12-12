@@ -156,6 +156,7 @@ FaceTracker::FaceTracker(char* filename)
 ,m_FarSwitchThreshold(45)
 ,m_CmxHandler(NULL)
 ,flag_dark_main(1)
+,m_AdaptiveGainKG(0.000173)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -294,6 +295,7 @@ FaceTracker::FaceTracker(char* filename)
 	m_AdaptiveGain = EyelockConfig.getValue("FTracker.AdaptiveGain", false);
 	m_AdaptiveGainFactor = EyelockConfig.getValue("FTracker.AdaptiveGainFactor",20000);
 	m_AdaptiveGainAuxAdjust = EyelockConfig.getValue("FTracker.AdaptiveGainAuxAdjust",float(1.25));
+	m_AdaptiveGainKG = EyelockConfig.getValue("FTracker.AdaptiveGainKG",float(0.000173)); // The value is 0.0005 for DHS Unit
 	
 	// Column Noise Correction
 	m_EnableColumnNoiseReduction = EyelockConfig.getValue("Eyelock.EnableColumnNoiseReduction", false);
@@ -639,7 +641,9 @@ int FaceTracker::CalculateGainWithKH(int facewidth, int CameraState)
 		gain = m_LeftMainIrisCamDigitalGain;
 	}
 
-	float KG = 0.000173;
+
+
+	float KG = m_AdaptiveGainKG; //0.000173;
 	int KH = 8;
 
 	// gain = KG * (KF/facewidth + KH)2

@@ -259,6 +259,8 @@ private:
 
 	int m_AdaptiveGainFactor;
 	float m_AdaptiveGainAuxAdjust;
+	float m_AdaptiveGainKG;
+
 	std::map<int,int> FaceWidthGainMap;
 	bool m_EnableColumnNoiseReduction;
 	int m_DarkImageGenFrameCnt;
