@@ -255,6 +255,9 @@ private:
 	bool m_AdaptiveGain;
 	int m_AdaptiveGainFactor;
 	float m_AdaptiveGainAuxAdjust;
+	float m_AdaptiveGainKGMain;
+	float m_AdaptiveGainKGAux;
+	int m_AdaptiveGainHysFactor;
 
 	void SetExp(int cam, int val);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
