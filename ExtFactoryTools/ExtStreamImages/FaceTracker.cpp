@@ -189,6 +189,9 @@ FaceTracker::FaceTracker(char* filename)
 	m_AdaptiveGain = EyelockConfig.getValue("FTracker.AdaptiveGain", false);
 	m_AdaptiveGainFactor = EyelockConfig.getValue("FTracker.AdaptiveGainFactor",20000);
 	m_AdaptiveGainAuxAdjust = EyelockConfig.getValue("FTracker.AdaptiveGainAuxAdjust",float(1.25));
+	m_AdaptiveGainKGMain = EyelockConfig.getValue("FTracker.AdaptiveGainKGMain",float(0.000173)); // The value is 0.0005 for DHS Unit
+	m_AdaptiveGainKGAux = EyelockConfig.getValue("FTracker.AdaptiveGainKGAux",float(0.000173)); // The value is 0.0005 for DHS Unit
+	m_AdaptiveGainHysFactor = EyelockConfig.getValue("FTracker.AdaptiveGainHysFactor", 8); // Can be 0 too , Need to experiment and decide for regular and DHS units
 
 	// Get the width and height of Image from Eyelock.ini
 	m_ImageWidth = EyelockConfig.getValue("FrameSize.width", 1200);
@@ -1589,17 +1592,20 @@ int FaceTracker::CalculateGainWithKH(int facewidth, int CameraState)
 {
 	int KF = m_AdaptiveGainFactor;
 	int gain;
-
-// 	printf("m_AdaptiveGainFactor...%d  Adjust----%f\n", m_AdaptiveGainFactor, m_AdaptiveGainAuxAdjust);
-	if(CameraState == STATE_AUX_IRIS){
+	float KG;
+ 	// printf("m_AdaptiveGainFactor...%d  Adjust----%f\n", m_AdaptiveGainFactor, m_AdaptiveGainAuxAdjust);
+	if(CameraState == 3 || CameraState == 4){
+		KG = m_AdaptiveGainKGAux;
 		KF = m_AdaptiveGainAuxAdjust * m_AdaptiveGainFactor;
-		gain = m_LeftAuxIrisCamDigitalGain;
+		// printf("m_AdaptiveGainFactor...%d  Adjust----%f KF --%d\n", m_AdaptiveGainFactor, m_AdaptiveGainAuxAdjust, KF);
+		gain = m_LeftAuxIrisCamDigitalGain; // Just setting to default values for respective cameras.
 	}else{
+		KG = m_AdaptiveGainKGMain;
 		gain = m_LeftMainIrisCamDigitalGain;
 	}
 
-	float KG = 0.000173;
-	int KH = 8;
+	// float KG = 0.0005;
+	int KH = m_AdaptiveGainHysFactor;
 
 	// gain = KG * (KF/facewidth + KH)2
 	if(facewidth)
