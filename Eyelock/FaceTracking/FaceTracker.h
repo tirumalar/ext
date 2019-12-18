@@ -257,9 +257,13 @@ private:
 
 	bool m_AdaptiveGain;
 
-	int m_AdaptiveGainFactor;
-	float m_AdaptiveGainAuxAdjust;
-	float m_AdaptiveGainKG;
+	int m_AdaptiveGainMainFactor;
+	// float m_AdaptiveGainAuxAdjust;
+	int m_AdaptiveGainAuxFactor;
+	int m_AdaptiveGainMainHysFactor;
+	int m_AdaptiveGainAuxHysFactor;
+	float m_AdaptiveGainKGMain;
+	float m_AdaptiveGainKGAux;
 
 	std::map<int,int> FaceWidthGainMap;
 	bool m_EnableColumnNoiseReduction;
