@@ -76,7 +76,8 @@ void EyeSegmentationInterface::init(int scale, int w, int h)
 					template_width, template_height,
 					m_AusIrisfind_min_Iris_Diameter, m_AusIrisfind_max_Iris_Diameter,
 					m_AusIrisfind_min_pupil_Diameter,m_AusIrisfind_max_pupil_Diameter,
-					m_AusIrisfind_min_spec_Diameter, m_AusIrisfind_max_spec_Diameter);
+					m_AusIrisfind_min_spec_Diameter, m_AusIrisfind_max_spec_Diameter,
+					m_gaze_radius_thresh, m_PIVThreshold);
 
 
 }
@@ -360,11 +361,12 @@ int LoadEyelockConfigINIFile(){
 
 bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, int h, int stride, unsigned char *Iriscode, unsigned char *Maskcode, IrisPupilCircles *pCircles)
 {
+	// printf("m_bEnableAusSeg...%d\n", m_bEnableAusSeg);
 	if(m_bEnableAusSeg){
 		bool bSegresult = false;
 		size_t eyecrop_width = m_AusIrisfind_EyeCropWidth;
 		size_t eyecrop_height = m_AusIrisfind_EyeCropHeight;
-		printf("m_AusIrisfind_EyeCropWidth:%d m_AusIrisfind_EyeCropHeight:%d\n", m_AusIrisfind_EyeCropWidth, m_AusIrisfind_EyeCropHeight);
+		// printf("m_AusIrisfind_EyeCropWidth:%d m_AusIrisfind_EyeCropHeight:%d\n", m_AusIrisfind_EyeCropWidth, m_AusIrisfind_EyeCropHeight);
 		if(eyecrop_width == 640 && eyecrop_height == 480){
 			bSegresult = m_AusSegment->m_Iris->GenerateFlatIris(imageBuffer,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height);
 		}else{
@@ -380,6 +382,9 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 			cvWaitKey(1);*/
 			bSegresult = m_AusSegment->m_Iris->GenerateFlatIris((unsigned char*)m_AusSegment->EyeCropHeader_320_240->imageData,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height);
 		}
+
+		// printf("bSegresult.....%d\n", bSegresult);
+
 		if(bSegresult)
 		{
 			bool bTemplateResult = m_AusSegment->m_Encode->EncodeFlatIris((unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, Iriscode, Maskcode);
@@ -946,7 +951,8 @@ AusSegment::AusSegment(int base_scale, size_t eyecrop_width, size_t eyecrop_heig
 		size_t template_width, size_t template_height,
 		int MinIrisDiameter, int MaxIrisDiameter,
 		int MinPupilDiameter, int MaxPupilDiameter,
-		int MinSpecDiameter, int MaxSpecDiameter)
+		int MinSpecDiameter, int MaxSpecDiameter,
+		float gaze_radius_thresh, float PorportionOfIrisVisibleThreshold)
 {
 
 	EyeCropHeader_640_480 = cvCreateImage(cvSize(640, 480), IPL_DEPTH_8U, 1);
@@ -954,13 +960,13 @@ AusSegment::AusSegment(int base_scale, size_t eyecrop_width, size_t eyecrop_heig
 	m_flatIris = cvCreateImage(cvSize(480, 64), IPL_DEPTH_8U, 1);
 	m_flatMask = cvCreateImage(cvSize(480, 64), IPL_DEPTH_8U, 1);
 
-	m_Iris = new AusIris(eyecrop_width, eyecrop_height, flat_iris_width,
-				  flat_iris_height);
+	m_Iris = new IrisSegmentation(eyecrop_width, eyecrop_height, flat_iris_width,
+				  flat_iris_height, gaze_radius_thresh, PorportionOfIrisVisibleThreshold);
 
 	m_Encode = new Encode(base_scale, flat_iris_width, flat_iris_height,
 					   template_width, template_height);
 
-	m_Iris->AusIris_init(eyecrop_width, eyecrop_height,
+	m_Iris->IrisSegmentation_init(eyecrop_width, eyecrop_height,
 			MinIrisDiameter, MaxIrisDiameter,
 			MinPupilDiameter, MaxPupilDiameter,
 			MinSpecDiameter, MaxSpecDiameter);
@@ -1021,6 +1027,16 @@ void EyeSegmentationInterface::SetAusIrisfind_Spec_Diameter(unsigned short int M
 	m_AusIrisfind_max_spec_Diameter = MaxSpecDiameter;
 }
 
+void EyeSegmentationInterface::SetAusGaze_radius_thresh(float gaze_radius_thresh)
+{
+	m_gaze_radius_thresh = gaze_radius_thresh;
+}
+
+void EyeSegmentationInterface::SetAusPIV_Threshold(float propor_iris_visible_threshold)
+{
+	// printf("%f\n", propor_iris_visible_threshold);
+	m_PIVThreshold = propor_iris_visible_threshold;
+}
 
 void EyeSegmentationInterface::SetAusIrisfind_EyeCorpSize(int Width, int Height)
 {

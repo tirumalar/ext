@@ -66,7 +66,7 @@ struct PointXY {
   uint16 y;
 };
 
-struct AusMessage {
+struct Messages {
   uint32 code;
   float32 value;
   uint8* string[64];

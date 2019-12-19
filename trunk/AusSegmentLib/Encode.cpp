@@ -87,34 +87,20 @@ Encode::Encode(int base_scale, size_t flat_iris_width, size_t flat_iris_height,
 }
 
 Encode::~Encode() {
-	if(_frequency_response_threshold)
-		delete [] _frequency_response_threshold;
-	if(_line_ptr_flat)
-		delete [] _line_ptr_flat;
-	if(_line_ptr_mask)
-		delete [] _line_ptr_mask;
-	if(_line_ptr_template_encode)
-		delete [] _line_ptr_template_encode;
-	if(_line_ptr_template_mask)
-		delete [] _line_ptr_template_mask;
 
-	if(_buf_wrap)
-		delete [] _buf_wrap;
-	if(_buf_integral_wrap)
-		delete [] _buf_integral_wrap;
-	if(_buf_mask_wrap)
-		delete [] _buf_mask_wrap;
-	if(_buf_mask_integral_wrap)
-		delete [] _buf_mask_integral_wrap;
-
-	if(_line_ptr_buf_wrap)
-		delete [] _line_ptr_buf_wrap;
-	if(_line_ptr_buf_integral_wrap)
-		delete [] _line_ptr_buf_integral_wrap;
-	if(_line_ptr_buf_mask_wrap)
-		delete [] _line_ptr_buf_mask_wrap;
-	if(_line_ptr_buf_mask_integral_wrap)
-		delete [] _line_ptr_buf_mask_integral_wrap;
+	delete [] _frequency_response_threshold;
+	delete [] _line_ptr_flat;
+	delete [] _line_ptr_mask;
+	delete [] _line_ptr_template_encode;
+	delete [] _line_ptr_template_mask;
+	delete [] _buf_wrap;
+	delete [] _buf_integral_wrap;
+	delete [] _buf_mask_wrap;
+	delete [] _buf_mask_integral_wrap;
+	delete [] _line_ptr_buf_wrap;
+	delete [] _line_ptr_buf_integral_wrap;
+	delete [] _line_ptr_buf_mask_wrap;
+	delete [] _line_ptr_buf_mask_integral_wrap;
 }
 
 // Add image data to beginning and end of image to make >360 deg flat iris.
@@ -394,7 +380,7 @@ int Encode::EncodeFlatIris(uint8_t* flat_iris, uint8_t* partial_mask,
   uint32_t unmaskedBitsInTemplate;
   float validBitRatioInTemplate;
 
-  IRISERROR eIrisError = IRISERROR::Segmentation_Successful;
+  TemplatePipelineError eIrisError = TemplatePipelineError::Segmentation_Successful;
 
   get_lineptrs_8(flat_iris, _flat_iris_width, _flat_iris_height,
                  _line_ptr_flat);
@@ -423,17 +409,16 @@ int Encode::EncodeFlatIris(uint8_t* flat_iris, uint8_t* partial_mask,
                   _template_width, _template_height, validBitsInTemplate,
                   unmaskedBitsInTemplate, validBitRatioInTemplate);
 
-  // TODO: Replace with Error Class
   if (validBitsInTemplate > TEMPLATE_MIN_VALID_BITS){
-	  eIrisError =  IRISERROR::Segmentation_Successful;
+	  eIrisError =  TemplatePipelineError::Segmentation_Successful;
   }else{
-	  eIrisError =  IRISERROR::InValidbits_in_Template;
+	  eIrisError =  TemplatePipelineError::InValidbits_in_Template;
   }
 
-  if(eIrisError == IRISERROR::Segmentation_Successful)
+  if(eIrisError == TemplatePipelineError::Segmentation_Successful){
 	  return true;
-  else{
-	  printf("Error   %d\n", eIrisError);
+  }else{
+	  printf("TemplateError   %d\n", eIrisError);
  	  return false;
   }
 }

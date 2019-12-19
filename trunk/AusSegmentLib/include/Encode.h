@@ -1,6 +1,7 @@
+#pragma once
 #include "helper.h"
 #include "string.h"
-#include "irisfind.h"
+#include "TemplatePipelineError.h"
 
 #define TEMPLATE_MIN_VALID_BITS 1500
 #define ENCODE_CORING_SCALE_FACTOR 1.0

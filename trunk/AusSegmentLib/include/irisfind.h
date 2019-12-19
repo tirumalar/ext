@@ -4,6 +4,7 @@
 #include "compiler.h"  // compiler specific, data types, macros
 #include "eyelid.h"
 #include <system_error>
+#include "TemplatePipelineError.h"
 
 using namespace std;
 
@@ -66,32 +67,6 @@ using namespace std;
 #define IRISFIND_SEARCH_BOX_MAX_SIZE 200
 #define LIVEDET_MAX_LIVE_EYE_COUNT 2
 
-enum class IRISERROR {
-	Segmentation_Successful = 0,
-	Pupil_Iris_Boundary_Not_Found = 100,
-	Iris_Sclera_Boundary_Not_Found = 101,
-	Usable_Iris_Area_not_sufficient = 102,
-	Iris_Diameter_out_of_range = 103, 			// reject unless D >= 73
-	Pupil_Iris_ratio_out_of_range = 104,			// ignore for authentication mode
-	Gaze_out_of_range = 105,
-	Median_Iris_Intensity_out_of_range = 106,
-	Percentage_Of_Iris_Visible_too_small = 107,
-	InValidbits_in_Template = 108, 				// reject if V < 1000
-};
-
-namespace std
-{
-  template<>
-    struct is_error_code_enum<IRISERROR> : true_type {};
-}
-
-std::error_code make_error_code(IRISERROR);
-
-
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
-
 // signed so it can be hold a flag = -1
 struct PointXY_signed {
 	int16 x;
@@ -136,51 +111,38 @@ struct Circle_struct {
 	uint16 vBottomRightSize;
 };
 
-class Irisfind_Class {
+class Irisfind {
 public:
 	uint16 m_Irisfind_min_Iris_Diameter;
-
 	uint16 m_Irisfind_max_Iris_Diameter;
-
 	uint16 m_Irisfind_min_pupil_Diameter;
-
 	uint16 m_Irisfind_max_pupil_Diameter;
-
 	uint16 m_Irisfind_min_spec_Diameter;
-
 	uint16 m_Irisfind_max_spec_Diameter;
-
 	uint16 m_Irisfind_max_pupil_radius;
-
 	struct PointXYZ_float specPos[2];
-
 	float32 m_fpupilToIrisRatio[2];
-
 	uint16 maxLutSize;
-
 	struct Circle_struct circle[IRISFIND_MAX_RADIUS_CNT];
-
 	uint16 tempLUTbuf16[IRISFIND_FULLCIRCLE_MAX_LUT_SIZE];
-
 	float32 focus_unfiltered;
-
 	uint8 irisBrightness;
 	uint8 pupilBrightness;
 	uint8 pupilBrightnessLR[2];
 	uint32 pupilEdge;
 	bool brightnessValid;
-
 	struct PointXYZ_float pupilPos[2];
 	uint32 pupilScore[2];
 	bool pupilFound[2];
 	struct PointXYZ_float irisPos[2];
 	uint32 irisScore[2];
 	bool irisFound[2];
-	Irisfind_Class(size_t eyecrop_width, size_t eyecrop_height);
-	~ Irisfind_Class();
+
+	Irisfind(size_t eyecrop_width, size_t eyecrop_height, float gaze_radius_thresh);
+	~ Irisfind();
 	void ek_irisfind_session_init(size_t eyecrop_width, size_t eyecrop_height);
 	void ek_irisfind_init();
-	IRISERROR ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
+	TemplatePipelineError ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
 			size_t eyecrop_width, size_t eyecrop_height, size_t flat_iris_width,
 			size_t flat_iris_height);
 	void init_circles(uint16 lutCnt);
@@ -200,9 +162,7 @@ private:
 	int8 minRedPupilGrad;
 	int8 maxIrisGrad;
 	int8 minIrisGrad;
-
 	uint32 minScoreVariance;
-
 	// adjust the size of the mask so that it is larger than the actual spec
 	float32 specMaskMultiplier;  // IRISFIND_SPECMASK_MULTIPLIER
 
@@ -232,10 +192,6 @@ private:
 	uint8 **bufMask;
 	PLINE **lineptrMask;
 
-	/*
-	uint16 m_width;
-	uint16 m_height;*/
-
 	uint16 maxIrisRadius;
 	uint16 minIrisRadius;
 	uint16 maxPupilRadius;
@@ -248,28 +204,18 @@ private:
 	struct PointXYZ_float darkPos[2];
 	uint32 darkScore[2];
 	bool darkFound[2];
-
 	uint32 specScore[2];
 	bool specFound[2];
-
 	struct PointXYZ_float prev_specPos[2];
-
 	bool findRedEye;
 	bool autoRedEye;
-
 	uint16 errorCnt;
-
 	struct ScoreXYZS scoreCube[3][3][3];
 	float32 faceDistance[2];
-
 	bool glasses_lowEyelid_detected[2];
-
 	float32 gaze_radius_thresh;
-
 	struct PointXYZ_float gaze[2];
-
 	bool good_gaze[2];
-
 	bool headRotationError;
 	bool bystanderError;
 
@@ -279,9 +225,9 @@ private:
 	void spec_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
 	void dark_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
 	void pupil_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
-	IRISERROR pupil_search_subpixel(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
-	IRISERROR iris_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
-	IRISERROR iris_search_subpixel(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
+	TemplatePipelineError pupil_search_subpixel(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
+	TemplatePipelineError iris_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
+	TemplatePipelineError iris_search_subpixel(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
 };
 
 enum class IRLEDSequence {
@@ -396,9 +342,6 @@ int16* xmax, int16* ymin, int16* ymax);
 
 float32 irisfind_distanceToFace_cm(float32 iris_radius_pixels);
 
-//#ifdef __cplusplus
-//}
-//#endif
 
 
 
