@@ -7,14 +7,14 @@
 #include "math.h"
 
 
-class AusIris {
+class IrisSegmentation {
  public:
-  AusIris(size_t eyecrop_width, size_t eyecrop_height, size_t flat_iris_width,
-       size_t flat_iris_height);
+	IrisSegmentation(size_t eyecrop_width, size_t eyecrop_height, size_t flat_iris_width,
+       size_t flat_iris_height, float gaze_radius_thresh, float PorportionOfIrisVisibleThreshold);
 
-  ~AusIris();
+  ~IrisSegmentation();
 
-  void AusIris_init(size_t eyecrop_width, size_t eyecrop_height,
+  void IrisSegmentation_init(size_t eyecrop_width, size_t eyecrop_height,
 		  unsigned short int MinIrisDiameter, unsigned short int MaxIrisDiameter,
 		  unsigned short int MinPupilDiameter, unsigned short int MaxPupilDiameter,
 		  unsigned short int MinSpecDiameter, unsigned short int MaxSpecDiameter);
@@ -33,7 +33,7 @@ class AusIris {
   PLINE* _line_ptr_flat;
   PLINE* _line_ptr_mask;
 
-  Irisfind_Class *m_iris_find; // Class to initialize the memory for variables which are 320x240 and 640x480 eyecrops
+  Irisfind *m_iris_find; // Class to initialize the memory for variables which are 320x240 and 640x480 eyecrops
 
   Eyelid_struct _eyelid;
   LiveDetection_struct _live_detection;
@@ -41,4 +41,6 @@ class AusIris {
   float _radius_sampling;
   float* _cos_table;
   float* _sin_table;
+
+  float _PIVThreshold; // PorportionOfIrisVisibleThreshold
 };

@@ -41,6 +41,8 @@ public:
 	void SetAusIrisfind_Pupil_Diameter(unsigned short int MinPupilDiameter, unsigned short int MaxPupilDiameter);
 	void SetAusIrisfind_Spec_Diameter(unsigned short int MinSpecDiameter, unsigned short int MaxSpecDiameter);
 	void SetAusIrisfind_EyeCorpSize(int Width, int Height);
+	void SetAusGaze_radius_thresh(float gaze_radius_thresh);
+	void SetAusPIV_Threshold(float propor_iris_visible_threshold);
 	bool GetPupilAngleSearchRange(float& min, float& max);
 	int GetMaxCorruptBitsPercAllowed();
 	void SetMaxCorruptBitsPercAllowed(int perc);

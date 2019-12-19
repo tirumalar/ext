@@ -283,7 +283,7 @@ float createEyelidMask(Eyelid_struct& eyelid, PLINE* lineptrIris, uint16 width,
     copy_buf(eyelid.lineptrMask[0], width, height, lineptrIrisMask);
   }
 
-  return (float)coverage[0] * 100;
+  return (float)coverage[0]; 
 }
 //
 //
@@ -341,9 +341,9 @@ uint8 iris_brightness(PLINE* lineptrIris, PLINE* lineptrIrisMask, uint16 width,
 */
 //
 
-void ek_eyelid_main(PLINE* lineptrCrop, size_t eyecrop_width,
+TemplatePipelineError ek_eyelid_main(PLINE* lineptrCrop, size_t eyecrop_width,
                     size_t eyecrop_height, size_t flat_iris_width,
-                    size_t flat_iris_height, Irisfind_Class* irisfind,
+                    size_t flat_iris_height, Irisfind* irisfind,
                     Eyelid_struct& eyelid, PLINE* lineptrFlat,
                     PLINE* lineptrMask, float radiusSampling, float* cosTable,
                     float* sinTable) {
@@ -356,6 +356,10 @@ void ek_eyelid_main(PLINE* lineptrCrop, size_t eyecrop_width,
 
     eyelid.coverage[0] = createEyelidMask(eyelid, lineptrFlat, flat_iris_width,
                                           flat_iris_height, lineptrMask);
+
+
+  }else{
+	  return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
   }
 
   //
@@ -369,6 +373,8 @@ void ek_eyelid_main(PLINE* lineptrCrop, size_t eyecrop_width,
         lineptrFlat, lineptrMask, flat_iris_width, flat_iris_height);
     irisfind->pupilBrightness = irisfind->pupilBrightnessLR[0];
     irisfind->pupilEdge = irisfind->pupilScore[0];
+  }else{
+	  return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
   }
   //
 
@@ -384,6 +390,8 @@ void ek_eyelid_main(PLINE* lineptrCrop, size_t eyecrop_width,
 
     irisfind->focus_unfiltered = irisPupilEdge_normalized / 5.0f;
   }
+
+  return TemplatePipelineError::Segmentation_Successful;
 }
 
 
