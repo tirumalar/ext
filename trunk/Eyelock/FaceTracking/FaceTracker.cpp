@@ -289,8 +289,8 @@ FaceTracker::FaceTracker(char* filename)
 	m_EyelockIrisMode = EyelockConfig.getValue("Eyelock.IrisMode",1);
 
 	int m_ImageSize = m_ImageWidth * m_ImageHeight;
-	m_LeftCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
-	m_RightCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
+	m_FaceCameraInfo.faceImagePtr = new unsigned char[m_ImageSize];
+
 
 	// Adaptive Gain
 	m_AdaptiveGain = EyelockConfig.getValue("FTracker.AdaptiveGain", false);
@@ -354,10 +354,8 @@ FaceTracker::FaceTracker(char* filename)
 
 FaceTracker::~FaceTracker()
 {
-	if(m_LeftCameraFaceInfo.faceImagePtr)
-		delete [] m_LeftCameraFaceInfo.faceImagePtr;
-	if(m_RightCameraFaceInfo.faceImagePtr)
-		delete [] m_RightCameraFaceInfo.faceImagePtr;
+	if(m_FaceCameraInfo.faceImagePtr)
+		delete [] m_FaceCameraInfo.faceImagePtr;
 }
 
 void FaceTracker::SetExp(int cam, int val)
@@ -2186,37 +2184,14 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 		 		m_CmxHandler->SetLatestFaceCoordRect(FaceCoord);
 		 	}
 
-		 	m_LeftCameraFaceInfo.FoundFace = foundFace;
-			m_LeftCameraFaceInfo.ScaledFaceCoord = FaceCoord;
-			m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
-			m_LeftCameraFaceInfo.projPtr = m_ProjPtr;
-			m_LeftCameraFaceInfo.FaceWidth = eye_size;
-
-			m_RightCameraFaceInfo.FoundFace = foundFace;
-			m_RightCameraFaceInfo.ScaledFaceCoord = FaceCoord;
-			m_RightCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
-			m_RightCameraFaceInfo.projPtr = m_ProjPtr;
-			m_LeftCameraFaceInfo.FaceWidth = eye_size;
-
 			if(bIrisToFaceMapDebug){
 				RotatedfaceImg = rotation90(outImg);
-				memcpy(m_LeftCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
-				memcpy(m_RightCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
+				m_FaceCameraInfo.FoundFace = foundFace;
+				m_FaceCameraInfo.FaceFrameNo = FaceCameraFrameNo;
+				m_FaceCameraInfo.FaceWidth = eye_size;
+				memcpy(m_FaceCameraInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
+				m_CmxHandler->SetLatestFaceInfo(m_FaceCameraInfo);
 			}
-#if 0 // Anita on 10th Oct
-			EyelockLog(logger, TRACE, "FaceTracking:  Pushing FaceFrame = %d\n", FaceCameraFrameNo);
-			// If we're full, the top is stale anyway, get rid of it, then add the current item
-			// Increase the size of the queues if we are dropping too many unprocessed FaceFrames here...
-   		    if (g_pLeftCameraFaceQueue->Full())
-   		    	g_pLeftCameraFaceQueue->Pop();
-			g_pLeftCameraFaceQueue->Push(m_LeftCameraFaceInfo);
-			EyelockLog(logger, TRACE, "FaceTracking:  Pushed LeftQueue, Size() = %d\n", g_pLeftCameraFaceQueue->Size());
-			// If we're full, the top is stale anyway, get rid of it, then add the current item
-   		    if (g_pRightCameraFaceQueue->Full())
-   		    	g_pRightCameraFaceQueue->Pop();
-			g_pRightCameraFaceQueue->Push(m_RightCameraFaceInfo);
-   		    EyelockLog(logger, TRACE, "FaceTracking:  Pushed Pushed RightQueue, Size() = %d\n", g_pRightCameraFaceQueue->Size());
-#endif
 			if(bFaceMapDebug){
 				char filename[100];
 				sprintf(filename,"FaceImage_%d_ProjPtr_%d.pgm", FaceCameraFrameNo, m_ProjPtr);

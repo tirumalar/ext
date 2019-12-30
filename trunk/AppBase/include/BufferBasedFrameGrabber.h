@@ -25,6 +25,7 @@ typedef struct ImageQueueItem{
 	unsigned int MainLeftFrameIndex;
 	unsigned int MainRightFrameIndex;
 	cv::Rect ScaledFaceRect;
+	FaceImageQueue m_FaceInfo;
 };
 
 
@@ -63,6 +64,7 @@ private:
 
 	ImageQueueItem m_ImageQueueItem;
 	ImageQueueItem m_current_process_queue_item;
+	bool bIrisToFaceMapDebug;
 };
 
 #endif /* BUFFERBASEDFRAMEGRABBER_H_ */

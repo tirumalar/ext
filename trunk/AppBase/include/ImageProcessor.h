@@ -306,6 +306,8 @@ protected:
 	float magOffMainl, magOffMainR, magOffAuxl, magOffAuxR;
 	float magOffMainlDiv, magOffMainRDiv, magOffAuxlDiv, magOffAuxRDiv;
 	cv::Point2f constantMainl, constantMainR, constantAuxl, constantAuxR;
+	cv::Size m_ProjtextSize;
+	std::ostringstream m_ssCoInfo;
 	bool useOffest_m, useOffest_a;
 	float projOffset_m, projOffset_a;
 	bool m_showProjection;
@@ -394,6 +396,9 @@ private:
 	bool bIrisToFaceMapDebug;
 	bool bIrisToFaceMapValid;
 	unsigned int m_IrisToFaceMapCorrectionVal;
+	int m_IrisToFaceMapCorrectionValPLXx;
+	int m_IrisToFaceMapCorrectionValPLXy;
+	float m_BoundaryRectAdj;
 	bool m_DHSScreens;
 	int m_LEDBrightness;
 	cv::Mat Screen;
@@ -415,10 +420,13 @@ private:
 
     // Calibration Parallax
     float getUnscaledAngleComponent(float offsetBaseline, float cameraOffset, float magIrisBaseline, int irisSize, int faceSize);
-    float getfaceDistance(cv::Rect FaceCoord);
+    float getfaceDistance(int pixelFaceboxWidth);
     cv::Point2i projectPoints_IristoFace_Parallax(cv::Point2i ptrI, cv::Point2f camOffset, cv::Point2f angComp, float irisEFL, float distanceMM);
     int validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Point2i ptrI, int CameraId, unsigned char *faceImagePtr, int m_faceIndex);
+    bool IsPointInsideLeftRect(const cv::Point pt, cv::Rect leftRect);
+    bool IsPointInsideRightRect(const cv::Point pt, cv::Rect rightRect);
     cv::Rect m_BScaledFaceRect;
+    FaceImageQueue m_FaceInfoForDebug;
 };
 
 #endif /* IMAGEPROCESSOR_H_ */

@@ -236,8 +236,7 @@ private:
 	pthread_t threadIdtemp;
 	pthread_t threadIdFace;
 
-	FaceImageQueue m_LeftCameraFaceInfo;
-	FaceImageQueue m_RightCameraFaceInfo;
+	FaceImageQueue m_FaceCameraInfo;
 
 	bool bFaceMapDebug;
 
