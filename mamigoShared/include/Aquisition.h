@@ -30,12 +30,19 @@ public:
 	virtual cv::Rect getLatestScaledFaceRect(){
 		return m_ScaledFaceRect;
 	}
+
+	virtual FaceImageQueue getLatestFaceInfo(){
+		return m_FaceInfo;
+	}
+	bool bIrisToFaceMapDebug;
 protected:
 	Aquisition():temp_header(0){}
 	FrameGrabber *framer;
 	IplImage *temp_header;
 	bool m_bSingleFrame;
 	cv::Rect m_ScaledFaceRect;
+	FaceImageQueue m_FaceInfo;
+
 };
 
 class AquisitionFile: public Aquisition{

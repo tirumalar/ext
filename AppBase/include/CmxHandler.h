@@ -105,6 +105,11 @@ public:
 	void SetSeed(unsigned short sd);
 	void SetLatestFaceCoordRect(cv::Rect ScaledFaceRect);
 	cv::Rect GetLatestFaceCoordRect();
+	Mutex m_FaceInfoLock;
+	FaceImageQueue m_FaceInfo;
+	bool bIrisToFaceMapDebug;
+	void SetLatestFaceInfo(FaceImageQueue FaceCamInfo);
+	FaceImageQueue GetLatestFaceInfo();
 	void SendMessage(char *out_msg, int len, unsigned short randomseed);
 private:
     bool HandleReceiveMsg(Socket & client);

@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 #include <opencv/cv.h>
+#include "FaceMap.h"
 
 class Configuration;
 
@@ -30,6 +31,9 @@ public:
 	virtual char *getLatestFrame_raw(){return 0;}
 	virtual cv::Rect getLatestScaledFaceRect(){
 		return m_ScaledFaceRect;
+	}
+	virtual FaceImageQueue getLatestFaceInfo(){
+		return m_FaceInfo;
 	}
 
 	//virtual void getIlluminator(int& il0,int& il1){ il0 = m_ill0;il1 = m_frameIndex;}
@@ -58,6 +62,7 @@ protected:
 	int m_ill0,m_frameIndex;
 	__int64_t m_ts;
 	cv::Rect m_ScaledFaceRect;
+	FaceImageQueue m_FaceInfo;
 };
 
 
