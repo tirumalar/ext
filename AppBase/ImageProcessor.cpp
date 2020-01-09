@@ -1475,12 +1475,6 @@ int ImageProcessor::validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Po
 	leftRect.height = FaceCoord.height;
 	leftRect.width = FaceCoord.width/2.0;
 
-	cv::Rect ValidEyeRect;
-	ValidEyeRect.x = FaceCoord.x;
-	ValidEyeRect.y = FaceCoord.y + (float) FaceCoord.height*0.1;
-	ValidEyeRect.height = FaceCoord.height/2.0;
-	ValidEyeRect.width = FaceCoord.width;
-
 	float faceDistance = getfaceDistance(FaceCoord.width);
 
 	// Increase the rect based on boundary adjust parameter
@@ -1496,6 +1490,35 @@ int ImageProcessor::validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Po
 	rightRectAdj.width = rightRect.width + (rightRect.width * m_BoundaryRectAdj);
 	rightRectAdj.height = rightRect.height + (rightRect.height * m_BoundaryRectAdj);
 
+	cv::Rect ValidEyeRect;
+	ValidEyeRect.x = FaceCoord.x;
+	ValidEyeRect.y = FaceCoord.y + (float) FaceCoord.height*0.1;
+	ValidEyeRect.height = FaceCoord.height/2.0;
+	ValidEyeRect.width = FaceCoord.width;
+
+	cv::Rect ValidEyeRectMod;
+	ValidEyeRectMod.x = ValidEyeRect.x - (ValidEyeRect.height * (m_BoundaryRectAdj/2)) - ((float) FaceCoord.height*0.1/4.0);
+	ValidEyeRectMod.y = ValidEyeRect.y - (ValidEyeRect.height * (m_BoundaryRectAdj/2));
+	ValidEyeRectMod.width = ValidEyeRect.width + (ValidEyeRect.width * m_BoundaryRectAdj);
+	ValidEyeRectMod.height = ValidEyeRect.height + (ValidEyeRect.height * m_BoundaryRectAdj);
+
+	//Project Iris points to face image
+	if (CameraId == IRISCAM_AUX_LEFT){
+		ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetAuxl, angCompAuxl,auxLensEFL, faceDistance);
+	}
+	else if (CameraId == IRISCAM_AUX_RIGHT){
+		ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetAuxR, angCompAuxR,auxLensEFL,faceDistance);
+	}
+	else if (CameraId == IRISCAM_MAIN_LEFT){
+		ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetMainl, angCompMainl,mainLensEFL,faceDistance);
+	}else if (CameraId == IRISCAM_MAIN_RIGHT){
+		ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetMainR, angCompMainR,mainLensEFL,faceDistance);
+	}
+
+	if (!ValidEyeRectMod.contains(ptrF)){
+		return 3;
+	}
+
 	if(bIrisToFaceMapDebug){
 		cv::Mat ColorfaceImage;
 		cv::Mat face = cv::Mat(m_Imagewidth, m_Imageheight, CV_8UC1, faceImagePtr);
@@ -1507,31 +1530,27 @@ int ImageProcessor::validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Po
 			cv::rectangle(ColorfaceImage, rightRect, cv::Scalar(255,255,255),1,0);
 			cv::rectangle(ColorfaceImage, leftRect, cv::Scalar(255,255,255),1,0);
 
+			cv::rectangle(ColorfaceImage, ValidEyeRect, cv::Scalar(255,255,0),1,0);
+			cv::rectangle(ColorfaceImage, ValidEyeRectMod, cv::Scalar(0,0,255),1,0);
+
 			if (CameraId == IRISCAM_AUX_LEFT)
 			{
 				// light green
-				ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetAuxl, angCompAuxl,auxLensEFL, faceDistance);
 				putText(ColorfaceImage,m_ssCoInfo.str().c_str(),cv::Point(ptrF.x-m_ProjtextSize.width/2,ptrF.y+m_ProjtextSize.height/2), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(144,238,144),2);
 
 			}else if (CameraId == IRISCAM_AUX_RIGHT)
 			{
 				// light blue
-				ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetAuxR, angCompAuxR,auxLensEFL,faceDistance);
 				putText(ColorfaceImage,m_ssCoInfo.str().c_str(),cv::Point(ptrF.x-m_ProjtextSize.width/2,ptrF.y+m_ProjtextSize.height/2), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(230,216,173),2);
 
 			}else if (CameraId == IRISCAM_MAIN_LEFT)
 			{
 				// Red
-				ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetMainl, angCompMainl,mainLensEFL,faceDistance);
 				putText(ColorfaceImage,m_ssCoInfo.str().c_str(),cv::Point(ptrF.x-m_ProjtextSize.width/2,ptrF.y+m_ProjtextSize.height/2), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(175,175,0),2);
-
-
 			}else if (CameraId == IRISCAM_MAIN_RIGHT)
 			{
 				// Orange
-				ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetMainR, angCompMainR,mainLensEFL,faceDistance);
 				putText(ColorfaceImage,m_ssCoInfo.str().c_str(),cv::Point(ptrF.x-m_ProjtextSize.width/2,ptrF.y+m_ProjtextSize.height/2), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv:: Scalar(0,165,255),2);
-
 			}
 			imshow("IrisToFaceMap", ColorfaceImage);
 			cvWaitKey(2);

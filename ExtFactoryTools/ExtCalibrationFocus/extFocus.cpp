@@ -181,6 +181,9 @@ void extFocus::DoStartCmd_focus(){
 	sprintf(cmd,"wcr(0x1b,0x30b0,%i)\n",((1 &0x3)<<4) | 0X80);
 	port_com_send(cmd);
 
+	sprintf(cmd,"wcr(0x04,0x30b0,%i)\n",((1&0x3)<<4) | 0X80);
+	port_com_send(cmd);
+
 	//Leave the PLL always ON
 	port_com_send("wcr(0x1f,0x301a,0x1998)");
 
