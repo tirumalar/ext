@@ -329,6 +329,25 @@ upgradeMaster(){
 		rm "${NEW_DHCP_HOOK}"
 	fi
 
+	# changing lighttpd service configuration if needed
+	CUR_LIGHTTPD_CONF1='/usr/share/lighttpd/include-conf-enabled.pl'
+	NEW_LIGHTTPD_CONF1='/home/root/include-conf-enabled.pl'
+	if ! diff -q "${CUR_LIGHTTPD_CONF1}" "${NEW_LIGHTTPD_CONF1}"
+	then 
+		mv "${NEW_LIGHTTPD_CONF1}" "${CUR_LIGHTTPD_CONF1}" 
+		chmod +x "${CUR_LIGHTTPD_CONF1}" 
+	else
+		rm "${NEW_LIGHTTPD_CONF1}"
+	fi
+	CUR_LIGHTTPD_CONF2='/etc/systemd/system/lighttpd.service'
+	NEW_LIGHTTPD_CONF2='/home/root/lighttpd.service'
+	if ! diff -q "${CUR_LIGHTTPD_CONF2}" "${NEW_LIGHTTPD_CONF2}"
+	then 
+		mv "${NEW_LIGHTTPD_CONF2}" "${CUR_LIGHTTPD_CONF2}" 
+	else
+		rm "${NEW_LIGHTTPD_CONF2}"
+	fi
+
 	${logger} -L"Applying done."
 
 	${logger} -L"Settings merging..."
@@ -795,22 +814,6 @@ upgrade()
 		${logger} -L"Terminating done."
 		checkApplicationTermination
 		
-
-		${logger} -L"Upgrading master..."
-		upgradeMaster ${masterFileName}
-		upgradeMasterStatus=$?
-		if [[ ${upgradeMasterStatus} -ne 0 ]]
-		then
-			${logger} -L"Error: master upgrade failed."
-			${logger} -L"STATUS:UNSUCCESSFUL"
-			${logger} -L"Device will be rebooted."
-			sleep 5
-			cleanup
-			rebootDevice
-			exit 5
-		fi
-		${logger} -L"Master upgrade done."
-		
 		${logger} -L"Upgrading linux packages..."
 		PKG_UPD_DIR='/home/root/packages_updates'
 		if [[ -d ${PKG_UPD_DIR} ]]
@@ -826,6 +829,21 @@ upgrade()
 			rm -r "${PKG_UPD_DIR}"
 		fi
 		${logger} -L"Upgrading linux packages done."
+		
+		${logger} -L"Upgrading master..."
+		upgradeMaster ${masterFileName}
+		upgradeMasterStatus=$?
+		if [[ ${upgradeMasterStatus} -ne 0 ]]
+		then
+			${logger} -L"Error: master upgrade failed."
+			${logger} -L"STATUS:UNSUCCESSFUL"
+			${logger} -L"Device will be rebooted."
+			sleep 5
+			cleanup
+			rebootDevice
+			exit 5
+		fi
+		${logger} -L"Master upgrade done."
 	
 		# format is different from WebConfig. Is it OK?
 		NOW=$(date -u)
