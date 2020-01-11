@@ -11,6 +11,8 @@ then
 fi
 
 projects=(
+log4cxx
+EyelockLoggingLib
 AusSegmentLib
 BiOmega
 EdgeImage
