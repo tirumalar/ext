@@ -358,7 +358,7 @@ public:
 	int terminate;
 	EyeSortingWrap *eyeSortingWrapObj;
 	bool shouldIBeginSorting;
-
+	bool m_bEnableAusSeg;
 	bool m_EnableISOSharpness;
 	int m_ISOSharpnessThreshold;
 

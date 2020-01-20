@@ -6,7 +6,6 @@
 #include "irisfind.h"
 #include "math.h"
 
-
 class IrisSegmentation {
  public:
 	IrisSegmentation(size_t eyecrop_width, size_t eyecrop_height, size_t flat_iris_width,
@@ -20,7 +19,7 @@ class IrisSegmentation {
 		  unsigned short int MinSpecDiameter, unsigned short int MaxSpecDiameter);
 
   float IrisFocus(uint8_t Iris[FLAT_IMAGE_SIZE], uint8_t Mask[FLAT_IMAGE_SIZE]);
-  int GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height);
+  int GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisPupilCircleParams& irisPupilCircles);
 
  private:
   size_t _eyecrop_width;

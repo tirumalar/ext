@@ -676,11 +676,30 @@ m_LedConsolidator = NULL;
 		EyelockLog(logger, WARN, "\nWARNING :Input given for EyeLocationSearchArea is invalid. ");
 		}
 
+		// Initialize Aus Segment Code
+		m_bEnableAusSeg = pConf->getValue("Eyelock.AusSegmentationCode", false);
+		eyeSortingWrapObj->SetEXTAusSegmentationFlag(m_bEnableAusSeg);
+
+		if(m_bEnableAusSeg)
+		{
+			int AusEyeCropWidth = pConf->getValue("Eyelock.AusEyeCropWidth", 640);
+			int AusEyeCropHeight = pConf->getValue("Eyelock.AusEyeCropHeight", 480);
+			unsigned short int Irisfind_min_Iris_Diameter = pConf->getValue("Eyelock.AusSegMinIrisDiameter", 60);
+			unsigned short int Irisfind_max_Iris_Diameter = pConf->getValue("Eyelock.AusSegMaxIrisDiameter", 180);
+
+			unsigned short int Irisfind_min_pupil_Diameter = pConf->getValue("Eyelock.AusSegMinPupilDiameter", 16);
+			unsigned short int Irisfind_max_pupil_Diameter = pConf->getValue("Eyelock.AusSegMaxPupilDiameter", 60);
+
+			eyeSortingWrapObj->SetIrisDiameterThresholds(Irisfind_min_Iris_Diameter, Irisfind_max_Iris_Diameter*1.5);
+			eyeSortingWrapObj->SetPupilDiameterThresholds(Irisfind_min_pupil_Diameter, Irisfind_max_pupil_Diameter);
+
+		}else{
 #if 0
 		eyeSortingWrapObj->SetIrisDiameterThresholds(70,170);
 #else
 		eyeSortingWrapObj->SetIrisDiameterThresholds(m_nMinIrisDiameter, m_expectedIrisWidth*1.5);//m_nMaxIrisDiameter); //DMOFIX!!! Need to hear back from Sarvesh...
 #endif
+		}
 		// eyeSortingWrapObj->SetHaloScoreTopPoints(6, 10, 140, 240);
 		eyeSortingWrapObj->SetQualRatioMax(1.3f);
 		eyeSortingWrapObj->SetQualThreshScore(9.5f);
@@ -3664,21 +3683,11 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 								if (shouldIBeginSorting == false) // Beginning a sorting
 								{
-#if 0
-									if (m_DHSScreens)
-									{
-										Screen = cv::imread("/home/root/screens/Slide2.BMP", cv::IMREAD_COLOR);
-										imshow("EXT", Screen);
-										cvWaitKey(1);
-									}
-#else
 									if (m_DHSScreens)
 									{
 										cvShowImage("EXT", IplImageScreen2);
 										cvWaitKey(1);
 									}
-
-#endif
 
 									time_newms= ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
 
@@ -3702,11 +3711,11 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 									eyeSortingWrapObj->BeginSorting((long) time_newms);
 									terminate = false; //We begin sorting. So terminate is false
-	#ifdef EYE_SIDE
-									terminate = eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, time_newms, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
-	#else
-									terminate = eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, time_newms, 0.0, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
-	#endif
+									if(m_bEnableAusSeg){
+										terminate = eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) im->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, time_newms, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
+									}else{
+										terminate = eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, time_newms, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
+									}
 									p++;
 									shouldIBeginSorting = true; // We already begin sorting. So it is false now
 								}
@@ -3718,11 +3727,10 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 									//printf("Sorting is running\*****%d\n", p);
 									if (!terminate)
 									{
-	#ifdef EYE_SIDE
-										terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, currTimems, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
-	#else
-										terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, currTimems, 0.0, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
-	#endif
+										if(m_bEnableAusSeg){
+											terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) im->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, currTimems, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
+										}else
+											terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, currTimems, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
 										p++;
 									}
 								}
@@ -3747,11 +3755,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 									if (!terminate)
 									{
-						#ifdef EYE_SIDE
 										terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0, m_eyeLabel); //Need to pass all the halo, laplacian, and all other info here from computation
-						#else
-										terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0); //Need to pass all the halo, laplacian, and all other info here from computation
-						#endif
 										// usleep (10); // usleep(10000);
 									}
 								}
@@ -3816,11 +3820,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 				if (!terminate)
 				{
-	#ifdef EYE_SIDE
 					terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0, m_eyeLabel); //Need to pass all the halo, laplacian, and all other info here from computation
-	#else
-					terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0); //Need to pass all the halo, laplacian, and all other info here from computation
-	#endif
 					// usleep(10); // usleep(10000);
 				}
 			}
@@ -3840,11 +3840,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 			if (!terminate)
 			{
-#ifdef EYE_SIDE
 				terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0, m_eyeLabel); //Need to pass all the halo, laplacian, and all other info here from computation
-#else
-				terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0); //Need to pass all the halo, laplacian, and all other info here from computation
-#endif
 				// usleep(10); // usleep(10000);
 			}
 		}

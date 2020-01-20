@@ -40,6 +40,11 @@ class Encode {
   PLINE* _line_ptr_buf_integral_wrap;
   PLINE* _line_ptr_buf_mask_integral_wrap;
 
+  // Anita on 20Jan 2020
+  bool m_featureNormalize;
+  int *m_fullFeature;
+  float m_evenVariance[4], m_oddVariance[4];
+
   void HorizontalBorderWrap(PLINE* linePtrIn, uint16 width, uint16 height,
                             uint8 filterLength, PLINE* linePtrOut);
   void ExtractFeatures(PLINE* lineptrWrapInt, PLINE* lineptrMaskWrapInt,
@@ -56,4 +61,5 @@ class Encode {
   ~Encode();
   int EncodeFlatIris(uint8_t* flat_iris, uint8_t* partial_mask,
                      uint8_t* template_encode, uint8_t* template_mask);
+  int GetFeatureVariances(float *var);
 };
