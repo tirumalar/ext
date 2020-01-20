@@ -8,6 +8,7 @@
 #include"EyeSortingWrap.h"
 #include "IrisSelector.h"
 #include <opencv/highgui.h>
+#include "FileConfiguration.h"
 #include <stdexcept>
 
 EyeSortingWrap::EyeSortingWrap(int FeatureScale, int maxSpecularityValue, int EarlyTimeoutMS, int GlobalTimeoutMS) : m_UserIris((IrisCodeMask *)0, (IrisCodeMask *)0), m_LogEnable(false)
@@ -15,6 +16,36 @@ EyeSortingWrap::EyeSortingWrap(int FeatureScale, int maxSpecularityValue, int Ea
 {
 	
 		m_pEyeSegmentationInterface = new EyeSegmentationInterface(); 
+
+		// Initialize Aus Segment Code
+		FileConfiguration pConf("/home/root/Eyelock.ini");
+		m_bEnableAusSeg = pConf.getValue("Eyelock.AusSegmentationCode", false);
+		SetEXTAusSegmentationFlag(m_bEnableAusSeg);
+
+		if(m_bEnableAusSeg)
+		{
+			int AusEyeCropWidth = pConf.getValue("Eyelock.AusEyeCropWidth", 640);
+			int AusEyeCropHeight = pConf.getValue("Eyelock.AusEyeCropHeight", 480);
+			unsigned short int Irisfind_min_Iris_Diameter = pConf.getValue("Eyelock.AusSegMinIrisDiameter", 60);
+			unsigned short int Irisfind_max_Iris_Diameter = pConf.getValue("Eyelock.AusSegMaxIrisDiameter", 180);
+
+			unsigned short int Irisfind_min_pupil_Diameter = pConf.getValue("Eyelock.AusSegMinPupilDiameter", 16);
+			unsigned short int Irisfind_max_pupil_Diameter = pConf.getValue("Eyelock.AusSegMaxPupilDiameter", 60);
+
+			unsigned short int Irisfind_min_spec_Diameter = pConf.getValue("Eyelock.AusSegMinSpecDiameter", 8);
+			unsigned short int Irisfind_max_spec_Diameter = pConf.getValue("Eyelock.AusSegMaxSpecDiameter", 20);
+
+			float gaze_radius_thresh = pConf.getValue("Eyelock.AusGazeRadiusThreshold", 10.0f);
+			float propor_iris_visible_threshold = pConf.getValue("Eyelock.AusPIVThreshold", 0.40f);
+			
+			SetAusIrisfind_Iris_Diameter(Irisfind_min_Iris_Diameter, Irisfind_max_Iris_Diameter);
+			SetAusIrisfind_Pupil_Diameter(Irisfind_min_pupil_Diameter, Irisfind_max_pupil_Diameter);
+			SetAusIrisfind_Spec_Diameter(Irisfind_min_spec_Diameter, Irisfind_max_spec_Diameter);
+			SetAusIrisfind_EyeCorpSize(AusEyeCropWidth, AusEyeCropHeight);
+			SetAusGaze_radius_thresh(gaze_radius_thresh);
+			SetAusPIV_Threshold(propor_iris_visible_threshold);
+		}
+
 		try		
 		{
 			m_pEyeSegmentationInterface->init(FeatureScale);
@@ -152,6 +183,12 @@ void EyeSortingWrap::SetIrisDiameterThresholds(int minIrisDiameter, int maxIrisD
 {
 	m_pEyeSorting->SetIrisDiameterThresholds(minIrisDiameter, maxIrisDiameter);
 }
+
+void EyeSortingWrap::SetPupilDiameterThresholds(int minIrisDiameter, int maxIrisDiameter)
+{
+	m_pEyeSorting->SetPupilDiameterThresholds(minIrisDiameter, maxIrisDiameter);
+}
+
 void EyeSortingWrap::SetHaloScoreTopPoints(int noOfPixelsToConsider, float topPixelsPercentage, int intensityThreshBP, int HaloThresh )
 {   
 	m_pEyeSorting ->SetHaloScoreTopPoints(noOfPixelsToConsider,topPixelsPercentage,intensityThreshBP,HaloThresh);
@@ -177,6 +214,49 @@ void EyeSortingWrap::SetEyeSortingLogEnable(bool EnableLog)
 	m_LogEnable = EnableLog;
 	m_pEyeSorting->SetEyeSortingLogEnable(EnableLog);
 }
+
+void EyeSortingWrap::SetEXTAusSegmentationFlag(bool val)
+{
+	if(m_pEyeSegmentationInterface)
+		m_pEyeSegmentationInterface->EnableAusSegmentation(val);
+}
+
+void EyeSortingWrap::SetAusIrisfind_Iris_Diameter(unsigned short int MinIrisDiameter, unsigned short int MaxIrisDiameter)
+{
+	if(m_pEyeSegmentationInterface)
+		m_pEyeSegmentationInterface->SetAusIrisfind_Iris_Diameter(MinIrisDiameter, MaxIrisDiameter);
+}
+
+void EyeSortingWrap::SetAusIrisfind_Pupil_Diameter(unsigned short int MinPupilDiameter, unsigned short int MaxPupilDiameter)
+{
+	if(m_pEyeSegmentationInterface)
+		m_pEyeSegmentationInterface->SetAusIrisfind_Pupil_Diameter(MinPupilDiameter, MaxPupilDiameter);	 // 70, was 60 (faster), but missed eyes too close to camera
+}
+
+void EyeSortingWrap::SetAusIrisfind_Spec_Diameter(unsigned short int MinSpecDiameter, unsigned short int MaxSpecDiameter)
+{
+	if(m_pEyeSegmentationInterface)
+		m_pEyeSegmentationInterface->SetAusIrisfind_Spec_Diameter(MinSpecDiameter, MaxSpecDiameter);
+}
+
+void EyeSortingWrap::SetAusIrisfind_EyeCorpSize(int Width, int Height)
+{
+	if(m_pEyeSegmentationInterface)
+		m_pEyeSegmentationInterface->SetAusIrisfind_EyeCorpSize(Width, Height);
+}
+
+void EyeSortingWrap::SetAusGaze_radius_thresh(float gaze_radius_thresh)
+{
+	if(m_pEyeSegmentationInterface)
+		m_pEyeSegmentationInterface->SetAusGaze_radius_thresh(gaze_radius_thresh);
+}
+
+void EyeSortingWrap::SetAusPIV_Threshold(float propor_iris_visible_threshold)
+{
+	if(m_pEyeSegmentationInterface)
+		m_pEyeSegmentationInterface->SetAusPIV_Threshold(propor_iris_visible_threshold);
+}
+
 
 std::pair<unsigned char*,unsigned char*> EyeSortingWrap::GetBestSortedPairOfEye(void){
 	std::pair<unsigned char*,unsigned char*> ret;

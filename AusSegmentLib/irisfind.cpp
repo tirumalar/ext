@@ -1077,7 +1077,7 @@ float32 pupilToIrisRatio(float32 pupil_rad, float32 iris_rad) {
 TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
                       size_t eyecrop_width,
                       size_t eyecrop_height, size_t flat_iris_width,
-                      size_t flat_iris_height)
+                      size_t flat_iris_height, IrisPupilCircleParams& irisPupilCircles)
 
 {
   //---------------------------------------------------------------------------------------------
@@ -1170,6 +1170,16 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
     }else{
     	return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
     }
+
+    // Get the values for sorting
+	//  printf("irisPos %f %f %f\n", irisPos[0].x, irisPos[0].y, irisPos[0].z);
+	irisPupilCircles.ip.x = irisPos[0].x;
+	irisPupilCircles.ip.y = irisPos[0].y;
+	irisPupilCircles.ip.r = irisPos[0].z;
+
+	irisPupilCircles.pp.x = pupilPos[0].x;
+	irisPupilCircles.pp.y = pupilPos[0].y;
+	irisPupilCircles.pp.r = pupilPos[0].z;
 
     //------------------------------------------------------------------------------------
     //

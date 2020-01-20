@@ -89,6 +89,20 @@ struct ScoreXYZS {
 	uint32 s;
 };
 
+typedef struct
+{
+	float x;
+	float y;
+	float r;
+} CircleParams;
+
+typedef struct
+{
+	CircleParams ip;
+	CircleParams pp;
+
+}IrisPupilCircleParams;
+
 // One Circle_struct per radius.
 // Circle_struct contains the LUT for one radius and the
 // circle match winner info for that radius.
@@ -144,7 +158,7 @@ public:
 	void ek_irisfind_init();
 	TemplatePipelineError ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
 			size_t eyecrop_width, size_t eyecrop_height, size_t flat_iris_width,
-			size_t flat_iris_height);
+			size_t flat_iris_height, IrisPupilCircleParams& pCircles);
 	void init_circles(uint16 lutCnt);
 	void SetIrisfind_Iris_Diameter(uint16 MinIrisDiameter,
 			uint16 MaxIrisDiameter);

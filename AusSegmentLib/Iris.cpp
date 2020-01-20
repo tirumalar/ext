@@ -100,8 +100,7 @@ float IrisSegmentation::IrisFocus(uint8_t Iris[FLAT_IMAGE_SIZE],
   return Accumulator / Count;
 }
 
-int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris,
-                           uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height) {
+int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisPupilCircleParams& irisPupilCircles) {
   get_lineptrs_8(eyecrop, _eyecrop_width, _eyecrop_height, _line_ptr_crop);
   get_lineptrs_8(flat_iris, _flat_iris_width, _flat_iris_height,
                  _line_ptr_flat);
@@ -132,7 +131,7 @@ int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris,
   // LiveDetection->enabled = true;
 
   // run the iris find algorithm
-  eIrisError = m_iris_find->ek_irisfind_main(_line_ptr_crop, _line_ptr_flat, eyecrop_width, eyecrop_height, _flat_iris_width, _flat_iris_height);
+  eIrisError = m_iris_find->ek_irisfind_main(_line_ptr_crop, _line_ptr_flat, eyecrop_width, eyecrop_height, _flat_iris_width, _flat_iris_height, irisPupilCircles);
 
   //
   // extract the "last human" flag from the "spoof detection" sub-struct

@@ -366,9 +366,10 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 		bool bSegresult = false;
 		size_t eyecrop_width = m_AusIrisfind_EyeCropWidth;
 		size_t eyecrop_height = m_AusIrisfind_EyeCropHeight;
+		IrisPupilCircleParams irisPupilCircles;
 		// printf("m_AusIrisfind_EyeCropWidth:%d m_AusIrisfind_EyeCropHeight:%d\n", m_AusIrisfind_EyeCropWidth, m_AusIrisfind_EyeCropHeight);
 		if(eyecrop_width == 640 && eyecrop_height == 480){
-			bSegresult = m_AusSegment->m_Iris->GenerateFlatIris(imageBuffer,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height);
+			bSegresult = m_AusSegment->m_Iris->GenerateFlatIris(imageBuffer,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height, irisPupilCircles);
 		}else{
 			CvRect rect = {160, 120, 320, 240};
 			memcpy(m_AusSegment->EyeCropHeader_640_480->imageData, imageBuffer,(640*480));
@@ -376,12 +377,28 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 			cvSetImageROI(m_AusSegment->EyeCropHeader_640_480, rect);
 			cvCopy(m_AusSegment->EyeCropHeader_640_480,m_AusSegment->EyeCropHeader_320_240);
 			cvResetImageROI(m_AusSegment->EyeCropHeader_640_480);
-			m_AusSegment->m_Iris->GenerateFlatIris((unsigned char*)m_AusSegment->EyeCropHeader_320_240->imageData,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height);
+			// m_AusSegment->m_Iris->GenerateFlatIris((unsigned char*)m_AusSegment->EyeCropHeader_320_240->imageData,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height, &pCircles);
 			/*cv::Mat mateye = cv::cvarrToMat(m_AusSegment->EyeCropHeader_320_240);
 			cv::imshow("Test",mateye);
 			cvWaitKey(1);*/
-			bSegresult = m_AusSegment->m_Iris->GenerateFlatIris((unsigned char*)m_AusSegment->EyeCropHeader_320_240->imageData,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height);
+			bSegresult = m_AusSegment->m_Iris->GenerateFlatIris((unsigned char*)m_AusSegment->EyeCropHeader_320_240->imageData,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height, irisPupilCircles);
 		}
+
+		if(pCircles)
+		{
+			pCircles->ip.x = irisPupilCircles.ip.x;
+			pCircles->ip.y = irisPupilCircles.ip.y;
+			pCircles->ip.r = irisPupilCircles.ip.r;
+
+			pCircles->pp.x = irisPupilCircles.pp.x;
+			pCircles->pp.y = irisPupilCircles.pp.y;
+			pCircles->pp.r = irisPupilCircles.pp.r;
+
+
+			// printf("%f %f %f\n", pCircles->ip.x, pCircles->ip.y, pCircles->ip.r);
+		}
+
+		m_pEyeSegmentServer->m_iseye = true; // Needed for sorting
 
 		// printf("bSegresult.....%d\n", bSegresult);
 
@@ -747,13 +764,24 @@ void EyeSegmentationInterface::GetFlatIris( unsigned char *flatIris, int w, int 
 }
 void EyeSegmentationInterface::GetFlatMask( unsigned char *flatMask, int w, int h, int stride )
 {
-	if(w == m_eso->flatMask->width && h == m_eso->flatMask->height)
+	if(m_bEnableAusSeg)
 	{
 		IplImage *header = cvCreateImageHeader(cvSize(w, h), IPL_DEPTH_8U, 1);
 		cvSetData(header, flatMask, stride);
 
-		cvCopy( m_eso->flatMask, header );
+		cvCopy(m_AusSegment->m_flatMask, header );
 		cvReleaseImageHeader(&header);
+	}
+	else
+	{
+		if(w == m_eso->flatMask->width && h == m_eso->flatMask->height)
+		{
+			IplImage *header = cvCreateImageHeader(cvSize(w, h), IPL_DEPTH_8U, 1);
+			cvSetData(header, flatMask, stride);
+
+			cvCopy( m_eso->flatMask, header );
+			cvReleaseImageHeader(&header);
+		}
 	}
 }
 void EyeSegmentationInterface::GetSpecularityMask( unsigned char *Mask, int w, int h, int stride )
@@ -770,7 +798,11 @@ int EyeSegmentationInterface::checkBitCorruption( unsigned char *tag )
 }
 int EyeSegmentationInterface::GetFeatureVariances(float *var)
 {
-	return m_pEyeFeatureServer->GetFeatureVariances(var);
+	if(m_bEnableAusSeg){
+		return m_AusSegment->m_Encode->GetFeatureVariances(var);
+	}else{
+		return m_pEyeFeatureServer->GetFeatureVariances(var);
+	}
 }
 
 IrisMatchInterface::IrisMatchInterface(int featureLength, int numRows, int byteSize,int shift):
@@ -998,9 +1030,8 @@ AusSegment::~AusSegment()
 
 }
 
-int AusSegment::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris,
-                               uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height) {
-  return m_Iris->GenerateFlatIris(eyecrop, flat_iris, partial_mask, eyecrop_width, eyecrop_height);
+int AusSegment::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisPupilCircleParams& irisPupilCircles) {
+	return m_Iris->GenerateFlatIris(eyecrop, flat_iris, partial_mask, eyecrop_width, eyecrop_height, irisPupilCircles);
 }
 
 int AusSegment::GenerateEncodedTemplate(uint8_t* flat_iris, uint8_t* partial_mask,

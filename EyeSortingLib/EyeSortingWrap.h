@@ -137,8 +137,16 @@ class EyeSortingWrap
 		void SetEyeQualityClassifierWeights(float haloRankWeight, float fvRankWeight, float cbMaskRankWeight);
 		void SetOldHaloRankWeight(float oldHaloRankWeight);
 		void SetIrisDiameterThresholds(int minIrisDiameter, int maxIrisDiameter);
+		void SetPupilDiameterThresholds(int minIrisDiameter, int maxIrisDiameter);
 		void SetMinEyesInCluster(int minEyesInCluster);
 	    void SetEyeSortingLogEnable(bool EnableLog);
+	    void SetEXTAusSegmentationFlag(bool val);
+	    void SetAusIrisfind_Iris_Diameter(unsigned short int MinIrisDiameter, unsigned short int MaxIrisDiameter);
+		void SetAusIrisfind_Pupil_Diameter(unsigned short int MinPupilDiameter, unsigned short int MaxPupilDiameter);
+		void SetAusIrisfind_Spec_Diameter(unsigned short int MinSpecDiameter, unsigned short int MaxSpecDiameter);
+		void SetAusIrisfind_EyeCorpSize(int Width, int Height);
+		void SetAusGaze_radius_thresh(float gaze_radius_thresh);
+		void SetAusPIV_Threshold(float propor_iris_visible_threshold);
 	    void SetDeviceType(DeviceType deviceType){m_deviceType = deviceType;}
 		void BeginSorting(long time_ms);
 	    std::pair<IrisCodeMask *, IrisCodeMask *> GetSortedPairEyes(void);
@@ -164,5 +172,6 @@ class EyeSortingWrap
 		IrisMatchInterface *m_pIrisMatchInterface;
 		EnrollmentServer *m_pEyeSorting;
 		DeviceType m_deviceType;
+		bool m_bEnableAusSeg;
 };
 
