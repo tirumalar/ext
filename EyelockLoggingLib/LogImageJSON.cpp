@@ -17,6 +17,11 @@
 #include <log4cxx/helpers/transcoder.h>
 #include <log4cxx/mdc.h>
 #include <LogImageJSON.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv/cv.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 
 using namespace std;
@@ -148,17 +153,47 @@ bool LogImageRecordJSON::SetImageData(uint8_t *pData, uint32_t width, uint32_t h
 {
 	m_arImageData.empty();
 
-	// Copy the image data internally
-	m_arImageData.insert(m_arImageData.end(), pData, pData+(width*height));
+	// For now, we always convert to PNG
+	Convert8bitGreyscaleToPNG(pData, width, height, m_arImageData);
 
 	// Update all of the relevant record information
-	m_nImageFormat = IMAGEFORMAT_MONO_RAW;
+	m_nImageFormat = IMAGEFORMAT_MONO_PNG;
+
+	// Copy the image data internally
+	m_arImageData.insert(m_arImageData.end(), pData, pData+(width*height));
 
 	// Update the length of our record...
 	m_nImageWidth = width;
 	m_nImageHeight = height;
 	return true;
 }
+
+
+bool LogImageRecordJSON::Convert8bitGreyscaleToPNG(uint8_t *pData, uint32_t width, uint32_t height, vector<uint8_t>&arOutImage)
+{
+	IplImage *image = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 1);
+	memcpy(image->imageData, pData, width*height);
+
+	cv::Mat img = cv::cvarrToMat(image);
+
+	vector<int> compression_params;
+
+	compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+	compression_params.push_back(0); // Uncompressed
+
+	vector<uint8_t> theBuffer;
+
+	cv::imencode(".png", img, theBuffer);
+
+	arOutImage.clear();
+
+	if (theBuffer.size() > 0)
+		arOutImage.insert(arOutImage.end(), theBuffer.begin(), theBuffer.end());
+
+	cvReleaseImage(&image);
+	img.release();
+}
+
 
 
 string LogImageRecordJSON::GetObjectAsJSON()

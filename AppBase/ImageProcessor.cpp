@@ -2574,7 +2574,7 @@ bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 		 ProcessImageMatchMode(frame, matchmode);
 	 }
 
-	EYELOCK_WRITELOGIMAGE_TRACE(imglogger, "frame");	// Must be paired with CREATE call to actually write img to log and clean up
+	EYELOCK_WRITELOGIMAGE_TRACE(imglogger, "frame", pLogFrame);	// Must be paired with CREATE call to actually write img to log and clean up
 }
 
 void ImageProcessor::CreateFaceWidthGainMap()
@@ -2989,6 +2989,7 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 		pLogFrame->SetSpecularityCount(m_sframe.GetNumberOfSpecularityEyes());
 	}
 
+
 	for(int eyeIdx=0;eyeIdx<maxEyes;eyeIdx++){
 		CvPoint2D32f irisCentroid = cvPoint2D32f(0,0);
 		DetectedEye *eye=getNextAvailableEyeBuffer();
@@ -3158,7 +3159,7 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 			}
 		}
 
-		EYELOCK_WRITELOGIMAGE_DEBUG(imglogger, "crop");
+		EYELOCK_WRITELOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);
 		pLogCrop = NULL;
 	}
 
@@ -3603,6 +3604,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 				// We have crop... setup logging
 				EYELOCK_CREATELOGIMAGE_DEBUG(imglogger, "crop", eye->getEyeCrop()->imageData, eye->getEyeCrop()->width, eye->getEyeCrop()->height);
+
 				EYELOCK_MODIFYLOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);
 				if (NULL != pLogCrop)
 				{
@@ -3787,7 +3789,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 									pLogCrop->SetDiscarded(true);
 
 									//Write the crop to disk and cleanup...
-									EYELOCK_WRITELOGIMAGE_DEBUG(imglogger, "crop");
+									EYELOCK_WRITELOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);
 								}
 
 								if (shouldIBeginSorting == true)
@@ -3848,7 +3850,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				}
 
 				// Log the crop
-				EYELOCK_WRITELOGIMAGE_DEBUG(imglogger, "crop");
+				EYELOCK_WRITELOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);
 			} // end of (for)
 		}
 		else // No eyes detected...
@@ -4142,6 +4144,8 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		EYELOCK_INFO(eyelocklogger, "Sorting Complete");
 		log4cxx::MDC::remove("capturesession");
 	} // End of terminate
+
+
     return bSentSomething;
 }
 
