@@ -26,26 +26,26 @@ const char *log_format(const char *fmt, ...);
 #define EYELOCK_FATAL(logger, fmt, ...) LOG4CXX_FATAL(logger, log_format(fmt, ## __VA_ARGS__))
 
 //  These macros are for dealing with log images...
-#define EYELOCK_CREATELOGIMAGE_TRACE(logger, key, imageData, width, height) { \
-        if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
+#define EYELOCK_CREATELOGIMAGE_DEBUG(logger, key, imageData, width, height) { \
+        if (LOG4CXX_UNLIKELY(logger->isDebugEnabled())) {\
         		if (NULL != imageData)\
 					LogImageRecordJSON::put(key, imageData, width, height);\
            }}
 
-#define EYELOCK_MODIFYLOGIMAGE_TRACE(logger, key, pLogImage) { \
-        if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
+#define EYELOCK_MODIFYLOGIMAGE_DEBUG(logger, key, pLogImage) { \
+        if (LOG4CXX_UNLIKELY(logger->isDebugEnabled())) {\
         	pLogImage = LogImageRecordJSON::get(key);\
            }\
 		   else {\
 		   	   pLogImage = NULL;\
 		   }}
 
-#define EYELOCK_WRITELOGIMAGE_TRACE(logger, key, pLogImage) { \
-        if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
+#define EYELOCK_WRITELOGIMAGE_DEBUG(logger, key, pLogImage) { \
+        if (LOG4CXX_UNLIKELY(logger->isDebugEnabled())) {\
         	pLogImage = LogImageRecordJSON::get(key);\
         	if (NULL != pLogImage) {\
         		LogImageRecordJSON::remove(key); \
-        		LOG4CXX_TRACE(logger, pLogImage->GetObjectAsJSON());\
+        		LOG4CXX_DEBUG(logger, pLogImage->GetObjectAsJSON());\
         		delete pLogImage; \
         		pLogImage = NULL;\
            }}\
@@ -55,21 +55,21 @@ const char *log_format(const char *fmt, ...);
 			}
 
 
-#define EYELOCK_CREATELOGIMAGE_DEBUG(logger, key, imageData, width, height) { \
-        if (LOG4CXX_UNLIKELY(logger->isDebugEnabled())) {\
-        		EYELOCK_CREATELOGIMAGE_TRACE(logger, key, imageData, width, height);\
+#define EYELOCK_CREATELOGIMAGE_TRACE(logger, key, imageData, width, height) { \
+        if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
+        		EYELOCK_CREATELOGIMAGE_DEBUG(logger, key, imageData, width, height);\
            }}
 
-#define EYELOCK_MODIFYLOGIMAGE_DEBUG(logger, key, pLogImage) {\
-        if (LOG4CXX_UNLIKELY(logger->isDebugEnabled())) {\
-        	EYELOCK_MODIFYLOGIMAGE_TRACE(logger, key, pLogImage);\
+#define EYELOCK_MODIFYLOGIMAGE_TRACE(logger, key, pLogImage) {\
+        if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
+        	EYELOCK_MODIFYLOGIMAGE_DEBUG(logger, key, pLogImage);\
         }else {\
         	pLogImage = NULL;\
           }}
 
-#define EYELOCK_WRITELOGIMAGE_DEBUG(logger, key, pLogImage) { \
-        if (LOG4CXX_UNLIKELY(logger->isDebugEnabled())) {\
-        	EYELOCK_WRITELOGIMAGE_TRACE(logger, key, pLogImage);\
+#define EYELOCK_WRITELOGIMAGE_TRACE(logger, key, pLogImage) { \
+        if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
+        	EYELOCK_WRITELOGIMAGE_DEBUG(logger, key, pLogImage);\
         }else {\
 			pLogImage = NULL;\
         }}\
