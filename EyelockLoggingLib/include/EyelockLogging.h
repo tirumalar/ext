@@ -32,13 +32,13 @@ const char *log_format(const char *fmt, ...);
 					LogImageRecordJSON::put(key, imageData, width, height);\
            }}
 
-#define EYELOCK_MODIFYLOGIMAGE_TRACE(logger, key, pLogImage) \
+#define EYELOCK_MODIFYLOGIMAGE_TRACE(logger, key, pLogImage) { \
         if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
         	pLogImage = LogImageRecordJSON::get(key);\
            }\
 		   else {\
 		   	   pLogImage = NULL;\
-		   }
+		   }}
 
 #define EYELOCK_WRITELOGIMAGE_TRACE(logger, key, pLogImage) { \
         if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
@@ -48,7 +48,11 @@ const char *log_format(const char *fmt, ...);
         		LOG4CXX_TRACE(logger, pLogImage->GetObjectAsJSON());\
         		delete pLogImage; \
         		pLogImage = NULL;\
-           }}}
+           }}\
+			else {\
+				pLogImage = NULL;\
+			  }\
+			}
 
 
 #define EYELOCK_CREATELOGIMAGE_DEBUG(logger, key, imageData, width, height) { \
@@ -56,15 +60,19 @@ const char *log_format(const char *fmt, ...);
         		EYELOCK_CREATELOGIMAGE_TRACE(logger, key, imageData, width, height);\
            }}
 
-#define EYELOCK_MODIFYLOGIMAGE_DEBUG(logger, key, pLogImage) \
+#define EYELOCK_MODIFYLOGIMAGE_DEBUG(logger, key, pLogImage) {\
         if (LOG4CXX_UNLIKELY(logger->isDebugEnabled())) {\
         	EYELOCK_MODIFYLOGIMAGE_TRACE(logger, key, pLogImage);\
-		}
+        }else {\
+        	pLogImage = NULL;\
+          }}
 
 #define EYELOCK_WRITELOGIMAGE_DEBUG(logger, key, pLogImage) { \
         if (LOG4CXX_UNLIKELY(logger->isDebugEnabled())) {\
         	EYELOCK_WRITELOGIMAGE_TRACE(logger, key, pLogImage);\
-        }}
+        }else {\
+			pLogImage = NULL;\
+        }}\
 
 
 

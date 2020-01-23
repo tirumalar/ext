@@ -306,12 +306,13 @@ LogImageRecordJSON *LogImageRecordJSON::get(const std::string& key)
 
  			 if (result.size() > 1)
  			 {
- 				LogImageRecordJSON *pLogImage;
+ 				//LogImageRecordJSON *pLogImage;
+ 				 void *pLogImage = NULL;
 
 				if (sscanf(result[1].c_str(), "%p", &pLogImage) <= 0)
-					pLogImage = NULL;
+					return NULL;
 
- 				return pLogImage;
+ 				return (LogImageRecordJSON *)pLogImage;
  			 }
  			 else
  				 return NULL;
