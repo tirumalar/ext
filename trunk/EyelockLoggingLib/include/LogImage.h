@@ -13,6 +13,9 @@
 #include <log4cxx/log4cxx.h>
 #include <log4cxx/logstring.h>
 #include <serializelog.h>
+// single file json library
+#include <single_include/nlohmann/json.hpp>
+
 
 
 using namespace std;
@@ -38,8 +41,8 @@ public:
 	typedef enum LogImageType
 	{
 		FACE = 0,
-		IRIS_MAIN,
-		IRIS_AUX
+		IRIS_FRAME,
+		IRIS_CROP
 	}LOGIMAGETYPE;
 
 	typedef enum EyeLabelType
@@ -106,6 +109,7 @@ public:
 	uint8_t m_DeviceType; 			//Need to check (EXT, NXT, etc)
 	uint16_t m_nCaptureDeviceID;	// DeviceID of the capturing device
 
+	LogImageType m_LogImageType;
 	uint16_t m_nFrameID;  			// which Frame is this?
 	uint16_t m_nCamID;
 	uint16_t m_nFaceIndex;			// Which face image does this correspond to
@@ -181,9 +185,9 @@ public:
 
 public:
 	LogImageRecord() : m_nRecordLength(0), m_DeviceType(EYELOCK_EXT), m_nCaptureDeviceID(0), m_nFrameID(0), m_nCamID(0), m_nFaceIndex(0),
-						m_nNumOfHaarEyes(0), m_nNumofSpecularities(0), m_Discarded(0), m_EyeLabel(SUBJECT_EYE_LABEL_UNDEF),  m_ImageType(IRIS_MAIN),
+						m_nNumOfHaarEyes(0), m_nNumofSpecularities(0), m_Discarded(0), m_EyeLabel(SUBJECT_EYE_LABEL_UNDEF),  m_ImageType(IRIS_FRAME),
 					m_ImageFormat(IMAGEFORMAT_MONO_RAW), m_ImageProperties(0), m_nImageWidth(640), m_nImageHeight(480), m_BitDepth(8), m_fSharpness(0.0)
-					 { m_pMemFileData = NULL; m_nRecordLength = m_nBaseObjectLength;}
+					 { m_pMemFileData = NULL; m_nRecordLength = m_nBaseObjectLength; SetCreationTime(); }
 	virtual ~LogImageRecord() {};
 
 

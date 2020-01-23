@@ -155,8 +155,10 @@ protected:
 	
 	log4cxx::LoggerPtr eyelocklogger;
 	log4cxx::LoggerPtr imglogger;
-	LogImageRecord *pLogFrame; // ptr to the current "frame" logImage
-	LogImageRecord *pLogCrop; // ptr to the current "crop" logImage
+	LogImageRecordJSON *pLogFrame; // ptr to the current "frame" logImage
+	LogImageRecordJSON *pLogCrop; // ptr to the current "crop" logImage
+
+
     bool m_tsDestAddrpresent;
     ProcessorChain *m_nwLedDispatcher;
     ProcessorChain *m_LedConsolidator;

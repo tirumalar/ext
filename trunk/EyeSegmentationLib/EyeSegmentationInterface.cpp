@@ -10,6 +10,8 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <EyelockLogging.h>
+
 //#include "FFTVarSpoofDetector.h"
 
 // #define PROFILE
@@ -366,10 +368,10 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 		bool bSegresult = false;
 		size_t eyecrop_width = m_AusIrisfind_EyeCropWidth;
 		size_t eyecrop_height = m_AusIrisfind_EyeCropHeight;
-		IrisPupilCircleParams irisPupilCircles;
+		IrisFindParameters irisPupilParams;
 		// printf("m_AusIrisfind_EyeCropWidth:%d m_AusIrisfind_EyeCropHeight:%d\n", m_AusIrisfind_EyeCropWidth, m_AusIrisfind_EyeCropHeight);
 		if(eyecrop_width == 640 && eyecrop_height == 480){
-			bSegresult = m_AusSegment->m_Iris->GenerateFlatIris(imageBuffer,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height, irisPupilCircles);
+			bSegresult = m_AusSegment->m_Iris->GenerateFlatIris(imageBuffer,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height, irisPupilParams);
 		}else{
 			CvRect rect = {160, 120, 320, 240};
 			memcpy(m_AusSegment->EyeCropHeader_640_480->imageData, imageBuffer,(640*480));
@@ -381,21 +383,51 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 			/*cv::Mat mateye = cv::cvarrToMat(m_AusSegment->EyeCropHeader_320_240);
 			cv::imshow("Test",mateye);
 			cvWaitKey(1);*/
-			bSegresult = m_AusSegment->m_Iris->GenerateFlatIris((unsigned char*)m_AusSegment->EyeCropHeader_320_240->imageData,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height, irisPupilCircles);
+			bSegresult = m_AusSegment->m_Iris->GenerateFlatIris((unsigned char*)m_AusSegment->EyeCropHeader_320_240->imageData,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height, irisPupilParams);
 		}
 
 		if(pCircles)
 		{
-			pCircles->ip.x = irisPupilCircles.ip.x;
-			pCircles->ip.y = irisPupilCircles.ip.y;
-			pCircles->ip.r = irisPupilCircles.ip.r;
+			pCircles->ip.x = irisPupilParams.ip.x;
+			pCircles->ip.y = irisPupilParams.ip.y;
+			pCircles->ip.r = irisPupilParams.ip.r;
 
-			pCircles->pp.x = irisPupilCircles.pp.x;
-			pCircles->pp.y = irisPupilCircles.pp.y;
-			pCircles->pp.r = irisPupilCircles.pp.r;
+			pCircles->pp.x = irisPupilParams.pp.x;
+			pCircles->pp.y = irisPupilParams.pp.y;
+			pCircles->pp.r = irisPupilParams.pp.r;
 
 
 			// printf("%f %f %f\n", pCircles->ip.x, pCircles->ip.y, pCircles->ip.r);
+		}
+		// Update our Debugging Crop with the segmentation data
+		log4cxx::LoggerPtr imglogger = log4cxx::Logger::getLogger("imglog");
+
+		LogImageRecordJSON *pLogCrop; // ptr to the current "crop" logImage
+		EYELOCK_MODIFYLOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);
+
+		if (NULL != pLogCrop)
+		{
+			LogImageCircle theCircle;
+
+			theCircle.m_nPointX = irisPupilParams.pp.x;
+			theCircle.m_nPointY = irisPupilParams.pp.y;
+			theCircle.m_nRadius = irisPupilParams.pp.r;
+			pLogCrop->AddSegPupilCircle(theCircle);
+
+			theCircle.m_nPointX = irisPupilParams.ip.x;
+			theCircle.m_nPointY = irisPupilParams.ip.y;
+			theCircle.m_nRadius = irisPupilParams.ip.r;
+
+			pLogCrop->AddSegIrisCircle(theCircle);
+
+			pLogCrop->SetTemplatePipelineError((int)irisPupilParams.eIrisError);
+			pLogCrop->SetGazeZ(irisPupilParams.GazeVal);
+			pLogCrop->SetEyelidCoverage(irisPupilParams.eyelidCoverage);
+			pLogCrop->SetUseableIrisArea(irisPupilParams.Usable_Iris_Area);
+			pLogCrop->SetPupilToIrisRatio(irisPupilParams.PupilToIrisRatio);
+			pLogCrop->SetIrisScore(irisPupilParams.IrisScore);
+			pLogCrop->SetDarkScore(irisPupilParams.darkScore);
+			pLogCrop->SetSpecScore(irisPupilParams.SpecScore);
 		}
 
 		m_pEyeSegmentServer->m_iseye = true; // Needed for sorting
@@ -1030,8 +1062,8 @@ AusSegment::~AusSegment()
 
 }
 
-int AusSegment::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisPupilCircleParams& irisPupilCircles) {
-	return m_Iris->GenerateFlatIris(eyecrop, flat_iris, partial_mask, eyecrop_width, eyecrop_height, irisPupilCircles);
+int AusSegment::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisFindParameters& IrisPupilParams) {
+	return m_Iris->GenerateFlatIris(eyecrop, flat_iris, partial_mask, eyecrop_width, eyecrop_height, IrisPupilParams);
 }
 
 int AusSegment::GenerateEncodedTemplate(uint8_t* flat_iris, uint8_t* partial_mask,

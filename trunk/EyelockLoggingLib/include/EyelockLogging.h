@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <log4cxx/logger.h>
-#include <LogImage.h> // Interface for logging of images to binary file...
+#include <LogImageJSON.h> // Interface for logging of images to binary file...
 
 const char *log_format(const char *fmt, ...);
 
@@ -26,14 +26,15 @@ const char *log_format(const char *fmt, ...);
 #define EYELOCK_FATAL(logger, fmt, ...) LOG4CXX_FATAL(logger, log_format(fmt, ## __VA_ARGS__))
 
 //  These macros are for dealing with log images...
-#define EYELOCK_CREATELOGIMAGE_TRACE(logger, key, imgData, width, height) { \
+#define EYELOCK_CREATELOGIMAGE_TRACE(logger, key, imageData, width, height) { \
         if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
-        	LogImageRecord::put(key, imgData, width, height);\
+        		if (NULL != imageData)\
+					LogImageRecordJSON::put(key, imageData, width, height);\
            }}
 
 #define EYELOCK_MODIFYLOGIMAGE_TRACE(logger, key, pLogImage) \
         if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
-        	pLogImage = LogImageRecord::get(key);\
+        	pLogImage = LogImageRecordJSON::get(key);\
            }\
 		   else {\
 		   	   pLogImage = NULL;\
@@ -41,18 +42,18 @@ const char *log_format(const char *fmt, ...);
 
 #define EYELOCK_WRITELOGIMAGE_TRACE(logger, key) { \
         if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
-        	LogImageRecord *pLogImage = LogImageRecord::get(key);\
+        	LogImageRecordJSON *pLogImage = LogImageRecordJSON::get(key);\
         	if (NULL != pLogImage) {\
-        		LogImageRecord::remove(key); \
-        		std::string msg((const char*)pLogImage->SaveToMemFile(), (size_t)pLogImage->GetTotalRecordSize());\
-        		LOG4CXX_TRACE(logger, msg);\
+        		LogImageRecordJSON::remove(key); \
+        		LOG4CXX_TRACE(logger, pLogImage->GetObjectAsJSON());\
         		delete pLogImage; \
+        		pLogImage = NULL;\
            }}}
 
 
-#define EYELOCK_CREATELOGIMAGE_DEBUG(logger, key, imgData, width, height) { \
+#define EYELOCK_CREATELOGIMAGE_DEBUG(logger, key, imageData, width, height) { \
         if (LOG4CXX_UNLIKELY(logger->isDebugEnabled())) {\
-        	EYELOCK_CREATELOGIMAGE_TRACE(logger, key, imgData, width, height);\
+        		EYELOCK_CREATELOGIMAGE_TRACE(logger, key, imageData, width, height);\
            }}
 
 #define EYELOCK_MODIFYLOGIMAGE_DEBUG(logger, key, pLogImage) \

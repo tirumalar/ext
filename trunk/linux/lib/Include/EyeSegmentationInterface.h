@@ -181,7 +181,7 @@ public:
 
 	~AusSegment();
 
-	int GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisPupilCircleParams& irisPupilCircles);
+	int GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisFindParameters& IrisPupilParams);
 
 	int GenerateEncodedTemplate(uint8_t* flat_iris, uint8_t* partial_mask,
 	                              uint8_t* template_encode, uint8_t* template_mask);
