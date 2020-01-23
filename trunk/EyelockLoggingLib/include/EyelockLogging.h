@@ -40,9 +40,9 @@ const char *log_format(const char *fmt, ...);
 		   	   pLogImage = NULL;\
 		   }
 
-#define EYELOCK_WRITELOGIMAGE_TRACE(logger, key) { \
+#define EYELOCK_WRITELOGIMAGE_TRACE(logger, key, pLogImage) { \
         if (LOG4CXX_UNLIKELY(logger->isTraceEnabled())) {\
-        	LogImageRecordJSON *pLogImage = LogImageRecordJSON::get(key);\
+        	pLogImage = LogImageRecordJSON::get(key);\
         	if (NULL != pLogImage) {\
         		LogImageRecordJSON::remove(key); \
         		LOG4CXX_TRACE(logger, pLogImage->GetObjectAsJSON());\
@@ -61,9 +61,9 @@ const char *log_format(const char *fmt, ...);
         	EYELOCK_MODIFYLOGIMAGE_TRACE(logger, key, pLogImage);\
 		}
 
-#define EYELOCK_WRITELOGIMAGE_DEBUG(logger, key) { \
+#define EYELOCK_WRITELOGIMAGE_DEBUG(logger, key, pLogImage) { \
         if (LOG4CXX_UNLIKELY(logger->isDebugEnabled())) {\
-        	EYELOCK_WRITELOGIMAGE_TRACE(logger, key);\
+        	EYELOCK_WRITELOGIMAGE_TRACE(logger, key, pLogImage);\
         }}
 
 

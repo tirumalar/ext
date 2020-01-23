@@ -22,6 +22,7 @@
 #include <log4cxx/log4cxx.h>
 #include <log4cxx/logstring.h>
 
+
 // single file json library
 #include <single_include/nlohmann/json.hpp>
 
@@ -422,6 +423,8 @@ public:
 
 
 	bool SetImageData(uint8_t *pData, uint32_t width, uint32_t height);
+	bool Convert8bitGreyscaleToPNG(uint8_t *pData, uint32_t width, uint32_t height, vector<uint8_t>&arOutImage);
+
 	vector<uint8_t>GetImageData() { return m_arImageData; }
 
 	void AddEyeDetectionPoint(LogImagePoint thePoint) { m_arEyeDetectionPoints.push_back(thePoint); }
