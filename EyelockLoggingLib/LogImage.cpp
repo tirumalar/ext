@@ -14,23 +14,14 @@
 #include <log4cxx/helpers/transcoder.h>
 #include <log4cxx/mdc.h>
 
+
 using namespace std;
 using namespace log4cxx;
 
 
+
 // This hack reference required to our class linked into our applications...
 //EyelockBinaryAppender theAppender();
-
-
-const char *log_format(const char *fmt, ...)
-{
-  va_list va;
-  static char formatted[1024];
-  va_start(va, fmt);
-  vsnprintf(formatted, 1024, fmt, va);
-  va_end(va);
-  return formatted;
-}
 
 
 

@@ -1077,7 +1077,7 @@ float32 pupilToIrisRatio(float32 pupil_rad, float32 iris_rad) {
 TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
                       size_t eyecrop_width,
                       size_t eyecrop_height, size_t flat_iris_width,
-                      size_t flat_iris_height, IrisPupilCircleParams& irisPupilCircles)
+                      size_t flat_iris_height, IrisFindParameters& IrisPupilParams)
 
 {
   //---------------------------------------------------------------------------------------------
@@ -1173,13 +1173,13 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
 
     // Get the values for sorting
 	//  printf("irisPos %f %f %f\n", irisPos[0].x, irisPos[0].y, irisPos[0].z);
-	irisPupilCircles.ip.x = irisPos[0].x;
-	irisPupilCircles.ip.y = irisPos[0].y;
-	irisPupilCircles.ip.r = irisPos[0].z;
+	IrisPupilParams.ip.x = irisPos[0].x;
+	IrisPupilParams.ip.y = irisPos[0].y;
+	IrisPupilParams.ip.r = irisPos[0].z;
 
-	irisPupilCircles.pp.x = pupilPos[0].x;
-	irisPupilCircles.pp.y = pupilPos[0].y;
-	irisPupilCircles.pp.r = pupilPos[0].z;
+	IrisPupilParams.pp.x = pupilPos[0].x;
+	IrisPupilParams.pp.y = pupilPos[0].y;
+	IrisPupilParams.pp.r = pupilPos[0].z;
 
     //------------------------------------------------------------------------------------
     //
@@ -1215,17 +1215,27 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
 
       good_gaze[0] = (gaze[0].z < gaze_radius_thresh);
 
+      // Anita for logging
+      IrisPupilParams.PupilToIrisRatio = m_fpupilToIrisRatio[0] ;
+      IrisPupilParams.GazeVal = gaze[0].z;
+      IrisPupilParams.IrisRadius = irisPos[0].z;
+      IrisPupilParams.PupilRadius = pupilPos[0].z;
+      IrisPupilParams.darkScore = darkScore[0];
+      IrisPupilParams.SpecScore = specScore[0];
+      IrisPupilParams.IrisScore = irisScore[0];
+      IrisPupilParams.PupilScore = pupilScore[0];
+
       // printf("gaze....%f\n", gaze_radius_thresh);
 
       if(gaze[0].z > gaze_radius_thresh)
     	  return TemplatePipelineError::Gaze_out_of_range;
 
       // Anita - Check for pupil and Iris Diameters
-      if(!(irisPos[0].z > m_Irisfind_min_Iris_Diameter && irisPos[0].z < m_Irisfind_max_Iris_Diameter))
+     /* if(!(irisPos[0].z > (m_Irisfind_min_Iris_Diameter >> 1) && irisPos[0].z < (m_Irisfind_max_Iris_Diameter  >> 1)))
     	  return TemplatePipelineError::Iris_Diameter_out_of_range;
 
-      if(!(pupilPos[0].z > m_Irisfind_min_pupil_Diameter && pupilPos[0].z  < m_Irisfind_max_pupil_Diameter))
-    	  return TemplatePipelineError::Pupil_Diameter_out_of_range;
+      if(!(pupilPos[0].z > (m_Irisfind_min_pupil_Diameter  >> 1) && pupilPos[0].z  < (m_Irisfind_max_pupil_Diameter >> 1)))
+    	  return TemplatePipelineError::Pupil_Diameter_out_of_range;*/
 
     }else{
     	return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;

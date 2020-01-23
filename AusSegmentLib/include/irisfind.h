@@ -96,12 +96,32 @@ typedef struct
 	float r;
 } CircleParams;
 
+/*
 typedef struct
 {
 	CircleParams ip;
 	CircleParams pp;
 
 }IrisPupilCircleParams;
+*/
+
+typedef struct
+{
+	CircleParams ip;
+	CircleParams pp;
+	TemplatePipelineError eIrisError;
+	uint32 darkScore;
+	uint32 SpecScore;
+	uint32 IrisScore;
+	uint32 PupilScore;
+	//  uint32 ValidBitsInTemplate;
+	float eyelidCoverage;
+	float Usable_Iris_Area; // (1.0 - _eyelid.coverage[0])
+	float GazeVal;
+	float PupilToIrisRatio;
+	int IrisRadius;
+	int PupilRadius;
+}IrisFindParameters;
 
 // One Circle_struct per radius.
 // Circle_struct contains the LUT for one radius and the
@@ -158,7 +178,7 @@ public:
 	void ek_irisfind_init();
 	TemplatePipelineError ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
 			size_t eyecrop_width, size_t eyecrop_height, size_t flat_iris_width,
-			size_t flat_iris_height, IrisPupilCircleParams& pCircles);
+			size_t flat_iris_height, IrisFindParameters& IrisPupilParams);
 	void init_circles(uint16 lutCnt);
 	void SetIrisfind_Iris_Diameter(uint16 MinIrisDiameter,
 			uint16 MaxIrisDiameter);

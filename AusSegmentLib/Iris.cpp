@@ -100,7 +100,7 @@ float IrisSegmentation::IrisFocus(uint8_t Iris[FLAT_IMAGE_SIZE],
   return Accumulator / Count;
 }
 
-int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisPupilCircleParams& irisPupilCircles) {
+int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisFindParameters& IrisPupilParams) {
   get_lineptrs_8(eyecrop, _eyecrop_width, _eyecrop_height, _line_ptr_crop);
   get_lineptrs_8(flat_iris, _flat_iris_width, _flat_iris_height,
                  _line_ptr_flat);
@@ -131,7 +131,7 @@ int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uin
   // LiveDetection->enabled = true;
 
   // run the iris find algorithm
-  eIrisError = m_iris_find->ek_irisfind_main(_line_ptr_crop, _line_ptr_flat, eyecrop_width, eyecrop_height, _flat_iris_width, _flat_iris_height, irisPupilCircles);
+  eIrisError = m_iris_find->ek_irisfind_main(_line_ptr_crop, _line_ptr_flat, eyecrop_width, eyecrop_height, _flat_iris_width, _flat_iris_height, IrisPupilParams);
 
   //
   // extract the "last human" flag from the "spoof detection" sub-struct
@@ -167,6 +167,10 @@ int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uin
   // EyeCrop->UserTooClose = eyefind->tooClose;
   // Template->LiveDet_FlatPaper = flat_paper;
 
+  IrisPupilParams.eyelidCoverage = _eyelid.coverage[0];
+  IrisPupilParams.Usable_Iris_Area = (1.0 - _eyelid.coverage[0]);
+  IrisPupilParams.eIrisError = eIrisError;
+
   if(eIrisError == TemplatePipelineError::Segmentation_Successful)
 	  return true;
   else
@@ -175,4 +179,5 @@ int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uin
 	  std::cout << ec << std::endl;
 	  return false;
   }
+
 }
