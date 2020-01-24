@@ -26,10 +26,6 @@
 #include "NanoFocusSpecularityBasedSpoofDetector.h"
 #include "CommonDefs.h"
 #include "HTTPPOSTMsg.h"
-#include <EyelockLogging.h>
-
-
-
 
 #ifdef IRIS_CAPTURE
 	#include "PostMessages.h"
@@ -153,12 +149,6 @@ public:
 protected:
 #endif
 	
-	log4cxx::LoggerPtr eyelocklogger;
-	log4cxx::LoggerPtr imglogger;
-	LogImageRecordJSON *pLogFrame; // ptr to the current "frame" logImage
-	LogImageRecordJSON *pLogCrop; // ptr to the current "crop" logImage
-
-
     bool m_tsDestAddrpresent;
     ProcessorChain *m_nwLedDispatcher;
     ProcessorChain *m_LedConsolidator;
