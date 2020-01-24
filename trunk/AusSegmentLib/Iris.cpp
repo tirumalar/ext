@@ -175,8 +175,9 @@ int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uin
 	  return true;
   else
   {
-	  std::error_code ec = make_error_code(eIrisError);
-	  std::cout << ec << std::endl;
+	  // std::error_code ec = make_error_code(eIrisError);
+	  // std::cout << ec << std::endl;
+	  printf("eIrisError......%d\n", eIrisError);
 	  return false;
   }
 

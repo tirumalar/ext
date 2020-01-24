@@ -96,9 +96,6 @@ m_LedConsolidator = NULL;
 #if 1
 	setConf(pConf);
 
-	// Get the loggers for use in this class...
-	eyelocklogger = log4cxx::Logger::getLogger("nxtlog");
-	imglogger = log4cxx::Logger::getLogger("imglog");
 #ifndef COMMENT
     //m_binType
 //    int rowbin = pConf->getValue( "MT9P031.row_bin",0);
@@ -2559,22 +2556,12 @@ void ImageProcessor::SaveEyeCrops(IplImage *eyeCrop, int cam_idd, int m_faceInde
 
 bool ImageProcessor::ProcessImage(IplImage *frame,bool matchmode)
 {
-	// We do get "null" frames... be sure to check before executing logging
-	char *pImageData = NULL;
-
-	if (NULL != frame)
-		pImageData = frame->imageData;
-
-	EYELOCK_CREATELOGIMAGE_TRACE(imglogger, "frame", pImageData, m_Imagewidth, m_Imageheight);
-
 	 if(m_EyelockIrisMode == 2){
 		 ProcessImageAcquisitionMode(frame, matchmode);
 	 }else{
 		 // printf("Inside Match Mode\n");
 		 ProcessImageMatchMode(frame, matchmode);
 	 }
-
-	EYELOCK_WRITELOGIMAGE_TRACE(imglogger, "frame", pLogFrame);	// Must be paired with CREATE call to actually write img to log and clean up
 }
 
 void ImageProcessor::CreateFaceWidthGainMap()
@@ -2818,18 +2805,6 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 	}
 #endif
 
-	// Get our logging object for the frame image...
-	EYELOCK_MODIFYLOGIMAGE_TRACE(imglogger, "frame", pLogFrame);
-
-	// If we have image logging enabled, update some interesting fields...
-	if (NULL != pLogFrame)
-	{
-		pLogFrame->SetImageType(1);
-		pLogFrame->SetFrameID(frame_number); // Also sets the FrameUUID
-		pLogFrame->SetCameraID(cam_idd);
-		pLogFrame->SetFaceIndex(m_faceIndex);
-	}
-
 	if(m_SaveFullFrame){
 		sprintf(filename,"InputImage_%d_%d.pgm", cam_idd, m_faceIndex);
 		cv::Mat mateye = cv::cvarrToMat(frame);
@@ -2911,10 +2886,6 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 
 				memcpy(frame->imageData, CorrectedImage.data, (m_Imagewidth*m_Imageheight) );
 
-
-				// Update image if logging...
-				if (NULL != pLogFrame)
-					pLogFrame->SetImageData((unsigned char *)frame->imageData, frame->width, frame->height);
 			}
 	}
 #else
@@ -2929,11 +2900,6 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 		cv::Mat CorrMat = ColumnNoiseReduction(frame, cam_idd);
 		// cvSetData(frame, CorrMat.data, frame->widthStep);
 		memcpy(frame->imageData, CorrMat.data, (m_Imagewidth*m_Imageheight) );
-
-		// Update image if logging...
-		if (NULL != pLogFrame)
-			pLogFrame->SetImageData((unsigned char *)frame->imageData, frame->width, frame->height);
-
 #if 0
 		sprintf(filename,"%d_%d_Frame.pgm", cam_idd, m_faceIndex);
 		cv::Mat mateye = cv::cvarrToMat(frame);
@@ -2982,14 +2948,6 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 
 	EyelockLog(logger, TRACE, "NoofHaarEyes = %d, maxEyes = %d\n", NoOfHaarEyes, maxEyes);
 
-	// If we have image logging enabled, update some interesting fields...
-	if (NULL != pLogFrame)
-	{
-		pLogFrame->SetHaarEyesCount(NoOfHaarEyes);
-		pLogFrame->SetSpecularityCount(m_sframe.GetNumberOfSpecularityEyes());
-	}
-
-
 	for(int eyeIdx=0;eyeIdx<maxEyes;eyeIdx++){
 		CvPoint2D32f irisCentroid = cvPoint2D32f(0,0);
 		DetectedEye *eye=getNextAvailableEyeBuffer();
@@ -2997,17 +2955,6 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 		CEyeCenterPoint& centroid = m_sframe.GetEyeCenterPointList()->at(eyeIdx);
 		cv::Point2i ptrI= cv::Point2i(centroid.m_nCenterPointX,
 				centroid.m_nCenterPointY);
-
-		// Log specularity centers of the current frame...
-		if (NULL != pLogFrame)
-		{
-			LogImagePoint thePoint;
-
-			thePoint.m_nPointX = centroid.m_nCenterPointX;
-			thePoint.m_nPointY = centroid.m_nCenterPointY;
-
-			pLogFrame->AddEyeDetectionPoint(thePoint);
-		}
 
 		if (m_IrisToFaceMapping){
 			if(m_ParallaxCorrection){
@@ -3032,19 +2979,6 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 
 		m_sframe.GetCroppedEye(eyeIdx, eye->getEyeCrop(), left, top);
 
-		// Log specularity centers of the current frame...
-		if (NULL != pLogFrame)
-		{
-			LogImageRect theRect;
-
-			theRect.m_nLeft = left;
-			theRect.m_nTop = top;
-			theRect.m_nWidth = eye->getEyeCrop()->width;
-			theRect.m_nHeight = eye->getEyeCrop()->height;
-
-			pLogFrame->AddEyeDetectionCropRect(theRect);
-		}
-
 		std::pair<float, float> score;
 		XTIME_OP("Check_image",
 			score = m_nanoSpoofDetector->check_image(eye->getEyeCrop()->imageData,eye->getEyeCrop()->width, eye->getEyeCrop()->height,eye->getEyeCrop()->widthStep)
@@ -3062,21 +2996,6 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 		if(m_SaveEyeCrops)
 		{
 			SaveEyeCrops(eye->getEyeCrop(), cam_idd, m_faceIndex, m_eyeLabel);
-		}
-
-		// We have crop... setup logging
-		EYELOCK_CREATELOGIMAGE_DEBUG(imglogger, "crop", eye->getEyeCrop()->imageData, eye->getEyeCrop()->width, eye->getEyeCrop()->height);
-		EYELOCK_MODIFYLOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);
-		if (NULL != pLogCrop)
-		{
-			pLogCrop->SetImageType(2);
-			// The the frameUUID to associate this crop with the current frame...
-			if (NULL != pLogFrame)
-				pLogCrop->SetFrameUUID(pLogFrame->GetFrameUUID());
-			pLogCrop->SetFrameID(frame_number);
-			pLogCrop->SetCameraID(cam_idd);
-			pLogCrop->SetEyeLabel(m_eyeLabel);
-			pLogCrop->SetFaceIndex(m_faceIndex);
 		}
 
 		if (m_enableLaplacian_focus_Threshold||m_enableLaplacian_focus_ThresholdEnroll){
@@ -3158,9 +3077,6 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 				}
 			}
 		}
-
-		EYELOCK_WRITELOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);
-		pLogCrop = NULL;
 	}
 
 	if(m_FocusBasedRejectionType){
@@ -3182,7 +3098,6 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 			}
 		}
 	}
-
 
 	// count ++;
     return bSentSomething;
@@ -3350,7 +3265,7 @@ IplImage *m_scaleSrcHeader; */
 IplImage *ImageProcessor::ResizeFrame(int width, int height, unsigned char *frame, int CameraId)
 {
 
-	float ratio;
+	float ratio = 1.0;
 	if (CameraId == IRISCAM_AUX_LEFT){
 		ratio = (m_expectedIrisWidth * 1.0) / m_actualIrisWidth;
 	}else if (CameraId == IRISCAM_AUX_RIGHT){
@@ -3423,23 +3338,6 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		}
 	#endif
 
-		// Get our logging object for the frame image...
-		EYELOCK_MODIFYLOGIMAGE_TRACE(imglogger, "frame", pLogFrame);
-
-		// If we have image logging enabled, update some interesting fields...
-		if (NULL != pLogFrame)
-		{
-			pLogFrame->SetImageType(1);
-			pLogFrame->SetFrameID(frame_number);
-			pLogFrame->SetCameraID(cam_idd);
-			pLogFrame->SetFaceIndex(m_faceIndex);
-
-			// If we have an active capture session, store with the frame as well...
-			string capsession;
-			log4cxx::MDC::get("capturesession", capsession);
-			pLogFrame->SetCaptureSession(capsession);
-		}
-
 		/*
 		if(m_IrisCameraPreview && (frame->imageData != NULL)){
 			cv::Mat mateye = cv::cvarrToMat(frame);
@@ -3458,15 +3356,9 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		}
 
 		// Loading Offset file - PGM
-		if(m_EnableOffsetCorrection)
-		{
+		if(m_EnableOffsetCorrection){
 			m_ProcessImageFrame = OffsetImageCorrection(frame, cam_idd);
 			cvCopy(m_ProcessImageFrame,frame);
-
-			// Update image if logging...
-			if (NULL != pLogFrame)
-				pLogFrame->SetImageData((unsigned char *)frame->imageData, frame->width, frame->height);
-
 		}
 		// DMO
 		// Check the face queues for a matching FaceFrame at the very beginning...
@@ -3491,10 +3383,6 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			// cvInitImageHeader(frame, cvSize(m_Imagewidth, m_Imageheight), IPL_DEPTH_8U, 1);
 			// cvSetData(frame, CorrectedImage.data, frame->widthStep);
 			memcpy(frame->imageData, CorrectedImage.data, (m_Imagewidth*m_Imageheight) );
-
-			// Update image if logging...
-			if (NULL != pLogFrame)
-				pLogFrame->SetImageData((unsigned char *)frame->imageData, frame->width, frame->height);
 		}
 
 		if (!bSkipProcessingImage)
@@ -3537,14 +3425,8 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				return bSentSomething;
 			}
 
-			printf("NoofHaarEyes = %d, NoOfSpecularityEyes = %d, maxEyes = %d\n", NoOfHaarEyes, NoOfSpecularityEyes, maxEyes);
-
-			// If we have image logging enabled, update some interesting fields...
-			if (NULL != pLogFrame)
-			{
-				pLogFrame->SetHaarEyesCount(NoOfHaarEyes);
-				pLogFrame->SetSpecularityCount(NoOfSpecularityEyes);
-			}
+			// printf("NoofHaarEyes = %d, NoOfSpecularityEyes = %d, maxEyes = %d\n", NoOfHaarEyes, NoOfSpecularityEyes, maxEyes);
+			EyelockLog(logger, DEBUG, "NoofHaarEyes = %d, NoOfSpecularityEyes = %d, maxEyes = %d", NoOfHaarEyes, NoOfSpecularityEyes, maxEyes);
 		}// !bSkipProcessing
 
 
@@ -3559,18 +3441,6 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				cv::Point2i ptrI= cv::Point2i(centroid.m_nCenterPointX,
 						centroid.m_nCenterPointY);
 
-				// Log specularity centers of the current frame...
-				if (NULL != pLogFrame)
-				{
-					LogImagePoint thePoint;
-
-					thePoint.m_nPointX = centroid.m_nCenterPointX;
-					thePoint.m_nPointY = centroid.m_nCenterPointY;
-
-					pLogFrame->AddEyeDetectionPoint(thePoint);
-				}
-
-
 				if (m_IrisToFaceMapping){
 					if(m_ParallaxCorrection){
 						m_eyeLabel = validateLeftRightEyecropsParallax(m_BScaledFaceRect, ptrI, cam_idd, m_FaceInfoForDebug.faceImagePtr, m_faceIndex);
@@ -3583,46 +3453,16 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				}
 
 				if (m_eyeLabel == 3){
-					printf("eyeLabel is 3 hence returning from ImageProcessor\n");
-					// goto SKIP;//return false; // commented by Anita on 22Jan for CLEAR
+					printf("eyeLabel is 3\n");
+					// goto SKIP;//return false;
 				}
 
 				m_sframe.GetCroppedEye(eyeIdx, eye->getEyeCrop(), left, top);
-
-				// Log specularity centers of the current frame...
-				if (NULL != pLogFrame)
-				{
-					LogImageRect theRect;
-
-					theRect.m_nLeft = left;
-					theRect.m_nTop = top;
-					theRect.m_nWidth = eye->getEyeCrop()->width;
-					theRect.m_nHeight = eye->getEyeCrop()->height;
-
-					pLogFrame->AddEyeDetectionCropRect(theRect);
-				}
-
-				// We have crop... setup logging
-				EYELOCK_CREATELOGIMAGE_DEBUG(imglogger, "crop", eye->getEyeCrop()->imageData, eye->getEyeCrop()->width, eye->getEyeCrop()->height);
-
-				EYELOCK_MODIFYLOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);
-				if (NULL != pLogCrop)
-				{
-					pLogCrop->SetImageType(2);
-					// The the frameUUID to associate this crop with the current frame...
-					if (NULL != pLogFrame)
-						pLogCrop->SetFrameUUID(pLogFrame->GetFrameUUID());
-					pLogCrop->SetFrameID(frame_number);
-					pLogCrop->SetCameraID(cam_idd);
-					pLogCrop->SetEyeLabel(m_eyeLabel);
-					pLogCrop->SetFaceIndex(m_faceIndex);
-				}
 
 				std::pair<float, float> score;
 				XTIME_OP("Check_image",
 					score = m_nanoSpoofDetector->check_image(eye->getEyeCrop()->imageData,eye->getEyeCrop()->width, eye->getEyeCrop()->height,eye->getEyeCrop()->widthStep)
 				);
-
 				CvPoint3D32f halo ;
 			//	XTIME_OP("Halo",
 						//halo =  m_nanoSpoofDetector->ComputeHaloScore(eye->getEyeCrop(),m_currMaxSpecValue)
@@ -3697,10 +3537,6 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 							// Critical... resize the image
 							tmpImage = ResizeFrame(640, 480, im->imageData, cam_idd);
 
-							// Update the crop for logging
-	// DMOOUT						if (NULL != pLogCrop)
-	// DMOOUT							pLogCrop->SetImageData((unsigned char *)tmpImage->imageData, tmpImage->width, tmpImage->height);
-
 							if(m_EnableISOSharpness){
 								cec = m_centreEyecrop;
 								rect.x = MAX(0,(m_rotatedEyecrop->width-cec->width)/2);
@@ -3714,39 +3550,24 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 								float sharpness = 100000 * GetISOSharpness(cec->imageData, cec->width, cec->height);
 								output.x = sharpness;
 								// printf("output.x  output.xoutput.x %f\n", output.x);
-
-							if (NULL != pLogCrop)
-								pLogCrop->SetSharpness(output.x);
+								EyelockLog(logger, DEBUG, "ISOSharpness %f", output.x);
 
 							 if(output.x  > m_ISOSharpnessThreshold){
 
-								if (shouldIBeginSorting == false) // Beginning a sorting
+								if (shouldIBeginSorting == false) // Begining a sorting
 								{
+
 									if (m_DHSScreens)
 									{
 										cvShowImage("EXT", IplImageScreen2);
 										cvWaitKey(1);
 									}
 
+
 									time_newms= ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
 
 									//DMOREMOVE
 								//	printf("\n#########   BeginSorting! TIME:  %ld ms, TIMEOUT: %d ms   #######\n", time_newms, m_IrisCaptureEarlyTimeout);
-
-									//LOGDEMO
-									// Write to the text logger (includes and created 'frame' or 'crop' references...
-									// Create a context for this session so that we can track logging per session...
-									std::string capsession = LogImageRecordJSON::generate_hex(8);
-
-									// Log our capture session ID, and store it in any log images...
-									log4cxx::MDC::put("capturesession", capsession);
-									if (NULL != pLogCrop)
-										pLogCrop->SetCaptureSession(capsession);
-									if (NULL != pLogFrame)
-										pLogFrame->SetCaptureSession(capsession);
-
-									EYELOCK_INFO(eyelocklogger, "Begin Sorting");
-
 
 									eyeSortingWrapObj->BeginSorting((long) time_newms);
 									terminate = false; //We begin sorting. So terminate is false
@@ -3760,13 +3581,6 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 								}
 								else
 								{
-									if (NULL != pLogCrop)
-									{
-										string capsession;
-										log4cxx::MDC::get("capturesession", capsession);
-										pLogCrop->SetCaptureSession(capsession);
-									}
-
 									currTimems= ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
 
 									//Sorting is running
@@ -3783,18 +3597,9 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 							}
 							 else
 							 {
-								// This crop was discarded... log it...
-								if (NULL != pLogCrop)
-								{
-									pLogCrop->SetDiscarded(true);
-
-									//Write the crop to disk and cleanup...
-									EYELOCK_WRITELOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);
-								}
-
-								if (shouldIBeginSorting == true)
-								{
-									unsigned long NoEyeCurrTimems = 0;
+									if (shouldIBeginSorting == true)
+									{
+										unsigned long NoEyeCurrTimems = 0;
 
 									NoEyeCurrTimems= ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
 
@@ -3848,9 +3653,6 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 					}
 					//if(m_Debug)printf("Score[%d]=%d ",eyeIdx,eyeInfo.score);
 				}
-
-				// Log the crop
-				EYELOCK_WRITELOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);
 			} // end of (for)
 		}
 		else // No eyes detected...
@@ -4139,13 +3941,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		terminate = false; //Making terminate false to restart our sorting
 		shouldIBeginSorting = false;  //Next image we should start our sorting
 		// eyeSortingWrapObj->clearAllEyes(); // Check Anita later should be uncommented
-
-		// We are done with this capture session... Remove our Mapped Diagnostic Context...
-		EYELOCK_INFO(eyelocklogger, "Sorting Complete");
-		log4cxx::MDC::remove("capturesession");
 	} // End of terminate
-
-
     return bSentSomething;
 }
 

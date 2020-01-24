@@ -1167,12 +1167,10 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
       pupil_search_subpixel(0, eyecrop_width, eyecrop_height);
 
       iris_search_subpixel(0, eyecrop_width, eyecrop_height);
-    }else{
+    }/*else{
     	return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
-    }
+    }*/
 
-    // Get the values for sorting
-	//  printf("irisPos %f %f %f\n", irisPos[0].x, irisPos[0].y, irisPos[0].z);
 	IrisPupilParams.ip.x = irisPos[0].x;
 	IrisPupilParams.ip.y = irisPos[0].y;
 	IrisPupilParams.ip.r = irisPos[0].z;
@@ -1180,7 +1178,6 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
 	IrisPupilParams.pp.x = pupilPos[0].x;
 	IrisPupilParams.pp.y = pupilPos[0].y;
 	IrisPupilParams.pp.r = pupilPos[0].z;
-
     //------------------------------------------------------------------------------------
     //
     // face distance: from iris diameter
@@ -1215,7 +1212,6 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
 
       good_gaze[0] = (gaze[0].z < gaze_radius_thresh);
 
-      // Anita for logging
       IrisPupilParams.PupilToIrisRatio = m_fpupilToIrisRatio[0] ;
       IrisPupilParams.GazeVal = gaze[0].z;
       IrisPupilParams.IrisRadius = irisPos[0].z;
@@ -1224,22 +1220,21 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
       IrisPupilParams.SpecScore = specScore[0];
       IrisPupilParams.IrisScore = irisScore[0];
       IrisPupilParams.PupilScore = pupilScore[0];
-
       // printf("gaze....%f\n", gaze_radius_thresh);
 
       if(gaze[0].z > gaze_radius_thresh)
     	  return TemplatePipelineError::Gaze_out_of_range;
 
       // Anita - Check for pupil and Iris Diameters
-     /* if(!(irisPos[0].z > (m_Irisfind_min_Iris_Diameter >> 1) && irisPos[0].z < (m_Irisfind_max_Iris_Diameter  >> 1)))
+     /* if(!(irisPos[0].z > m_Irisfind_min_Iris_Diameter && irisPos[0].z < m_Irisfind_max_Iris_Diameter))
     	  return TemplatePipelineError::Iris_Diameter_out_of_range;
 
-      if(!(pupilPos[0].z > (m_Irisfind_min_pupil_Diameter  >> 1) && pupilPos[0].z  < (m_Irisfind_max_pupil_Diameter >> 1)))
+      if(!(pupilPos[0].z > m_Irisfind_min_pupil_Diameter && pupilPos[0].z  < m_Irisfind_max_pupil_Diameter))
     	  return TemplatePipelineError::Pupil_Diameter_out_of_range;*/
 
-    }else{
+    }/*else{
     	return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
-    }
+    }*/
     //-------------------------------------------------------------------------------
   }
 
