@@ -15,6 +15,7 @@ using Newtonsoft.Json.Linq;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Drawing.Drawing2D;
+using System.Threading;
 
 namespace ImageLogViewer
 {
@@ -37,6 +38,9 @@ namespace ImageLogViewer
 		private string m_CurrentFilename = "";
 		private int m_nFrameCount = 0;
 		private int m_nCropCount = 0;
+		private long m_lCurrentFileOffset = 0; // Holds the position of the last read object to virtualize loading of large image files...
+        private MyTCPLogServer m_LogServer = null;
+		private Thread m_LogServerThread = null;
 
 
 		public MainWindow()
@@ -50,13 +54,33 @@ namespace ImageLogViewer
 			tsSortCombo.SelectedIndex = 0;
 		}
 
-	
+
+		// This object has already been extracted from the Network stream...
+		// all we need to do is deserialize it into a JSON object and add it to the tree....	
+		public void parseJSONTextToTree(string theJSON)
+		{
+			// We a JSON object, DeSerialize it and display it...
+			ImageLogTree.BeginUpdate();
+			JObject theObject = (JObject)JToken.Parse(theJSON);
+
+			LoadObject(theObject);
+
+			// Note, as the network stream comes in, it gets written to file on disk... with the garbage stripped...
+			// When image display is called for, this
+			m_lCurrentFileOffset += theJSON.Length;
+
+			// done, draw all nodes now
+			ImageLogTree.EndUpdate();
+		}
+
+
 		private void Deserialize(string Filename)
 		{
-			long m_lCurrentFileOffset = 0; // Holds the position of the last read object to virtualize loading of large image files...
-
 			Cursor.Current = Cursors.WaitCursor;
+			JObject theObject;
+
 			ImageLogTree.Nodes.Clear();
+			m_lCurrentFileOffset = 0;
 
 			// read JSON directly from a file
 			using (StreamReader file = File.OpenText(Filename))
@@ -66,7 +90,11 @@ namespace ImageLogViewer
 
 				ImageLogTree.BeginUpdate();
 				while (reader.Read())
-					LoadObject(reader, ref m_lCurrentFileOffset);
+				{
+					theObject = (JObject)JToken.ReadFrom(reader);
+					LoadObject(theObject);
+					m_lCurrentFileOffset = reader.LinePosition;
+				}
 
 				// done, draw all nodes now
 				ImageLogTree.EndUpdate();
@@ -76,10 +104,8 @@ namespace ImageLogViewer
 		}
 
 
-		private void LoadObject(JsonTextReader reader, ref long m_lCurrentFileOffset)
+		public void LoadObject(JObject theObject)
 		{
-			JObject theObject = (JObject)JToken.ReadFrom(reader);
-
 			// Ok, crops come in before their Frame... to handle this, we buffer up the crops until the frame comes in
 			// then we make them all children of the frame...
 			if ((int)theObject["ImageType"] == 2) // Crop
@@ -205,8 +231,6 @@ namespace ImageLogViewer
 				theObject["imageData"] = "";
 				theObject.Add("objectOffset", m_lCurrentFileOffset);
 			}
-
-			m_lCurrentFileOffset = reader.LinePosition;
 		}
 
 
@@ -295,21 +319,22 @@ namespace ImageLogViewer
 		private void OpenImageLogFile()
 		{
 			OpenFileDialog ofDialog = new OpenFileDialog();
-			ofDialog.ShowDialog();
-
-			try
+			if (DialogResult.OK == ofDialog.ShowDialog())
 			{
-				m_CurrentFilename = ofDialog.FileName;
+				try
+				{
+					m_CurrentFilename = ofDialog.FileName;
 
-				// Reset
-				m_nFrameCount = 0;
-				m_nCropCount = 0;
+					// Reset
+					m_nFrameCount = 0;
+					m_nCropCount = 0;
 
-				Deserialize(m_CurrentFilename);
-			}
-			catch (IOException ioEx)
-			{
-				MessageBox.Show("Unable to open the file. " + ioEx.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+					Deserialize(m_CurrentFilename);
+				}
+				catch (IOException ioEx)
+				{
+					MessageBox.Show("Unable to open the file. " + ioEx.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				}
 			}
 		}
 
@@ -364,7 +389,8 @@ namespace ImageLogViewer
 			// read JSON directly from a file
 			if (m_CurrentFilename.Length > 0)
 			{
-				using (StreamReader file = File.OpenText(m_CurrentFilename))
+				FileStream theStream = new FileStream(m_CurrentFilename, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+				using(StreamReader file = new StreamReader(theStream))
 				{
 					// Seek to the beginning of the object in the file... then read the object...
 					file.BaseStream.Seek((long)theObject["objectOffset"], SeekOrigin.Begin);
@@ -584,6 +610,51 @@ namespace ImageLogViewer
 				Location = Properties.Settings.Default.Location;
 				Size = Properties.Settings.Default.Size;
 			}
+		}
+
+
+		public void SetStreamFilename(string theFileName)
+		{
+			m_CurrentFilename = theFileName;
+			// Enable the Save As button...
+			btnSave.Enabled = true;
+		}
+
+		// If checked start our server, if unchecking, kill it if it exists...
+		private void tsbutStartServer_Click(object sender, EventArgs e)
+		{
+	
+		}
+
+		private void tsbutStartServer_CheckedChanged(object sender, EventArgs e)
+		{
+			if (tsbutStartServer.Checked)
+			{
+				m_LogServer = new MyTCPLogServer(Convert.ToInt32(lblRemotePort.Text), this);
+				m_LogServerThread = new Thread(new ThreadStart(m_LogServer.listen));
+				m_LogServerThread.Start();
+			}
+			else if (null != m_LogServer)
+			{
+				m_LogServer.Kill(1000);
+				m_LogServerThread.Interrupt();
+
+				m_LogServer = null;
+				m_LogServerThread = null;
+			}
+		}
+
+		private void btnSave_Click(object sender, EventArgs e)
+		{
+			// If clicked, give user chance to save the temporary file somewhere..
+			SaveFileDialog sfDialog = new SaveFileDialog();
+
+			sfDialog.FileName = "Untitled.json";
+			sfDialog.Filter = "JSON Files (*.json)|*.json";
+			sfDialog.FilterIndex = 0;
+
+			if (DialogResult.OK == sfDialog.ShowDialog())
+				File.Copy(m_CurrentFilename, sfDialog.FileName);
 		}
 	}
 

@@ -32,6 +32,11 @@
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
 			this.MainSplitContainer = new System.Windows.Forms.SplitContainer();
 			this.TopSplitterContainer = new System.Windows.Forms.SplitContainer();
+			this.statusStripTreeView = new System.Windows.Forms.StatusStrip();
+			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+			this.toolStripStatusFrameCount = new System.Windows.Forms.ToolStripStatusLabel();
+			this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
+			this.toolStripStatusCropCount = new System.Windows.Forms.ToolStripStatusLabel();
 			this.ImageLogTree = new System.Windows.Forms.TreeView();
 			this.ilTreeView = new System.Windows.Forms.ImageList(this.components);
 			this.tsTreeView = new System.Windows.Forms.ToolStrip();
@@ -50,6 +55,8 @@
 			this.rtbRawText = new System.Windows.Forms.RichTextBox();
 			this.tabPage2 = new System.Windows.Forms.TabPage();
 			this.tabPage6 = new System.Windows.Forms.TabPage();
+			this.tsLogWindow = new System.Windows.Forms.ToolStrip();
+			this.btnOpenLogFile = new System.Windows.Forms.ToolStripButton();
 			this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
 			this.menuStrip = new System.Windows.Forms.MenuStrip();
 			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -58,13 +65,11 @@
 			this.btnQuit = new System.Windows.Forms.Button();
 			this.tsMain = new System.Windows.Forms.ToolStrip();
 			this.btnOpen = new System.Windows.Forms.ToolStripButton();
-			this.tsLogWindow = new System.Windows.Forms.ToolStrip();
-			this.btnOpenLogFile = new System.Windows.Forms.ToolStripButton();
-			this.statusStripTreeView = new System.Windows.Forms.StatusStrip();
-			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
-			this.toolStripStatusFrameCount = new System.Windows.Forms.ToolStripStatusLabel();
-			this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
-			this.toolStripStatusCropCount = new System.Windows.Forms.ToolStripStatusLabel();
+			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+			this.toolStripLabel3 = new System.Windows.Forms.ToolStripLabel();
+			this.lblRemotePort = new System.Windows.Forms.ToolStripTextBox();
+			this.tsbutStartServer = new System.Windows.Forms.ToolStripButton();
+			this.btnSave = new System.Windows.Forms.ToolStripButton();
 			((System.ComponentModel.ISupportInitialize)(this.MainSplitContainer)).BeginInit();
 			this.MainSplitContainer.Panel1.SuspendLayout();
 			this.MainSplitContainer.Panel2.SuspendLayout();
@@ -73,6 +78,7 @@
 			this.TopSplitterContainer.Panel1.SuspendLayout();
 			this.TopSplitterContainer.Panel2.SuspendLayout();
 			this.TopSplitterContainer.SuspendLayout();
+			this.statusStripTreeView.SuspendLayout();
 			this.tsTreeView.SuspendLayout();
 			this.tabImageData.SuspendLayout();
 			this.tabPage3.SuspendLayout();
@@ -81,11 +87,10 @@
 			this.tabPage4.SuspendLayout();
 			this.tabControl1.SuspendLayout();
 			this.tabPage1.SuspendLayout();
+			this.tsLogWindow.SuspendLayout();
 			this.menuStrip.SuspendLayout();
 			this.btnPanel.SuspendLayout();
 			this.tsMain.SuspendLayout();
-			this.tsLogWindow.SuspendLayout();
-			this.statusStripTreeView.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// MainSplitContainer
@@ -105,8 +110,8 @@
 			// 
 			this.MainSplitContainer.Panel2.Controls.Add(this.tabControl1);
 			this.MainSplitContainer.Panel2.Controls.Add(this.tsLogWindow);
-			this.MainSplitContainer.Size = new System.Drawing.Size(852, 463);
-			this.MainSplitContainer.SplitterDistance = 305;
+			this.MainSplitContainer.Size = new System.Drawing.Size(763, 420);
+			this.MainSplitContainer.SplitterDistance = 262;
 			this.MainSplitContainer.TabIndex = 0;
 			// 
 			// TopSplitterContainer
@@ -125,9 +130,47 @@
 			// TopSplitterContainer.Panel2
 			// 
 			this.TopSplitterContainer.Panel2.Controls.Add(this.tabImageData);
-			this.TopSplitterContainer.Size = new System.Drawing.Size(848, 301);
-			this.TopSplitterContainer.SplitterDistance = 250;
+			this.TopSplitterContainer.Size = new System.Drawing.Size(759, 258);
+			this.TopSplitterContainer.SplitterDistance = 338;
 			this.TopSplitterContainer.TabIndex = 0;
+			// 
+			// statusStripTreeView
+			// 
+			this.statusStripTreeView.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusLabel1,
+            this.toolStripStatusFrameCount,
+            this.toolStripStatusLabel2,
+            this.toolStripStatusCropCount});
+			this.statusStripTreeView.Location = new System.Drawing.Point(0, 236);
+			this.statusStripTreeView.Name = "statusStripTreeView";
+			this.statusStripTreeView.Size = new System.Drawing.Size(338, 22);
+			this.statusStripTreeView.SizingGrip = false;
+			this.statusStripTreeView.TabIndex = 2;
+			this.statusStripTreeView.Text = "statusStrip1";
+			// 
+			// toolStripStatusLabel1
+			// 
+			this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+			this.toolStripStatusLabel1.Size = new System.Drawing.Size(79, 17);
+			this.toolStripStatusLabel1.Text = "Frame Count:";
+			// 
+			// toolStripStatusFrameCount
+			// 
+			this.toolStripStatusFrameCount.Name = "toolStripStatusFrameCount";
+			this.toolStripStatusFrameCount.Size = new System.Drawing.Size(13, 17);
+			this.toolStripStatusFrameCount.Text = "0";
+			// 
+			// toolStripStatusLabel2
+			// 
+			this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
+			this.toolStripStatusLabel2.Size = new System.Drawing.Size(72, 17);
+			this.toolStripStatusLabel2.Text = "Crop Count:";
+			// 
+			// toolStripStatusCropCount
+			// 
+			this.toolStripStatusCropCount.Name = "toolStripStatusCropCount";
+			this.toolStripStatusCropCount.Size = new System.Drawing.Size(13, 17);
+			this.toolStripStatusCropCount.Text = "0";
 			// 
 			// ImageLogTree
 			// 
@@ -138,7 +181,7 @@
 			this.ImageLogTree.Location = new System.Drawing.Point(0, 25);
 			this.ImageLogTree.Name = "ImageLogTree";
 			this.ImageLogTree.SelectedImageIndex = 0;
-			this.ImageLogTree.Size = new System.Drawing.Size(250, 276);
+			this.ImageLogTree.Size = new System.Drawing.Size(338, 233);
 			this.ImageLogTree.TabIndex = 0;
 			this.ImageLogTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.ImageLogTree_AfterSelect);
 			// 
@@ -159,7 +202,7 @@
             this.tsSortCombo});
 			this.tsTreeView.Location = new System.Drawing.Point(0, 0);
 			this.tsTreeView.Name = "tsTreeView";
-			this.tsTreeView.Size = new System.Drawing.Size(250, 25);
+			this.tsTreeView.Size = new System.Drawing.Size(338, 25);
 			this.tsTreeView.TabIndex = 1;
 			this.tsTreeView.Text = "toolStrip2";
 			// 
@@ -188,7 +231,7 @@
 			this.tabImageData.Location = new System.Drawing.Point(0, 0);
 			this.tabImageData.Name = "tabImageData";
 			this.tabImageData.SelectedIndex = 0;
-			this.tabImageData.Size = new System.Drawing.Size(594, 301);
+			this.tabImageData.Size = new System.Drawing.Size(417, 258);
 			this.tabImageData.TabIndex = 0;
 			// 
 			// tabPage3
@@ -198,7 +241,7 @@
 			this.tabPage3.Location = new System.Drawing.Point(4, 22);
 			this.tabPage3.Name = "tabPage3";
 			this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage3.Size = new System.Drawing.Size(586, 275);
+			this.tabPage3.Size = new System.Drawing.Size(409, 232);
 			this.tabPage3.TabIndex = 0;
 			this.tabPage3.Text = "Image";
 			this.tabPage3.UseVisualStyleBackColor = true;
@@ -209,7 +252,7 @@
 			this.pbImage.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.pbImage.Location = new System.Drawing.Point(3, 28);
 			this.pbImage.Name = "pbImage";
-			this.pbImage.Size = new System.Drawing.Size(580, 244);
+			this.pbImage.Size = new System.Drawing.Size(403, 201);
 			this.pbImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
 			this.pbImage.TabIndex = 0;
 			this.pbImage.TabStop = false;
@@ -222,7 +265,7 @@
             this.imageToolStripSaveAs});
 			this.toolStrip1.Location = new System.Drawing.Point(3, 3);
 			this.toolStrip1.Name = "toolStrip1";
-			this.toolStrip1.Size = new System.Drawing.Size(580, 25);
+			this.toolStrip1.Size = new System.Drawing.Size(403, 25);
 			this.toolStrip1.TabIndex = 0;
 			this.toolStrip1.Text = "toolStrip1";
 			// 
@@ -254,7 +297,7 @@
 			this.tabPage4.Location = new System.Drawing.Point(4, 22);
 			this.tabPage4.Name = "tabPage4";
 			this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage4.Size = new System.Drawing.Size(379, 272);
+			this.tabPage4.Size = new System.Drawing.Size(409, 232);
 			this.tabPage4.TabIndex = 1;
 			this.tabPage4.Text = "Details";
 			this.tabPage4.UseVisualStyleBackColor = true;
@@ -264,7 +307,7 @@
 			this.pgImageDetails.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.pgImageDetails.Location = new System.Drawing.Point(3, 3);
 			this.pgImageDetails.Name = "pgImageDetails";
-			this.pgImageDetails.Size = new System.Drawing.Size(373, 266);
+			this.pgImageDetails.Size = new System.Drawing.Size(403, 226);
 			this.pgImageDetails.TabIndex = 0;
 			// 
 			// tabControl1
@@ -276,7 +319,7 @@
 			this.tabControl1.Location = new System.Drawing.Point(0, 25);
 			this.tabControl1.Name = "tabControl1";
 			this.tabControl1.SelectedIndex = 0;
-			this.tabControl1.Size = new System.Drawing.Size(848, 125);
+			this.tabControl1.Size = new System.Drawing.Size(759, 125);
 			this.tabControl1.TabIndex = 0;
 			// 
 			// tabPage1
@@ -285,7 +328,7 @@
 			this.tabPage1.Location = new System.Drawing.Point(4, 22);
 			this.tabPage1.Name = "tabPage1";
 			this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage1.Size = new System.Drawing.Size(840, 99);
+			this.tabPage1.Size = new System.Drawing.Size(751, 99);
 			this.tabPage1.TabIndex = 0;
 			this.tabPage1.Text = "NXT Log";
 			this.tabPage1.UseVisualStyleBackColor = true;
@@ -295,7 +338,7 @@
 			this.rtbRawText.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.rtbRawText.Location = new System.Drawing.Point(3, 3);
 			this.rtbRawText.Name = "rtbRawText";
-			this.rtbRawText.Size = new System.Drawing.Size(834, 93);
+			this.rtbRawText.Size = new System.Drawing.Size(745, 93);
 			this.rtbRawText.TabIndex = 0;
 			this.rtbRawText.Text = "";
 			// 
@@ -304,7 +347,7 @@
 			this.tabPage2.Location = new System.Drawing.Point(4, 22);
 			this.tabPage2.Name = "tabPage2";
 			this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage2.Size = new System.Drawing.Size(751, 103);
+			this.tabPage2.Size = new System.Drawing.Size(840, 99);
 			this.tabPage2.TabIndex = 1;
 			this.tabPage2.Text = "FaceTracking Log";
 			this.tabPage2.UseVisualStyleBackColor = true;
@@ -314,10 +357,29 @@
 			this.tabPage6.Location = new System.Drawing.Point(4, 22);
 			this.tabPage6.Name = "tabPage6";
 			this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage6.Size = new System.Drawing.Size(751, 103);
+			this.tabPage6.Size = new System.Drawing.Size(840, 99);
 			this.tabPage6.TabIndex = 3;
 			this.tabPage6.Text = "Motor Log";
 			this.tabPage6.UseVisualStyleBackColor = true;
+			// 
+			// tsLogWindow
+			// 
+			this.tsLogWindow.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.btnOpenLogFile});
+			this.tsLogWindow.Location = new System.Drawing.Point(0, 0);
+			this.tsLogWindow.Name = "tsLogWindow";
+			this.tsLogWindow.Size = new System.Drawing.Size(759, 25);
+			this.tsLogWindow.TabIndex = 1;
+			this.tsLogWindow.Text = "toolStrip2";
+			// 
+			// btnOpenLogFile
+			// 
+			this.btnOpenLogFile.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+			this.btnOpenLogFile.Image = global::ImageLogViewer.Properties.Resources.CaptureFolder_24x24;
+			this.btnOpenLogFile.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this.btnOpenLogFile.Name = "btnOpenLogFile";
+			this.btnOpenLogFile.Size = new System.Drawing.Size(23, 22);
+			this.btnOpenLogFile.Text = "toolStripButton1";
 			// 
 			// notifyIcon1
 			// 
@@ -330,7 +392,7 @@
             this.fileToolStripMenuItem});
 			this.menuStrip.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip.Name = "menuStrip";
-			this.menuStrip.Size = new System.Drawing.Size(852, 24);
+			this.menuStrip.Size = new System.Drawing.Size(763, 24);
 			this.menuStrip.TabIndex = 0;
 			this.menuStrip.Text = "menuStrip1";
 			// 
@@ -353,16 +415,16 @@
 			// 
 			this.btnPanel.Controls.Add(this.btnQuit);
 			this.btnPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-			this.btnPanel.Location = new System.Drawing.Point(0, 512);
+			this.btnPanel.Location = new System.Drawing.Point(0, 469);
 			this.btnPanel.Name = "btnPanel";
-			this.btnPanel.Size = new System.Drawing.Size(852, 42);
+			this.btnPanel.Size = new System.Drawing.Size(763, 42);
 			this.btnPanel.TabIndex = 1;
 			// 
 			// btnQuit
 			// 
 			this.btnQuit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnQuit.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-			this.btnQuit.Location = new System.Drawing.Point(765, 8);
+			this.btnQuit.Location = new System.Drawing.Point(676, 8);
 			this.btnQuit.Name = "btnQuit";
 			this.btnQuit.Size = new System.Drawing.Size(75, 23);
 			this.btnQuit.TabIndex = 0;
@@ -373,10 +435,15 @@
 			// tsMain
 			// 
 			this.tsMain.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.btnOpen});
+            this.btnOpen,
+            this.btnSave,
+            this.toolStripSeparator1,
+            this.toolStripLabel3,
+            this.lblRemotePort,
+            this.tsbutStartServer});
 			this.tsMain.Location = new System.Drawing.Point(0, 24);
 			this.tsMain.Name = "tsMain";
-			this.tsMain.Size = new System.Drawing.Size(852, 25);
+			this.tsMain.Size = new System.Drawing.Size(763, 25);
 			this.tsMain.TabIndex = 2;
 			this.tsMain.Text = "toolStrip2";
 			// 
@@ -390,62 +457,44 @@
 			this.btnOpen.Text = "toolStripButton1";
 			this.btnOpen.Click += new System.EventHandler(this.btnOpen_Click);
 			// 
-			// tsLogWindow
+			// toolStripSeparator1
 			// 
-			this.tsLogWindow.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.btnOpenLogFile});
-			this.tsLogWindow.Location = new System.Drawing.Point(0, 0);
-			this.tsLogWindow.Name = "tsLogWindow";
-			this.tsLogWindow.Size = new System.Drawing.Size(848, 25);
-			this.tsLogWindow.TabIndex = 1;
-			this.tsLogWindow.Text = "toolStrip2";
+			this.toolStripSeparator1.Name = "toolStripSeparator1";
+			this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
 			// 
-			// btnOpenLogFile
+			// toolStripLabel3
 			// 
-			this.btnOpenLogFile.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-			this.btnOpenLogFile.Image = global::ImageLogViewer.Properties.Resources.CaptureFolder_24x24;
-			this.btnOpenLogFile.ImageTransparentColor = System.Drawing.Color.Magenta;
-			this.btnOpenLogFile.Name = "btnOpenLogFile";
-			this.btnOpenLogFile.Size = new System.Drawing.Size(23, 22);
-			this.btnOpenLogFile.Text = "toolStripButton1";
+			this.toolStripLabel3.Name = "toolStripLabel3";
+			this.toolStripLabel3.Size = new System.Drawing.Size(32, 22);
+			this.toolStripLabel3.Text = "Port:";
 			// 
-			// statusStripTreeView
+			// lblRemotePort
 			// 
-			this.statusStripTreeView.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripStatusLabel1,
-            this.toolStripStatusFrameCount,
-            this.toolStripStatusLabel2,
-            this.toolStripStatusCropCount});
-			this.statusStripTreeView.Location = new System.Drawing.Point(0, 279);
-			this.statusStripTreeView.Name = "statusStripTreeView";
-			this.statusStripTreeView.Size = new System.Drawing.Size(250, 22);
-			this.statusStripTreeView.SizingGrip = false;
-			this.statusStripTreeView.TabIndex = 2;
-			this.statusStripTreeView.Text = "statusStrip1";
+			this.lblRemotePort.Name = "lblRemotePort";
+			this.lblRemotePort.Size = new System.Drawing.Size(100, 25);
 			// 
-			// toolStripStatusLabel1
+			// tsbutStartServer
 			// 
-			this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-			this.toolStripStatusLabel1.Size = new System.Drawing.Size(79, 17);
-			this.toolStripStatusLabel1.Text = "Frame Count:";
+			this.tsbutStartServer.CheckOnClick = true;
+			this.tsbutStartServer.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+			this.tsbutStartServer.Image = ((System.Drawing.Image)(resources.GetObject("tsbutStartServer.Image")));
+			this.tsbutStartServer.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this.tsbutStartServer.Name = "tsbutStartServer";
+			this.tsbutStartServer.Size = new System.Drawing.Size(23, 22);
+			this.tsbutStartServer.Text = "Start/Stop Listening";
+			this.tsbutStartServer.CheckedChanged += new System.EventHandler(this.tsbutStartServer_CheckedChanged);
+			this.tsbutStartServer.Click += new System.EventHandler(this.tsbutStartServer_Click);
 			// 
-			// toolStripStatusFrameCount
+			// btnSave
 			// 
-			this.toolStripStatusFrameCount.Name = "toolStripStatusFrameCount";
-			this.toolStripStatusFrameCount.Size = new System.Drawing.Size(13, 17);
-			this.toolStripStatusFrameCount.Text = "0";
-			// 
-			// toolStripStatusLabel2
-			// 
-			this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-			this.toolStripStatusLabel2.Size = new System.Drawing.Size(72, 17);
-			this.toolStripStatusLabel2.Text = "Crop Count:";
-			// 
-			// toolStripStatusCropCount
-			// 
-			this.toolStripStatusCropCount.Name = "toolStripStatusCropCount";
-			this.toolStripStatusCropCount.Size = new System.Drawing.Size(13, 17);
-			this.toolStripStatusCropCount.Text = "0";
+			this.btnSave.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+			this.btnSave.Enabled = false;
+			this.btnSave.Image = global::ImageLogViewer.Properties.Resources.Disk;
+			this.btnSave.ImageTransparentColor = System.Drawing.Color.Magenta;
+			this.btnSave.Name = "btnSave";
+			this.btnSave.Size = new System.Drawing.Size(23, 22);
+			this.btnSave.Text = "Save File...";
+			this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
 			// 
 			// MainWindow
 			// 
@@ -474,6 +523,8 @@
 			this.TopSplitterContainer.Panel2.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)(this.TopSplitterContainer)).EndInit();
 			this.TopSplitterContainer.ResumeLayout(false);
+			this.statusStripTreeView.ResumeLayout(false);
+			this.statusStripTreeView.PerformLayout();
 			this.tsTreeView.ResumeLayout(false);
 			this.tsTreeView.PerformLayout();
 			this.tabImageData.ResumeLayout(false);
@@ -485,15 +536,13 @@
 			this.tabPage4.ResumeLayout(false);
 			this.tabControl1.ResumeLayout(false);
 			this.tabPage1.ResumeLayout(false);
+			this.tsLogWindow.ResumeLayout(false);
+			this.tsLogWindow.PerformLayout();
 			this.menuStrip.ResumeLayout(false);
 			this.menuStrip.PerformLayout();
 			this.btnPanel.ResumeLayout(false);
 			this.tsMain.ResumeLayout(false);
 			this.tsMain.PerformLayout();
-			this.tsLogWindow.ResumeLayout(false);
-			this.tsLogWindow.PerformLayout();
-			this.statusStripTreeView.ResumeLayout(false);
-			this.statusStripTreeView.PerformLayout();
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -536,6 +585,11 @@
 		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusFrameCount;
 		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
 		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusCropCount;
+		private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+		private System.Windows.Forms.ToolStripLabel toolStripLabel3;
+		private System.Windows.Forms.ToolStripTextBox lblRemotePort;
+		private System.Windows.Forms.ToolStripButton tsbutStartServer;
+		private System.Windows.Forms.ToolStripButton btnSave;
 	}
 }
 
