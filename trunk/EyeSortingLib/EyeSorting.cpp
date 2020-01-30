@@ -24,6 +24,7 @@
 #include <opencv/cv.h>
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
+#include "FileConfiguration.h"
 
 #ifdef _WIN32
 	#if _MSC_VER == 1500
@@ -53,6 +54,36 @@ EnrollmentServer::EnrollmentServer(int FeatureScale, IrisMatchInterface *pMatche
 
 	// For Bigger Pupil
 	temp_pEyeSegmentationInterface = new EyeSegmentationInterface(); 
+
+	// Initialize Aus Segment Code
+	FileConfiguration pConf("/home/root/Eyelock.ini");
+	bool m_bEnableAusSeg = pConf.getValue("Eyelock.AusSegmentationCode", false);
+	temp_pEyeSegmentationInterface->EnableAusSegmentation(m_bEnableAusSeg);
+
+	if(m_bEnableAusSeg){
+		int AusEyeCropWidth = pConf.getValue("Eyelock.AusEyeCropWidth", 640);
+		int AusEyeCropHeight = pConf.getValue("Eyelock.AusEyeCropHeight", 480);
+		unsigned short int Irisfind_min_Iris_Diameter = pConf.getValue("Eyelock.AusSegMinIrisDiameter", 60);
+		unsigned short int Irisfind_max_Iris_Diameter = pConf.getValue("Eyelock.AusSegMaxIrisDiameter", 180);
+
+		unsigned short int Irisfind_min_pupil_Diameter = pConf.getValue("Eyelock.AusSegMinPupilDiameter", 16);
+		unsigned short int Irisfind_max_pupil_Diameter = pConf.getValue("Eyelock.AusSegMaxPupilDiameter", 60);
+
+		unsigned short int Irisfind_min_spec_Diameter = pConf.getValue("Eyelock.AusSegMinSpecDiameter", 8);
+		unsigned short int Irisfind_max_spec_Diameter = pConf.getValue("Eyelock.AusSegMaxSpecDiameter", 20);
+
+		float gaze_radius_thresh = pConf.getValue("Eyelock.AusGazeRadiusThreshold", 10.0f);
+		float propor_iris_visible_threshold = pConf.getValue("Eyelock.AusPIVThreshold", 0.40f);
+
+		temp_pEyeSegmentationInterface->SetAusIrisfind_Iris_Diameter(Irisfind_min_Iris_Diameter, Irisfind_max_Iris_Diameter);
+		temp_pEyeSegmentationInterface->SetAusIrisfind_Pupil_Diameter(Irisfind_min_pupil_Diameter, Irisfind_max_pupil_Diameter);
+		temp_pEyeSegmentationInterface->SetAusIrisfind_Spec_Diameter(Irisfind_min_spec_Diameter, Irisfind_max_spec_Diameter);
+		temp_pEyeSegmentationInterface->SetAusIrisfind_EyeCorpSize(AusEyeCropWidth, AusEyeCropHeight);
+		temp_pEyeSegmentationInterface->SetAusGaze_radius_thresh(gaze_radius_thresh);
+		temp_pEyeSegmentationInterface->SetAusPIV_Threshold(propor_iris_visible_threshold);
+
+	}
+
 	try		
 	{
 		temp_pEyeSegmentationInterface->init(FeatureScale);
@@ -1399,7 +1430,7 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 
 	int tt = clock();
 	bool valid = GetEyeSegmentationInterface()->GetIrisCode(image, 640,	480, 640, pCode, pCode + length, &irisPupilCircles); /* circles optional, last */
-	printf("Eyesorting Current time = %2.4f, ProcessingTme = %2.4f\n", (float) clock() / CLOCKS_PER_SEC, (float) (clock() - tt) / CLOCKS_PER_SEC);
+	// printf("Eyesorting Current time = %2.4f, ProcessingTme = %2.4f\n", (float) clock() / CLOCKS_PER_SEC, (float) (clock() - tt) / CLOCKS_PER_SEC);
 	if (m_eyeSortingLogEnable)
 		SaveOurImage(image, imageId, false, &irisPupilCircles);
 
@@ -1530,7 +1561,8 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 			printf("======= END SEGMENTATION RESULTS IMAGE #%d ==========\n", imageId);
 		}
 
-		if(flag==true && segmentOK && (!isBoundaryInValid) && irisDiameter>GetMinIrisDiameter() && irisDiameter<GetMaxIrisDiameter() && corruptBitCountMask<corruptBitsAbsoluteThresh && variance[0]>GetFeatureVarianceAbsoluteThresh() && oldHalo<m_HaloThresh && pupilDiameter >GetMinPupilDiameter()  && pupilDiameter < GetMaxPupilDiameter() &&  maxXDelta < GetMaxXdelta() &&  maxYDelta < GetMaxYdelta() && irisImagecentre_distX < GetMaxIrisImagecentreDistX() && irisImagecentre_distY < GetMaxIrisImagecentreDistY() )
+		// if(flag==true && segmentOK && (!isBoundaryInValid) && irisDiameter>GetMinIrisDiameter() && irisDiameter<GetMaxIrisDiameter() && corruptBitCountMask<corruptBitsAbsoluteThresh && variance[0]>GetFeatureVarianceAbsoluteThresh() && oldHalo<m_HaloThresh && pupilDiameter >GetMinPupilDiameter()  && pupilDiameter < GetMaxPupilDiameter() &&  maxXDelta < GetMaxXdelta() &&  maxYDelta < GetMaxYdelta() && irisImagecentre_distX < GetMaxIrisImagecentreDistX() && irisImagecentre_distY < GetMaxIrisImagecentreDistY() )
+		if(flag==true && segmentOK && (!isBoundaryInValid) && irisDiameter>GetMinIrisDiameter() && irisDiameter<GetMaxIrisDiameter() && variance[0]>GetFeatureVarianceAbsoluteThresh() && pupilDiameter >GetMinPupilDiameter()  && pupilDiameter < GetMaxPupilDiameter() &&  maxXDelta < GetMaxXdelta() &&  maxYDelta < GetMaxYdelta() && irisImagecentre_distX < GetMaxIrisImagecentreDistX() && irisImagecentre_distY < GetMaxIrisImagecentreDistY() )
 		{			
 			//	printf("************ valid Iris Laplacian Score :%f\n",laplacianScore);
 			//	fflush(stdout);
@@ -1671,7 +1703,7 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 			int tt = clock();
 
 			bool valid1 = temp_pEyeSegmentationInterface->GetIrisCode(image, 640,	480, 640, pCode1, pCode1 + length1, &irisPupilCircles1); /* circles optional, last */
-			printf("else of EyeSorting Current time = %2.4f, ProcessingTme = %2.4f\n", (float) clock() / CLOCKS_PER_SEC, (float) (clock() - tt) / CLOCKS_PER_SEC);
+			// printf("else of EyeSorting Current time = %2.4f, ProcessingTme = %2.4f\n", (float) clock() / CLOCKS_PER_SEC, (float) (clock() - tt) / CLOCKS_PER_SEC);
 			
 			int corruptBitCountMask1 = temp_pEyeSegmentationInterface->checkBitCorruption(pCode1+length1);						
 			/* If segmentation worked, then create a record and add it to our list */
