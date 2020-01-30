@@ -358,9 +358,7 @@ TemplatePipelineError ek_eyelid_main(PLINE* lineptrCrop, size_t eyecrop_width,
                                           flat_iris_height, lineptrMask);
 
 
-  }/*else{
-	  return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
-  }*/
+  }
 
   //
   // iris brightness
@@ -373,9 +371,8 @@ TemplatePipelineError ek_eyelid_main(PLINE* lineptrCrop, size_t eyecrop_width,
         lineptrFlat, lineptrMask, flat_iris_width, flat_iris_height);
     irisfind->pupilBrightness = irisfind->pupilBrightnessLR[0];
     irisfind->pupilEdge = irisfind->pupilScore[0];
-  }/*else{
-	  return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
-  }*/
+  }
+
   //
 
   //
