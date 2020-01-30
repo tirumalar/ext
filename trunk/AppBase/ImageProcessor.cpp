@@ -441,6 +441,9 @@ m_LedConsolidator = NULL;
 	m1280shiftvalauxcam_x = pConf->getValue("Eyelock.1280shiftvalAuxCam_x", float(11.52));
 
 	// Parallax
+	mainLensEFL = pConf->getValue("Eyelock.MainLensEFL", 16); // 25 for DHS
+	auxLensEFL = pConf->getValue("Eyelock.AuxLensEFL",25);  // 35 for DHS
+
 	m_IrisToFaceMapCorrectionValPLXx = pConf->getValue("Eyelock.IrisToFaceMapCorrectionFactorPLXx", -3);
 	m_IrisToFaceMapCorrectionValPLXy = pConf->getValue("Eyelock.IrisToFaceMapCorrectionFactorPLXy", -3);
 
@@ -541,10 +544,11 @@ m_LedConsolidator = NULL;
 	//all non pixel distances in mm
 	baselineDistance = 585;
 	faceLensEFL = 3.9; //3.5;
-	mainLensEFL = 16;
-	auxLensEFL = 25;
 	pixelSize = 0.00375;
 	avgHeadWidth = 110; //149;
+
+	/*mainLensEFL = 16;
+	auxLensEFL = 25;*/
 
 	faceDistanceScale = avgHeadWidth*faceLensEFL/pixelSize;
 
@@ -560,9 +564,6 @@ m_LedConsolidator = NULL;
 
 	camOffsetMainR.x = -33;
 	camOffsetMainR.y = 20;
-
-	mainLensEFL = 16;
-	auxLensEFL = 25;
 
 	magFaceBaseline = faceLensEFL / (baselineDistance - faceLensEFL);
 	magAuxBaseline = auxLensEFL / (baselineDistance - auxLensEFL);
@@ -3923,6 +3924,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		{
 			aquisition->clearFrameBuffer(); // Clear frame buffer
 			eyeSortingWrapObj->clearAllEyes();
+
 			usleep(m_IrisCaptureResetDelay *1000); // wait for next
 			buf[0] = CMX_LED_CMD;
 			buf[1] = 3;
@@ -3938,6 +3940,16 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		g_pLeftCameraFaceQueue->Clear(); // Clear FaceQueue
 		g_pRightCameraFaceQueue->Clear(); // Clear FaceQueue
 		eyeSortingWrapObj->clearAllEyes(); // Check Anita later should be uncommented
+
+	    // Clear the FrameGrabber buffer of all images...don't wait forever in case images keep coming
+        // but remove enough that the person has walked away and eyes are no long in the FOV
+        int nFrameCount = 10;
+        IplImage *pFrame1 = NULL;
+        do
+        {
+        	pFrame1 = aquisition->getFrame_nowait();
+        }while((pFrame1 != NULL) && (nFrameCount-- > 0));
+
 		terminate = false; //Making terminate false to restart our sorting
 		shouldIBeginSorting = false;  //Next image we should start our sorting
 		// eyeSortingWrapObj->clearAllEyes(); // Check Anita later should be uncommented

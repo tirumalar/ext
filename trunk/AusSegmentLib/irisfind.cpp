@@ -1167,9 +1167,9 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
       pupil_search_subpixel(0, eyecrop_width, eyecrop_height);
 
       iris_search_subpixel(0, eyecrop_width, eyecrop_height);
-    }/*else{
+    }else{
     	return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
-    }*/
+    }
 
 	IrisPupilParams.ip.x = irisPos[0].x;
 	IrisPupilParams.ip.y = irisPos[0].y;
@@ -1232,9 +1232,9 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
       if(!(pupilPos[0].z > m_Irisfind_min_pupil_Diameter && pupilPos[0].z  < m_Irisfind_max_pupil_Diameter))
     	  return TemplatePipelineError::Pupil_Diameter_out_of_range;*/
 
-    }/*else{
+    }else{
     	return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
-    }*/
+    }
     //-------------------------------------------------------------------------------
   }
 
