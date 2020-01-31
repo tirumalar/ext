@@ -3595,6 +3595,13 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 										p++;
 									}
 								}
+
+
+								// Check to see if the last sorting request gave us 2 good images...
+								std::pair<IrisDetail *, IrisDetail *> testimages = eyeSortingWrapObj->GetSortedPairEyesDetail();
+
+								if ((testimages.first != NULL) && (testimages.second != NULL))
+									terminate = true;
 							}
 							 else
 							 {
