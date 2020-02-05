@@ -5,13 +5,11 @@ echo "Removing the existing workspace"
 rm -rf "${EYELOCK_WS_EXTLINUX}/.metadata"
 
 projects=(
-linux/pkg/apache-log4cxx-0.10.0/src/main/log4cxx
 AppBase
 AusSegmentLib
 BiOmega
 EdgeImage
 EyeDetection
-EyelockLoggingLib
 Eyelock
 EyelockConfigurationLib
 EyeSegmentationLib
