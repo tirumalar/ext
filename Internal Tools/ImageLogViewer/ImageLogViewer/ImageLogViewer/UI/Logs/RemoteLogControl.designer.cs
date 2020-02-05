@@ -364,7 +364,7 @@
             this.Controls.Add(this.toolStrip1);
             this.Name = "RemoteLogControl";
             this.Size = new System.Drawing.Size(751, 216);
-            this.Load += new System.EventHandler(this.NetworkMatcherLogControl_Load);
+            this.Load += new System.EventHandler(this.RemoteLogControl_Load);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.blvLogEntry)).EndInit();

@@ -70,6 +70,8 @@
 			this.toolStripLabel3 = new System.Windows.Forms.ToolStripLabel();
 			this.lblRemotePort = new System.Windows.Forms.ToolStripTextBox();
 			this.tsbutStartServer = new System.Windows.Forms.ToolStripButton();
+			this.tabPage5 = new System.Windows.Forms.TabPage();
+			this.remoteLogControl1 = new ImageLogViewer.UI.Logs.RemoteLogControl();
 			((System.ComponentModel.ISupportInitialize)(this.MainSplitContainer)).BeginInit();
 			this.MainSplitContainer.Panel1.SuspendLayout();
 			this.MainSplitContainer.Panel2.SuspendLayout();
@@ -92,6 +94,7 @@
 			this.menuStrip.SuspendLayout();
 			this.btnPanel.SuspendLayout();
 			this.tsMain.SuspendLayout();
+			this.tabPage5.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// MainSplitContainer
@@ -315,6 +318,7 @@
 			this.tabControl1.Controls.Add(this.tabPage1);
 			this.tabControl1.Controls.Add(this.tabPage2);
 			this.tabControl1.Controls.Add(this.tabPage6);
+			this.tabControl1.Controls.Add(this.tabPage5);
 			this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.tabControl1.Location = new System.Drawing.Point(0, 0);
 			this.tabControl1.Name = "tabControl1";
@@ -500,6 +504,27 @@
 			this.tsbutStartServer.CheckedChanged += new System.EventHandler(this.tsbutStartServer_CheckedChanged);
 			this.tsbutStartServer.Click += new System.EventHandler(this.tsbutStartServer_Click);
 			// 
+			// tabPage5
+			// 
+			this.tabPage5.Controls.Add(this.remoteLogControl1);
+			this.tabPage5.Location = new System.Drawing.Point(4, 22);
+			this.tabPage5.Name = "tabPage5";
+			this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+			this.tabPage5.Size = new System.Drawing.Size(751, 192);
+			this.tabPage5.TabIndex = 4;
+			this.tabPage5.Text = "Event Log";
+			this.tabPage5.UseVisualStyleBackColor = true;
+			// 
+			// remoteLogControl1
+			// 
+			this.remoteLogControl1.BottomColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
+			this.remoteLogControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.remoteLogControl1.Location = new System.Drawing.Point(3, 3);
+			this.remoteLogControl1.Name = "remoteLogControl1";
+			this.remoteLogControl1.Size = new System.Drawing.Size(745, 186);
+			this.remoteLogControl1.TabIndex = 0;
+			this.remoteLogControl1.TopColor = System.Drawing.Color.White;
+			// 
 			// MainWindow
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -546,6 +571,7 @@
 			this.btnPanel.ResumeLayout(false);
 			this.tsMain.ResumeLayout(false);
 			this.tsMain.PerformLayout();
+			this.tabPage5.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -593,6 +619,8 @@
 		private System.Windows.Forms.TabPage tabPage2;
 		private UI.Logs.RemoteLogControl remoteLogFaceTrackingLog;
 		private UI.Logs.RemoteLogControl remoteLogMotorLog;
+		private System.Windows.Forms.TabPage tabPage5;
+		private UI.Logs.RemoteLogControl remoteLogControl1;
 	}
 }
 
