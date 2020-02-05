@@ -50,6 +50,7 @@ namespace ImageLogViewer.UI.Logs
 			Dock = DockStyle.Fill;
 			blvLogEntry.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top;
 
+
 #if null //DMO listchange
 #region delegates            
 
@@ -106,6 +107,38 @@ namespace ImageLogViewer.UI.Logs
                 lastRefresh = DateTime.Now;
                 System.Console.WriteLine("{0} logs refresh attempted", lastRefresh);
             }
+		}
+
+
+		private void LoadSettings()
+		{
+			TabControl theParent = Parent as TabControl;
+			switch (Parent.TabIndex)
+			{
+				case 0: // NXTLog
+				{
+					tsedtTextLog.Text = Properties.Settings.Default.NXTLogPort;
+					break;
+				}
+
+				case 1: // FaceLog
+				{
+					tsedtTextLog.Text = Properties.Settings.Default.FaceLogPort;
+					break;
+				}
+
+				case 2: // MotorLog
+				{
+					tsedtTextLog.Text = Properties.Settings.Default.MotorLogPort;
+					break;
+				}
+
+				case 3: // EventLog
+				{
+					tsedtTextLog.Text = Properties.Settings.Default.EventLogPort;
+					break;
+				}
+			}
 		}
 
 
@@ -172,24 +205,11 @@ namespace ImageLogViewer.UI.Logs
 						else
 							break; // No more data...
 					}
-					catch (Exception e)
+					catch (Exception)
 					{
 					}
 				}
 			}
-
-#if null
-			string line;
-			while ((line = sr.ReadLine()) != null)
-			{
-				LogEntry theEntry;
-
-				theEntry = ParseLogLine(line, true);
-
-				if (theEntry != null)
-					theEntries.Add(theEntry);
-			}
-#endif
 
 			return theEntries;
 		}
@@ -395,20 +415,17 @@ namespace ImageLogViewer.UI.Logs
         {
             filter.Flip(LOGMSGSEVERITY.ERROR);
 			PopulateLogList();
-  //DMOTODO          this.blvLogEntry.ModelFilter = filter.copy();
         }
         private void btnspWarnings_Click(object sender, EventArgs e)
         {
             filter.Flip(LOGMSGSEVERITY.WARN);
 			PopulateLogList();
-			//DMOTODO          this.blvLogEntry.ModelFilter = filter.copy();
         }
 
         private void btnspInformation_Click(object sender, EventArgs e)
         {
             filter.Flip(LOGMSGSEVERITY.INFO);
 			PopulateLogList();
-			//DMOTODO            this.blvLogEntry.ModelFilter = filter.copy();
         }
 
 		private void toolStripButton2_Click(object sender, EventArgs e)
@@ -495,9 +512,11 @@ namespace ImageLogViewer.UI.Logs
            // RefreshLogsIfRequired();
         }
 
-		private void NetworkMatcherLogControl_Load(object sender, EventArgs e)
+		private void RemoteLogControl_Load(object sender, EventArgs e)
 		{
 	        this.Dock = DockStyle.Fill;
+
+			LoadSettings();
 		}
 
 
@@ -523,6 +542,36 @@ namespace ImageLogViewer.UI.Logs
 					SetStreamFilename(m_LogServer.tempFilename);
 					m_LogServerThread = new Thread(new ThreadStart(m_LogServer.listen));
 					m_LogServerThread.Start();
+
+					// Depending on the parent tab... store our port #
+					TabControl theParent = Parent as TabControl;
+
+					switch (Parent.TabIndex)
+					{
+						case 0: // NXTLog
+						{
+							Properties.Settings.Default.NXTLogPort = tsedtTextLog.Text;
+							break;
+						}
+
+						case 1: // FaceLog
+						{
+							Properties.Settings.Default.FaceLogPort = tsedtTextLog.Text;
+							break;
+						}
+
+						case 2: // MotorLog
+						{
+							Properties.Settings.Default.MotorLogPort = tsedtTextLog.Text;
+							break;
+						}
+
+						case 3: // EventLog
+						{
+							Properties.Settings.Default.EventLogPort = tsedtTextLog.Text;
+							break;
+						}
+					}
 				}
 			}
 			else if (null != m_LogServer)

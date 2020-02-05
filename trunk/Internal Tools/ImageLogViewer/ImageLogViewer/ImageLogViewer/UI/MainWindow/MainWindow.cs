@@ -663,10 +663,16 @@ namespace ImageLogViewer
 
 		private void MainWindow_Load(object sender, EventArgs e)
 		{
-			{
-				Location = Properties.Settings.Default.Location;
-				Size = Properties.Settings.Default.Size;
-			}
+			LoadSettings();
+		}
+
+
+		private void LoadSettings()
+		{
+			Location = Properties.Settings.Default.Location;
+			Size = Properties.Settings.Default.Size;
+
+			lblRemotePort.Text = Properties.Settings.Default.ImageLogPort;
 		}
 
 
@@ -704,6 +710,8 @@ namespace ImageLogViewer
 					SetStreamFilename(m_LogServer.tempFilename);
 					m_LogServerThread = new Thread(new ThreadStart(m_LogServer.listen));
 					m_LogServerThread.Start();
+
+					Properties.Settings.Default.ImageLogPort = lblRemotePort.Text;
 				}
 			}
 			else if (null != m_LogServer)

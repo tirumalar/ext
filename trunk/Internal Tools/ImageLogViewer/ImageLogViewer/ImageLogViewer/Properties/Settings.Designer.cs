@@ -46,5 +46,65 @@ namespace ImageLogViewer.Properties {
                 this["Size"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2222")]
+        public string ImageLogPort {
+            get {
+                return ((string)(this["ImageLogPort"]));
+            }
+            set {
+                this["ImageLogPort"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2223")]
+        public string NXTLogPort {
+            get {
+                return ((string)(this["NXTLogPort"]));
+            }
+            set {
+                this["NXTLogPort"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2224")]
+        public string FaceLogPort {
+            get {
+                return ((string)(this["FaceLogPort"]));
+            }
+            set {
+                this["FaceLogPort"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2225")]
+        public string MotorLogPort {
+            get {
+                return ((string)(this["MotorLogPort"]));
+            }
+            set {
+                this["MotorLogPort"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2226")]
+        public string EventLogPort {
+            get {
+                return ((string)(this["EventLogPort"]));
+            }
+            set {
+                this["EventLogPort"] = value;
+            }
+        }
     }
 }
