@@ -57,10 +57,9 @@
 			this.remoteLogFaceTrackingLog = new ImageLogViewer.UI.Logs.RemoteLogControl();
 			this.tabPage6 = new System.Windows.Forms.TabPage();
 			this.remoteLogMotorLog = new ImageLogViewer.UI.Logs.RemoteLogControl();
+			this.tabPage5 = new System.Windows.Forms.TabPage();
+			this.remoteLogControl1 = new ImageLogViewer.UI.Logs.RemoteLogControl();
 			this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
-			this.menuStrip = new System.Windows.Forms.MenuStrip();
-			this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-			this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.btnPanel = new System.Windows.Forms.Panel();
 			this.btnQuit = new System.Windows.Forms.Button();
 			this.tsMain = new System.Windows.Forms.ToolStrip();
@@ -70,8 +69,6 @@
 			this.toolStripLabel3 = new System.Windows.Forms.ToolStripLabel();
 			this.lblRemotePort = new System.Windows.Forms.ToolStripTextBox();
 			this.tsbutStartServer = new System.Windows.Forms.ToolStripButton();
-			this.tabPage5 = new System.Windows.Forms.TabPage();
-			this.remoteLogControl1 = new ImageLogViewer.UI.Logs.RemoteLogControl();
 			((System.ComponentModel.ISupportInitialize)(this.MainSplitContainer)).BeginInit();
 			this.MainSplitContainer.Panel1.SuspendLayout();
 			this.MainSplitContainer.Panel2.SuspendLayout();
@@ -91,10 +88,9 @@
 			this.tabPage1.SuspendLayout();
 			this.tabPage2.SuspendLayout();
 			this.tabPage6.SuspendLayout();
-			this.menuStrip.SuspendLayout();
+			this.tabPage5.SuspendLayout();
 			this.btnPanel.SuspendLayout();
 			this.tsMain.SuspendLayout();
-			this.tabPage5.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// MainSplitContainer
@@ -102,7 +98,7 @@
 			this.MainSplitContainer.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
 			this.MainSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.MainSplitContainer.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
-			this.MainSplitContainer.Location = new System.Drawing.Point(0, 49);
+			this.MainSplitContainer.Location = new System.Drawing.Point(0, 25);
 			this.MainSplitContainer.Name = "MainSplitContainer";
 			this.MainSplitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
 			// 
@@ -113,8 +109,8 @@
 			// MainSplitContainer.Panel2
 			// 
 			this.MainSplitContainer.Panel2.Controls.Add(this.tabControl1);
-			this.MainSplitContainer.Size = new System.Drawing.Size(763, 420);
-			this.MainSplitContainer.SplitterDistance = 194;
+			this.MainSplitContainer.Size = new System.Drawing.Size(763, 444);
+			this.MainSplitContainer.SplitterDistance = 218;
 			this.MainSplitContainer.TabIndex = 0;
 			// 
 			// TopSplitterContainer
@@ -133,7 +129,7 @@
 			// TopSplitterContainer.Panel2
 			// 
 			this.TopSplitterContainer.Panel2.Controls.Add(this.tabImageData);
-			this.TopSplitterContainer.Size = new System.Drawing.Size(759, 190);
+			this.TopSplitterContainer.Size = new System.Drawing.Size(759, 214);
 			this.TopSplitterContainer.SplitterDistance = 338;
 			this.TopSplitterContainer.TabIndex = 0;
 			// 
@@ -144,7 +140,7 @@
             this.toolStripStatusFrameCount,
             this.toolStripStatusLabel2,
             this.toolStripStatusCropCount});
-			this.statusStripTreeView.Location = new System.Drawing.Point(0, 168);
+			this.statusStripTreeView.Location = new System.Drawing.Point(0, 192);
 			this.statusStripTreeView.Name = "statusStripTreeView";
 			this.statusStripTreeView.Size = new System.Drawing.Size(338, 22);
 			this.statusStripTreeView.SizingGrip = false;
@@ -184,7 +180,7 @@
 			this.ImageLogTree.Location = new System.Drawing.Point(0, 25);
 			this.ImageLogTree.Name = "ImageLogTree";
 			this.ImageLogTree.SelectedImageIndex = 0;
-			this.ImageLogTree.Size = new System.Drawing.Size(338, 165);
+			this.ImageLogTree.Size = new System.Drawing.Size(338, 189);
 			this.ImageLogTree.TabIndex = 0;
 			this.ImageLogTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.ImageLogTree_AfterSelect);
 			// 
@@ -234,7 +230,7 @@
 			this.tabImageData.Location = new System.Drawing.Point(0, 0);
 			this.tabImageData.Name = "tabImageData";
 			this.tabImageData.SelectedIndex = 0;
-			this.tabImageData.Size = new System.Drawing.Size(417, 190);
+			this.tabImageData.Size = new System.Drawing.Size(417, 214);
 			this.tabImageData.TabIndex = 0;
 			// 
 			// tabPage3
@@ -244,7 +240,7 @@
 			this.tabPage3.Location = new System.Drawing.Point(4, 22);
 			this.tabPage3.Name = "tabPage3";
 			this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage3.Size = new System.Drawing.Size(409, 164);
+			this.tabPage3.Size = new System.Drawing.Size(409, 188);
 			this.tabPage3.TabIndex = 0;
 			this.tabPage3.Text = "Image";
 			this.tabPage3.UseVisualStyleBackColor = true;
@@ -255,7 +251,7 @@
 			this.pbImage.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.pbImage.Location = new System.Drawing.Point(3, 28);
 			this.pbImage.Name = "pbImage";
-			this.pbImage.Size = new System.Drawing.Size(403, 133);
+			this.pbImage.Size = new System.Drawing.Size(403, 157);
 			this.pbImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
 			this.pbImage.TabIndex = 0;
 			this.pbImage.TabStop = false;
@@ -389,35 +385,31 @@
 			this.remoteLogMotorLog.TabIndex = 0;
 			this.remoteLogMotorLog.TopColor = System.Drawing.Color.White;
 			// 
+			// tabPage5
+			// 
+			this.tabPage5.Controls.Add(this.remoteLogControl1);
+			this.tabPage5.Location = new System.Drawing.Point(4, 22);
+			this.tabPage5.Name = "tabPage5";
+			this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+			this.tabPage5.Size = new System.Drawing.Size(751, 192);
+			this.tabPage5.TabIndex = 4;
+			this.tabPage5.Text = "Event Log";
+			this.tabPage5.UseVisualStyleBackColor = true;
+			// 
+			// remoteLogControl1
+			// 
+			this.remoteLogControl1.BottomColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
+			this.remoteLogControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.remoteLogControl1.Location = new System.Drawing.Point(3, 3);
+			this.remoteLogControl1.Name = "remoteLogControl1";
+			this.remoteLogControl1.Size = new System.Drawing.Size(745, 186);
+			this.remoteLogControl1.TabIndex = 0;
+			this.remoteLogControl1.TopColor = System.Drawing.Color.White;
+			// 
 			// notifyIcon1
 			// 
 			this.notifyIcon1.Text = "notifyIcon1";
 			this.notifyIcon1.Visible = true;
-			// 
-			// menuStrip
-			// 
-			this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem});
-			this.menuStrip.Location = new System.Drawing.Point(0, 0);
-			this.menuStrip.Name = "menuStrip";
-			this.menuStrip.Size = new System.Drawing.Size(763, 24);
-			this.menuStrip.TabIndex = 0;
-			this.menuStrip.Text = "menuStrip1";
-			// 
-			// fileToolStripMenuItem
-			// 
-			this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.openToolStripMenuItem});
-			this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-			this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
-			this.fileToolStripMenuItem.Text = "File";
-			// 
-			// openToolStripMenuItem
-			// 
-			this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-			this.openToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
-			this.openToolStripMenuItem.Text = "Open";
-			this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click_1);
 			// 
 			// btnPanel
 			// 
@@ -449,7 +441,7 @@
             this.toolStripLabel3,
             this.lblRemotePort,
             this.tsbutStartServer});
-			this.tsMain.Location = new System.Drawing.Point(0, 24);
+			this.tsMain.Location = new System.Drawing.Point(0, 0);
 			this.tsMain.Name = "tsMain";
 			this.tsMain.Size = new System.Drawing.Size(763, 25);
 			this.tsMain.TabIndex = 2;
@@ -504,27 +496,6 @@
 			this.tsbutStartServer.CheckedChanged += new System.EventHandler(this.tsbutStartServer_CheckedChanged);
 			this.tsbutStartServer.Click += new System.EventHandler(this.tsbutStartServer_Click);
 			// 
-			// tabPage5
-			// 
-			this.tabPage5.Controls.Add(this.remoteLogControl1);
-			this.tabPage5.Location = new System.Drawing.Point(4, 22);
-			this.tabPage5.Name = "tabPage5";
-			this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage5.Size = new System.Drawing.Size(751, 192);
-			this.tabPage5.TabIndex = 4;
-			this.tabPage5.Text = "Event Log";
-			this.tabPage5.UseVisualStyleBackColor = true;
-			// 
-			// remoteLogControl1
-			// 
-			this.remoteLogControl1.BottomColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
-			this.remoteLogControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.remoteLogControl1.Location = new System.Drawing.Point(3, 3);
-			this.remoteLogControl1.Name = "remoteLogControl1";
-			this.remoteLogControl1.Size = new System.Drawing.Size(745, 186);
-			this.remoteLogControl1.TabIndex = 0;
-			this.remoteLogControl1.TopColor = System.Drawing.Color.White;
-			// 
 			// MainWindow
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -533,11 +504,9 @@
 			this.Controls.Add(this.MainSplitContainer);
 			this.Controls.Add(this.btnPanel);
 			this.Controls.Add(this.tsMain);
-			this.Controls.Add(this.menuStrip);
 			this.DataBindings.Add(new System.Windows.Forms.Binding("Location", global::ImageLogViewer.Properties.Settings.Default, "Location", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
 			this.DataBindings.Add(new System.Windows.Forms.Binding("ClientSize", global::ImageLogViewer.Properties.Settings.Default, "Size", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
 			this.Location = global::ImageLogViewer.Properties.Settings.Default.Location;
-			this.MainMenuStrip = this.menuStrip;
 			this.Name = "MainWindow";
 			this.Text = "EyeLock Image Log Viewer";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
@@ -566,12 +535,10 @@
 			this.tabPage1.ResumeLayout(false);
 			this.tabPage2.ResumeLayout(false);
 			this.tabPage6.ResumeLayout(false);
-			this.menuStrip.ResumeLayout(false);
-			this.menuStrip.PerformLayout();
+			this.tabPage5.ResumeLayout(false);
 			this.btnPanel.ResumeLayout(false);
 			this.tsMain.ResumeLayout(false);
 			this.tsMain.PerformLayout();
-			this.tabPage5.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 
@@ -583,9 +550,6 @@
 		private System.Windows.Forms.SplitContainer TopSplitterContainer;
 		private System.Windows.Forms.TreeView ImageLogTree;
 		private System.Windows.Forms.NotifyIcon notifyIcon1;
-		private System.Windows.Forms.MenuStrip menuStrip;
-		private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
-		private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
 		private System.Windows.Forms.Panel btnPanel;
 		private System.Windows.Forms.Button btnQuit;
 		private System.Windows.Forms.PictureBox pbImage;
