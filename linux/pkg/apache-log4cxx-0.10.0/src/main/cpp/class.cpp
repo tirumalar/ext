@@ -19,6 +19,8 @@
 #pragma warning ( disable: 4231 4251 4275 4786 )
 #endif
 
+#include <log4cxx/helpers/loglog.h>
+
 #include <log4cxx/logstring.h>
 #include <log4cxx/helpers/class.h>
 #include <log4cxx/helpers/exception.h>
@@ -32,7 +34,6 @@
 #include <log4cxx/private/log4cxx_private.h>
 #include <log4cxx/rollingfileappender.h>
 #include <log4cxx/dailyrollingfileappender.h>
-
 
 #include <log4cxx/asyncappender.h>
 #include <log4cxx/consoleappender.h>
@@ -52,6 +53,9 @@
 #include <log4cxx/net/telnetappender.h>
 #include <log4cxx/writerappender.h>
 #include <log4cxx/net/xmlsocketappender.h>
+
+#include <log4cxx/eyelock/EyelockBinaryAppender.h>
+
 #include <log4cxx/layout.h>
 #include <log4cxx/patternlayout.h>
 #include <log4cxx/htmllayout.h>
@@ -110,12 +114,21 @@ Class::ClassMap& Class::getRegistry() {
 
 const Class& Class::forName(const LogString& className)
 {
+    LogLog::error((LogString) LOG4CXX_STR("DMOFN 1"));
+
         LogString lowerName(StringHelper::toLowerCase(className));
+
+        LogLog::error((LogString) LOG4CXX_STR("DMOFN 2"));
+
         //
         //  check registry using full class name
         //
         const Class* clazz = getRegistry()[lowerName];
+        LogLog::error((LogString) LOG4CXX_STR("DMOFN 2.1"));
+
         if (clazz == 0) {
+            LogLog::error((LogString) LOG4CXX_STR("DMOFN 3"));
+
             LogString::size_type pos = className.find_last_of(LOG4CXX_STR(".$"));
             if (pos != LogString::npos) {
                 LogString terminalName(lowerName, pos + 1, LogString::npos);
@@ -132,9 +145,15 @@ const Class& Class::forName(const LogString& className)
                 clazz = getRegistry()[lowerName];
             }
         }
+        LogLog::error((LogString) LOG4CXX_STR("DMOFN 4"));
+
         if (clazz == 0) {
+            LogLog::error((LogString) LOG4CXX_STR("DMOFN 5"));
+
             throw ClassNotFoundException(className);
         }
+
+        LogLog::error((LogString) LOG4CXX_STR("DMOFN 6"));
 
         return *clazz;
 }
@@ -159,6 +178,9 @@ void Class::registerClasses() {
         log4cxx::nt::OutputDebugStringAppender::registerClass();
 #endif
         log4cxx::RollingFileAppender::registerClass();
+
+        log4cxx::EyelockBinaryAppender::registerClass();
+
         SMTPAppender::registerClass();
         SocketAppender::registerClass();
 #if APR_HAS_THREADS
@@ -179,6 +201,7 @@ void Class::registerClasses() {
         LevelRangeFilter::registerClass();
         StringMatchFilter::registerClass();
         log4cxx::RollingFileAppender::registerClass();
+        log4cxx::EyelockBinaryAppender::registerClass();
         log4cxx::rolling::RollingFileAppender::registerClass();
         DailyRollingFileAppender::registerClass();
         log4cxx::rolling::SizeBasedTriggeringPolicy::registerClass();

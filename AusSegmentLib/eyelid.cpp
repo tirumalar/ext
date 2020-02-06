@@ -283,7 +283,7 @@ float createEyelidMask(Eyelid_struct& eyelid, PLINE* lineptrIris, uint16 width,
     copy_buf(eyelid.lineptrMask[0], width, height, lineptrIrisMask);
   }
 
-  return (float)coverage[0] * 100;
+  return (float)coverage[0]; 
 }
 //
 //
@@ -340,48 +340,55 @@ uint8 iris_brightness(PLINE* lineptrIris, PLINE* lineptrIrisMask, uint16 width,
 
 */
 //
-void ek_eyelid_main(PLINE* lineptrCrop, size_t eyecrop_width,
+
+TemplatePipelineError ek_eyelid_main(PLINE* lineptrCrop, size_t eyecrop_width,
                     size_t eyecrop_height, size_t flat_iris_width,
-                    size_t flat_iris_height, Irisfind_struct& irisfind,
+                    size_t flat_iris_height, Irisfind* irisfind,
                     Eyelid_struct& eyelid, PLINE* lineptrFlat,
                     PLINE* lineptrMask, float radiusSampling, float* cosTable,
                     float* sinTable) {
-  uint8 eyeCropIndex;
 
-  if (irisfind.irisFound[0]) {
+  if (irisfind->irisFound[0]) {
     flattenIris(lineptrCrop, eyecrop_width, eyecrop_height,
-                &irisfind.irisPos[0], &irisfind.pupilPos[0], lineptrFlat,
+                &irisfind->irisPos[0], &irisfind->pupilPos[0], lineptrFlat,
                 flat_iris_width, flat_iris_height, radiusSampling, cosTable,
                 sinTable);
 
     eyelid.coverage[0] = createEyelidMask(eyelid, lineptrFlat, flat_iris_width,
                                           flat_iris_height, lineptrMask);
+
+
   }
 
   //
   // iris brightness
   //
 
-  if (irisfind.irisFound[0]) {
-    irisfind.brightnessValid = true;
+  if (irisfind->irisFound[0]) {
+    irisfind->brightnessValid = true;
 
-    irisfind.irisBrightness = iris_brightness(
+    irisfind->irisBrightness = iris_brightness(
         lineptrFlat, lineptrMask, flat_iris_width, flat_iris_height);
-    irisfind.pupilBrightness = irisfind.pupilBrightnessLR[0];
-    irisfind.pupilEdge = irisfind.pupilScore[0];
+    irisfind->pupilBrightness = irisfind->pupilBrightnessLR[0];
+    irisfind->pupilEdge = irisfind->pupilScore[0];
   }
+
   //
 
   //
   // eye focus estimate
   //
 
-  if (irisfind.brightnessValid) {
+  if (irisfind->brightnessValid) {
     float irisPupilStepSize =
-        (float)irisfind.irisBrightness - (float)irisfind.pupilBrightness;
+        (float)irisfind->irisBrightness - (float)irisfind->pupilBrightness;
     float irisPupilEdge_normalized =
-        (float)irisfind.pupilEdge / irisPupilStepSize;
+        (float)irisfind->pupilEdge / irisPupilStepSize;
 
-    irisfind.focus_unfiltered = irisPupilEdge_normalized / 5.0f;
+    irisfind->focus_unfiltered = irisPupilEdge_normalized / 5.0f;
   }
+
+  return TemplatePipelineError::Segmentation_Successful;
 }
+
+

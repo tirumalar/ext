@@ -4,6 +4,7 @@
 #include "compiler.h"
 #include "eyelid.h"
 #include "helper.h"
+#include <stddef.h>
 
 #include <math.h>  // for sqrtf()
 #ifdef API_STAT
@@ -12,37 +13,146 @@
 
 #include <iostream>
 
-void ek_irisfind_session_init(Irisfind_struct& irisfind) {
-  // init
+Irisfind::Irisfind(size_t eyecrop_width, size_t eyecrop_height, float gaze_radius_thresh)
+:errorCnt(0)
+,irisBrightness(0)
+,pupilBrightness(0)
+,pupilEdge(0)
+,brightnessValid(false)
+,focus_unfiltered(0.0f)
+,gaze_radius_thresh(gaze_radius_thresh)
+,headRotationError(false)
+,bystanderError(false)
+,m_Irisfind_min_Iris_Diameter(60)
+,m_Irisfind_max_Iris_Diameter(180)
+,m_Irisfind_min_pupil_Diameter(16)
+,m_Irisfind_max_pupil_Diameter(60)  // 70, was 60 (faster), but missed eyes too close to camera
+,m_Irisfind_min_spec_Diameter(8)
+,m_Irisfind_max_spec_Diameter(20)
+,maxIrisRadius(90)
+,minIrisRadius(30)
+,maxPupilRadius(30)
+,minPupilRadius(8)
+,maxSpecRadius(10)
+,minSpecRadius(4)
+{
+	irisfind_image_size = eyecrop_width * eyecrop_height;
 
-  irisfind.findRedEye = false;
-  irisfind.autoRedEye = false;
+	hgradSpec = new int8[irisfind_image_size];
+
+	lineptrHgradSpec = new PLINE[eyecrop_height];
+
+	vgradSpec = new int8[irisfind_image_size];
+
+	lineptrVgradSpec = new PLINE[eyecrop_height];
+
+	hgradPupil = new int8[irisfind_image_size];
+
+	lineptrHgradPupil = new PLINE[eyecrop_height];
+
+	vgradPupil = new int8[irisfind_image_size];
+
+	lineptrVgradPupil = new PLINE[eyecrop_height];
+
+	hgradIris = new int8[irisfind_image_size];
+
+	lineptrHgradIris = new PLINE[eyecrop_height];
+
+	vgradIris = new int8[irisfind_image_size];
+
+	lineptrVgradIris = new PLINE[eyecrop_height];
+
+	hgrad = new int8[irisfind_image_size];
+
+	lineptrHgrad = new PLINE[eyecrop_height];
+
+	vgrad = new int8[irisfind_image_size];
+
+	lineptrVgrad = new PLINE[eyecrop_height];
+
+	bufDark = new uint8[irisfind_image_size];
+
+	lineptrDark = new PLINE[eyecrop_height];
+
+	bufMask = new uint8*[2];
+	for(int i = 0; i < 2; ++i)
+		bufMask[i] = new uint8[irisfind_image_size];
+
+	lineptrMask = new PLINE*[2];
+		for(int i = 0; i < 2; ++i)
+			lineptrMask[i] = new PLINE[eyecrop_height];
+
+}
+
+Irisfind::~Irisfind()
+{
+	delete [] hgradSpec;
+	delete [] lineptrHgradSpec;
+	delete [] vgradSpec;
+	delete [] lineptrVgradSpec;
+	delete [] lineptrHgradPupil;
+	delete [] vgradPupil;
+	delete [] lineptrVgradPupil;
+	delete [] hgradIris;
+	delete [] lineptrHgradIris;
+	delete [] vgradIris;
+	delete [] lineptrVgradIris;
+	delete [] hgrad;
+	delete [] lineptrHgrad;
+	delete [] vgrad;
+	delete [] lineptrVgrad;
+	delete [] bufDark;
+	delete [] lineptrDark;
+
+	for(int i = 0; i < 2; ++i) {
+		delete [] bufMask[i];
+	}
+	delete [] bufMask;
+
+	for(int i = 0; i < 2; ++i) {
+		delete [] lineptrMask[i];
+	}
+	delete [] lineptrMask;
+}
+
+void Irisfind::SetIrisfind_Iris_Diameter(uint16 MinIrisDiameter, uint16 MaxIrisDiameter)
+{
+	m_Irisfind_min_Iris_Diameter = MinIrisDiameter;
+	m_Irisfind_max_Iris_Diameter = MaxIrisDiameter;
+}
+
+void Irisfind::SetIrisfind_Pupil_Diameter(uint16 MinPupilDiameter, uint16 MaxPupilDiameter)
+{
+	m_Irisfind_min_pupil_Diameter = MinPupilDiameter;
+	m_Irisfind_max_pupil_Diameter = MaxPupilDiameter;  // 70, was 60 (faster), but missed eyes too close to camera
+}
+
+void Irisfind::SetIrisfind_Spec_Diameter(uint16 MinSpecDiameter, uint16 MaxSpecDiameter)
+{
+	m_Irisfind_min_spec_Diameter = MinSpecDiameter;
+	m_Irisfind_max_spec_Diameter = MaxSpecDiameter;
+}
+
+void Irisfind::ek_irisfind_session_init(size_t eyecrop_width, size_t eyecrop_height)
+{
+  // init
+  findRedEye = false;
+  autoRedEye = false;
 
   // set up buffers
+  size_t eyecrop_image_size = (eyecrop_width * eyecrop_height);
 
-  irisfind.width = IRISFIND_IMAGE_WIDTH;
-  irisfind.height = IRISFIND_IMAGE_HEIGHT;
+  get_lineptrs_8((uint8*)hgradSpec, eyecrop_width, eyecrop_height, lineptrHgradSpec);
+  get_lineptrs_8((uint8*)vgradSpec, eyecrop_width, eyecrop_height, lineptrVgradSpec);
+  get_lineptrs_8((uint8*)hgradPupil, eyecrop_width, eyecrop_height, lineptrHgradPupil);
+  get_lineptrs_8((uint8*)vgradPupil, eyecrop_width, eyecrop_height, lineptrVgradPupil);
+  get_lineptrs_8((uint8*)hgradIris, eyecrop_width, eyecrop_height, lineptrHgradIris);
+  get_lineptrs_8((uint8*)vgradIris, eyecrop_width, eyecrop_height, lineptrVgradIris);
 
-  get_lineptrs_8((uint8*)irisfind.hgradSpec, irisfind.width, irisfind.height,
-                 irisfind.lineptrHgradSpec);
-  get_lineptrs_8((uint8*)irisfind.vgradSpec, irisfind.width, irisfind.height,
-                 irisfind.lineptrVgradSpec);
-  get_lineptrs_8((uint8*)irisfind.hgradPupil, irisfind.width, irisfind.height,
-                 irisfind.lineptrHgradPupil);
-  get_lineptrs_8((uint8*)irisfind.vgradPupil, irisfind.width, irisfind.height,
-                 irisfind.lineptrVgradPupil);
-  get_lineptrs_8((uint8*)irisfind.hgradIris, irisfind.width, irisfind.height,
-                 irisfind.lineptrHgradIris);
-  get_lineptrs_8((uint8*)irisfind.vgradIris, irisfind.width, irisfind.height,
-                 irisfind.lineptrVgradIris);
+  get_lineptrs_8((uint8*)hgrad, eyecrop_width, eyecrop_height, lineptrHgrad);
+  get_lineptrs_8((uint8*)vgrad, eyecrop_width, eyecrop_height, lineptrVgrad);
 
-  get_lineptrs_8((uint8*)irisfind.hgrad, irisfind.width, irisfind.height,
-                 irisfind.lineptrHgrad);
-  get_lineptrs_8((uint8*)irisfind.vgrad, irisfind.width, irisfind.height,
-                 irisfind.lineptrVgrad);
-
-  get_lineptrs_8((uint8*)irisfind.bufDark, irisfind.width, irisfind.height,
-                 irisfind.lineptrDark);
+  get_lineptrs_8((uint8*)bufDark, eyecrop_width, eyecrop_height, lineptrDark);
 
   //--------------------------------------------------------------
   //
@@ -50,18 +160,15 @@ void ek_irisfind_session_init(Irisfind_struct& irisfind) {
   //
 
   for (uint8 eye = 0; eye < 2; eye++) {
-    get_lineptrs_8(irisfind.bufMask[eye], irisfind.width, irisfind.height,
-                   irisfind.lineptrMask[eye]);
+    get_lineptrs_8(bufMask[eye], eyecrop_width, eyecrop_height, lineptrMask[eye]);
     // clear mask buffer
-    for (uint32 i = 0; i < IRISFIND_IMAGE_SIZE; i++)
-      irisfind.bufMask[eye][i] = 0;
+    for (uint32 i = 0; i < eyecrop_image_size; i++)
+    	bufMask[eye][i] = 0;
     // for erasing previous mask instead of clearing whole buffer
     // init a previous dummy spec
-    irisfind.prev_specPos[eye].x =
-        (float32)(irisfind.width / 2);  // arbitrary coordinate
-    irisfind.prev_specPos[eye].y =
-        (float32)(irisfind.height / 2);  // arbitrary coordinate
-    irisfind.prev_specPos[eye].z = 2;    // arbitrary small number
+    prev_specPos[eye].x = (float32)(eyecrop_width / 2);  // arbitrary coordinate
+    prev_specPos[eye].y = (float32)(eyecrop_height / 2);  // arbitrary coordinate
+    prev_specPos[eye].z = 2;    // arbitrary small number
   }
 
   //--------------------------------------------------------------
@@ -69,17 +176,18 @@ void ek_irisfind_session_init(Irisfind_struct& irisfind) {
   // init circle templates
   //
 
-  irisfind.maxLutCnt = IRISFIND_MAX_RADIUS_CNT;
-  irisfind.maxLutSize = IRISFIND_FULLCIRCLE_MAX_LUT_SIZE;
+  maxLutCnt = IRISFIND_MAX_RADIUS_CNT;
+  maxLutSize = IRISFIND_FULLCIRCLE_MAX_LUT_SIZE;
 
   // init once per session, not init per scale change
   // number of circle templates
   // use index i (LUT[i]) to be the same as radius = i
   // so that circle index = radius
-  irisfind.lutCnt = irisfind.maxLutCnt;
-  if (irisfind.lutCnt > irisfind.maxLutCnt)
-    irisfind.lutCnt = irisfind.maxLutCnt;
-  init_circles(irisfind, irisfind.lutCnt);
+  lutCnt = maxLutCnt;
+  if (lutCnt > maxLutCnt)
+	  lutCnt = maxLutCnt;
+
+  init_circles(lutCnt);
   //
   //--------------------------------------------------------------
   //
@@ -88,49 +196,268 @@ void ek_irisfind_session_init(Irisfind_struct& irisfind) {
 
   // irisfind.pupilHistory.goodHistory = false;
 }
+
 //
-void ek_irisfind_init(Irisfind_struct& irisfind) {
+// return size of LUT
+uint32 make_circle_lut(uint32 radius, uint32 lutMaxSize,
+                       struct PointXY_signed* pos,
+                       uint32(cfunc)(uint32, uint32, struct PointXY_signed*,
+                                     uint32)) {
+  uint32 x = 0;
+  uint32 y = radius;
+  float32 p = (float32)((5.0 - ((float32)radius * 4.0)) / 4.0);
+  uint32 cnt = 0;
+  cnt = cfunc(x, y, pos, cnt);
+  while (x < y) {
+    x++;
+    if (p < 0.0) {
+      p += (float32)((2.0 * (float32)x) + 1.0);
+    } else {
+      y--;
+      p += (float32)(2.0 * ((float32)x - (float32)y) + 1.0);
+    }
+    // old test for a different circle routine to prevent LUT overrun
+    if ((cnt + 8) < lutMaxSize) {
+      cnt = cfunc(x, y, pos, cnt);
+    }
+  }
+  return cnt;
+}
+
+//
+//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
+//
+// Create circle coordinate LUTs
+//
+//
+/*
+See notes in init_circles() for circles LUT allocated size in bytes
+*/
+//
+uint32 circlePoints_topRight(uint32 x, uint32 y, struct PointXY_signed* pos,
+                             uint32 i) {
+  if (x == 0) {
+    // pos[i].x = 0; pos[i].y = -y; i++;
+  } else if (x < y) {
+    pos[i].x = (int16_t)x;
+    pos[i].y = -(int16)y;
+    i++;
+  }
+  return i;
+}
+//
+
+uint32 circlePoints_rightBottom(uint32 x, uint32 y, struct PointXY_signed* pos,
+                                uint32 i) {
+  if (x == 0) {
+    pos[i].x = y;
+    pos[i].y = x;
+    i++;
+  } else if (x < y) {
+    pos[i].x = y;
+    pos[i].y = x;
+    i++;
+  }
+  return i;
+}
+
+//
+void reverse_order_and_extend_lut(uint32 lutSize, struct PointXY_signed* pos,
+                                  uint16* tempbuf) {
   uint32 i;
+  for (i = 0; i < lutSize; i++) {
+    tempbuf[i] = pos[i].x;
+  }
+  for (i = 0; i < lutSize; i++) {
+    pos[i].x = tempbuf[lutSize - i - 1];
+    pos[i + lutSize].x = tempbuf[i];
+  }
+  for (i = 0; i < lutSize; i++) {
+    tempbuf[i] = pos[i].y;
+  }
+  for (i = 0; i < lutSize; i++) {
+    pos[i].y = -tempbuf[lutSize - i - 1];
+    pos[i + lutSize].y = tempbuf[i];
+  }
+}
 
-  // init errors
 
-  irisfind.errorCnt = 0;
+//
+void Irisfind::init_circles(uint16 lutCnt) {
+  uint32 i, j;
+  uint32 memsize = 0;
+  uint32 allocated = 0;
+  // radius index i same as radius
+  // radius = i
+  // circle[i] contains LUT for radius i circle
+  //
+  /*
+  // pupil and iris arcs
+  for(i = 0;i < lutCnt;i++){
+      irisfind.circle[i].radius = i;
+      //
+      // left and right arcs
+      // horizontal gradient
+      // hArc, 1/8 circle
+      irisfind.circle[i].hArcSize = make_circle_lut(irisfind.circle[i].radius,
+  irisfind.maxLutSize >> 2, irisfind.circle[i].hArc, circlePoints_horizontal);
+      //Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].hArcSize));
+      memsize += irisfind.circle[i].hArcSize;
+      allocated += irisfind.maxLutSize >> 3;
+      //
+      // top and bottom arcs
+      // vertical gradient
+      // vArc, 1/8 circle
+      irisfind.circle[i].vArcSize = make_circle_lut(irisfind.circle[i].radius,
+  irisfind.maxLutSize >> 2, irisfind.circle[i].vArc, circlePoints_vertical);
+      //Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].vArcSize));
+      memsize += irisfind.circle[i].vArcSize;
+      allocated += irisfind.maxLutSize >> 3;
+      // reverse order for easy weighting from horizontal center out
+      reverse_order_lut(irisfind.circle[i].vArcSize, irisfind.circle[i].vArc,
+  irisfind.tempLUTbuf16);
+  }
+  Log("required memsize hv arcs: " + IntToStr(memsize));
+  Log("required memsize hv arcs in bytes: " + IntToStr(memsize * 4));
+  */
+  //
+  // eyelid arcs
+  //
+  // right half of circle
+  // ordered from top to bottom
+  memsize = 0;
+  for (i = 0; i < lutCnt; i++) {
+    circle[i].radius = i;
+    //
+    // top right arc
+    // vTopRight, 1/8 circle
+    circle[i].vTopRightSize =
+        make_circle_lut(circle[i].radius, maxLutSize >> 3,
+                        circle[i].vTopRight, circlePoints_topRight);
+    // Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].vTopRightSize));
+    memsize += circle[i].vTopRightSize;
+    allocated += maxLutSize >> 3;
+    //
+    // right arc
+    // hRight, 1/4 circle
+    circle[i].hRightSize =
+        make_circle_lut(circle[i].radius, maxLutSize >> 3,
+                        circle[i].hRight, circlePoints_rightBottom);
+    // reverse order for easy filtering from top down
+    reverse_order_and_extend_lut(circle[i].hRightSize,
+                                 circle[i].hRight,
+                                 tempLUTbuf16);
+    circle[i].hRightSize *= 2;
+    // Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].hRightSize));
+    memsize += circle[i].hRightSize;
+    allocated += maxLutSize >> 2;
+    //
+    // bottom right arc
+    // vBottomRight, 1/8 circle
+    uint16 size = circle[i].vTopRightSize;
+    circle[i].vBottomRightSize = size;
+    for (j = 0; j < circle[i].vBottomRightSize; j++) {
+      size--;
+      circle[i].vBottomRight[j].x =
+          circle[i].vTopRight[size].x;
+      circle[i].vBottomRight[j].y =
+          -circle[i].vTopRight[size].y;
+    }
+    // Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].vBottomRightSize));
+    memsize += circle[i].vBottomRightSize;
+    allocated += maxLutSize >> 3;
+  }
+  // Log("required memsize eyelid arcs: " + IntToStr(memsize));
+  // Log("required memsize eyelid arcs in bytes: " + IntToStr(memsize * 4));
+  //
+  /*
+  // left half of circle
+  // ordered from top to bottom
+  for(i = 0;i < lutCnt;i++){
+      irisfind.circle[i].radius = i;
+      //
+      // top left arc
+      // vTopLeft, 1/8 circle
+      irisfind.circle[i].vTopLeftSize = irisfind.circle[i].vTopRightSize;
+      for(j = 0;j < irisfind.circle[i].vTopLeftSize;j++){
+          irisfind.circle[i].vTopLeft[j].x = -irisfind.circle[i].vTopRight[j].x;
+          irisfind.circle[i].vTopLeft[j].y = irisfind.circle[i].vTopRight[j].y;
+      }
+      //Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].vTopLeftSize));
+      memsize += irisfind.circle[i].vTopLeftSize;
+      allocated += irisfind.maxLutSize >> 3;
+      //
+      // left arc
+      // hLeft, 1/4 circle
+      irisfind.circle[i].hLeftSize = irisfind.circle[i].hRightSize;
+      for(j = 0;j < irisfind.circle[i].hLeftSize;j++){
+          irisfind.circle[i].hLeft[j].x = -irisfind.circle[i].hRight[j].x;
+          irisfind.circle[i].hLeft[j].y = irisfind.circle[i].hRight[j].y;
+      }
+      //Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].hLeftSize));
+      memsize += irisfind.circle[i].hLeftSize;
+      allocated += irisfind.maxLutSize >> 2;
+      //
+      // bottom left arc
+      // vBottomLeft, 1/8 circle
+      irisfind.circle[i].vBottomLeftSize = irisfind.circle[i].vBottomRightSize;
+      for(j = 0;j < irisfind.circle[i].vBottomLeftSize;j++){
+          irisfind.circle[i].vBottomLeft[j].x =
+  -irisfind.circle[i].vBottomRight[j].x; irisfind.circle[i].vBottomLeft[j].y =
+  irisfind.circle[i].vBottomRight[j].y;
+      }
+      //Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].vBottomLeftSize));
+      memsize += irisfind.circle[i].vBottomLeftSize;
+      allocated += irisfind.maxLutSize >> 3;
+  }
+  */
+  /*
+  required memsize eyelid arcs: 14144
+  required memsize eyelid arcs in bytes: 56576
+  allocated circle LUTs in bytes: 121604
+  */
+  // Log("required memsize eyelid arcs: " + IntToStr(memsize));
+  // Log("required memsize eyelid arcs in bytes: " + IntToStr(memsize * 4));
+  // Log("allocated circle LUTs in bytes: " + IntToStr(allocated * 4));
+}
 
-  // init variables
+//
+void Irisfind::ek_irisfind_init()
+{
+  uint32 i;
+  errorCnt = 0;
 
-  // init irisfind results
-
-  irisfind.irisBrightness = 0;
-  irisfind.pupilBrightness = 0;
-  irisfind.pupilBrightnessLR[0] = 0;
-  irisfind.pupilBrightnessLR[1] = 0;
-  irisfind.pupilEdge = 0;
-  irisfind.brightnessValid = false;
-  irisfind.focus_unfiltered = 0.0f;
-  irisfind.gaze_radius_thresh = GAZE_RADIUS_THRESH;
-  irisfind.headRotationError = false;
-  irisfind.bystanderError = false;
+  irisBrightness = 0;
+  pupilBrightness = 0;
+  pupilBrightnessLR[0] = 0;
+  pupilBrightnessLR[1] = 0;
+  pupilEdge = 0;
+  brightnessValid = false;
+  focus_unfiltered = 0.0f;
+  headRotationError = false;
+  bystanderError = false;
 
   for (i = 0; i <= 1; i++) {
-    irisfind.specFound[i] = false;
-    irisfind.darkFound[i] = false;
-    irisfind.pupilFound[i] = false;
-    irisfind.irisFound[i] = false;
+    specFound[i] = false;
+    darkFound[i] = false;
+    pupilFound[i] = false;
+    irisFound[i] = false;
 
-    irisfind.darkScore[i] = 0;
-    irisfind.specScore[i] = 0;
-    irisfind.pupilScore[i] = 0;
-    irisfind.irisScore[i] = 0;
+    darkScore[i] = 0;
+    specScore[i] = 0;
+    pupilScore[i] = 0;
+    irisScore[i] = 0;
 
-    irisfind.faceDistance[i] = 0;
-    irisfind.pupilToIrisRatio[i] = 0;
+    faceDistance[i] = 0;
+    m_fpupilToIrisRatio[i] = 0;
 
-    irisfind.glasses_lowEyelid_detected[i] = 0;
+    glasses_lowEyelid_detected[i] = 0;
 
-    irisfind.gaze[i].x = 0.0;
-    irisfind.gaze[i].y = 0.0;
-    irisfind.gaze[i].z = 0.0;
-    irisfind.good_gaze[i] = true;
+    gaze[i].x = 0.0;
+    gaze[i].y = 0.0;
+    gaze[i].z = 0.0;
+    good_gaze[i] = true;
   }
 
   // clear mask buffer
@@ -142,16 +469,16 @@ void ek_irisfind_init(Irisfind_struct& irisfind) {
 
   // TBD: adjust with contrast and lighting
 
-  irisfind.maxSpecGrad = IRISFIND_MAX_SPEC_GRADIENT;
-  irisfind.minSpecGrad = IRISFIND_MIN_SPEC_GRADIENT;
-  irisfind.maxPupilGrad = IRISFIND_MAX_PUPIL_GRADIENT;
-  irisfind.minPupilGrad = IRISFIND_MIN_PUPIL_GRADIENT;
-  irisfind.maxRedPupilGrad = IRISFIND_MAX_REDPUPIL_GRADIENT;
-  irisfind.minRedPupilGrad = IRISFIND_MIN_REDPUPIL_GRADIENT;
-  irisfind.maxIrisGrad = IRISFIND_MAX_IRIS_GRADIENT;
-  irisfind.minIrisGrad = IRISFIND_MIN_IRIS_GRADIENT;
+  maxSpecGrad = IRISFIND_MAX_SPEC_GRADIENT;
+  minSpecGrad = IRISFIND_MIN_SPEC_GRADIENT;
+  maxPupilGrad = IRISFIND_MAX_PUPIL_GRADIENT;
+  minPupilGrad = IRISFIND_MIN_PUPIL_GRADIENT;
+  maxRedPupilGrad = IRISFIND_MAX_REDPUPIL_GRADIENT;
+  minRedPupilGrad = IRISFIND_MIN_REDPUPIL_GRADIENT;
+  maxIrisGrad = IRISFIND_MAX_IRIS_GRADIENT;
+  minIrisGrad = IRISFIND_MIN_IRIS_GRADIENT;
 
-  irisfind.minScoreVariance = MIN_SCORE_VARIANCE;
+  minScoreVariance = MIN_SCORE_VARIANCE;
 
   // TBD: adjust with zoom
 
@@ -166,15 +493,20 @@ void ek_irisfind_init(Irisfind_struct& irisfind) {
   //
 
   // irisfind.searchBoxIris = irisfind.searchBox;
-  irisfind.maxIrisRadius = IRISFIND_MAX_IRIS_RADIUS;
-  irisfind.minIrisRadius = IRISFIND_MIN_IRIS_RADIUS;
+
+
+  // radius is used in the algorithm, not diameter
+  maxIrisRadius = (m_Irisfind_max_Iris_Diameter >> 1);
+  minIrisRadius = (m_Irisfind_min_Iris_Diameter >> 1);
 
   // irisfind.searchBoxPupil = 10;
-  irisfind.maxPupilRadius = IRISFIND_MAX_PUPIL_RADIUS;
-  irisfind.minPupilRadius = IRISFIND_MIN_PUPIL_RADIUS;
+  maxPupilRadius = (m_Irisfind_max_pupil_Diameter >> 1);
+  minPupilRadius = (m_Irisfind_min_pupil_Diameter >> 1);
 
-  irisfind.maxSpecRadius = IRISFIND_MAX_SPEC_RADIUS;
-  irisfind.minSpecRadius = IRISFIND_MIN_SPEC_RADIUS;
+  maxSpecRadius = (m_Irisfind_max_spec_Diameter >> 1);
+  minSpecRadius = (m_Irisfind_min_spec_Diameter >> 1);
+
+  m_Irisfind_max_pupil_radius = (m_Irisfind_max_pupil_Diameter >> 1);
 
   // TBD
   // irisfind.searchBoxIris = irisfind.maxIrisRadius;
@@ -188,7 +520,7 @@ void ek_irisfind_init(Irisfind_struct& irisfind) {
   // TBD: adjust with zoom or size of spec
 
   // adjust the size of the mask so that it is larger than the actual spec
-  irisfind.specMaskMultiplier = IRISFIND_SPECMASK_MULTIPLIER;
+  specMaskMultiplier = IRISFIND_SPECMASK_MULTIPLIER;
 }
 //
 //---------------------------------------------------------------------------
@@ -244,7 +576,8 @@ void make_spec_mask(PLINE* lineptr, uint16 /*width*/, uint16 /*height*/,
 // spec search
 //
 //
-void spec_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
+void Irisfind::spec_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height)
+{
   // search type
   bool dark = false;
   bool ccl_dark = false;
@@ -252,47 +585,44 @@ void spec_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   bool pupil = false;
   bool iris = false;
   // return search winner circle (x, y, z)
-  struct PointXYZ_float* wpos = &irisfind.specPos[eyeCropIndex];
+  struct PointXYZ_float* wpos = &specPos[eyeCropIndex];
   //---------------------------------------------------
   // search area
   // TBD: the following parameters could change with distance
   // set min and max radius
-  uint16 minRadius = irisfind.minSpecRadius;
-  uint16 maxRadius = irisfind.maxSpecRadius;
+  uint16 minRadius = minSpecRadius;
+  uint16 maxRadius = maxSpecRadius;
   // set gradient min and max
-  int8 minGrad = irisfind.minSpecGrad;
-  int8 maxGrad = irisfind.maxSpecGrad;
+  int8 minGrad = minSpecGrad;
+  int8 maxGrad = maxSpecGrad;
   // set center of search area (xc, yc)
-  int16 xc = irisfind.width >> 1;
-  int16 yc = irisfind.height >> 1;
+  int16 xc = eyecrop_width >> 1;
+  int16 yc = eyecrop_height >> 1;
   // set search box size
   int16 searchBox = IRISFIND_SPEC_SEARCHBOX;
   //---------------------------------------------------
   // search inputs
   // the following are the same for spec, pupil, iris
-  // eyecrop width and height
-  int16 width = irisfind.width;
-  int16 height = irisfind.height;
   // set gradient of eye crop
-  PLINE* hGradLptr = irisfind.lineptrHgrad;
-  PLINE* vGradLptr = irisfind.lineptrVgrad;
+  PLINE* hGradLptr = lineptrHgrad;
+  PLINE* vGradLptr = lineptrVgrad;
   PLINE* mLptr = NULL;
-  PLINE* dLptr = irisfind.lineptrDark;  // dark ptr
+  PLINE* dLptr = lineptrDark;  // dark ptr
   // set circle LUTs
-  struct Circle_struct* circleR = irisfind.circle;
+  struct Circle_struct* circleR = circle;
   // search the gradient for circles
   search_for_circles(hGradLptr, vGradLptr, mLptr, dLptr, minGrad, maxGrad,
-                     circleR, minRadius, maxRadius, width, height, xc, yc,
-                     searchBox, wpos, dark, ccl_dark, spec, pupil, iris);
+                     circleR, minRadius, maxRadius, eyecrop_width, eyecrop_height, xc, yc,
+                     searchBox, wpos, dark, ccl_dark, spec, pupil, iris, m_Irisfind_max_pupil_radius);
   //
   // output results to use in pupil search
   // return search winner circle (x, y, z)
   uint16 winnerRadius = (uint16)wpos->z;  // search winner (x, y, z)
-  irisfind.specScore[eyeCropIndex] = wpos->s;
+  specScore[eyeCropIndex] = wpos->s;
   if (winnerRadius > 0)
-    irisfind.specFound[eyeCropIndex] = true;  // TBD: how to test for good spec?
-  if (irisfind.specScore[eyeCropIndex] < IRISFIND_SPEC_MIN_SCORE)
-    irisfind.specFound[eyeCropIndex] = false;
+	  specFound[eyeCropIndex] = true;  // TBD: how to test for good spec?
+  if (specScore[eyeCropIndex] < IRISFIND_SPEC_MIN_SCORE)
+	  specFound[eyeCropIndex] = false;
 }
 //
 //
@@ -302,7 +632,8 @@ void spec_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
 // dark search for rough pupil area (dark pixel values) detection
 //
 //
-void dark_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
+void Irisfind::dark_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height)
+{
   // search type
   bool dark = true;
   bool ccl_dark = false;
@@ -310,25 +641,24 @@ void dark_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   bool pupil = false;
   bool iris = false;
   // return search winner circle (x, y, z)
-  struct PointXYZ_float* wpos = &irisfind.darkPos[eyeCropIndex];
+  struct PointXYZ_float* wpos = &darkPos[eyeCropIndex];
   //---------------------------------------------------
   // search area
   // TBD: the following parameters could change with distance
   // set min and max radius
-  uint16 minRadius = irisfind.minPupilRadius;
-  uint16 maxRadius = irisfind.maxPupilRadius;
+  uint16 minRadius = minPupilRadius;
+  uint16 maxRadius = maxPupilRadius;
   // set gradient min and max
   int8 minGrad = 0;
   int8 maxGrad = 0;
 
   // set center of search area (xc, yc)
-  int16 xc = (int16)irisfind.specPos[eyeCropIndex].x;
-  int16 yc = (int16)irisfind.specPos[eyeCropIndex].y;
+  int16 xc = (int16)specPos[eyeCropIndex].x;
+  int16 yc = (int16)specPos[eyeCropIndex].y;
   // set search box size
   // Dark searchBox will be calculated in search_for_circles(); in
   // ek_irisfind_circles.cpp
-  int16 searchBox = (int16)irisfind.specPos[eyeCropIndex]
-                        .z;  // spec radius used later to make dark searchbox
+  int16 searchBox = (int16)specPos[eyeCropIndex].z;  // spec radius used later to make dark searchbox
 
   // set center of search area (xc, yc)
   // int16 xc = irisfind.width >> 1;
@@ -338,30 +668,27 @@ void dark_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   //---------------------------------------------------
   // search inputs
   // the following are the same for spec, pupil, iris
-  // eyecrop width and height
-  int16 width = irisfind.width;
-  int16 height = irisfind.height;
   // set gradient of eye crop
   PLINE* hGradLptr = NULL;
   PLINE* vGradLptr = NULL;
   PLINE* mLptr = NULL;                  // spec mask ptr
-  PLINE* dLptr = irisfind.lineptrDark;  // dark ptr
+  PLINE* dLptr = lineptrDark;  // dark ptr
   // set circle LUTs
-  struct Circle_struct* circleR = irisfind.circle;
+  struct Circle_struct* circleR = circle;
   // search the gradient for circles
   search_for_circles(hGradLptr, vGradLptr, mLptr, dLptr, minGrad, maxGrad,
-                     circleR, minRadius, maxRadius, width, height, xc, yc,
-                     searchBox, wpos, dark, ccl_dark, spec, pupil, iris);
+                     circleR, minRadius, maxRadius, eyecrop_width, eyecrop_height, xc, yc,
+                     searchBox, wpos, dark, ccl_dark, spec, pupil, iris, m_Irisfind_max_pupil_radius);
   //
   // output results to use in pupil search
   // return search winner circle (x, y, z)
   uint16 winnerRadius = (uint16)wpos->z;  // search winner (x, y, z)
   // arbitrary multipler make dark score range similar to pupil and iris range
-  irisfind.darkScore[eyeCropIndex] = wpos->s * DARK_SCORE_ARBITRARY_MULTIPLIER;
+  darkScore[eyeCropIndex] = wpos->s * DARK_SCORE_ARBITRARY_MULTIPLIER;
   if (winnerRadius > 0)
-    irisfind.darkFound[eyeCropIndex] = true;  // TBD: how to test for good spec?
-  if (irisfind.darkScore[eyeCropIndex] < IRISFIND_DARK_MIN_SCORE)
-    irisfind.darkFound[eyeCropIndex] = false;
+	  darkFound[eyeCropIndex] = true;  // TBD: how to test for good spec?
+  if (darkScore[eyeCropIndex] < IRISFIND_DARK_MIN_SCORE)
+	  darkFound[eyeCropIndex] = false;
 }
 //
 //---------------------------------------------------------------------------
@@ -370,7 +697,8 @@ void dark_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
 // pupil search
 //
 //
-void pupil_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
+void Irisfind::pupil_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height)
+{
   // search type
   bool dark = false;
   bool ccl_dark = false;
@@ -378,7 +706,9 @@ void pupil_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   bool pupil = true;
   bool iris = false;
   // return search winner circle (x, y, z)
-  struct PointXYZ_float* wpos = &irisfind.pupilPos[eyeCropIndex];
+  struct PointXYZ_float* wpos = &pupilPos[eyeCropIndex];
+  // printf(" pupil_search %f\n", wpos->z);
+
   //---------------------------------------------------
   // search area
   // TBD: the following parameters could change with distance
@@ -388,20 +718,20 @@ void pupil_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   //
   // calculate search area from dark location
   //
-  uint16 darkRadius = (uint16)irisfind.darkPos[eyeCropIndex].z;
+  uint16 darkRadius = (uint16)darkPos[eyeCropIndex].z;
   uint16 minRadius = (uint16)((float32)darkRadius * 0.8);
   uint16 maxRadius = (uint16)((float32)darkRadius * 1.25);
 
   // set center of search area (xc, yc)
-  int16 xc = (int16)irisfind.darkPos[eyeCropIndex].x;
-  int16 yc = (int16)irisfind.darkPos[eyeCropIndex].y;
+  int16 xc = (int16)darkPos[eyeCropIndex].x;
+  int16 yc = (int16)darkPos[eyeCropIndex].y;
   // set search box size
   int16 searchBox = 2;  //(float32)darkRadius * 0.5;
 
   //
   // set gradient min and max
-  int8 minGrad = irisfind.minPupilGrad;
-  int8 maxGrad = irisfind.maxPupilGrad;
+  int8 minGrad = minPupilGrad;
+  int8 maxGrad = maxPupilGrad;
   //
 
   /*
@@ -429,35 +759,33 @@ void pupil_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   //---------------------------------------------------
   // search inputs
   // the following are the same for spec, pupil, iris
-  // eyecrop width and height
-  int16 width = irisfind.width;
-  int16 height = irisfind.height;
   // set gradient of eye crop
-  PLINE* hGradLptr = irisfind.lineptrHgrad;
-  PLINE* vGradLptr = irisfind.lineptrVgrad;
-  PLINE* mLptr = irisfind.lineptrMask[eyeCropIndex];
+  PLINE* hGradLptr = lineptrHgrad;
+  PLINE* vGradLptr = lineptrVgrad;
+  PLINE* mLptr = lineptrMask[eyeCropIndex];
   PLINE* dLptr = NULL;  // dark ptr
   // set circle LUTs
-  struct Circle_struct* circleR = irisfind.circle;
+  struct Circle_struct* circleR = circle;
   // search the gradient for circles
   search_for_circles(hGradLptr, vGradLptr, mLptr, dLptr, minGrad, maxGrad,
-                     circleR, minRadius, maxRadius, width, height, xc, yc,
-                     searchBox, wpos, dark, ccl_dark, spec, pupil, iris);
+                     circleR, minRadius, maxRadius, eyecrop_width, eyecrop_height, xc, yc,
+                     searchBox, wpos, dark, ccl_dark, spec, pupil, iris, m_Irisfind_max_pupil_radius);
   //
   // output results to use in iris search
   // return search winner circle (x, y, z)
   uint16 winnerRadius = (uint16)wpos->z;  // search winner (x, y, z)
-  irisfind.pupilScore[eyeCropIndex] = wpos->s;
+  pupilScore[eyeCropIndex] = wpos->s;
   if (winnerRadius > 0)
-    irisfind.pupilFound[eyeCropIndex] =
+	  pupilFound[eyeCropIndex] =
         true;  // TBD: how to test for good pupil?
-  if (irisfind.pupilScore[eyeCropIndex] < IRISFIND_PUPIL_MIN_SCORE)
-    irisfind.pupilFound[eyeCropIndex] = false;
+  if (pupilScore[eyeCropIndex] < IRISFIND_PUPIL_MIN_SCORE)
+    pupilFound[eyeCropIndex] = false;
 }
 //
 //-------------------
 //
-uint8 pupil_search_subpixel(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
+TemplatePipelineError Irisfind::pupil_search_subpixel(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height)
+{
   //---------------------------------------------------
   //
   // only these parameters change between pupil and iris subpixel
@@ -468,10 +796,12 @@ uint8 pupil_search_subpixel(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   bool pupil = true;
   bool iris = false;
   // set xyz input from search winner
-  struct PointXYZ_float* wpos = &irisfind.pupilPos[eyeCropIndex];
+  struct PointXYZ_float* wpos = &pupilPos[eyeCropIndex];
+
+  // printf("pupil_search_subpixel...%f\n",  wpos->z);
   // set gradient min and max
-  int8 minGrad = irisfind.minPupilGrad;
-  int8 maxGrad = irisfind.maxPupilGrad;
+  int8 minGrad = minPupilGrad;
+  int8 maxGrad = maxPupilGrad;
   //---------------------------------------------------
   //
   // calculate search area from search winner
@@ -480,9 +810,11 @@ uint8 pupil_search_subpixel(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   // detect parameters that would cause errors
   // do not process if already at radius limit
   // small radius
-  if (wpos->z <= 1) return 0;  // out of bounds
+  if (wpos->z <= 1)
+	  return TemplatePipelineError::Pupil_Diameter_out_of_range;  // out of bounds
   // large radius
-  if (wpos->z >= IRISFIND_CIRCLE_MAX_RADIUS) return 0;  // out of bounds
+  if (wpos->z >= IRISFIND_CIRCLE_MAX_RADIUS)
+	  return TemplatePipelineError::Pupil_Diameter_out_of_range;  // out of bounds
   // radius ok
   uint16 centerRadius = (uint16)wpos->z;
   uint16 maxRadius = (uint16)wpos->z + 1;
@@ -491,28 +823,26 @@ uint8 pupil_search_subpixel(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   int16 yc = (int16)wpos->y;
   // search inputs
   // the following are the same for spec, pupil, iris
-  // eyecrop width and height
-  int16 width = irisfind.width;
-  int16 height = irisfind.height;
-  // set search box size
+   // set search box size
   int16 searchBox = 3;
   // test for out-of-bounds
   int16 xmin, xmax, ymin, ymax;  // not used
-  uint8 inbounds = make_xy_search_area(width, height, xc, yc, maxRadius,
+  uint8 inbounds = make_xy_search_area(eyecrop_width, eyecrop_height, xc, yc, maxRadius,
                                        searchBox, &xmin, &xmax, &ymin, &ymax);
-  if (inbounds == 0) return 0;  // out of bounds
+  if (inbounds == 0)
+	  return TemplatePipelineError::Pupil_Diameter_out_of_range;  // out of bounds
   //---------------------------------------------------
   // search inputs
   // the following are the same for spec, pupil, iris
   // set gradient of eye crop
-  PLINE* hGradLptr = irisfind.lineptrHgrad;
-  PLINE* vGradLptr = irisfind.lineptrVgrad;
-  PLINE* mLptr = irisfind.lineptrMask[eyeCropIndex];
+  PLINE* hGradLptr = lineptrHgrad;
+  PLINE* vGradLptr = lineptrVgrad;
+  PLINE* mLptr = lineptrMask[eyeCropIndex];
   PLINE* dLptr = NULL;  // dark ptr
   // set circle LUTs
-  struct Circle_struct* circleR = irisfind.circle;
+  struct Circle_struct* circleR = circle;
   // set results return struct
-  struct ScoreXYZS(*sCube)[3][3][3] = &irisfind.scoreCube;
+  struct ScoreXYZS(*sCube)[3][3][3] = &scoreCube;
   // search the gradient for circles
   search_for_circles_subpixel(hGradLptr, vGradLptr, mLptr, dLptr, minGrad,
                               maxGrad, circleR, centerRadius, xc, yc, dark,
@@ -540,7 +870,7 @@ uint8 pupil_search_subpixel(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
     wpos->z = psz;
   }
   //
-  return 1;  // good subpixel
+  return TemplatePipelineError::Segmentation_Successful;  // good subpixel
 }
 //
 //---------------------------------------------------------------------------
@@ -549,7 +879,7 @@ uint8 pupil_search_subpixel(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
 // iris search
 //
 //
-void iris_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
+TemplatePipelineError Irisfind::iris_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height) {
   // search type
   bool dark = false;
   bool ccl_dark = false;
@@ -557,31 +887,33 @@ void iris_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   bool pupil = false;
   bool iris = true;
   // return search winner circle (x, y, z)
-  struct PointXYZ_float* wpos = &irisfind.irisPos[eyeCropIndex];
+  struct PointXYZ_float* wpos = &irisPos[eyeCropIndex];
+
+  // printf("iris_search...%f\n",  wpos->z);
   //---------------------------------------------------
   // search area
   // TBD: the following parameters could change with distance
   // set min and max radius
   // uint16 minRadius = irisfind.minIrisRadius;
   // uint16 maxRadius = irisfind.maxIrisRadius;
-  uint16 minRadius = (uint16)((float32)irisfind.pupilPos[eyeCropIndex].z *
+  uint16 minRadius = (uint16)((float32)pupilPos[eyeCropIndex].z *
                               IRISFIND__PUPIL_TO_IRIS__MIN_MULTIPLIER);
-  uint16 maxRadius = (uint16)((float32)irisfind.pupilPos[eyeCropIndex].z *
+  uint16 maxRadius = (uint16)((float32)pupilPos[eyeCropIndex].z *
                               IRISFIND__PUPIL_TO_IRIS__MAX_MULTIPLIER);
-  if ((minRadius > irisfind.maxIrisRadius) ||
-      (minRadius < irisfind.minIrisRadius))
-    minRadius = irisfind.minIrisRadius;
-  if ((maxRadius > irisfind.maxIrisRadius) ||
-      (maxRadius < irisfind.minIrisRadius))
-    maxRadius = irisfind.maxIrisRadius;
+  if ((minRadius > maxIrisRadius) ||
+      (minRadius < minIrisRadius))
+    minRadius = minIrisRadius;
+  if ((maxRadius > maxIrisRadius) ||
+      (maxRadius < minIrisRadius))
+    maxRadius = maxIrisRadius;
   // set gradient min and max
-  int8 minGrad = irisfind.minIrisGrad;
-  int8 maxGrad = irisfind.maxIrisGrad;
+  int8 minGrad = minIrisGrad;
+  int8 maxGrad = maxIrisGrad;
   // set center of search area (xc, yc)
   // int16 xc = irisfind.width >> 1;
   // int16 yc = irisfind.height >> 1;
-  int16 xc = (int16)irisfind.pupilPos[eyeCropIndex].x;
-  int16 yc = (int16)irisfind.pupilPos[eyeCropIndex].y;
+  int16 xc = (int16)pupilPos[eyeCropIndex].x;
+  int16 yc = (int16)pupilPos[eyeCropIndex].y;
   // set search box size
   // int16 searchBox = IRISFIND_IRIS_SEARCHBOX;
   // For iris, set (max searchBox) here.
@@ -589,39 +921,40 @@ void iris_search(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   // ek_irisfind_circles.cpp TBD: relate iris offset to (distance to face) and
   // pupil/iris size ratio
   int16 searchBox =
-      (int16)irisfind.pupilPos[eyeCropIndex]
-          .z;  //* 0.5;// *
+      (int16)pupilPos[eyeCropIndex].z;  //* 0.5;// *
                //IRISFIND__PUPIL_RADIUS_MULTIPLIER_TO_MAKE_IRIS_MAX_SEARCHBOX;
   //---------------------------------------------------
   // search inputs
   // the following are the same for spec, pupil, iris
   // eyecrop width and height
-  int16 width = irisfind.width;
-  int16 height = irisfind.height;
+  //int16 width = m_width;
+  //int16 height = m_height;
   // set gradient of eye crop
-  PLINE* hGradLptr = irisfind.lineptrHgrad;
-  PLINE* vGradLptr = irisfind.lineptrVgrad;
-  PLINE* mLptr = irisfind.lineptrMask[eyeCropIndex];
+  PLINE* hGradLptr = lineptrHgrad;
+  PLINE* vGradLptr = lineptrVgrad;
+  PLINE* mLptr = lineptrMask[eyeCropIndex];
   PLINE* dLptr = NULL;  // dark ptr
   // set circle LUTs
-  struct Circle_struct* circleR = irisfind.circle;
+  struct Circle_struct* circleR = circle;
   // search the gradient for circles
   search_for_circles(hGradLptr, vGradLptr, mLptr, dLptr, minGrad, maxGrad,
-                     circleR, minRadius, maxRadius, width, height, xc, yc,
-                     searchBox, wpos, dark, ccl_dark, spec, pupil, iris);
+                     circleR, minRadius, maxRadius, eyecrop_width, eyecrop_height, xc, yc,
+                     searchBox, wpos, dark, ccl_dark, spec, pupil, iris, m_Irisfind_max_pupil_radius);
   //
   // return search winner circle (x, y, z)
   uint16 winnerRadius = (uint16)wpos->z;  // search winner (x, y, z)
-  irisfind.irisScore[eyeCropIndex] = wpos->s;
+  irisScore[eyeCropIndex] = wpos->s;
   if (winnerRadius > 0)
-    irisfind.irisFound[eyeCropIndex] = true;  // TBD: how to test for good iris?
-  if (irisfind.irisScore[eyeCropIndex] < IRISFIND_IRIS_MIN_SCORE)
-    irisfind.irisFound[eyeCropIndex] = false;
+    irisFound[eyeCropIndex] = true;  // TBD: how to test for good iris?
+  if (irisScore[eyeCropIndex] < IRISFIND_IRIS_MIN_SCORE)
+    irisFound[eyeCropIndex] = false;
+
+  return TemplatePipelineError::Segmentation_Successful;
 }
 //
 //-------------------
 //
-uint8 iris_search_subpixel(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
+TemplatePipelineError Irisfind::iris_search_subpixel(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height) {
   //---------------------------------------------------
   //
   // only these parameters change between pupil and iris subpixel
@@ -632,10 +965,12 @@ uint8 iris_search_subpixel(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   bool pupil = false;
   bool iris = true;
   // set xyz input from search winner
-  struct PointXYZ_float* wpos = &irisfind.irisPos[eyeCropIndex];
+  struct PointXYZ_float* wpos = &irisPos[eyeCropIndex];
+
+  // printf("iris_search_subpixel...%f\n",  wpos->z);
   // set gradient min and max
-  int8 minGrad = irisfind.minIrisGrad;
-  int8 maxGrad = irisfind.maxIrisGrad;
+  int8 minGrad = minIrisGrad;
+  int8 maxGrad = maxIrisGrad;
   //---------------------------------------------------
   //
   // calculate search area from search winner
@@ -644,9 +979,11 @@ uint8 iris_search_subpixel(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   // detect parameters that would cause errors
   // do not process if already at radius limit
   // small radius
-  if (wpos->z <= 1) return 0;  // out of bounds
+  if (wpos->z <= 1)
+	  return TemplatePipelineError::Iris_Diameter_out_of_range;  // out of bounds
   // large radius
-  if (wpos->z >= IRISFIND_CIRCLE_MAX_RADIUS) return 0;  // out of bounds
+  if (wpos->z >= IRISFIND_CIRCLE_MAX_RADIUS)
+	  return TemplatePipelineError::Iris_Diameter_out_of_range;  // out of bounds
   // radius ok
   uint16 centerRadius = (uint16)wpos->z;
   uint16 maxRadius = (uint16)wpos->z + 1;
@@ -655,28 +992,26 @@ uint8 iris_search_subpixel(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
   int16 yc = (int16)wpos->y;
   // search inputs
   // the following are the same for spec, pupil, iris
-  // eyecrop width and height
-  int16 width = irisfind.width;
-  int16 height = irisfind.height;
   // set search box size
   int16 searchBox = 3;
   // test for out-of-bounds
   int16 xmin, xmax, ymin, ymax;  // not used
-  uint8 inbounds = make_xy_search_area(width, height, xc, yc, maxRadius,
+  uint8 inbounds = make_xy_search_area(eyecrop_width, eyecrop_height, xc, yc, maxRadius,
                                        searchBox, &xmin, &xmax, &ymin, &ymax);
-  if (inbounds == 0) return 0;  // out of bounds
+  if (inbounds == 0)
+	  return TemplatePipelineError::Iris_Diameter_out_of_range;  // out of bounds
   //---------------------------------------------------
   // search inputs
   // the following are the same for spec, pupil, iris
   // set gradient of eye crop
-  PLINE* hGradLptr = irisfind.lineptrHgrad;
-  PLINE* vGradLptr = irisfind.lineptrVgrad;
-  PLINE* mLptr = irisfind.lineptrMask[eyeCropIndex];
+  PLINE* hGradLptr = lineptrHgrad;
+  PLINE* vGradLptr = lineptrVgrad;
+  PLINE* mLptr = lineptrMask[eyeCropIndex];
   PLINE* dLptr = NULL;  // dark ptr
   // set circle LUTs
-  struct Circle_struct* circleR = irisfind.circle;
+  struct Circle_struct* circleR = circle;
   // set results return struct
-  struct ScoreXYZS(*sCube)[3][3][3] = &irisfind.scoreCube;
+  struct ScoreXYZS(*sCube)[3][3][3] = &scoreCube;
   // search the gradient for circles
   search_for_circles_subpixel(hGradLptr, vGradLptr, mLptr, dLptr, minGrad,
                               maxGrad, circleR, centerRadius, xc, yc, dark,
@@ -704,7 +1039,7 @@ uint8 iris_search_subpixel(Irisfind_struct& irisfind, uint8 eyeCropIndex) {
     wpos->z = psz;
   }
   //
-  return 1;  // good subpixel
+  return TemplatePipelineError::Segmentation_Successful;  // good subpixel
 }
 //
 //---------------------------------------------------------------------------
@@ -739,10 +1074,10 @@ float32 pupilToIrisRatio(float32 pupil_rad, float32 iris_rad) {
   return ratio;
 }
 
-void ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
-                      Irisfind_struct& irisfind, size_t eyecrop_width,
+TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
+                      size_t eyecrop_width,
                       size_t eyecrop_height, size_t flat_iris_width,
-                      size_t flat_iris_height)
+                      size_t flat_iris_height, IrisFindParameters& IrisPupilParams)
 
 {
   //---------------------------------------------------------------------------------------------
@@ -777,46 +1112,45 @@ void ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
 
   mark_low_values_on_image(line_ptr_eyecrop, eyecrop_width, eyecrop_height, xc,
                            yc, roi, (float32)IRISFIND_DARK_RATIO,
-                           irisfind.lineptrDark,
-                           &irisfind.pupilBrightnessLR[0]);
+                           lineptrDark,
+                           &pupilBrightnessLR[0]);
 
   // test using spec to guide dark circle search
-  irisfind.specPos[0].x = (float)(xc);
-  irisfind.specPos[0].y = (float)(yc);
-  irisfind.specPos[0].z = 8;
+  specPos[0].x = (float)(xc);
+  specPos[0].y = (float)(yc);
+  specPos[0].z = 8;
 
-  dark_search(irisfind, 0);
+  dark_search(0, eyecrop_width, eyecrop_height);
 
-  if (irisfind.darkFound[0]) {
+  if (darkFound[0]) {
     // make gradients of eye crop
-    hor_gradient(line_ptr_eyecrop, irisfind.width, irisfind.height,
-                 irisfind.lineptrHgrad);
-    vert_gradient(line_ptr_eyecrop, irisfind.width, irisfind.height,
-                  irisfind.lineptrVgrad);
+    hor_gradient(line_ptr_eyecrop, eyecrop_width, eyecrop_height, lineptrHgrad);
+    vert_gradient(line_ptr_eyecrop, eyecrop_width, eyecrop_height, lineptrVgrad);
 
     //
     // search for specularity
     //
 
-    spec_search(irisfind,
-                0);  // TBD: bad method if spec is not round or single.
+    spec_search(0, eyecrop_width, eyecrop_height);  // TBD: bad method if spec is not round or single.
 
     // if(!irisfind.specFound[eyeCropIndex]) // TBD: what to do here?
     // clear old spec mask, make new spec mask
     // TBD: fix the order of parameters in call
-    make_spec_mask(irisfind.lineptrMask[0], irisfind.width, irisfind.height,
-                   &irisfind.prev_specPos[0], &irisfind.specPos[0],
-                   irisfind.specMaskMultiplier, irisfind.specFound[0]);
+    make_spec_mask(lineptrMask[0], eyecrop_width, eyecrop_height,
+                   &prev_specPos[0], &specPos[0],
+                   specMaskMultiplier, specFound[0]);
     //
     // search for pupil and iris
     //
     //
     // TBD: note that segmentation is allowed to continue if spec search fails
     //
-    if (irisfind.specFound[0]) {
-      pupil_search(irisfind, 0);
-      if (irisfind.pupilFound[0]) {
-        iris_search(irisfind, 0);
+    if (specFound[0]) {
+      pupil_search(0, eyecrop_width, eyecrop_height);
+      if (pupilFound[0]) {
+        iris_search(0, eyecrop_width, eyecrop_height);
+      }else{
+      	return TemplatePipelineError::Pupil_Iris_Boundary_Not_Found;
       }
     }
 
@@ -829,22 +1163,31 @@ void ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
     // are weighted by surrounding 3x3x3 array values and overwritten with
     // float32.
     //
-    if (irisfind.irisFound[0]) {
-      pupil_search_subpixel(irisfind, 0);
+    if (irisFound[0]) {
+      pupil_search_subpixel(0, eyecrop_width, eyecrop_height);
 
-      iris_search_subpixel(irisfind, 0);
+      iris_search_subpixel(0, eyecrop_width, eyecrop_height);
+    }else{
+    	return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
     }
 
+	IrisPupilParams.ip.x = irisPos[0].x;
+	IrisPupilParams.ip.y = irisPos[0].y;
+	IrisPupilParams.ip.r = irisPos[0].z;
+
+	IrisPupilParams.pp.x = pupilPos[0].x;
+	IrisPupilParams.pp.y = pupilPos[0].y;
+	IrisPupilParams.pp.r = pupilPos[0].z;
     //------------------------------------------------------------------------------------
     //
     // face distance: from iris diameter
     // pupil dilation: ratio of pupil radius to iris radius
     // gaze: compare pupil location to spec location
     //
-    if (irisfind.irisFound[0]) {
+    if (irisFound[0]) {
       // possible face distance in cm from camera for candidate eyes
-      irisfind.faceDistance[0] =
-          irisfind_distanceToFace_cm(irisfind.irisPos[0].z);
+      faceDistance[0] =
+          irisfind_distanceToFace_cm(irisPos[0].z);
       // TODO: REPLACE WITH DISTANCE CLASS
       /*if (irisfind.faceDistance[0] > eyefind.maxFaceDistance) {
               eyefind.tooFar = true;
@@ -855,17 +1198,42 @@ void ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
 }*/
 
       // pupil radius to iris radius, (pupil/iris) ratio for candidate eyes
-      irisfind.pupilToIrisRatio[0] =
-          pupilToIrisRatio(irisfind.pupilPos[0].z, irisfind.irisPos[0].z);
+      m_fpupilToIrisRatio[0] = pupilToIrisRatio(pupilPos[0].z, irisPos[0].z);
+
+      if(m_fpupilToIrisRatio[0] < 0.40){
+    	  // return IRISERROR::Percentage_Of_Iris_Visible_too_small; // Ignore for Authentication
+      }
 
       // gaze: compare pupil location to spec location
-      irisfind.gaze[0].x = irisfind.pupilPos[0].x - irisfind.specPos[0].x;
-      irisfind.gaze[0].y = irisfind.pupilPos[0].y - irisfind.specPos[0].y;
-      irisfind.gaze[0].z =
-          sqrtf(pow(irisfind.gaze[0].x, 2) + pow(irisfind.gaze[0].y, 2));
+      gaze[0].x = pupilPos[0].x - specPos[0].x;
+      gaze[0].y = pupilPos[0].y - specPos[0].y;
+      gaze[0].z =
+          sqrtf(pow(gaze[0].x, 2) + pow(gaze[0].y, 2));
 
-      irisfind.good_gaze[0] =
-          (irisfind.gaze[0].z < irisfind.gaze_radius_thresh);
+      good_gaze[0] = (gaze[0].z < gaze_radius_thresh);
+
+      IrisPupilParams.PupilToIrisRatio = m_fpupilToIrisRatio[0] ;
+      IrisPupilParams.GazeVal = gaze[0].z;
+      IrisPupilParams.IrisRadius = irisPos[0].z;
+      IrisPupilParams.PupilRadius = pupilPos[0].z;
+      IrisPupilParams.darkScore = darkScore[0];
+      IrisPupilParams.SpecScore = specScore[0];
+      IrisPupilParams.IrisScore = irisScore[0];
+      IrisPupilParams.PupilScore = pupilScore[0];
+      // printf("gaze....%f\n", gaze_radius_thresh);
+
+      if(gaze[0].z > gaze_radius_thresh)
+    	  return TemplatePipelineError::Gaze_out_of_range;
+
+      // Anita - Check for pupil and Iris Diameters
+     /* if(!(irisPos[0].z > m_Irisfind_min_Iris_Diameter && irisPos[0].z < m_Irisfind_max_Iris_Diameter))
+    	  return TemplatePipelineError::Iris_Diameter_out_of_range;
+
+      if(!(pupilPos[0].z > m_Irisfind_min_pupil_Diameter && pupilPos[0].z  < m_Irisfind_max_pupil_Diameter))
+    	  return TemplatePipelineError::Pupil_Diameter_out_of_range;*/
+
+    }else{
+    	return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
     }
     //-------------------------------------------------------------------------------
   }
@@ -881,7 +1249,7 @@ void ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
   // test if iris are at different distances from camera
   // If one iris is further from camera, invalidate it.
   //
-  if (irisfind.irisFound[0]) {
+  if (irisFound[0]) {
     /*float32 d0 = irisfind.faceDistance[0];
     float32 d1 = irisfind.faceDistance[1];
     // eye 0 is closest to camera
@@ -1109,4 +1477,8 @@ true:
     // << std::endl; spoofdet.last_human = true;
     //}
   }
+  return TemplatePipelineError::Segmentation_Successful;
 }
+
+
+

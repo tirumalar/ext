@@ -14,6 +14,14 @@ Aquisition::Aquisition(Configuration *pConf,bool bSingleFrame):temp_header(0),m_
 {
 	int width, height,temp;
 	framer=FrameGrabberFactory(pConf).create();
+	bIrisToFaceMapDebug = pConf->getValue("Eyelock.IrisToFaceMapDebug", false);
+	if(bIrisToFaceMapDebug){
+		int width, height, imageSize;
+		width = pConf->getValue("FrameSize.width", 1280);
+		height = pConf->getValue("FrameSize.height", 960);
+		imageSize = width * height;
+		m_FaceInfo.faceImagePtr = new unsigned char[imageSize];
+	}
 
 #if 0
 	framer->getPPIParams(width,height,temp);
@@ -33,6 +41,10 @@ Aquisition::~Aquisition()
 	framer->term();
 	delete framer; // stops and terminates
 	if(temp_header)cvReleaseImageHeader(&temp_header);
+	if(bIrisToFaceMapDebug){
+		if(m_FaceInfo.faceImagePtr)
+			delete [] m_FaceInfo.faceImagePtr;
+	}
 }
 
 size_t Aquisition::getSingleFrame(void * buff,size_t cnt)
@@ -60,6 +72,8 @@ IplImage *Aquisition::getFrame()
 	}
     char *raw = framer->getLatestFrame_raw();
     m_ScaledFaceRect = framer->getLatestScaledFaceRect();
+    if(bIrisToFaceMapDebug)
+    	m_FaceInfo = framer->getLatestFaceInfo();
     if(raw==0){
     	framer->stop();
     	throw "could not grab a frame";
@@ -83,6 +97,9 @@ IplImage *Aquisition::getFrame_nowait()
 	// return immediately even if queue empty
     char *raw = framer->getLatestFrame_raw_nowait();
     m_ScaledFaceRect = framer->getLatestScaledFaceRect();
+
+    if(bIrisToFaceMapDebug)
+    	m_FaceInfo = framer->getLatestFaceInfo();
 
     if (raw == NULL)
     	return NULL;
@@ -160,6 +177,10 @@ IplImage *AquisitionBuffer::getFrame()
 	}
     char *raw = framer->getLatestFrame_raw();
     m_ScaledFaceRect = framer->getLatestScaledFaceRect();
+
+    if(bIrisToFaceMapDebug)
+    	m_FaceInfo = framer->getLatestFaceInfo();
+
     if(raw==0){
     	framer->stop();
     	throw "could not grab a frame";

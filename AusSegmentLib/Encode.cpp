@@ -84,24 +84,28 @@ Encode::Encode(int base_scale, size_t flat_iris_width, size_t flat_iris_height,
         (uint16)((74.0 * extra_factor) + 0.5);  // 24
     _frequency_response_threshold[7] = (uint16)((86.0 * extra_factor) + 0.5);
   }
+  // Anita on 20 Jan 2020
+  m_featureNormalize = false;
+  m_fullFeature = (int *) malloc(8*1280*sizeof(int)); // feature length is 1280
 }
 
 Encode::~Encode() {
-  delete _frequency_response_threshold;
-  delete _line_ptr_flat;
-  delete _line_ptr_mask;
-  delete _line_ptr_template_encode;
-  delete _line_ptr_template_mask;
 
-  delete _buf_wrap;
-  delete _buf_integral_wrap;
-  delete _buf_mask_wrap;
-  delete _buf_mask_integral_wrap;
-
-  delete _line_ptr_buf_wrap;
-  delete _line_ptr_buf_integral_wrap;
-  delete _line_ptr_buf_mask_wrap;
-  delete _line_ptr_buf_mask_integral_wrap;
+	delete [] _frequency_response_threshold;
+	delete [] _line_ptr_flat;
+	delete [] _line_ptr_mask;
+	delete [] _line_ptr_template_encode;
+	delete [] _line_ptr_template_mask;
+	delete [] _buf_wrap;
+	delete [] _buf_integral_wrap;
+	delete [] _buf_mask_wrap;
+	delete [] _buf_mask_integral_wrap;
+	delete [] _line_ptr_buf_wrap;
+	delete [] _line_ptr_buf_integral_wrap;
+	delete [] _line_ptr_buf_mask_wrap;
+	delete [] _line_ptr_buf_mask_integral_wrap;
+	// Anita on 20Jan 2020
+	free(m_fullFeature);
 }
 
 // Add image data to beginning and end of image to make >360 deg flat iris.
@@ -119,6 +123,16 @@ void Encode::HorizontalBorderWrap(PLINE* linePtrIn, uint16 width, uint16 height,
     memcpy(optr + borderSize, iptr, width);
     memcpy(optr + width + borderSize, iptr, borderSize);
   }
+}
+
+int Encode::GetFeatureVariances(float *var)
+{
+	for(int i=0,j=0;i<4;i++)
+	{
+		var[j++] = sqrt(m_evenVariance[i]);
+		var[j++] = sqrt(m_oddVariance[i]);
+	}
+	return 1;
 }
 
 void Encode::ExtractFeatures(PLINE* lineptrWrapInt, PLINE* lineptrMaskWrapInt,
@@ -154,10 +168,16 @@ void Encode::ExtractFeatures(PLINE* lineptrWrapInt, PLINE* lineptrMaskWrapInt,
     sum[i] = 0.0;
   }
 
+  // Added by Anita for sorting
+  int numEvenFeatures[4] = {0, 0, 0, 0}, numOddFeatures[4] = {0, 0, 0, 0};
+  float *normalizedFeature = (float *) m_fullFeature;
+  for(int i=0;i<4;i++)
+	  m_evenVariance[i] = m_oddVariance[i] = 0.0f;
+
   // TBD confirm this EyeLock legacy value for maskPerCent
   int maskPerCent = 0x800;  // EyeLock legacy code, maskPerCent = 8 * 0xff;
 
-  for (int rr = 0; rr < encodeHeight; rr++) {
+  for (unsigned int rr = 0; rr < encodeHeight; rr++) {
     uint8* encpptr = (uint8*)lineptrEncoded[ency];
     uint8* tagpptr = (uint8*)lineptrTag[ency];
     ency++;
@@ -179,7 +199,7 @@ void Encode::ExtractFeatures(PLINE* lineptrWrapInt, PLINE* lineptrMaskWrapInt,
     uint32* mptr8 = mptr + (_vertical_template_sample_size * inStep);
 
     // increment all of the pointers ****
-    for (int jj = 0; jj < encodeWidth; jj++,
+    for (unsigned int jj = 0; jj < encodeWidth; jj++,
              iptr += _horizontal_template_sample_size,
              iptr8 += _horizontal_template_sample_size,
              mptr += _horizontal_template_sample_size,
@@ -234,6 +254,16 @@ void Encode::ExtractFeatures(PLINE* lineptrWrapInt, PLINE* lineptrMaskWrapInt,
           enc_mask |= a1;  // maskPerCent = ~0x800
           validBit = 0;
           unmaskedBit = 0;
+        }
+
+        // Anita on 20Jan 2020
+        float mean = m_featureNormalize? iptr8[sc2] + iptr[-sc2] - iptr[sc2] - iptr8[-sc2] : 1.0f;
+        mean = 1.0f/(mean*mean);
+        float featureVal = (float) D * (float) D *  mean;
+        if(M == 0)
+        {
+        	m_evenVariance[i] += featureVal;
+        	numEvenFeatures[i]++;
         }
 
         // under threshold
@@ -304,6 +334,15 @@ void Encode::ExtractFeatures(PLINE* lineptrWrapInt, PLINE* lineptrMaskWrapInt,
           unmaskedBit = 0;
         }
 
+        // Anita on 20Jan 2020
+        featureVal = (float) D * (float) D *  mean;
+        *normalizedFeature++ = featureVal;
+        if(M == 0)
+		{
+        	m_oddVariance[i] += featureVal;
+        	numOddFeatures[i]++;
+		}
+
         // under threshold
         if (abs(D) < _frequency_response_threshold[i * 2 + 1]) {
           enc_mask |= a2;
@@ -361,6 +400,13 @@ void Encode::ExtractFeatures(PLINE* lineptrWrapInt, PLINE* lineptrMaskWrapInt,
     filty++;
   }
 
+  // Anita on 20Jan 2020
+  for(int i=0;i<4;i++)
+  {
+	  m_evenVariance[i] /= numEvenFeatures[i];
+	  m_oddVariance[i] /= numOddFeatures[i];
+  }
+
   //
   // return vaild bits in template
   //
@@ -380,6 +426,8 @@ int Encode::EncodeFlatIris(uint8_t* flat_iris, uint8_t* partial_mask,
   uint32_t validBitsInTemplate;
   uint32_t unmaskedBitsInTemplate;
   float validBitRatioInTemplate;
+
+  TemplatePipelineError eIrisError = TemplatePipelineError::Segmentation_Successful;
 
   get_lineptrs_8(flat_iris, _flat_iris_width, _flat_iris_height,
                  _line_ptr_flat);
@@ -408,9 +456,16 @@ int Encode::EncodeFlatIris(uint8_t* flat_iris, uint8_t* partial_mask,
                   _template_width, _template_height, validBitsInTemplate,
                   unmaskedBitsInTemplate, validBitRatioInTemplate);
 
-  // TODO: Replace with Error Class
-  if (validBitsInTemplate > TEMPLATE_MIN_VALID_BITS)
-    return 0;
-  else
-    return 1;
+  if (validBitsInTemplate > TEMPLATE_MIN_VALID_BITS){
+	  eIrisError =  TemplatePipelineError::Segmentation_Successful;
+  }else{
+	  eIrisError =  TemplatePipelineError::InValidbits_in_Template;
+  }
+
+  if(eIrisError == TemplatePipelineError::Segmentation_Successful){
+	  return true;
+  }else{
+	  printf("TemplateError   %d\n", eIrisError);
+ 	  return false;
+  }
 }

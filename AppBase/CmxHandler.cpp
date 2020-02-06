@@ -2293,6 +2293,12 @@ rightCServerInfo(0)
 	m_ImageWidth = conf.getValue("FrameSize.width", 1200);
 	m_ImageHeight = conf.getValue("FrameSize.height", 960);
 	m_ImageSize = m_ImageWidth * m_ImageHeight;
+	bIrisToFaceMapDebug = conf.getValue("Eyelock.IrisToFaceMapDebug", false);
+
+	if(bIrisToFaceMapDebug){
+		m_FaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
+	}
+
 #ifdef HBOX_PG
 	m_width = conf.getValue("FrameSize.width",0);
 	m_height = conf.getValue("FrameSize.height",0);
@@ -2324,6 +2330,11 @@ CmxHandler::~CmxHandler() {
 
 	if (rightCServerInfo)
 		delete rightCServerInfo;
+
+	if(bIrisToFaceMapDebug){
+		// if (0 != m_FaceInfo.faceImagePtr ) // Not needed as per stdc++11
+		delete [] m_FaceInfo.faceImagePtr ;
+	}
 
 	DestroyCMDTCPServer();
 
@@ -2948,6 +2959,23 @@ cv::Rect CmxHandler::GetLatestFaceCoordRect()
 	ScopeLock lock(m_FaceRectLock);
 	return m_ScaledFaceRect;
 }
+void CmxHandler::SetLatestFaceInfo(FaceImageQueue FaceInfo)
+{
+	ScopeLock lock(m_FaceInfoLock);
+	/*
+	m_FaceInfo.FoundFace = FaceInfo.FoundFace;
+	m_FaceInfo.FaceFrameNo = FaceInfo.FaceFrameNo;
+	m_FaceInfo.FaceWidth = FaceInfo.FaceWidth;
+	memcpy(m_FaceInfo.faceImagePtr, FaceInfo.faceImagePtr, m_ImageSize);*/
+	m_FaceInfo = FaceInfo;
+	// printf("Inside CmxHandler SetLatest FaceInfo\n");
+}
+FaceImageQueue CmxHandler::GetLatestFaceInfo()
+{
+	ScopeLock lock(m_FaceInfoLock);
+	// printf("Inside CmxHandler GetLatestFaceInfo FaceInfo\n");
+	return m_FaceInfo;
+}
 #define IMAGE_START_OFFSET 2
 #define CAM_ID_OFFSET      2
 #define FRAME_ID_OFFSET    3
@@ -2987,6 +3015,10 @@ void *leftCServer(void *arg)
 	BufferBasedFrameGrabber *pFrameGrabber = (BufferBasedFrameGrabber*) me->pImageProcessor->GetFrameGrabber();
 	queueItem = pFrameGrabber->GetFreeBuffer();
 	queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
+
+	if(me->bIrisToFaceMapDebug){
+		queueItem.m_FaceInfo = me->GetLatestFaceInfo();
+	}
 
 	char * databuf = (char *) queueItem.m_ptr;
 
@@ -3073,6 +3105,9 @@ void *leftCServer(void *arg)
 					if (valid_image){
 						queueItem = pFrameGrabber->GetFreeBuffer();
 						queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
+						if(me->bIrisToFaceMapDebug){
+							queueItem.m_FaceInfo = me->GetLatestFaceInfo();
+						}
 					}
 				}else{
 					// dont push if its a dummy buffer
@@ -3096,6 +3131,9 @@ void *leftCServer(void *arg)
 
 					queueItem = pFrameGrabber->GetFreeBuffer();
 					queueItem.ScaledFaceRect = me->GetLatestFaceCoordRect();
+					if(me->bIrisToFaceMapDebug){
+						queueItem.m_FaceInfo = me->GetLatestFaceInfo();
+					}
 				}
 				// if not put data into dummy buffer
 				if (!queueItem.m_ptr) {

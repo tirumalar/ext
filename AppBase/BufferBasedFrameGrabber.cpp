@@ -164,6 +164,7 @@ void BufferBasedFrameGrabber::init(Configuration *pConf){
 	m_Height=pConf->getValue("FrameSize.height",960);	//1392);
 	m_WidthStep=pConf->getValue("FrameSize.widthstep",0);
 	imagebits=pConf->getValue("FrameSize.bits",8);
+	bIrisToFaceMapDebug = pConf->getValue("Eyelock.IrisToFaceMapDebug", false);
 	int buff_size;
 	buff_size = pConf->getValue("BuffFrameGrab.size",2);
 	printf("Queue size = %d\n",buff_size);
@@ -267,7 +268,9 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw(){
 	m_frameIndex = m_current_process_queue_item.m_frameIndex;
 	m_ts = m_current_process_queue_item.m_endTime;
 	m_ScaledFaceRect = m_current_process_queue_item.ScaledFaceRect;
-
+	if(bIrisToFaceMapDebug){
+		m_FaceInfo = m_current_process_queue_item.m_FaceInfo;
+	}
 	EyelockLog(logger, TRACE, "get image queue m_ill0 %d, m_frameIndex %d, time %llu", m_ill0,m_frameIndex, m_ts);
 
 #if 0
@@ -374,7 +377,9 @@ char *BufferBasedFrameGrabber::getLatestFrame_raw_nowait(){
 	m_frameIndex = m_current_process_queue_item.m_frameIndex;
 	m_ts = m_current_process_queue_item.m_endTime;
 	m_ScaledFaceRect = m_current_process_queue_item.ScaledFaceRect;
-
+	if(bIrisToFaceMapDebug){
+		m_FaceInfo = m_current_process_queue_item.m_FaceInfo;
+	}
 	EyelockLog(logger, TRACE, "get image queue m_ill0 %d, m_frameIndex %d, time %llu", m_ill0,m_frameIndex, m_ts);
 
 #if 0

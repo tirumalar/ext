@@ -252,11 +252,18 @@ private:
 
 	int m_nCalculatedBrightness;
 
+	bool m_AdaptiveGain;
+	int m_AdaptiveGainFactor;
+	float m_AdaptiveGainAuxAdjust;
+	float m_AdaptiveGainKGMain;
+	float m_AdaptiveGainKGAux;
+	int m_AdaptiveGainHysFactor;
+
 	void SetExp(int cam, int val);
 	void setRGBled(int R,int G,int B,int mtime,int VIPcall,int mask);
 	void SelLedDistance(int val); // val between 0 and 100
 
-	void MainIrisSettings();
+	void MainIrisSettings(int FaceWidth, int CameraNo);
 	void SwitchIrisCameras(bool mode);
 	void SetFaceMode();
 
@@ -311,7 +318,8 @@ private:
 	IplImage *m_RightCameraIrisImage;
 	int resizeFaceWidth, resizeIrisWidth, resizeIrisHeight, IrisPointYLoc;
 	IplImage *m_EyeCrop;
-
+	int CalculateGainWithKH(int facewidth, int CameraState);
+	void AdaptiveGain(int faceWidth, int CameraState);
 public:
 	int FRAME_DELAY;
 	int m_ImageWidth;

@@ -7,6 +7,8 @@ class EyeSegmentationInterface;
 
 #include "BiOmega_def.h"
 #include "EyeSegmentationInterface.h"
+#include <stdint.h>
+
 struct _IplImage;
 struct CvPoint2D32f;
 struct CvPoint3D32f;
@@ -35,6 +37,12 @@ public:
 	bool SetIrisRadiusSearchRange(int min, int max);
 	bool SetPupilRadiusSearchRange(int min, int max);
 	bool SetPupilAngleSearchRange(int min, int max);
+	void SetAusIrisfind_Iris_Diameter(unsigned short int MinIrisDiameter, unsigned short int MaxIrisDiameter);
+	void SetAusIrisfind_Pupil_Diameter(unsigned short int MinPupilDiameter, unsigned short int MaxPupilDiameter);
+	void SetAusIrisfind_Spec_Diameter(unsigned short int MinSpecDiameter, unsigned short int MaxSpecDiameter);
+	void SetAusIrisfind_EyeCorpSize(int Width, int Height);
+	void SetAusGaze_radius_thresh(float gaze_radius_thresh);
+	void SetAusPIV_Threshold(float propor_iris_visible_threshold);
 	bool GetPupilAngleSearchRange(float& min, float& max);
 	int GetMaxCorruptBitsPercAllowed();
 	void SetMaxCorruptBitsPercAllowed(int perc);
@@ -65,4 +73,5 @@ private:
 	int m_MatchKeyBitLen;
 	int m_IrisIDByteLen;
 	static char *m_softwareVersion;
+
 };

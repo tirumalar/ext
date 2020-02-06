@@ -388,7 +388,12 @@ SDKCallbackMsg::SDKCallbackMsg(SDKCallbackType eventType, string info): m_eventT
 
 string SDKCallbackMsg::GetDeviceTypeAndId()
 {
-	string deviceTypeStr = "DEVICETYPE:1;";
+	string deviceTypeStr;
+#ifdef CMX_C1
+	deviceTypeStr = "DEVICETYPE:2;";
+#else	
+    deviceTypeStr = "DEVICETYPE:1;";
+#endif
 
 	char myID[10];
 

@@ -82,13 +82,14 @@ public:
 		{
 			if (isSecure)
 			{
-				pSocket = new Poco::Net::SecureStreamSocket(endpoint, pContext);
+				pSocket = new Poco::Net::SecureStreamSocket(pContext);
 				Poco::Net::SSLManager::instance().initializeClient(0, 0, pContext);
 			}
 			else
 			{
-				pSocket = new Poco::Net::StreamSocket(endpoint);
+				pSocket = new Poco::Net::StreamSocket();
 			}
+			pSocket->connect(endpoint, Poco::Timespan((long) 5, (long) 0)); // 5 seconds
 			pSocket->setReceiveTimeout(Poco::Timespan((long) 5, (long) 0)); // 5 seconds
 		}
 	};
@@ -239,7 +240,8 @@ protected:
 			Option("dest-ip", "d", "set the TCP messages destination IP")
 				.required(false)
 				.repeatable(false)
-				.validator(new RegExpValidator("^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"))
+				//.validator(new RegexValidator("^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"))
+				.validator(new IpValidator())
 				.argument("\"IP\"", true)
 				.binding("msgdestip", _pUserConfig));
 

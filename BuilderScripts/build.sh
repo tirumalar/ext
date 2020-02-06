@@ -11,6 +11,8 @@ then
 fi
 
 projects=(
+EyelockLoggingLib
+AusSegmentLib
 BiOmega
 EdgeImage
 EyeDetection

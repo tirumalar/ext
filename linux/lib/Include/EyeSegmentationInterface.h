@@ -11,6 +11,10 @@ struct _IplImage;
 #include <map>
 #include "EyeSegmentationLib_def.h"
 #include <opencv2/core.hpp>
+#include "Iris.h"
+#include "Encode.h"
+
+class AusSegment;
 
 typedef struct
 {
@@ -54,6 +58,7 @@ public:
 	void SetEyelidSearchSampling(double sampling);
 	void SetCoarseSearchSampling(double sampling);
 	void EnableEyelidSegmentation(bool enable=true);
+	void EnableAusSegmentation(bool bEnableAusSeg);
 	void SetUpperEyelidCenterandRadius(CvPoint cenPt,float rad);
 	void SetLowerEyelidCenterandRadius(CvPoint cenPt,float rad);
 
@@ -64,7 +69,9 @@ public:
 	void SetEyeLocationSearchArea(int xo, int yo, int w, int h);
 	void GetEyeLocationSearchArea(int& xo, int& yo, int& w, int& h);
 	void SetLUT(int pupilmin5= 5,int pupilmax64 = 64,int cirmin5=5,int cirmax255 = 255);
-
+	void SetPupilSearchAngles(float minAngle, float maxAngle);
+	void SetFeatureNormalization(bool normalize);
+	void SetSpecularityMaskLevel(int level);
 	void EnableEyeQualityAssessment(bool enable=true);
 	void EnableImprovedCostMetric(bool enable=true);
 	int GetMaxCorruptBitsPercAllowed();
@@ -76,8 +83,16 @@ public:
 	int GetFeatureNumRows() const;
 	_IplImage** GetImagePyramid();
 	float GetCorruptBitsPerc(){ return m_corruptBitcountPerc;}
-	EyeSegmentationOutput GetFlatIrisMask(unsigned char *imageBuffer, int w, int h, int stride, unsigned char *Iriscode, unsigned char *Maskcode, IrisPupilCircles *pCircles);
+
+	void SetAusIrisfind_Iris_Diameter(unsigned short int MinIrisDiameter, unsigned short int MaxIrisDiameter);
+	void SetAusIrisfind_Pupil_Diameter(unsigned short int MinPupilDiameter, unsigned short int MaxPupilDiameter);
+	void SetAusIrisfind_Spec_Diameter(unsigned short int MinSpecDiameter, unsigned short int MaxSpecDiameter);
+	void SetAusGaze_radius_thresh(float gaze_radius_thresh);
+	void SetAusPIV_Threshold(float propor_iris_visible_threshold);
+	void SetAusIrisfind_EyeCorpSize(int Width, int Height);
+	// EyeSegmentationOutput GetFlatIrisMask(unsigned char *imageBuffer, int w, int h, int stride, unsigned char *Iriscode, unsigned char *Maskcode, IrisPupilCircles *pCircles);
 private:
+	bool m_bEnableAusSeg;
 	EyeSegmentServer *m_pEyeSegmentServer;
 	EyeFeatureServer *m_pEyeFeatureServer;
 	EyeSegmentationOutput *m_eso;
@@ -86,6 +101,23 @@ private:
 	int m_index;
 	int m_maxCorruptBitsPercAllowed;
 	float m_corruptBitcountPerc;
+
+	// To Enable Austin Segmentation Code
+	unsigned short int m_AusIrisfind_min_Iris_Diameter;
+	unsigned short int m_AusIrisfind_max_Iris_Diameter;
+
+	unsigned short int m_AusIrisfind_min_pupil_Diameter;
+	unsigned short int m_AusIrisfind_max_pupil_Diameter;
+
+	unsigned short int m_AusIrisfind_min_spec_Diameter;
+	unsigned short int m_AusIrisfind_max_spec_Diameter;
+
+	float m_gaze_radius_thresh;
+	float m_PIVThreshold;
+
+	int m_AusIrisfind_EyeCropWidth;
+	int m_AusIrisfind_EyeCropHeight;
+	AusSegment* m_AusSegment;
 };
 
 class EYESEGMENTATIONLIB_EXPORTS_DLL_EXPORT IrisMatchInterface
@@ -112,6 +144,7 @@ public:
 	int GetNumberOfRotations();
 	void SetNominalCommonBits(int bits);
 	void SetFeatureScale(int scale);
+	void SetFeatureScaleNew(int scale, float scaleFactor=1.0f);
 	void SetMinCommonBits(int commonBits);
 	void SetDoRawScore(bool raw);
 	static int GetCoarseIrisCode(unsigned char *irisCode, unsigned char *maskCode, int length, unsigned char *coarseIrisCode,unsigned char *coarseMaskCode);
@@ -124,4 +157,32 @@ private:
 	EyeMatchServer *m_pEyeMatchServer;
 	int m_featureLength, m_numRows, m_byteSize;
 	int m_shift;
+};
+
+class AusSegment
+{
+private:
+
+public:
+	IrisSegmentation* m_Iris;
+	Encode* m_Encode;
+	IplImage *m_flatIris;
+	IplImage *m_flatMask;
+	IplImage *EyeCropHeader_640_480;
+	IplImage *EyeCropHeader_320_240;
+
+	AusSegment(int base_scale, size_t eyecrop_width, size_t eyecrop_height,
+				size_t flat_iris_width, size_t flat_iris_height,
+				size_t template_width, size_t template_height,
+				int MinIrisDiameter, int MaxIrisDiameter,
+				int MinPupilDiameter, int MaxPupilDiameter,
+				int MinSpecDiameter, int MaxSpecDiameter,
+				float gaze_radius_thresh, float PorportionOfIrisVisibleThreshold);
+
+	~AusSegment();
+
+	int GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisFindParameters& IrisPupilParams);
+
+	int GenerateEncodedTemplate(uint8_t* flat_iris, uint8_t* partial_mask,
+	                              uint8_t* template_encode, uint8_t* template_mask);
 };

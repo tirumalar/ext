@@ -399,10 +399,13 @@ m_LedConsolidator = NULL;
 	m_showProjection = pConf->getValue("Eyelock.showProjection",false);
 	m_IrisToFaceMapping = pConf->getValue("Eyelock.IrisToFaceMapping",false);
 
-	m_IrisToFaceMapCorrectionVal = pConf->getValue("Eyelock.IrisToFaceMapCorrectionFactor", 20);
+	// m_IrisToFaceMapCorrectionVal = pConf->getValue("Eyelock.IrisToFaceMapCorrectionFactor", 20);
 
 	bIrisToFaceMapDebug = pConf->getValue("Eyelock.IrisToFaceMapDebug", false);
-	
+	if(bIrisToFaceMapDebug){
+		int ImageSize = m_Imagewidth * m_Imageheight;
+		m_FaceInfoForDebug.faceImagePtr = new unsigned char[ImageSize];
+	}
 	bIrisToFaceMapValid = pConf->getValue("Eyelock.IrisToFaceMapValid", true);
 
 	m_activeEyeSideLabeling = pConf->getValue("Eyelock.EyeSideLabeling",false);;
@@ -436,6 +439,13 @@ m_LedConsolidator = NULL;
 	m1280shiftval_y = pConf->getValue("Eyelock.1280shiftval_y", 80);
 	m1280shiftvalmaincam_x = pConf->getValue("Eyelock.1280shiftvalMainCam_x", float(18));
 	m1280shiftvalauxcam_x = pConf->getValue("Eyelock.1280shiftvalAuxCam_x", float(11.52));
+
+	// Parallax
+	mainLensEFL = pConf->getValue("Eyelock.MainLensEFL", 16); // 25 for DHS
+	auxLensEFL = pConf->getValue("Eyelock.AuxLensEFL",25);  // 35 for DHS
+
+	m_IrisToFaceMapCorrectionValPLXx = pConf->getValue("Eyelock.IrisToFaceMapCorrectionFactorPLXx", -3);
+	m_IrisToFaceMapCorrectionValPLXy = pConf->getValue("Eyelock.IrisToFaceMapCorrectionFactorPLXy", -3);
 
 	if(m_OIMFTPEnabled){
 		// Calibration Parameters from CalRectFromOIM.ini
@@ -528,12 +538,66 @@ m_LedConsolidator = NULL;
 		constantAuxR.y = constantAuxR.y + m1280shiftval_y;
 	}
 
+	// Parallax
+	//static board based parameters for parallax calc
+	//may need to move out of configurations files need to discuss hardware revision nomenclature
+	//all non pixel distances in mm
+	baselineDistance = 585;
+	faceLensEFL = 3.9; //3.5;
+	pixelSize = 0.00375;
+	avgHeadWidth = 110; //149;
+
+	/*mainLensEFL = 16;
+	auxLensEFL = 25;*/
+
+	faceDistanceScale = avgHeadWidth*faceLensEFL/pixelSize;
+
+	//Parameters for Parallax mapping calculation
+	camOffsetAuxl.x = 33; //-25;
+	camOffsetAuxl.y = -5.8;
+
+	camOffsetAuxR.x = -33; //25;
+	camOffsetAuxR.y = -5.8;
+
+	camOffsetMainl.x = 33;
+	camOffsetMainl.y = 20;
+
+	camOffsetMainR.x = -33;
+	camOffsetMainR.y = 20;
+
+	magFaceBaseline = faceLensEFL / (baselineDistance - faceLensEFL);
+	magAuxBaseline = auxLensEFL / (baselineDistance - auxLensEFL);
+	magMainBaseline = mainLensEFL / (baselineDistance - mainLensEFL);
+
+	//Angle component of camera offset
+	//unitless, only used for calcuation
+	//THE IRIS AND FACE CAMERA SIZES WILL HAVE TO CHANGE IF THESE TWO ARE EVER DIFFERENT
+	//Iris and Face are liable to be rotated
+	angCompMainl.x = getUnscaledAngleComponent(constantMainl.x, camOffsetMainl.x, magMainBaseline, m_Imagewidth, m_Imageheight);
+	angCompMainl.y = getUnscaledAngleComponent(constantMainl.y, camOffsetMainl.y, magMainBaseline, m_Imageheight, m_Imagewidth);
+	angCompAuxl.x = getUnscaledAngleComponent(constantAuxl.x, camOffsetAuxl.x, magAuxBaseline, m_Imagewidth, m_Imageheight);
+	angCompAuxl.y = getUnscaledAngleComponent(constantAuxl.y, camOffsetAuxl.y, magAuxBaseline, m_Imageheight, m_Imagewidth);
+
+	angCompMainR.x = getUnscaledAngleComponent(constantMainR.x, camOffsetMainR.x, magMainBaseline, m_Imagewidth, m_Imageheight);
+	angCompMainR.y = getUnscaledAngleComponent(constantMainR.y, camOffsetMainR.y, magMainBaseline, m_Imageheight, m_Imagewidth);
+	angCompAuxR.x = getUnscaledAngleComponent(constantAuxR.x, camOffsetAuxR.x, magAuxBaseline, m_Imagewidth, m_Imageheight);
+	angCompAuxR.y = getUnscaledAngleComponent(constantAuxR.y, camOffsetAuxR.y, magAuxBaseline, m_Imageheight, m_Imagewidth);
+
+	// m_IrisToFaceMapCorrectionVal = pConf->getValue("Eyelock.IrisToFaceMapCorrectionFactor", 0);
+	m_BoundaryRectAdj = pConf->getValue("Eyelock.IrisToFaceMapBoundRectAdj", float(0.15));
+
+	//GET TEXT SIZE
+	int baseline=0;
+	m_ssCoInfo << "+";
+	m_ProjtextSize = getTextSize(m_ssCoInfo.str().c_str(), cv::FONT_HERSHEY_SIMPLEX, 1.5,2,&baseline);
+
 	m_bFaceMapDebug = m_FaceConfig.getValue("FTracker.FaceMapDebug", false);
 	n_bDebugFrameBuffer = m_FaceConfig.getValue("FTracker.DebugFrameBuffer", false);
 	// Adaptive gain
 	m_AdaptiveGain = pConf->getValue("FTracker.AdaptiveGain", false);
 	m_AdaptiveGainFactor = pConf->getValue("FTracker.AdaptiveGainFactor",20000);
 	m_AdaptiveGainAuxAdjust = pConf->getValue("FTracker.AdaptiveGainAuxAdjust",float(1.25));
+	m_AdaptiveGainKG = pConf->getValue("FTracker.AdaptiveGainKG",float(0.000173)); // The value is 0.0005 for DHS Unit
 
 #ifdef IRIS_CAPTURE
 	// bool bIrisMode = pConf->getValue("Eyelock.IrisMode", 1) == 2; // DMOTODO default to capture for now...
@@ -610,11 +674,30 @@ m_LedConsolidator = NULL;
 		EyelockLog(logger, WARN, "\nWARNING :Input given for EyeLocationSearchArea is invalid. ");
 		}
 
+		// Initialize Aus Segment Code
+		m_bEnableAusSeg = pConf->getValue("Eyelock.AusSegmentationCode", false);
+		eyeSortingWrapObj->SetEXTAusSegmentationFlag(m_bEnableAusSeg);
+
+		if(m_bEnableAusSeg)
+		{
+			int AusEyeCropWidth = pConf->getValue("Eyelock.AusEyeCropWidth", 640);
+			int AusEyeCropHeight = pConf->getValue("Eyelock.AusEyeCropHeight", 480);
+			unsigned short int Irisfind_min_Iris_Diameter = pConf->getValue("Eyelock.AusSegMinIrisDiameter", 60);
+			unsigned short int Irisfind_max_Iris_Diameter = pConf->getValue("Eyelock.AusSegMaxIrisDiameter", 180);
+
+			unsigned short int Irisfind_min_pupil_Diameter = pConf->getValue("Eyelock.AusSegMinPupilDiameter", 16);
+			unsigned short int Irisfind_max_pupil_Diameter = pConf->getValue("Eyelock.AusSegMaxPupilDiameter", 60);
+
+			eyeSortingWrapObj->SetIrisDiameterThresholds(Irisfind_min_Iris_Diameter, Irisfind_max_Iris_Diameter*1.5);
+			eyeSortingWrapObj->SetPupilDiameterThresholds(Irisfind_min_pupil_Diameter, Irisfind_max_pupil_Diameter);
+
+		}else{
 #if 0
 		eyeSortingWrapObj->SetIrisDiameterThresholds(70,170);
 #else
 		eyeSortingWrapObj->SetIrisDiameterThresholds(m_nMinIrisDiameter, m_expectedIrisWidth*1.5);//m_nMaxIrisDiameter); //DMOFIX!!! Need to hear back from Sarvesh...
 #endif
+		}
 		// eyeSortingWrapObj->SetHaloScoreTopPoints(6, 10, 140, 240);
 		eyeSortingWrapObj->SetQualRatioMax(1.3f);
 		eyeSortingWrapObj->SetQualThreshScore(9.5f);
@@ -842,6 +925,10 @@ ImageProcessor::~ImageProcessor() {
 	}
 	if(m_IrisProjImage){
 		cvReleaseImage(&m_IrisProjImage);
+	}
+
+	if(bIrisToFaceMapDebug){
+		delete [] m_FaceInfoForDebug.faceImagePtr ;
 	}
 
 #ifdef IRIS_CAPTURE
@@ -1133,11 +1220,17 @@ IplImage * ImageProcessor::GetFrame(){
 	if(m_EyelockIrisMode == 2){
 		frame = aquisition->getFrame_nowait();
 		m_BScaledFaceRect = aquisition->getLatestScaledFaceRect();
+		if(bIrisToFaceMapDebug){
+			m_FaceInfoForDebug = aquisition->getLatestFaceInfo();
+		}
 		if (NULL == frame)
 			return NULL;
 	}else{
 		frame = aquisition->getFrame();
 		m_BScaledFaceRect = aquisition->getLatestScaledFaceRect();
+		if(bIrisToFaceMapDebug){
+			m_FaceInfoForDebug = aquisition->getLatestFaceInfo();
+		}
 	}
 	if(n_bDebugFrameBuffer){
 		auto finish = std::chrono::high_resolution_clock::now();
@@ -1312,7 +1405,7 @@ cv::Point2i ImageProcessor::projectPoints_IristoFace(cv::Point2i ptrI, cv::Point
 	return ptrF;
 }
 
-#if 1 // Anita Parallex correction Might need changes after experimentation
+// Anita Parallex correction Might need changes after experimentation
 // Function for calculating unscaled angle component of parallax calculation - different for every camera and direction
 // pixels at calibration plane - scale to distance using
 // pixels offset = distance/distance cal * unscaled
@@ -1324,73 +1417,26 @@ float ImageProcessor::getUnscaledAngleComponent(float offsetBaseline, float came
 
 }
 
-#if 0
-float FaceTracker::getDistanceFace(int pixelFaceboxWidth){
-
-	return faceDistanceScale/pixelFaceboxWidth;
-	faceDistanceScale = avgHeadWidth*faceLensEFL/pixelSize;
-}
-
-#endif
-
-float eflFace = 3.5;
-float widthHead = 149;
-
-float ImageProcessor::getfaceDistance(cv::Rect FaceCoord)			//returns distance to face in mm
+float ImageProcessor::getfaceDistance(int pixelFaceboxWidth)			//returns distance to face in mm
 {
 	// By Anita
 	// printf(" FaceCoord.width...%d\n",  FaceCoord.width);
-	float widthBoundingBox = FaceCoord.width;
-	return ((widthHead * eflFace) / (pixelSize * FaceCoord.width));
+	// float widthBoundingBox = FaceCoord.width;
+	// return ((widthHead * eflFace) / (pixelSize * FaceCoord.width));
+	return (faceDistanceScale/pixelFaceboxWidth);
 }
 
 cv::Point2i ImageProcessor::projectPoints_IristoFace_Parallax(cv::Point2i ptrI, cv::Point2f camOffset, cv::Point2f angComp, float irisEFL, float distanceMM)
 {
 
-	//static board based parameters for parallax calc
-	//may need to move out of configurations files need to discuss hardware revision nomenclature
-	//all non pixel distances in mm
-	baselineDistance = 585;
-	faceLensEFL = 3.5;
-	mainLensEFL = 16;
-	auxLensEFL = 25;
-	pixelSize = 0.00375;
-	avgHeadWidth = 149;
-
-	faceDistanceScale = avgHeadWidth*faceLensEFL/pixelSize;
-
-	magFaceBaseline = faceLensEFL / (baselineDistance - faceLensEFL);
-	magAuxBaseline = auxLensEFL / (baselineDistance - auxLensEFL);
-	magMainBaseline = mainLensEFL / (baselineDistance - mainLensEFL);
-
-	//Parameters for Parallax mapping calculation
-
-	camOffsetAuxl.x = -25;
-	camOffsetAuxl.y = -5.1;
-	camOffsetAuxR.x = 25;
-	camOffsetAuxR.y = -5.1;
-	camOffsetMainl.x = -33;
-	camOffsetMainl.y = 14;
-	camOffsetMainR.x = 33;
-	camOffsetMainR.y = 14;
-
-	//Angle component of camera offset
-	//unitless, only used for calcuation
-	//THE IRIS AND FACE CAMERA SIZES WILL HAVE TO CHANGE IF THESE TWO ARE EVER DIFFERENT
-
-	//Iris and Face are liable to be rotated
-	angCompMainl.x = getUnscaledAngleComponent(constantMainl.x, camOffsetMainl.x, magMainBaseline, m_Imagewidth, m_Imageheight);
-	angCompMainl.y = getUnscaledAngleComponent(constantMainl.y, camOffsetMainl.y, magMainBaseline, m_Imageheight, m_Imagewidth);
-	angCompAuxl.x = getUnscaledAngleComponent(constantAuxl.x, camOffsetAuxl.x, magAuxBaseline, m_Imagewidth, m_Imageheight);
-	angCompAuxl.y = getUnscaledAngleComponent(constantAuxl.y, camOffsetAuxl.y, magAuxBaseline, m_Imageheight, m_Imagewidth);
-
-	angCompMainR.x = getUnscaledAngleComponent(constantMainR.x, camOffsetMainR.x, magMainBaseline, m_Imagewidth, m_Imageheight);
-	angCompMainR.y = getUnscaledAngleComponent(constantMainR.y, camOffsetMainR.y, magMainBaseline, m_Imageheight, m_Imagewidth);
-	angCompAuxR.x = getUnscaledAngleComponent(constantAuxR.x, camOffsetAuxR.x, magAuxBaseline, m_Imagewidth, m_Imageheight);
-	angCompAuxR.y = getUnscaledAngleComponent(constantAuxR.y, camOffsetAuxR.y, magAuxBaseline, m_Imageheight, m_Imagewidth);
-
-
 	cv::Point2i ptrF;
+
+	if(ptrI.x==0 && ptrI.y==0)
+	{
+		ptrF.x=0;
+		ptrF.y=0;
+		return ptrF;
+	}
 
 	float magIrisDistance = irisEFL/(distanceMM - irisEFL);
 	float magFaceDistance = faceLensEFL/(distanceMM - faceLensEFL);
@@ -1402,28 +1448,39 @@ cv::Point2i ImageProcessor::projectPoints_IristoFace_Parallax(cv::Point2i ptrI, 
 	ptrF.x = ptrI.x * magFaceDistance / magIrisDistance + Cx ;
 	ptrF.y = ptrI.y * magFaceDistance / magIrisDistance + Cy ;
 
-#if 0 // Anita made it configurable due to calibration error
-	ptrF.x-=20;
-	ptrF.y+=20;
-#else
-	ptrF.x-=m_IrisToFaceMapCorrectionVal;
-	ptrF.y+=m_IrisToFaceMapCorrectionVal;
-#endif
+	// Anita made it configurable due to calibration error
+	ptrF.x+=m_IrisToFaceMapCorrectionValPLXx;
+	ptrF.y+=m_IrisToFaceMapCorrectionValPLXy;
 
 	return ptrF;
 }
-#endif
+
+
+bool ImageProcessor::IsPointInsideLeftRect(const cv::Point pt, cv::Rect leftRect)
+{
+	cv::Rect leftRectAdj;
+	leftRectAdj.x = leftRect.x;
+	leftRectAdj.y = leftRect.y - (leftRect.height * (m_BoundaryRectAdj/2));
+	leftRectAdj.width = leftRect.width + (leftRect.width * m_BoundaryRectAdj );
+	leftRectAdj.height = leftRect.height + (leftRect.height * m_BoundaryRectAdj) ;
+
+	return (leftRectAdj.x <= pt.x && pt.x < leftRectAdj.x + leftRectAdj.width && leftRectAdj.y <= pt.y && pt.y < leftRectAdj.y + leftRectAdj.height);
+}
+
+bool ImageProcessor::IsPointInsideRightRect(const cv::Point pt, cv::Rect rightRect)
+{
+	cv::Rect rightRectAdj;
+	rightRectAdj.x = rightRect.x - (rightRect.width * m_BoundaryRectAdj);
+	rightRectAdj.y = rightRect.y - (rightRect.height * (m_BoundaryRectAdj/2));
+	rightRectAdj.width = rightRect.width + (rightRect.width * m_BoundaryRectAdj);
+	rightRectAdj.height = rightRect.height + (rightRect.height * m_BoundaryRectAdj);
+
+	return (rightRectAdj.x <= pt.x && pt.x < rightRectAdj.x + rightRectAdj.width && rightRectAdj.y <= pt.y && pt.y < rightRectAdj.y + rightRectAdj.height);
+}
 
 int ImageProcessor::validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Point2i ptrI, int CameraId, unsigned char *faceImagePtr, int m_faceIndex)
 {
-	char filename[100];
-	char key;
 	cv::Point2i ptrF;
-	std::ostringstream ssCoInfo;
-	int Exposure;
-	cv::Point2i ptrFParallax;
-	std::ostringstream ssParallax;
-
 	cv::Rect rightRect, leftRect;
 
 	//Separate Right eye Rect
@@ -1438,58 +1495,82 @@ int ImageProcessor::validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Po
 	leftRect.height = FaceCoord.height;
 	leftRect.width = FaceCoord.width/2.0;
 
+	float faceDistance = getfaceDistance(FaceCoord.width);
+
+	// Increase the rect based on boundary adjust parameter
+	cv::Rect leftRectAdj;
+	leftRectAdj.x = leftRect.x;
+	leftRectAdj.y = leftRect.y - (leftRect.height * (m_BoundaryRectAdj/2));
+	leftRectAdj.width = leftRect.width + (leftRect.width * m_BoundaryRectAdj );
+	leftRectAdj.height = leftRect.height + (leftRect.height * m_BoundaryRectAdj) ;
+
+	cv::Rect rightRectAdj;
+	rightRectAdj.x = rightRect.x - (rightRect.width * m_BoundaryRectAdj);
+	rightRectAdj.y = rightRect.y - (rightRect.height * (m_BoundaryRectAdj/2));
+	rightRectAdj.width = rightRect.width + (rightRect.width * m_BoundaryRectAdj);
+	rightRectAdj.height = rightRect.height + (rightRect.height * m_BoundaryRectAdj);
+
 	cv::Rect ValidEyeRect;
 	ValidEyeRect.x = FaceCoord.x;
 	ValidEyeRect.y = FaceCoord.y + (float) FaceCoord.height*0.1;
 	ValidEyeRect.height = FaceCoord.height/2.0;
 	ValidEyeRect.width = FaceCoord.width;
 
-	faceDistance = getfaceDistance(FaceCoord);
+	cv::Rect ValidEyeRectMod;
+	ValidEyeRectMod.x = ValidEyeRect.x - (ValidEyeRect.height * (m_BoundaryRectAdj/2)) - ((float) FaceCoord.height*0.1/4.0);
+	ValidEyeRectMod.y = ValidEyeRect.y - (ValidEyeRect.height * (m_BoundaryRectAdj/2));
+	ValidEyeRectMod.width = ValidEyeRect.width + (ValidEyeRect.width * m_BoundaryRectAdj);
+	ValidEyeRectMod.height = ValidEyeRect.height + (ValidEyeRect.height * m_BoundaryRectAdj);
+
+	//Project Iris points to face image
+	if (CameraId == IRISCAM_AUX_LEFT){
+		ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetAuxl, angCompAuxl,auxLensEFL, faceDistance);
+	}
+	else if (CameraId == IRISCAM_AUX_RIGHT){
+		ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetAuxR, angCompAuxR,auxLensEFL,faceDistance);
+	}
+	else if (CameraId == IRISCAM_MAIN_LEFT){
+		ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetMainl, angCompMainl,mainLensEFL,faceDistance);
+	}else if (CameraId == IRISCAM_MAIN_RIGHT){
+		ptrF = projectPoints_IristoFace_Parallax(ptrI, camOffsetMainR, angCompMainR,mainLensEFL,faceDistance);
+	}
+
+	if (!ValidEyeRectMod.contains(ptrF)){
+		return 3;
+	}
 
 	if(bIrisToFaceMapDebug){
 		cv::Mat ColorfaceImage;
 		cv::Mat face = cv::Mat(m_Imagewidth, m_Imageheight, CV_8UC1, faceImagePtr);
 		cv::cvtColor(face, ColorfaceImage, CV_GRAY2BGR);
 		try{
-			cv::rectangle(ColorfaceImage, rightRect, cv::Scalar(255,0,0),1,0);
-			cv::rectangle(ColorfaceImage, leftRect, cv::Scalar(255,0,0),1,0);
-			ssCoInfo << "+";
-			ssParallax << "P";
+			cv::rectangle(ColorfaceImage, rightRectAdj, cv::Scalar(255,0,0),1,0);
+			cv::rectangle(ColorfaceImage, leftRectAdj, cv::Scalar(255,0,0),1,0);
+
+			cv::rectangle(ColorfaceImage, rightRect, cv::Scalar(255,255,255),1,0);
+			cv::rectangle(ColorfaceImage, leftRect, cv::Scalar(255,255,255),1,0);
+
+			cv::rectangle(ColorfaceImage, ValidEyeRect, cv::Scalar(255,255,0),1,0);
+			cv::rectangle(ColorfaceImage, ValidEyeRectMod, cv::Scalar(0,0,255),1,0);
+
 			if (CameraId == IRISCAM_AUX_LEFT)
 			{
 				// light green
-				ptrFParallax = projectPoints_IristoFace_Parallax(ptrI, camOffsetAuxl, angCompAuxl,auxLensEFL,faceDistance);
-				putText(ColorfaceImage,ssParallax.str().c_str(),cv::Point(ptrFParallax.x,ptrFParallax.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(144,238,144),2);
-
-				ptrF = projectPoints_IristoFace(ptrI, constantAuxl, magOffAuxl);
-				putText(ColorfaceImage,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(144,238,144),2);
+				putText(ColorfaceImage,m_ssCoInfo.str().c_str(),cv::Point(ptrF.x-m_ProjtextSize.width/2,ptrF.y+m_ProjtextSize.height/2), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(144,238,144),2);
 
 			}else if (CameraId == IRISCAM_AUX_RIGHT)
 			{
 				// light blue
-				ptrFParallax = projectPoints_IristoFace_Parallax(ptrI, camOffsetAuxR, angCompAuxR,auxLensEFL,faceDistance);
-				putText(ColorfaceImage,ssParallax.str().c_str(),cv::Point(ptrFParallax.x,ptrFParallax.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(230,216,173),2);
-
-				ptrF = projectPoints_IristoFace(ptrI, constantAuxR, magOffAuxR);
-				putText(ColorfaceImage,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(230,216,173),2);
+				putText(ColorfaceImage,m_ssCoInfo.str().c_str(),cv::Point(ptrF.x-m_ProjtextSize.width/2,ptrF.y+m_ProjtextSize.height/2), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(230,216,173),2);
 
 			}else if (CameraId == IRISCAM_MAIN_LEFT)
 			{
 				// Red
-				ptrFParallax = projectPoints_IristoFace_Parallax(ptrI, camOffsetMainl, angCompMainl,mainLensEFL,faceDistance);
-				putText(ColorfaceImage,ssParallax.str().c_str(),cv::Point(ptrFParallax.x,ptrFParallax.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
-
-				ptrF = projectPoints_IristoFace(ptrI, constantMainl, magOffMainl);
-				putText(ColorfaceImage,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
-
+				putText(ColorfaceImage,m_ssCoInfo.str().c_str(),cv::Point(ptrF.x-m_ProjtextSize.width/2,ptrF.y+m_ProjtextSize.height/2), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(175,175,0),2);
 			}else if (CameraId == IRISCAM_MAIN_RIGHT)
 			{
 				// Orange
-				ptrFParallax = projectPoints_IristoFace_Parallax(ptrI, camOffsetMainR, angCompMainR,mainLensEFL,faceDistance);
-				putText(ColorfaceImage,ssParallax.str().c_str(),cv::Point(ptrFParallax.x,ptrFParallax.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv:: Scalar(0,165,255),2);
-
-				ptrF = projectPoints_IristoFace(ptrI, constantMainR, magOffMainR);
-				putText(ColorfaceImage,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv:: Scalar(0,165,255),2);
+				putText(ColorfaceImage,m_ssCoInfo.str().c_str(),cv::Point(ptrF.x-m_ProjtextSize.width/2,ptrF.y+m_ProjtextSize.height/2), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv:: Scalar(0,165,255),2);
 			}
 			imshow("IrisToFaceMap", ColorfaceImage);
 			cvWaitKey(2);
@@ -1498,8 +1579,9 @@ int ImageProcessor::validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Po
 		}
 		face.release();
 	}
+
 	// 1 - Left; 2 - Right; 0-Undefined
-	if (leftRect.contains(ptrFParallax)){
+	if (leftRectAdj.contains(ptrF)){
 		EyelockLog(logger, DEBUG, "Left EYE found	return %d !!!!\n", 1);
 		/*
 		sprintf(filename,"FaceImages_%d_%d_left.pgm", CameraId, m_faceIndex);
@@ -1507,7 +1589,7 @@ int ImageProcessor::validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Po
 		imwrite(filename, dst);
 		dst.release();*/
 		return 1;
-	}else if (rightRect.contains(ptrFParallax)){
+	}else if (rightRectAdj.contains(ptrF)){
 		EyelockLog(logger, DEBUG, "Right EYE found	return %d !!!!\n", 2);
 		/*sprintf(filename,"FaceImages_%d_%d_Right.pgm", CameraId, m_faceIndex);
 		cv::Mat dst1 = face.clone();
@@ -1572,9 +1654,6 @@ unsigned int ImageProcessor::validateLeftRightEyecrops(cv::Rect FaceCoord, cv::P
 			cv::rectangle(face, leftRect, cv::Scalar(255,0,0),1,0);
 			// cv::rectangle(face, ValidEyeRect, cv::Scalar(128,127,65),1,0);
 			std::ostringstream ssCoInfo;
-			std::ostringstream ssCoInfo1;
-			std::ostringstream ssColeft;
-			std::ostringstream ssCoright;
 			ssCoInfo << "+"; // ptrF.x << "," << ptrF.y;
 			putText(face,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(128,128,128),2);
 			imshow("IrisToFaceMap", face);
@@ -2554,7 +2633,8 @@ int ImageProcessor::CalculateGainWithKH(int facewidth, int CameraId)
 	else{
 		gain =43;
 	}
-	float KG = 0.000173;
+
+	float KG = m_AdaptiveGainKG; //0.000173;
 	int KH = 8;
 
 	// gain = KG * (KF/facewidth + KH)2
@@ -2878,13 +2958,11 @@ bool ImageProcessor::ProcessImageMatchMode(IplImage *frame,bool matchmode)
 				centroid.m_nCenterPointY);
 
 		if (m_IrisToFaceMapping){
-			FaceImageQueue FaceInfo;
 			if(m_ParallaxCorrection){
-
-				m_eyeLabel = validateLeftRightEyecropsParallax(m_BScaledFaceRect, ptrI, cam_idd, FaceInfo.faceImagePtr, m_faceIndex);
+				m_eyeLabel = validateLeftRightEyecropsParallax(m_BScaledFaceRect, ptrI, cam_idd, m_FaceInfoForDebug.faceImagePtr, m_faceIndex);
 			}
 			else{
-				m_eyeLabel = validateLeftRightEyecrops(m_BScaledFaceRect, ptrI, cam_idd, FaceInfo.faceImagePtr, m_faceIndex);
+				m_eyeLabel = validateLeftRightEyecrops(m_BScaledFaceRect, ptrI, cam_idd, m_FaceInfoForDebug.faceImagePtr, m_faceIndex);
 			}
 			// printf("eye Label Information Cam_idd %d frameidx %d eyeLabel %d projStatus %d\n", cam_idd, m_faceIndex, eyeLabel, m_projStatus);
 			EyelockLog(logger, DEBUG, "Eyes detected Info CameraId:%d FrameId:%d eyeLabel:%d\n", cam_idd, m_faceIndex, m_eyeLabel);
@@ -3188,7 +3266,7 @@ IplImage *m_scaleSrcHeader; */
 IplImage *ImageProcessor::ResizeFrame(int width, int height, unsigned char *frame, int CameraId)
 {
 
-	float ratio;
+	float ratio = 1.0;
 	if (CameraId == IRISCAM_AUX_LEFT){
 		ratio = (m_expectedIrisWidth * 1.0) / m_actualIrisWidth;
 	}else if (CameraId == IRISCAM_AUX_RIGHT){
@@ -3348,8 +3426,8 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 				return bSentSomething;
 			}
 
-			printf("NoofHaarEyes = %d, NoOfSpecularityEyes = %d, maxEyes = %d\n", NoOfHaarEyes, NoOfSpecularityEyes, maxEyes);
-
+			// printf("NoofHaarEyes = %d, NoOfSpecularityEyes = %d, maxEyes = %d\n", NoOfHaarEyes, NoOfSpecularityEyes, maxEyes);
+			EyelockLog(logger, DEBUG, "NoofHaarEyes = %d, NoOfSpecularityEyes = %d, maxEyes = %d", NoOfHaarEyes, NoOfSpecularityEyes, maxEyes);
 		}// !bSkipProcessing
 
 
@@ -3365,14 +3443,19 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 						centroid.m_nCenterPointY);
 
 				if (m_IrisToFaceMapping){
-					m_eyeLabel = validateLeftRightEyecrops(m_BScaledFaceRect, ptrI, cam_idd, FaceInfo.faceImagePtr, m_faceIndex);
+					if(m_ParallaxCorrection){
+						m_eyeLabel = validateLeftRightEyecropsParallax(m_BScaledFaceRect, ptrI, cam_idd, m_FaceInfoForDebug.faceImagePtr, m_faceIndex);
+					}
+					else{
+						m_eyeLabel = validateLeftRightEyecrops(m_BScaledFaceRect, ptrI, cam_idd, m_FaceInfoForDebug.faceImagePtr, m_faceIndex);
+					}
 					// printf("eye Label Information Cam_idd %d frameidx %d eyeLabel %d projStatus %d\n", cam_idd, m_faceIndex, eyeLabel, m_projStatus);
 					EyelockLog(logger, DEBUG, "No Eyes detected in Input Frame from Camera %d_%d label %d\n", cam_idd, m_faceIndex, m_eyeLabel);
 				}
 
 				if (m_eyeLabel == 3){
-					printf("eyeLabel is 3 hence returning from ImageProcessor\n");
-					goto SKIP;//return false;
+					printf("eyeLabel is 3\n");
+					// goto SKIP;//return false;
 				}
 
 				m_sframe.GetCroppedEye(eyeIdx, eye->getEyeCrop(), left, top);
@@ -3468,26 +3551,19 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 								float sharpness = 100000 * GetISOSharpness(cec->imageData, cec->width, cec->height);
 								output.x = sharpness;
 								// printf("output.x  output.xoutput.x %f\n", output.x);
+								EyelockLog(logger, DEBUG, "ISOSharpness %f", output.x);
 
 							 if(output.x  > m_ISOSharpnessThreshold){
 
 								if (shouldIBeginSorting == false) // Begining a sorting
 								{
-#if 0
-									if (m_DHSScreens)
-									{
-										Screen = cv::imread("/home/root/screens/Slide2.BMP", cv::IMREAD_COLOR);
-										imshow("EXT", Screen);
-										cvWaitKey(1);
-									}
-#else
+
 									if (m_DHSScreens)
 									{
 										cvShowImage("EXT", IplImageScreen2);
 										cvWaitKey(1);
 									}
 
-#endif
 
 									time_newms= ptime_in_ms_from_epoch1(boost::posix_time::microsec_clock::local_time());
 
@@ -3496,11 +3572,11 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 									eyeSortingWrapObj->BeginSorting((long) time_newms);
 									terminate = false; //We begin sorting. So terminate is false
-	#ifdef EYE_SIDE
-									terminate = eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, time_newms, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
-	#else
-									terminate = eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, time_newms, 0.0, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
-	#endif
+									if(m_bEnableAusSeg){
+										terminate = eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) im->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, time_newms, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
+									}else{
+										terminate = eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, time_newms, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
+									}
 									p++;
 									shouldIBeginSorting = true; // We already begin sorting. So it is false now
 								}
@@ -3512,14 +3588,20 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 									//printf("Sorting is running\*****%d\n", p);
 									if (!terminate)
 									{
-	#ifdef EYE_SIDE
-										terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, currTimems, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
-	#else
-										terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, currTimems, 0.0, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
-	#endif
+										if(m_bEnableAusSeg){
+											terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) im->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, currTimems, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
+										}else
+											terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) tmpImage->imageData,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, currTimems, 0.0, m_eyeLabel, output.x/*DMOTODarEyeSide[eyeIdx]*/); //Need to pass all the halo, laplacian, and all other info here from computation
 										p++;
 									}
 								}
+
+
+								// Check to see if the last sorting request gave us 2 good images...
+								std::pair<IrisDetail *, IrisDetail *> testimages = eyeSortingWrapObj->GetSortedPairEyesDetail();
+
+								if ((testimages.first != NULL) && (testimages.second != NULL))
+									terminate = true;
 							}
 							 else
 							 {
@@ -3531,11 +3613,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 									if (!terminate)
 									{
-						#ifdef EYE_SIDE
 										terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0, m_eyeLabel); //Need to pass all the halo, laplacian, and all other info here from computation
-						#else
-										terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0); //Need to pass all the halo, laplacian, and all other info here from computation
-						#endif
 										// usleep (10); // usleep(10000);
 									}
 								}
@@ -3596,11 +3674,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 				if (!terminate)
 				{
-	#ifdef EYE_SIDE
 					terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0, m_eyeLabel); //Need to pass all the halo, laplacian, and all other info here from computation
-	#else
-					terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0); //Need to pass all the halo, laplacian, and all other info here from computation
-	#endif
 					// usleep(10); // usleep(10000);
 				}
 			}
@@ -3620,11 +3694,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 			if (!terminate)
 			{
-#ifdef EYE_SIDE
 				terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0, m_eyeLabel); //Need to pass all the halo, laplacian, and all other info here from computation
-#else
-				terminate =	eyeSortingWrapObj->GetBestPairOfEyes( (unsigned char *) NULL,-1, -1, -1, p, p, 1, 1, -1, 640, 480, -1, -1, NoEyeCurrTimems, 0); //Need to pass all the halo, laplacian, and all other info here from computation
-#endif
 				// usleep(10); // usleep(10000);
 			}
 		}
@@ -3861,6 +3931,7 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		{
 			aquisition->clearFrameBuffer(); // Clear frame buffer
 			eyeSortingWrapObj->clearAllEyes();
+
 			usleep(m_IrisCaptureResetDelay *1000); // wait for next
 			buf[0] = CMX_LED_CMD;
 			buf[1] = 3;
@@ -3876,6 +3947,16 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		g_pLeftCameraFaceQueue->Clear(); // Clear FaceQueue
 		g_pRightCameraFaceQueue->Clear(); // Clear FaceQueue
 		eyeSortingWrapObj->clearAllEyes(); // Check Anita later should be uncommented
+
+	    // Clear the FrameGrabber buffer of all images...don't wait forever in case images keep coming
+        // but remove enough that the person has walked away and eyes are no long in the FOV
+        int nFrameCount = 10;
+        IplImage *pFrame1 = NULL;
+        do
+        {
+        	pFrame1 = aquisition->getFrame_nowait();
+        }while((pFrame1 != NULL) && (nFrameCount-- > 0));
+
 		terminate = false; //Making terminate false to restart our sorting
 		shouldIBeginSorting = false;  //Next image we should start our sorting
 		// eyeSortingWrapObj->clearAllEyes(); // Check Anita later should be uncommented

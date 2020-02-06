@@ -103,6 +103,13 @@ cp "${EYELOCK_WS_EXT}/NanoSDK/scripts/fwHandler.sh" "${ROOT_DIR}"
 cp "${EYELOCK_WS_EXT}/MultiChannelLogger/Release/MultiChannelLogger" "${ROOT_DIR}"
 cp "${EYELOCK_WS_EXT}/MultiChannelLogger/MultiChannelLoggerSettings.xml" "${ROOT_DIR}"
 
+mkdir "${ROOT_DIR}/packages_updates"
+readarray -t packages < <(sed '/^\s*$/d' "${EYELOCK_WS_EXT}/firmware/packages_to_update.txt")
+for file in "${packages[@]}"
+do
+    cp "${EYELOCK_WS_EXT}/packages_updates/$file" "${ROOT_DIR}/packages_updates"
+done
+
 # default
 rsync -r "${EYELOCK_WS_EXT}/nano/Configurations/master/default" "${BOARD_DIR}"
 cp "${ROOT_DIR}/Eyelock.ini" "${BOARD_DIR}/default"

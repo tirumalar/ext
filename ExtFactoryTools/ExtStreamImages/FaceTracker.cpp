@@ -78,6 +78,9 @@ FaceTracker::FaceTracker(char* filename)
 ,m_eyeLabel(0)
 ,status(false)
 ,m_CameraNo(1)
+,m_AdaptiveGain(false)
+,m_AdaptiveGainFactor(20000)
+,m_AdaptiveGainAuxAdjust(1.25)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -178,8 +181,17 @@ FaceTracker::FaceTracker(char* filename)
 	m_Motor_Bottom_Offset = FaceConfig.getValue("FTracker.MotorBottomOffset",5);
 	m_Motor_Range = FaceConfig.getValue("FTracker.MotorRange",55);
 
+
 	// Eyelock.ini Parameters	
 	FileConfiguration EyelockConfig("/home/root/Eyelock.ini");
+
+	// Adaptive Gain
+	m_AdaptiveGain = EyelockConfig.getValue("FTracker.AdaptiveGain", false);
+	m_AdaptiveGainFactor = EyelockConfig.getValue("FTracker.AdaptiveGainFactor",20000);
+	m_AdaptiveGainAuxAdjust = EyelockConfig.getValue("FTracker.AdaptiveGainAuxAdjust",float(1.25));
+	m_AdaptiveGainKGMain = EyelockConfig.getValue("FTracker.AdaptiveGainKGMain",float(0.000173)); // The value is 0.0005 for DHS Unit
+	m_AdaptiveGainKGAux = EyelockConfig.getValue("FTracker.AdaptiveGainKGAux",float(0.000173)); // The value is 0.0005 for DHS Unit
+	m_AdaptiveGainHysFactor = EyelockConfig.getValue("FTracker.AdaptiveGainHysFactor", 8); // Can be 0 too , Need to experiment and decide for regular and DHS units
 
 	// Get the width and height of Image from Eyelock.ini
 	m_ImageWidth = EyelockConfig.getValue("FrameSize.width", 1200);
@@ -389,7 +401,7 @@ char* GetTimeStamp()
 	return(timeVar);
 }
 
-void FaceTracker::MainIrisSettings()
+void FaceTracker::MainIrisSettings(int FaceWidth, int CameraNo)
 {
 	EyelockLog(logger, TRACE, "MainIrisSettings");
 
@@ -407,6 +419,9 @@ void FaceTracker::MainIrisSettings()
 	//port_com_send("wcr(0x83,0x3012,12) | wcr(0x83,0x301e,0) | wcr(0x83,0x305e,128)");
 
 	EyelockLog(logger, DEBUG, "Values in MainIrisSettings IrisLEDEnable:%d, IrisLEDVolt:%d, IrisLEDcurrentSet:%d, IrisLEDtrigger:%d, IrisLEDmaxTime:%d ", m_IrisLEDEnable, m_IrisLEDVolt, m_IrisLEDcurrentSet, m_IrisLEDtrigger, m_IrisLEDmaxTime);
+	if(m_AdaptiveGain){
+		AdaptiveGain(FaceWidth, CameraNo);
+	}
 }
 
 void FaceTracker::SwitchIrisCameras(bool mode)
@@ -888,10 +903,12 @@ void FaceTracker::DoStartCmd()
 	sprintf(cmd1,"cam_set_seed(%i)", 0);		//Set the seed
 	port_com_send(cmd1);
 
-	MainIrisSettings();
+	// MainIrisSettings();
+#if 0 //For switching on both the cameras
 	string camID;
 	camID = "0x47"; //camID = "0x08"; 	//
 	setCamera(camID, FRAME_DELAY);
+#endif
 
 	DimmFaceForIris();	//Dim face settings
 
@@ -1156,6 +1173,7 @@ int FaceTracker::validateLeftRightEyecrops( int CameraId, cv::Point2i ptrI, cv::
 	char key;
 	cv::Point2i ptrF;
 	std::ostringstream ssCoInfo;
+	int Exposure;
 
 	//Project Iris points to face image
 	// try
@@ -1183,6 +1201,20 @@ int FaceTracker::validateLeftRightEyecrops( int CameraId, cv::Point2i ptrI, cv::
 			}
 		}
 
+		if (CameraId == IRISCAM_AUX_LEFT){
+			// light green
+			Exposure = m_LeftAuxIrisCamExposureTime;
+		}else if (CameraId == IRISCAM_AUX_RIGHT){
+			// light blue
+			Exposure = m_RightAuxIrisCamExposureTime;
+		}else if (CameraId == IRISCAM_MAIN_LEFT){
+			// Red
+			Exposure = m_LeftMainIrisCamExposureTime;
+		}else if (CameraId == IRISCAM_MAIN_RIGHT){
+			// Orange
+			Exposure = m_RightMainIrisCamExposureTime;
+		}
+
 		cv::Mat DisplayImage(cv::Size(DISPLAY_WIN_WIDTH, DISPLAY_WIN_HEIGHT), CV_8UC3, Scalar(0,0,0));
 
 		cv::Mat resizeFace;
@@ -1198,6 +1230,23 @@ int FaceTracker::validateLeftRightEyecrops( int CameraId, cv::Point2i ptrI, cv::
 		ColorIrisImage.copyTo(DisplayImage(cv::Rect(resizeFaceWidth,IrisPointYLoc,resizeIrisWidth,resizeIrisHeight)));
 
 		std::ostringstream ssCoInfo1;
+		int Gain;
+		if(m_AdaptiveGain){
+			if (CameraId == IRISCAM_AUX_LEFT){
+				Gain = CalculateGainWithKH(eye_size, 3);
+			}else if(CameraId == IRISCAM_AUX_RIGHT){
+				Gain = CalculateGainWithKH(eye_size, 4);
+			}else{
+				Gain = CalculateGainWithKH(eye_size, 1);
+			}
+			ssCoInfo1 << " CAM " <<   CameraId  <<  (CameraId & 0x80 ?  " AUX":" MAIN ") <<   "FW="<< eye_size << " " << "G=" << Gain << " " << "E" << Exposure;
+			cv::cvtColor(IrisImage, ColorIrisImage, CV_GRAY2BGR);
+			putText(ColorIrisImage,ssCoInfo1.str().c_str(),cv::Point(50,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
+			cvNamedWindow("EXT", CV_WINDOW_NORMAL);
+			cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+			imshow("EXT", ColorIrisImage);
+			key = cv::waitKey(1);
+		}else{
 		ssCoInfo1 << m_Deviceid << " CAM " <<   CameraId  <<  (CameraId & 0x80 ?  " AUX":" MAIN ") <<   m_Distance << "\"";
 		putText(DisplayImage,ssCoInfo1.str().c_str(),cv::Point(980,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
 
@@ -1205,6 +1254,7 @@ int FaceTracker::validateLeftRightEyecrops( int CameraId, cv::Point2i ptrI, cv::
 		cvSetWindowProperty("EXT", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
 		imshow("EXT", DisplayImage);
 		key = cv::waitKey(1);
+		}
 		switch (key)
 		{
 			case '1':
@@ -1249,11 +1299,27 @@ int FaceTracker::validateLeftRightEyecrops( int CameraId, cv::Point2i ptrI, cv::
 				/*if ((key != 0) && (key != 's') && (key >= LowerBound || key <= UpperBound)){
 					DistanceValue = key;
 				}*/
+				if(m_AdaptiveGain){
+					if (CameraId == IRISCAM_AUX_LEFT){
+						Gain = CalculateGainWithKH(eye_size, 3);
+					}else if(CameraId == IRISCAM_AUX_RIGHT){
+						Gain = CalculateGainWithKH(eye_size, 4);
+					}else{
+						Gain = CalculateGainWithKH(eye_size, 1);
+					}
+					cv::cvtColor(IrisImage, ColorIrisImage, CV_GRAY2BGR);
+					ssCoInfo1 << " CAM " <<   CameraId  <<  (CameraId & 0x80 ?  " AUX":" MAIN ") <<   "FW="<< eye_size << " " << "G=" << Gain << " " << "E" << Exposure;
+					putText(ColorIrisImage,ssCoInfo1.str().c_str(),cv::Point(50,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
+				}
 				if((CameraId == IRISCAM_MAIN_LEFT) || (CameraId == IRISCAM_MAIN_RIGHT))
 					sprintf(filename,"DeviceTestingFiles/%d_Main_%d_%dInches_%s_%lu.bmp", m_Deviceid, CameraId, m_Distance, time_str, ts.tv_sec);
 				else
 					sprintf(filename,"DeviceTestingFiles/%d_Aux_%d_%dInches_%s_%lu.bmp", m_Deviceid, CameraId, m_Distance, time_str, ts.tv_sec);
-				imwrite(filename, IrisImage);
+				if(m_AdaptiveGain){
+					imwrite(filename, ColorIrisImage);
+				}else{
+					imwrite(filename, IrisImage);
+				}
 				sprintf(filename,"DeviceTestingFiles/%d_Face_%dInches_%s_%lu.bmp", m_Deviceid, m_Distance, time_str, ts.tv_sec);
 				imwrite(filename, faceImage);
 				cv::Mat mateyeCrop = cv::cvarrToMat(eyeCrop);
@@ -1521,6 +1587,54 @@ void showMessage()
 	waitKey(1);
 }
 
+
+int FaceTracker::CalculateGainWithKH(int facewidth, int CameraState)
+{
+	int KF = m_AdaptiveGainFactor;
+	int gain;
+	float KG;
+ 	// printf("m_AdaptiveGainFactor...%d  Adjust----%f\n", m_AdaptiveGainFactor, m_AdaptiveGainAuxAdjust);
+	if(CameraState == 3 || CameraState == 4){
+		KG = m_AdaptiveGainKGAux;
+		KF = m_AdaptiveGainAuxAdjust * m_AdaptiveGainFactor;
+		// printf("m_AdaptiveGainFactor...%d  Adjust----%f KF --%d\n", m_AdaptiveGainFactor, m_AdaptiveGainAuxAdjust, KF);
+		gain = m_LeftAuxIrisCamDigitalGain; // Just setting to default values for respective cameras.
+	}else{
+		KG = m_AdaptiveGainKGMain;
+		gain = m_LeftMainIrisCamDigitalGain;
+	}
+
+	// float KG = 0.0005;
+	int KH = m_AdaptiveGainHysFactor;
+
+	// gain = KG * (KF/facewidth + KH)2
+	if(facewidth)
+		gain = KG * pow(((KF/facewidth) + KH), 2);
+
+	if(gain >= 255)
+		gain = 255;
+	if(gain <= 32)
+		gain = 32;
+
+	return gain;
+}
+
+void FaceTracker::AdaptiveGain(int faceWidth, int CameraState)
+{
+	EyelockLog(logger, TRACE, "AdaptiveGain");
+
+	char buff[512];
+	// Set the gain based on distance
+	// int Gain = FaceWidthGainMap.find(faceWidth)->second;
+	int Gain = CalculateGainWithKH(faceWidth, CameraState);
+	// printf("FaceTracker:: FaceWidth %d Gain %d\n", faceWidth, Gain);
+	sprintf(buff,"wcr(0x1B,0x305e,%d)", Gain);
+	port_com_send(buff);
+
+}
+
+
+
 void FaceTracker::displayInstruction(){
 
 
@@ -1595,6 +1709,8 @@ int FaceTracker::DoRunMode(bool bShowFaceTracking, bool bDebugSessions, int Came
 	smallImg = preProcessingImg(outImg);
 
 	foundFace = FindEyeLocation(smallImg, eyes, eye_size, face, MIN_FACE_SIZE, MAX_FACE_SIZE);
+
+	MainIrisSettings(eye_size, CameraNo);
 
 	face = adjustWidthDuringFaceDetection(face);
 
