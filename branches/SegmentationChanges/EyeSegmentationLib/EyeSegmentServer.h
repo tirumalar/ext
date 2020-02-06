@@ -166,6 +166,7 @@ public:
 	void ComputeAnnularSectionHistograms(IplImage *img, IplImage *mask, CvPoint3D32f iris, int level);
 	void EstimatePupilCenter(IplImage *img, CvPoint3D32f iris, CvHistogram *histogram);
 	void SetStartPyramidLevel(int level) {m_availablePyramidLevel = level; }
+	bool m_iseye;
 protected:
 	void find_common_points(IplImage *ref, IplImage *ins, CvPoint3D32f *peaks, float *score, int *peakCount, CvPoint3D32f off, float threshold=0);
 	bool checkNbhdForMaxima(IplImage* image, IplImage* mask,CvPoint3D32f CirclePoint, bool pupil, int level);
@@ -230,7 +231,7 @@ protected:
 	CvPoint m_centerptLowerEyelid;
 	float m_radiusLowerEyelid;
 
-	bool m_iseye;
+	// bool m_iseye;
 	std::pair<float,float> m_EstimatedPupil;
 	IplImage *m_reusableImage;
 	IplImage *m_gradPyr[5];

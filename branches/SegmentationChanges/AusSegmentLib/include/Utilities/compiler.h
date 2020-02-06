@@ -50,7 +50,7 @@
 #define IRISFIND_MAX_IRIS_DISTANCE_DIFF_CM 2.0f
 
 // radius of gaze = spec location - iris location
-#define GAZE_RADIUS_THRESH 10.0f
+// #define GAZE_RADIUS_THRESH 10.0f
 
 #if defined(COMPILER_QT)
 

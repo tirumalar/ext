@@ -2,9 +2,8 @@
 
 #define PI 3.14159265
 
-AusIris::AusIris(size_t eyecrop_width, size_t eyecrop_height, size_t flat_iris_width,
-           size_t flat_iris_height)
-
+IrisSegmentation::IrisSegmentation(size_t eyecrop_width, size_t eyecrop_height, size_t flat_iris_width,
+           size_t flat_iris_height, float gaze_radius_thresh, float PorportionOfIrisVisibleThreshold)
 {
   _line_ptr_crop = new PLINE[eyecrop_height];
   _line_ptr_flat = new PLINE[flat_iris_height];
@@ -20,29 +19,47 @@ AusIris::AusIris(size_t eyecrop_width, size_t eyecrop_height, size_t flat_iris_w
 
   _radius_sampling = (float)(1.0 / flat_iris_height);
 
+  _PIVThreshold = PorportionOfIrisVisibleThreshold;
+
+  // printf("\n_PIVThreshold....%f gaze_radius_thresh...%f\n", _PIVThreshold, gaze_radius_thresh);
+
   float angle_sampling = (float)((2.0 * PI) / flat_iris_width);
   float angle = 0.0f;
-  for (int i = 0; i < flat_iris_width; i++) {
+  for (unsigned int i = 0; i < flat_iris_width; i++) {
     _cos_table[i] = (float)cos(angle);
     _sin_table[i] = (float)sin(angle);
     angle += angle_sampling;
   }
+  m_iris_find = new Irisfind(eyecrop_width, eyecrop_height, gaze_radius_thresh);
 }
 
-AusIris ::~AusIris() {
-  delete _line_ptr_crop;
-  delete _line_ptr_flat;
-  delete _line_ptr_mask;
-  delete _cos_table;
-  delete _sin_table;
+IrisSegmentation ::~IrisSegmentation()
+{
+	delete [] _line_ptr_crop;
+	delete [] _line_ptr_flat;
+	delete [] _line_ptr_mask;
+	delete [] _cos_table;
+	delete [] _sin_table;
+	delete m_iris_find;
 }
 
-void AusIris::AusIris_init() {
-  ek_irisfind_session_init(_iris_find);
-  ek_eyelid_session_init(_eyelid, true);
+void IrisSegmentation::IrisSegmentation_init(size_t eyecrop_width, size_t eyecrop_height,
+		unsigned short int MinIrisDiameter, unsigned short int MaxIrisDiameter,
+		unsigned short int MinPupilDiameter, unsigned short int MaxPupilDiameter,
+		unsigned short int MinSpecDiameter, unsigned short int MaxSpecDiameter)
+{
+
+	//Initialize Segmentation Parameters - Iris, Pupil and Spec
+	m_iris_find->SetIrisfind_Iris_Diameter(MinIrisDiameter, MaxIrisDiameter);
+	m_iris_find->SetIrisfind_Pupil_Diameter(MinPupilDiameter, MaxPupilDiameter);
+	m_iris_find->SetIrisfind_Spec_Diameter( MinSpecDiameter, MaxSpecDiameter);
+
+	m_iris_find->ek_irisfind_session_init(eyecrop_width, eyecrop_height);
+
+	ek_eyelid_session_init(_eyelid, true);
 }
 
-float AusIris::IrisFocus(uint8_t Iris[FLAT_IMAGE_SIZE],
+float IrisSegmentation::IrisFocus(uint8_t Iris[FLAT_IMAGE_SIZE],
                       uint8_t Mask[FLAT_IMAGE_SIZE]) {
   int Row, Column;
   int Offset, NextOffset;
@@ -83,16 +100,17 @@ float AusIris::IrisFocus(uint8_t Iris[FLAT_IMAGE_SIZE],
   return Accumulator / Count;
 }
 
-int AusIris::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris,
-                           uint8_t* partial_mask) {
+int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisFindParameters& IrisPupilParams) {
   get_lineptrs_8(eyecrop, _eyecrop_width, _eyecrop_height, _line_ptr_crop);
   get_lineptrs_8(flat_iris, _flat_iris_width, _flat_iris_height,
                  _line_ptr_flat);
   get_lineptrs_8(partial_mask, _flat_iris_width, _flat_iris_height,
                  _line_ptr_mask);
 
+  TemplatePipelineError eIrisError = TemplatePipelineError::Segmentation_Successful;
+
   // Initialize the irisfind software
-  ek_irisfind_init(_iris_find);
+  m_iris_find->ek_irisfind_init();
 
   // Initialize the eyelid software
   ek_eyelid_init(_eyelid);
@@ -113,9 +131,7 @@ int AusIris::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris,
   // LiveDetection->enabled = true;
 
   // run the iris find algorithm
-
-  ek_irisfind_main(_line_ptr_crop, _line_ptr_flat, _iris_find, _eyecrop_width,
-                   _eyecrop_height, _flat_iris_width, _flat_iris_height);
+  eIrisError = m_iris_find->ek_irisfind_main(_line_ptr_crop, _line_ptr_flat, eyecrop_width, eyecrop_height, _flat_iris_width, _flat_iris_height, IrisPupilParams);
 
   //
   // extract the "last human" flag from the "spoof detection" sub-struct
@@ -128,11 +144,16 @@ int AusIris::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris,
   // m_GlobalContext.AlgoGlobalMutex.unlock();
 
   // Find the boudaries of the eyelid
-
-  ek_eyelid_main(_line_ptr_crop, _eyecrop_width, _eyecrop_height,
-                 _flat_iris_width, _flat_iris_height, _iris_find, _eyelid,
+  eIrisError = ek_eyelid_main(_line_ptr_crop, _eyecrop_width, _eyecrop_height,
+                 _flat_iris_width, _flat_iris_height, m_iris_find, _eyelid,
                  _line_ptr_flat, _line_ptr_mask, _radius_sampling, _cos_table,
                  _sin_table);
+
+  // printf("_eyelid.coverage....%f  %f _PIVThreshold %f\n", _eyelid.coverage[0], (1.0- _eyelid.coverage[0]), _PIVThreshold);
+
+  if((1.0 - _eyelid.coverage[0]) < _PIVThreshold){
+	  eIrisError = TemplatePipelineError::Usable_Iris_Area_not_sufficient;
+  }
 
   // Template->brightnessValid = _iris_find->brightnessValid;
   // Template->brightness = _iris_find->irisBrightness;
@@ -146,6 +167,18 @@ int AusIris::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris,
   // EyeCrop->UserTooClose = eyefind->tooClose;
   // Template->LiveDet_FlatPaper = flat_paper;
 
-  return RESULT_SUCCESS;
-  // return int8_t();
+  IrisPupilParams.eyelidCoverage = _eyelid.coverage[0];
+  IrisPupilParams.Usable_Iris_Area = (1.0 - _eyelid.coverage[0]);
+  IrisPupilParams.eIrisError = eIrisError;
+
+  if(eIrisError == TemplatePipelineError::Segmentation_Successful)
+	  return true;
+  else
+  {
+	  // std::error_code ec = make_error_code(eIrisError);
+	  // std::cout << ec << std::endl;
+	  printf("eIrisError......%d\n", eIrisError);
+	  return false;
+  }
+
 }

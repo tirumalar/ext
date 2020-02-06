@@ -62,7 +62,7 @@ bool HDMPCRemote::StartMatch(unsigned char *iriscode, int taskid) {
 	char *deviceID = m_pMatchManagerInterface->GetDeviceID();
 	m_taskId = taskid;
 	//printf("MATCH:1;3:%s;%d;%d;\n", myID, 2, featurelen);
-	int len = sprintf(m_matchMsg->GetBuffer(), "MATCH:1;3:%s;%d;%d;", deviceID, 2, featurelen);
+	int len = sprintf(m_matchMsg->GetBuffer(), "MATCH:1;6:%s;%d;%d;", deviceID, 2, featurelen);
 	memcpy(m_matchMsg->GetBuffer()+len,m_irisData->getIris(),featurelen);
 	m_matchMsg->SetSize(len+featurelen);
 
@@ -89,15 +89,15 @@ bool HDMPCRemote::SendPCMatchMsg(char *msg, int msglen) {
 
 	int len = 0;
 	char *deviceID = m_pMatchManagerInterface->GetDeviceID();
-	len = sprintf(m_matchMsg->GetBuffer(), "MATCH:1;3:%s;%d;%d;", deviceID, 2, msglen);	// 2 is ACS in network matcher
+	len = sprintf(m_matchMsg->GetBuffer(), "MATCH:1;6:%s;%d;%d;", deviceID, 2, msglen);	// 2 is ACS in network matcher
 	m_Status=BUSY;
 	//printf( "MATCH:1;3:%s;%d;%d;", deviceID, 2, msglen);
     //Verb:  VALIDATE:X;DEV_TYPE{:DEV_ID};CARDDATA
     //ID:  x:y   x = deviceType  y = deviceid
     //CARDDATA:  c = carddata (encoded)
 	if (msg) {
-		len = sprintf(m_matchMsg->GetBuffer(), "VALIDATECARD:1;3:%s;", deviceID);
-		printf("VALIDATECARD:1;3:%s;\n", deviceID);
+		len = sprintf(m_matchMsg->GetBuffer(), "VALIDATECARD:1;6:%s;", deviceID);
+		printf("VALIDATECARD:1;6:%s;\n", deviceID);
 		memcpy(m_matchMsg->GetBuffer()+len,msg,msglen);
 		m_Status=CARDMATCH;
 	}

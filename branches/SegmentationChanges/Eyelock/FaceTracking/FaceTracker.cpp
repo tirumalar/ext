@@ -147,8 +147,8 @@ FaceTracker::FaceTracker(char* filename)
 ,m_ImageWidth(1200)
 ,m_ImageHeight(960)
 ,m_AdaptiveGain(false)
-,m_AdaptiveGainFactor(20000)
-,m_AdaptiveGainAuxAdjust(1.25)
+,m_AdaptiveGainMainFactor(20000)
+,m_AdaptiveGainAuxFactor(25000)
 ,m_CalibrationImageSize(1200)
 ,m_bCalibImageSizeIs1280(false)
 ,m_EnableIrisCameraPingPong(false)
@@ -156,6 +156,8 @@ FaceTracker::FaceTracker(char* filename)
 ,m_FarSwitchThreshold(45)
 ,m_CmxHandler(NULL)
 ,flag_dark_main(1)
+,m_AdaptiveGainKGMain(0.000173)
+,m_AdaptiveGainKGAux(0.000173)
 {
 
 	FRAME_DELAY = FaceConfig.getValue("FTracker.FRAMEDELAY",60);
@@ -287,13 +289,18 @@ FaceTracker::FaceTracker(char* filename)
 	m_EyelockIrisMode = EyelockConfig.getValue("Eyelock.IrisMode",1);
 
 	int m_ImageSize = m_ImageWidth * m_ImageHeight;
-	m_LeftCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
-	m_RightCameraFaceInfo.faceImagePtr = new unsigned char[m_ImageSize];
+	m_FaceCameraInfo.faceImagePtr = new unsigned char[m_ImageSize];
+
 
 	// Adaptive Gain
 	m_AdaptiveGain = EyelockConfig.getValue("FTracker.AdaptiveGain", false);
-	m_AdaptiveGainFactor = EyelockConfig.getValue("FTracker.AdaptiveGainFactor",20000);
-	m_AdaptiveGainAuxAdjust = EyelockConfig.getValue("FTracker.AdaptiveGainAuxAdjust",float(1.25));
+	// m_AdaptiveGainAuxAdjust = EyelockConfig.getValue("FTracker.AdaptiveGainAuxAdjust",float(1.25));
+	m_AdaptiveGainMainFactor = EyelockConfig.getValue("FTracker.AdaptiveGainMainFactor",20000);
+	m_AdaptiveGainAuxFactor = EyelockConfig.getValue("FTracker.AdaptiveGainAuxFactor",25000);      // Normal Lens - 20000*1.25 - Anita Determined by expteriments
+	m_AdaptiveGainKGMain = EyelockConfig.getValue("FTracker.AdaptiveGainKGMain",float(0.000173)); // The value is 0.0005 for DHS Unit
+	m_AdaptiveGainKGAux = EyelockConfig.getValue("FTracker.AdaptiveGainKGAux",float(0.000173)); // The value is 0.0005 for DHS Unit
+	m_AdaptiveGainMainHysFactor = EyelockConfig.getValue("FTracker.AdaptiveGainMainHysFactor", 0); // Can be 0 too , Need to experiment and decide for regular and DHS units
+	m_AdaptiveGainAuxHysFactor = EyelockConfig.getValue("FTracker.AdaptiveGainAuxHysFactor", 0); // Can be 0 too , Need to experiment and decide for regular and DHS units
 	
 	// Column Noise Correction
 	m_EnableColumnNoiseReduction = EyelockConfig.getValue("Eyelock.EnableColumnNoiseReduction", false);
@@ -347,10 +354,8 @@ FaceTracker::FaceTracker(char* filename)
 
 FaceTracker::~FaceTracker()
 {
-	if(m_LeftCameraFaceInfo.faceImagePtr)
-		delete [] m_LeftCameraFaceInfo.faceImagePtr;
-	if(m_RightCameraFaceInfo.faceImagePtr)
-		delete [] m_RightCameraFaceInfo.faceImagePtr;
+	if(m_FaceCameraInfo.faceImagePtr)
+		delete [] m_FaceCameraInfo.faceImagePtr;
 }
 
 void FaceTracker::SetExp(int cam, int val)
@@ -628,19 +633,29 @@ int FaceTracker::CalculateGain(int facewidth)
 
 int FaceTracker::CalculateGainWithKH(int facewidth, int CameraState)
 {
-	int KF = m_AdaptiveGainFactor;
+	int KF;
 	int gain;
+	float KG;
+	int KH;
 
 // 	printf("m_AdaptiveGainFactor...%d  Adjust----%f\n", m_AdaptiveGainFactor, m_AdaptiveGainAuxAdjust);
 	if(CameraState == STATE_AUX_IRIS){
-		KF = m_AdaptiveGainAuxAdjust * m_AdaptiveGainFactor;
-		gain = m_LeftAuxIrisCamDigitalGain;
+		KG = m_AdaptiveGainKGAux;
+		KF = m_AdaptiveGainAuxFactor;
+		KH = m_AdaptiveGainAuxHysFactor;
+		// KF = m_AdaptiveGainAuxAdjust * m_AdaptiveGainFactor;
+		gain = m_LeftAuxIrisCamDigitalGain; // Just setting to default values for respective cameras.
 	}else{
-		gain = m_LeftMainIrisCamDigitalGain;
+		KG = m_AdaptiveGainKGMain;
+		KF = m_AdaptiveGainMainFactor;
+		KH = m_AdaptiveGainMainHysFactor;
+		gain = m_LeftMainIrisCamDigitalGain; // Just setting to default values for respective cameras.
 	}
 
-	float KG = 0.000173;
-	int KH = 8;
+
+
+	// float KG = m_AdaptiveGainKG; //0.000173;
+	/// int KH = 8;
 
 	// gain = KG * (KF/facewidth + KH)2
 	if(facewidth)
@@ -2169,37 +2184,14 @@ void FaceTracker::DoRunMode_test(bool bShowFaceTracking, bool bDebugSessions){
 		 		m_CmxHandler->SetLatestFaceCoordRect(FaceCoord);
 		 	}
 
-		 	m_LeftCameraFaceInfo.FoundFace = foundFace;
-			m_LeftCameraFaceInfo.ScaledFaceCoord = FaceCoord;
-			m_LeftCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
-			m_LeftCameraFaceInfo.projPtr = m_ProjPtr;
-			m_LeftCameraFaceInfo.FaceWidth = eye_size;
-
-			m_RightCameraFaceInfo.FoundFace = foundFace;
-			m_RightCameraFaceInfo.ScaledFaceCoord = FaceCoord;
-			m_RightCameraFaceInfo.FaceFrameNo = FaceCameraFrameNo;
-			m_RightCameraFaceInfo.projPtr = m_ProjPtr;
-			m_LeftCameraFaceInfo.FaceWidth = eye_size;
-
 			if(bIrisToFaceMapDebug){
 				RotatedfaceImg = rotation90(outImg);
-				memcpy(m_LeftCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
-				memcpy(m_RightCameraFaceInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
+				m_FaceCameraInfo.FoundFace = foundFace;
+				m_FaceCameraInfo.FaceFrameNo = FaceCameraFrameNo;
+				m_FaceCameraInfo.FaceWidth = eye_size;
+				memcpy(m_FaceCameraInfo.faceImagePtr, RotatedfaceImg.data, ImageSize);
+				m_CmxHandler->SetLatestFaceInfo(m_FaceCameraInfo);
 			}
-#if 0 // Anita on 10th Oct
-			EyelockLog(logger, TRACE, "FaceTracking:  Pushing FaceFrame = %d\n", FaceCameraFrameNo);
-			// If we're full, the top is stale anyway, get rid of it, then add the current item
-			// Increase the size of the queues if we are dropping too many unprocessed FaceFrames here...
-   		    if (g_pLeftCameraFaceQueue->Full())
-   		    	g_pLeftCameraFaceQueue->Pop();
-			g_pLeftCameraFaceQueue->Push(m_LeftCameraFaceInfo);
-			EyelockLog(logger, TRACE, "FaceTracking:  Pushed LeftQueue, Size() = %d\n", g_pLeftCameraFaceQueue->Size());
-			// If we're full, the top is stale anyway, get rid of it, then add the current item
-   		    if (g_pRightCameraFaceQueue->Full())
-   		    	g_pRightCameraFaceQueue->Pop();
-			g_pRightCameraFaceQueue->Push(m_RightCameraFaceInfo);
-   		    EyelockLog(logger, TRACE, "FaceTracking:  Pushed Pushed RightQueue, Size() = %d\n", g_pRightCameraFaceQueue->Size());
-#endif
 			if(bFaceMapDebug){
 				char filename[100];
 				sprintf(filename,"FaceImage_%d_ProjPtr_%d.pgm", FaceCameraFrameNo, m_ProjPtr);

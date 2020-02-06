@@ -43,7 +43,8 @@ uint8 make_xy_search_area(int16 width, int16 height, int16 xc, int16 yc,
   }
   // return error if out of bounds
   // only the subpixel routines care if range was not allowed
-  if (withinBoundaries == 0) return 0;
+  if (withinBoundaries == 0)
+	  return 0;
   return 1;
 }
 
@@ -581,7 +582,7 @@ void search_for_circles(PLINE* hGradLptr, PLINE* vGradLptr, PLINE* mLptr,
                         uint16 maxRadius, int16 width, int16 height, int16 xc,
                         int16 yc, int16 searchBox, struct PointXYZ_float* wpos,
                         bool dark, bool ccl_dark, bool spec, bool pupil,
-                        bool iris) {
+                        bool iris, uint16 Irisfind_max_pupil_radius) {
   struct ScoreXYZS winner;
   uint16 radius;
   int16 xmin, xmax, ymin, ymax;
@@ -621,7 +622,7 @@ void search_for_circles(PLINE* hGradLptr, PLINE* vGradLptr, PLINE* mLptr,
   // search over (radius, x, y)
   for (radius = minRadius; radius <= maxRadius; radius += stepSize) {
     if (dark && STEP_TEST) {
-      if (radius > (IRISFIND_MAX_PUPIL_RADIUS >> 1)) {
+      if (radius > (Irisfind_max_pupil_radius >> 1)) {
         stepSize = 2;
         // circleSize = circleR[radius].vTopRightSize * 4;
       }
@@ -754,42 +755,8 @@ void search_for_circles_subpixel(PLINE* hGradLptr, PLINE* vGradLptr,
 
   }  // end of radius search loop
 }
-//
-//---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
-//
-// Create circle coordinate LUTs
-//
-//
-/*
-See notes in init_circles() for circles LUT allocated size in bytes
-*/
-//
-uint32 circlePoints_topRight(uint32 x, uint32 y, struct PointXY_signed* pos,
-                             uint32 i) {
-  if (x == 0) {
-    // pos[i].x = 0; pos[i].y = -y; i++;
-  } else if (x < y) {
-    pos[i].x = (int16_t)x;
-    pos[i].y = -(int16)y;
-    i++;
-  }
-  return i;
-}
-//
-uint32 circlePoints_rightBottom(uint32 x, uint32 y, struct PointXY_signed* pos,
-                                uint32 i) {
-  if (x == 0) {
-    pos[i].x = y;
-    pos[i].y = x;
-    i++;
-  } else if (x < y) {
-    pos[i].x = y;
-    pos[i].y = x;
-    i++;
-  }
-  return i;
-}
+
+
 //
 // build from the center (y = 0) out
 uint32 circlePoints_horizontal(uint32 x, uint32 y, struct PointXY_signed* pos,
@@ -837,186 +804,8 @@ void reverse_order_lut(uint32 lutSize, struct PointXY_signed* pos,
     pos[i].y = tempbuf[lutSize - i - 1];
   }
 }
-//
-void reverse_order_and_extend_lut(uint32 lutSize, struct PointXY_signed* pos,
-                                  uint16* tempbuf) {
-  uint32 i;
-  for (i = 0; i < lutSize; i++) {
-    tempbuf[i] = pos[i].x;
-  }
-  for (i = 0; i < lutSize; i++) {
-    pos[i].x = tempbuf[lutSize - i - 1];
-    pos[i + lutSize].x = tempbuf[i];
-  }
-  for (i = 0; i < lutSize; i++) {
-    tempbuf[i] = pos[i].y;
-  }
-  for (i = 0; i < lutSize; i++) {
-    pos[i].y = -tempbuf[lutSize - i - 1];
-    pos[i + lutSize].y = tempbuf[i];
-  }
-}
-//
-// return size of LUT
-uint32 make_circle_lut(uint32 radius, uint32 lutMaxSize,
-                       struct PointXY_signed* pos,
-                       uint32(cfunc)(uint32, uint32, struct PointXY_signed*,
-                                     uint32)) {
-  uint32 x = 0;
-  uint32 y = radius;
-  float32 p = (float32)((5.0 - ((float32)radius * 4.0)) / 4.0);
-  uint32 cnt = 0;
-  cnt = cfunc(x, y, pos, cnt);
-  while (x < y) {
-    x++;
-    if (p < 0.0) {
-      p += (float32)((2.0 * (float32)x) + 1.0);
-    } else {
-      y--;
-      p += (float32)(2.0 * ((float32)x - (float32)y) + 1.0);
-    }
-    // old test for a different circle routine to prevent LUT overrun
-    if ((cnt + 8) < lutMaxSize) {
-      cnt = cfunc(x, y, pos, cnt);
-    }
-  }
-  return cnt;
-}
-//
-void init_circles(Irisfind_struct& irisfind, uint16 lutCnt) {
-  uint32 i, j;
-  uint32 memsize = 0;
-  uint32 allocated = 0;
-  // radius index i same as radius
-  // radius = i
-  // circle[i] contains LUT for radius i circle
-  //
-  /*
-  // pupil and iris arcs
-  for(i = 0;i < lutCnt;i++){
-      irisfind.circle[i].radius = i;
-      //
-      // left and right arcs
-      // horizontal gradient
-      // hArc, 1/8 circle
-      irisfind.circle[i].hArcSize = make_circle_lut(irisfind.circle[i].radius,
-  irisfind.maxLutSize >> 2, irisfind.circle[i].hArc, circlePoints_horizontal);
-      //Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].hArcSize));
-      memsize += irisfind.circle[i].hArcSize;
-      allocated += irisfind.maxLutSize >> 3;
-      //
-      // top and bottom arcs
-      // vertical gradient
-      // vArc, 1/8 circle
-      irisfind.circle[i].vArcSize = make_circle_lut(irisfind.circle[i].radius,
-  irisfind.maxLutSize >> 2, irisfind.circle[i].vArc, circlePoints_vertical);
-      //Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].vArcSize));
-      memsize += irisfind.circle[i].vArcSize;
-      allocated += irisfind.maxLutSize >> 3;
-      // reverse order for easy weighting from horizontal center out
-      reverse_order_lut(irisfind.circle[i].vArcSize, irisfind.circle[i].vArc,
-  irisfind.tempLUTbuf16);
-  }
-  Log("required memsize hv arcs: " + IntToStr(memsize));
-  Log("required memsize hv arcs in bytes: " + IntToStr(memsize * 4));
-  */
-  //
-  // eyelid arcs
-  //
-  // right half of circle
-  // ordered from top to bottom
-  memsize = 0;
-  for (i = 0; i < lutCnt; i++) {
-    irisfind.circle[i].radius = i;
-    //
-    // top right arc
-    // vTopRight, 1/8 circle
-    irisfind.circle[i].vTopRightSize =
-        make_circle_lut(irisfind.circle[i].radius, irisfind.maxLutSize >> 3,
-                        irisfind.circle[i].vTopRight, circlePoints_topRight);
-    // Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].vTopRightSize));
-    memsize += irisfind.circle[i].vTopRightSize;
-    allocated += irisfind.maxLutSize >> 3;
-    //
-    // right arc
-    // hRight, 1/4 circle
-    irisfind.circle[i].hRightSize =
-        make_circle_lut(irisfind.circle[i].radius, irisfind.maxLutSize >> 3,
-                        irisfind.circle[i].hRight, circlePoints_rightBottom);
-    // reverse order for easy filtering from top down
-    reverse_order_and_extend_lut(irisfind.circle[i].hRightSize,
-                                 irisfind.circle[i].hRight,
-                                 irisfind.tempLUTbuf16);
-    irisfind.circle[i].hRightSize *= 2;
-    // Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].hRightSize));
-    memsize += irisfind.circle[i].hRightSize;
-    allocated += irisfind.maxLutSize >> 2;
-    //
-    // bottom right arc
-    // vBottomRight, 1/8 circle
-    uint16 size = irisfind.circle[i].vTopRightSize;
-    irisfind.circle[i].vBottomRightSize = size;
-    for (j = 0; j < irisfind.circle[i].vBottomRightSize; j++) {
-      size--;
-      irisfind.circle[i].vBottomRight[j].x =
-          irisfind.circle[i].vTopRight[size].x;
-      irisfind.circle[i].vBottomRight[j].y =
-          -irisfind.circle[i].vTopRight[size].y;
-    }
-    // Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].vBottomRightSize));
-    memsize += irisfind.circle[i].vBottomRightSize;
-    allocated += irisfind.maxLutSize >> 3;
-  }
-  // Log("required memsize eyelid arcs: " + IntToStr(memsize));
-  // Log("required memsize eyelid arcs in bytes: " + IntToStr(memsize * 4));
-  //
-  /*
-  // left half of circle
-  // ordered from top to bottom
-  for(i = 0;i < lutCnt;i++){
-      irisfind.circle[i].radius = i;
-      //
-      // top left arc
-      // vTopLeft, 1/8 circle
-      irisfind.circle[i].vTopLeftSize = irisfind.circle[i].vTopRightSize;
-      for(j = 0;j < irisfind.circle[i].vTopLeftSize;j++){
-          irisfind.circle[i].vTopLeft[j].x = -irisfind.circle[i].vTopRight[j].x;
-          irisfind.circle[i].vTopLeft[j].y = irisfind.circle[i].vTopRight[j].y;
-      }
-      //Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].vTopLeftSize));
-      memsize += irisfind.circle[i].vTopLeftSize;
-      allocated += irisfind.maxLutSize >> 3;
-      //
-      // left arc
-      // hLeft, 1/4 circle
-      irisfind.circle[i].hLeftSize = irisfind.circle[i].hRightSize;
-      for(j = 0;j < irisfind.circle[i].hLeftSize;j++){
-          irisfind.circle[i].hLeft[j].x = -irisfind.circle[i].hRight[j].x;
-          irisfind.circle[i].hLeft[j].y = irisfind.circle[i].hRight[j].y;
-      }
-      //Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].hLeftSize));
-      memsize += irisfind.circle[i].hLeftSize;
-      allocated += irisfind.maxLutSize >> 2;
-      //
-      // bottom left arc
-      // vBottomLeft, 1/8 circle
-      irisfind.circle[i].vBottomLeftSize = irisfind.circle[i].vBottomRightSize;
-      for(j = 0;j < irisfind.circle[i].vBottomLeftSize;j++){
-          irisfind.circle[i].vBottomLeft[j].x =
-  -irisfind.circle[i].vBottomRight[j].x; irisfind.circle[i].vBottomLeft[j].y =
-  irisfind.circle[i].vBottomRight[j].y;
-      }
-      //Log(IntToStr(i) + ": " + IntToStr(irisfind.circle[i].vBottomLeftSize));
-      memsize += irisfind.circle[i].vBottomLeftSize;
-      allocated += irisfind.maxLutSize >> 3;
-  }
-  */
-  /*
-  required memsize eyelid arcs: 14144
-  required memsize eyelid arcs in bytes: 56576
-  allocated circle LUTs in bytes: 121604
-  */
-  // Log("required memsize eyelid arcs: " + IntToStr(memsize));
-  // Log("required memsize eyelid arcs in bytes: " + IntToStr(memsize * 4));
-  // Log("allocated circle LUTs in bytes: " + IntToStr(allocated * 4));
-}
+
+
+
+
+

@@ -6,6 +6,7 @@
 #include "helper.h"
 #include "irisfind.h"
 #include "stdio.h"
+#include "TemplatePipelineError.h"
 
 #include <math.h>    // for sqrtf(), sin(), cos(), abs()
 #include <string.h>  // for memcpy()
@@ -26,6 +27,7 @@
 
 #define UNCOVERED 0
 
+class Irisfind;
 //-------------------------------------------------------------------------
 //-------------------------------------------------------------------------
 #ifdef __cplusplus
@@ -61,9 +63,9 @@ struct Eyelid_struct {
 void ek_eyelid_session_init(Eyelid_struct &eyelid, bool enable_eyelid_detect);
 void ek_eyelid_init(Eyelid_struct &eyelid);
 
-void ek_eyelid_main(PLINE *lineptrCrop, size_t eyecrop_width,
+TemplatePipelineError ek_eyelid_main(PLINE *lineptrCrop, size_t eyecrop_width,
                     size_t eyecrop_height, size_t flat_iris_width,
-                    size_t flat_iris_height, Irisfind_struct &irisfind,
+                    size_t flat_iris_height, Irisfind* irisfind,
                     Eyelid_struct &eyelid, PLINE *lineptrFlat,
                     PLINE *lineptrMask, float radiusSampling, float *cosTable,
                     float *sinTable);
