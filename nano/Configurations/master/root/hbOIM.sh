@@ -75,6 +75,8 @@ do
 				ifdown eth0
 				sleep 5
 				ifup eth0
+				sleep 5
+				/sbin/ethtool -s eth0 speed 1000 autoneg off duplex full
 
 				touch "${FLAG}"
 				((COUNTER++))
