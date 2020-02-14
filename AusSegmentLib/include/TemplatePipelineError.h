@@ -21,6 +21,10 @@ enum class TemplatePipelineError {
 	Median_Iris_Intensity_out_of_range = 107,
 	Percentage_Of_Iris_Visible_too_small = 108,
 	InValidbits_in_Template = 109, 				// reject if V < 1500
+	Dark_Pixel_Detection_Failed = 110,
+	Spec_Search_Failed = 111,
+	Iris_Search_Failed = 112,
+	Eye_Focus_Estimate_Is_False = 113  // brightnessValid
 };
 
 namespace std

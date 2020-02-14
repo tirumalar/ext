@@ -95,9 +95,6 @@ void PropertyConfigurator::doConfigure(const File& configFileName,
 {
        hierarchy->setConfigured(true);
 
-       //DMOTODO - remove this later...
-       LogLog::setInternalDebugging(true);
-
        Properties props;
        try {
           InputStreamPtr inputStream = new FileInputStream(configFileName);
@@ -370,15 +367,11 @@ void PropertyConfigurator::parseLogger(
                 LogLog::debug(LOG4CXX_STR("Parsing appender named ")
                       + appenderName + LOG4CXX_STR("\"."));
                 appender = parseAppender(props, appenderName);
-                LogLog::error((LogString) LOG4CXX_STR("DMO 10"));
 
                 if (appender != 0)
                 {
                         logger->addAppender(appender);
                 }
-
-                LogLog::error((LogString) LOG4CXX_STR("DMO 11"));
-
         }
 }
 
@@ -401,79 +394,48 @@ AppenderPtr PropertyConfigurator::parseAppender(
         LogString prefix = APPENDER_PREFIX + appenderName;
         LogString layoutPrefix = prefix + LOG4CXX_STR(".layout");
 
-
-        LogLog::error((LogString) LOG4CXX_STR("DMO APPENDER \"")
-            + prefix + LOG4CXX_STR("\"."));
-
         appender =
                 OptionConverter::instantiateByKey(
                 props, prefix, Appender::getStaticClass(), 0);
 
-        LogLog::error((LogString) LOG4CXX_STR("DMO 0"));
-
         if (appender == 0)
         {
-            LogLog::error((LogString) LOG4CXX_STR("DMO 04"));
-
                 LogLog::error((LogString) LOG4CXX_STR("Could not instantiate appender named \"")
                     + appenderName + LOG4CXX_STR("\"."));
                 return 0;
         }
 
-        LogLog::error((LogString) LOG4CXX_STR("DMO 02"));
-
         appender->setName(appenderName);
-        LogLog::error((LogString) LOG4CXX_STR("DMO 03"));
-
-
-    	//LogLog::setInternalDebugging(true);
 
         if (appender->instanceof(OptionHandler::getStaticClass()))
         {
         Pool p;
-
-        LogLog::error((LogString) LOG4CXX_STR("DMO 1"));
-
                 if (appender->requiresLayout())
                 {
-                    LogLog::error((LogString) LOG4CXX_STR("DMO 2"));
-
                         LayoutPtr layout =
                                 OptionConverter::instantiateByKey(
                                 props, layoutPrefix, Layout::getStaticClass(), 0);
 
                         if (layout != 0)
                         {
-                            LogLog::error((LogString) LOG4CXX_STR("DMO 3"));
-
                                 appender->setLayout(layout);
                                 LogLog::debug((LogString) LOG4CXX_STR("Parsing layout options for \"")
                                     + appenderName + LOG4CXX_STR("\"."));
-
-                                LogLog::error((LogString) LOG4CXX_STR("DMO 4"));
 
                                 //configureOptionHandler(layout, layoutPrefix + ".", props);
                                 PropertySetter::setProperties(layout, props, layoutPrefix + LOG4CXX_STR("."), p);
                 LogLog::debug((LogString) LOG4CXX_STR("End of parsing for \"")
                     + appenderName +  LOG4CXX_STR("\"."));
-                LogLog::error((LogString) LOG4CXX_STR("DMO 5"));
-
                         }
                 }
-                LogLog::error((LogString) LOG4CXX_STR("DMO 6"));
 
                 //configureOptionHandler((OptionHandler) appender, prefix + _T("."), props);
                 PropertySetter::setProperties(appender, props, prefix + LOG4CXX_STR("."), p);
         LogLog::debug((LogString) LOG4CXX_STR("Parsed \"")
              + appenderName + LOG4CXX_STR("\" options."));
-        LogLog::error((LogString) LOG4CXX_STR("DMO 7"));
-
         }
 
-        LogLog::error((LogString) LOG4CXX_STR("DMO 8"));
-
         registryPut(appender);
-        LogLog::error((LogString) LOG4CXX_STR("DMO 9"));
 
         return appender;
 }

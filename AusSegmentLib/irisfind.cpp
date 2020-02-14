@@ -82,6 +82,8 @@ Irisfind::Irisfind(size_t eyecrop_width, size_t eyecrop_height, float gaze_radiu
 		for(int i = 0; i < 2; ++i)
 			lineptrMask[i] = new PLINE[eyecrop_height];
 
+
+
 }
 
 Irisfind::~Irisfind()
@@ -619,6 +621,9 @@ void Irisfind::spec_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyec
   // return search winner circle (x, y, z)
   uint16 winnerRadius = (uint16)wpos->z;  // search winner (x, y, z)
   specScore[eyeCropIndex] = wpos->s;
+
+  // printf("specScore[eyeCropIndex]......%d\n", specScore[eyeCropIndex]);
+
   if (winnerRadius > 0)
 	  specFound[eyeCropIndex] = true;  // TBD: how to test for good spec?
   if (specScore[eyeCropIndex] < IRISFIND_SPEC_MIN_SCORE)
@@ -685,6 +690,9 @@ void Irisfind::dark_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyec
   uint16 winnerRadius = (uint16)wpos->z;  // search winner (x, y, z)
   // arbitrary multipler make dark score range similar to pupil and iris range
   darkScore[eyeCropIndex] = wpos->s * DARK_SCORE_ARBITRARY_MULTIPLIER;
+
+  // printf("darkScore[eyeCropIndex]......%d\n", darkScore[eyeCropIndex]);
+
   if (winnerRadius > 0)
 	  darkFound[eyeCropIndex] = true;  // TBD: how to test for good spec?
   if (darkScore[eyeCropIndex] < IRISFIND_DARK_MIN_SCORE)
@@ -775,6 +783,9 @@ void Irisfind::pupil_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eye
   // return search winner circle (x, y, z)
   uint16 winnerRadius = (uint16)wpos->z;  // search winner (x, y, z)
   pupilScore[eyeCropIndex] = wpos->s;
+
+  // printf("pupilScore[eyeCropIndex]......%d\n", pupilScore[eyeCropIndex]);
+
   if (winnerRadius > 0)
 	  pupilFound[eyeCropIndex] =
         true;  // TBD: how to test for good pupil?
@@ -791,6 +802,7 @@ TemplatePipelineError Irisfind::pupil_search_subpixel(uint8 eyeCropIndex, size_t
   // only these parameters change between pupil and iris subpixel
   //
   // search type
+  TemplatePipelineError eIrisError;
   bool dark = false;
   bool spec = false;
   bool pupil = true;
@@ -830,7 +842,7 @@ TemplatePipelineError Irisfind::pupil_search_subpixel(uint8 eyeCropIndex, size_t
   uint8 inbounds = make_xy_search_area(eyecrop_width, eyecrop_height, xc, yc, maxRadius,
                                        searchBox, &xmin, &xmax, &ymin, &ymax);
   if (inbounds == 0)
-	  return TemplatePipelineError::Pupil_Diameter_out_of_range;  // out of bounds
+	  eIrisError = TemplatePipelineError::Pupil_Diameter_out_of_range;  // out of bounds
   //---------------------------------------------------
   // search inputs
   // the following are the same for spec, pupil, iris
@@ -869,8 +881,9 @@ TemplatePipelineError Irisfind::pupil_search_subpixel(uint8 eyeCropIndex, size_t
     wpos->y = psy;
     wpos->z = psz;
   }
-  //
-  return TemplatePipelineError::Segmentation_Successful;  // good subpixel
+
+  return eIrisError;
+
 }
 //
 //---------------------------------------------------------------------------
@@ -879,7 +892,7 @@ TemplatePipelineError Irisfind::pupil_search_subpixel(uint8 eyeCropIndex, size_t
 // iris search
 //
 //
-TemplatePipelineError Irisfind::iris_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height) {
+void Irisfind::iris_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height) {
   // search type
   bool dark = false;
   bool ccl_dark = false;
@@ -944,12 +957,14 @@ TemplatePipelineError Irisfind::iris_search(uint8 eyeCropIndex, size_t eyecrop_w
   // return search winner circle (x, y, z)
   uint16 winnerRadius = (uint16)wpos->z;  // search winner (x, y, z)
   irisScore[eyeCropIndex] = wpos->s;
+
+  // printf("irisScore[eyeCropIndex]......%d\n", irisScore[eyeCropIndex]);
+
   if (winnerRadius > 0)
     irisFound[eyeCropIndex] = true;  // TBD: how to test for good iris?
   if (irisScore[eyeCropIndex] < IRISFIND_IRIS_MIN_SCORE)
     irisFound[eyeCropIndex] = false;
 
-  return TemplatePipelineError::Segmentation_Successful;
 }
 //
 //-------------------
@@ -960,6 +975,7 @@ TemplatePipelineError Irisfind::iris_search_subpixel(uint8 eyeCropIndex, size_t 
   // only these parameters change between pupil and iris subpixel
   //
   // search type
+  TemplatePipelineError eIrisError;
   bool dark = false;
   bool spec = false;
   bool pupil = false;
@@ -980,10 +996,10 @@ TemplatePipelineError Irisfind::iris_search_subpixel(uint8 eyeCropIndex, size_t 
   // do not process if already at radius limit
   // small radius
   if (wpos->z <= 1)
-	  return TemplatePipelineError::Iris_Diameter_out_of_range;  // out of bounds
+	  eIrisError = TemplatePipelineError::Iris_Diameter_out_of_range;  // out of bounds
   // large radius
   if (wpos->z >= IRISFIND_CIRCLE_MAX_RADIUS)
-	  return TemplatePipelineError::Iris_Diameter_out_of_range;  // out of bounds
+	  eIrisError = TemplatePipelineError::Iris_Diameter_out_of_range;  // out of bounds
   // radius ok
   uint16 centerRadius = (uint16)wpos->z;
   uint16 maxRadius = (uint16)wpos->z + 1;
@@ -999,7 +1015,7 @@ TemplatePipelineError Irisfind::iris_search_subpixel(uint8 eyeCropIndex, size_t 
   uint8 inbounds = make_xy_search_area(eyecrop_width, eyecrop_height, xc, yc, maxRadius,
                                        searchBox, &xmin, &xmax, &ymin, &ymax);
   if (inbounds == 0)
-	  return TemplatePipelineError::Iris_Diameter_out_of_range;  // out of bounds
+	  eIrisError = TemplatePipelineError::Iris_Diameter_out_of_range;  // out of bounds
   //---------------------------------------------------
   // search inputs
   // the following are the same for spec, pupil, iris
@@ -1038,8 +1054,7 @@ TemplatePipelineError Irisfind::iris_search_subpixel(uint8 eyeCropIndex, size_t 
     wpos->y = psy;
     wpos->z = psz;
   }
-  //
-  return TemplatePipelineError::Segmentation_Successful;  // good subpixel
+  return eIrisError;
 }
 //
 //---------------------------------------------------------------------------
@@ -1077,7 +1092,7 @@ float32 pupilToIrisRatio(float32 pupil_rad, float32 iris_rad) {
 TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
                       size_t eyecrop_width,
                       size_t eyecrop_height, size_t flat_iris_width,
-                      size_t flat_iris_height, IrisFindParameters& IrisPupilParams)
+                      size_t flat_iris_height, IrisFindParameters& IrisPupilParams, int LogSegInfo)
 
 {
   //---------------------------------------------------------------------------------------------
@@ -1105,7 +1120,7 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
   //
   // search for dark area that might be pupil
   //
-
+  TemplatePipelineError eIrisError = TemplatePipelineError::Segmentation_Successful;
   int16 xc = eyecrop_width >> 1;
   int16 yc = eyecrop_height >> 1;
   int16 roi = IRISFIND_DARK_ROI;
@@ -1121,6 +1136,9 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
   specPos[0].z = 8;
 
   dark_search(0, eyecrop_width, eyecrop_height);
+
+  if(LogSegInfo)
+	  printf("darkFound[0].......%d\n", darkFound[0]);
 
   if (darkFound[0]) {
     // make gradients of eye crop
@@ -1145,14 +1163,20 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
     //
     // TBD: note that segmentation is allowed to continue if spec search fails
     //
+    if(LogSegInfo)
+    	printf("specFound[0].......%d\n", specFound[0]);
+
     if (specFound[0]) {
       pupil_search(0, eyecrop_width, eyecrop_height);
       if (pupilFound[0]) {
         iris_search(0, eyecrop_width, eyecrop_height);
       }else{
-      	return TemplatePipelineError::Pupil_Iris_Boundary_Not_Found;
+    	  eIrisError = TemplatePipelineError::Pupil_Iris_Boundary_Not_Found;
       }
+    }else{
+    	eIrisError = TemplatePipelineError::Spec_Search_Failed;
     }
+
 
     //------------------------------------------------------------------------------------
     //
@@ -1163,80 +1187,88 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
     // are weighted by surrounding 3x3x3 array values and overwritten with
     // float32.
     //
+    if(LogSegInfo)
+    	printf("irisFound[0].......%d\n", irisFound[0]);
     if (irisFound[0]) {
       pupil_search_subpixel(0, eyecrop_width, eyecrop_height);
 
       iris_search_subpixel(0, eyecrop_width, eyecrop_height);
-    }else{
-    	return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
-    }
 
-	IrisPupilParams.ip.x = irisPos[0].x;
-	IrisPupilParams.ip.y = irisPos[0].y;
-	IrisPupilParams.ip.r = irisPos[0].z;
+      //------------------------------------------------------------------------------------
+        //
+        // face distance: from iris diameter
+        // pupil dilation: ratio of pupil radius to iris radius
+        // gaze: compare pupil location to spec location
+        //
 
-	IrisPupilParams.pp.x = pupilPos[0].x;
-	IrisPupilParams.pp.y = pupilPos[0].y;
-	IrisPupilParams.pp.r = pupilPos[0].z;
-    //------------------------------------------------------------------------------------
-    //
-    // face distance: from iris diameter
-    // pupil dilation: ratio of pupil radius to iris radius
-    // gaze: compare pupil location to spec location
-    //
-    if (irisFound[0]) {
       // possible face distance in cm from camera for candidate eyes
-      faceDistance[0] =
-          irisfind_distanceToFace_cm(irisPos[0].z);
-      // TODO: REPLACE WITH DISTANCE CLASS
-      /*if (irisfind.faceDistance[0] > eyefind.maxFaceDistance) {
-              eyefind.tooFar = true;
-      }
-      else if (irisfind.faceDistance[0] > 0.0 &&
-              irisfind.faceDistance[0] < eyefind.minFaceDistance) {
-              eyefind.tooClose = true;
-}*/
+		faceDistance[0] =
+			irisfind_distanceToFace_cm(irisPos[0].z);
+		// TODO: REPLACE WITH DISTANCE CLASS
+		/*if (irisfind.faceDistance[0] > eyefind.maxFaceDistance) {
+				eyefind.tooFar = true;
+		}
+		else if (irisfind.faceDistance[0] > 0.0 &&
+				irisfind.faceDistance[0] < eyefind.minFaceDistance) {
+				eyefind.tooClose = true;
+	}*/
 
-      // pupil radius to iris radius, (pupil/iris) ratio for candidate eyes
-      m_fpupilToIrisRatio[0] = pupilToIrisRatio(pupilPos[0].z, irisPos[0].z);
+		// pupil radius to iris radius, (pupil/iris) ratio for candidate eyes
+		m_fpupilToIrisRatio[0] = pupilToIrisRatio(pupilPos[0].z, irisPos[0].z);
 
-      if(m_fpupilToIrisRatio[0] < 0.40){
-    	  // return IRISERROR::Percentage_Of_Iris_Visible_too_small; // Ignore for Authentication
-      }
+		if(m_fpupilToIrisRatio[0] < 0.40){
+		  // return IRISERROR::Percentage_Of_Iris_Visible_too_small; // Ignore for Authentication
+		}
 
-      // gaze: compare pupil location to spec location
-      gaze[0].x = pupilPos[0].x - specPos[0].x;
-      gaze[0].y = pupilPos[0].y - specPos[0].y;
-      gaze[0].z =
-          sqrtf(pow(gaze[0].x, 2) + pow(gaze[0].y, 2));
+		// gaze: compare pupil location to spec location
+		gaze[0].x = pupilPos[0].x - specPos[0].x;
+		gaze[0].y = pupilPos[0].y - specPos[0].y;
+		gaze[0].z =
+			sqrtf(pow(gaze[0].x, 2) + pow(gaze[0].y, 2));
 
-      good_gaze[0] = (gaze[0].z < gaze_radius_thresh);
+		good_gaze[0] = (gaze[0].z < gaze_radius_thresh);
 
-      IrisPupilParams.PupilToIrisRatio = m_fpupilToIrisRatio[0] ;
-      IrisPupilParams.GazeVal = gaze[0].z;
-      IrisPupilParams.IrisRadius = irisPos[0].z;
-      IrisPupilParams.PupilRadius = pupilPos[0].z;
-      IrisPupilParams.darkScore = darkScore[0];
-      IrisPupilParams.SpecScore = specScore[0];
-      IrisPupilParams.IrisScore = irisScore[0];
-      IrisPupilParams.PupilScore = pupilScore[0];
-      // printf("gaze....%f\n", gaze_radius_thresh);
+		IrisPupilParams.ip.x = irisPos[0].x;
+		IrisPupilParams.ip.y = irisPos[0].y;
+		IrisPupilParams.ip.r = irisPos[0].z;
 
-      if(gaze[0].z > gaze_radius_thresh)
-    	  return TemplatePipelineError::Gaze_out_of_range;
+		IrisPupilParams.pp.x = pupilPos[0].x;
+		IrisPupilParams.pp.y = pupilPos[0].y;
+		IrisPupilParams.pp.r = pupilPos[0].z;
 
-      // Anita - Check for pupil and Iris Diameters
-     /* if(!(irisPos[0].z > m_Irisfind_min_Iris_Diameter && irisPos[0].z < m_Irisfind_max_Iris_Diameter))
-    	  return TemplatePipelineError::Iris_Diameter_out_of_range;
+		IrisPupilParams.PupilToIrisRatio = m_fpupilToIrisRatio[0] ;
+		IrisPupilParams.GazeVal = gaze[0].z;
+		IrisPupilParams.IrisRadius = irisPos[0].z;
+		IrisPupilParams.PupilRadius = pupilPos[0].z;
+		IrisPupilParams.darkScore = darkScore[0];
+		IrisPupilParams.SpecScore = specScore[0];
+		IrisPupilParams.IrisScore = irisScore[0];
+		IrisPupilParams.PupilScore = pupilScore[0];
 
-      if(!(pupilPos[0].z > m_Irisfind_min_pupil_Diameter && pupilPos[0].z  < m_Irisfind_max_pupil_Diameter))
-    	  return TemplatePipelineError::Pupil_Diameter_out_of_range;*/
+		if(LogSegInfo)
+			printf("gaze....%f\n", gaze[0].z);
 
+		if(gaze[0].z > gaze_radius_thresh)
+			eIrisError = TemplatePipelineError::Gaze_out_of_range;
+
+		// Anita - Check for pupil and Iris Diameters
+	   /* if(!(irisPos[0].z > m_Irisfind_min_Iris_Diameter && irisPos[0].z < m_Irisfind_max_Iris_Diameter))
+		  return TemplatePipelineError::Iris_Diameter_out_of_range;
+
+		if(!(pupilPos[0].z > m_Irisfind_min_pupil_Diameter && pupilPos[0].z  < m_Irisfind_max_pupil_Diameter))
+		  return TemplatePipelineError::Pupil_Diameter_out_of_range;*/
     }else{
-    	return TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
+    	eIrisError = TemplatePipelineError::Iris_Sclera_Boundary_Not_Found;
     }
-    //-------------------------------------------------------------------------------
+  }else{
+	  // printf("INNNdarkFound[0].......%d\n", darkFound[0]);
+	  eIrisError = TemplatePipelineError::Dark_Pixel_Detection_Failed;
   }
+
+  // printf("eIrisErroreIrisErroreIrisErroreIrisErroreIrisError....%d\n", eIrisError);
+
+#if 0 // Anita on 12Feb 2020
+
 
   //}
 
@@ -1477,7 +1509,9 @@ true:
     // << std::endl; spoofdet.last_human = true;
     //}
   }
-  return TemplatePipelineError::Segmentation_Successful;
+#endif
+
+  return eIrisError;
 }
 
 

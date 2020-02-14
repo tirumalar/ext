@@ -1556,8 +1556,15 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 			printf("corruptBitCountMask = %d\n", corruptBitCountMask);
 			printf("corruptBitsAbsoluteThresh = %d\n", corruptBitsAbsoluteThresh);
 			printf("oldHalo<m_HaloThresh = %d\n", oldHalo<m_HaloThresh);
-
 			printf("variance[0]>GetFeatureVarianceAbsoluteThresh() = %d\n", variance[0]>GetFeatureVarianceAbsoluteThresh());
+			printf("irisDiameter>GetMinIrisDiameter() == %d\n", irisDiameter>GetMinIrisDiameter());
+			printf("irisDiameter<GetMaxIrisDiameter() == %d\n", irisDiameter<GetMaxIrisDiameter());
+			printf("pupilDiameter >GetMinPupilDiameter() == %d\n", pupilDiameter >GetMinPupilDiameter());
+			printf("pupilDiameter < GetMaxPupilDiameter() == %d\n", pupilDiameter < GetMaxPupilDiameter());
+			printf("maxYDelta < GetMaxYdelta() == %d\n", maxYDelta < GetMaxYdelta());
+			printf("maxYDelta < GetMaxYdelta()  == %d\n", maxYDelta < GetMaxYdelta());
+			printf("irisImagecentre_distX < GetMaxIrisImagecentreDistX() == %d\n", irisImagecentre_distX < GetMaxIrisImagecentreDistX());
+			printf("irisImagecentre_distY < GetMaxIrisImagecentreDistY() == %d\n", irisImagecentre_distY < GetMaxIrisImagecentreDistY());
 			printf("======= END SEGMENTATION RESULTS IMAGE #%d ==========\n", imageId);
 		}
 
@@ -1648,6 +1655,8 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 							"Good Image not currently saved to disk\n"
 							"ImageCount=%d\n"
 							"FrameID=%d\n"
+							"CamID=%d\n"
+							"EyeSide=%s\n"
 							"LaplacianScore=%f\n"
 							"BigPupil=%s\n"
 							"BigPupilCount=%d\n"
@@ -1674,7 +1683,9 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 							"AvgIntTP=%f\n"
 							"nTP=%d\n"
 							"===================================================\n\n",
-							imageCount, frameId, laplacianScore, bBigPupil ? "true":"false", number_BigPupil, 
+							imageCount, frameId, cameraId,
+							(side == 0) ? "UNKNOWN" : ((side == 1) ? "LEFT" : "RIGHT"),
+							laplacianScore, bBigPupil ? "true":"false", number_BigPupil,
 							irisDiameter, pupilDiameter, maxXDelta, maxYDelta,
 							irisImagecentre_distX, irisImagecentre_distY, m_minPupilDiameter,
 							m_maxPupilDiameter, m_maxXdelta, m_maxYdelta,
@@ -1696,54 +1707,14 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 #endif
 #endif
 			//Probability of having large pupil
-			int length1 = GetEyeSegmentationInterface()->GetFeatureLength();
-			unsigned char *pCode1 = new unsigned char[length * 2];
-			IrisPupilCircles irisPupilCircles1;
-
-			int tt = clock();
-
-			bool valid1 = temp_pEyeSegmentationInterface->GetIrisCode(image, 640,	480, 640, pCode1, pCode1 + length1, &irisPupilCircles1); /* circles optional, last */
-			// printf("else of EyeSorting Current time = %2.4f, ProcessingTme = %2.4f\n", (float) clock() / CLOCKS_PER_SEC, (float) (clock() - tt) / CLOCKS_PER_SEC);
-			
-			int corruptBitCountMask1 = temp_pEyeSegmentationInterface->checkBitCorruption(pCode1+length1);						
-			/* If segmentation worked, then create a record and add it to our list */
-			if (valid1 && temp_pEyeSegmentationInterface->Getiseye()) 
-			{
-				int irisDiameter1 = irisPupilCircles1.ip.r*2;
-				int pupilDiameter1 = irisPupilCircles1.pp.r*2;
-				int maxXDelta1 = abs(irisPupilCircles1.pp.x -irisPupilCircles1.ip.x);
-				int maxYDelta1 = abs(irisPupilCircles1.pp.y -irisPupilCircles1.ip.y);
-
-				int irisImagecentre_distX1 = abs(320 - irisPupilCircles1.ip.x);
-				int irisImagecentre_distY1 = abs(240 - irisPupilCircles1.ip.y);
-
-				float variance1[8];
-#if EXP_FViance
-		temp_pEyeSegmentationInterface->GetRatioFeatureVariances(variance1);
-#else
-		temp_pEyeSegmentationInterface->GetFeatureVariances(variance1);
-#endif
-
-				bool segmentOK1 = true;
-				bool isBoundaryInValid1 = false;
-
-#ifndef __linux__ //not implemented for embedded codebase yet
-#ifndef EL_IOS
-				segmentOK1= temp_pEyeSegmentationInterface->testSegmentation(image, width, height, 
-					irisPupilCircles1.pp.x, irisPupilCircles1.pp.y, irisPupilCircles1.pp.r, 
-					irisPupilCircles1.ip.x, irisPupilCircles1.ip.y, irisPupilCircles1.ip.r);
-#endif
-#endif
-				if (segmentOK1  /*&& irisDiameter1>GetMinIrisDiameter() && irisDiameter1<GetMaxIrisDiameter() && corruptBitCountMask1<corruptBitsAbsoluteThresh && variance1[0]>GetFeatureVarianceAbsoluteThresh() && oldHalo<m_HaloThresh && pupilDiameter1 >GetMinPupilDiameter()  && pupilDiameter1 < GetMaxPupilDiameter() &&  maxXDelta1 < GetMaxXdelta() &&  maxYDelta1 < GetMaxYdelta() && irisImagecentre_distX1 < GetMaxIrisImagecentreDistX() && irisImagecentre_distY1 < GetMaxIrisImagecentreDistY()*/ )
-				{	
-					if (irisPupilCircles1.ip.r / irisPupilCircles1.pp.r < 2)
-					{
-						bBigPupil = true;
-						number_BigPupil++;
-					}
+			if (segmentOK)
+			{	
+				if (irisPupilCircles.ip.r / irisPupilCircles.pp.r < 2)
+				{
+					bBigPupil = true;
+					number_BigPupil++;
 				}
-			}	
-			delete[] pCode1;
+			}
 
 			if (m_eyeSortingLogEnable)
 			{
@@ -1782,10 +1753,39 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 				else 
 #endif //DMOREMOVE
 				{
+					char szReason[128];
+
+					// Determine the failure reason...
+					if (!segmentOK)
+						strcpy(szReason, "Segmentation Failed...");
+					else if (irisDiameter <= GetMinIrisDiameter())
+						strcpy(szReason, "Iris Too Small...");
+					else if (irisDiameter >= GetMaxIrisDiameter())
+						strcpy(szReason, "Iris Too Big...");
+					else if (variance[0] <= GetFeatureVarianceAbsoluteThresh())
+						strcpy(szReason, "Feature Variance Too Low...");
+					else if (pupilDiameter <= GetMinPupilDiameter())
+						strcpy(szReason, "Pupil Too Small...");
+					else if (pupilDiameter >= GetMaxPupilDiameter())
+						strcpy(szReason, "Pupil Too Big...");
+					else if (maxXDelta >= GetMaxXdelta())
+						strcpy(szReason, "X Delta Too Large...");
+					else if (maxYDelta >= GetMaxYdelta())
+						strcpy(szReason, "Y Delta Too Large...");
+					else if (irisImagecentre_distX >= GetMaxIrisImagecentreDistX())
+						strcpy(szReason, "X Iris Center Too Far Off...");
+					else if (irisImagecentre_distY >= GetMaxIrisImagecentreDistY())
+						strcpy(szReason, "Y Iris Center Too Far Off...");
+					else
+						strcpy(szReason, "Unknown");
+
 					fprintf(fDump,"========================================================\n"
 							"BadImageFileName: %s\n"
+							"Failure Reason=%s\n"
 							"ImageCount=%d\n"
 							"FrameID=%d\n"
+							"CamID=%d\n"
+							"EyeSide=%s\n"
 							"LaplacianScore=%f\n"
 							"BigPupil=%s\n"
 							"BigPupilCount=%d\n"
@@ -1806,7 +1806,9 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 							"AvgIntTP=%f\n"
 							"nTP=%d\n"
 							"===============================================================\n\n",
-							buffer, imageCount, frameId, laplacianScore, 
+							buffer, szReason, imageCount, frameId, cameraId,
+							(side == 0) ? "UNKNOWN" : ((side == 1) ? "LEFT" : "RIGHT"),
+							laplacianScore,
 							bBigPupil?"true":"false", number_BigPupil,
 							irisDiameter, pupilDiameter,
 							maxXDelta,maxYDelta,irisImagecentre_distX,irisImagecentre_distY,
@@ -1827,12 +1829,18 @@ std::pair<Iris *, Iris *> EnrollmentServer::GetBestPairOfEyesHelper(unsigned cha
 			delete[] pImage;
 			delete pIris;
 			iris = 0;
+
+			std::pair<Iris *, Iris *> temp = std::make_pair((Iris *)NULL, (Iris *)NULL);
+			return temp;
 		}
 	} 
 	else 
 	{  	
 		delete[] pCode;
 		iris = 0;
+
+		std::pair<Iris *, Iris *> temp = std::make_pair((Iris *)NULL, (Iris *)NULL);
+		return temp;
 	}
 
 #if 0

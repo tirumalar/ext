@@ -40,6 +40,21 @@ std::string IrisErrCategory::message(int errvalue) const {
 	case TemplatePipelineError::Percentage_Of_Iris_Visible_too_small:
 		return "Percentage_Of_Iris_Visible_too_small";
 
+	case TemplatePipelineError::InValidbits_in_Template:
+				return "InValidbits_in_Template";
+
+	case TemplatePipelineError::Dark_Pixel_Detection_Failed:
+			return "Dark_Pixel_Detection_Failed";
+
+	case TemplatePipelineError::Spec_Search_Failed:
+			return "Spec_Search_Failed";
+
+	case TemplatePipelineError::Iris_Search_Failed:
+				return "Iris_Search_Failed";
+
+	case TemplatePipelineError::Eye_Focus_Estimate_Is_False:
+				return "Eye_Focus_Estimate_Is_False";
+
 	default:
 		return "(unrecognized error)";
 	}
