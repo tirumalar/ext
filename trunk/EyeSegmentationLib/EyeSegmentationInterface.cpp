@@ -385,7 +385,7 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 			bSegresult = m_AusSegment->m_Iris->GenerateFlatIris((unsigned char*)m_AusSegment->EyeCropHeader_320_240->imageData,(unsigned char*)m_AusSegment->m_flatIris->imageData,(unsigned char*)m_AusSegment->m_flatMask->imageData, eyecrop_width, eyecrop_height, irisPupilParams);
 		}
 
-		if(pCircles)
+		if(pCircles && bSegresult)
 		{
 			pCircles->ip.x = irisPupilParams.ip.x;
 			pCircles->ip.y = irisPupilParams.ip.y;
@@ -407,7 +407,10 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 				return true;
 			else
 				return false;
+		}else{
+			return bSegresult; // Bad Segmentation
 		}
+
 	}else{
 		////printf("*********entering GetIrisCode *************\n");
 		m_corruptBitcountPerc = 0.0f;
@@ -791,7 +794,7 @@ void EyeSegmentationInterface::GetSpecularityMask( unsigned char *Mask, int w, i
 }
 int EyeSegmentationInterface::checkBitCorruption( unsigned char *tag )
 {
-	printf("*********entering checkBitCorruption *************\n");
+	// printf("*********entering checkBitCorruption *************\n");
 	return m_pEyeFeatureServer->checkBitCorruption( tag );
 }
 int EyeSegmentationInterface::GetFeatureVariances(float *var)
