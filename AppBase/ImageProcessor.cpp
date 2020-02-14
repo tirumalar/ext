@@ -402,6 +402,7 @@ m_LedConsolidator = NULL;
 	// m_IrisToFaceMapCorrectionVal = pConf->getValue("Eyelock.IrisToFaceMapCorrectionFactor", 20);
 
 	bIrisToFaceMapDebug = pConf->getValue("Eyelock.IrisToFaceMapDebug", false);
+	m_bIrisToFaceMapDebugShowImage = pConf->getValue("Eyelock.IrisToFaceMapDebugShowImage", false);
 	if(bIrisToFaceMapDebug){
 		int ImageSize = m_Imagewidth * m_Imageheight;
 		m_FaceInfoForDebug.faceImagePtr = new unsigned char[ImageSize];
@@ -688,14 +689,14 @@ m_LedConsolidator = NULL;
 			unsigned short int Irisfind_min_pupil_Diameter = pConf->getValue("Eyelock.AusSegMinPupilDiameter", 16);
 			unsigned short int Irisfind_max_pupil_Diameter = pConf->getValue("Eyelock.AusSegMaxPupilDiameter", 60);
 
-			eyeSortingWrapObj->SetIrisDiameterThresholds(Irisfind_min_Iris_Diameter, Irisfind_max_Iris_Diameter*1.5);
+			eyeSortingWrapObj->SetIrisDiameterThresholds(Irisfind_min_Iris_Diameter, Irisfind_max_Iris_Diameter);
 			eyeSortingWrapObj->SetPupilDiameterThresholds(Irisfind_min_pupil_Diameter, Irisfind_max_pupil_Diameter);
 
 		}else{
 #if 0
 		eyeSortingWrapObj->SetIrisDiameterThresholds(70,170);
 #else
-		eyeSortingWrapObj->SetIrisDiameterThresholds(m_nMinIrisDiameter, m_expectedIrisWidth*1.5);//m_nMaxIrisDiameter); //DMOFIX!!! Need to hear back from Sarvesh...
+		eyeSortingWrapObj->SetIrisDiameterThresholds(m_nMinIrisDiameter, m_expectedIrisWidth);//m_nMaxIrisDiameter); //DMOFIX!!! Need to hear back from Sarvesh...
 #endif
 		}
 		// eyeSortingWrapObj->SetHaloScoreTopPoints(6, 10, 140, 240);
@@ -1572,8 +1573,10 @@ int ImageProcessor::validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Po
 				// Orange
 				putText(ColorfaceImage,m_ssCoInfo.str().c_str(),cv::Point(ptrF.x-m_ProjtextSize.width/2,ptrF.y+m_ProjtextSize.height/2), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv:: Scalar(0,165,255),2);
 			}
-			imshow("IrisToFaceMap", ColorfaceImage);
-			cvWaitKey(2);
+			if(m_bIrisToFaceMapDebugShowImage){
+				imshow("IrisToFaceMap", ColorfaceImage);
+				cvWaitKey(1);
+			}
 		}catch (cv::Exception& e) {
 			cout << e.what() << endl;
 		}
@@ -1656,8 +1659,10 @@ unsigned int ImageProcessor::validateLeftRightEyecrops(cv::Rect FaceCoord, cv::P
 			std::ostringstream ssCoInfo;
 			ssCoInfo << "+"; // ptrF.x << "," << ptrF.y;
 			putText(face,ssCoInfo.str().c_str(),cv::Point(ptrF.x,ptrF.y), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(128,128,128),2);
-			imshow("IrisToFaceMap", face);
-			cvWaitKey(2);
+			if(m_bIrisToFaceMapDebugShowImage){
+				imshow("IrisToFaceMap", face);
+				cvWaitKey(1);
+			}
 		}catch (cv::Exception& e) {
 			cout << e.what() << endl;
 		}
@@ -2667,17 +2672,15 @@ int CamIdLookup(int CameraId)
 
 void ImageProcessor::ShowIrisCameraPreview(IplImage *frame, int cam_idd)
 {
-	// Won't work in this release
-	FaceImageQueue FaceInfo;
 	cv::Mat mateye = cv::cvarrToMat(frame);
 	std::ostringstream ssCoInfo;
 	if(m_AdaptiveGain){
-		if(FaceInfo.FaceWidth && FaceInfo.FoundFace){
+		if(m_FaceInfoForDebug.FaceWidth && m_FaceInfoForDebug.FoundFace){
 			cv::Mat ColorIrisImage;
 			cv::cvtColor(mateye, ColorIrisImage, CV_GRAY2BGR);
-			int Gain = CalculateGainWithKH(FaceInfo.FaceWidth, cam_idd);
+			int Gain = CalculateGainWithKH(m_FaceInfoForDebug.FaceWidth, cam_idd);
 			// printf("ImageProcessor %d %d %d\n", cam_idd, FaceInfo.FaceWidth, Gain);
-			ssCoInfo << " CAM " << cam_idd  <<  (cam_idd & 0x80 ?  " AUX":" MAIN ") << " " << "FW=" << FaceInfo.FaceWidth << " " << "G=" << Gain;
+			ssCoInfo << " CAM " << cam_idd  <<  (cam_idd & 0x80 ?  " AUX":" MAIN ") << " " << "FW=" << m_FaceInfoForDebug.FaceWidth << " " << "G=" << Gain;
 			putText(ColorIrisImage,ssCoInfo.str().c_str(),cv::Point(40,100), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(0,0,255),2);
 			imshow("IrisCamera", ColorIrisImage);
 			cvWaitKey(1);
@@ -3339,15 +3342,9 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 		}
 	#endif
 
-		/*
 		if(m_IrisCameraPreview && (frame->imageData != NULL)){
-			cv::Mat mateye = cv::cvarrToMat(frame);
-			std::ostringstream ssCoInfo;
-			ssCoInfo << "CAM " <<  cam_idd  <<  (cam_idd & 0x80 ?  "AUX":"MAIN");
-			putText(mateye,ssCoInfo.str().c_str(),cv::Point(10,60), cv::FONT_HERSHEY_SIMPLEX, 1.5,cv::Scalar(255,255,255),2);
-			imshow("IrisCamera", mateye);
-			cvWaitKey(1);
-		}*/
+			ShowIrisCameraPreview(frame, cam_idd);
+		}
 
 		if(m_SaveFullFrame){
 			sprintf(filename,"InputImage_%d_%d.pgm", cam_idd, m_faceIndex);
@@ -3597,11 +3594,11 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 								}
 
 
-								// Check to see if the last sorting request gave us 2 good images...
-								std::pair<IrisDetail *, IrisDetail *> testimages = eyeSortingWrapObj->GetSortedPairEyesDetail();
+								// Check to see if the last sorting request gave us 2 good images... // Anita removed as it was giving not good eyes
+							//	std::pair<IrisDetail *, IrisDetail *> testimages = eyeSortingWrapObj->GetSortedPairEyesDetail();
 
-								if ((testimages.first != NULL) && (testimages.second != NULL))
-									terminate = true;
+						//		if ((testimages.first != NULL) && (testimages.second != NULL))
+						//			terminate = true;
 							}
 							 else
 							 {
@@ -4316,13 +4313,13 @@ bool ImageProcessor::CheckHaloAndBLC(DetectedEye *eye){
 
      if(tobesend)
      {
-    	 printf("************sending LED Detect************\n");
+    	 // printf("************sending LED Detect************\n");
     	 LEDResult ld;
     	 ld.setState(LED_DETECT);
     	 if(m_nwLedDispatcher)m_nwLedDispatcher->enqueMsg(ld);
     	 if(m_LedConsolidator)
     	 {
-    		 printf("************sending LED Detect - LEDCOnsi************\n");
+    		 // printf("************sending LED Detect - LEDCOnsi************\n");
     	 				if(m_LedConsolidator)m_LedConsolidator->enqueMsg(ld);
     	 }
      }

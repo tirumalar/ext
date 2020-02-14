@@ -394,6 +394,7 @@ private:
 	bool m_activeEyeSideLabeling;
 	bool m_IrisToFaceMapping;
 	bool bIrisToFaceMapDebug;
+	bool m_bIrisToFaceMapDebugShowImage;
 	bool bIrisToFaceMapValid;
 	unsigned int m_IrisToFaceMapCorrectionVal;
 	int m_IrisToFaceMapCorrectionValPLXx;

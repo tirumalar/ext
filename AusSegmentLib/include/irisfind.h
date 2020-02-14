@@ -178,7 +178,7 @@ public:
 	void ek_irisfind_init();
 	TemplatePipelineError ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE* line_ptr_flat_iris,
 			size_t eyecrop_width, size_t eyecrop_height, size_t flat_iris_width,
-			size_t flat_iris_height, IrisFindParameters& IrisPupilParams);
+			size_t flat_iris_height, IrisFindParameters& IrisPupilParams, int LogSegInfo);
 	void init_circles(uint16 lutCnt);
 	void SetIrisfind_Iris_Diameter(uint16 MinIrisDiameter,
 			uint16 MaxIrisDiameter);
@@ -260,8 +260,9 @@ private:
 	void dark_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
 	void pupil_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
 	TemplatePipelineError pupil_search_subpixel(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
-	TemplatePipelineError iris_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
+	void iris_search(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
 	TemplatePipelineError iris_search_subpixel(uint8 eyeCropIndex, size_t eyecrop_width, size_t eyecrop_height);
+
 };
 
 enum class IRLEDSequence {
