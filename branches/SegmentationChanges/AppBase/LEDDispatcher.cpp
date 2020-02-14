@@ -183,7 +183,7 @@ void LEDDispatcher::SetB() {
 }
 
 void LEDDispatcher::SetLEDValue(unsigned char mask) {
-	printf("****** enter SetLEDValue *****\n");
+	// printf("****** enter SetLEDValue *****\n");
 #if DO_RGB_ABSTRACTION
 	if (m_pRGBController)
 		m_pRGBController->SetRGB(mask);

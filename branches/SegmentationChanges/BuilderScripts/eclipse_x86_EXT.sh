@@ -1,6 +1,6 @@
 #!/bin/bash -e
 echo HOMEDIR  $HOME
-export EYELOCK_WS_EXT="${HOME}/workspace/trunk"
+export EYELOCK_WS_EXT="${HOME}/Anita/BinaryLogging/SegmentationChanges"
 
 if [ "${HOME}/workspace/eclipse" ];
 then

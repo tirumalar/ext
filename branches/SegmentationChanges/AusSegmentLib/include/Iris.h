@@ -21,6 +21,9 @@ class IrisSegmentation {
   float IrisFocus(uint8_t Iris[FLAT_IMAGE_SIZE], uint8_t Mask[FLAT_IMAGE_SIZE]);
   int GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uint8_t* partial_mask, size_t eyecrop_width, size_t eyecrop_height, IrisFindParameters& IrisPupilParams);
 
+  int m_LogSegInfo;
+
+  int LoadEyelockConfigINIFile();
  private:
   size_t _eyecrop_width;
   size_t _eyecrop_height;

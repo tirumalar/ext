@@ -2686,7 +2686,7 @@ void CmxHandler::HandleSendMsg(char *msg, unsigned short randomseed){
 			//BobSetCommand (BOB_COMMAND_SET_LED);
 
 		} else {
-				printf("SKIPPING AN LED COMMAND\n");
+				// printf("SKIPPING AN LED COMMAND\n");
 				len = sprintf(buf, "fixed_set_rgb(%d,%d,%d)\n", msg[2], msg[3], msg[4]);	// set_rgb(r,g,b)
 				printf("CMX: NOT sending %s\n",buf);
 
