@@ -14,6 +14,7 @@
 #include <random>
 #include <stdarg.h>
 
+#include <log4cxx/logger.h>
 #include <log4cxx/helpers/transcoder.h>
 #include <log4cxx/mdc.h>
 #include <LogImageJSON.h>
@@ -153,6 +154,13 @@ bool LogImageRecordJSON::SetImageData(uint8_t *pData, uint32_t width, uint32_t h
 {
 	m_arImageData.empty();
 
+	// If logging level for imglog is INFO, then we don't log the image itself, only the metadata...
+	log4cxx::LoggerPtr imglogger = log4cxx::Logger::getLogger("imglog.remoteimglog");
+	// If at least debug is not enabled, we skip the image data... but we still log the metadata...
+	// as long as remoteimglog.imglog config level is set to INFO or higher...
+	if (!imglogger->isDebugEnabled())
+		return true; // we skip all image data if INFO is enabled...
+
 	// For now, we always convert to PNG
 	Convert8bitGreyscaleToPNG(pData, width, height, m_arImageData);
 
@@ -214,12 +222,14 @@ string LogImageRecordJSON::GetObjectAsJSON()
 	theObject["ProcessingDurationMS"] = fp_ms.count();
 	theObject["DeviceType"] = m_nDeviceType;
 	theObject["DeviceID"] = m_sCaptureDeviceID;
+	theObject["ImageKey"] = m_sImageKey;
 	theObject["FrameID"] = m_nFrameID;
 	theObject["CameraID"] = m_nCamID;
 	theObject["FaceIndex"] = m_nFaceIndex;
 	theObject["HaarEyeCount"] = m_nNumOfHaarEyes;
 	theObject["SpecularityCount"] = m_nNumofSpecularities;
 	theObject["Discarded"] = m_bDiscarded;
+	theObject["DiscardedReason"] = m_sDiscardedReason;
 	theObject["EyeLabel"] = m_nEyeLabel;
 	theObject["ImageType"] = m_nImageType;
 	theObject["ImageFormat"] = m_nImageFormat;
@@ -259,7 +269,13 @@ string LogImageRecordJSON::GetObjectAsJSON()
 	theObject["IrisCircle"] = m_Iris;
 	theObject["TemplatePipelineError"] = m_TemplatePipelineError;
 
-	theObject["imageData"] = base64((char *)m_arImageData.data(), m_arImageData.size());
+	if (m_arImageData.size() > 0)
+		theObject["imageData"] = base64((char *)m_arImageData.data(), m_arImageData.size());
+	else
+		theObject["imageData"] = "";
+
+	json ptCustom(m_arCustomMetadata);
+	theObject["CustomMetadata"] = ptCustom;
 
 	return theObject.dump();
 }
@@ -269,9 +285,9 @@ LogImageRecordJSON *LogImageRecordJSON::put(const std::string& key, uint8_t *pDa
 {
 	char ptrString[16+3];
 
-	// DMOTODO check for existence of this image type first?
 	LogImageRecordJSON *pLogImage = new LogImageRecordJSON();
 	pLogImage->SetImageData(pData, width, height);
+	pLogImage->SetImageKey(key);
 
 	// Now we have our object created and we have image data in it...
 	// Create our UUID:LogImageRecordPtr value and put it into the MDC...
