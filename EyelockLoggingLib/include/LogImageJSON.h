@@ -175,6 +175,7 @@ public:
 	string  m_sCaptureDeviceID;	// DeviceID of the capturing device
 
 	// Frame/Crop/Camera specifics
+	string  m_sImageKey; // frame, crop, ???
 	int		m_nFrameID;  			// which Frame is this?
 	int		m_nCamID;
 	int		m_nFaceIndex;			// Which face image does this correspond to
@@ -182,6 +183,7 @@ public:
 	int		m_nNumofSpecularities;
 
 	bool 	m_bDiscarded;
+	string  m_sDiscardedReason;
 
 	int		m_nEyeLabel;
 	LogImageType		m_nImageType;
@@ -225,6 +227,8 @@ public:
 
 	vector<uint8_t> m_arImageData;
 
+	vector<string> m_arCustomMetadata;
+
 
 private:
 	uint8_t 		*m_pMemFileData;	// Memory byte[] representation for writing to disk...
@@ -252,6 +256,9 @@ public:
 	string GetDeviceID() { return m_sCaptureDeviceID; }
 	void SetDeviceID(string sDeviceID) { m_sCaptureDeviceID = sDeviceID; }
 
+	string GetImageKey(){ return m_sImageKey; }
+	void SetImageKey(string sKey) { m_sImageKey = sKey; }
+
 	int GetFrameID() { return m_nFrameID; }
 	void SetFrameID(int nFrameID) { m_nFrameID = nFrameID; }
 
@@ -269,6 +276,9 @@ public:
 
 	bool GetDiscarded() { return m_bDiscarded; }
 	void SetDiscarded(bool bDiscarded) { m_bDiscarded = bDiscarded; }
+
+	string GetDiscaredReason() { return m_sDiscardedReason; }
+	void SetDiscardedReason(string theReason) { m_sDiscardedReason = theReason; }
 
 	int GetEyeLabel() { return m_nEyeLabel; }
 	void SetEyeLabel(int nEyeLabel) { m_nEyeLabel = nEyeLabel; }
@@ -361,8 +371,8 @@ public:
 
 public:
 	// Get time as string in constructor...
-	LogImageRecordJSON() : 	m_lFrameUUID(0L), m_sDateTime(""), m_lTimeStampMS(0L), m_nDeviceType(0),	m_sCaptureDeviceID(""), m_nFrameID(0),
-							m_nCamID(0), m_nFaceIndex(0), m_nNumOfHaarEyes(0), m_nNumofSpecularities(0), m_bDiscarded(false),
+	LogImageRecordJSON() : 	m_lFrameUUID(0L), m_sDateTime(""), m_lTimeStampMS(0L), m_nDeviceType(0),	m_sCaptureDeviceID(""), m_sImageKey(""),  m_nFrameID(0),
+							m_nCamID(0), m_nFaceIndex(0), m_nNumOfHaarEyes(0), m_nNumofSpecularities(0), m_bDiscarded(false), m_sDiscardedReason(""),
 							m_nEyeLabel(SUBJECT_EYE_LABEL_UNDEF), m_nImageType(FACE), m_nImageFormat(IMAGEFORMAT_MONO_RAW),
 							m_nImageProperties(0), m_nImageWidth(0), m_nImageHeight(0),	m_nBitDepth(8),	m_sCaptureSession("Default"),
 							m_fSharpness(0.0), m_irisScore(0), m_darkScore(0), m_specScore(0), m_pupilScore(0), m_validBitsInTemplate(0),
@@ -429,6 +439,7 @@ public:
 
 	void AddEyeDetectionPoint(LogImagePoint thePoint) { m_arEyeDetectionPoints.push_back(thePoint); }
 	void AddEyeDetectionCropRect(LogImageRect theRect) { m_arEyeDetectionCropRects.push_back(theRect); }
+	void AddCustomMetadata(string theMetadata) { m_arCustomMetadata.push_back(theMetadata); }
 
 	string GetObjectAsJSON();
 

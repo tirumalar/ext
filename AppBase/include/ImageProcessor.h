@@ -26,6 +26,10 @@
 #include "NanoFocusSpecularityBasedSpoofDetector.h"
 #include "CommonDefs.h"
 #include "HTTPPOSTMsg.h"
+#include <EyelockLogging.h>
+
+
+
 
 #ifdef IRIS_CAPTURE
 	#include "PostMessages.h"
@@ -149,6 +153,14 @@ public:
 protected:
 #endif
 	
+
+	log4cxx::LoggerPtr eyelocklogger;
+	log4cxx::LoggerPtr imglogger;
+	LogImageRecordJSON *pLogFrame; // ptr to the current "frame" logImage
+	LogImageRecordJSON *pLogCrop; // ptr to the current "crop" logImage
+	LogImageRecordJSON *pLogFace; // ptr to the current "face" logImage
+
+
     bool m_tsDestAddrpresent;
     ProcessorChain *m_nwLedDispatcher;
     ProcessorChain *m_LedConsolidator;
@@ -423,7 +435,7 @@ private:
     float getUnscaledAngleComponent(float offsetBaseline, float cameraOffset, float magIrisBaseline, int irisSize, int faceSize);
     float getfaceDistance(int pixelFaceboxWidth);
     cv::Point2i projectPoints_IristoFace_Parallax(cv::Point2i ptrI, cv::Point2f camOffset, cv::Point2f angComp, float irisEFL, float distanceMM);
-    int validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Point2i ptrI, int CameraId, unsigned char *faceImagePtr, int m_faceIndex);
+    int validateLeftRightEyecropsParallax(cv::Rect FaceCoord, cv::Point2i ptrI, int FrameId, int CameraId, unsigned char *faceImagePtr, int m_faceIndex);
     bool IsPointInsideLeftRect(const cv::Point pt, cv::Rect leftRect);
     bool IsPointInsideRightRect(const cv::Point pt, cv::Rect rightRect);
     cv::Rect m_BScaledFaceRect;
