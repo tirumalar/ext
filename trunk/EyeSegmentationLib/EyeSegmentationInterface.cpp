@@ -10,6 +10,8 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+// #include <EyelockLogging.h>
+
 //#include "FFTVarSpoofDetector.h"
 
 // #define PROFILE
@@ -396,6 +398,38 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 			pCircles->pp.r = irisPupilParams.pp.r;
 			// printf("%f %f %f\n", pCircles->ip.x, pCircles->ip.y, pCircles->ip.r);
 		}
+#ifdef BINARY_LOGGING
+		// Update our Debugging Crop with the segmentation data
+		log4cxx::LoggerPtr imglogger = log4cxx::Logger::getLogger("imglog");
+
+		LogImageRecordJSON *pLogCrop; // ptr to the current "crop" logImage
+		EYELOCK_MODIFYLOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);
+
+		if (NULL != pLogCrop)
+		{
+			LogImageCircle theCircle;
+
+			theCircle.m_nPointX = irisPupilParams.pp.x;
+			theCircle.m_nPointY = irisPupilParams.pp.y;
+			theCircle.m_nRadius = irisPupilParams.pp.r;
+			pLogCrop->AddSegPupilCircle(theCircle);
+
+			theCircle.m_nPointX = irisPupilParams.ip.x;
+			theCircle.m_nPointY = irisPupilParams.ip.y;
+			theCircle.m_nRadius = irisPupilParams.ip.r;
+
+			pLogCrop->AddSegIrisCircle(theCircle);
+
+			pLogCrop->SetTemplatePipelineError((int)irisPupilParams.eIrisError);
+			pLogCrop->SetGazeZ(irisPupilParams.GazeVal);
+			pLogCrop->SetEyelidCoverage(irisPupilParams.eyelidCoverage);
+			pLogCrop->SetUseableIrisArea(irisPupilParams.Usable_Iris_Area);
+			pLogCrop->SetPupilToIrisRatio(irisPupilParams.PupilToIrisRatio);
+			pLogCrop->SetIrisScore(irisPupilParams.IrisScore);
+			pLogCrop->SetDarkScore(irisPupilParams.darkScore);
+			pLogCrop->SetSpecScore(irisPupilParams.SpecScore);
+		}
+#endif
 		m_pEyeSegmentServer->m_iseye = true; // Needed for sorting
 
 		// printf("bSegresult.....%d\n", bSegresult);
