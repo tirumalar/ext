@@ -29,7 +29,7 @@
 #include <EyelockLogging.h>
 
 
-
+// #define BINARY_LOGGING
 
 #ifdef IRIS_CAPTURE
 	#include "PostMessages.h"
@@ -153,13 +153,13 @@ public:
 protected:
 #endif
 	
-
+#ifdef BINARY_LOGGING
 	log4cxx::LoggerPtr eyelocklogger;
 	log4cxx::LoggerPtr imglogger;
 	LogImageRecordJSON *pLogFrame; // ptr to the current "frame" logImage
 	LogImageRecordJSON *pLogCrop; // ptr to the current "crop" logImage
 	LogImageRecordJSON *pLogFace; // ptr to the current "face" logImage
-
+#endif
 
     bool m_tsDestAddrpresent;
     ProcessorChain *m_nwLedDispatcher;
