@@ -29,7 +29,7 @@
 #include <EyelockLogging.h>
 
 
-// #define BINARY_LOGGING
+#define BINARY_LOGGING
 
 #ifdef IRIS_CAPTURE
 	#include "PostMessages.h"
