@@ -896,7 +896,18 @@ upgrade()
 	#fi
 	
 	upgradeOim
-
+	upgradeOimStatus=$?
+	if [[ ${upgradeOimStatus} -ne 0 ]]
+	then
+		${logger} -L"Error: OIM upgrade failed."
+		${logger} -L"STATUS:UNSUCCESSFUL"
+		${logger} -L"Device will be rebooted."
+		sleep 5
+		cleanup
+		rebootDevice
+		exit 7
+	fi
+	
 	# adding upgrade event to logs
 	NOW=$(date -u +"%Y-%m-%d %T, %Z")
 	echo "$NOW > SW Upgrade: AppVer: ${nanoVersion}; ICM FW: ${bobVersion}" >> /home/root/nxtEvent.log
