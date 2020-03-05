@@ -304,22 +304,22 @@ LevelPtr OptionConverter::toLevel(const LogString& value,
 ObjectPtr OptionConverter::instantiateByKey(Properties& props, const LogString& key,
         const Class& superClass, const ObjectPtr& defaultValue)
 {
-    LogLog::error((LogString) LOG4CXX_STR("DMOIBK 1"));
+  //  LogLog::error((LogString) LOG4CXX_STR("DMOIBK 1"));
 
         // Get the value of the property in string form
         LogString className(findAndSubst(key, props));
-        LogLog::error((LogString) LOG4CXX_STR("DMOIBK 2"));
+      //  LogLog::error((LogString) LOG4CXX_STR("DMOIBK 2"));
 
         if(className.empty())
         {
-            LogLog::error((LogString) LOG4CXX_STR("DMOIBK 3"));
+            //LogLog::error((LogString) LOG4CXX_STR("DMOIBK 3"));
 
                 LogLog::error(
                    ((LogString) LOG4CXX_STR("Could not find value for key ")) + key);
                 return defaultValue;
         }
 
-        LogLog::error((LogString) LOG4CXX_STR("DMOIBK 4"));
+       // LogLog::error((LogString) LOG4CXX_STR("DMOIBK 4"));
 
         // Trim className to avoid trailing spaces that cause problems.
         return OptionConverter::instantiateByClassName(
@@ -329,42 +329,42 @@ ObjectPtr OptionConverter::instantiateByKey(Properties& props, const LogString& 
 ObjectPtr OptionConverter::instantiateByClassName(const LogString& className,
         const Class& superClass, const ObjectPtr& defaultValue)
 {
-    LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 1"));
+   // LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 1"));
 
         if(!className.empty())
         {
-            LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 2"));
+          //  LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 2"));
 
                 try
                 {
-                    LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 3 [") + className + LOG4CXX_STR("]"));
+                   // LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 3 [") + className + LOG4CXX_STR("]"));
 
                         const Class& classObj = Loader::loadClass(className);
 
-                        LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 3.1"));
+                     //   LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 3.1"));
 
                         ObjectPtr newObject =  classObj.newInstance();
-                        LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 3.2"));
+                      //  LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 3.2"));
 
                         if (!newObject->instanceof(superClass))
                         {
-                            LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 4"));
+                           // LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 4"));
 
                                 return defaultValue;
                         }
-                        LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 5"));
+                       // LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 5"));
 
                         return newObject;
                 }
                 catch (Exception& e)
                 {
-                    LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 6"));
+                   // LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 6"));
 
                         LogLog::error(LOG4CXX_STR("Could not instantiate class [") +
                                 className + LOG4CXX_STR("]."), e);
                 }
         }
-        LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 7"));
+     //   LogLog::error((LogString) LOG4CXX_STR("DMOIBCN 7"));
 
         return defaultValue;
 }

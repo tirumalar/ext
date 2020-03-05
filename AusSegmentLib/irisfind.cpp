@@ -1138,7 +1138,7 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
   dark_search(0, eyecrop_width, eyecrop_height);
 
   if(LogSegInfo)
-	  printf("darkFound[0].......%d\n", darkFound[0]);
+	  printf("darkFound[0] :%d darkScore[0] :%d\n", darkFound[0], darkScore[0]);
 
   if (darkFound[0]) {
     // make gradients of eye crop
@@ -1164,10 +1164,14 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
     // TBD: note that segmentation is allowed to continue if spec search fails
     //
     if(LogSegInfo)
-    	printf("specFound[0].......%d\n", specFound[0]);
+    	printf("specFound[0] :%d specScore[0] :%d\n", specFound[0], specScore[0]);
 
     if (specFound[0]) {
       pupil_search(0, eyecrop_width, eyecrop_height);
+
+      if(LogSegInfo)
+    	  printf("pupilFound[0]:%d pupilScore[0]:%d\n", pupilFound[0], pupilScore[0]);
+
       if (pupilFound[0]) {
         iris_search(0, eyecrop_width, eyecrop_height);
       }else{
@@ -1188,7 +1192,8 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
     // float32.
     //
     if(LogSegInfo)
-    	printf("irisFound[0].......%d\n", irisFound[0]);
+    	printf("irisFound[0] :%d irisScore[0] :%d\n", irisFound[0], irisScore[0]);
+
     if (irisFound[0]) {
       pupil_search_subpixel(0, eyecrop_width, eyecrop_height);
 
@@ -1246,7 +1251,7 @@ TemplatePipelineError Irisfind::ek_irisfind_main(PLINE* line_ptr_eyecrop, PLINE*
 		IrisPupilParams.PupilScore = pupilScore[0];
 
 		if(LogSegInfo)
-			printf("gaze....%f\n", gaze[0].z);
+			printf("Gaze:%f\n", gaze[0].z);
 
 		if(gaze[0].z > gaze_radius_thresh)
 			eIrisError = TemplatePipelineError::Gaze_out_of_range;

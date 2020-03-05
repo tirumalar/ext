@@ -20,6 +20,7 @@
 
 #include "FileConfiguration.h"
 #include "NwListener.h"
+#include "RemoteConfigServer.h"
 #include "CircularAccess.h"
 #include "Safe.h"
 #include "HTTPPOSTMsg.h"
@@ -41,6 +42,7 @@
 #include "SDKDispatcher.h"
 #include "MasterSlaveNwListner.h"
 #include "CmxHandler.h"
+
 
 class RGBController;
 class AudioDispatcher;
@@ -80,6 +82,7 @@ public:
 	FileConfiguration conf;
 private:
 	NwListener nwListener;
+	RemoteConfigServer LogConfigServer;	// For remote logging configuration...
 	LEDDispatcher *pledDispatcher;
 	LEDConsolidator *pledConsolidator;
 	NwLEDDispatcher *pnwLEDDispatcher;

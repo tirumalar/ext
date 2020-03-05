@@ -114,20 +114,20 @@ Class::ClassMap& Class::getRegistry() {
 
 const Class& Class::forName(const LogString& className)
 {
-    LogLog::error((LogString) LOG4CXX_STR("DMOFN 1"));
+    //LogLog::error((LogString) LOG4CXX_STR("DMOFN 1"));
 
         LogString lowerName(StringHelper::toLowerCase(className));
 
-        LogLog::error((LogString) LOG4CXX_STR("DMOFN 2"));
+       /// LogLog::error((LogString) LOG4CXX_STR("DMOFN 2"));
 
         //
         //  check registry using full class name
         //
         const Class* clazz = getRegistry()[lowerName];
-        LogLog::error((LogString) LOG4CXX_STR("DMOFN 2.1"));
+       // LogLog::error((LogString) LOG4CXX_STR("DMOFN 2.1"));
 
         if (clazz == 0) {
-            LogLog::error((LogString) LOG4CXX_STR("DMOFN 3"));
+       //     LogLog::error((LogString) LOG4CXX_STR("DMOFN 3"));
 
             LogString::size_type pos = className.find_last_of(LOG4CXX_STR(".$"));
             if (pos != LogString::npos) {
@@ -145,15 +145,15 @@ const Class& Class::forName(const LogString& className)
                 clazz = getRegistry()[lowerName];
             }
         }
-        LogLog::error((LogString) LOG4CXX_STR("DMOFN 4"));
+      //  LogLog::error((LogString) LOG4CXX_STR("DMOFN 4"));
 
         if (clazz == 0) {
-            LogLog::error((LogString) LOG4CXX_STR("DMOFN 5"));
+         //   LogLog::error((LogString) LOG4CXX_STR("DMOFN 5"));
 
             throw ClassNotFoundException(className);
         }
 
-        LogLog::error((LogString) LOG4CXX_STR("DMOFN 6"));
+      //  LogLog::error((LogString) LOG4CXX_STR("DMOFN 6"));
 
         return *clazz;
 }

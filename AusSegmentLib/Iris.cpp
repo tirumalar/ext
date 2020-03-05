@@ -166,7 +166,7 @@ int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uin
   eIrisError = m_iris_find->ek_irisfind_main(_line_ptr_crop, _line_ptr_flat, eyecrop_width, eyecrop_height, _flat_iris_width, _flat_iris_height, IrisPupilParams, m_LogSegInfo);
 
   if(m_LogSegInfo)
-	  printf("eIrisError ek_irisfind_main...........%d\n", eIrisError);
+	  printf("eIrisError ek_irisfind_main:%d\n", eIrisError);
   //
   // extract the "last human" flag from the "spoof detection" sub-struct
   // of the "live detection" struct
@@ -187,7 +187,7 @@ int IrisSegmentation::GenerateFlatIris(uint8_t* eyecrop, uint8_t* flat_iris, uin
 
 		  // printf("_eyelid.coverage....%f  %f _PIVThreshold %f\n", _eyelid.coverage[0], (1.0- _eyelid.coverage[0]), _PIVThreshold);
 	 if(m_LogSegInfo)
-		 printf("eIrisError ek_eyelid_main...........%d \n", eIrisError);
+		 printf("eIrisError ek_eyelid_main  :%d\n", eIrisError);
 
 	  if((1.0 - _eyelid.coverage[0]) < _PIVThreshold){
 		  eIrisError = TemplatePipelineError::Usable_Iris_Area_not_sufficient;

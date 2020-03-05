@@ -1,6 +1,7 @@
 // EyelockBinaryAppender.cpp
 
 #include <stdio.h>
+#include <sys/stat.h>
 #include <log4cxx/appenderskeleton.h>
 #include <log4cxx/spi/loggingevent.h>
 #include <log4cxx/helpers/loglog.h>
@@ -39,15 +40,92 @@ using namespace std;
             m_os.write(theData.data(), theData.size());
 
             if (m_bImmediateFlush)
-            {
                 m_os.flush();
-            }
+
+            // Now that we have written the file...
+            // Check for rollover, and roll it over if necessary...
+            rollover(p);
         }
         catch (IOException ex)
         {
             LogLog::error((LogString) LOG4CXX_STR("[EyelockBinaryAppender:  ]Not allowed to write to a closed appender."));
         }
     }
+
+
+	bool EyelockBinaryAppender::rollover(Pool& p)
+	{
+	    synchronized sync(mutex);
+
+	    try
+	    {
+	    	// Check fileLength to see if it's time to Rollover...
+			long lSize = GetFileSize(m_sFilename);
+
+			if (-1 == lSize)
+			{
+				return false; // Didn't rollover...
+			}
+			else
+			{
+				if (lSize > m_MaxFileSize) // Need to rollover...
+				{
+					char szTemp[16];
+					int nCurrentIndex = m_MaxBackupIndex;
+
+					closeFile();
+
+					// Now, delete the highest file...
+					string theFile = m_sFilename;
+					sprintf(szTemp, ".%d", m_MaxBackupIndex);
+					theFile += szTemp;
+
+					// If successfully removed...
+					remove(theFile.c_str()); // It may or may not exist, so this call could fail (which we ignore)
+
+					// Rename the other files...
+					do
+					{
+						string theFromFile = m_sFilename;
+
+						if (nCurrentIndex > 1)
+						{
+							sprintf(szTemp, ".%d", nCurrentIndex-1);
+							theFromFile += szTemp;
+						}
+
+						string theToFile = m_sFilename;
+						sprintf(szTemp, ".%d", nCurrentIndex);
+						theToFile += szTemp;
+
+						rename(theFromFile.c_str(), theToFile.c_str());
+						printf("Renaming: From %s, To %s\n", theFromFile.c_str(), theToFile.c_str());
+
+						nCurrentIndex--;
+					}while (nCurrentIndex > 0);
+
+					// Now, create/open the new file...
+					setFile(m_sFilename, m_bAppend);
+
+					return true;
+				}
+			}
+	    }
+	    catch (std::exception& ex)
+	    {
+	    	LogLog::warn(LOG4CXX_STR("Exception during rollover"));
+	    }
+
+	  return false;
+	}
+
+	long EyelockBinaryAppender::GetFileSize(std::string filename)
+	{
+	    struct stat stat_buf;
+	    int rc = stat(filename.c_str(), &stat_buf);
+
+	    return rc == 0 ? stat_buf.st_size : -1;
+	}
 
 
     void EyelockBinaryAppender::activateOptions(Pool& pool)
@@ -83,6 +161,19 @@ using namespace std;
             {
                     synchronized sync(mutex);
                     m_bAppend = OptionConverter::toBoolean(value, true);
+            }
+            else if (StringHelper::equalsIgnoreCase(option, LOG4CXX_STR("MAXFILESIZE"), LOG4CXX_STR("maxfilesize")))
+            {
+					synchronized sync(mutex);
+					// Default... 1 gig...
+					m_MaxFileSize = OptionConverter::toFileSize(value, 1024*1024*1024);
+					printf("MaxFileSize = %ld\n", m_MaxFileSize);
+            }
+            else if (StringHelper::equalsIgnoreCase(option, LOG4CXX_STR("MAXBACKUPINDEX"), LOG4CXX_STR("maxbackupindex")))
+            {
+                    synchronized sync(mutex);
+                    m_MaxBackupIndex = OptionConverter::toInt(value, 2);
+                	printf("m_MaxBackupIndex = %d\n", m_MaxBackupIndex);
             }
     }
 
