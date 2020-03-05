@@ -59,7 +59,7 @@ extern void *init_facetracking(void * arg);
 enum LEDType { MiniLED, NanoLED, EyelockLED, PicoLED, NoLED }; // TODO: Make LEDControllerFctory for thisvoid
 const char logger[30] = "EyelockMain";
 
-EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),pMatchProcessor(0),pNwDispatcher(0),pImageProcessor(0),
+EyeLockMain::EyeLockMain(char* filename):conf(filename),nwListener(conf),LogConfigServer(conf), pMatchProcessor(0),pNwDispatcher(0),pImageProcessor(0),
 			   pF2FDispatcher(0),pDBReceive(0),pledDispatcher(0),pEyeDispatcher(0),pNwMatchManager(0),m_SendLed(true),m_curval(0),
 			   m_outMsg(256),m_FuturisticTime(0),m_svrAddr(0),m_Debug(false),m_Master(false),m_Slave(false),pEyelockNanoSdkThread(NULL),
 			   pAudioDispatcher(0), m_pLiquidLens(0),pLoiteringDetector(0),m_matchDispatcher(0),pledConsolidator(0),pnwLEDDispatcher(0),
@@ -812,6 +812,11 @@ void EyeLockMain::startWithMatching(){
 
 	#endif
 
+		//printf("LOGCONFIG.BEGIN()\n");
+		LogConfigServer.Begin();
+		//printf("LOGCONFIG.AFTER()\n");
+
+
 		//match dispatcher
 		if(m_matchDispatcher)
 		{
@@ -844,6 +849,9 @@ void EyeLockMain::stopEverything()
 		nwListener.End();
 	}
 #endif
+
+	EyelockLog(logger, INFO, "LogConfigServer::End");
+	LogConfigServer.End();
 
 	EyelockLog(logger, INFO, "NwDispatcher::End");
 	if(pNwDispatcher)
@@ -978,6 +986,8 @@ void EyeLockMain::PushAllThreads(){
 #ifdef __NW_THREAD__
 	m_Threads.push_back(&nwListener);
 #endif
+
+	m_Threads.push_back(&LogConfigServer);
 }
 
 bool EyeLockMain::AreCamerasHealthy()

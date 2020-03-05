@@ -10,7 +10,9 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-// #include <EyelockLogging.h>
+#include <EyelockLogging.h>
+
+#define BINARY_LOGGING
 
 //#include "FFTVarSpoofDetector.h"
 
@@ -400,7 +402,7 @@ bool EyeSegmentationInterface::GetIrisCode(unsigned char *imageBuffer, int w, in
 		}
 #ifdef BINARY_LOGGING
 		// Update our Debugging Crop with the segmentation data
-		log4cxx::LoggerPtr imglogger = log4cxx::Logger::getLogger("imglog");
+		log4cxx::LoggerPtr imglogger = log4cxx::Logger::getLogger("imglog.remoteimglog");
 
 		LogImageRecordJSON *pLogCrop; // ptr to the current "crop" logImage
 		EYELOCK_MODIFYLOGIMAGE_DEBUG(imglogger, "crop", pLogCrop);

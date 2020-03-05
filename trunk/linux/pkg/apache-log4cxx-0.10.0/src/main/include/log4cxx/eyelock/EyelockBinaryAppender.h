@@ -37,7 +37,7 @@ namespace log4cxx
 		END_LOG4CXX_CAST_MAP()
 
 
-		EyelockBinaryAppender() : m_bImmediateFlush(true), m_bAppend(true) { };
+		EyelockBinaryAppender() : m_bImmediateFlush(true), m_bAppend(true), m_MaxFileSize(1024*1024*1024), m_MaxBackupIndex(2) { };
 		virtual ~EyelockBinaryAppender() {};
 
 	private:
@@ -47,6 +47,8 @@ namespace log4cxx
 			//fields
 			string m_sFilename;
 			bool m_bAppend;
+			long m_MaxFileSize;
+			int	m_MaxBackupIndex;
 
 		    //getter & setter methods
 		    string getFile() { return m_sFilename; }
@@ -78,6 +80,8 @@ namespace log4cxx
 		    void setFile(string sFilename, bool append);
 		    bool checkEntryConditions();
 			bool isClosed() const { return closed; }
+			bool rollover(Pool& p);
+			long GetFileSize(std::string filename);
 
 
 			//const std::vector<spi::LoggingEventPtr>& getVector() const
