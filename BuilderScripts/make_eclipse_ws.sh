@@ -5,12 +5,12 @@ echo "Removing the existing workspace"
 rm -rf "${EYELOCK_WS_EXT}/.metadata"
 
 projects=(
+EyelockLoggingLib
 AppBase
 AusSegmentLib
 BiOmega
 EdgeImage
 EyeDetection
-EyelockLoggingLib
 Eyelock
 EyelockConfigurationLib
 EyeSegmentationLib
