@@ -11,16 +11,16 @@ then
 fi
 
 projects=(
-AusSegmentLib
-EyelockLoggingLib
 BiOmega
 EdgeImage
+EyelockLoggingLib
 EyeDetection
 MamigoBaseIPL
 EyeSegmentationLib
 EyeSortingLib
 HttpPostSender
 ISOBiometricCodecLib
+AusSegmentLib
 EyeTracking
 FocusEyeSelector
 mamigoShared
