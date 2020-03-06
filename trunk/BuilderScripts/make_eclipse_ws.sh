@@ -5,12 +5,12 @@ echo "Removing the existing workspace"
 rm -rf "${EYELOCK_WS_EXT}/.metadata"
 
 projects=(
-EyelockLoggingLib
 AppBase
 AusSegmentLib
 BiOmega
 EdgeImage
 EyeDetection
+EyelockLoggingLib
 Eyelock
 EyelockConfigurationLib
 EyeSegmentationLib
@@ -27,9 +27,9 @@ nxtW
 KeyMgr
 icm_communicator_EXT
 MultiChannelLogger
-EXTFaceDetection/CLM
-EXTFaceDetection/facedetect
-EXTFaceDetection/FaceTracker
+#EXTFaceDetection/CLM
+#EXTFaceDetection/facedetect
+#EXTFaceDetection/FaceTracker
 ExtFactoryTools/ExtCapture
 i2cHandler
 )
