@@ -127,10 +127,13 @@ function defineStrings($HardwareType)
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL", "General");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE", "DHCP Mode:");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION", "Stateless");
-                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "Stateful");
+
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "Normal");
+
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_AUTO", "Auto");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE", "Off");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_ADDRESS_PREFIX_LENGTH", "IPv6 Address/Subnet Prefix Length:");
+
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "Default Gateway:");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "DNS Server 1:");
                 define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS Server 2:");
@@ -144,6 +147,17 @@ function defineStrings($HardwareType)
             define("SSL_PROTOCOL_LEGEND", "SSL Protocol");
             define("SSLPROTO_DEFAULT", "Legacy");
             define("SSLPROTO_TLS12", "TLS 1.2 (Only)");
+
+            define ("NETWORK_CERTIFICATES_GROUPTITLE", "Certificates");
+            define ("NETWORK_CACERT", "CA Certificate:");
+            define ("NETWORK_CLIENTCERT", "Client Certificate:");
+            define ("NETWORK_CLIENTPRIVATEKEY", "Client Private Key (and Certificate):");
+            define ("NETWORK_CERTIFICATES_SETTINGS_GROUPTITLE", "Settings");
+            define ("NETWORK_EAPOLVERSION", "EAPOL Version:");
+            define ("NETWORK_EAPIDENTITY", "EAP Identity:");
+            define ("NETWORK_PRIVTEKEYPWD", "Private Key Password:");
+
+            define ("NETWORK_EAPOLVERSION", "EAPOL バージョン:");
 
             define ("NETWORK_SETTINGS_ENABLEIEEE8021X", "Enable IEEE 802.1X");
             define ("NETWORK_SETTINGS_NOCERTIFICATE", "No Certificate File Uploaded");
@@ -335,8 +349,8 @@ function defineStrings($HardwareType)
             define ("ACP_PROTOCOL_GROUPTITLE", "Access Control Protocol");
             define ("ACP_PROTOCOL_PROTOCOL", "Protocol:");
             define ("ACP_PROTOCOL_DUALAUTHENABLEDLABEL", "Dual Factor Authentication");
-             define ("ACP_PROTOCOL_TEMPLATEONCARD", "Portable Templates");
-             define ("ACP_PROTOCOL_TEMPLATEONCARDPASS", "Single Factor Authentication");
+             define ("ACP_PROTOCOL_TEMPLATEONCARD", "ポータブル テンプレート");
+             define ("ACP_PROTOCOL_TEMPLATEONCARDPASS", "1 要素認証");
              
                define ("ACP_PROTOCOL_DUALAUTHPARITY", "Check Parity Bits");
             define ("ACP_PROTOCOL_DUALAUTHLEDENABLEDLABEL", "LED Controlled by ACS");
@@ -1151,6 +1165,15 @@ function defineStrings($HardwareType)
         define("SSL_PROTOCOL_LEGEND", "SSL Protocol");
         define("SSLPROTO_DEFAULT", "Legacy");
         define("SSLPROTO_TLS12", "TLS 1.2 (Only)");
+            define ("NETWORK_CERTIFICATES_GROUPTITLE", "Certificates");
+            define ("NETWORK_CACERT", "CA Certificate:");
+            define ("NETWORK_CLIENTCERT", "Client Certificate:");
+            define ("NETWORK_CLIENTPRIVATEKEY", "Client Private Key (and Certificate):");
+            define ("NETWORK_CERTIFICATES_SETTINGS_GROUPTITLE", "Settings");
+            define ("NETWORK_EAPOLVERSION", "EAPOL Version:");
+            define ("NETWORK_EAPIDENTITY", "EAP Identity:");
+            define ("NETWORK_PRIVTEKEYPWD", "Private Key Password:");
+		
         define ("NETWORK_SETTINGS_ENABLEIEEE8021X", "Enable IEEE 802.1X");
         define ("NETWORK_SETTINGS_NOCERTIFICATE", "No Certificate File Uploaded");
         define ("NETWORK_SETTINGS_NOKEY", "No Private Key Uploaded");
@@ -1794,6 +1817,15 @@ function defineStrings($HardwareType)
             define("SSL_PROTOCOL_LEGEND", "SSL Protocolo");
             define("SSLPROTO_DEFAULT", "Legacy");
             define("SSLPROTO_TLS12", "TLS 1.2 (Only)");
+
+            define ("NETWORK_CERTIFICATES_GROUPTITLE", "Certificates");
+            define ("NETWORK_CACERT", "CA Certificate:");
+            define ("NETWORK_CLIENTCERT", "Client Certificate:");
+            define ("NETWORK_CLIENTPRIVATEKEY", "Client Private Key (and Certificate):");
+            define ("NETWORK_CERTIFICATES_SETTINGS_GROUPTITLE", "Settings");
+            define ("NETWORK_EAPOLVERSION", "EAPOL Version:");
+            define ("NETWORK_EAPIDENTITY", "EAP Identity:");
+            define ("NETWORK_PRIVTEKEYPWD", "Private Key Password:");
 
             define ("NETWORK_SETTINGS_ENABLEIEEE8021X", "Ativar IEEE 802.1X");
             define ("NETWORK_SETTINGS_NOCERTIFICATE", "No Certificate File Uploaded");
@@ -2777,16 +2809,807 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
 			define("DISCONNECTWARNING","Não feche o navegador, desligue o ".$NXTText." ou remova a conexão de rede durante este processo.");
 			break;
 
+        case "jp":
+        //////////////////////////////////////////////////////
+        // LOGIN PAGE
+        //////////////////////////////////////////////////////
+            define("TITLE_NANOLOGIN", $NXTText." ログイン");
+            define("LOGIN_USERNAME", "ユーザー名");
+            define("LOGIN_PASSWORD", "パスワード");
+            define("LOGIN_LOGIN", "ログイン");
+            define("LOGIN_FORGOTPASSWORD", "パスワードをお忘れですか?");
+            define("LOGIN_USER_GROUPTITLE", "ユーザー ログイン レベル");
+
+			//
+			//License page
+			//
+			define("TITLE_LICENSE_KEY", "Nano ライセンス キー");
+			define("LK_ENTER_LICENSE_KEY_HEADER", "ライセンス キーの入力");
+			define("LK_ENTER_KEY_TEXT", "".$NXTText." パッケージに含まれているライセンス <br>キー カードにあるライセンス キーを入力してください。");
+			define("LK_DEFAULT_TEXT", "ライセンス キー...");
+			define("LK_BTN_ACTIVATE_TEXT", "アクティブ化");
+			define("LK_INVALID_LICENSE", "入力されたライセンス キーが無効です。");
+			  define("SUBMIT_BUTTON", "保存");
+			 define("CANCEL_BUTTON", "キャンセル");
+			define("DLGBTN_CONTINUE","続行");
+        //////////////////////////////////////////////////////
+        // CONFIGURATION PAGE
+        //////////////////////////////////////////////////////
+            define("TITLE_NANOCONFIG", $NXTText." の構成");
+            define("TITLE_HELP", "ヘルプ設定");
+            define("TITLE_LOGOUT", "ログアウト");
+			   define("HEADER_LICENSE", "ライセンス");
+			
+			
+				 define ("NWMS_TEST_FAILED","NWMS テスト失敗");
+			define ("NWMS_TEST_SUCCESS","NWMS テスト成功");
+			define ("NWMS_SUCCESS_DETAIL","Network Matcher がターゲット アドレスで見つかりました。");
+				define ("NWMS_FAIL_DETAIL_NOTFOUND","Network Matcher がターゲット アドレスで見つかりませんでした。");
+				define ("NWMS_FAIL_DETAIL_INVALID","テストの応答が無効です。nano が動作中であることを確認してください。");
+			define("SESSION_TIMEOUT_WARNING", "セッションの有効期限がまもなく切れます");
+			define("SESSION_TIMEOUT_CONTINUE", "ログインしたままにするには [続行] をクリックしてください。");
+			
+            //////////////////////////////////////////////////////
+            // HOME TAB STRINGS
+            //////////////////////////////////////////////////////
+            define ("HOME_TABLABEL", "ホーム");
+            define ("HOME_HEADING", $NXTText." の情報");
+            define ("HOME_DEVICEINFO_GROUPTITLE", "デバイス情報");
+            define ("HOME_DEVICEINFO_DEVICENAME", $NXTText." の名前:");
+            define ("HOME_DEVICEINFO_IPADDR", "IP アドレス:");
+            define ("HOME_DEVICEINFO_IPV6ADDR", "IPv6 アドレス:");
+			define ("HOME_DEVICEINFO_SERIAL", "デバイス ID:");
+            define ("HOME_DEVICEINFO_MACADDR", "MAC アドレス:");
+            define ("HOME_DEVICEINFO_LOCALTIME", $NXTText." の時間スナップショット");
+            define ("HOME_DEVICEINFO_PREVIOUSUPDATEFAILED", "この ".$NXTText." では以前にファームウェアの更新に失敗しました。<br>".$NXTText." は、最後に正しく動作した状態に戻されました。<br>ファームウェアを更新すると、このメッセージがクリアされます。");
+
+            define ("HOME_STORAGESTATS_GROUPTITLE", "ストレージ統計情報");
+            define("HOME_STORAGESTATS_PT_GROUPTITLE", "ポータブル テンプレート デコーダー情報");
+            define ("HOME_STORAGESTATS_NETWORKMATCHENABLED", "Network Matcher:");
+            define ("HOME_STORAGESTATS_NETWORKMATCHADDRESS", "Network Matcher アドレス:");
+            define ("HOME_STORAGESTATS_TEMPLATESPACE", "テンプレート残量:");
+
+            define ("HOME_PTINFO_BLEVERSION", "BLE バージョン:");
+            define ("HOME_PTINFO_MAINFWVERSION", "ファームウェア バージョン:");
+            define ("HOME_PTINFO_BOOTLOADERVERSION", "ブート ローダー バージョン:");
+            define ("HOME_PTINFO_HARDWAREVERSION", "ハードウェア バージョン:");
+            define ("HOME_PTINFO_KEYPADVERSION", "キーパッド バージョン:");
+            define ("HOME_PTINFO_CONFIGURATION", "構成:");
+
+            define ("HOME_SOFTWARE_GROUPTITLE", "ソフトウェア情報");
+            define ("HOME_SOFTWARE_APPVER", $NXTText." のファームウェア:");
+            define ("HOME_SOFTWARE_BOBVER", "ICM ファームウェア バージョン: ");
+            define ("HOME_HARDWARE_BOBVER", "ICM ハードウェア バージョン: ");
+             define ("HOME_SOFTWARE_LINUXVER", "Linux OS バージョン: ");
+             define ("HOME_HARDWARE_PSOCVER", "M.B. PSOC バージョン: ");
+             define ("HOME_CAMERA_FPGAVER", "カメラ FPGA バージョン: ");
+             define ("HOME_CAMERA_PSOCVER", "カメラ PSOC バージョン: ");
+             define ("HOME_FIXED_BOARDVER", "固定ボード バージョン: ");
+
+            define ("HOME_SOFTWARE_NANOLABEL", $NXTText." 更新済: ");
+            define ("HOME_SOFTWARE_BOBLABEL", "ICM 更新済: ");
+			define ("HOME_SOFTWARE_FPGALABEL", "カメラ FPGA 更新済: ");
+			define ("HOME_SOFTWARE_CAMERAPSOCLABEL", "カメラ PSOC 更新済: ");
+			define ("HOME_SOFTWARE_FIXEDPSOCLABEL", "固定ボード更新済: ");
+
+       
+            //////////////////////////////////////////////////////
+            // NETWORK TAB STRINGS
+            //////////////////////////////////////////////////////
+            define ("NETWORK_TABLABEL", "ネットワーク");
+            define ("NETWORK_HEADING", "デバイス ネットワーク構成");
+            define ("NETWORK_DEVICENAME_GROUPTITLE", "デバイス名");
+            define ("NETWORK_DEVICENAME_LABEL", "名前:");
+            define ("NETWORK_DHCP_GROUPTITLE", "IP アドレスの自動取得 (DHCP)");
+            define ("NETWORK_DHCP_SETTINGS", "DHCP 設定...");
+			define("NETWORK_DNS_SERVER1", "DNS サーバー 1:");
+			define("NETWORK_DNS_SERVER2", "DNS サーバー 2:");
+                ///// ADV. DHCP SETTINGS DIALOG
+                define ("NETWORK_DHCPSETTINGS_TITLE", "詳細 DHCP 設定");
+                define ("NETWORK_DHCPSETTINGS_TIMEOUTS_GROUPLABEL", "タイムアウト");
+                define ("NETWORK_DHCPSETTINGS_TIMEOUTS_DHCPTIMEOUTLABEL", "DHCP タイムアウト:");
+                define ("NETWORK_DHCPSETTINGS_TIMEOUTS_DHCPRETRIESLABEL", "DHCP 再試行:");
+                define ("NETWORK_DHCPSETTINGS_TIMEOUTS_DHCPRETRYDELAYLABEL", "再試行遅延:");
+                define ("NETWORK_DHCPSETTINGS_OK", "OK");
+            define ("NETWORK_STATICIP_GROUPLABEL", "次の静的 IP アドレスを使用");
+            define ("NETWORK_STATICIP_DEVICEIPLABEL", "デバイス IP:");
+            define ("NETWORK_STATICIP_BROADCASTNETWORKLABEL", "ブロードキャスト ネットワーク:");
+            define ("NETWORK_STATICIP_SUBNETMASKLABEL", "サブネット マスク:");
+            define ("NETWORK_STATICIP_DEFAULTGATEWAYLABEL", "デフォルト ゲートウェイ:");
+
+            define ("NETWORK_IPV6_ENABLE", "IPv6 を有効にする");
+            define ("NETWORK_IPV6_CONFIGURATION", "IPv6 構成...");
+                // IPV6 Pop-up
+                define ("NETWORK_IPV6CONFIGURATION_TITLE", "IPv6 構成");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL", "一般");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE", "DHCP モード:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_INFORMATION", "ステートレス");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NORMAL", "ステートフル");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_AUTO", "自動");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DHCP_MODE_NONE", "オフ");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_ADDRESS_PREFIX_LENGTH", "IPv6 アドレス/サブネット プレフィックス長:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DEFAULTGATEWAY", "デフォルト ゲートウェイ:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER1", "DNS サーバー 1:");
+                define ("NETWORK_IPV6CONFIGURATION_GENERAL_DNS_SERVER2", "DNS サーバー 2:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS", "ステータス");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_LINK_LOCAL", "リンクローカル:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL", "グローバル:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS", "グローバル ステートレス:");
+				define ("NETWORK_IPV6CONFIGURATION_STATUS_GLOBAL_STATELESS_TEMPORARY", "グローバル ステートレス一時:");
+                define ("NETWORK_IPV6CONFIGURATION_STATUS_NO_ADDRESSES", "デバイスには IPv6 アドレスが現在割り当てられていません");
+
+            define("SSL_PROTOCOL_LEGEND", "SSL プロトコル");
+            define("SSLPROTO_DEFAULT", "レガシー");
+            define("SSLPROTO_TLS12", "TLS 1.2 (専用)");
+
+            define ("NETWORK_CERTIFICATES_GROUPTITLE", "証明書");
+            define ("NETWORK_CACERT", "CA 証明書:");
+            define ("NETWORK_CLIENTCERT", "クライアント証明書:");
+            define ("NETWORK_CLIENTPRIVATEKEY", "クライアント秘密キー (と証明書)");
+            define ("NETWORK_CERTIFICATES_SETTINGS_GROUPTITLE", "設定");
+            define ("NETWORK_EAPOLVERSION", "EAPOL バージョン:");
+            define ("NETWORK_EAPIDENTITY", "EAP ID:");
+            define ("NETWORK_PRIVTEKEYPWD", "秘密キー パスワード:");
+
+            define ("NETWORK_SETTINGS_ENABLEIEEE8021X", "IEEE 802.1X を有効にする");
+            define ("NETWORK_SETTINGS_NOCERTIFICATE", "証明書ファイルがアップロードされていません");
+            define ("NETWORK_SETTINGS_NOKEY", "秘密キーがアップロードされていません");
+            define ("NETWORK_802LOG_DOWNLOAD", "IEEE 802.1X ログのダウンロード...");
+            
+            define ("NETWORK_CHECKING_IP_ADDRESS_DUPLICATE", "IP アドレスの重複を確認中");
+            define ("NETWORK_DUPLICATE_IP_ADDRESS", "IP アドレス競合");
+            define ("NETWORK_IP_ADDRESS_IN_USE", "指定されたデバイス IP アドレスはネットワークの別のシステムと競合しています。");
+
+            //////////////////////////////////////////////////////
+            // DEVICE TAB STRINGS
+            //////////////////////////////////////////////////////
+            define ("DEVICE_TABLABEL", "デバイス");
+            define ("DEVICE_HEADING", "デバイス設定");
+            define ("DEVICE_USERFEEDBACK_GROUPTITLE", "フィードバック");
+            define ("DEVICE_USERFEEDBACK_VOLUMELABEL", "スピーカー音量:");
+            define ("DEVICE_USERFEEDBACK_FREQUENCYLABEL", "トーン周波数 (Hz):");
+            define ("DEVICE_USERFEEDBACK_DURATIONLABEL", "トーン期間:");
+            define ("DEVICE_USERFEEDBACK_TAMPERVOLUMELABEL", "改ざんトーン音量");
+            define ("DEVICE_USERFEEDBACK_LEDBRIGHTNESSLABEL", "LED の明るさ:");
+            define ("DEVICE_USERFEEDBACK_LOCATEDEVICE", "デバイスの発見...");
+            define ("DEVICE_TIMESETTINGS_GROUPTITLE", "時刻設定");
+            define ("DEVICE_TIMESETTINGS_SERVERLABEL", "タイム サーバー:");
+            define ("DEVICE_TIMESETTINGS_NANOTIMELABEL", "nano ローカル時刻:");
+            define ("DEVICE_TIMESETTINGS_UPDATETIME", "今すぐ同期");
+            define ("DEVICE_TIMESETTINGS_SYNCHRONIZETIMELABEL", "毎日同期");
+    	    define ("DEVICE_TIMESETTINGS_UPDATELOCALTIME", "ホストと同期");
+            define ("DEVICE_ACTIVITIES_GROUPTITLE", "アクティビティ");
+            define ("DEVICE_ACTIVITIES_FACTORYRESET", "出荷時の設定にリセット");
+		    define ("DEVICE_ACS_OSDPINSTALLMODE", "OSDP インストール モード");
+            define ("DEVICE_ACTIVITIES_REBOOTDEVICE", "デバイスのリブート");
+            define ("DEVICE_EXTERNAL_GROUPTITLE", "HBOX 設定 (EyeLock サポート専用)");
+            define("DEVICE_EXTERNAL_WELCOMEMESSAGE", "ようこそメッセージ:");
+            define("DEVICE_EXTERNAL_LOCATION", "場所:");
+            define("DEVICE_EXTERNAL_POSTTITLE", "イベント後の URL");
+            define("DEVICE_EXTERNAL_DESTINATIONURL", "メイン URL:");
+            define("DEVICE_EXTERNAL_IRISURL", "虹彩 POST エンドポイント:");
+            define("DEVICE_EXTERNAL_ERRORURL", "エラー エンドポイント:");
+            define("DEVICE_EXTERNAL_HEARTBEATURL", "ハートビート エンドポイント:");
+            define("DEVICE_EXTERNAL_MAINTENANCEURL", "保守エンドポイント:");
+            define("DEVICE_EXTERNAL_POSTSCHEMEURL", "POST スキーム:");
+            define ("DEVICE_ADVSETTINGS_GROUPTITLE", "詳細デバイス設定");
+            define ("DEVICE_ADVSETTINGS_LISTENINGPORTLABEL", "ネットワーク リスニング ポート:");
+            define ("DEVICE_ADVSETTINGS_EYEDESTADDR", "目の情報の保存先アドレス:");
+            define ("DEVICE_ADVSETTINGS_EYEDESTPORT", "目の情報の保存先ポート:");
+			  define ("DEVICE_ADVSETTINGS_EYECONNECTTIMEOUT", "目の接続タイムアウト:");
+			  define ("DEVICE_ADVSETTINGS_EYESENDTIMEOUT", "目の送信タイムアウト:");
+
+			define ("DEVICE_TIMESERVERFAIL_PING", "タイム サーバーを Ping できませんでした。");
+			define ("DEVICE_TIMESERVERFAIL_SYNC", "タイム サーバーと同期できませんでした。");
+				define("FACTORY_RESET_PROGRESS", "出荷時の設定にリセット中です。");
+			define("FACTORY_RESET_LOGGEDOUT", "このプロセスのためにログアウトされました。");
+			define("FACTORY_RESET_TWOMINS", "約 2 分後に再びログインできます。");
+            //////////////////////////////////////////////////////
+            // SECURITY TAB STRINGS
+            //////////////////////////////////////////////////////
+            define ("SECURITY_TABLABEL", "セキュリティ");
+            define ("SECURITY_HEADING", "セキュリティ設定");
+
+            define ("SECURITY_PASSWORD_GROUPTITLE", "パスワード リセット");
+            define ("SECURITY_PASSWORD_OLDPWDLABEL", "古いパスワード:");
+            define ("SECURITY_PASSWORD_NEWPWDLABEL", "新しいパスワード:");
+            define ("SECURITY_PASSWORD_CONFIRMPWDLABEL", "パスワードの確認:");
+            define ("SECURITY_PASSWORD_REMOVEPWDLABEL", "パスワードのクリア");
+            define ("SECURITY_PASSWORD_RESETPWD", "パスワードの更新");
+
+            define ("SECURITY_TAMPER_SETTINGS", "改ざん設定");
+            define ("SECURITY_TAMPER_SIGNALHIGH", "高信号で改ざん状態をアクティブにする");
+            define ("SECURITY_TAMPER_SIGNALLOW", "低信号で改ざん状態をアクティブにする");
+            define ("SECURITY_TAMPER_NOTIFYADDRESS", "通知アドレス:");
+            define ("SECURITY_TAMPER_NOTIFYPORT", "ポート:");
+            define ("SECURITY_TAMPER_NOTIFYMESSAGE", "改ざんメッセージ:");
+			define ("SECURITY_TAMPER_MESSAGE_SETTINGS", "改ざんメッセージ設定");
+	     
+             define ("SECURITY_CARD_READER_INPUT_TAMPER_SETTINGS", "カード リーダーの入力改ざん設定");
+              define ("SECURITY_NXT_OUTPUT_TAMPER_SETTINGS", "改ざん出力設定");
+               define ("SECURITY_OUTPUT_TAMPER_SIGNALHIGH", "高信号");
+            define ("SECURITY_OUTPUT_TAMPER_SIGNALLOW", "低信号");
+            //////////////////////////////////////////////////////
+            // SOFTWARE TAB STRINGS
+            //////////////////////////////////////////////////////
+			define ("SOFTWARE_FIRMWARELINK", "最新のファームウェアは <a href=\"http://help.eyelock.com\">help.eyelock.com</a> で入手できます。");
+            define ("SOFTWARE_TABLABEL", "ソフトウェア");
+            define ("SOFTWARE_HEADING", "ソフトウェア/ファームウェアの詳細");
+            define ("SOFTWARE_STATUS_GROUPTITLE", "バージョン/更新ステータス");
+            define ("SOFTWARE_CHECKUPDATES_LABEL", "前回の更新確認:");
+            define ("SOFTWARE_UPDATEDETAILS_TITLE", "ソフトウェア更新の詳細");
+            define ("SOFTWARE_AVAILUPDATE_NANOLABEL", "新しい ".$NXTText." のバージョン:");
+            define ("SOFTWARE_AVAILUPDATE_BOBLABEL", "新しい ICM のバージョン:");
+            define ("SOFTWARE_INSTALLEDUPDATES_NANOLABEL", $NXTText." の更新がインストールされました:");
+            define ("SOFTWARE_INSTALLEDUPDATES_BOBLABEL", "ICM の更新がインストールされました:");
+            define ("SOFTWARE_UPDATE_ALLOWSITEADMIN", "管理者にデバイスの更新を許可");
+
+			define ("VERSION_HEADER", "バージョン");
+			define("RESTORE_POINTS_TIME_STAMP", "復元ポイントのタイムスタンプ");
+            define ("SOFTWARE_STATUS_UPDATESTATUS_FAILED", "更新サーバーに接続できませんでした。");
+            define ("SOFTWARE_STATUS_UPDATESTATUS_NEWVERSION", "新しい ".$NXTText." のソフトウェア更新を入手できます。");
+            define ("SOFTWARE_STATUS_UPDATESTATUS_CURRENT", "".$NXTText." のソフトウェアは最新です。");
+            define ("SOFTWARE_STATUS_UPDATESTATUS_VERCORRUPT", "バージョン ファイルが破損しているようです。");
+            define ("SOFTWARE_STATUS_UPDATESTATUS_CHECKINTERNET", "ブラウザーのインターネット接続ステータスを確認してください。");
+            define ("SOFTWARE_STATUS_UPDATENOW", "今すぐ更新");
+            define ("SOFTWARE_STATUS_LATER", "後で更新");
+            define ("SOFTWARE_STATUS_MANUALNANO", "ローカル ファイル...");
+            define ("SOFTWARE_STATUS_MANUALBOB", "ローカル ICM ファイル...");
+            define ("SOFTWARE_STATUS_UPDATEDETAIL", "詳細...");
+            define ("SOFTWARE_MODE_NANOLABEL", $NXTText." の復元ポイント");
+			define ("SOFTWARE_MODE_BOBLABEL", "ICM ボードの復元ポイント");
+            define ("SOFTWARE_MODE_DELETERESTOREPOINTS", "デバイスの復元ポイントを削除中...");
+            define ("SOFTWARE_MODE_RESTORERESTOREPOINT", "以前のバージョンに復元中...");
+            define ("SOFTWARE_RESTOREPOINTS_NONANO", "使用できる ".$NXTText." の復元ポイントがありません。");
+            define ("SOFTWARE_RESTOREPOINTS_NOBOB", "使用できる ICM の復元ポイントがありません。");
+            define ("SOFTWARE_RESTOREHEADER_SELECT", "選択");
+            define ("SOFTWARE_RESTOREHEADER_RESTOREPOINTS", "復元ポイント");
+            define ("SOFTWARE_RESTORE_GROUPTITLE", "ファームウェアの復元");
+            define ("SOFTWARE_RESTORE_RESTORENOW", "今すぐ復元...");
+            define ("SOFTWARE_RESTORE_DELETERESTOREPOINTS", "削除...");
+			
+
+            //////////////////////////////////////////////////////
+            // AUTHENTICATION TAB STRINGS
+            //////////////////////////////////////////////////////
+            define ("AUTHENTICATION_TABLABEL", "虹彩処理");
+            define ("AUTHENTICATION_HEADING", "虹彩処理詳細の構成");
+            define ("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "虹彩処理モード");
+            define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLMODE", "アクセス制御認証モード");
+            define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLAUTHENTICATION", "アクセス制御認証");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTUREMODE", "虹彩キャプチャ モード");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTURE", "虹彩キャプチャ");
+            define ("DEVICE_EXTERNAL_POSTSCHEME", "虹彩 POST スキーム:");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTURESETTINGS", "虹彩キャプチャの設定");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTURETIMEOUT", "虹彩キャプチャ タイムアウト:");
+            define ("AUTHENTICATION_SETTINGS_IRISCAPTURERESETDELAY", "虹彩キャプチャ リセット遅延:");
+            define ("AUTHENTICATION_SETTINGS_HTTPPOSTMSGFORMAT", "HTTP POST メッセージの形式:");
+            define ("AUTHENTICATION_SETTINGS_IRISIMAGEFORMAT", "虹彩画像形式:");
+            define ("AUTHENTICATION_SETTINGS_IRISIMAGEQUALITY", "画質:");
+            define ("AUTHENTICATION_SETTINGS_100LOSSLESS", "(100 = 損失なし)");
+            define ("AUTHENTICATION_MODE_GROUPTITLE", "照合");
+            define ("AUTHENTICATION_MODE_SINGLEEYELABEL", "片目の使用");
+            define ("AUTHENTICATION_MODE_DUALEYELABEL", "両目の使用");
+            define ("AUTHENTICATION_SETTINGS_GROUPTITLE", "設定");
+            define ("AUTHENTICATION_SETTINGS_REPEATPERIODLABEL", "反復認証期間:");
+            define ("AUTHENTICATION_SETTINGS_NEGMATCHTIMEOUTENABLEDLABEL", "照合失敗タイムアウトを有効にする");
+            define ("AUTHENTICATION_SETTINGS_LOITERPERIODLABEL", "待機時間:");
+            define ("AUTHENTICATION_SETTINGS_NEGMATCHRESETLABEL", "照合失敗リセット タイマー:");
+            define ("AUTHENTICATION_SETTINGS_DESTINATIONADDRESSLABEL", "ネットワーク メッセージ宛先 IP:");
+            define ("AUTHENTICATION_SETTINGS_DESTINATIONPORTLABEL", "ポート:");
+            define ("AUTHENTICATION_SETTINGS_SECURENETWORDLABEL", "安全なネットワーク照合メッセージ");
+            define ("AUTHENTICATION_SETTINGS_MSGFORMATLABEL", "ネットワーク メッセージの形式:");
+            define ("AUTHENTICATION_SETTINGS_SENDALLIMAGES", "すべての画像の送信");
+
+            //////////////////////////////////////////////////////f
+            // DATABASE TAB STRINGS
+            //////////////////////////////////////////////////////
+            define ("DATABASE_TABLABEL", "データベース");
+            define ("DATABASE_HEADING", "データベース構成の詳細");
+            define ("DATABASE_TYPE", "データベース タイプ: ");
+            define ("DATABASE_SQLLITE", "SQLite");
+            define ("DATABASE_BINARY", "バイナリ (フラット ファイル)");
+            define ("DATABASE_TYPE_GROUPTITLE", "データベースの詳細");
+            define ("DATABASE_TYPE_LOCALLABEL", "ローカル");
+            define ("DATABASE_TYPE_NETMATCHLABEL", "Network Matcher (NWMS) を有効にする");
+            define ("DATABASE_TYPE_NETMATCHADDRESSLABEL", "Network Matcher アドレス:");
+			define ("TESTING_NETWORK_MATCHER", "Network Matcher のテスト中...");
+            define ("DATABASE_TYPE_NETMATCHPORTLABEL", "Network Matcher 宛先ポート:");
+            define ("DATABASE_STATISTICS_GROUPTITLE", "データベース統計情報");
+               define ("DATABASE_TOC_GROUPTITLE", "ポータブル テンプレート");
+            define ("DATABASE_STATISTICS_TEMPLATESPACE", "テンプレート領域残量:");
+			define ("DATABASE_SECURECOMM_NETMATCHLABEL", "安全な Network Matcher");
+            define("DATABASE_MOBILEMODE", "モバイル モード");
+            define ("TOOLTIP_TOC_MODE", "スマートフォン アプリのポータブル テンプレートでは、歩行、タップで送信、PIN で送信のモードが使われます。</br><strong>EV1 カード システムには影響しません。</strong>");
+            define ("TOOLTIP_TOC_IRIS_WAIT_TIME", "ポータブル テンプレートが提示された後、".$NXTText." で保持される秒数。最小で 10 秒、最大で 600 秒です。");
+              define("TOOLTIP_TOC_DEFAULT_KEY", "デフォルトの ".$NXTText." キーをポータブル テンプレートに対して使います。");
+             define("TOOLTIP_TOC_CUSTOM_KEY", "アップロードしたキーをポータブル テンプレートに対して使います。");
+            define("TOOLTIP_UPLOAD_CERTIFICATE", "ポータブル テンプレートで使う .pfx キーをアップロードします。キーのパスワードを左側のボックスに入力してください。");
+            define("TOOLTIP_CURRENT_CERTIFICATE", "「キーのアップロード...」とここに表示されたら、キーをアップロードしてください。);
+            define("DATABASE_EXPIRATION", "虹彩有効期限");
+			
+			define("DATABASE_CURRENT_KEY", "現在のキー:");
+			
+			define("DATABASE_TOC_MODE_WALKUP","歩行");
+				define("DATABASE_TOC_MODE_TAPTOSEND","タップで送信");
+				define("DATABASE_TOC_MODE_PINTOSEND","PIN で送信");
+            //////////////////////////////////////////////////////
+            // ACS TAB STRINGS
+            //////////////////////////////////////////////////////
+            define ("ACP_TABLABEL", "ACS");
+            define ("ACP_HEADING", "アクセス制御システム (ACS)")");
+            define ("ACP_PROTOCOL_GROUPTITLE", "アクセス制御プロトコル");
+            define ("ACP_PROTOCOL_PROTOCOL", "プロトコル:");
+            define ("ACP_PROTOCOL_DUALAUTHENABLEDLABEL", "2 要素認証");
+             define ("ACP_PROTOCOL_TEMPLATEONCARD", "Portable Templates");
+             define ("ACP_PROTOCOL_TEMPLATEONCARDPASS", "Single Factor Authentication");
+             
+               define ("ACP_PROTOCOL_DUALAUTHPARITY", "パリティ ビットの確認");
+            define ("ACP_PROTOCOL_DUALAUTHLEDENABLEDLABEL", "ACS で LED を制御");
+            define ("ACP_PROTOCOL_MATCHWAITIRISTIMELABEL", "虹彩待機時間:");
+            define ("ACP_PROTOCOL_MATCHWAITPINTIMELABEL", "PIN 待機時間:");
+            define ("ACP_PROTOCOL_PINBURSTBITS", "PIN バースト ビット:");
+            define ("ACP_PROTOCOL_RELAYTIMELABEL", "許可リレー時間:");
+            define ("ACP_PROTOCOL_DENYRELAYTIMELABEL", "拒否リレー時間:");
+            define ("ACP_PROTOCOL_DURESSRELAYTIMELABEL", "脅迫リレー時間:");
+            define ("ACP_PROTOCOL_ENABLERELAYTRIGGERSLABEL","リレーを有効にする");
+            define ("ACP_PROTOCOL_NEGMATCHTIMEOUTLABEL", "照合失敗タイムアウト:");
+
+            define ("ACP_TEST_GROUPTITLE", "アクセス拒否とテスト データ");
+            define ("ACP_TEST_TESTBUTTON", "今すぐテスト");
+            define ("ACP_TEST_CARDIDLABEL", "カード番号:");
+            define ("ACP_TEST_FACILITYCODELABEL", "施設コード:");
+            define ("ACP_TEST_SENDINGMESSAGE", "ACS パネルにテスト メッセージを送信中...");
+            define ("ACP_NETWORK_SECURECOMMLABEL", "安全な通信");
+            define ("ACP_TEST_TCPCONNECTIONFAILED", "ソケット接続失敗");
+            define ("ACP_TEST_FAILED", "ACS テスト文字列をパネルに送信できませんでした。");
+            define ("ACP_TEST_CONNECTIONFAILED", "ファームウェアとソケット接続を確立できません。");
+	        define ("OSDP_INSTALL_MODE_SETTINGS", "デバイスをインストール モードに設定中。");
+            define ("AUTHENTICATION_SCHEME", "認証スキーム:");
+            define ("ACP_DD_SINGLEFACTORIO", "1 要素 [虹彩のみ]");
+            define ("ACP_DD_SINGLEFACTORIC", "1 要素 [虹彩またはカード]");
+            define ("ACP_DD_DUALFACTORIC", "2 要素 [虹彩とカード]");
+            define ("ACP_DD_DUALFACTORICPP", "2 要素 [虹彩とカード (PIN パススルー)]";
+            define ("ACP_DD_DUALFACTORPI", "2 要素 [虹彩と PIN]");
+            define ("ACP_DD_DUALFACTORIPID", "2 要素 [虹彩と PIN (脅迫)]");
+            define ("ACP_DD_DUALFACTORICPI", "3 要素 [虹彩とカードと PIN]");
+            define ("ACP_DD_DUALFACTORICPID", "3 要素 [虹彩とカードと PIN (脅迫)]");
+			
+			define("PARITY_MASK_GROUP_TITLE", "パリティ マスキング");
+			define("TOOLTIP_ACS_PARITY_MASK_DISABLED", "選択すると、2 要素認証時にリーダーのパリティ ビットが ".$NXTText." で確認されます");
+			define("TOOLTIP_ACS_PARITY_MASK_ENABLED", "選択すると、2 要素認証時にリーダーのパリティ ビットが ".$NXTText." で無視されます");
+			
+			define("ACS_PARITY_MASK_DISABLED", "マスキングなし");
+			define("ACS_PARITY_MASK_ENABLED", "マスキングあり");
+            //////////////////////////////////////////////////////
+            // LOGS TAB STRINGS
+            //////////////////////////////////////////////////////
+			define ("LOG_NO_INFO", "使用できるログ情報がありません。");
+			define("MATCH_FAIL_NO_IRIS","照合失敗: 虹彩がありません");
+			define("MATCH_FAIL_MISMATCH","照合失敗: 虹彩が一致しません");
+			define("MATCH_FAIL_INVALID_CARD","照合失敗: カードが無効です");
+            define("MATCH_SUCCESS","照合成功");
+            define("MATCH_SUCCESSDURESS","照合成功 (脅迫)");
+            define("MATCH_FAIL_INVALIDPIN","照合失敗: PIN が無効です");
+            define("MATCH_FAIL_NOPIN","照合失敗: PIN がありません");
+
+            define ("LOGS_TABLABEL", "ログ");
+            define ("LOGS_HEADING", "ログ");
+            define ("LOGHEADER_STATUS", "ステータス");
+            define ("LOGHEADER_DATE", "日時");
+            define ("LOGHEADER_NAME", "名前");
+            define ("LOGHEADER_CODE", "ACS コード");
+            define ("LOGHEADER_MESSAGE", "メッセージ");
+            define ("LOGS_EVENTLOG_GROUPTITLE", "イベント ログ");
+            define ("LOGS_EVENTLOG_REFRESHBUTTON", "リフレッシュ");
+            define ("LOGS_EVENTLOG_DOWNLOAD", "ログのダウンロード...");
+            define ("LOG_AUTOREFRESH_LABEL", "自動リフレッシュ:");
+			define ("LOGS_TIMES_SHOWN_IN", "すべての時刻を次で表示: ");
+			define ("LOG_TYPE", "ログ レベル");
+            //////////////////////////////////////////////////////
+            // DUMP TAB STRINGS
+            //////////////////////////////////////////////////////
+            define ("DUMP_TABLABEL", "ダンプ");
+
+
+            //////////////////////////////////////////////////////
+            // HELP SETTINGS DIALOG STRINGS
+            //////////////////////////////////////////////////////
+            define ("DIALOG_HELPSETTINGS_TITLE", "ヘルプ設定");
+            define ("DIALOG_HELPSETTINGS_ENABLEHELP", "ポップアップ ヘルプを有効にする");
+            define ("DIALOG_HELPSETTINGS_POPUPTRIGGERMODE", "ポップアップ トリガー モード:");
+            define ("DIALOG_HELPSETTINGS_POPUPHOVER", "マウスのポイント");
+            define ("DIALOG_HELPSETTINGS_POPUPCLICK", "マウスのクリック");
+            define ("DIALOG_HELPSETTINGS_POPUPDELAY", "カーソルのポイント遅延:");
+
+
+            //////////////////////////////////////////////////////
+            // HELP DIALOG HELP STRINGS
+            //////////////////////////////////////////////////////
+            define ("TOOLTIP_HELPSETTINGS_ENABLEHELP", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ポップアップ ヘルプを有効にする&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションを選ぶと、&lt;i&gt;ポップアップ ヘルプ システム&lt;/i&gt;が有効になります。&lt;/li&gt;&lt;li&gt;選ばないと、&lt;i&gt;ポップアップ ヘルプ システム&lt;/i&gt;が完全に無効になります。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_HELPSETTINGS_POPUPMODE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ポップアップ ヘルプ モード&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;&lt;i&gt;ポップアップ ヘルプ システム&lt;/i&gt;のポップアップを開始するために使う方法を選びます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_HELPSETTINGS_POPUPDELAY", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;カーソルのポイント遅延&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;&lt;i&gt;ポップアップ ヘルプ システム&lt;/i&gt;のウィンドウが表示されるまでに、マウスポインターをポイントしたままにする必要がある秒数を指定します。&lt;/li&gt;&lt;li&gt;期間範囲 (秒): 0 - 5。&lt;/li&gt;&lt;li&gt;デフォルト値: 1.0。&lt;/li&gt;&lt;/ul&gt;");
+
+
+            //////////////////////////////////////////////////////
+            // COMMON STRINGS
+            //////////////////////////////////////////////////////
+            define ("TAMPER_ICON_ALTTEXT", "改ざんアラート!");
+
+            /////////////////////////////////////////////////////
+            // TOOLTIP STRINGS
+            /////////////////////////////////////////////////////
+            define ("TAMPER_TOOLTIP_TEXT", "デバイスの改ざんが検知されました。");
+            define ("ATOMIC_TOOLTIP_TEXT", "Eyelock アプリケーションが実行されています。");
+            define ("POWERBUTTON_TOOLTIP_TEXT", "Eyelock アプリケーションが実行されていません。");
+            define ("EYELOCK_APPLICATION_STATUS", "Eyelock アプリケーション ステータス");
+            define ("EYELOCK_MASTER_STATUSTEXT", "デバイス カメラ 1 のステータス:");
+            define ("EYELOCK_SLAVE_STATUSTEXT", "デバイス カメラ 2 のステータス:");
+            define ("EYELOCK_STATUS_RUNNING", "OK");
+            define ("EYELOCK_STATUS_NOTRUNNING", "失敗");
+
+            /////////////////////////////////////////////////////
+            // ASSORTED STRINGS
+            /////////////////////////////////////////////////////
+            define ("SECONDS_LABEL", " 秒");
+            define ("MILLISECONDS_LABEL", " ミリ秒");
+			define("MSG_UPDATING", "更新中");
+            define ("DEFAULT_EMPTY_FIELD", "オプション");
+            define ("REQUIRED_EMPTY_FIELD", "必須");
+            define ("CHANGE_PASSWORD_OLD", "古いパスワード");
+            define ("CHANGE_PASSWORD_NEW", "新しいパスワード");
+            define ("CHANGE_PASSWORD_CONFIRM", "パスワードの確認");
+            define ("MSG_UNAVAILABLE", "使用不可");
+            define ("MSG_USERHELLO", "こんにちは、");
+            define ("MSG_UNKNOWNUSER", "不明なユーザー");
+            define ("MSG_ENABLED", "有効");
+            define ("MSG_DISABLED", "無効");
+            define ("MSG_NEVER", "不可");
+            define ("MSGBOX_INFORMATION_TITLE", "情報");
+            define ("MSGBOX_INFORMATION_TITLESHORT", "情報");
+            define ("MSGBOX_SUCCESS_TITLE", "成功");
+            define ("MSGBOX_FAILED_TITLE", "失敗");
+            define ("MSGBOX_TAMPERED_TITLE", "改ざん");
+            define ("MSGBOX_OKBUTTON", "OK");
+            define ("MSGBOX_CANCELBUTTON", "キャンセル");
+            define ("MSGBOX_YESBUTTON", "はい");
+            define ("MSGBOX_NOBUTTON", "いいえ");
+            define ("SAVING_SETTINGS", "設定を保存中...");
+            define ("SAVING_SETTINGSANDRESTART", "設定を保存して再起動中...");
+            define ("SAVING_FEWMOMENTS", "しばらくお待ちください...");
+            define ("RELOADING_PAGE", "ページを再ロード中...お待ちください...");
+            define ("REFRESHING_PAGE", "ページをリフレッシュ中...お待ちください...");
+            define ("VALIDATION_FAILEDTITLE", "検証に失敗しました。");
+            define ("VALIDATION_MESSAGE1", "一部のフィールドの内容が有効ではありません。");
+            define ("VALIDATION_MESSAGE2", "無効なフィールドがないか、すべてのタブを確認してください。");
+            define ("CONNECTION_FAILEDTITLE", "接続エラー!");
+            define ("CONNECTION_MESSAGE1", "WebConfig がデバイスと接続できませんでした。");
+            define ("CONNECTION_MESSAGE2", "デバイスの IP アドレスと電源を確認してください。");
+            define ("LOADINGLOG_DETAIL", "ログ詳細のロード中...お待ちください...");
+            define ("ALERT_IPINUSE", "指定された静的 IP はすでに使用中です。保存できない設定があります。");
+            define ("ALERT_802CONFIG", "IEEE 802.1X 構成情報を確認できません。保存できない設定があります。必要な証明書やキーをすべてアップロードしたことを確認してください。");
+            define ("RESETPASSWORD_MESSAGETITLE", "パスワード リセット");
+            define ("RESETTINGPASSWORD_MESSAGE", "パスワードをリセット中。お待ちください...");
+            define ("RESETPASSWORD_SUCCESS", "パスワードが正常にリセットされました。");
+            define ("RESETPASSWORD_LOGOUT", "ログアウトすると新しいパスワードを使用できます。");
+            define ("RESETPASSWORD_FAIL", "パスワードをリセットできませんでした。");
+	     define ("KEY_MANAGEMENT_GROUPTITLE", "キー管理の設定");
+         define ("KEY_MANAGEMENT_DEFAULT", "デフォルト キーの使用");
+          define ("KEY_MANAGEMENT_CUSTOM", "カスタム キーの使用");
+			define("DATABASE_CURRENT_KEY_DEFAULT", "デフォルト キー");
+				define("DATABASE_CURRENT_KEY_CUSTOM", "カスタム キー");
+			define("DATABASE_PTUPLOAD", "アップロード...");
+			
+	     define ("KEY_MANAGEMENT_BUTTON", "キーのダウンロード...");
+	     define ("ADDKEY_DIALOG_TITLE", "新しい暗号化キーの追加");
+	     define ("ADDKEY_DIALOG_MESSAGE", "暗号化キーの詳細を次に入力してください。");
+	     define ("ADDKEY_DIALOG_CONTROLS", "<table style="width:100%"><tr style="height:2px" /><tr><td>ホスト名:</td><td><input id="keyHostName" type="text" name="keyHostName" style="width:120px" onblur="checkHostName()"></td><td /></tr><tr style="height:2px" /><tr><td>有効期間:</td><td><input id="keyValidPeriod" type="text" name="keyValidity" style="width:120px" onblur="checkValidity()"></td><td>日数 (5 から 3650)</td></tr><tr style="height:2px" /></table>")\"></td> <td /></tr> <tr style=\"height:2px\" /> <tr><td>Validity Period : </td><td><input id=\"keyValidPeriod\" type=\"text\" name=\"keyValidity\" style=\"width:120px\" onblur=\"checkValidity()\"></td><td>in days(5 to 3650)</td></tr> <tr style=\"height:2px\" /></table>");						
+	     define ("ADDING_NEW_KEY", "新しいキーを追加中...");
+	     define ("DELETEALLKEY_DIALOG_TITLE", "すべてのホスト キーの削除");
+	     define ("DELETEALLKEY_DIALOG_MESSAGE", "デバイスのすべてのホスト キーを削除しようとしています。");
+	     define ("DELETING_ALL_KEYS", "すべてのキーを削除中...");
+ 	     define ("DELETEKEY_DIALOG_TITLE", "ホスト キーの削除");
+	     define ("DELETEKEY_DIALOG_MESSAGE", "デバイスのホスト キーを削除しようとしています。");
+    	     define ("DELETING_HOST_KEY", "ホスト キーを削除中...");
+            define ("DOWNLOADING_KEY", "キーのダウンロード中...");
+	     define ("REGENERATEKEY_DIALOG_TITLE", "".$NXTText." キーの再生成");
+	     define ("REGENERATEKEY_DIALOG_MESSAGE", "".$NXTText." キーを再生成しようとしています。これにより、以前にダウンロードしたキーはすべて無効になります。");
+	     define ("REGENERATING_NANO_KEY", "".$NXTText." キーを再生成しています...");
+	     define ("STARTING_EYELOCK_APPLICATION", "Eyelock アプリケーションを起動しています...");
+            define ("IDENTIFY_DEVICE_TITLE", "デバイスの識別中");
+            define ("IDENTIFY_DEVICE_MESSAGE", "デバイスの LED を繰り返し点滅中...");
+            define ("IDENTIFY_DEVICE_MESSAGE2", "[キャンセル] をクリックすると中止します。");
+            define ("RESETTING_DEVICE_MESSAGE", "デバイスをリセット中...お待ちください...");
+            define ("REBOOTING_DEVICE_MESSAGE", "デバイスをリブート中..."お待ちください...");
+            define ("REBOOTING_DEVICE_MESSAGE2", "1、2 分かかる場合があります...");
+            define ("WAITING_FOR_EYELOCK_RESTART", "Eyelock アプリケーションを再起動中...お待ちください...");
+            define ("DEVICE_TIME_SYNCHRONIZING", "デバイス時刻を同期中...お待ちください...");
+            define ("DEVICE_TIME_SYNCHRONIZED", "デバイスの時刻が正常に設定されました。");
+            define ("DEVICE_TIME_SYNCFAILED", "デバイスの時刻を設定できませんでした。");
+            define ("FACTORYRESET_DEVICE", "デバイスを出荷時のデフォルトにリセット中...");
+            define ("RESTORE_DEVICE", "バックアップからデバイスを復元中...");
+            define ("RESTORE_DEVICE_TITLE", "デバイス ファームウェアの復元");
+            define ("RESTORE_DEVICE_DELETETITLE", "復元ポイントの削除");
+            define ("RESTORE_DEVICE_DELETEMSG", "デバイスの復元ポイントを削除中...");
+			define("RESTORE_FAILED_NOT_SUPPORTED", "復元ポイントを復元できませんでした。バージョンがサポートされなくなりました");
+			define("RESTORE_FAILED_NO_FILE", "復元ポイントの処理に失敗しました。Nano の復元ポイントが見つかりませんでした。");
+            define ("AUTOMATIC_LOGOUT", "今すぐログアウトされます。");
+            define ("LOGOUT_MESSAGE", "ログアウトしています...お待ちください...");
+            define ("REBOOT__DEVICE_TITLE", "デバイスのリブート");
+            define ("REBOOT_DEVICE_WARNING", "[はい] をクリックすると、デバイスがリブートします...");
+            define ("MSG_AREYOUSURE", "続行しますか?");
+            define ("FACTORY_RESET_TITLE", "出荷時の設定にリセットの確認");
+			
+			 define ("OSDPINSTALLMODE_TITLE", "OSDP インストール モードの設定確認");
+			
+            define ("FACTORY_RESET_WARNING", "この処理は元に戻せません...");
+            define ("FIRMWARE_UPDATE_NANOTITLE", "".$NXTText." のファームウェアを更新中...お待ちください...");
+			
+			define ("PT_FIRMWARE_UPDATE_NANO_TITLE","ポータブル テンプレート リーダーのファームウェアを更新中...お待ちください...");
+			  define ("PT_FIRMWARE_UPDATE_STATUS_UPLOAD","ポータブル テンプレート リーダーのファームウェアをアップロード中");
+			  define ("PT_FIRMWARE_UPDATE_STATUS_UPDATING_BOB","ポータブル テンプレート リーダーのファームウェアを更新中");
+
+			  define ("PT_FIRMWARE_UPDATE_TITLE","ポータブル テンプレート リーダーのファームウェアの更新");
+			  define ("PT_FIRWMARE_UPDATE_SUCCESS","ポータブル テンプレート リーダーのファームウェアが正常に更新されました。");
+			  define ("PT_FIRWMARE_UPDATE_RELOAD","[OK] をクリックすると、ページがリフレッシュされます。");
+			  define ("PT_FIRWMARE_UPDATE_ERROR_FAILED","ポータブル テンプレート リーダーのファームウェアを更新できませんでした。");
+			  define ("PT_FIRWMARE_UPDATE_FAILED","ポータブル テンプレート リーダーのファームウェアを更新できませんでした。");
+			
+			
+			define("PT_FIRMWARE_MANAGEMENT_TITLE", "ポータブル テンプレート リーダーのファームウェアの管理");
+			define("PT_FIRWMARE_UPDATE_WAITING", "ポータブル テンプレート リーダーの再起動を待機中...");
+			
+			
+			
+			define ("UPGRADE_NOT_ALLOWED", "アップグレードに失敗しました。アップグレード バージョンがサポートされていません");
+            define ("FIRMWARE_UPDATESTATUS_UPLOAD", "パッケージをデバイスにアップロード中...");
+            define ("FIRMWARE_UPDATESTATUS_DOWNLOAD", "パッケージをサーバーからダウンロード中: ");
+            define ("FIRMWARE_UPDATESTATUS_UNPACK", "ファイルをアンパック中...");
+            define ("FIRMWARE_UPDATESTATUS_VALIDATING", "".$NXTText." の画像を検証中...");
+            define ("FIRMWARE_UPDATESTATUS_COPYING", "必要なファイルをコピー中...");
+            define ("FIRMWARE_UPDATESTATUS_RESTOREPOINT", "".$NXTText." の復元ポイントを作成中...");
+            define ("FIRMWARE_UPDATESTATUS_UPDATING", "".$NXTText." の更新を実行中...");
+            define ("FIRMWARE_UPDATESTATUS_VALIDATINGBOB", "ICM の画像を検証中...");
+            define ("FIRMWARE_UPDATESTATUS_RESTOREPOINTBOB", "ICM の復元ポイントを作成中...");
+            define ("FIRMWARE_UPDATESTATUS_UPDATINGBOB", "ICM の更新を実行中...");
+            define ("FIRMWARE_UPDATESTATUS_COMPLETE", "ファームウェアの更新完了");
+            define ("FIRMWARE_UPDATESTATUS_RESTORESETTINGS", "デバイスの設定を復元中...");
+            define ("FIRMWARE_UPDATE_TITLE", "ファームウェアの更新結果");
+            define ("FIRMWARE_UPDATE_FAILEDTITLE", "ファームウェアの更新失敗");
+	     define ("FIRMWARE_UPDATE_FAILEDMESSAGE", $NXTText." のファームウェアを更新できませんでした。");
+            define ("FIRMWARE_UPDATE_SUCCESS", "ファームウェアが正常に更新されました。");
+            define ("FIRMWARE_UPDATE_RELOAD", "[OK] をクリックすると、デバイスがリブートします...");
+            define ("FIRMWARE_UPDATEERROR_BADFILETYPE", "アップロードされたファイルが有効なファームウェア パッケージではありません。");
+            define ("FIRMWARE_UPDATEERROR_UNPACKFAILED", "ファームウェア パッケージをアンパックできませんでした。パッケージが破損しているか、デバイスの容量がなくなった可能性があります。");
+            define ("FIRMWARE_UPDATEERROR_VALIDATEFAILED", "パッケージの内容を検証できませんでした。内容が破損している可能性があります。");
+            define ("FIRMWARE_UPDATEERROR_RESTOREPOINTFAILED", "復元ポイントを作成できませんでした。デバイスの容量がなくなった可能性があります。");
+            define ("FIRMWARE_UPDATEERROR_INSTALLFAILED", "デバイスにファームウェアを完全に抽出できませんでした。デバイスの容量がなくなった可能性があります。");
+            define ("FIRMWARE_UPDATEERROR_BOBINSTALLFAILED", "ブレークアウト ボードのファームウェアの更新を正常にインストールできませんでした。");
+            define ("FIRMWARE_UPDATEERROR_DEVICERESTOREFAILED", "デバイスの設定を復元できませんでした。");
+            define ("FIRMWARE_UPDATEERROR_SLAVECOPYFAILED", "スレーブ デバイスにファイルをコピーできませんでした。デバイスの容量がなくなった可能性があります。");
+            define ("FIRMWARE_UPDATEERROR_SLAVEINSTALLFAILED", "スレーブ デバイスをアップグレードできませんでした。");
+            define ("FIRMWARE_UPDATEERROR_UNKNOWNFAILED", "デバイスの更新中に不明なエラーが発生しました。");
+            define ("DATABASE_DETAILSUNAVAILABLE", "詳細は不明です。");
+            define ("NANO_DEVICE_STATUSTITLE", $NXTText." デバイス ステータス");
+            define ("NANO_DEVICE_CONNDOWN", "通信できません。デバイスの電源が入っていることを確認してください。");
+            define ("NANO_DEVICE_RECONNECT", "デバイスを確認してから、[OK] をクリックしてステータスを確認してください。");
+
+            //Tooltip text
+            define ("TOOLTIP_LOGIN_installer", "<b>Installer</b><br><b><i>Installer</i></b> ユーザー タイプには、すべての編集権限があります。");
+            define ("TOOLTIP_LOGIN_SITEADMIN", "<b>Admin</b><br><b><i>Admin</i></b> ユーザー タイプには、すべての読み取り権限がありますが、書き込み権限に制限があります。");
+            define ("TOOLTIP_LOGIN_CHANGEPASSWORD", "パスワードを変更するユーザー タイプを選んでください。");
+
+            define ("TOOLTIP_HOME_TAB", "<b><i>[ホーム] タブ</i></b> <br> ".$NXTText." の基本情報 (デバイス情報、ソフトウェア情報およびデータベース ストレージの統計情報) が表示されます。");
+
+            define ("TOOLTIP_NETWORK_TAB", "<b><i>[ネットワーク] タブ</i></b><br>ネットワーク パラメーター (DHCP 設定、IP アドレス、ホスト名など) の構成。 )");
+            define ("TOOLTIP_NETWORK_NAME", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;デバイス名&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;&lt;b&gt;&lt;i&gt;[名前]&lt;/i&gt;&lt;/b&gt; フィールドは、ネットワークで DHCP または静的 IP を実行しているときの ".$NXTText." のホスト名を表します。&lt;/li&gt;&lt;li&gt;有効な&lt;i&gt;デバイス名&lt;/i&gt;は、文字と数字のみを含み、64 文字未満である必要があります。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_DHCP", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;IP アドレスの自動取得 (DHCP)&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このセクションでは、DHCP を介して&lt;i&gt;デバイス名&lt;/i&gt;を使って ".$NXTText." を使えるようにします。&lt;/li&gt;&lt;li&gt;DHCP を使うと、IP アドレスのかわりに&lt;i&gt;デバイス名&lt;/i&gt;を入力して ".$NXTText." にアクセスできるようになります。&lt;/li&gt;&lt;li&gt;一部のネットワークは DHCP を使うように構成されています。DHCP を使うようにネットワークが構成されていない場合、静的 IP を使って Web Config にアクセスできます。&lt;/li&gt;&lt;/ul&gt;");
+             define ("TOOLTIP_NETWORK_SSLPROTOCOL", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;SSL プロトコル&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." が通信に使う SSL プロトコルを選びます。&lt;/li&gt;
+                                             &lt;li&gt;レガシー: SSL 3.0 または TLS 1.2 を使えます&lt;/li&gt;
+                                             &lt;li&gt;TLS 1.2: TLS 1.2 のみを使えます&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_ADVDHCPBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;DHCP 設定ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、DHCP の詳細設定にアクセスできます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_STATICIP", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;次の静的 IP アドレスを使用&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションでは、指定した静的 IP アドレスを使って ".$NXTText." をネットワークで使えるようにします。&lt;/li&gt;&lt;li&gt;構成する IP アドレスは、ネットワークの他の場所で使われていないことが必要です。&lt;/li&gt;&lt;li&gt;IP アドレスがすでに使用中の場合は、".$NXTText." をネットワークで使用できず、&lt;i&gt;デバイス名&lt;/i&gt;も表示されません。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_DEVICEIP", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;デバイス IP&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;静的 IP アドレスをここに入力します。&lt;/li&gt;&lt;li&gt;使用可能な IP アドレスがあるかどうかは、必要に応じてローカルのネットワーク管理者に問い合わせてください。&lt;/li&gt;&lt;li&gt;この設定が適用されるのは、上記の &lt;i&gt;[次の静的 IP アドレスを使用]&lt;/i&gt; を選んだ場合のみです。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_BROADCASTNETWORK", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ブロードキャスト ネットワーク&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;正しい値は、必要に応じてローカルのネットワーク管理者に問い合わせてください。&lt;/li&gt;&lt;li&gt;この設定が適用されるのは、上記の &lt;i&gt;[次の静的 IP アドレスを使用]&lt;/i&gt; を選んだ場合のみです。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_SUBNETMASK", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;サブネット マスク&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;正しい値は、必要に応じてローカルのネットワーク管理者に問い合わせてください。&lt;/li&gt;&lt;li&gt;この設定が適用されるのは、上記の &lt;i&gt;[次の静的 IP アドレスを使用]&lt;/i&gt; を選んだ場合のみです。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_DEFAULTGATEWAY", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;デフォルト ゲートウェイ&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;正しい値は、必要に応じてローカルのネットワーク管理者に問い合わせてください。&lt;/li&gt;&lt;li&gt;この設定が適用されるのは、上記の &lt;i&gt;[次の静的 IP アドレスを使用]&lt;/i&gt; を選んだ場合のみです。&lt;/li&gt;&lt;/ul&gt;");
+ 	        define ("TOOLTIP_NETWORK_DNS", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;DNS (Domain Name System) サーバー&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;正しい値は、必要に応じてローカルのネットワーク管理者に問い合わせてください。&lt;/li&gt;&lt;li&gt;この設定が適用されるのは、上記の &lt;i&gt;[次の静的 IP アドレスを使用]&lt;/i&gt; を選んだ場合のみです。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_ENABLEIEEE8021X", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;IEEE 802.1X のセキュリティ を有効にする&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;正しい値は、必要に応じてローカルのネットワーク管理者に問い合わせてください。&lt;/li&gt;&lt;li&gt;この設定では、IEEE 802.1X ネットワーク プロトコルが ".$NXTText." で有効になります。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_CACERT", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;CA 証明書&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;右側の [アップロード] ボタンを使って、CA 証明書ファイルを参照してデバイスにアップロードします。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_UPLOADCACERTIFICATE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;CA 証明書のアップロード&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このボタンを使って、CA 証明書ファイルを参照してデバイスにアップロードします。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_CLIENTCERT",  "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;クライアント証明書&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;右側の [アップロード] ボタンを使って、クライアント証明書ファイルを参照してデバイスにアップロードします。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_UPLOADCLIENTCERTIFICATE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;クライアント証明書のアップロード&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このボタンを使って、クライアント証明書ファイルを参照してデバイスにアップロードします。&lt;/li&gt;&lt;/ul&gt;"); 
+            define ("TOOLTIP_NETWORK_CLIENTPRIVATEKEY",  "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;クライアント秘密キー&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;右側の [アップロード] ボタンを使って、クライアント秘密キー ファイルを参照してデバイスにアップロードします。&lt;/li&gt;&lt;li&gt;クライアント キーとパスワードを組み合わせた (PEM) ファイルをアップロードすることもできます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_NETWORK_UPLOADPRIVATEKEY", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;クライアント証明書のアップロード&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このボタンを使って、クライアント秘密キーファイルを参照してデバイスにアップロードします。&lt;/li&gt;&lt;li&gt;クライアント キーとパスワードを組み合わせた (PEM) ファイルをアップロードすることもできます。&lt;/li&gt;&lt;/ul&gt;"); 
+            define ("TOOLTIP_NETWORK_EAPOLVERSION", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;EAPOL バージョン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;使用する EAPOL プロトコルのバージョンをドロップダウンを使って指定します。&lt;/li&gt;&lt;/ul&gt;"); 
+            define ("TOOLTIP_NETWORK_EAPIDENTITY", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;EAP ID&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;EAP ID を指定します。&lt;/li&gt;&lt;/ul&gt;"); 
+            define ("TOOLTIP_NETWORK_PRIVTEKEYPWD",  "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;秘密キー パスワード&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;秘密キー パスワードを指定します。&lt;/li&gt;&lt;/ul&gt;"); 
+            define ("TOOLTIP_NETWORK_DOWNLOADLOGBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[802.1X ログのダウンロード] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、".$NXTText." の &lt;i&gt;IEEE 802.1X ログ&lt;/i&gt;がテキスト ファイルとしてダウンロードされます。&lt;/li&gt;&lt;/ul&gt;");
+
+
+            //////////////////////////////////////////////////////
+            // ADV. DHCP DIALOG HELP STRINGS
+            //////////////////////////////////////////////////////
+            define ("TOOLTIP_ADVDHCP_TIMEOUT", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;DHCP タイムアウト&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." DHCP クライアントが ".$NXTText." の&lt;i&gt;ホスト名&lt;/i&gt; を解決できないと判断するまでの秒数を指定します。&lt;/li&gt;&lt;li&gt;期間範囲 (秒): 10 - 120。&lt;/li&gt;&lt;li&gt;デフォルト値: 10。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ADVDHCP_RETRIES", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;DHCP 再試行&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." DHCP クライアントが ".$NXTText." の&lt;i&gt;ホスト名&lt;/i&gt;の解決に失敗した場合の合計試行回数を指定します。&lt;/li&gt;&lt;li&gt;試行回数: 0 - 5。&lt;/li&gt;&lt;li&gt;デフォルト値: 0。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ADVDHCP_RETRYDELAY", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;再試行遅延&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;DHCP クライアントの再試行の間隔を秒数で指定します。&lt;/li&gt;&lt;li&gt;期間範囲 (秒): 0 - 60。&lt;/li&gt;&lt;li&gt;デフォルト値: 10。&lt;/li&gt;&lt;/ul&gt;");
+
+            define ("TOOLTIP_IPV6_ENABLE", "<span class='tooltip-header'>IPv6 を有効にする</span>");
+            define ("TOOLTIP_IPV6_CONFIGURATION", "<span class='tooltip-header'>IPv6 構成詳細の指定</span>");
+            define ("TOOLTIP_IPV6_DHCP_MODE", "<span class='tooltip-header'>IPv6 DHCP モード:</span><ul class='tooltip-list'><li><b>ステートレス</b> &ndash; DNS サーバーや NTP サーバーなどの設定に DHCPv6 を使いますが、IPv6 アドレスの設定には使いません。</li><li><b>ステートフル</b> - IPv6 アドレスおよび DNS サーバーなどの設定に DHCPv6 を使います。</li><li><b>自動</b> &ndash; ルーター アドバタイズメントによって DHCPv6 の使用が決まります。</li><li><b>オフ</b> - DHCPv6 が無効になります。</li></ul>");
+            define ("TOOLTIP_IPV6_ADDRESS", "<span class='tooltip-header'>IPv6 ネットワーク アドレス</span>");
+            define ("TOOLTIP_IPV6_GATEWAY", "<span class='tooltip-header'>IPv6 デフォルト ゲートウェイ アドレス</span>");
+            define ("TOOLTIP_IPV6_DNS1", "<span class='tooltip-header'>IPv6 プライマリ DNS サーバー アドレス</span>");
+            define ("TOOLTIP_IPV6_DNS2", "<span class='tooltip-header'>IPv6 セカンダリ DNS サーバー アドレス</span>");
+			define ("TOOLTIP_IPV6_STATUS", "&lt;span class=&apos;tooltip-header&apos;&gt;EXT デバイスに現在割り当てられている IPv6 アドレス&lt;/span&gt;&lt;ul class=&apos;tooltip-list&apos;&gt;&lt;li&gt;&lt;b&gt;グローバル&lt;/b&gt; &amp;ndash; グローバルに有効なアドレス。&lt;/li&gt;&lt;li&gt;&lt;b&gt;リンクローカル&lt;/b&gt; - EXT デバイスが接続されているネットワーク セグメントまたはブロードキャスト ドメイン内の通信のみに有効なアドレス。&lt;/li&gt;&lt;li&gt;&lt;b&gt;ステートレス&lt;/b&gt; &amp;ndash; ステートレス アドレス構成のためにインストールされたアドレス。&lt;/li&gt;&lt;li&gt;&lt;b&gt;一時&lt;/b&gt; - 一時ランダム アドレス (RFC 4941 に記載)。&lt;/li&gt;&lt;/ul&gt;");
+
+            define ("TOOLTIP_DEVICE_TAB", "<b><i>[デバイス] タブ</i></b><br>".$NXTText." デバイスの構成。(LED の明るさ、音量調節、時刻設定、リブート、出荷時設定にリセット)");
+            define ("TOOLTIP_DEVICE_SPEAKERVOLUME", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;スピーカー音量&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." のスピーカー音量を調節します。&lt;/li&gt;&lt;li&gt;値を &amp;apos;0&amp;apos; に設定するとスピーカーが無音になります。&lt;/li&gt;&lt;li&gt;音量範囲: 0 - 100。&lt;/li&gt;&lt;li&gt;デフォルト値: 40。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_DEVICE_LEDBRIGHTNESS", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;LED の明るさ&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." の LED の明るさレベルを調節します。&lt;/li&gt;&lt;li&gt;値を &amp;apos;0&amp;apos; に設定すると LED がオフになります。&lt;/li&gt;&lt;li&gt;明るさ範囲: 0 - 100。&lt;/li&gt;&lt;li&gt;デフォルト値: 20.。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_DEVICE_TAMPERVOLUME", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;改ざんトーン音量&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;&lt;i&gt;改ざんアラーム&lt;/i&gt;の音量レベルを調節します。&lt;/li&gt;&lt;li&gt;値を &amp;apos;0&amp;apos; に設定するとアラームが無音になります。&lt;/li&gt;&lt;li&gt;音量範囲: 0 - 100。&lt;/li&gt;&lt;li&gt;デフォルト値: 10。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_DEVICE_TIMESERVER", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;インターネット タイム サーバー&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;現在の時刻を取得する&lt;i&gt;インターネット タイム サーバー&lt;/i&gt;の Web アドレス。&lt;/li&gt;&lt;li&gt;この機能が動作するために、".$NXTText." が&lt;i&gt;インターネット タイム サーバー&lt;/i&gt;にアクセスできる&lt;b&gt;&lt;i&gt;必要があります&lt;/i&gt;&lt;/b&gt;。&lt;/li&gt;&lt;li&gt;デフォルト値: time.nist.gov。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_DEVICE_SYNCHRONIZEDAILY", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;毎日時刻を同期&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションでは、指定された&lt;i&gt;インターネット タイム サーバー&lt;/i&gt;と ".$NXTText." が 1 日に 1 回同期できるようにします。&lt;/li&gt;&lt;li&gt;デフォルト値: 有効。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_DEVICE_LOCATEDEVICE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[デバイスの発見] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると ".$NXTText." の LED が点滅します。&lt;/li&gt;&lt;li&gt;ユーザーが操作をキャンセルするまで、LED は点滅し続けます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_DEVICE_SYNCHRONIZENOW", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[今すぐ同期] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、指定した&lt;i&gt;インターネット タイム サーバー&lt;/i&gt;と ".$NXTText." の時刻が即座に同期されます。&lt;/li&gt;&lt;/ul&gt;");
+	    define ("TOOLTIP_DEVICE_SYNCHRONIZEWITHHOST", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[ホストと同期] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、現在のホストまたはシステムの時刻と ".$NXTText." の時刻が即座に同期されます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_DEVICE_FACTORYRESET", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[出荷時の設定にリセット] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると ".$NXTText." が&lt;i&gt;出荷時&lt;/i&gt;の設定にリセットされます。&lt;/li&gt;&lt;li&gt;".$NXTText." が出荷時の設定にリセットされると、&lt;/li&gt;&lt;ol&gt;&lt;li&gt;すべての設定がデフォルト値にリセットされます。&lt;/li&gt;&lt;li&gt;ネットワーク設定がデフォルト (DHCP) に戻ります。&lt;/li&gt;&lt;li&gt;".$NXTText." のデータベースがクリアされます。&lt;/li&gt;&lt;li&gt;".$NXTText." に保存されているログ ファイルがクリアされます。&lt;/li&gt;&lt;li&gt;".$NXTText." がリブートします。&lt;/li&gt;&lt;/ol&gt;&lt;/ul&gt;");
+			
+			 define ("TOOLTIP_ACS_INSTALLATION_MODE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;セキュア モード OSDP インストール モード&lt;/span&gt;&amp;quot;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、".$NXTText." がセキュア モード OSDP インストール モードに設定されます。&lt;/li&gt;
+                                                &lt;li&gt;このモードでは、".$NXTText." がセキュア モード OSDP SCBK を制御パネルから受信できます。&lt;/li&gt;&lt;ol&gt;
+                                                &lt;li&gt;このモードでは、新しい制御パネルの使用時または新規インストール時にセキュア モード OSDP を使用する必要があります。&lt;/li&gt;
+												&lt;li&gt;このオプションを確定すると、現在保存されている SCBK が削除されます。&lt;b&gt;この操作は元に戻せません&lt;/b&gt;&lt;/li&gt;
+                                                &lt;/ol&gt;&lt;/ul&gt;");
+			
+            define ("TOOLTIP_DEVICE_REBOOTDEVICE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[リブート] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、".$NXTText." のソフト リブートが実行されます。&lt;/li&gt;&lt;li&gt;リブートすると、WebConfig が ".$NXTText." から切断されます。&lt;/li&gt;&lt;li&gt;リブート シーケンスが進んで、WebConfig が ".$NXTText." と再接続されるまでお待ちください。&lt;/li&gt;&lt;li&gt;WebConfig が 2 分以内に自動的に再接続されない場合は、".$NXTText." が動作していることを確認した後、ブラウザーでこのページをリフレッシュしてください。&lt;/li&gt;&lt;/ul&gt;");
+
+
+            define ("TOOLTIP_SECURITY_TAB", "&lt;b&gt;&lt;i&gt;[セキュリティ] タブ&lt;/i&gt;&lt;/b&gt;&lt;br&gt;".$NXTText." のセキュリティ構成。(キー管理、パスワードのリセット、改ざん設定)");
+            define ("TOOLTIP_SECURITY_TAMPERACTIVEHIGH", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;高信号で改ざんをアクティブにする&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;2 要素認証のシステムにカード リーダーが取り付けられている場合は、この設定がカード リーダーの改ざん出力と一致している必要があります。&lt;/li&gt;&lt;li&gt;&amp;apos;カード リーダーの改ざん状態が高信号でアクティブになる場合は、[高信号で改ざん状態をアクティブにする] を選んでください。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SECURITY_TAMPERACTIVELOW", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;低信号で改ざんをアクティブにする&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;2 要素認証のシステムにカード リーダーが取り付けられている場合は、この設定がカード リーダーの改ざん出力と一致している必要があります。&lt;/li&gt;&lt;li&gt;&amp;apos;カード リーダーの改ざん状態が低信号でアクティブになる場合は、[低信号で改ざん状態をアクティブにする] を選んでください。&lt;/li&gt;&lt;/ul&gt;");
+             define ("TOOLTIP_OUTPUT_SECURITY_TAMPERACTIVEHIGH", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;高信号&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;改ざんが検知された場合の出力を「高」に設定します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_OUTPUT_SECURITY_TAMPERACTIVELOW", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;低信号で改ざんをアクティブにする&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;改ざんが検知された場合の出力を「低」に設定します。&lt;/li&gt;&lt;/ul&gt;");
+
+
+            define ("TOOLTIP_SECURITY_TAMPERNOTIFYADDR", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;通知アドレス&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;&lt;i&gt;改ざんメッセージ&lt;/i&gt;を受信するシステムやアプリケーションの IP アドレスを指定します&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SECURITY_TAMPERNOTIFYPORT", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;通知ポート&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;&lt;i&gt;改ざんメッセージ&lt;/i&gt;を受信するシステムやアプリケーションのポートを指定します&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SECURITY_TAMPERMESSAGE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;改ざんメッセージ&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." で改ざんが発生した場合に上記の場所に送信するメッセージを指定します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SECURITY_OLDPWD", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;古いパスワード&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;既存の ".$NXTText." ログオン パスワードをこのフィールドに入力します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SECURITY_NEWPWD", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;新しいパスワード&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;希望する ".$NXTText." ログオン パスワードをこのフィールドに入力します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SECURITY_CONFIRMPWD", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;パスワードの確認&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;希望する ".$NXTText." ログオン パスワードをこのフィールドにもう一度入力します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SECURITY_UPDATEPWDBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[パスワードのリセット] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると ".$NXTText." のパスワードがリセットされます。&lt;/li&gt;&lt;li&gt;パスワードがリセットされると、Web Config のログオン画面が表示されます。新しいパスワードを入力してログインしてください。&lt;/li&gt;&lt;/ul&gt;");
+	     define ("TOOLTIP_SECURITY_NANONXT_TEXT", $NXTText."デバイス");
+	     define ("TOOLTIP_SECURITY_PC_TEXT", "ホスト システム");
+	     define ("TOOLTIP_SECURITY_VALIDKEY_TEXT", "有効なキー");
+	     define ("TOOLTIP_SECURITY_INVALIDKEY_TEXT", "キーが無効または期限切れです");
+	     define ("TOOLTIP_SECURITY_REGENERATEKEY_TEXT", "キーの再生成");
+	     define ("TOOLTIP_SECURITY_DELETEKEY_TEXT", "キーの削除");
+	     define ("TOOLTIP_SECURITY_DOWNLOADKEY_TEXT", "キーのダウンロード");
+	     define ("TOOLTIP_SECURITY_KEYMGMTBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;キーのダウンロード&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;カスタム キーをこのコンピューターにダウンロードします。&lt;/li&gt;&lt;li&gt;".$NXTText." を [デフォルト キーの使用] から [カスタム キーの使用] に切り替えるたびにキーをダウンロードする必要があります。&lt;/ul&gt;");
+	     define ("TOOLTIP_SECURITY_ADDHOSTKEYBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;カスタム キーの追加&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、新しいカスタム キーが ".$NXTText." に追加されます。&lt;/li&gt;&lt;/ul&gt;");
+	     define ("TOOLTIP_SECURITY_DELETEALLHOSTKEYSBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;カスタム キーの削除&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、".$NXTText." にあるカスタム キーが削除されます。&lt;/li&gt;&lt;/ul&gt;");
+    
+        define ("TOOLTIP_SECURITY_KEYMGMTDEFAULTRADIO", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;デフォルト キーの使用&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;Eyelock 製品とともに提供されるデフォルト キーを使って ".$NXTText." と対話します。&lt;/li&gt;&lt;li&gt;&lt;a id=&apos;DefaultKeyExpiry&apos;&gt;デフォルト キーは 2025 年 3 月 19 日に期限が切れます&lt;/a&gt;&lt;/li&gt;&lt;/ul&gt;");
+         define ("TOOLTIP_SECURITY_KEYMGMTCUSTOMRADIO", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;カスタム キーの使用&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;対話に使用するカスタム キーが ".$NXTText." で生成されます。キーをダウンロードして、Eyelock アプリケーションに割り当ててください。&lt;/li&gt;&lt;/ul&gt;");
+
+        define ("TOOLTIP_SECURITY_KEYMGMTVALIDITY", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;キーの有効期限...&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;表示される日時までカスタム キーが有効です。&lt;/li&gt;&lt;/ul&gt;");
+
+            define ("TOOLTIP_SOFTWARE_TAB", "&lt;b&gt;&lt;i&gt;[ソフトウェア] タブ&lt;/i&gt;&lt;/b&gt;&lt;br&gt;".$NXTText." のファームウェアを構成します。(ファームウェアの更新、ファームウェアの復元)");
+            define ("TOOLTIP_SOFTWARE_UPDATENOWBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[今すぐ更新] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;新しいバージョンの ".$NXTText." のファームウェアが Eyelock.com Web サイトで入手可能になると、このボタンが表示されます。&lt;/li&gt;&lt;li&gt;クリックすると、 ソフトウェアの自動アップグレード プロセスが開始します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SOFTWARE_LOCALFILEBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[ローカル ファイル...] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このボタンをクリックすると、ローカルでアクセス可能な Eyelock アップグレード パッケージで ".$NXTText." のファームウェアをアップグレードできます。&lt;/li&gt;&lt;li&gt;このボタンをクリックして、パッケージ ファイルを選択すると、アップグレード プロセスが始まります。&lt;/li&gt;&lt;li&gt;&lt;strong&gt;警告: 更新中は、Nano の電源を切断したり、ワークステーションのネットワークを切断したり、ブラウザー ウィンドウを閉じたりしないでください。&lt;/strong&gt;&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SOFTWARE_PTLOCALFILEBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ローカル ファイル... ポータブル テンプレート リーダーのファームウェアの管理&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このボタンをクリックすると、ローカルでアクセス可能なファームウェア イメージ (.bin ファイル) でポータブル テンプレート リーダーのファームウェアをアップグレードできます。&lt;/li&gt;&lt;li&gt;このボタンをクリックして、イメージ ファイルを選択すると、アップグレード プロセスが始まります。&lt;/li&gt;&lt;li&gt;&lt;strong&gt;警告: 更新中は、Nano の電源を切断したり、ワークステーションのネットワークを切断したり、ブラウザー ウィンドウを閉じたりしないでください。&lt;/strong&gt;&lt;/li&gt;&lt;/ul&gt;");
+			
+			define ("TOOLTIP_SOFTWARE_DETAILSBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[詳細...] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このボタンをクリックすると、".$NXTText." のアップグレード ダイアログに、現在使用可能なアップグレード パッケージ ファイルの詳細が表示されます。&lt;/li&gt;&lt;li&gt;[詳細] 画面からアップグレードを開始してください。&lt;/li&gt;&lt;/ul&gt;");
+
+            define ("TOOLTIP_SOFTWARE_ALLOWSITEADMINUPDATE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;管理者にデバイスの更新を許可&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションを有効にすると、&lt;i&gt;admin&lt;/i&gt; でログインしたユーザーが ".$NXTText." をアップグレードできるようになります。&lt;/li&gt;&lt;li&gt;このオプションは &lt;i&gt;installer&lt;/i&gt; に対してのみ表示されます。&lt;/li&gt;&lt;/ul&gt;");
+
+            define ("TOOLTIP_SOFTWARE_NANORESTORE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;".$NXTText." の復元ポイント&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションを選ぶと、使用可能な ".$NXTText." ファームウェアの復元ポイントのリストが表示されます。&lt;/li&gt;&lt;li&gt;復元ポイントの横のチェック ボックスを選んで、&lt;i&gt;[復元...]&lt;/i&gt; または &lt;i&gt;[削除...]&lt;/i&gt; ボタンをクリックすれば、復元ポイントを復元または削除できます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SOFTWARE_BOBRESTORE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;".$NXTText." ブレークアウト ボードの復元ポイント&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションを選ぶと、使用可能な ".$NXTText." のブレークアウト ボードのファームウェア復元ポイントのリストが表示されます。&lt;/li&gt;&lt;li&gt;復元ポイントの横のチェック ボックスを選んで、&lt;i&gt;[復元...]&lt;/i&gt; または &lt;i&gt;[削除...]&lt;/i&gt; ボタンをクリックすれば、復元ポイントを復元または削除できます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SOFTWARE_RESTOREBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;復元ポイント復元ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、".$NXTText." のファームウェアが以前の復元ポイントに戻ります。&lt;/li&gt;&lt;li&gt;選択した最初の復元ポイントが復元されます。&lt;/li&gt;&lt;li&gt;復元は自動プロセスなので一度開始すると停止できません。&lt;/li&gt;&lt;li&gt;".$NXTText." に復元ポイントを 5 個まで保持できます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_SOFTWARE_DELETEBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;復元ポイント削除ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このボタンをクリックすると、選択したすべての復元ポイントが ".$NXTText." から永続的に削除されます。&lt;/li&gt;&lt;li&gt;削除された復元ポイントは回復できません。&lt;/li&gt;&lt;/ul&gt;");
+
+
+            define ("TOOLTIP_AUTHENTICATION_TAB", "&lt;b&gt;&lt;i&gt;[認証] タブ&lt;/i&gt;&lt;/b&gt;&lt;br&gt;".$NXTText." 認証パラメーターの構成。(照合モード、反復認証期間、照合失敗タイムアウトなど)");
+            define ("TOOLTIP_AUTHENTICATION_SINGLEEYE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;片目認証&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションを選ぶと、片目の生体照合で正常に認証&lt;i&gt;できます&lt;/i&gt;。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_DUALEYE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;両目認証&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションを選ぶと、両目の生体照合を&lt;i&gt;しないと&lt;/i&gt;正常に認証できません。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_REPEATPERIOD", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;反復認証期間&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;正常に認証するために必要な&lt;i&gt;最小&lt;/i&gt;間隔。画質を確保するために 2 秒以上必要です。&lt;/li&gt;&lt;li&gt;範囲 (秒): 2  - 60。&lt;/li&gt;&lt;li&gt;デフォルト値: 4。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_ENABLENEGMATCHTIMEOUT", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;照合失敗タイムアウトを有効にする&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションを選ぶと、&lt;i&gt;照合失敗&lt;/i&gt;のタイムアウト規則の処理が有効になります。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_LOITERPERIOD", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;待機時間&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." の認証がタイムアウトして照合失敗が報告されるまでの&lt;i&gt;最小&lt;/i&gt;期間を指定します。&lt;/li&gt;&lt;li&gt;範囲 (秒): 2  - 60。&lt;/li&gt;&lt;li&gt;デフォルト値: 6。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_NEGMATCHRESET", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;照合失敗リセット タイマー&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;照合に失敗した後に、".$NXTText." が別の認証を試みるまでに経過する必要がある&lt;i&gt;最小&lt;/i&gt;期間を秒数で指定します。&lt;/li&gt;&lt;li&gt;範囲 (秒): 2  - 60。&lt;/li&gt;&lt;li&gt;デフォルト値: 4。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_NETWORKMSGADDR", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ネットワーク メッセージ宛先 IP&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;&lt;i&gt;ネットワーク照合&lt;/i&gt;メッセージを受信するシステムやアプリケーションの IP アドレスを指定します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_NETWORKMSGPORT", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;通知ポート&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;&lt;i&gt;ネットワーク照合&lt;/i&gt;メッセージを受信するシステムやアプリケーションのポートを指定します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_NETWORKMSGMSG", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ネットワーク メッセージの形式&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;正常に照合や認証が行われた場合に、上記の場所に送信されるメッセージの形式文字列を指定します。&lt;/li&gt;&lt;li&gt;デフォルト値: 照合済:%d;スコア:%0.4f;時間:%llu;ID:&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_IRISPROCESSINGMODE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;虹彩処理モード&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;虹彩処理のモードを指定します。2 つのオプションがあります。&lt;/li&gt;&lt;li&gt;アクセス制御認証 - 照合機能を使ってユーザーの虹彩を認証し、オプションで ACS システムとインタフェースできます。&lt;/li&gt;&lt;li&gt;虹彩キャプチャ モード - 虹彩をキャプチャして、リモート HTTP エンドポイントに送信します。照合や ACS 統合は行われません。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_CAPTURETIMEOUT", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;虹彩キャプチャ タイムアウト&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;メッセージを HTTP エンドポイントに送信する前にユーザーの虹彩を処理する時間をミリ秒単位で指定します。&lt;/li&gt;&lt;li&gt;範囲 (ミリ秒): 1000  - 60000。&lt;/li&gt;&lt;li&gt;デフォルト値: 5000。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_CAPTURERESETDELAY", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;虹彩キャプチャ リセット遅延&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;虹彩をキャプチャした後、次のユーザーを処理するまでにデバイスが待機する遅延時間をミリ秒単位で指定します。&lt;/li&gt;&lt;li&gt;範囲 (ミリ秒): 1000  - 300000。&lt;/li&gt;&lt;li&gt;デフォルト値: 5000。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_MESSAGEFORMAT", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;HTTP メッセージの形式&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;HTTP エンドポイントに送信されるメッセージの形式を指定します。&lt;/li&gt;&lt;li&gt;デフォルト値: SOAP (SOAP メッセージのスキーマについては文書を参照してください)&lt;/li&gt;&lt;li&gt;代替値: JSON (JSON メッセージのスキーマについては文書を参照してください)&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_PAYLOADFORMAT", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;メッセージ画像ペイロード形式&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;HTTP エンドポイントに送信される虹彩画像のグラフィック形式を指定します。&lt;/li&gt;&lt;li&gt;オプション 1: RAW - 8 ビット、シングル チャネル画像&lt;/li&gt;&lt;li&gt;オプション 2: PNG&lt;/li&gt;&lt;li&gt;オプション 3: J2K (JPEG 2000)&lt;/li&gt;&lt;li&gt;デフォルト値: RAW - 8 ビット、シングル チャネル画像&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_IRISIMAGEQUALITY", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;虹彩画質&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;エンコードされた JPEG 2000 虹彩画像の画質を指定します。100 を指定すると無損失圧縮になります。&lt;/li&gt;&lt;li&gt;デフォルト値: 100&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_IRISCAPTURE_WECOMEMSG", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ようこそメッセージ&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;虹彩キャプチャ メッセージの一部として送信されるテキスト文字列を定義します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_IRISCAPTURE_DEVICELOCATION", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;デバイスの場所&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;虹彩キャプチャ メッセージで、このデバイスに関連付ける独自の文字列を定義します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_IRISCAPTURE_HEARTBEATURL", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ハートビート URL&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このデバイスのハートビート メッセージの送信先の URL を定義します。空にしておくと、ハートビート メッセージは送信されません。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_IRISCAPTURE_POSTSENDERURL", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;送信先アドレス&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;すべての虹彩キャプチャ メッセージの宛先のベース URL。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_IRISCAPTURE_ERRORURL", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;シグナル エラー エンドポイント&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;シグナル エラー メッセージの送信先アドレスのエンドポイント。空にしておくと、メッセージは送信されません。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_IRISCAPTURE_POSTIRISURL", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;虹彩送信エンドポイント&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;虹彩画像の送信先アドレスのエンドポイント。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_IRISCAPTURE_MAINTENANCEURL", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;保守エンドポイント&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;保守メッセージの送信先アドレスのエンドポイント。空にしておくと、メッセージは送信されません。&lt;/li&gt;&lt;/ul&gt;");
+
+            define ("TOOLTIP_DATABASE_TAB", "&lt;b&gt;&lt;i&gt;[データベース] タブ&lt;/i&gt;&lt;/b&gt;&lt;br&gt;".$NXTText." のデータベース構成。(Network Matcher およびデータベース統計情報)");
+            define ("TOOLTIP_DATABASE_ENABLENETWORKMATCHER", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;Network Matcher を有効にする&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションを選ぶと、&lt;i&gt;Eyelock Network Matcher サービス&lt;/i&gt;を使って、生体認証データをデバイス以外で追加処理できます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_DATABASE_NETWORKMATCHERADDR", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;Network Matcher 宛先アドレス&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;認証要求を処理する Eyelock Network Matcher サービスの IP アドレスを指定します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_DATABASE_NETWORKMATCHERPORT", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;Network Matcher 宛先ポート&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;認証要求を処理する Eyelock Network Matcher サービスのポートを指定します。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_AUTHENTICATION_SECURENETWORK", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;安全なネットワーク照合メッセージを有効にする&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションを有効にすると、照合メッセージがネットワークで安全に送信されます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_DATABASE_STATISTICS", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;テンプレート領域残量&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;この値には、使用可能なテンプレートの最大数から ".$NXTText." のデータベースに現在保存されている生体認証テンプレート数を差し引いた値が表示されます。&lt;/li&gt;&lt;/ul&gt;");
+			define ("TOOLTIP_DATABASE_NETWORKMATCHER_SECURECOMM", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;安全な Network Matcher を有効にする&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションを有効にすると、&lt;i&gt;Eyelock Network Matcher サービス&lt;/i&gt;と安全に通信できます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_UPLOAD_PTFIRMWARE", "ポータブル テンプレート リーダーのファームウェア (.bin) ファイルをアップロードします。");                       
+            define ("TOOLTIP_ACS_TAB", "&lt;b&gt;&lt;i&gt;[ACS] タブ&lt;/i&gt;&lt;/b&gt;&lt;br&gt;ACS やドア パネル システムの ".$NXTText." の構成。 (プロトコル、ACS LED 制御、2 要素認証、リレー、ACS テスト オプション)");
+
+
+            define ("TOOLTIP_LOGS_TAB", "&lt;b&gt;&lt;i&gt;[ログ] タブ&lt;/i&gt;&lt;/b&gt;&lt;br&gt;".$NXTText." のログの表示およびダウンロードが可能です。");
+            define ("TOOLTIP_LOGS_REFRESHBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[リフレッシュ] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このボタンをクリックすると、ログの現在のコンテンツと&lt;i&gt;イベント ログ&lt;/i&gt;が同期されます。&lt;/li&gt;&lt;li&gt;&lt;i&gt;イベント ログ&lt;/i&gt;は、WebConfig を初めて実行したときに同期されます。継続的には更新されません。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_LOGS_DOWNLOADBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[ダウンロード] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、".$NXTText." の&lt;i&gt;イベント ログ&lt;/i&gt;が Microsoft Excel CSV ファイルとしてダウンロードされます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ACCESSCONTROLTYPE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;認証スキーム&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." で使う認証スキームを選びます。&lt;/li&gt;&lt;li&gt;スキーム&lt;/li&gt;&lt;ul&gt;&lt;li&gt;虹彩のみ: ".$NXTText." がアクセス システムに虹彩認証のみを渡します&lt;/li&gt;&lt;li&gt;虹彩またはカード: カードの資格証明または虹彩認証のどちらかを ".$NXTText." がアクセス システムに送信します&lt;/li&gt;&lt;li&gt;虹彩とカード: カードの資格証明と (提示されたカードと一致する) 虹彩認証の両方が ".$NXTText." で必要になります&lt;/li&gt;&lt;li&gt;虹彩とカード (PIN パススルー): カードの資格証明と (提示されたカードと一致する) 虹彩認証の両方が ".$NXTText." で必要になり、PIN はアクセス システムにそのまま渡されます&lt;/li&gt;&lt;li&gt;PIN と虹彩: PIN と虹彩認証の両方を ".$NXTText." がアクセス システムに送信します&lt;/li&gt;&lt;li&gt;PIN とカードと虹彩: PIN とカードの資格証明と (提示されたカードと一致する) 虹彩認証を ".$NXTText." が送信します&lt;/li&gt;&lt;/ul&gt;&lt;/ul&gt;);
+
+            define ("TOOLTIP_ACS_PROTOCOL", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ACS プロトコル&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このドロップダウンで、この ".$NXTText." で使う ACS プロトコルを選びす。&lt;/li&gt;&lt;li&gt;次のプロトコルがサポートされています。&lt;/li&gt;&lt;ul&gt;&lt;li&gt;Wiegand&lt;/li&gt;&lt;li&gt;HID シリアル&lt;/li&gt;&lt;li&gt;F2F&lt;/li&gt;&lt;li&gt;PAC&lt;/li&gt;&lt;li&gt;OSDP&lt;/li&gt;&lt;/ul&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_OSDP_BAUD", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;OSDP ボー レート&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;RS-485 入力と RS-485 出力両方の半二重非同期シリアル通信速度を制御します。信号のデフォルトはデータ 8 ビット、ストップ ビット 1、パリティ ビットなしです。ボー レートのデフォルト値は 9600 です。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_OSDP_ADDRESS", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;OSDP アドレス&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;マルチドロップ RS-485 ネットワークの出力用 OSDP アドレスを指定します。アドレスのデフォルト値は 0 です。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ACS_LEDCONTROLLEDACS", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ACS で LED を制御&lt;/span&gt;&lt;br /&gt;&lt;br /&gt;LED 制御では、".$NXTText." の LED と音響器の状態を ACS で制御できます。  LED 制御を有効にしないと、".$NXTText." が内部的に LED を管理します。");
+            define ("TOOLTIP_ACS_DUALAUTHENTICATION", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;2 要素認証&lt;/span&gt;&lt;br /&gt;&lt;br /&gt;2 要素認証では、虹彩を認証する前に、付属のカード リーダーにユーザーがカードを提示する必要があります。&lt;br /&gt;".$NXTText." では、内部メモリーのカードが参照された後、ランプが白に変わって、ユーザーに虹彩認証を促します。&lt;br /&gt;参照された記録とユーザーの虹彩が一致すれば、".$NXTText." から ACS にデータが送信されます。&lt;br /&gt;一致しない場合は、照合失敗コードが ".$NXTText." から送信されます。");
+
+                                
+            define ("TOOLTIP_ACS_TEMPLATEONCARDPASS", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;1 要素認証&lt;/span&gt;&lt;br /&gt;&lt;br /&gt;付属のカード リーダーまたは虹彩認証のどちらかに提示された資格情報が ".$NXTText." からアクセス制御パネルに送信されます。");
+            define ("TOOLTIP_ACS_TEMPLATEONCARD", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;1 要素認証&lt;/span&gt;&lt;br /&gt;&lt;br /&gt;付属のカード リーダーまたは虹彩認証のどちらかに提示された資格情報が ".$NXTText." からアクセス制御パネルに送信されます。");
+            define ("TOOLTIP_ACS_DUALAUTHPARITY", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;2 要素認証パリティ&lt;/span&gt;&lt;br /&gt;&lt;br /&gt;2 要素認証のカード読み取り時に、カードリーダーから送信されるパリティ ビットを確認するかどうかを選択します。");
+            define ("TOOLTIP_ACS_IRISWAITTIME", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;虹彩待機時間&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;カードをスキャンした後に、ユーザーが ".$NXTText." で虹彩認証をするまでの許容時間を秒数で指定します&lt;/li&gt;&lt;li&gt;期間範囲 (秒): 2 - 60。&lt;/li&gt;&lt;li&gt;デフォルト値: 10。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ACS_PINWAITTIME", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;PIN 待機時間&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;カードをスキャンした後に、ユーザーが PIN を入力するまでの許容時間を秒数で指定します&lt;/li&gt;&lt;li&gt;期間範囲 (秒): 2 - 60。&lt;/li&gt;&lt;li&gt;デフォルト値: 10。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ACS_PINBURSTBITS", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;PIN バースト ビット&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;PIN 処理のビット サイズを指定します&lt;/li&gt;&lt;li&gt;デフォルト値: 4。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ACS_ENABLERELAYS", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;リレーを有効にする&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このオプションを選択すると、ACS パネルの物理的なリレーの動作が有効になります。&lt;/li&gt;&lt;li&gt;&lt;i&gt;許可&lt;/i&gt;と&lt;i&gt;拒否&lt;/i&gt;のリレーがサポートされています。&lt;/li&gt;&lt;li&gt;下部のスライダーを使って、リレーをアクティブにしておく時間を指定できます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ACS_GRANTRELAYTIME", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;許可リレー時間&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;認証に成功した場合に&lt;i&gt;許可&lt;/i&gt;リレーをトリガーする秒数を指定します。&lt;/li&gt;&lt;li&gt;&lt;i&gt;許可&lt;/i&gt;リレーを個別に無効にするには、この値をゼロに設定してください。&lt;/li&gt;&lt;li&gt;期間範囲 (秒): 0 - 10。&lt;/li&gt;&lt;li&gt;デフォルト値: 3。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ACS_DENYRELAYTIME", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;拒否リレー時間&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;認証に失敗した場合に&lt;i&gt;拒否&lt;/i&gt;リレーをトリガーする秒数を指定します。&lt;/li&gt;&lt;li&gt;&lt;i&gt;拒否&lt;/i&gt;リレーを個別に無効にするには、この値をゼロに設定してください。&lt;/li&gt;&lt;li&gt;期間範囲 (秒): 0 - 10。&lt;/li&gt;&lt;li&gt;デフォルト値: 5。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ACS_DURESSRELAYTIME", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;脅迫リレー時間&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;認証に成功した場合に&lt;i&gt;脅迫&lt;/i&gt;リレーをトリガーする秒数を指定します。&lt;/li&gt;&lt;li&gt;&lt;i&gt;脅迫&lt;/i&gt;リレーを個別に無効にするには、この値をゼロに設定してください。&lt;/li&gt;&lt;li&gt;期間範囲 (秒): 0 - 10。&lt;/li&gt;&lt;li&gt;デフォルト値: 5。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ACS_TESTCODE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;施設コード&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;選択した ACS プロトコルで、&lt;i&gt;[今すぐテスト]&lt;/i&gt; ボタンをクリックしたときに使われる事前定義済の施設コードが表示されます。&lt;/li&gt;&lt;li&gt;ACS システムをテストする前に、EyeEnroll アプリケーションを使って、この値を事前に定義しておいてください。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ACS_TESTCARDID", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;カード ID&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;選択した ACS プロトコルで、&lt;i&gt;[今すぐテスト]&lt;/i&gt; ボタンをクリックしたときに使われる事前定義済のカード ID が表示されます。&lt;/li&gt;&lt;li&gt;ACS システムをテストする前に、EyeEnroll アプリケーションを使って、この値を事前に定義しておいてください。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_ACS_TESTACSBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[今すぐテスト] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このボタンをクリックすると、事前定義済のテスト文字列が ACS パネルに送信されます。EyEnroll アプリケーションを使って、".$NXTText." のテスト文字列を定義しておく必要があります。&lt;/li&gt;&lt;/ul&gt;");
+
+
+            //////////////////////////////////////////////////////////////////////////////
+            // Other Tool Tips...
+            //////////////////////////////////////////////////////////////////////////////
+            define ("TOOLTIP_HEADER_LANGUAGE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[言語] ドロップダウン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このドロップダウンを使って、WebConfig ユーザー インタフェースの言語を選びます。&lt;/li&gt;&lt;li&gt;使用可能な言語のみが表示されます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_HEADER_EYELOCKLOGO", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;Eyelock Corporation&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;&lt;a href=&apos;http://www.eyelock.com&apos;  target=&apos;_blank&apos;&gt;ここ&lt;/a&gt; をクリックすると、Eyelock の Web サイトが表示されます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_HEADER_CLIENTVER", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;WebConfig クライアント バージョン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;現在使用中の WebConfig クライアントのバージョンが表示されます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_HEADER_LICENSE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ライセンス リンク&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、&lt;i&gt;エンド ユーザー ライセンス契約&lt;/i&gt;が表示されます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_HEADER_HELP", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ヘルプ リンク&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このリンクをクリックすると、ダイアログ ボックスが表示されて、&lt;i&gt;ポップアップ ヘルプ システム&lt;/i&gt;の設定を変更できます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_HEADER_LOGOUT", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ログアウト リンク&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このリンクをクリックすると、現在のセッションからログアウトして、ログイン ページに戻ります。&lt;/li&gt;&lt;/ul&gt;");
+
+            define ("TOOLTIP_FOOTER_APPVERSION", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;".$NXTText." ファームウェア バージョン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." で実行中のアプリケーション ファームウェアの現在のバージョンが表示されます。&lt;/li&gt;&lt;/ul&gt;");
+            define ("TOOLTIP_FOOTER_BOBVERSION", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;".$NXTText." ICM バージョン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." で実行中の ICM の現在のバージョンが表示されます。&lt;/li&gt;&lt;/ul&gt;");
+
+            define ("TOOLTIP_FOOTER_SAVEBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[保存] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、".$NXTText." の設定に加えた変更が永続的に保存されます。&lt;/li&gt;&lt;li&gt;設定をコミットすると、".$NXTText." が自動的に再起動して、新しい設定が即座に有効になります。&lt;/li&gt;&lt;/ul&gt;");
+			
+			 define ("TOOLTIP_FOOTER_CANCELBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[キャンセル] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、加えた変更が破棄されて、構成ページがリフレッシュされます。&lt;/li&gt;
+                                                &lt;/ul&gt;");
+
+            define ("TOOLTIP_TAB_DEVICEIP", "&lt;span style=&apos;font-size: 14px; font-style:bold&apos;&gt;現在の ".$NXTText." の名前/IP アドレス");
+            define ("TOOLTIP_TAB_DEVICEMACADDR", "&lt;span style=&apos;font-size: 14px; font-style:bold&apos;&gt;現在の ".$NXTText." の MAC アドレス");
+
+            //////////////////////////////////////////////////////////////////////////////
+            // Validation Error Messages
+            //////////////////////////////////////////////////////////////////////////////
+            define ("VALIDATOR_MSG_HOSTNAME", "ホスト名に空白や特殊文字を含めることはできず、</br>64 文字未満にする必要があります。");
+            define("TITLE_BTN_TESTNWMS", "現在適用されている Network Matcher の設定をテストします。");
+            define("TEST_NWMS", "NWMS のテスト");
+            define("CB_NWMATCHERCOMMSECURE_TEXT", "安全ではありません");
+            define("COPYRIGHTTEXT", "Copyright 2014-2020.All Rights Reserved."9; 2014.  All Rights Reserved.");
+            define("DISCONNECTWARNING", "この処理の実行中は、ブラウザーを閉じたり、".$NXTText." の電源を切断したり、ネットワークを切断したりしないでください。");
+            break;
+
+
+
 /*
         case "de":
             define("WELCOME_TXT","Willkommen!");
             define("CHOOSE_TXT","Sprache auswÃ¤hlen");
             break;
 
-        case "ja":
-            define("WELCOME_TXT","[ Japanese characters here]");
-            define("CHOOSE_TXT","[ Japanese characters here]");
-            break;
 
         default:
             define("WELCOME_TXT","Welcome!");
