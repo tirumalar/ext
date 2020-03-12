@@ -347,8 +347,8 @@ function defineStrings($HardwareType)
             define ("ACP_PROTOCOL_GROUPTITLE", "Access Control Protocol");
             define ("ACP_PROTOCOL_PROTOCOL", "Protocol:");
             define ("ACP_PROTOCOL_DUALAUTHENABLEDLABEL", "Dual Factor Authentication");
-             define ("ACP_PROTOCOL_TEMPLATEONCARD", "ポータブル テンプレート");
-             define ("ACP_PROTOCOL_TEMPLATEONCARDPASS", "1 要素認証");
+             define ("ACP_PROTOCOL_TEMPLATEONCARD", "Portable Templates");
+             define ("ACP_PROTOCOL_TEMPLATEONCARDPASS", "Single Factor Authentication");
              
                define ("ACP_PROTOCOL_DUALAUTHPARITY", "Check Parity Bits");
             define ("ACP_PROTOCOL_DUALAUTHLEDENABLEDLABEL", "LED Controlled by ACS");
@@ -2023,6 +2023,7 @@ function defineStrings($HardwareType)
             define ("ACP_PROTOCOL_DUALAUTHENABLEDLABEL", "Autenticação de fator duplo");
              define ("ACP_PROTOCOL_TEMPLATEONCARD", "Template Portátil");
              define ("ACP_PROTOCOL_TEMPLATEONCARDPASS", "Autenticação de fator singular");
+			 
              
                define ("ACP_PROTOCOL_DUALAUTHPARITY", "Verifique os Bits de Paridade");
             define ("ACP_PROTOCOL_DUALAUTHLEDENABLEDLABEL", "LED controlado por ACS");
@@ -3114,7 +3115,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
 			define ("TESTING_NETWORK_MATCHER", "Network Matcher のテスト中...");
             define ("DATABASE_TYPE_NETMATCHPORTLABEL", "Network Matcher 宛先ポート:");
             define ("DATABASE_STATISTICS_GROUPTITLE", "データベース統計情報");
-               define ("DATABASE_TOC_GROUPTITLE", "ポータブル テンプレート");
+            define ("DATABASE_TOC_GROUPTITLE", "ポータブル テンプレート");
             define ("DATABASE_STATISTICS_TEMPLATESPACE", "テンプレート領域残量:");
 			define ("DATABASE_SECURECOMM_NETMATCHLABEL", "安全な Network Matcher");
             define("DATABASE_MOBILEMODE", "モバイル モード");
@@ -3139,8 +3140,9 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
             define ("ACP_PROTOCOL_GROUPTITLE", "アクセス制御プロトコル");
             define ("ACP_PROTOCOL_PROTOCOL", "プロトコル:");
             define ("ACP_PROTOCOL_DUALAUTHENABLEDLABEL", "2 要素認証");
-             define ("ACP_PROTOCOL_TEMPLATEONCARD", "Portable Templates");
-             define ("ACP_PROTOCOL_TEMPLATEONCARDPASS", "Single Factor Authentication");
+             define ("ACP_PROTOCOL_TEMPLATEONCARD", "ポータブル テンプレート");
+             define ("ACP_PROTOCOL_TEMPLATEONCARDPASS", "1 要素認証");
+			 
              
                define ("ACP_PROTOCOL_DUALAUTHPARITY", "パリティ ビットの確認");
             define ("ACP_PROTOCOL_DUALAUTHLEDENABLEDLABEL", "ACS で LED を制御");
