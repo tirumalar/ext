@@ -157,8 +157,6 @@ function defineStrings($HardwareType)
             define ("NETWORK_EAPIDENTITY", "EAP Identity:");
             define ("NETWORK_PRIVTEKEYPWD", "Private Key Password:");
 
-            define ("NETWORK_EAPOLVERSION", "EAPOL バージョン:");
-
             define ("NETWORK_SETTINGS_ENABLEIEEE8021X", "Enable IEEE 802.1X");
             define ("NETWORK_SETTINGS_NOCERTIFICATE", "No Certificate File Uploaded");
             define ("NETWORK_SETTINGS_NOKEY", "No Private Key Uploaded");
@@ -3125,7 +3123,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
               define("TOOLTIP_TOC_DEFAULT_KEY", "デフォルトの ".$NXTText." キーをポータブル テンプレートに対して使います。");
              define("TOOLTIP_TOC_CUSTOM_KEY", "アップロードしたキーをポータブル テンプレートに対して使います。");
             define("TOOLTIP_UPLOAD_CERTIFICATE", "ポータブル テンプレートで使う .pfx キーをアップロードします。キーのパスワードを左側のボックスに入力してください。");
-            define("TOOLTIP_CURRENT_CERTIFICATE", "「キーのアップロード...」とここに表示されたら、キーをアップロードしてください。);
+            define("TOOLTIP_CURRENT_CERTIFICATE", "「キーのアップロード...」とここに表示されたら、キーをアップロードしてください。");
             define("DATABASE_EXPIRATION", "虹彩有効期限");
 			
 			define("DATABASE_CURRENT_KEY", "現在のキー:");
@@ -3137,7 +3135,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
             // ACS TAB STRINGS
             //////////////////////////////////////////////////////
             define ("ACP_TABLABEL", "ACS");
-            define ("ACP_HEADING", "アクセス制御システム (ACS)")");
+            define ("ACP_HEADING", "アクセス制御システム (ACS)");
             define ("ACP_PROTOCOL_GROUPTITLE", "アクセス制御プロトコル");
             define ("ACP_PROTOCOL_PROTOCOL", "プロトコル:");
             define ("ACP_PROTOCOL_DUALAUTHENABLEDLABEL", "2 要素認証");
@@ -3169,7 +3167,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
             define ("ACP_DD_SINGLEFACTORIO", "1 要素 [虹彩のみ]");
             define ("ACP_DD_SINGLEFACTORIC", "1 要素 [虹彩またはカード]");
             define ("ACP_DD_DUALFACTORIC", "2 要素 [虹彩とカード]");
-            define ("ACP_DD_DUALFACTORICPP", "2 要素 [虹彩とカード (PIN パススルー)]";
+            define ("ACP_DD_DUALFACTORICPP", "2 要素 [虹彩とカード (PIN パススルー)]");
             define ("ACP_DD_DUALFACTORPI", "2 要素 [虹彩と PIN]");
             define ("ACP_DD_DUALFACTORIPID", "2 要素 [虹彩と PIN (脅迫)]");
             define ("ACP_DD_DUALFACTORICPI", "3 要素 [虹彩とカードと PIN]");
@@ -3303,7 +3301,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
 	     define ("KEY_MANAGEMENT_BUTTON", "キーのダウンロード...");
 	     define ("ADDKEY_DIALOG_TITLE", "新しい暗号化キーの追加");
 	     define ("ADDKEY_DIALOG_MESSAGE", "暗号化キーの詳細を次に入力してください。");
-	     define ("ADDKEY_DIALOG_CONTROLS", "<table style="width:100%"><tr style="height:2px" /><tr><td>ホスト名:</td><td><input id="keyHostName" type="text" name="keyHostName" style="width:120px" onblur="checkHostName()"></td><td /></tr><tr style="height:2px" /><tr><td>有効期間:</td><td><input id="keyValidPeriod" type="text" name="keyValidity" style="width:120px" onblur="checkValidity()"></td><td>日数 (5 から 3650)</td></tr><tr style="height:2px" /></table>")\"></td> <td /></tr> <tr style=\"height:2px\" /> <tr><td>Validity Period : </td><td><input id=\"keyValidPeriod\" type=\"text\" name=\"keyValidity\" style=\"width:120px\" onblur=\"checkValidity()\"></td><td>in days(5 to 3650)</td></tr> <tr style=\"height:2px\" /></table>");						
+	     define ("ADDKEY_DIALOG_CONTROLS", "<table style=\"width:100%\"><tr style=\"height:2px\" /> <tr><td>Host Name :</td> <td><input id=\"keyHostName\" type=\"text\" name=\"keyHostName\" style=\"width:120px\" onblur=\"checkHostName()\"></td> <td /></tr> <tr style=\"height:2px\" /> <tr><td>Validity Period : </td><td><input id=\"keyValidPeriod\" type=\"text\" name=\"keyValidity\" style=\"width:120px\" onblur=\"checkValidity()\"></td><td>in days(5 to 3650)</td></tr> <tr style=\"height:2px\" /></table>");						
 	     define ("ADDING_NEW_KEY", "新しいキーを追加中...");
 	     define ("DELETEALLKEY_DIALOG_TITLE", "すべてのホスト キーの削除");
 	     define ("DELETEALLKEY_DIALOG_MESSAGE", "デバイスのすべてのホスト キーを削除しようとしています。");
@@ -3320,7 +3318,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
             define ("IDENTIFY_DEVICE_MESSAGE", "デバイスの LED を繰り返し点滅中...");
             define ("IDENTIFY_DEVICE_MESSAGE2", "[キャンセル] をクリックすると中止します。");
             define ("RESETTING_DEVICE_MESSAGE", "デバイスをリセット中...お待ちください...");
-            define ("REBOOTING_DEVICE_MESSAGE", "デバイスをリブート中..."お待ちください...");
+            define ("REBOOTING_DEVICE_MESSAGE", "デバイスをリブート中...お待ちください...");
             define ("REBOOTING_DEVICE_MESSAGE2", "1、2 分かかる場合があります...");
             define ("WAITING_FOR_EYELOCK_RESTART", "Eyelock アプリケーションを再起動中...お待ちください...");
             define ("DEVICE_TIME_SYNCHRONIZING", "デバイス時刻を同期中...お待ちください...");
@@ -3546,7 +3544,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
             define ("TOOLTIP_LOGS_TAB", "&lt;b&gt;&lt;i&gt;[ログ] タブ&lt;/i&gt;&lt;/b&gt;&lt;br&gt;".$NXTText." のログの表示およびダウンロードが可能です。");
             define ("TOOLTIP_LOGS_REFRESHBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[リフレッシュ] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このボタンをクリックすると、ログの現在のコンテンツと&lt;i&gt;イベント ログ&lt;/i&gt;が同期されます。&lt;/li&gt;&lt;li&gt;&lt;i&gt;イベント ログ&lt;/i&gt;は、WebConfig を初めて実行したときに同期されます。継続的には更新されません。&lt;/li&gt;&lt;/ul&gt;");
             define ("TOOLTIP_LOGS_DOWNLOADBUTTON", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;[ダウンロード] ボタン&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;クリックすると、".$NXTText." の&lt;i&gt;イベント ログ&lt;/i&gt;が Microsoft Excel CSV ファイルとしてダウンロードされます。&lt;/li&gt;&lt;/ul&gt;");
-            define ("TOOLTIP_ACCESSCONTROLTYPE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;認証スキーム&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." で使う認証スキームを選びます。&lt;/li&gt;&lt;li&gt;スキーム&lt;/li&gt;&lt;ul&gt;&lt;li&gt;虹彩のみ: ".$NXTText." がアクセス システムに虹彩認証のみを渡します&lt;/li&gt;&lt;li&gt;虹彩またはカード: カードの資格証明または虹彩認証のどちらかを ".$NXTText." がアクセス システムに送信します&lt;/li&gt;&lt;li&gt;虹彩とカード: カードの資格証明と (提示されたカードと一致する) 虹彩認証の両方が ".$NXTText." で必要になります&lt;/li&gt;&lt;li&gt;虹彩とカード (PIN パススルー): カードの資格証明と (提示されたカードと一致する) 虹彩認証の両方が ".$NXTText." で必要になり、PIN はアクセス システムにそのまま渡されます&lt;/li&gt;&lt;li&gt;PIN と虹彩: PIN と虹彩認証の両方を ".$NXTText." がアクセス システムに送信します&lt;/li&gt;&lt;li&gt;PIN とカードと虹彩: PIN とカードの資格証明と (提示されたカードと一致する) 虹彩認証を ".$NXTText." が送信します&lt;/li&gt;&lt;/ul&gt;&lt;/ul&gt;);
+            define ("TOOLTIP_ACCESSCONTROLTYPE", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;認証スキーム&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;".$NXTText." で使う認証スキームを選びます。&lt;/li&gt;&lt;li&gt;スキーム&lt;/li&gt;&lt;ul&gt;&lt;li&gt;虹彩のみ: ".$NXTText." がアクセス システムに虹彩認証のみを渡します&lt;/li&gt;&lt;li&gt;虹彩またはカード: カードの資格証明または虹彩認証のどちらかを ".$NXTText." がアクセス システムに送信します&lt;/li&gt;&lt;li&gt;虹彩とカード: カードの資格証明と (提示されたカードと一致する) 虹彩認証の両方が ".$NXTText." で必要になります&lt;/li&gt;&lt;li&gt;虹彩とカード (PIN パススルー): カードの資格証明と (提示されたカードと一致する) 虹彩認証の両方が ".$NXTText." で必要になり、PIN はアクセス システムにそのまま渡されます&lt;/li&gt;&lt;li&gt;PIN と虹彩: PIN と虹彩認証の両方を ".$NXTText." がアクセス システムに送信します&lt;/li&gt;&lt;li&gt;PIN とカードと虹彩: PIN とカードの資格証明と (提示されたカードと一致する) 虹彩認証を ".$NXTText." が送信します&lt;/li&gt;&lt;/ul&gt;&lt;/ul&gt;");
 
             define ("TOOLTIP_ACS_PROTOCOL", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;ACS プロトコル&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;このドロップダウンで、この ".$NXTText." で使う ACS プロトコルを選びす。&lt;/li&gt;&lt;li&gt;次のプロトコルがサポートされています。&lt;/li&gt;&lt;ul&gt;&lt;li&gt;Wiegand&lt;/li&gt;&lt;li&gt;HID シリアル&lt;/li&gt;&lt;li&gt;F2F&lt;/li&gt;&lt;li&gt;PAC&lt;/li&gt;&lt;li&gt;OSDP&lt;/li&gt;&lt;/ul&gt;&lt;/ul&gt;");
             define ("TOOLTIP_OSDP_BAUD", "&lt;span style=&apos;font-size: 16px; font-style:bold&apos;&gt;OSDP ボー レート&lt;/span&gt;&lt;ul style=&apos;padding-left: 1em&apos;&gt;&lt;li&gt;RS-485 入力と RS-485 出力両方の半二重非同期シリアル通信速度を制御します。信号のデフォルトはデータ 8 ビット、ストップ ビット 1、パリティ ビットなしです。ボー レートのデフォルト値は 9600 です。&lt;/li&gt;&lt;/ul&gt;");
@@ -3598,7 +3596,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
             define("TITLE_BTN_TESTNWMS", "現在適用されている Network Matcher の設定をテストします。");
             define("TEST_NWMS", "NWMS のテスト");
             define("CB_NWMATCHERCOMMSECURE_TEXT", "安全ではありません");
-            define("COPYRIGHTTEXT", "Copyright 2014-2020.All Rights Reserved."9; 2014.  All Rights Reserved.");
+            define("COPYRIGHTTEXT", "Copyright \AD&#169; 2014-2020.  All Rights Reserved.");
             define("DISCONNECTWARNING", "この処理の実行中は、ブラウザーを閉じたり、".$NXTText." の電源を切断したり、ネットワークを切断したりしないでください。");
             break;
 
