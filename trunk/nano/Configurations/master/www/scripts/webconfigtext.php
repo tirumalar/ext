@@ -280,7 +280,7 @@ function defineStrings($HardwareType)
             //////////////////////////////////////////////////////
             define ("AUTHENTICATION_TABLABEL", "Iris Processing");
             define ("AUTHENTICATION_HEADING", "Configure Iris Processing Details");
-            define ("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "Iris Processing Mode");
+            define ("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "Iris Processing Mode:");
             define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLMODE", "Access Control Authentication Mode");
             define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLAUTHENTICATION", "Access Control Authentication");
             define ("AUTHENTICATION_SETTINGS_IRISCAPTUREMODE", "Iris Capture Mode");
@@ -325,7 +325,7 @@ function defineStrings($HardwareType)
                define ("DATABASE_TOC_GROUPTITLE", "Portable Templates");
             define ("DATABASE_STATISTICS_TEMPLATESPACE", "Remaining Template Space:");
 			define ("DATABASE_SECURECOMM_NETMATCHLABEL", "Secure Network Matcher");
-            define("DATABASE_MOBILEMODE", "Mobile Mode" );
+            define("DATABASE_MOBILEMODE", "Mobile Mode:" );
             define ("TOOLTIP_TOC_MODE", "Portable template on Smartphone Application will use these modes: Walk Up, Tap to Send, Pin to Send</br><strong>Does not affect EV1 card system.</strong>");
             define ("TOOLTIP_TOC_IRIS_WAIT_TIME", "Time in seconds that the ".$NXTText." retains a portable template after it was presented.  Minimum 10 seconds, Maximum 600 seconds.");
               define("TOOLTIP_TOC_DEFAULT_KEY", "Use the default ".$NXTText." key for portable templates.");
@@ -1265,7 +1265,7 @@ function defineStrings($HardwareType)
 		define("SOFTWARE_RESTORE_DELETERESTOREPOINTS", "Удалить...");
 		define("AUTHENTICATION_TABLABEL", "Аутентификация");
 		define("AUTHENTICATION_HEADING", "Настройки аутентификации");
-        define("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "Iris Processing Mode");
+        define("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "Iris Processing Mode:");
         define("AUTHENTICATION_SETTINGS_ACCESSCONTROLMODE", "Access Control Authentication");
         define("AUTHENTICATION_SETTINGS_ACCESSCONTROLAUTHENTICATION", "Access Control Authentication");
         define("AUTHENTICATION_SETTINGS_IRISCAPTUREMODE", "Iris Capture Mode");
@@ -1955,7 +1955,7 @@ function defineStrings($HardwareType)
             //////////////////////////////////////////////////////
             define ("AUTHENTICATION_TABLABEL", "Autenticação");
             define ("AUTHENTICATION_HEADING", "Configurar Detalhes de Autenticação");
-            define ("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "Iris Processing Mode");
+            define ("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "Iris Processing Mode:");
             define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLMODE", "Access Control Authentication");
             define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLAUTHENTICATION", "Access Control Authentication");
             define ("AUTHENTICATION_SETTINGS_IRISCAPTUREMODE", "Iris Capture Mode");
@@ -2001,7 +2001,7 @@ function defineStrings($HardwareType)
                define ("DATABASE_TOC_GROUPTITLE", "Templates portáteis");
             define ("DATABASE_STATISTICS_TEMPLATESPACE", "Espaço de Template restante:");
 			define ("DATABASE_SECURECOMM_NETMATCHLABEL", "Combinador de rede segura");
-            define("DATABASE_MOBILEMODE", "Modo Mobile" );
+            define("DATABASE_MOBILEMODE", "Modo Mobile:" );
             define ("TOOLTIP_TOC_MODE", "Template portátil em Aplicação Smartphone irá utilizar estes modos: Role para cima, Toque para enviar, pressione para enviar </ br> <strong> Não afeta sistema de cartão EV1.</ strong>");
             define ("TOOLTIP_TOC_IRIS_WAIT_TIME", "Tempo em segundos que o ".$NXTText." mantém um template portátil depois que foi apresentado. Mínimo de 10 segundos, máximo de 600 segundos.");
               define("TOOLTIP_TOC_DEFAULT_KEY", "Usar a chave ".$NXTText." padrão para templates portáteis.");
@@ -2859,7 +2859,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
             define ("HOME_DEVICEINFO_IPV6ADDR", "IPv6 アドレス:");
 			define ("HOME_DEVICEINFO_SERIAL", "デバイス ID:");
             define ("HOME_DEVICEINFO_MACADDR", "MAC アドレス:");
-            define ("HOME_DEVICEINFO_LOCALTIME", $NXTText." の時間スナップショット");
+            define ("HOME_DEVICEINFO_LOCALTIME", $NXTText." の時間スナップショット:");
             define ("HOME_DEVICEINFO_PREVIOUSUPDATEFAILED", "この ".$NXTText." では以前にファームウェアの更新に失敗しました。<br>".$NXTText." は、最後に正しく動作した状態に戻されました。<br>ファームウェアを更新すると、このメッセージがクリアされます。");
 
             define ("HOME_STORAGESTATS_GROUPTITLE", "ストレージ統計情報");
@@ -2944,7 +2944,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
             define ("NETWORK_CERTIFICATES_GROUPTITLE", "証明書");
             define ("NETWORK_CACERT", "CA 証明書:");
             define ("NETWORK_CLIENTCERT", "クライアント証明書:");
-            define ("NETWORK_CLIENTPRIVATEKEY", "クライアント秘密キー (と証明書)");
+            define ("NETWORK_CLIENTPRIVATEKEY", "クライアント秘密キー (と証明書):");
             define ("NETWORK_CERTIFICATES_SETTINGS_GROUPTITLE", "設定");
             define ("NETWORK_EAPOLVERSION", "EAPOL バージョン:");
             define ("NETWORK_EAPIDENTITY", "EAP ID:");
@@ -3073,7 +3073,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
             //////////////////////////////////////////////////////
             define ("AUTHENTICATION_TABLABEL", "虹彩処理");
             define ("AUTHENTICATION_HEADING", "虹彩処理詳細の構成");
-            define ("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "虹彩処理モード");
+            define ("AUTHENTICATION_SETTINGS_IRISPROCESSINGMODE", "虹彩処理モード:");
             define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLMODE", "アクセス制御認証モード");
             define ("AUTHENTICATION_SETTINGS_ACCESSCONTROLAUTHENTICATION", "アクセス制御認証");
             define ("AUTHENTICATION_SETTINGS_IRISCAPTUREMODE", "虹彩キャプチャ モード");
@@ -3118,7 +3118,7 @@ define("PT_FIRWMARE_UPDATE_WAITING","Aguardando o Leitor de Modelo Portátil rei
             define ("DATABASE_TOC_GROUPTITLE", "ポータブル テンプレート");
             define ("DATABASE_STATISTICS_TEMPLATESPACE", "テンプレート領域残量:");
 			define ("DATABASE_SECURECOMM_NETMATCHLABEL", "安全な Network Matcher");
-            define("DATABASE_MOBILEMODE", "モバイル モード");
+            define("DATABASE_MOBILEMODE", "モバイル モード:");
             define ("TOOLTIP_TOC_MODE", "スマートフォン アプリのポータブル テンプレートでは、歩行、タップで送信、PIN で送信のモードが使われます。</br><strong>EV1 カード システムには影響しません。</strong>");
             define ("TOOLTIP_TOC_IRIS_WAIT_TIME", "ポータブル テンプレートが提示された後、".$NXTText." で保持される秒数。最小で 10 秒、最大で 600 秒です。");
               define("TOOLTIP_TOC_DEFAULT_KEY", "デフォルトの ".$NXTText." キーをポータブル テンプレートに対して使います。");
