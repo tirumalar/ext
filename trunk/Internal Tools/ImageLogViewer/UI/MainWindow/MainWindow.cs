@@ -43,6 +43,7 @@ namespace ImageLogViewer
 		private long m_lCurrentFileOffset = 0; // Holds the position of the last read object to virtualize loading of large image files...
         private MyTCPLogServer m_LogServer = null;
 		private Thread m_LogServerThread = null;
+		private bool expandState = false;
 
 		public MainWindow()
 		{
@@ -631,39 +632,46 @@ namespace ImageLogViewer
 
 		private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			// Clean up server listener
-			if (null != m_LogServer)
+			try
 			{
-				m_LogServer.Kill(1000);
-				m_LogServerThread.Interrupt();
+				// Clean up server listener
+				if (null != m_LogServer)
+				{
+					m_LogServer.Kill(1000);
+					m_LogServerThread.Interrupt();
 
-				m_LogServer = null;
-				m_LogServerThread = null;
+					m_LogServer = null;
+					m_LogServerThread = null;
+				}
+
+				remoteLogControlNXTLog.FormClosing();
+				remoteLogFaceTrackingLog.FormClosing();
+				remoteLogMotorLog.FormClosing();
+				remoteLogEventLog.FormClosing();
+
+				Properties.Settings.Default.WindowState = WindowState;
+
+				if (WindowState == FormWindowState.Normal)
+				{
+					Properties.Settings.Default.Location = Location;
+					Properties.Settings.Default.Size = Size;
+				}
+				else
+				{
+					Properties.Settings.Default.Location = RestoreBounds.Location;
+					Properties.Settings.Default.Size = RestoreBounds.Size;
+				}
+
+				Properties.Settings.Default.Save();
+
+				System.Windows.Forms.DialogResult M = MessageBox.Show("Do you want to reset the logging on the device to its default settings?", "Logging Reset", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+				// Now revert the config on the connected device...
+				if (M == System.Windows.Forms.DialogResult.Yes) SendMessageToDevice("REVERTCONFIG;");
 			}
-
-			remoteLogControlNXTLog.FormClosing();
-			remoteLogFaceTrackingLog.FormClosing();
-			remoteLogMotorLog.FormClosing();
-			remoteLogEventLog.FormClosing();
-
-			Properties.Settings.Default.WindowState = WindowState;
-
-			if (WindowState == FormWindowState.Normal)
+			catch
 			{
-				Properties.Settings.Default.Location = Location;
-				Properties.Settings.Default.Size = Size;
-			}
-			else
-			{
-				Properties.Settings.Default.Location = RestoreBounds.Location;
-				Properties.Settings.Default.Size = RestoreBounds.Size;
-			}
-			
-			Properties.Settings.Default.Save();
-
-			// Now revert the config on the connected device...
-			if (System.Windows.Forms.DialogResult.Yes == MessageBox.Show("Do you want to reset the logging on the device to its default settings?", "Logging Reset", MessageBoxButtons.YesNo, MessageBoxIcon.Question))
 				SendMessageToDevice("REVERTCONFIG;");
+			}
 		}
 
 
@@ -726,6 +734,9 @@ namespace ImageLogViewer
 			WindowState = Properties.Settings.Default.WindowState;
 			Location = Properties.Settings.Default.Location;
 			Size = Properties.Settings.Default.Size;
+			
+			Text = "EyeLock Image Log Viewer - v" + Properties.Settings.Default.AppVersion;
+			versionLabel.Text = Properties.Settings.Default.AppVersion;
 
 			lblRemotePort.Text = Properties.Settings.Default.ImageLogPort;
 		}
@@ -802,6 +813,38 @@ namespace ImageLogViewer
 			dlgSettings.ShowDialog();
 		}
 
+		private void expandTextButton_Click(object sender, EventArgs e)
+		{
+			if (expandState) {
+				ImageLogTree.CollapseAll();
+				expandState = false;
+			}
+			else
+			{
+				TreeNodeCollection topLev = ImageLogTree.Nodes;
+
+				expandLevel(topLev, 1);
+
+				expandState = true;
+			}
+		}
+
+		private void expandLevel(TreeNodeCollection t, int maxdepth)
+		{
+			foreach(TreeNode n in t)
+			{
+				if (n.Level < maxdepth)
+				{
+					n.Expand();
+					expandLevel(n.Nodes, maxdepth);
+				}
+				else if(n.Level == maxdepth)
+				{
+					n.Expand();
+				}
+			}
+		}
+
 		private void MainWindow_SizeChanged(object sender, EventArgs e)
 		{
 		}
@@ -814,6 +857,7 @@ namespace ImageLogViewer
 		private void MainSplitContainer_Resize(object sender, EventArgs e)
 		{
 		}
+
 	}
 
 

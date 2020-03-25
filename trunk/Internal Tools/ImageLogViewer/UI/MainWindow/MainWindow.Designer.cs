@@ -42,6 +42,16 @@
             this.tsTreeView = new System.Windows.Forms.ToolStrip();
             this.toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
             this.tsSortCombo = new System.Windows.Forms.ToolStripComboBox();
+            this.expandTextButton = new System.Windows.Forms.ToolStripButton();
+            this.openToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.saveToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.printToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator = new System.Windows.Forms.ToolStripSeparator();
+            this.cutToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.copyToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.pasteToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.helpToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.tabImageData = new System.Windows.Forms.TabControl();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.pbImage = new System.Windows.Forms.PictureBox();
@@ -61,6 +71,7 @@
             this.remoteLogEventLog = new ImageLogViewer.UI.Logs.RemoteLogControl();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.btnPanel = new System.Windows.Forms.Panel();
+            this.versionLabel = new System.Windows.Forms.Label();
             this.btnQuit = new System.Windows.Forms.Button();
             this.tsMain = new System.Windows.Forms.ToolStrip();
             this.btnOpen = new System.Windows.Forms.ToolStripButton();
@@ -100,8 +111,9 @@
             this.MainSplitContainer.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.MainSplitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.MainSplitContainer.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
-            this.MainSplitContainer.Location = new System.Drawing.Point(0, 27);
-            this.MainSplitContainer.MinimumSize = new System.Drawing.Size(400, 300);
+            this.MainSplitContainer.Location = new System.Drawing.Point(0, 31);
+            this.MainSplitContainer.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.MainSplitContainer.MinimumSize = new System.Drawing.Size(600, 462);
             this.MainSplitContainer.Name = "MainSplitContainer";
             this.MainSplitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
@@ -112,8 +124,9 @@
             // MainSplitContainer.Panel2
             // 
             this.MainSplitContainer.Panel2.Controls.Add(this.tabControl1);
-            this.MainSplitContainer.Size = new System.Drawing.Size(763, 442);
-            this.MainSplitContainer.SplitterDistance = 215;
+            this.MainSplitContainer.Size = new System.Drawing.Size(763, 462);
+            this.MainSplitContainer.SplitterDistance = 229;
+            this.MainSplitContainer.SplitterWidth = 6;
             this.MainSplitContainer.TabIndex = 0;
             this.MainSplitContainer.Resize += new System.EventHandler(this.MainSplitContainer_Resize);
             // 
@@ -122,6 +135,7 @@
             this.TopSplitterContainer.Dock = System.Windows.Forms.DockStyle.Fill;
             this.TopSplitterContainer.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
             this.TopSplitterContainer.Location = new System.Drawing.Point(0, 0);
+            this.TopSplitterContainer.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.TopSplitterContainer.Name = "TopSplitterContainer";
             // 
             // TopSplitterContainer.Panel1
@@ -133,8 +147,9 @@
             // TopSplitterContainer.Panel2
             // 
             this.TopSplitterContainer.Panel2.Controls.Add(this.tabImageData);
-            this.TopSplitterContainer.Size = new System.Drawing.Size(759, 211);
+            this.TopSplitterContainer.Size = new System.Drawing.Size(759, 225);
             this.TopSplitterContainer.SplitterDistance = 338;
+            this.TopSplitterContainer.SplitterWidth = 6;
             this.TopSplitterContainer.TabIndex = 0;
             // 
             // statusStripTreeView
@@ -145,9 +160,10 @@
             this.toolStripStatusFrameCount,
             this.toolStripStatusLabel2,
             this.toolStripStatusCropCount});
-            this.statusStripTreeView.Location = new System.Drawing.Point(0, 189);
+            this.statusStripTreeView.Location = new System.Drawing.Point(0, 193);
             this.statusStripTreeView.Name = "statusStripTreeView";
-            this.statusStripTreeView.Size = new System.Drawing.Size(338, 22);
+            this.statusStripTreeView.Padding = new System.Windows.Forms.Padding(2, 0, 21, 0);
+            this.statusStripTreeView.Size = new System.Drawing.Size(338, 32);
             this.statusStripTreeView.SizingGrip = false;
             this.statusStripTreeView.TabIndex = 2;
             this.statusStripTreeView.Text = "statusStrip1";
@@ -155,25 +171,25 @@
             // toolStripStatusLabel1
             // 
             this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(79, 17);
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(118, 25);
             this.toolStripStatusLabel1.Text = "Frame Count:";
             // 
             // toolStripStatusFrameCount
             // 
             this.toolStripStatusFrameCount.Name = "toolStripStatusFrameCount";
-            this.toolStripStatusFrameCount.Size = new System.Drawing.Size(13, 17);
+            this.toolStripStatusFrameCount.Size = new System.Drawing.Size(22, 25);
             this.toolStripStatusFrameCount.Text = "0";
             // 
             // toolStripStatusLabel2
             // 
             this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(72, 17);
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(108, 25);
             this.toolStripStatusLabel2.Text = "Crop Count:";
             // 
             // toolStripStatusCropCount
             // 
             this.toolStripStatusCropCount.Name = "toolStripStatusCropCount";
-            this.toolStripStatusCropCount.Size = new System.Drawing.Size(13, 17);
+            this.toolStripStatusCropCount.Size = new System.Drawing.Size(22, 25);
             this.toolStripStatusCropCount.Text = "0";
             // 
             // ImageLogTree
@@ -182,10 +198,11 @@
             this.ImageLogTree.Dock = System.Windows.Forms.DockStyle.Fill;
             this.ImageLogTree.ImageIndex = 0;
             this.ImageLogTree.ImageList = this.ilTreeView;
-            this.ImageLogTree.Location = new System.Drawing.Point(0, 25);
+            this.ImageLogTree.Location = new System.Drawing.Point(0, 33);
+            this.ImageLogTree.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.ImageLogTree.Name = "ImageLogTree";
             this.ImageLogTree.SelectedImageIndex = 0;
-            this.ImageLogTree.Size = new System.Drawing.Size(338, 186);
+            this.ImageLogTree.Size = new System.Drawing.Size(338, 192);
             this.ImageLogTree.TabIndex = 0;
             this.ImageLogTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.ImageLogTree_AfterSelect);
             // 
@@ -204,17 +221,28 @@
             this.tsTreeView.ImageScalingSize = new System.Drawing.Size(20, 20);
             this.tsTreeView.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripLabel1,
-            this.tsSortCombo});
+            this.tsSortCombo,
+            this.expandTextButton,
+            this.openToolStripButton,
+            this.saveToolStripButton,
+            this.printToolStripButton,
+            this.toolStripSeparator,
+            this.cutToolStripButton,
+            this.copyToolStripButton,
+            this.pasteToolStripButton,
+            this.toolStripSeparator3,
+            this.helpToolStripButton});
             this.tsTreeView.Location = new System.Drawing.Point(0, 0);
             this.tsTreeView.Name = "tsTreeView";
-            this.tsTreeView.Size = new System.Drawing.Size(338, 25);
+            this.tsTreeView.Padding = new System.Windows.Forms.Padding(0, 0, 3, 0);
+            this.tsTreeView.Size = new System.Drawing.Size(338, 33);
             this.tsTreeView.TabIndex = 1;
             this.tsTreeView.Text = "toolStrip2";
             // 
             // toolStripLabel1
             // 
             this.toolStripLabel1.Name = "toolStripLabel1";
-            this.toolStripLabel1.Size = new System.Drawing.Size(47, 22);
+            this.toolStripLabel1.Size = new System.Drawing.Size(73, 28);
             this.toolStripLabel1.Text = "Sort By:";
             // 
             // tsSortCombo
@@ -225,8 +253,91 @@
             "Camera ID",
             "Image Type"});
             this.tsSortCombo.Name = "tsSortCombo";
-            this.tsSortCombo.Size = new System.Drawing.Size(121, 25);
+            this.tsSortCombo.Size = new System.Drawing.Size(180, 33);
             this.tsSortCombo.SelectedIndexChanged += new System.EventHandler(this.tsSortCombo_SelectedIndexChanged);
+            // 
+            // expandTextButton
+            // 
+            this.expandTextButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.expandTextButton.Image = global::ImageLogViewer.Properties.Resources.Details;
+            this.expandTextButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.expandTextButton.Name = "expandTextButton";
+            this.expandTextButton.Size = new System.Drawing.Size(34, 28);
+            this.expandTextButton.Text = "&Expand";
+            this.expandTextButton.Click += new System.EventHandler(this.expandTextButton_Click);
+            // 
+            // openToolStripButton
+            // 
+            this.openToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.openToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("openToolStripButton.Image")));
+            this.openToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.openToolStripButton.Name = "openToolStripButton";
+            this.openToolStripButton.Size = new System.Drawing.Size(34, 24);
+            this.openToolStripButton.Text = "&Open";
+            // 
+            // saveToolStripButton
+            // 
+            this.saveToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.saveToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("saveToolStripButton.Image")));
+            this.saveToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.saveToolStripButton.Name = "saveToolStripButton";
+            this.saveToolStripButton.Size = new System.Drawing.Size(34, 24);
+            this.saveToolStripButton.Text = "&Save";
+            // 
+            // printToolStripButton
+            // 
+            this.printToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.printToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("printToolStripButton.Image")));
+            this.printToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.printToolStripButton.Name = "printToolStripButton";
+            this.printToolStripButton.Size = new System.Drawing.Size(34, 24);
+            this.printToolStripButton.Text = "&Print";
+            // 
+            // toolStripSeparator
+            // 
+            this.toolStripSeparator.Name = "toolStripSeparator";
+            this.toolStripSeparator.Size = new System.Drawing.Size(6, 6);
+            // 
+            // cutToolStripButton
+            // 
+            this.cutToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.cutToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("cutToolStripButton.Image")));
+            this.cutToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.cutToolStripButton.Name = "cutToolStripButton";
+            this.cutToolStripButton.Size = new System.Drawing.Size(34, 24);
+            this.cutToolStripButton.Text = "C&ut";
+            // 
+            // copyToolStripButton
+            // 
+            this.copyToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.copyToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("copyToolStripButton.Image")));
+            this.copyToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.copyToolStripButton.Name = "copyToolStripButton";
+            this.copyToolStripButton.Size = new System.Drawing.Size(34, 24);
+            this.copyToolStripButton.Text = "&Copy";
+            // 
+            // pasteToolStripButton
+            // 
+            this.pasteToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.pasteToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("pasteToolStripButton.Image")));
+            this.pasteToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.pasteToolStripButton.Name = "pasteToolStripButton";
+            this.pasteToolStripButton.Size = new System.Drawing.Size(34, 24);
+            this.pasteToolStripButton.Text = "&Paste";
+            // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 6);
+            // 
+            // helpToolStripButton
+            // 
+            this.helpToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.helpToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("helpToolStripButton.Image")));
+            this.helpToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.helpToolStripButton.Name = "helpToolStripButton";
+            this.helpToolStripButton.Size = new System.Drawing.Size(34, 24);
+            this.helpToolStripButton.Text = "He&lp";
             // 
             // tabImageData
             // 
@@ -234,19 +345,21 @@
             this.tabImageData.Controls.Add(this.tabPage4);
             this.tabImageData.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabImageData.Location = new System.Drawing.Point(0, 0);
+            this.tabImageData.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.tabImageData.Name = "tabImageData";
             this.tabImageData.SelectedIndex = 0;
-            this.tabImageData.Size = new System.Drawing.Size(417, 211);
+            this.tabImageData.Size = new System.Drawing.Size(415, 225);
             this.tabImageData.TabIndex = 0;
             // 
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this.pbImage);
             this.tabPage3.Controls.Add(this.toolStrip1);
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Location = new System.Drawing.Point(4, 29);
+            this.tabPage3.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(409, 185);
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.tabPage3.Size = new System.Drawing.Size(407, 192);
             this.tabPage3.TabIndex = 0;
             this.tabPage3.Text = "Image";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -255,9 +368,10 @@
             // 
             this.pbImage.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.pbImage.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pbImage.Location = new System.Drawing.Point(3, 30);
+            this.pbImage.Location = new System.Drawing.Point(4, 34);
+            this.pbImage.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.pbImage.Name = "pbImage";
-            this.pbImage.Size = new System.Drawing.Size(403, 152);
+            this.pbImage.Size = new System.Drawing.Size(399, 153);
             this.pbImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pbImage.TabIndex = 0;
             this.pbImage.TabStop = false;
@@ -269,9 +383,10 @@
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.imageToolStripToggleData,
             this.imageToolStripSaveAs});
-            this.toolStrip1.Location = new System.Drawing.Point(3, 3);
+            this.toolStrip1.Location = new System.Drawing.Point(4, 5);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(403, 27);
+            this.toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 3, 0);
+            this.toolStrip1.Size = new System.Drawing.Size(399, 29);
             this.toolStrip1.TabIndex = 0;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -282,7 +397,7 @@
             this.imageToolStripToggleData.Image = global::ImageLogViewer.Properties.Resources.Details;
             this.imageToolStripToggleData.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.imageToolStripToggleData.Name = "imageToolStripToggleData";
-            this.imageToolStripToggleData.Size = new System.Drawing.Size(24, 24);
+            this.imageToolStripToggleData.Size = new System.Drawing.Size(34, 24);
             this.imageToolStripToggleData.Text = "Toggle Details";
             this.imageToolStripToggleData.CheckedChanged += new System.EventHandler(this.imageToolStripToggleData_CheckedChanged);
             // 
@@ -292,7 +407,7 @@
             this.imageToolStripSaveAs.Image = global::ImageLogViewer.Properties.Resources.Disk;
             this.imageToolStripSaveAs.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.imageToolStripSaveAs.Name = "imageToolStripSaveAs";
-            this.imageToolStripSaveAs.Size = new System.Drawing.Size(24, 24);
+            this.imageToolStripSaveAs.Size = new System.Drawing.Size(34, 24);
             this.imageToolStripSaveAs.Text = "toolStripButton1";
             this.imageToolStripSaveAs.ToolTipText = "Save As...";
             this.imageToolStripSaveAs.Click += new System.EventHandler(this.imageToolStripSaveAs_Click);
@@ -300,10 +415,11 @@
             // tabPage4
             // 
             this.tabPage4.Controls.Add(this.pgImageDetails);
-            this.tabPage4.Location = new System.Drawing.Point(4, 22);
+            this.tabPage4.Location = new System.Drawing.Point(4, 29);
+            this.tabPage4.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(409, 185);
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.tabPage4.Size = new System.Drawing.Size(967, 204);
             this.tabPage4.TabIndex = 1;
             this.tabPage4.Text = "Details";
             this.tabPage4.UseVisualStyleBackColor = true;
@@ -311,9 +427,10 @@
             // pgImageDetails
             // 
             this.pgImageDetails.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pgImageDetails.Location = new System.Drawing.Point(3, 3);
+            this.pgImageDetails.Location = new System.Drawing.Point(4, 5);
+            this.pgImageDetails.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.pgImageDetails.Name = "pgImageDetails";
-            this.pgImageDetails.Size = new System.Drawing.Size(403, 179);
+            this.pgImageDetails.Size = new System.Drawing.Size(959, 194);
             this.pgImageDetails.TabIndex = 0;
             // 
             // tabControl1
@@ -324,18 +441,20 @@
             this.tabControl1.Controls.Add(this.tabPage6);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
+            this.tabControl1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(759, 219);
+            this.tabControl1.Size = new System.Drawing.Size(759, 223);
             this.tabControl1.TabIndex = 0;
             // 
             // tabPage1
             // 
             this.tabPage1.Controls.Add(this.remoteLogControlNXTLog);
-            this.tabPage1.Location = new System.Drawing.Point(4, 22);
+            this.tabPage1.Location = new System.Drawing.Point(4, 29);
+            this.tabPage1.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(751, 193);
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.tabPage1.Size = new System.Drawing.Size(751, 190);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "NXT Log";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -344,20 +463,21 @@
             // 
             this.remoteLogControlNXTLog.BottomColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
             this.remoteLogControlNXTLog.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.remoteLogControlNXTLog.Location = new System.Drawing.Point(3, 3);
-            this.remoteLogControlNXTLog.Margin = new System.Windows.Forms.Padding(4);
+            this.remoteLogControlNXTLog.Location = new System.Drawing.Point(4, 5);
+            this.remoteLogControlNXTLog.Margin = new System.Windows.Forms.Padding(6);
             this.remoteLogControlNXTLog.Name = "remoteLogControlNXTLog";
-            this.remoteLogControlNXTLog.Size = new System.Drawing.Size(745, 187);
+            this.remoteLogControlNXTLog.Size = new System.Drawing.Size(743, 180);
             this.remoteLogControlNXTLog.TabIndex = 0;
             this.remoteLogControlNXTLog.TopColor = System.Drawing.Color.White;
             // 
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.remoteLogFaceTrackingLog);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Location = new System.Drawing.Point(4, 29);
+            this.tabPage2.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(751, 193);
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.tabPage2.Size = new System.Drawing.Size(1311, 190);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "FaceTracking Log";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -366,20 +486,21 @@
             // 
             this.remoteLogFaceTrackingLog.BottomColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
             this.remoteLogFaceTrackingLog.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.remoteLogFaceTrackingLog.Location = new System.Drawing.Point(3, 3);
-            this.remoteLogFaceTrackingLog.Margin = new System.Windows.Forms.Padding(4);
+            this.remoteLogFaceTrackingLog.Location = new System.Drawing.Point(4, 5);
+            this.remoteLogFaceTrackingLog.Margin = new System.Windows.Forms.Padding(6);
             this.remoteLogFaceTrackingLog.Name = "remoteLogFaceTrackingLog";
-            this.remoteLogFaceTrackingLog.Size = new System.Drawing.Size(745, 187);
+            this.remoteLogFaceTrackingLog.Size = new System.Drawing.Size(1303, 180);
             this.remoteLogFaceTrackingLog.TabIndex = 0;
             this.remoteLogFaceTrackingLog.TopColor = System.Drawing.Color.White;
             // 
             // tabPage5
             // 
             this.tabPage5.Controls.Add(this.remoteLogMotorLog);
-            this.tabPage5.Location = new System.Drawing.Point(4, 22);
+            this.tabPage5.Location = new System.Drawing.Point(4, 29);
+            this.tabPage5.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage5.Size = new System.Drawing.Size(751, 193);
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.tabPage5.Size = new System.Drawing.Size(1311, 190);
             this.tabPage5.TabIndex = 2;
             this.tabPage5.Text = "Motor Log";
             this.tabPage5.UseVisualStyleBackColor = true;
@@ -388,20 +509,21 @@
             // 
             this.remoteLogMotorLog.BottomColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
             this.remoteLogMotorLog.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.remoteLogMotorLog.Location = new System.Drawing.Point(3, 3);
-            this.remoteLogMotorLog.Margin = new System.Windows.Forms.Padding(4);
+            this.remoteLogMotorLog.Location = new System.Drawing.Point(4, 5);
+            this.remoteLogMotorLog.Margin = new System.Windows.Forms.Padding(6);
             this.remoteLogMotorLog.Name = "remoteLogMotorLog";
-            this.remoteLogMotorLog.Size = new System.Drawing.Size(745, 187);
+            this.remoteLogMotorLog.Size = new System.Drawing.Size(1303, 180);
             this.remoteLogMotorLog.TabIndex = 0;
             this.remoteLogMotorLog.TopColor = System.Drawing.Color.White;
             // 
             // tabPage6
             // 
             this.tabPage6.Controls.Add(this.remoteLogEventLog);
-            this.tabPage6.Location = new System.Drawing.Point(4, 22);
+            this.tabPage6.Location = new System.Drawing.Point(4, 29);
+            this.tabPage6.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.tabPage6.Name = "tabPage6";
-            this.tabPage6.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage6.Size = new System.Drawing.Size(751, 193);
+            this.tabPage6.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.tabPage6.Size = new System.Drawing.Size(1311, 190);
             this.tabPage6.TabIndex = 3;
             this.tabPage6.Text = "Event Log";
             this.tabPage6.UseVisualStyleBackColor = true;
@@ -410,10 +532,10 @@
             // 
             this.remoteLogEventLog.BottomColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
             this.remoteLogEventLog.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.remoteLogEventLog.Location = new System.Drawing.Point(3, 3);
-            this.remoteLogEventLog.Margin = new System.Windows.Forms.Padding(4);
+            this.remoteLogEventLog.Location = new System.Drawing.Point(4, 5);
+            this.remoteLogEventLog.Margin = new System.Windows.Forms.Padding(6);
             this.remoteLogEventLog.Name = "remoteLogEventLog";
-            this.remoteLogEventLog.Size = new System.Drawing.Size(745, 187);
+            this.remoteLogEventLog.Size = new System.Drawing.Size(1303, 180);
             this.remoteLogEventLog.TabIndex = 0;
             this.remoteLogEventLog.TopColor = System.Drawing.Color.White;
             // 
@@ -424,20 +546,33 @@
             // 
             // btnPanel
             // 
+            this.btnPanel.Controls.Add(this.versionLabel);
             this.btnPanel.Controls.Add(this.btnQuit);
             this.btnPanel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.btnPanel.Location = new System.Drawing.Point(0, 469);
+            this.btnPanel.Location = new System.Drawing.Point(0, 446);
+            this.btnPanel.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.btnPanel.Name = "btnPanel";
-            this.btnPanel.Size = new System.Drawing.Size(763, 42);
+            this.btnPanel.Size = new System.Drawing.Size(763, 65);
             this.btnPanel.TabIndex = 1;
+            // 
+            // versionLabel
+            // 
+            this.versionLabel.AutoSize = true;
+            this.versionLabel.Location = new System.Drawing.Point(18, 29);
+            this.versionLabel.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.versionLabel.Name = "versionLabel";
+            this.versionLabel.Size = new System.Drawing.Size(63, 20);
+            this.versionLabel.TabIndex = 1;
+            this.versionLabel.Text = "Version";
             // 
             // btnQuit
             // 
             this.btnQuit.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnQuit.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnQuit.Location = new System.Drawing.Point(676, 8);
+            this.btnQuit.Location = new System.Drawing.Point(633, 12);
+            this.btnQuit.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.btnQuit.Name = "btnQuit";
-            this.btnQuit.Size = new System.Drawing.Size(75, 23);
+            this.btnQuit.Size = new System.Drawing.Size(112, 35);
             this.btnQuit.TabIndex = 0;
             this.btnQuit.Text = "Quit";
             this.btnQuit.UseVisualStyleBackColor = true;
@@ -457,7 +592,8 @@
             this.tsDeviceSettings});
             this.tsMain.Location = new System.Drawing.Point(0, 0);
             this.tsMain.Name = "tsMain";
-            this.tsMain.Size = new System.Drawing.Size(763, 27);
+            this.tsMain.Padding = new System.Windows.Forms.Padding(0, 0, 3, 0);
+            this.tsMain.Size = new System.Drawing.Size(763, 31);
             this.tsMain.TabIndex = 2;
             this.tsMain.Text = "toolStrip2";
             // 
@@ -467,7 +603,7 @@
             this.btnOpen.Image = global::ImageLogViewer.Properties.Resources.CaptureFolder_24x24;
             this.btnOpen.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnOpen.Name = "btnOpen";
-            this.btnOpen.Size = new System.Drawing.Size(24, 24);
+            this.btnOpen.Size = new System.Drawing.Size(34, 26);
             this.btnOpen.Text = "toolStripButton1";
             this.btnOpen.Click += new System.EventHandler(this.btnOpen_Click);
             // 
@@ -478,26 +614,25 @@
             this.btnSave.Image = global::ImageLogViewer.Properties.Resources.Disk;
             this.btnSave.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(24, 24);
+            this.btnSave.Size = new System.Drawing.Size(34, 26);
             this.btnSave.Text = "Save File...";
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 27);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 31);
             // 
             // toolStripLabel3
             // 
             this.toolStripLabel3.Name = "toolStripLabel3";
-            this.toolStripLabel3.Size = new System.Drawing.Size(32, 24);
+            this.toolStripLabel3.Size = new System.Drawing.Size(48, 26);
             this.toolStripLabel3.Text = "Port:";
             // 
             // lblRemotePort
             // 
-            this.lblRemotePort.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.lblRemotePort.Name = "lblRemotePort";
-            this.lblRemotePort.Size = new System.Drawing.Size(100, 27);
+            this.lblRemotePort.Size = new System.Drawing.Size(148, 31);
             // 
             // tsbutStartServer
             // 
@@ -505,14 +640,14 @@
             this.tsbutStartServer.Image = global::ImageLogViewer.Properties.Resources.icons8_refresh_26;
             this.tsbutStartServer.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsbutStartServer.Name = "tsbutStartServer";
-            this.tsbutStartServer.Size = new System.Drawing.Size(24, 24);
+            this.tsbutStartServer.Size = new System.Drawing.Size(34, 26);
             this.tsbutStartServer.Text = "Refresh Listening";
             this.tsbutStartServer.Click += new System.EventHandler(this.tsbutStartServer_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 27);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 31);
             // 
             // tsDeviceSettings
             // 
@@ -520,13 +655,13 @@
             this.tsDeviceSettings.Image = global::ImageLogViewer.Properties.Resources.icons8_settings_24;
             this.tsDeviceSettings.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsDeviceSettings.Name = "tsDeviceSettings";
-            this.tsDeviceSettings.Size = new System.Drawing.Size(24, 24);
+            this.tsDeviceSettings.Size = new System.Drawing.Size(34, 26);
             this.tsDeviceSettings.Text = "Enable/Configure Remote Logging";
             this.tsDeviceSettings.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
             // MainWindow
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = global::ImageLogViewer.Properties.Settings.Default.Size;
             this.Controls.Add(this.MainSplitContainer);
@@ -536,7 +671,7 @@
             this.DataBindings.Add(new System.Windows.Forms.Binding("ClientSize", global::ImageLogViewer.Properties.Settings.Default, "Size", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Location = global::ImageLogViewer.Properties.Settings.Default.Location;
-            this.Margin = new System.Windows.Forms.Padding(4);
+            this.Margin = new System.Windows.Forms.Padding(6);
             this.Name = "MainWindow";
             this.Text = "EyeLock Image Log Viewer";
             this.MaximizedBoundsChanged += new System.EventHandler(this.MainWindow_MaximizedBoundsChanged);
@@ -569,6 +704,7 @@
             this.tabPage5.ResumeLayout(false);
             this.tabPage6.ResumeLayout(false);
             this.btnPanel.ResumeLayout(false);
+            this.btnPanel.PerformLayout();
             this.tsMain.ResumeLayout(false);
             this.tsMain.PerformLayout();
             this.ResumeLayout(false);
@@ -619,6 +755,17 @@
 		private UI.Logs.RemoteLogControl remoteLogMotorLog;
 		private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
 		private System.Windows.Forms.ToolStripButton tsDeviceSettings;
-	}
+        private System.Windows.Forms.Label versionLabel;
+        private System.Windows.Forms.ToolStripButton expandTextButton;
+        private System.Windows.Forms.ToolStripButton openToolStripButton;
+        private System.Windows.Forms.ToolStripButton saveToolStripButton;
+        private System.Windows.Forms.ToolStripButton printToolStripButton;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator;
+        private System.Windows.Forms.ToolStripButton cutToolStripButton;
+        private System.Windows.Forms.ToolStripButton copyToolStripButton;
+        private System.Windows.Forms.ToolStripButton pasteToolStripButton;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private System.Windows.Forms.ToolStripButton helpToolStripButton;
+    }
 }
 
