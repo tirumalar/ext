@@ -4074,13 +4074,13 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 			bSentCaptureImage = true;
 		}
 
-		if (!m_DHSScreens) //  && bSentCaptureImage)
+		if (!m_DHSScreens && bSentCaptureImage)
 		{
 			unsigned char buf[256];
 			buf[0] = CMX_LED_CMD;
 			buf[1] = 3;
 			buf[2] = 0;
-			buf[3] = 255;
+			buf[3] = 255; // Green
 			buf[4] = 0;
 			if (m_pCMXHandler){
 				m_pCMXHandler->HandleSendMsg((char *)buf, m_pCMXHandler->m_Randomseed);
@@ -4091,16 +4091,30 @@ bool ImageProcessor::ProcessImageAcquisitionMode(IplImage *frame,bool matchmode)
 
 			printf("******************** sleeping for 1 sec**********\n");
 		}
+		else if(bSentCaptureImage == false){
+			unsigned char buf[256];
+			buf[0] = CMX_LED_CMD;
+			buf[1] = 3;
+			buf[2] = 255; // Red
+			buf[3] = 0;
+			buf[4] = 0;
+			if (m_pCMXHandler){
+				m_pCMXHandler->HandleSendMsg((char *)buf, m_pCMXHandler->m_Randomseed);
+			}
+
+			int len = sprintf((char *)buf, "play_snd(0)\n");
+			m_pCMXHandler->SendMessage((char *)buf, len, m_pCMXHandler->m_Randomseed);
+		}
 
 		unsigned char buf[256];
 		// DHS Screen functions
-		if(m_DHSScreens)
+		if(m_DHSScreens && bSentCaptureImage)
 		{
 
 			buf[0] = CMX_LED_CMD;
 			buf[1] = 3;
 			buf[2] = 0;
-			buf[3] = 255;
+			buf[3] = 255; // green
 			buf[4] = 0;
 			if (m_pCMXHandler) {
 				m_pCMXHandler->HandleSendMsg((char *) buf, m_pCMXHandler->m_Randomseed);
