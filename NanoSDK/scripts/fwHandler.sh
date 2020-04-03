@@ -519,6 +519,16 @@ upgradeOim(){
 	# DEBUG
 	#echo "New fixed board FW version: ${fixedBrdVer}"
 	#echo "New fixed board FW file: ${fixedBrdFileName}"
+	${logger} -L"Restarting OIM before the upgrade"
+	/home/root/i2cHandler -r0;
+	sleep 5;
+	/home/root/i2cHandler -r1;
+	sleep 30;
+	ifdown eth0;
+	sleep 1;
+	ifup eth0;
+	sleep 5;
+	${logger} -L"Restarting OIM before the upgrade done"
 	
 	if ! ping -q -c 5 192.168.4.172
 	then
