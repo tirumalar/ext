@@ -15,6 +15,7 @@ EYELOCK_TAMPER_FILE='/home/root/tamper'
 
 cd /home/root/
 rm "${FLAG}"
+rm OimVersion
 
 rm "${FACETRACKER_RUN_FILE}"
 rm "${EYELOCK_RUN_FILE}"
@@ -30,6 +31,7 @@ do
 	if ping -c 5 "${OIM_IP}"
 	then
 		EyelockLog "OIM ${OIM_IP} is pingable, sleeping ${TIMEOUT} seconds" 'TRACE'
+		printf "ver\n" | nc -q 5 -w 10 192.168.4.172 30 | grep -e 'FPGA VERSION' -e 'Fixed board Verson' -e 'Cam Psoc Version' > /home/root/OimVersion
 #		touch "${FACETRACKER_RUN_FILE}"
 		touch "${EYELOCK_RUN_FILE}"
 		COUNTER=0	
