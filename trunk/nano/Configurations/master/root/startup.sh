@@ -120,10 +120,6 @@ chmod a+x ./icm_communicator
 chmod a+x ./FaceTracker
 #bash -c "while true; do if [ -f /home/root/FaceTracker.run ]; then /home/root/FaceTracker 8194 1; fi; sleep 6; done" &
 
-rm /home/root/OimVersion
-printf "ver\n" | nc -q 5 -w 10 192.168.4.172 30 | grep -e 'FPGA VERSION' -e 'Fixed board Verson' -e 'Cam Psoc Version' > /home/root/OimVersion
-sleep 3
-
 # Only run Eyelock when Eyelock.run exists
 #OIM ftp 
 OIMFTPEnable=`grep -e "Eyelock\.OIMFTPEnable\=.*" Eyelock.ini | cut -f2 -d'='`
