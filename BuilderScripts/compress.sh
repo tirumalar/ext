@@ -166,7 +166,7 @@ md5sum "${TARGET_DIR}/${BOARD_FILE}" | awk ' { print $1 } ' > "${TARGET_DIR}/${B
 mv "${TARGET_DIR}/tmp" "${TARGET_DIR}/${FWHANDLER_FILE}"
 openssl dgst -sha256 -sign "${KEY_FILE}" -out "${TARGET_DIR}/${FWHANDLER_FILE}.sig" "${TARGET_DIR}/${FWHANDLER_FILE}"
 
-tar -cf "${EYELOCK_WS_EXT}/dist/${FW_FILE}.enc" -C "${TARGET_DIR}" "${BOARD_FILE}" "${BOARD_FILE}.md5" "${ICM_FILE}" "${FWHANDLER_FILE}" "${FWHANDLER_FILE}.sig" "${XML_FILE}" "${XML_FILE_LEGACY}"
+tar -cf "${EYELOCK_WS_EXT}/dist/${FW_FILE}.enc" -C "${TARGET_DIR}" "${BOARD_FILE}" "${BOARD_FILE}.md5" "${ICM_FILE}" "${FPGA_FILE}" "${FIXED_BRD_FILE}" "${CAM_BRD_FILE}" "${FWHANDLER_FILE}" "${FWHANDLER_FILE}.sig" "${XML_FILE}" "${XML_FILE_LEGACY}"
 
 rm -r "${TARGET_DIR}"
 # -----------------------------------------------------------------------------------------------------------
