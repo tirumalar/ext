@@ -523,14 +523,14 @@ upgradeOim(){
 	/home/root/i2cHandler -r0;
 	sleep 5;
 	/home/root/i2cHandler -r1;
-	sleep 30;
+	sleep 40;
 	ifdown eth0;
 	sleep 1;
 	ifup eth0;
-	sleep 5;
+	sleep 10;
 	${logger} -L"Restarting OIM before the upgrade done"
 	
-	if ! ping -q -c 5 192.168.4.172
+	if ! ping -q -c 3 192.168.4.172
 	then
 		${logger} -L"Error: failed to ping OIM"
 		${logger} -L"STATUS:UNSUCCESSFUL"
