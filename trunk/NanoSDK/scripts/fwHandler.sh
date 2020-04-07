@@ -1084,7 +1084,7 @@ upgrade(){
 			echo "<loggerDestPort>$2</loggerDestPort>" >> ${loggerDestFile}
 			echo "<loggerDestSecure>$3</loggerDestSecure>" >> ${loggerDestFile}
 		fi
-		echo -n -e '3\x1F404' | nc 127.0.0.1 1234
+		echo -n -e '3\x1F404' | nc -w3 127.0.0.1 1234
 	else 
 		upgradeInternal
 	fi
