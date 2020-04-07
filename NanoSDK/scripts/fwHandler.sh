@@ -519,16 +519,16 @@ upgradeOim(){
 	# DEBUG
 	#echo "New fixed board FW version: ${fixedBrdVer}"
 	#echo "New fixed board FW file: ${fixedBrdFileName}"
-	${logger} -L"Restarting OIM before the upgrade"
-	/home/root/i2cHandler -r0;
-	sleep 5;
-	/home/root/i2cHandler -r1;
-	sleep 40;
-	ifdown eth0;
-	sleep 1;
-	ifup eth0;
-	sleep 10;
-	${logger} -L"Restarting OIM before the upgrade done"
+	#${logger} -L"Restarting OIM before the upgrade"
+	#/home/root/i2cHandler -r0;
+	#sleep 5;
+	#/home/root/i2cHandler -r1;
+	#sleep 40;
+	#ifdown eth0;
+	#sleep 1;
+	#ifup eth0;
+	#sleep 10;
+	#${logger} -L"Restarting OIM before the upgrade done"
 	
 	if ! ping -q -c 3 192.168.4.172
 	then
@@ -728,7 +728,7 @@ upgrade_partial(){
 
 # *******************************************************************************
 
-upgrade()
+upgradeInternal()
 {
 	firmwareDir=/home/firmware
 	bobVersion=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml bobversion)
@@ -752,6 +752,12 @@ upgrade()
 	loggerDestIp=$1
 	loggerDestPort=$2
 	loggerDestSecure=$3
+	if [[ -z ${loggerDestIp} && -f ${loggerDestFile} ]]
+	then
+		loggerDestIp=$(getXmlTag ${loggerDestFile} loggerDestIp)
+		loggerDestPort=$(getXmlTag ${loggerDestFile} loggerDestPort)
+		loggerDestSecure=$(getXmlTag ${loggerDestFile} loggerDestSecure)
+	fi
 
 	# working directory: /home/firmware
 	cd ${firmwareDir}
@@ -1067,9 +1073,26 @@ restore(){
 	rebootDevice
 }
 
+upgrade(){
+	grParentPid=$(ps -o ppid= -p $PPID | tr -d ' ')
+	grParentCmd=$(cat /proc/${grParentPid}/cmdline)
+	if [[ ${grParentCmd} == '/home/root/Eyelock' ]]
+	then
+		if [[ -n $1 ]]
+		then
+			echo "<loggerDestIp>$1</loggerDestIp>" > ${loggerDestFile}
+			echo "<loggerDestPort>$2</loggerDestPort>" >> ${loggerDestFile}
+			echo "<loggerDestSecure>$3</loggerDestSecure>" >> ${loggerDestFile}
+		fi
+		echo -n -e '3\x1F404' | nc 127.0.0.1 1234
+	else 
+		upgradeInternal
+	fi
+}
+
 
 echo "fwHandler is running"
-
+loggerDestFile='/home/root/upgradeCallbacksDest.xml'
 operation=$1
 
 case "${operation}" in
