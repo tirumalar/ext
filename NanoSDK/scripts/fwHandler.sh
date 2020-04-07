@@ -1074,9 +1074,9 @@ restore(){
 }
 
 upgrade(){
-	grParentPid=$(ps -o ppid= -p $PPID | tr -d ' ')
-	grParentCmd=$(cat /proc/${grParentPid}/cmdline)
-	if [[ ${grParentCmd} == '/home/root/Eyelock' ]]
+	#grParentPid=$(ps -o ppid= -p $PPID | tr -d ' ')
+	parentCmd=$(cat /proc/$PPID/cmdline)
+	if [[ ${parentCmd} == '/home/root/Eyelock' ]]
 	then
 		if [[ -n $1 ]]
 		then
