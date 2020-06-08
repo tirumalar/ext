@@ -1,0 +1,2134 @@
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"inout.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	s,40,4
+  19              		.comm	currentAccessType,1,1
+  20              		.comm	old,1,1
+  21              		.comm	TAMPERCR_POLARITY,4,4
+  22              		.comm	card_ack,4,4
+  23              		.comm	card_in_buf,4,4
+  24              		.comm	got_pulse,1,1
+  25              		.comm	f2f_pulsewidth,4,4
+  26              		.comm	timeout_cnt,4,4
+  27              		.comm	activate_f2ftimer,1,1
+  28              		.section	.text.SetHardwareVals,"ax",%progbits
+  29              		.align	2
+  30              		.global	SetHardwareVals
+  31              		.thumb
+  32              		.thumb_func
+  33              		.type	SetHardwareVals, %function
+  34              	SetHardwareVals:
+  35              	.LFB63:
+  36              		.file 1 ".\\inout.c"
+   1:.\inout.c     **** /* ========================================
+   2:.\inout.c     ****  *
+   3:.\inout.c     ****  * Copyright YOUR COMPANY, THE YEAR
+   4:.\inout.c     ****  * All Rights Reserved
+   5:.\inout.c     ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:.\inout.c     ****  *
+   7:.\inout.c     ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:.\inout.c     ****  * WHICH IS THE PROPERTY OF your company.
+   9:.\inout.c     ****  *
+  10:.\inout.c     ****  * ========================================
+  11:.\inout.c     **** */
+  12:.\inout.c     **** 
+  13:.\inout.c     **** // GRI 1-13-2015 - Revised for 3.1.1;  TAMPER_OUT must not be set in SetHardwareVals - has been mov
+  14:.\inout.c     **** // GRI 2-04-2015 - Revised for 3.1.5;  Extensive revision to input signal checker to add debounce/n
+  15:.\inout.c     **** 
+  16:.\inout.c     **** #include <project.h>
+  17:.\inout.c     **** #include "system.h"
+  18:.\inout.c     **** #include "i2cuart.h"
+  19:.\inout.c     **** 
+  20:.\inout.c     **** //int pwr_cnt;
+  21:.\inout.c     **** 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 2
+
+
+  22:.\inout.c     **** // this function reads the current settings from the file register 
+  23:.\inout.c     **** // and configures the outputs accordingly
+  24:.\inout.c     **** void  SetHardwareVals(int val)
+  25:.\inout.c     **** {
+  37              		.loc 1 25 0
+  38              		.cfi_startproc
+  39              		@ args = 0, pretend = 0, frame = 8
+  40              		@ frame_needed = 1, uses_anonymous_args = 0
+  41 0000 80B5     		push	{r7, lr}
+  42              		.cfi_def_cfa_offset 8
+  43              		.cfi_offset 7, -8
+  44              		.cfi_offset 14, -4
+  45 0002 82B0     		sub	sp, sp, #8
+  46              		.cfi_def_cfa_offset 16
+  47 0004 00AF     		add	r7, sp, #0
+  48              		.cfi_def_cfa_register 7
+  49 0006 7860     		str	r0, [r7, #4]
+  26:.\inout.c     ****     // 1 - low ; 0 - high
+  27:.\inout.c     **** 
+  28:.\inout.c     ****     if((val&LED_OUT_RED) == LED_OUT_RED) 
+  50              		.loc 1 28 0
+  51 0008 7B68     		ldr	r3, [r7, #4]
+  52 000a 03F00103 		and	r3, r3, #1
+  53 000e 002B     		cmp	r3, #0
+  54 0010 03D0     		beq	.L2
+  29:.\inout.c     **** 	    LEDR_OUT_Write(1);
+  55              		.loc 1 29 0
+  56 0012 0120     		movs	r0, #1
+  57 0014 FFF7FEFF 		bl	LEDR_OUT_Write
+  58 0018 02E0     		b	.L3
+  59              	.L2:
+  30:.\inout.c     ****     else
+  31:.\inout.c     ****         LEDR_OUT_Write(0);
+  60              		.loc 1 31 0
+  61 001a 0020     		movs	r0, #0
+  62 001c FFF7FEFF 		bl	LEDR_OUT_Write
+  63              	.L3:
+  32:.\inout.c     ****         
+  33:.\inout.c     ****     if((val&LED_OUT_GRN) == LED_OUT_GRN) 
+  64              		.loc 1 33 0
+  65 0020 7B68     		ldr	r3, [r7, #4]
+  66 0022 03F00203 		and	r3, r3, #2
+  67 0026 002B     		cmp	r3, #0
+  68 0028 03D0     		beq	.L4
+  34:.\inout.c     **** 	    LEDG_OUT_Write(1);
+  69              		.loc 1 34 0
+  70 002a 0120     		movs	r0, #1
+  71 002c FFF7FEFF 		bl	LEDG_OUT_Write
+  72 0030 02E0     		b	.L5
+  73              	.L4:
+  35:.\inout.c     ****     else
+  36:.\inout.c     ****         LEDG_OUT_Write(0);
+  74              		.loc 1 36 0
+  75 0032 0020     		movs	r0, #0
+  76 0034 FFF7FEFF 		bl	LEDG_OUT_Write
+  77              	.L5:
+  37:.\inout.c     ****         
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 3
+
+
+  38:.\inout.c     **** 	 if((val&SOUNDER_OUT) == SOUNDER_OUT) 
+  78              		.loc 1 38 0
+  79 0038 7B68     		ldr	r3, [r7, #4]
+  80 003a 03F00403 		and	r3, r3, #4
+  81 003e 002B     		cmp	r3, #0
+  82 0040 03D0     		beq	.L6
+  39:.\inout.c     **** 	    SOUND_OUT_Write(1);
+  83              		.loc 1 39 0
+  84 0042 0120     		movs	r0, #1
+  85 0044 FFF7FEFF 		bl	SOUND_OUT_Write
+  86 0048 02E0     		b	.L7
+  87              	.L6:
+  40:.\inout.c     ****     else
+  41:.\inout.c     ****         SOUND_OUT_Write(0);
+  88              		.loc 1 41 0
+  89 004a 0020     		movs	r0, #0
+  90 004c FFF7FEFF 		bl	SOUND_OUT_Write
+  91              	.L7:
+  42:.\inout.c     **** 
+  43:.\inout.c     ****     // TAMPER_OUT logic is now moved to HandleInputs.  (GRI 1-13-15, 2-3-15)
+  44:.\inout.c     ****     // TAMPER_POL is incoming webconfig polarity bit for CR tamper.
+  45:.\inout.c     ****     if((val&TAMPERCR_POL) == TAMPERCR_POL)  
+  92              		.loc 1 45 0
+  93 0050 7B68     		ldr	r3, [r7, #4]
+  94 0052 03F00803 		and	r3, r3, #8
+  95 0056 002B     		cmp	r3, #0
+  96 0058 03D0     		beq	.L8
+  46:.\inout.c     ****         TAMPERCR_POLARITY = 1;
+  97              		.loc 1 46 0
+  98 005a 114B     		ldr	r3, .L14
+  99 005c 0122     		movs	r2, #1
+ 100 005e 1A60     		str	r2, [r3]
+ 101 0060 02E0     		b	.L9
+ 102              	.L8:
+  47:.\inout.c     ****    else
+  48:.\inout.c     ****         TAMPERCR_POLARITY = 0;
+ 103              		.loc 1 48 0
+ 104 0062 0F4B     		ldr	r3, .L14
+ 105 0064 0022     		movs	r2, #0
+ 106 0066 1A60     		str	r2, [r3]
+ 107              	.L9:
+  49:.\inout.c     ****                 
+  50:.\inout.c     ****     if((val&RELAY_1_OUT) == RELAY_1_OUT) 
+ 108              		.loc 1 50 0
+ 109 0068 7B68     		ldr	r3, [r7, #4]
+ 110 006a 03F01003 		and	r3, r3, #16
+ 111 006e 002B     		cmp	r3, #0
+ 112 0070 03D0     		beq	.L10
+  51:.\inout.c     ****         RELAY_A_Write(1);
+ 113              		.loc 1 51 0
+ 114 0072 0120     		movs	r0, #1
+ 115 0074 FFF7FEFF 		bl	RELAY_A_Write
+ 116 0078 02E0     		b	.L11
+ 117              	.L10:
+  52:.\inout.c     ****     else
+  53:.\inout.c     ****         RELAY_A_Write(0);
+ 118              		.loc 1 53 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 4
+
+
+ 119 007a 0020     		movs	r0, #0
+ 120 007c FFF7FEFF 		bl	RELAY_A_Write
+ 121              	.L11:
+  54:.\inout.c     ****         
+  55:.\inout.c     ****     if((val&RELAY_2_OUT) == RELAY_2_OUT) 
+ 122              		.loc 1 55 0
+ 123 0080 7B68     		ldr	r3, [r7, #4]
+ 124 0082 03F02003 		and	r3, r3, #32
+ 125 0086 002B     		cmp	r3, #0
+ 126 0088 03D0     		beq	.L12
+  56:.\inout.c     ****         RELAY_B_Write(1);
+ 127              		.loc 1 56 0
+ 128 008a 0120     		movs	r0, #1
+ 129 008c FFF7FEFF 		bl	RELAY_B_Write
+ 130 0090 02E0     		b	.L1
+ 131              	.L12:
+  57:.\inout.c     ****     else
+  58:.\inout.c     ****         RELAY_B_Write(0);
+ 132              		.loc 1 58 0
+ 133 0092 0020     		movs	r0, #0
+ 134 0094 FFF7FEFF 		bl	RELAY_B_Write
+ 135              	.L1:
+  59:.\inout.c     **** 	
+  60:.\inout.c     **** 
+  61:.\inout.c     **** } 
+ 136              		.loc 1 61 0
+ 137 0098 0837     		adds	r7, r7, #8
+ 138 009a BD46     		mov	sp, r7
+ 139              		@ sp needed
+ 140 009c 80BD     		pop	{r7, pc}
+ 141              	.L15:
+ 142 009e 00BF     		.align	2
+ 143              	.L14:
+ 144 00a0 00000000 		.word	TAMPERCR_POLARITY
+ 145              		.cfi_endproc
+ 146              	.LFE63:
+ 147              		.size	SetHardwareVals, .-SetHardwareVals
+ 148              		.section	.text.GetHardwareVals,"ax",%progbits
+ 149              		.align	2
+ 150              		.global	GetHardwareVals
+ 151              		.thumb
+ 152              		.thumb_func
+ 153              		.type	GetHardwareVals, %function
+ 154              	GetHardwareVals:
+ 155              	.LFB64:
+  62:.\inout.c     **** 
+  63:.\inout.c     **** 
+  64:.\inout.c     **** 
+  65:.\inout.c     **** uint8 GetHardwareVals()
+  66:.\inout.c     **** {
+ 156              		.loc 1 66 0
+ 157              		.cfi_startproc
+ 158              		@ args = 0, pretend = 0, frame = 8
+ 159              		@ frame_needed = 1, uses_anonymous_args = 0
+ 160 0000 80B5     		push	{r7, lr}
+ 161              		.cfi_def_cfa_offset 8
+ 162              		.cfi_offset 7, -8
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 5
+
+
+ 163              		.cfi_offset 14, -4
+ 164 0002 82B0     		sub	sp, sp, #8
+ 165              		.cfi_def_cfa_offset 16
+ 166 0004 00AF     		add	r7, sp, #0
+ 167              		.cfi_def_cfa_register 7
+  67:.\inout.c     **** 	uint8 val = 0;
+ 168              		.loc 1 67 0
+ 169 0006 0023     		movs	r3, #0
+ 170 0008 FB71     		strb	r3, [r7, #7]
+  68:.\inout.c     **** 	
+  69:.\inout.c     **** 	if (LEDR_IN_Read() == 1)
+ 171              		.loc 1 69 0
+ 172 000a FFF7FEFF 		bl	LEDR_IN_Read
+ 173 000e 0346     		mov	r3, r0
+ 174 0010 012B     		cmp	r3, #1
+ 175 0012 04D1     		bne	.L17
+  70:.\inout.c     **** 	    val |= LED_IN_RED;
+ 176              		.loc 1 70 0
+ 177 0014 FB79     		ldrb	r3, [r7, #7]
+ 178 0016 43F00103 		orr	r3, r3, #1
+ 179 001a FB71     		strb	r3, [r7, #7]
+ 180 001c 03E0     		b	.L18
+ 181              	.L17:
+  71:.\inout.c     ****     else
+  72:.\inout.c     ****         val &= ~LED_IN_RED;
+ 182              		.loc 1 72 0
+ 183 001e FB79     		ldrb	r3, [r7, #7]
+ 184 0020 23F00103 		bic	r3, r3, #1
+ 185 0024 FB71     		strb	r3, [r7, #7]
+ 186              	.L18:
+  73:.\inout.c     ****     
+  74:.\inout.c     **** 	if (LEDG_IN_Read() == 1)
+ 187              		.loc 1 74 0
+ 188 0026 FFF7FEFF 		bl	LEDG_IN_Read
+ 189 002a 0346     		mov	r3, r0
+ 190 002c 012B     		cmp	r3, #1
+ 191 002e 04D1     		bne	.L19
+  75:.\inout.c     **** 	    val |= LED_IN_GRN;
+ 192              		.loc 1 75 0
+ 193 0030 FB79     		ldrb	r3, [r7, #7]
+ 194 0032 43F00203 		orr	r3, r3, #2
+ 195 0036 FB71     		strb	r3, [r7, #7]
+ 196 0038 03E0     		b	.L20
+ 197              	.L19:
+  76:.\inout.c     ****     else
+  77:.\inout.c     ****        val &= ~LED_IN_GRN; 
+ 198              		.loc 1 77 0
+ 199 003a FB79     		ldrb	r3, [r7, #7]
+ 200 003c 23F00203 		bic	r3, r3, #2
+ 201 0040 FB71     		strb	r3, [r7, #7]
+ 202              	.L20:
+  78:.\inout.c     **** 
+  79:.\inout.c     **** 	if (SOUND_IN_Read() == 1)
+ 203              		.loc 1 79 0
+ 204 0042 FFF7FEFF 		bl	SOUND_IN_Read
+ 205 0046 0346     		mov	r3, r0
+ 206 0048 012B     		cmp	r3, #1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 6
+
+
+ 207 004a 04D1     		bne	.L21
+  80:.\inout.c     **** 	   val |= SOUNDER_IN;
+ 208              		.loc 1 80 0
+ 209 004c FB79     		ldrb	r3, [r7, #7]
+ 210 004e 43F00403 		orr	r3, r3, #4
+ 211 0052 FB71     		strb	r3, [r7, #7]
+ 212 0054 03E0     		b	.L22
+ 213              	.L21:
+  81:.\inout.c     ****     else
+  82:.\inout.c     ****        val &= ~SOUNDER_IN;
+ 214              		.loc 1 82 0
+ 215 0056 FB79     		ldrb	r3, [r7, #7]
+ 216 0058 23F00403 		bic	r3, r3, #4
+ 217 005c FB71     		strb	r3, [r7, #7]
+ 218              	.L22:
+  83:.\inout.c     ****     
+  84:.\inout.c     ****     if (TAMPER_IN_Read() == 1)   // Tamper coming from Card Reader
+ 219              		.loc 1 84 0
+ 220 005e FFF7FEFF 		bl	TAMPER_IN_Read
+ 221 0062 0346     		mov	r3, r0
+ 222 0064 012B     		cmp	r3, #1
+ 223 0066 04D1     		bne	.L23
+  85:.\inout.c     **** 	    val |= TAMPERCR_IN;   //set register bit to 1
+ 224              		.loc 1 85 0
+ 225 0068 FB79     		ldrb	r3, [r7, #7]
+ 226 006a 43F00803 		orr	r3, r3, #8
+ 227 006e FB71     		strb	r3, [r7, #7]
+ 228 0070 03E0     		b	.L24
+ 229              	.L23:
+  86:.\inout.c     ****     else
+  87:.\inout.c     ****         val &= ~TAMPERCR_IN;  //set register bit to 0
+ 230              		.loc 1 87 0
+ 231 0072 FB79     		ldrb	r3, [r7, #7]
+ 232 0074 23F00803 		bic	r3, r3, #8
+ 233 0078 FB71     		strb	r3, [r7, #7]
+ 234              	.L24:
+  88:.\inout.c     ****    
+  89:.\inout.c     ****     if(REED_1_Read() == 1)  // Reed Switch 1 - local ICM tamper
+ 235              		.loc 1 89 0
+ 236 007a FFF7FEFF 		bl	REED_1_Read
+ 237 007e 0346     		mov	r3, r0
+ 238 0080 012B     		cmp	r3, #1
+ 239 0082 04D1     		bne	.L25
+  90:.\inout.c     ****       val |= REED_1_IN;
+ 240              		.loc 1 90 0
+ 241 0084 FB79     		ldrb	r3, [r7, #7]
+ 242 0086 43F01003 		orr	r3, r3, #16
+ 243 008a FB71     		strb	r3, [r7, #7]
+ 244 008c 03E0     		b	.L26
+ 245              	.L25:
+  91:.\inout.c     ****     else
+  92:.\inout.c     ****       val &= ~REED_1_IN;
+ 246              		.loc 1 92 0
+ 247 008e FB79     		ldrb	r3, [r7, #7]
+ 248 0090 23F01003 		bic	r3, r3, #16
+ 249 0094 FB71     		strb	r3, [r7, #7]
+ 250              	.L26:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 7
+
+
+  93:.\inout.c     **** /*    
+  94:.\inout.c     ****     if (REED_2_Read() == 1) // Reed Switch 2 - local ICM tamper  *** THIS SECTION DEFEATED DUE TO I
+  95:.\inout.c     ****       val |= REED_2_IN;
+  96:.\inout.c     ****     else 
+  97:.\inout.c     ****       val &= ~REED_2_IN;
+  98:.\inout.c     **** */
+  99:.\inout.c     ****       val |= REED_2_IN; // REED_2 is always set to 1 while defeated - remove this when re-enabled
+ 251              		.loc 1 99 0
+ 252 0096 FB79     		ldrb	r3, [r7, #7]
+ 253 0098 43F02003 		orr	r3, r3, #32
+ 254 009c FB71     		strb	r3, [r7, #7]
+ 100:.\inout.c     ****     
+ 101:.\inout.c     ****     
+ 102:.\inout.c     ****     if (buttonReleased){
+ 255              		.loc 1 102 0
+ 256 009e 2A4B     		ldr	r3, .L33
+ 257 00a0 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 258 00a2 002B     		cmp	r3, #0
+ 259 00a4 47D0     		beq	.L27
+ 103:.\inout.c     ****         buttonReleased = 0;
+ 260              		.loc 1 103 0
+ 261 00a6 284B     		ldr	r3, .L33
+ 262 00a8 0022     		movs	r2, #0
+ 263 00aa 1A70     		strb	r2, [r3]
+ 104:.\inout.c     ****         if(buttonDuration < FCTRYRST_TIME_MS){ //less than 5 seconds
+ 264              		.loc 1 104 0
+ 265 00ac 274B     		ldr	r3, .L33+4
+ 266 00ae 1A68     		ldr	r2, [r3]
+ 267 00b0 41F28733 		movw	r3, #4999
+ 268 00b4 9A42     		cmp	r2, r3
+ 269 00b6 08DC     		bgt	.L28
+ 105:.\inout.c     ****             val |= 0x40; 
+ 270              		.loc 1 105 0
+ 271 00b8 FB79     		ldrb	r3, [r7, #7]
+ 272 00ba 43F04003 		orr	r3, r3, #64
+ 273 00be FB71     		strb	r3, [r7, #7]
+ 106:.\inout.c     ****             MyI2C_Regs.factory_reset = 0;
+ 274              		.loc 1 106 0
+ 275 00c0 234B     		ldr	r3, .L33+8
+ 276 00c2 0022     		movs	r2, #0
+ 277 00c4 83F84220 		strb	r2, [r3, #66]
+ 278 00c8 39E0     		b	.L31
+ 279              	.L28:
+ 107:.\inout.c     ****         }else if(buttonDuration >=FCTRYRST_TIME_MS && buttonDuration < RSTR_TIME_MS){ //5~45 second
+ 280              		.loc 1 107 0
+ 281 00ca 204B     		ldr	r3, .L33+4
+ 282 00cc 1A68     		ldr	r2, [r3]
+ 283 00ce 41F28733 		movw	r3, #4999
+ 284 00d2 9A42     		cmp	r2, r3
+ 285 00d4 17DD     		ble	.L30
+ 286              		.loc 1 107 0 is_stmt 0 discriminator 1
+ 287 00d6 1D4B     		ldr	r3, .L33+4
+ 288 00d8 1A68     		ldr	r2, [r3]
+ 289 00da 4AF6C773 		movw	r3, #44999
+ 290 00de 9A42     		cmp	r2, r3
+ 291 00e0 11DC     		bgt	.L30
+ 108:.\inout.c     ****             LED_RED_Write(0);
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 8
+
+
+ 292              		.loc 1 108 0 is_stmt 1
+ 293 00e2 0020     		movs	r0, #0
+ 294 00e4 FFF7FEFF 		bl	LED_RED_Write
+ 109:.\inout.c     ****             LED_GRN_Write(0);
+ 295              		.loc 1 109 0
+ 296 00e8 0020     		movs	r0, #0
+ 297 00ea FFF7FEFF 		bl	LED_GRN_Write
+ 110:.\inout.c     ****             LED_YEL_Write(0);
+ 298              		.loc 1 110 0
+ 299 00ee 0020     		movs	r0, #0
+ 300 00f0 FFF7FEFF 		bl	LED_YEL_Write
+ 111:.\inout.c     ****             val &= 0xBF;  // active reset initiated
+ 301              		.loc 1 111 0
+ 302 00f4 FB79     		ldrb	r3, [r7, #7]
+ 303 00f6 23F04003 		bic	r3, r3, #64
+ 304 00fa FB71     		strb	r3, [r7, #7]
+ 112:.\inout.c     ****             MyI2C_Regs.factory_reset = FACRST_CODE;
+ 305              		.loc 1 112 0
+ 306 00fc 144B     		ldr	r3, .L33+8
+ 307 00fe 0F22     		movs	r2, #15
+ 308 0100 83F84220 		strb	r2, [r3, #66]
+ 309 0104 1BE0     		b	.L31
+ 310              	.L30:
+ 113:.\inout.c     ****         }else if(buttonDuration>=RSTR_TIME_MS){ //45 or more seconds
+ 311              		.loc 1 113 0
+ 312 0106 114B     		ldr	r3, .L33+4
+ 313 0108 1A68     		ldr	r2, [r3]
+ 314 010a 4AF6C773 		movw	r3, #44999
+ 315 010e 9A42     		cmp	r2, r3
+ 316 0110 15DD     		ble	.L31
+ 114:.\inout.c     ****             LED_RED_Write(0);
+ 317              		.loc 1 114 0
+ 318 0112 0020     		movs	r0, #0
+ 319 0114 FFF7FEFF 		bl	LED_RED_Write
+ 115:.\inout.c     ****             LED_GRN_Write(0);
+ 320              		.loc 1 115 0
+ 321 0118 0020     		movs	r0, #0
+ 322 011a FFF7FEFF 		bl	LED_GRN_Write
+ 116:.\inout.c     ****             LED_YEL_Write(0);
+ 323              		.loc 1 116 0
+ 324 011e 0020     		movs	r0, #0
+ 325 0120 FFF7FEFF 		bl	LED_YEL_Write
+ 117:.\inout.c     ****             val &= 0xBF;  // 
+ 326              		.loc 1 117 0
+ 327 0124 FB79     		ldrb	r3, [r7, #7]
+ 328 0126 23F04003 		bic	r3, r3, #64
+ 329 012a FB71     		strb	r3, [r7, #7]
+ 118:.\inout.c     ****             MyI2C_Regs.factory_reset = RESTRE_CODE;
+ 330              		.loc 1 118 0
+ 331 012c 084B     		ldr	r3, .L33+8
+ 332 012e 9922     		movs	r2, #153
+ 333 0130 83F84220 		strb	r2, [r3, #66]
+ 334 0134 03E0     		b	.L31
+ 335              	.L27:
+ 119:.\inout.c     ****         }
+ 120:.\inout.c     ****     }else{
+ 121:.\inout.c     ****         val |= 0x40;
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 9
+
+
+ 336              		.loc 1 121 0
+ 337 0136 FB79     		ldrb	r3, [r7, #7]
+ 338 0138 43F04003 		orr	r3, r3, #64
+ 339 013c FB71     		strb	r3, [r7, #7]
+ 340              	.L31:
+ 122:.\inout.c     ****     }
+ 123:.\inout.c     **** /*    if (SW_Rst_Read() == 0) // factory reset switch
+ 124:.\inout.c     ****     {  
+ 125:.\inout.c     ****       if(pwr_cnt >= 5000)   // switch must be held 'on' for 5 seconds
+ 126:.\inout.c     ****       {
+ 127:.\inout.c     ****           LED_RED_Write(0);
+ 128:.\inout.c     ****           LED_GRN_Write(0);
+ 129:.\inout.c     ****           LED_YEL_Write(0);
+ 130:.\inout.c     ****           val &= 0xBF;  // active reset initiated
+ 131:.\inout.c     ****           MyI2C_Regs.factory_reset = 1;
+ 132:.\inout.c     ****       }
+ 133:.\inout.c     ****       else
+ 134:.\inout.c     ****       {
+ 135:.\inout.c     ****           pwr_cnt++;
+ 136:.\inout.c     ****           val |= 0x40; 
+ 137:.\inout.c     ****           MyI2C_Regs.factory_reset = 0;
+ 138:.\inout.c     ****       }
+ 139:.\inout.c     ****     }
+ 140:.\inout.c     ****     else
+ 141:.\inout.c     ****     {
+ 142:.\inout.c     ****        pwr_cnt = 0;
+ 143:.\inout.c     ****        val |= 0x40;
+ 144:.\inout.c     ****        MyI2C_Regs.factory_reset = 0;
+ 145:.\inout.c     ****     }
+ 146:.\inout.c     ****     
+ 147:.\inout.c     ****     //val = 0;  //turn off - debug only 
+ 148:.\inout.c     **** */
+ 149:.\inout.c     ****     return val;
+ 341              		.loc 1 149 0
+ 342 013e FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 150:.\inout.c     **** }
+ 343              		.loc 1 150 0
+ 344 0140 1846     		mov	r0, r3
+ 345 0142 0837     		adds	r7, r7, #8
+ 346 0144 BD46     		mov	sp, r7
+ 347              		@ sp needed
+ 348 0146 80BD     		pop	{r7, pc}
+ 349              	.L34:
+ 350              		.align	2
+ 351              	.L33:
+ 352 0148 00000000 		.word	buttonReleased
+ 353 014c 00000000 		.word	buttonDuration
+ 354 0150 00000000 		.word	MyI2C_Regs
+ 355              		.cfi_endproc
+ 356              	.LFE64:
+ 357              		.size	GetHardwareVals, .-GetHardwareVals
+ 358              		.section	.text.HandleOutputs,"ax",%progbits
+ 359              		.align	2
+ 360              		.global	HandleOutputs
+ 361              		.thumb
+ 362              		.thumb_func
+ 363              		.type	HandleOutputs, %function
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 10
+
+
+ 364              	HandleOutputs:
+ 365              	.LFB65:
+ 151:.\inout.c     **** 
+ 152:.\inout.c     **** void  HandleOutputs()   // this executes every 1 ms on Tamper_Timer_ISR_Interrupt
+ 153:.\inout.c     **** {
+ 366              		.loc 1 153 0
+ 367              		.cfi_startproc
+ 368              		@ args = 0, pretend = 0, frame = 8
+ 369              		@ frame_needed = 1, uses_anonymous_args = 0
+ 370 0000 80B5     		push	{r7, lr}
+ 371              		.cfi_def_cfa_offset 8
+ 372              		.cfi_offset 7, -8
+ 373              		.cfi_offset 14, -4
+ 374 0002 82B0     		sub	sp, sp, #8
+ 375              		.cfi_def_cfa_offset 16
+ 376 0004 00AF     		add	r7, sp, #0
+ 377              		.cfi_def_cfa_register 7
+ 154:.\inout.c     **** 	char stat = MyI2C_Regs.status_in;
+ 378              		.loc 1 154 0
+ 379 0006 134B     		ldr	r3, .L40
+ 380 0008 5B78     		ldrb	r3, [r3, #1]
+ 381 000a FB71     		strb	r3, [r7, #7]
+ 155:.\inout.c     ****     if( stat & 0x01)
+ 382              		.loc 1 155 0
+ 383 000c FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 384 000e 03F00103 		and	r3, r3, #1
+ 385 0012 002B     		cmp	r3, #0
+ 386 0014 1BD0     		beq	.L35
+ 156:.\inout.c     ****     {
+ 157:.\inout.c     ****         if((stat & 0x2) == 0x2)
+ 387              		.loc 1 157 0
+ 388 0016 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 389 0018 03F00203 		and	r3, r3, #2
+ 390 001c 002B     		cmp	r3, #0
+ 391 001e 04D0     		beq	.L37
+ 158:.\inout.c     ****            SetHardwareVals(MyI2C_Regs.acs_inputs);
+ 392              		.loc 1 158 0
+ 393 0020 0C4B     		ldr	r3, .L40
+ 394 0022 5B79     		ldrb	r3, [r3, #5]	@ zero_extendqisi2
+ 395 0024 1846     		mov	r0, r3
+ 396 0026 FFF7FEFF 		bl	SetHardwareVals
+ 397              	.L37:
+ 159:.\inout.c     ****         
+ 160:.\inout.c     ****         if(stat & 0x04)
+ 398              		.loc 1 160 0
+ 399 002a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 400 002c 03F00403 		and	r3, r3, #4
+ 401 0030 002B     		cmp	r3, #0
+ 402 0032 01D0     		beq	.L38
+ 161:.\inout.c     ****             SendOSDP();
+ 403              		.loc 1 161 0
+ 404 0034 FFF7FEFF 		bl	SendOSDP
+ 405              	.L38:
+ 162:.\inout.c     ****             
+ 163:.\inout.c     ****         if(stat & 0x08)
+ 406              		.loc 1 163 0
+ 407 0038 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 11
+
+
+ 408 003a 03F00803 		and	r3, r3, #8
+ 409 003e 002B     		cmp	r3, #0
+ 410 0040 02D0     		beq	.L39
+ 164:.\inout.c     ****             card_ack = 1;    
+ 411              		.loc 1 164 0
+ 412 0042 054B     		ldr	r3, .L40+4
+ 413 0044 0122     		movs	r2, #1
+ 414 0046 1A60     		str	r2, [r3]
+ 415              	.L39:
+ 165:.\inout.c     ****             
+ 166:.\inout.c     ****         MyI2C_Regs.status_in = 0; 
+ 416              		.loc 1 166 0
+ 417 0048 024B     		ldr	r3, .L40
+ 418 004a 0022     		movs	r2, #0
+ 419 004c 5A70     		strb	r2, [r3, #1]
+ 420              	.L35:
+ 167:.\inout.c     ****     }
+ 168:.\inout.c     ****    
+ 169:.\inout.c     ****     
+ 170:.\inout.c     **** }
+ 421              		.loc 1 170 0
+ 422 004e 0837     		adds	r7, r7, #8
+ 423 0050 BD46     		mov	sp, r7
+ 424              		@ sp needed
+ 425 0052 80BD     		pop	{r7, pc}
+ 426              	.L41:
+ 427              		.align	2
+ 428              	.L40:
+ 429 0054 00000000 		.word	MyI2C_Regs
+ 430 0058 00000000 		.word	card_ack
+ 431              		.cfi_endproc
+ 432              	.LFE65:
+ 433              		.size	HandleOutputs, .-HandleOutputs
+ 434              		.section	.text.HandleInputs,"ax",%progbits
+ 435              		.align	2
+ 436              		.global	HandleInputs
+ 437              		.thumb
+ 438              		.thumb_func
+ 439              		.type	HandleInputs, %function
+ 440              	HandleInputs:
+ 441              	.LFB66:
+ 171:.\inout.c     **** 
+ 172:.\inout.c     **** 
+ 173:.\inout.c     **** void HandleInputs()   // this executes every 1 ms on Tamper_Timer_ISR_Interrupt
+ 174:.\inout.c     **** {
+ 442              		.loc 1 174 0
+ 443              		.cfi_startproc
+ 444              		@ args = 0, pretend = 0, frame = 8
+ 445              		@ frame_needed = 1, uses_anonymous_args = 0
+ 446 0000 80B5     		push	{r7, lr}
+ 447              		.cfi_def_cfa_offset 8
+ 448              		.cfi_offset 7, -8
+ 449              		.cfi_offset 14, -4
+ 450 0002 82B0     		sub	sp, sp, #8
+ 451              		.cfi_def_cfa_offset 16
+ 452 0004 00AF     		add	r7, sp, #0
+ 453              		.cfi_def_cfa_register 7
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 12
+
+
+ 175:.\inout.c     ****     char current_t1;
+ 176:.\inout.c     ****     char current_t2;
+ 177:.\inout.c     ****     
+ 178:.\inout.c     ****     /* TAMPER OUT signal to ACS Panel  GRI 1-13-15
+ 179:.\inout.c     ****        this accounts for configuration of tamper input from card reader  GRI 1-13-15 */
+ 180:.\inout.c     ****     if( (REED_1_Read() == 0)  
+ 454              		.loc 1 180 0
+ 455 0006 FFF7FEFF 		bl	REED_1_Read
+ 456 000a 0346     		mov	r3, r0
+ 457 000c 002B     		cmp	r3, #0
+ 458 000e 11D0     		beq	.L43
+ 181:.\inout.c     ****         /*   || (REED_2_Read() == 0)  // disabled GRI 2-4-15 */
+ 182:.\inout.c     ****         || ((TAMPER_IN_Read() == 0) && (TAMPERCR_POLARITY == 1)) 
+ 459              		.loc 1 182 0
+ 460 0010 FFF7FEFF 		bl	TAMPER_IN_Read
+ 461 0014 0346     		mov	r3, r0
+ 462 0016 002B     		cmp	r3, #0
+ 463 0018 03D1     		bne	.L44
+ 464              		.loc 1 182 0 is_stmt 0 discriminator 1
+ 465 001a 284B     		ldr	r3, .L52
+ 466 001c 1B68     		ldr	r3, [r3]
+ 467 001e 012B     		cmp	r3, #1
+ 468 0020 08D0     		beq	.L43
+ 469              	.L44:
+ 183:.\inout.c     ****         || ((TAMPER_IN_Read() == 1) && (TAMPERCR_POLARITY == 0)) )  
+ 470              		.loc 1 183 0 is_stmt 1
+ 471 0022 FFF7FEFF 		bl	TAMPER_IN_Read
+ 472 0026 0346     		mov	r3, r0
+ 473 0028 012B     		cmp	r3, #1
+ 474 002a 0AD1     		bne	.L45
+ 475              		.loc 1 183 0 is_stmt 0 discriminator 1
+ 476 002c 234B     		ldr	r3, .L52
+ 477 002e 1B68     		ldr	r3, [r3]
+ 478 0030 002B     		cmp	r3, #0
+ 479 0032 06D1     		bne	.L45
+ 480              	.L43:
+ 184:.\inout.c     ****         
+ 185:.\inout.c     ****     {
+ 186:.\inout.c     ****        TAMPER_OUT_Write(0); // TAMPER_OUT to ACS is ACTIVE LOW
+ 481              		.loc 1 186 0 is_stmt 1
+ 482 0034 0020     		movs	r0, #0
+ 483 0036 FFF7FEFF 		bl	TAMPER_OUT_Write
+ 187:.\inout.c     ****        LED_RED_Write(0); //LED on
+ 484              		.loc 1 187 0
+ 485 003a 0020     		movs	r0, #0
+ 486 003c FFF7FEFF 		bl	LED_RED_Write
+ 487 0040 05E0     		b	.L46
+ 488              	.L45:
+ 188:.\inout.c     ****     }
+ 189:.\inout.c     ****     else
+ 190:.\inout.c     ****     {
+ 191:.\inout.c     ****        TAMPER_OUT_Write(1); // TAMPER_OUT to ACS is INACTIVE HIGH
+ 489              		.loc 1 191 0
+ 490 0042 0120     		movs	r0, #1
+ 491 0044 FFF7FEFF 		bl	TAMPER_OUT_Write
+ 192:.\inout.c     ****        LED_RED_Write(1); //LED off
+ 492              		.loc 1 192 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 13
+
+
+ 493 0048 0120     		movs	r0, #1
+ 494 004a FFF7FEFF 		bl	LED_RED_Write
+ 495              	.L46:
+ 193:.\inout.c     ****     }
+ 194:.\inout.c     ****     // Tamper LED matches tamper_out signal status (ICM board only)
+ 195:.\inout.c     ****     
+ 196:.\inout.c     ****     
+ 197:.\inout.c     ****     //This section checks for input signal changes
+ 198:.\inout.c     **** 
+ 199:.\inout.c     ****     current_t1 = GetHardwareVals();  // read inputs first time
+ 496              		.loc 1 199 0
+ 497 004e FFF7FEFF 		bl	GetHardwareVals
+ 498 0052 0346     		mov	r3, r0
+ 499 0054 FB71     		strb	r3, [r7, #7]
+ 200:.\inout.c     **** 	if (current_t1 != old)  //change occurred?
+ 500              		.loc 1 200 0
+ 501 0056 1A4B     		ldr	r3, .L52+4
+ 502 0058 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 503 005a FA79     		ldrb	r2, [r7, #7]	@ zero_extendqisi2
+ 504 005c 9A42     		cmp	r2, r3
+ 505 005e 26D0     		beq	.L47
+ 201:.\inout.c     **** 	{
+ 202:.\inout.c     ****         CyDelayUs(100); //delay 100us for debounce
+ 506              		.loc 1 202 0
+ 507 0060 6420     		movs	r0, #100
+ 508 0062 FFF7FEFF 		bl	CyDelayUs
+ 203:.\inout.c     ****         current_t2 = GetHardwareVals();  // read inputs second time
+ 509              		.loc 1 203 0
+ 510 0066 FFF7FEFF 		bl	GetHardwareVals
+ 511 006a 0346     		mov	r3, r0
+ 512 006c BB71     		strb	r3, [r7, #6]
+ 204:.\inout.c     ****         
+ 205:.\inout.c     ****         if (current_t1 == current_t2)    // data is stable?
+ 513              		.loc 1 205 0
+ 514 006e FA79     		ldrb	r2, [r7, #7]	@ zero_extendqisi2
+ 515 0070 BB79     		ldrb	r3, [r7, #6]	@ zero_extendqisi2
+ 516 0072 9A42     		cmp	r2, r3
+ 517 0074 0DD1     		bne	.L48
+ 206:.\inout.c     ****         {   
+ 207:.\inout.c     ****             // If Data is stable, change the status reg
+ 208:.\inout.c     ****             
+ 209:.\inout.c     **** 	        MyI2C_Regs.acs_outputs = current_t2;                //set output reg to MB
+ 518              		.loc 1 209 0
+ 519 0076 134B     		ldr	r3, .L52+8
+ 520 0078 BA79     		ldrb	r2, [r7, #6]
+ 521 007a 1A71     		strb	r2, [r3, #4]
+ 210:.\inout.c     ****             old = current_t2;                                   //store latest value
+ 522              		.loc 1 210 0
+ 523 007c 104B     		ldr	r3, .L52+4
+ 524 007e BA79     		ldrb	r2, [r7, #6]
+ 525 0080 1A70     		strb	r2, [r3]
+ 211:.\inout.c     **** 	        MyI2C_Regs.status |= (STAT_ACS_IN | STAT_CHANGE);   //indicate change in ACS_IN
+ 526              		.loc 1 211 0
+ 527 0082 104B     		ldr	r3, .L52+8
+ 528 0084 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 529 0086 43F00503 		orr	r3, r3, #5
+ 530 008a DAB2     		uxtb	r2, r3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 14
+
+
+ 531 008c 0D4B     		ldr	r3, .L52+8
+ 532 008e 1A70     		strb	r2, [r3]
+ 533 0090 10E0     		b	.L42
+ 534              	.L48:
+ 212:.\inout.c     ****         }
+ 213:.\inout.c     ****         else // data changed again
+ 214:.\inout.c     ****         {
+ 215:.\inout.c     ****             if (current_t2 == old) // did it return to the old value?
+ 535              		.loc 1 215 0
+ 536 0092 0B4B     		ldr	r3, .L52+4
+ 537 0094 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 538 0096 BA79     		ldrb	r2, [r7, #6]	@ zero_extendqisi2
+ 539 0098 9A42     		cmp	r2, r3
+ 540 009a 03D1     		bne	.L50
+ 216:.\inout.c     ****             {
+ 217:.\inout.c     ****                 old = current_t2;  // latest value = same value 
+ 541              		.loc 1 217 0
+ 542 009c 084B     		ldr	r3, .L52+4
+ 543 009e BA79     		ldrb	r2, [r7, #6]
+ 544 00a0 1A70     		strb	r2, [r3]
+ 545 00a2 07E0     		b	.L42
+ 546              	.L50:
+ 218:.\inout.c     ****             }
+ 219:.\inout.c     ****             else // yet another new value, holdoff on reporting changes yet
+ 220:.\inout.c     ****             {
+ 221:.\inout.c     ****                 old = old; // keep previous value in case there were 2 or more nearly coincident ch
+ 547              		.loc 1 221 0
+ 548 00a4 064B     		ldr	r3, .L52+4
+ 549 00a6 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 550 00a8 054B     		ldr	r3, .L52+4
+ 551 00aa 1A70     		strb	r2, [r3]
+ 552 00ac 02E0     		b	.L42
+ 553              	.L47:
+ 222:.\inout.c     ****             } 
+ 223:.\inout.c     ****         } 
+ 224:.\inout.c     **** 	}
+ 225:.\inout.c     ****     else
+ 226:.\inout.c     ****     {
+ 227:.\inout.c     ****         old = current_t1; //store t1 value, no change
+ 554              		.loc 1 227 0
+ 555 00ae 044B     		ldr	r3, .L52+4
+ 556 00b0 FA79     		ldrb	r2, [r7, #7]
+ 557 00b2 1A70     		strb	r2, [r3]
+ 558              	.L42:
+ 228:.\inout.c     ****     }
+ 229:.\inout.c     **** }
+ 559              		.loc 1 229 0
+ 560 00b4 0837     		adds	r7, r7, #8
+ 561 00b6 BD46     		mov	sp, r7
+ 562              		@ sp needed
+ 563 00b8 80BD     		pop	{r7, pc}
+ 564              	.L53:
+ 565 00ba 00BF     		.align	2
+ 566              	.L52:
+ 567 00bc 00000000 		.word	TAMPERCR_POLARITY
+ 568 00c0 00000000 		.word	old
+ 569 00c4 00000000 		.word	MyI2C_Regs
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 15
+
+
+ 570              		.cfi_endproc
+ 571              	.LFE66:
+ 572              		.size	HandleInputs, .-HandleInputs
+ 573              		.text
+ 574              	.Letext0:
+ 575              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 576              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 577              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 578              		.file 5 ".\\softuart.h"
+ 579              		.file 6 ".\\system.h"
+ 580              		.file 7 "Generated_Source\\PSoC5/core_cm3.h"
+ 581              		.section	.debug_info,"",%progbits
+ 582              	.Ldebug_info0:
+ 583 0000 33040000 		.4byte	0x433
+ 584 0004 0400     		.2byte	0x4
+ 585 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 586 000a 04       		.byte	0x4
+ 587 000b 01       		.uleb128 0x1
+ 588 000c 13020000 		.4byte	.LASF69
+ 589 0010 01       		.byte	0x1
+ 590 0011 8F020000 		.4byte	.LASF70
+ 591 0015 53030000 		.4byte	.LASF71
+ 592 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 593 001d 00000000 		.4byte	0
+ 594 0021 00000000 		.4byte	.Ldebug_line0
+ 595 0025 02       		.uleb128 0x2
+ 596 0026 01       		.byte	0x1
+ 597 0027 06       		.byte	0x6
+ 598 0028 B6010000 		.4byte	.LASF0
+ 599 002c 02       		.uleb128 0x2
+ 600 002d 01       		.byte	0x1
+ 601 002e 08       		.byte	0x8
+ 602 002f A8010000 		.4byte	.LASF1
+ 603 0033 02       		.uleb128 0x2
+ 604 0034 02       		.byte	0x2
+ 605 0035 05       		.byte	0x5
+ 606 0036 9D000000 		.4byte	.LASF2
+ 607 003a 02       		.uleb128 0x2
+ 608 003b 02       		.byte	0x2
+ 609 003c 07       		.byte	0x7
+ 610 003d EA020000 		.4byte	.LASF3
+ 611 0041 03       		.uleb128 0x3
+ 612 0042 20030000 		.4byte	.LASF9
+ 613 0046 02       		.byte	0x2
+ 614 0047 37       		.byte	0x37
+ 615 0048 4C000000 		.4byte	0x4c
+ 616 004c 02       		.uleb128 0x2
+ 617 004d 04       		.byte	0x4
+ 618 004e 05       		.byte	0x5
+ 619 004f 28010000 		.4byte	.LASF4
+ 620 0053 02       		.uleb128 0x2
+ 621 0054 04       		.byte	0x4
+ 622 0055 07       		.byte	0x7
+ 623 0056 F6010000 		.4byte	.LASF5
+ 624 005a 02       		.uleb128 0x2
+ 625 005b 08       		.byte	0x8
+ 626 005c 05       		.byte	0x5
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 16
+
+
+ 627 005d 7F000000 		.4byte	.LASF6
+ 628 0061 02       		.uleb128 0x2
+ 629 0062 08       		.byte	0x8
+ 630 0063 07       		.byte	0x7
+ 631 0064 C8010000 		.4byte	.LASF7
+ 632 0068 04       		.uleb128 0x4
+ 633 0069 04       		.byte	0x4
+ 634 006a 05       		.byte	0x5
+ 635 006b 696E7400 		.ascii	"int\000"
+ 636 006f 02       		.uleb128 0x2
+ 637 0070 04       		.byte	0x4
+ 638 0071 07       		.byte	0x7
+ 639 0072 DF010000 		.4byte	.LASF8
+ 640 0076 03       		.uleb128 0x3
+ 641 0077 B5020000 		.4byte	.LASF10
+ 642 007b 03       		.byte	0x3
+ 643 007c 41       		.byte	0x41
+ 644 007d 41000000 		.4byte	0x41
+ 645 0081 03       		.uleb128 0x3
+ 646 0082 C8000000 		.4byte	.LASF11
+ 647 0086 04       		.byte	0x4
+ 648 0087 B3       		.byte	0xb3
+ 649 0088 2C000000 		.4byte	0x2c
+ 650 008c 03       		.uleb128 0x3
+ 651 008d AF000000 		.4byte	.LASF12
+ 652 0091 04       		.byte	0x4
+ 653 0092 B4       		.byte	0xb4
+ 654 0093 3A000000 		.4byte	0x3a
+ 655 0097 02       		.uleb128 0x2
+ 656 0098 04       		.byte	0x4
+ 657 0099 04       		.byte	0x4
+ 658 009a CE000000 		.4byte	.LASF13
+ 659 009e 02       		.uleb128 0x2
+ 660 009f 08       		.byte	0x8
+ 661 00a0 04       		.byte	0x4
+ 662 00a1 BB030000 		.4byte	.LASF14
+ 663 00a5 02       		.uleb128 0x2
+ 664 00a6 01       		.byte	0x1
+ 665 00a7 08       		.byte	0x8
+ 666 00a8 B0020000 		.4byte	.LASF15
+ 667 00ac 05       		.uleb128 0x5
+ 668 00ad 8C000000 		.4byte	0x8c
+ 669 00b1 02       		.uleb128 0x2
+ 670 00b2 04       		.byte	0x4
+ 671 00b3 07       		.byte	0x7
+ 672 00b4 24000000 		.4byte	.LASF16
+ 673 00b8 06       		.uleb128 0x6
+ 674 00b9 28       		.byte	0x28
+ 675 00ba 05       		.byte	0x5
+ 676 00bb 0D       		.byte	0xd
+ 677 00bc 51010000 		.4byte	0x151
+ 678 00c0 07       		.uleb128 0x7
+ 679 00c1 92010000 		.4byte	.LASF17
+ 680 00c5 05       		.byte	0x5
+ 681 00c6 0F       		.byte	0xf
+ 682 00c7 68000000 		.4byte	0x68
+ 683 00cb 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 17
+
+
+ 684 00cc 07       		.uleb128 0x7
+ 685 00cd 4C010000 		.4byte	.LASF18
+ 686 00d1 05       		.byte	0x5
+ 687 00d2 10       		.byte	0x10
+ 688 00d3 68000000 		.4byte	0x68
+ 689 00d7 04       		.byte	0x4
+ 690 00d8 07       		.uleb128 0x7
+ 691 00d9 EC010000 		.4byte	.LASF19
+ 692 00dd 05       		.byte	0x5
+ 693 00de 11       		.byte	0x11
+ 694 00df 68000000 		.4byte	0x68
+ 695 00e3 08       		.byte	0x8
+ 696 00e4 07       		.uleb128 0x7
+ 697 00e5 D4000000 		.4byte	.LASF20
+ 698 00e9 05       		.byte	0x5
+ 699 00ea 12       		.byte	0x12
+ 700 00eb 68000000 		.4byte	0x68
+ 701 00ef 0C       		.byte	0xc
+ 702 00f0 07       		.uleb128 0x7
+ 703 00f1 DB020000 		.4byte	.LASF21
+ 704 00f5 05       		.byte	0x5
+ 705 00f6 13       		.byte	0x13
+ 706 00f7 8C000000 		.4byte	0x8c
+ 707 00fb 10       		.byte	0x10
+ 708 00fc 07       		.uleb128 0x7
+ 709 00fd 44010000 		.4byte	.LASF22
+ 710 0101 05       		.byte	0x5
+ 711 0102 14       		.byte	0x14
+ 712 0103 AC000000 		.4byte	0xac
+ 713 0107 12       		.byte	0x12
+ 714 0108 07       		.uleb128 0x7
+ 715 0109 A1020000 		.4byte	.LASF23
+ 716 010d 05       		.byte	0x5
+ 717 010e 15       		.byte	0x15
+ 718 010f AC000000 		.4byte	0xac
+ 719 0113 14       		.byte	0x14
+ 720 0114 07       		.uleb128 0x7
+ 721 0115 A7000000 		.4byte	.LASF24
+ 722 0119 05       		.byte	0x5
+ 723 011a 16       		.byte	0x16
+ 724 011b 8C000000 		.4byte	0x8c
+ 725 011f 16       		.byte	0x16
+ 726 0120 07       		.uleb128 0x7
+ 727 0121 C2010000 		.4byte	.LASF25
+ 728 0125 05       		.byte	0x5
+ 729 0126 17       		.byte	0x17
+ 730 0127 51010000 		.4byte	0x151
+ 731 012b 18       		.byte	0x18
+ 732 012c 07       		.uleb128 0x7
+ 733 012d F6030000 		.4byte	.LASF26
+ 734 0131 05       		.byte	0x5
+ 735 0132 18       		.byte	0x18
+ 736 0133 51010000 		.4byte	0x151
+ 737 0137 1C       		.byte	0x1c
+ 738 0138 07       		.uleb128 0x7
+ 739 0139 31010000 		.4byte	.LASF27
+ 740 013d 05       		.byte	0x5
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 18
+
+
+ 741 013e 19       		.byte	0x19
+ 742 013f 51010000 		.4byte	0x151
+ 743 0143 20       		.byte	0x20
+ 744 0144 07       		.uleb128 0x7
+ 745 0145 99020000 		.4byte	.LASF28
+ 746 0149 05       		.byte	0x5
+ 747 014a 1A       		.byte	0x1a
+ 748 014b 51010000 		.4byte	0x151
+ 749 014f 24       		.byte	0x24
+ 750 0150 00       		.byte	0
+ 751 0151 05       		.uleb128 0x5
+ 752 0152 68000000 		.4byte	0x68
+ 753 0156 03       		.uleb128 0x3
+ 754 0157 81010000 		.4byte	.LASF29
+ 755 015b 05       		.byte	0x5
+ 756 015c 1B       		.byte	0x1b
+ 757 015d B8000000 		.4byte	0xb8
+ 758 0161 08       		.uleb128 0x8
+ 759 0162 17030000 		.4byte	.LASF49
+ 760 0166 0001     		.2byte	0x100
+ 761 0168 06       		.byte	0x6
+ 762 0169 18       		.byte	0x18
+ 763 016a 5F020000 		.4byte	0x25f
+ 764 016e 07       		.uleb128 0x7
+ 765 016f A9020000 		.4byte	.LASF30
+ 766 0173 06       		.byte	0x6
+ 767 0174 19       		.byte	0x19
+ 768 0175 A5000000 		.4byte	0xa5
+ 769 0179 00       		.byte	0
+ 770 017a 07       		.uleb128 0x7
+ 771 017b 0D030000 		.4byte	.LASF31
+ 772 017f 06       		.byte	0x6
+ 773 0180 1A       		.byte	0x1a
+ 774 0181 A5000000 		.4byte	0xa5
+ 775 0185 01       		.byte	0x1
+ 776 0186 09       		.uleb128 0x9
+ 777 0187 636D6400 		.ascii	"cmd\000"
+ 778 018b 06       		.byte	0x6
+ 779 018c 1B       		.byte	0x1b
+ 780 018d A5000000 		.4byte	0xa5
+ 781 0191 02       		.byte	0x2
+ 782 0192 07       		.uleb128 0x7
+ 783 0193 67000000 		.4byte	.LASF32
+ 784 0197 06       		.byte	0x6
+ 785 0198 1C       		.byte	0x1c
+ 786 0199 2C000000 		.4byte	0x2c
+ 787 019d 03       		.byte	0x3
+ 788 019e 07       		.uleb128 0x7
+ 789 019f E5000000 		.4byte	.LASF33
+ 790 01a3 06       		.byte	0x6
+ 791 01a4 1D       		.byte	0x1d
+ 792 01a5 A5000000 		.4byte	0xa5
+ 793 01a9 04       		.byte	0x4
+ 794 01aa 07       		.uleb128 0x7
+ 795 01ab 08020000 		.4byte	.LASF34
+ 796 01af 06       		.byte	0x6
+ 797 01b0 1E       		.byte	0x1e
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 19
+
+
+ 798 01b1 A5000000 		.4byte	0xa5
+ 799 01b5 05       		.byte	0x5
+ 800 01b6 07       		.uleb128 0x7
+ 801 01b7 E3020000 		.4byte	.LASF35
+ 802 01bb 06       		.byte	0x6
+ 803 01bc 1F       		.byte	0x1f
+ 804 01bd 5F020000 		.4byte	0x25f
+ 805 01c1 06       		.byte	0x6
+ 806 01c2 07       		.uleb128 0x7
+ 807 01c3 3E010000 		.4byte	.LASF36
+ 808 01c7 06       		.byte	0x6
+ 809 01c8 20       		.byte	0x20
+ 810 01c9 6F020000 		.4byte	0x26f
+ 811 01cd 1A       		.byte	0x1a
+ 812 01ce 07       		.uleb128 0x7
+ 813 01cf 59000000 		.4byte	.LASF37
+ 814 01d3 06       		.byte	0x6
+ 815 01d4 21       		.byte	0x21
+ 816 01d5 A5000000 		.4byte	0xa5
+ 817 01d9 42       		.byte	0x42
+ 818 01da 07       		.uleb128 0x7
+ 819 01db 48030000 		.4byte	.LASF38
+ 820 01df 06       		.byte	0x6
+ 821 01e0 22       		.byte	0x22
+ 822 01e1 7F020000 		.4byte	0x27f
+ 823 01e5 43       		.byte	0x43
+ 824 01e6 07       		.uleb128 0x7
+ 825 01e7 D4030000 		.4byte	.LASF39
+ 826 01eb 06       		.byte	0x6
+ 827 01ec 23       		.byte	0x23
+ 828 01ed 7F020000 		.4byte	0x27f
+ 829 01f1 46       		.byte	0x46
+ 830 01f2 07       		.uleb128 0x7
+ 831 01f3 ED030000 		.4byte	.LASF40
+ 832 01f7 06       		.byte	0x6
+ 833 01f8 24       		.byte	0x24
+ 834 01f9 2C000000 		.4byte	0x2c
+ 835 01fd 49       		.byte	0x49
+ 836 01fe 07       		.uleb128 0x7
+ 837 01ff 00000000 		.4byte	.LASF41
+ 838 0203 06       		.byte	0x6
+ 839 0204 25       		.byte	0x25
+ 840 0205 2C000000 		.4byte	0x2c
+ 841 0209 4A       		.byte	0x4a
+ 842 020a 07       		.uleb128 0x7
+ 843 020b 97010000 		.4byte	.LASF42
+ 844 020f 06       		.byte	0x6
+ 845 0210 26       		.byte	0x26
+ 846 0211 2C000000 		.4byte	0x2c
+ 847 0215 4B       		.byte	0x4b
+ 848 0216 07       		.uleb128 0x7
+ 849 0217 3F000000 		.4byte	.LASF43
+ 850 021b 06       		.byte	0x6
+ 851 021c 27       		.byte	0x27
+ 852 021d 2C000000 		.4byte	0x2c
+ 853 0221 4C       		.byte	0x4c
+ 854 0222 07       		.uleb128 0x7
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 20
+
+
+ 855 0223 73000000 		.4byte	.LASF44
+ 856 0227 06       		.byte	0x6
+ 857 0228 28       		.byte	0x28
+ 858 0229 8F020000 		.4byte	0x28f
+ 859 022d 4D       		.byte	0x4d
+ 860 022e 07       		.uleb128 0x7
+ 861 022f 49000000 		.4byte	.LASF45
+ 862 0233 06       		.byte	0x6
+ 863 0234 29       		.byte	0x29
+ 864 0235 2C000000 		.4byte	0x2c
+ 865 0239 CD       		.byte	0xcd
+ 866 023a 07       		.uleb128 0x7
+ 867 023b 07010000 		.4byte	.LASF46
+ 868 023f 06       		.byte	0x6
+ 869 0240 2A       		.byte	0x2a
+ 870 0241 2C000000 		.4byte	0x2c
+ 871 0245 CE       		.byte	0xce
+ 872 0246 07       		.uleb128 0x7
+ 873 0247 53010000 		.4byte	.LASF47
+ 874 024b 06       		.byte	0x6
+ 875 024c 2B       		.byte	0x2b
+ 876 024d 2C000000 		.4byte	0x2c
+ 877 0251 CF       		.byte	0xcf
+ 878 0252 07       		.uleb128 0x7
+ 879 0253 64010000 		.4byte	.LASF48
+ 880 0257 06       		.byte	0x6
+ 881 0258 2C       		.byte	0x2c
+ 882 0259 9F020000 		.4byte	0x29f
+ 883 025d D0       		.byte	0xd0
+ 884 025e 00       		.byte	0
+ 885 025f 0A       		.uleb128 0xa
+ 886 0260 2C000000 		.4byte	0x2c
+ 887 0264 6F020000 		.4byte	0x26f
+ 888 0268 0B       		.uleb128 0xb
+ 889 0269 B1000000 		.4byte	0xb1
+ 890 026d 13       		.byte	0x13
+ 891 026e 00       		.byte	0
+ 892 026f 0A       		.uleb128 0xa
+ 893 0270 A5000000 		.4byte	0xa5
+ 894 0274 7F020000 		.4byte	0x27f
+ 895 0278 0B       		.uleb128 0xb
+ 896 0279 B1000000 		.4byte	0xb1
+ 897 027d 27       		.byte	0x27
+ 898 027e 00       		.byte	0
+ 899 027f 0A       		.uleb128 0xa
+ 900 0280 A5000000 		.4byte	0xa5
+ 901 0284 8F020000 		.4byte	0x28f
+ 902 0288 0B       		.uleb128 0xb
+ 903 0289 B1000000 		.4byte	0xb1
+ 904 028d 02       		.byte	0x2
+ 905 028e 00       		.byte	0
+ 906 028f 0A       		.uleb128 0xa
+ 907 0290 2C000000 		.4byte	0x2c
+ 908 0294 9F020000 		.4byte	0x29f
+ 909 0298 0B       		.uleb128 0xb
+ 910 0299 B1000000 		.4byte	0xb1
+ 911 029d 7F       		.byte	0x7f
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 21
+
+
+ 912 029e 00       		.byte	0
+ 913 029f 0A       		.uleb128 0xa
+ 914 02a0 2C000000 		.4byte	0x2c
+ 915 02a4 AF020000 		.4byte	0x2af
+ 916 02a8 0B       		.uleb128 0xb
+ 917 02a9 B1000000 		.4byte	0xb1
+ 918 02ad 2F       		.byte	0x2f
+ 919 02ae 00       		.byte	0
+ 920 02af 03       		.uleb128 0x3
+ 921 02b0 17030000 		.4byte	.LASF49
+ 922 02b4 06       		.byte	0x6
+ 923 02b5 2D       		.byte	0x2d
+ 924 02b6 61010000 		.4byte	0x161
+ 925 02ba 0C       		.uleb128 0xc
+ 926 02bb 8D000000 		.4byte	.LASF50
+ 927 02bf 01       		.byte	0x1
+ 928 02c0 18       		.byte	0x18
+ 929 02c1 00000000 		.4byte	.LFB63
+ 930 02c5 A4000000 		.4byte	.LFE63-.LFB63
+ 931 02c9 01       		.uleb128 0x1
+ 932 02ca 9C       		.byte	0x9c
+ 933 02cb DE020000 		.4byte	0x2de
+ 934 02cf 0D       		.uleb128 0xd
+ 935 02d0 76616C00 		.ascii	"val\000"
+ 936 02d4 01       		.byte	0x1
+ 937 02d5 18       		.byte	0x18
+ 938 02d6 68000000 		.4byte	0x68
+ 939 02da 02       		.uleb128 0x2
+ 940 02db 91       		.byte	0x91
+ 941 02dc 74       		.sleb128 -12
+ 942 02dd 00       		.byte	0
+ 943 02de 0E       		.uleb128 0xe
+ 944 02df FD020000 		.4byte	.LASF51
+ 945 02e3 01       		.byte	0x1
+ 946 02e4 41       		.byte	0x41
+ 947 02e5 81000000 		.4byte	0x81
+ 948 02e9 00000000 		.4byte	.LFB64
+ 949 02ed 54010000 		.4byte	.LFE64-.LFB64
+ 950 02f1 01       		.uleb128 0x1
+ 951 02f2 9C       		.byte	0x9c
+ 952 02f3 06030000 		.4byte	0x306
+ 953 02f7 0F       		.uleb128 0xf
+ 954 02f8 76616C00 		.ascii	"val\000"
+ 955 02fc 01       		.byte	0x1
+ 956 02fd 43       		.byte	0x43
+ 957 02fe 81000000 		.4byte	0x81
+ 958 0302 02       		.uleb128 0x2
+ 959 0303 91       		.byte	0x91
+ 960 0304 77       		.sleb128 -9
+ 961 0305 00       		.byte	0
+ 962 0306 10       		.uleb128 0x10
+ 963 0307 DF030000 		.4byte	.LASF53
+ 964 030b 01       		.byte	0x1
+ 965 030c 98       		.byte	0x98
+ 966 030d 00000000 		.4byte	.LFB65
+ 967 0311 5C000000 		.4byte	.LFE65-.LFB65
+ 968 0315 01       		.uleb128 0x1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 22
+
+
+ 969 0316 9C       		.byte	0x9c
+ 970 0317 2A030000 		.4byte	0x32a
+ 971 031b 11       		.uleb128 0x11
+ 972 031c C2030000 		.4byte	.LASF52
+ 973 0320 01       		.byte	0x1
+ 974 0321 9A       		.byte	0x9a
+ 975 0322 A5000000 		.4byte	0xa5
+ 976 0326 02       		.uleb128 0x2
+ 977 0327 91       		.byte	0x91
+ 978 0328 77       		.sleb128 -9
+ 979 0329 00       		.byte	0
+ 980 032a 10       		.uleb128 0x10
+ 981 032b 0C000000 		.4byte	.LASF54
+ 982 032f 01       		.byte	0x1
+ 983 0330 AD       		.byte	0xad
+ 984 0331 00000000 		.4byte	.LFB66
+ 985 0335 C8000000 		.4byte	.LFE66-.LFB66
+ 986 0339 01       		.uleb128 0x1
+ 987 033a 9C       		.byte	0x9c
+ 988 033b 5C030000 		.4byte	0x35c
+ 989 033f 11       		.uleb128 0x11
+ 990 0340 F1000000 		.4byte	.LASF55
+ 991 0344 01       		.byte	0x1
+ 992 0345 AF       		.byte	0xaf
+ 993 0346 A5000000 		.4byte	0xa5
+ 994 034a 02       		.uleb128 0x2
+ 995 034b 91       		.byte	0x91
+ 996 034c 77       		.sleb128 -9
+ 997 034d 11       		.uleb128 0x11
+ 998 034e FC000000 		.4byte	.LASF56
+ 999 0352 01       		.byte	0x1
+ 1000 0353 B0       		.byte	0xb0
+ 1001 0354 A5000000 		.4byte	0xa5
+ 1002 0358 02       		.uleb128 0x2
+ 1003 0359 91       		.byte	0x91
+ 1004 035a 76       		.sleb128 -10
+ 1005 035b 00       		.byte	0
+ 1006 035c 12       		.uleb128 0x12
+ 1007 035d C7030000 		.4byte	.LASF57
+ 1008 0361 07       		.byte	0x7
+ 1009 0362 2A06     		.2byte	0x62a
+ 1010 0364 68030000 		.4byte	0x368
+ 1011 0368 05       		.uleb128 0x5
+ 1012 0369 76000000 		.4byte	0x76
+ 1013 036d 13       		.uleb128 0x13
+ 1014 036e 19000000 		.4byte	.LASF58
+ 1015 0372 06       		.byte	0x6
+ 1016 0373 2F       		.byte	0x2f
+ 1017 0374 AF020000 		.4byte	0x2af
+ 1018 0378 14       		.uleb128 0x14
+ 1019 0379 7300     		.ascii	"s\000"
+ 1020 037b 06       		.byte	0x6
+ 1021 037c 30       		.byte	0x30
+ 1022 037d 56010000 		.4byte	0x156
+ 1023 0381 05       		.uleb128 0x5
+ 1024 0382 03       		.byte	0x3
+ 1025 0383 00000000 		.4byte	s
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 23
+
+
+ 1026 0387 15       		.uleb128 0x15
+ 1027 0388 B6000000 		.4byte	.LASF59
+ 1028 038c 06       		.byte	0x6
+ 1029 038d 33       		.byte	0x33
+ 1030 038e A5000000 		.4byte	0xa5
+ 1031 0392 05       		.uleb128 0x5
+ 1032 0393 03       		.byte	0x3
+ 1033 0394 00000000 		.4byte	currentAccessType
+ 1034 0398 14       		.uleb128 0x14
+ 1035 0399 6F6C6400 		.ascii	"old\000"
+ 1036 039d 06       		.byte	0x6
+ 1037 039e 34       		.byte	0x34
+ 1038 039f A5000000 		.4byte	0xa5
+ 1039 03a3 05       		.uleb128 0x5
+ 1040 03a4 03       		.byte	0x3
+ 1041 03a5 00000000 		.4byte	old
+ 1042 03a9 15       		.uleb128 0x15
+ 1043 03aa 2D000000 		.4byte	.LASF60
+ 1044 03ae 06       		.byte	0x6
+ 1045 03af 35       		.byte	0x35
+ 1046 03b0 68000000 		.4byte	0x68
+ 1047 03b4 05       		.uleb128 0x5
+ 1048 03b5 03       		.byte	0x3
+ 1049 03b6 00000000 		.4byte	TAMPERCR_POLARITY
+ 1050 03ba 15       		.uleb128 0x15
+ 1051 03bb 1F010000 		.4byte	.LASF61
+ 1052 03bf 06       		.byte	0x6
+ 1053 03c0 38       		.byte	0x38
+ 1054 03c1 68000000 		.4byte	0x68
+ 1055 03c5 05       		.uleb128 0x5
+ 1056 03c6 03       		.byte	0x3
+ 1057 03c7 00000000 		.4byte	card_ack
+ 1058 03cb 15       		.uleb128 0x15
+ 1059 03cc D9000000 		.4byte	.LASF62
+ 1060 03d0 06       		.byte	0x6
+ 1061 03d1 39       		.byte	0x39
+ 1062 03d2 68000000 		.4byte	0x68
+ 1063 03d6 05       		.uleb128 0x5
+ 1064 03d7 03       		.byte	0x3
+ 1065 03d8 00000000 		.4byte	card_in_buf
+ 1066 03dc 15       		.uleb128 0x15
+ 1067 03dd 77010000 		.4byte	.LASF63
+ 1068 03e1 06       		.byte	0x6
+ 1069 03e2 3C       		.byte	0x3c
+ 1070 03e3 A5000000 		.4byte	0xa5
+ 1071 03e7 05       		.uleb128 0x5
+ 1072 03e8 03       		.byte	0x3
+ 1073 03e9 00000000 		.4byte	got_pulse
+ 1074 03ed 15       		.uleb128 0x15
+ 1075 03ee BD020000 		.4byte	.LASF64
+ 1076 03f2 06       		.byte	0x6
+ 1077 03f3 3D       		.byte	0x3d
+ 1078 03f4 68000000 		.4byte	0x68
+ 1079 03f8 05       		.uleb128 0x5
+ 1080 03f9 03       		.byte	0x3
+ 1081 03fa 00000000 		.4byte	f2f_pulsewidth
+ 1082 03fe 15       		.uleb128 0x15
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 24
+
+
+ 1083 03ff 2A030000 		.4byte	.LASF65
+ 1084 0403 06       		.byte	0x6
+ 1085 0404 3E       		.byte	0x3e
+ 1086 0405 68000000 		.4byte	0x68
+ 1087 0409 05       		.uleb128 0x5
+ 1088 040a 03       		.byte	0x3
+ 1089 040b 00000000 		.4byte	timeout_cnt
+ 1090 040f 15       		.uleb128 0x15
+ 1091 0410 36030000 		.4byte	.LASF66
+ 1092 0414 06       		.byte	0x6
+ 1093 0415 3F       		.byte	0x3f
+ 1094 0416 A5000000 		.4byte	0xa5
+ 1095 041a 05       		.uleb128 0x5
+ 1096 041b 03       		.byte	0x3
+ 1097 041c 00000000 		.4byte	activate_f2ftimer
+ 1098 0420 13       		.uleb128 0x13
+ 1099 0421 CC020000 		.4byte	.LASF67
+ 1100 0425 06       		.byte	0x6
+ 1101 0426 4B       		.byte	0x4b
+ 1102 0427 A5000000 		.4byte	0xa5
+ 1103 042b 13       		.uleb128 0x13
+ 1104 042c AC030000 		.4byte	.LASF68
+ 1105 0430 06       		.byte	0x6
+ 1106 0431 4C       		.byte	0x4c
+ 1107 0432 4C000000 		.4byte	0x4c
+ 1108 0436 00       		.byte	0
+ 1109              		.section	.debug_abbrev,"",%progbits
+ 1110              	.Ldebug_abbrev0:
+ 1111 0000 01       		.uleb128 0x1
+ 1112 0001 11       		.uleb128 0x11
+ 1113 0002 01       		.byte	0x1
+ 1114 0003 25       		.uleb128 0x25
+ 1115 0004 0E       		.uleb128 0xe
+ 1116 0005 13       		.uleb128 0x13
+ 1117 0006 0B       		.uleb128 0xb
+ 1118 0007 03       		.uleb128 0x3
+ 1119 0008 0E       		.uleb128 0xe
+ 1120 0009 1B       		.uleb128 0x1b
+ 1121 000a 0E       		.uleb128 0xe
+ 1122 000b 55       		.uleb128 0x55
+ 1123 000c 17       		.uleb128 0x17
+ 1124 000d 11       		.uleb128 0x11
+ 1125 000e 01       		.uleb128 0x1
+ 1126 000f 10       		.uleb128 0x10
+ 1127 0010 17       		.uleb128 0x17
+ 1128 0011 00       		.byte	0
+ 1129 0012 00       		.byte	0
+ 1130 0013 02       		.uleb128 0x2
+ 1131 0014 24       		.uleb128 0x24
+ 1132 0015 00       		.byte	0
+ 1133 0016 0B       		.uleb128 0xb
+ 1134 0017 0B       		.uleb128 0xb
+ 1135 0018 3E       		.uleb128 0x3e
+ 1136 0019 0B       		.uleb128 0xb
+ 1137 001a 03       		.uleb128 0x3
+ 1138 001b 0E       		.uleb128 0xe
+ 1139 001c 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 25
+
+
+ 1140 001d 00       		.byte	0
+ 1141 001e 03       		.uleb128 0x3
+ 1142 001f 16       		.uleb128 0x16
+ 1143 0020 00       		.byte	0
+ 1144 0021 03       		.uleb128 0x3
+ 1145 0022 0E       		.uleb128 0xe
+ 1146 0023 3A       		.uleb128 0x3a
+ 1147 0024 0B       		.uleb128 0xb
+ 1148 0025 3B       		.uleb128 0x3b
+ 1149 0026 0B       		.uleb128 0xb
+ 1150 0027 49       		.uleb128 0x49
+ 1151 0028 13       		.uleb128 0x13
+ 1152 0029 00       		.byte	0
+ 1153 002a 00       		.byte	0
+ 1154 002b 04       		.uleb128 0x4
+ 1155 002c 24       		.uleb128 0x24
+ 1156 002d 00       		.byte	0
+ 1157 002e 0B       		.uleb128 0xb
+ 1158 002f 0B       		.uleb128 0xb
+ 1159 0030 3E       		.uleb128 0x3e
+ 1160 0031 0B       		.uleb128 0xb
+ 1161 0032 03       		.uleb128 0x3
+ 1162 0033 08       		.uleb128 0x8
+ 1163 0034 00       		.byte	0
+ 1164 0035 00       		.byte	0
+ 1165 0036 05       		.uleb128 0x5
+ 1166 0037 35       		.uleb128 0x35
+ 1167 0038 00       		.byte	0
+ 1168 0039 49       		.uleb128 0x49
+ 1169 003a 13       		.uleb128 0x13
+ 1170 003b 00       		.byte	0
+ 1171 003c 00       		.byte	0
+ 1172 003d 06       		.uleb128 0x6
+ 1173 003e 13       		.uleb128 0x13
+ 1174 003f 01       		.byte	0x1
+ 1175 0040 0B       		.uleb128 0xb
+ 1176 0041 0B       		.uleb128 0xb
+ 1177 0042 3A       		.uleb128 0x3a
+ 1178 0043 0B       		.uleb128 0xb
+ 1179 0044 3B       		.uleb128 0x3b
+ 1180 0045 0B       		.uleb128 0xb
+ 1181 0046 01       		.uleb128 0x1
+ 1182 0047 13       		.uleb128 0x13
+ 1183 0048 00       		.byte	0
+ 1184 0049 00       		.byte	0
+ 1185 004a 07       		.uleb128 0x7
+ 1186 004b 0D       		.uleb128 0xd
+ 1187 004c 00       		.byte	0
+ 1188 004d 03       		.uleb128 0x3
+ 1189 004e 0E       		.uleb128 0xe
+ 1190 004f 3A       		.uleb128 0x3a
+ 1191 0050 0B       		.uleb128 0xb
+ 1192 0051 3B       		.uleb128 0x3b
+ 1193 0052 0B       		.uleb128 0xb
+ 1194 0053 49       		.uleb128 0x49
+ 1195 0054 13       		.uleb128 0x13
+ 1196 0055 38       		.uleb128 0x38
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 26
+
+
+ 1197 0056 0B       		.uleb128 0xb
+ 1198 0057 00       		.byte	0
+ 1199 0058 00       		.byte	0
+ 1200 0059 08       		.uleb128 0x8
+ 1201 005a 13       		.uleb128 0x13
+ 1202 005b 01       		.byte	0x1
+ 1203 005c 03       		.uleb128 0x3
+ 1204 005d 0E       		.uleb128 0xe
+ 1205 005e 0B       		.uleb128 0xb
+ 1206 005f 05       		.uleb128 0x5
+ 1207 0060 3A       		.uleb128 0x3a
+ 1208 0061 0B       		.uleb128 0xb
+ 1209 0062 3B       		.uleb128 0x3b
+ 1210 0063 0B       		.uleb128 0xb
+ 1211 0064 01       		.uleb128 0x1
+ 1212 0065 13       		.uleb128 0x13
+ 1213 0066 00       		.byte	0
+ 1214 0067 00       		.byte	0
+ 1215 0068 09       		.uleb128 0x9
+ 1216 0069 0D       		.uleb128 0xd
+ 1217 006a 00       		.byte	0
+ 1218 006b 03       		.uleb128 0x3
+ 1219 006c 08       		.uleb128 0x8
+ 1220 006d 3A       		.uleb128 0x3a
+ 1221 006e 0B       		.uleb128 0xb
+ 1222 006f 3B       		.uleb128 0x3b
+ 1223 0070 0B       		.uleb128 0xb
+ 1224 0071 49       		.uleb128 0x49
+ 1225 0072 13       		.uleb128 0x13
+ 1226 0073 38       		.uleb128 0x38
+ 1227 0074 0B       		.uleb128 0xb
+ 1228 0075 00       		.byte	0
+ 1229 0076 00       		.byte	0
+ 1230 0077 0A       		.uleb128 0xa
+ 1231 0078 01       		.uleb128 0x1
+ 1232 0079 01       		.byte	0x1
+ 1233 007a 49       		.uleb128 0x49
+ 1234 007b 13       		.uleb128 0x13
+ 1235 007c 01       		.uleb128 0x1
+ 1236 007d 13       		.uleb128 0x13
+ 1237 007e 00       		.byte	0
+ 1238 007f 00       		.byte	0
+ 1239 0080 0B       		.uleb128 0xb
+ 1240 0081 21       		.uleb128 0x21
+ 1241 0082 00       		.byte	0
+ 1242 0083 49       		.uleb128 0x49
+ 1243 0084 13       		.uleb128 0x13
+ 1244 0085 2F       		.uleb128 0x2f
+ 1245 0086 0B       		.uleb128 0xb
+ 1246 0087 00       		.byte	0
+ 1247 0088 00       		.byte	0
+ 1248 0089 0C       		.uleb128 0xc
+ 1249 008a 2E       		.uleb128 0x2e
+ 1250 008b 01       		.byte	0x1
+ 1251 008c 3F       		.uleb128 0x3f
+ 1252 008d 19       		.uleb128 0x19
+ 1253 008e 03       		.uleb128 0x3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 27
+
+
+ 1254 008f 0E       		.uleb128 0xe
+ 1255 0090 3A       		.uleb128 0x3a
+ 1256 0091 0B       		.uleb128 0xb
+ 1257 0092 3B       		.uleb128 0x3b
+ 1258 0093 0B       		.uleb128 0xb
+ 1259 0094 27       		.uleb128 0x27
+ 1260 0095 19       		.uleb128 0x19
+ 1261 0096 11       		.uleb128 0x11
+ 1262 0097 01       		.uleb128 0x1
+ 1263 0098 12       		.uleb128 0x12
+ 1264 0099 06       		.uleb128 0x6
+ 1265 009a 40       		.uleb128 0x40
+ 1266 009b 18       		.uleb128 0x18
+ 1267 009c 9642     		.uleb128 0x2116
+ 1268 009e 19       		.uleb128 0x19
+ 1269 009f 01       		.uleb128 0x1
+ 1270 00a0 13       		.uleb128 0x13
+ 1271 00a1 00       		.byte	0
+ 1272 00a2 00       		.byte	0
+ 1273 00a3 0D       		.uleb128 0xd
+ 1274 00a4 05       		.uleb128 0x5
+ 1275 00a5 00       		.byte	0
+ 1276 00a6 03       		.uleb128 0x3
+ 1277 00a7 08       		.uleb128 0x8
+ 1278 00a8 3A       		.uleb128 0x3a
+ 1279 00a9 0B       		.uleb128 0xb
+ 1280 00aa 3B       		.uleb128 0x3b
+ 1281 00ab 0B       		.uleb128 0xb
+ 1282 00ac 49       		.uleb128 0x49
+ 1283 00ad 13       		.uleb128 0x13
+ 1284 00ae 02       		.uleb128 0x2
+ 1285 00af 18       		.uleb128 0x18
+ 1286 00b0 00       		.byte	0
+ 1287 00b1 00       		.byte	0
+ 1288 00b2 0E       		.uleb128 0xe
+ 1289 00b3 2E       		.uleb128 0x2e
+ 1290 00b4 01       		.byte	0x1
+ 1291 00b5 3F       		.uleb128 0x3f
+ 1292 00b6 19       		.uleb128 0x19
+ 1293 00b7 03       		.uleb128 0x3
+ 1294 00b8 0E       		.uleb128 0xe
+ 1295 00b9 3A       		.uleb128 0x3a
+ 1296 00ba 0B       		.uleb128 0xb
+ 1297 00bb 3B       		.uleb128 0x3b
+ 1298 00bc 0B       		.uleb128 0xb
+ 1299 00bd 49       		.uleb128 0x49
+ 1300 00be 13       		.uleb128 0x13
+ 1301 00bf 11       		.uleb128 0x11
+ 1302 00c0 01       		.uleb128 0x1
+ 1303 00c1 12       		.uleb128 0x12
+ 1304 00c2 06       		.uleb128 0x6
+ 1305 00c3 40       		.uleb128 0x40
+ 1306 00c4 18       		.uleb128 0x18
+ 1307 00c5 9642     		.uleb128 0x2116
+ 1308 00c7 19       		.uleb128 0x19
+ 1309 00c8 01       		.uleb128 0x1
+ 1310 00c9 13       		.uleb128 0x13
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 28
+
+
+ 1311 00ca 00       		.byte	0
+ 1312 00cb 00       		.byte	0
+ 1313 00cc 0F       		.uleb128 0xf
+ 1314 00cd 34       		.uleb128 0x34
+ 1315 00ce 00       		.byte	0
+ 1316 00cf 03       		.uleb128 0x3
+ 1317 00d0 08       		.uleb128 0x8
+ 1318 00d1 3A       		.uleb128 0x3a
+ 1319 00d2 0B       		.uleb128 0xb
+ 1320 00d3 3B       		.uleb128 0x3b
+ 1321 00d4 0B       		.uleb128 0xb
+ 1322 00d5 49       		.uleb128 0x49
+ 1323 00d6 13       		.uleb128 0x13
+ 1324 00d7 02       		.uleb128 0x2
+ 1325 00d8 18       		.uleb128 0x18
+ 1326 00d9 00       		.byte	0
+ 1327 00da 00       		.byte	0
+ 1328 00db 10       		.uleb128 0x10
+ 1329 00dc 2E       		.uleb128 0x2e
+ 1330 00dd 01       		.byte	0x1
+ 1331 00de 3F       		.uleb128 0x3f
+ 1332 00df 19       		.uleb128 0x19
+ 1333 00e0 03       		.uleb128 0x3
+ 1334 00e1 0E       		.uleb128 0xe
+ 1335 00e2 3A       		.uleb128 0x3a
+ 1336 00e3 0B       		.uleb128 0xb
+ 1337 00e4 3B       		.uleb128 0x3b
+ 1338 00e5 0B       		.uleb128 0xb
+ 1339 00e6 11       		.uleb128 0x11
+ 1340 00e7 01       		.uleb128 0x1
+ 1341 00e8 12       		.uleb128 0x12
+ 1342 00e9 06       		.uleb128 0x6
+ 1343 00ea 40       		.uleb128 0x40
+ 1344 00eb 18       		.uleb128 0x18
+ 1345 00ec 9642     		.uleb128 0x2116
+ 1346 00ee 19       		.uleb128 0x19
+ 1347 00ef 01       		.uleb128 0x1
+ 1348 00f0 13       		.uleb128 0x13
+ 1349 00f1 00       		.byte	0
+ 1350 00f2 00       		.byte	0
+ 1351 00f3 11       		.uleb128 0x11
+ 1352 00f4 34       		.uleb128 0x34
+ 1353 00f5 00       		.byte	0
+ 1354 00f6 03       		.uleb128 0x3
+ 1355 00f7 0E       		.uleb128 0xe
+ 1356 00f8 3A       		.uleb128 0x3a
+ 1357 00f9 0B       		.uleb128 0xb
+ 1358 00fa 3B       		.uleb128 0x3b
+ 1359 00fb 0B       		.uleb128 0xb
+ 1360 00fc 49       		.uleb128 0x49
+ 1361 00fd 13       		.uleb128 0x13
+ 1362 00fe 02       		.uleb128 0x2
+ 1363 00ff 18       		.uleb128 0x18
+ 1364 0100 00       		.byte	0
+ 1365 0101 00       		.byte	0
+ 1366 0102 12       		.uleb128 0x12
+ 1367 0103 34       		.uleb128 0x34
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 29
+
+
+ 1368 0104 00       		.byte	0
+ 1369 0105 03       		.uleb128 0x3
+ 1370 0106 0E       		.uleb128 0xe
+ 1371 0107 3A       		.uleb128 0x3a
+ 1372 0108 0B       		.uleb128 0xb
+ 1373 0109 3B       		.uleb128 0x3b
+ 1374 010a 05       		.uleb128 0x5
+ 1375 010b 49       		.uleb128 0x49
+ 1376 010c 13       		.uleb128 0x13
+ 1377 010d 3F       		.uleb128 0x3f
+ 1378 010e 19       		.uleb128 0x19
+ 1379 010f 3C       		.uleb128 0x3c
+ 1380 0110 19       		.uleb128 0x19
+ 1381 0111 00       		.byte	0
+ 1382 0112 00       		.byte	0
+ 1383 0113 13       		.uleb128 0x13
+ 1384 0114 34       		.uleb128 0x34
+ 1385 0115 00       		.byte	0
+ 1386 0116 03       		.uleb128 0x3
+ 1387 0117 0E       		.uleb128 0xe
+ 1388 0118 3A       		.uleb128 0x3a
+ 1389 0119 0B       		.uleb128 0xb
+ 1390 011a 3B       		.uleb128 0x3b
+ 1391 011b 0B       		.uleb128 0xb
+ 1392 011c 49       		.uleb128 0x49
+ 1393 011d 13       		.uleb128 0x13
+ 1394 011e 3F       		.uleb128 0x3f
+ 1395 011f 19       		.uleb128 0x19
+ 1396 0120 3C       		.uleb128 0x3c
+ 1397 0121 19       		.uleb128 0x19
+ 1398 0122 00       		.byte	0
+ 1399 0123 00       		.byte	0
+ 1400 0124 14       		.uleb128 0x14
+ 1401 0125 34       		.uleb128 0x34
+ 1402 0126 00       		.byte	0
+ 1403 0127 03       		.uleb128 0x3
+ 1404 0128 08       		.uleb128 0x8
+ 1405 0129 3A       		.uleb128 0x3a
+ 1406 012a 0B       		.uleb128 0xb
+ 1407 012b 3B       		.uleb128 0x3b
+ 1408 012c 0B       		.uleb128 0xb
+ 1409 012d 49       		.uleb128 0x49
+ 1410 012e 13       		.uleb128 0x13
+ 1411 012f 3F       		.uleb128 0x3f
+ 1412 0130 19       		.uleb128 0x19
+ 1413 0131 02       		.uleb128 0x2
+ 1414 0132 18       		.uleb128 0x18
+ 1415 0133 00       		.byte	0
+ 1416 0134 00       		.byte	0
+ 1417 0135 15       		.uleb128 0x15
+ 1418 0136 34       		.uleb128 0x34
+ 1419 0137 00       		.byte	0
+ 1420 0138 03       		.uleb128 0x3
+ 1421 0139 0E       		.uleb128 0xe
+ 1422 013a 3A       		.uleb128 0x3a
+ 1423 013b 0B       		.uleb128 0xb
+ 1424 013c 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 30
+
+
+ 1425 013d 0B       		.uleb128 0xb
+ 1426 013e 49       		.uleb128 0x49
+ 1427 013f 13       		.uleb128 0x13
+ 1428 0140 3F       		.uleb128 0x3f
+ 1429 0141 19       		.uleb128 0x19
+ 1430 0142 02       		.uleb128 0x2
+ 1431 0143 18       		.uleb128 0x18
+ 1432 0144 00       		.byte	0
+ 1433 0145 00       		.byte	0
+ 1434 0146 00       		.byte	0
+ 1435              		.section	.debug_aranges,"",%progbits
+ 1436 0000 34000000 		.4byte	0x34
+ 1437 0004 0200     		.2byte	0x2
+ 1438 0006 00000000 		.4byte	.Ldebug_info0
+ 1439 000a 04       		.byte	0x4
+ 1440 000b 00       		.byte	0
+ 1441 000c 0000     		.2byte	0
+ 1442 000e 0000     		.2byte	0
+ 1443 0010 00000000 		.4byte	.LFB63
+ 1444 0014 A4000000 		.4byte	.LFE63-.LFB63
+ 1445 0018 00000000 		.4byte	.LFB64
+ 1446 001c 54010000 		.4byte	.LFE64-.LFB64
+ 1447 0020 00000000 		.4byte	.LFB65
+ 1448 0024 5C000000 		.4byte	.LFE65-.LFB65
+ 1449 0028 00000000 		.4byte	.LFB66
+ 1450 002c C8000000 		.4byte	.LFE66-.LFB66
+ 1451 0030 00000000 		.4byte	0
+ 1452 0034 00000000 		.4byte	0
+ 1453              		.section	.debug_ranges,"",%progbits
+ 1454              	.Ldebug_ranges0:
+ 1455 0000 00000000 		.4byte	.LFB63
+ 1456 0004 A4000000 		.4byte	.LFE63
+ 1457 0008 00000000 		.4byte	.LFB64
+ 1458 000c 54010000 		.4byte	.LFE64
+ 1459 0010 00000000 		.4byte	.LFB65
+ 1460 0014 5C000000 		.4byte	.LFE65
+ 1461 0018 00000000 		.4byte	.LFB66
+ 1462 001c C8000000 		.4byte	.LFE66
+ 1463 0020 00000000 		.4byte	0
+ 1464 0024 00000000 		.4byte	0
+ 1465              		.section	.debug_line,"",%progbits
+ 1466              	.Ldebug_line0:
+ 1467 0000 1A020000 		.section	.debug_str,"MS",%progbits,1
+ 1467      02006801 
+ 1467      00000201 
+ 1467      FB0E0D00 
+ 1467      01010101 
+ 1468              	.LASF41:
+ 1469 0000 6F736470 		.ascii	"osdp_status\000"
+ 1469      5F737461 
+ 1469      74757300 
+ 1470              	.LASF54:
+ 1471 000c 48616E64 		.ascii	"HandleInputs\000"
+ 1471      6C65496E 
+ 1471      70757473 
+ 1471      00
+ 1472              	.LASF58:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 31
+
+
+ 1473 0019 4D794932 		.ascii	"MyI2C_Regs\000"
+ 1473      435F5265 
+ 1473      677300
+ 1474              	.LASF16:
+ 1475 0024 73697A65 		.ascii	"sizetype\000"
+ 1475      74797065 
+ 1475      00
+ 1476              	.LASF60:
+ 1477 002d 54414D50 		.ascii	"TAMPERCR_POLARITY\000"
+ 1477      45524352 
+ 1477      5F504F4C 
+ 1477      41524954 
+ 1477      5900
+ 1478              	.LASF43:
+ 1479 003f 6F736470 		.ascii	"osdp_rate\000"
+ 1479      5F726174 
+ 1479      6500
+ 1480              	.LASF45:
+ 1481 0049 6F736470 		.ascii	"osdp_reader_cmd\000"
+ 1481      5F726561 
+ 1481      6465725F 
+ 1481      636D6400 
+ 1482              	.LASF37:
+ 1483 0059 66616374 		.ascii	"factory_reset\000"
+ 1483      6F72795F 
+ 1483      72657365 
+ 1483      7400
+ 1484              	.LASF32:
+ 1485 0067 64617461 		.ascii	"data_length\000"
+ 1485      5F6C656E 
+ 1485      67746800 
+ 1486              	.LASF44:
+ 1487 0073 6F736470 		.ascii	"osdp_buffer\000"
+ 1487      5F627566 
+ 1487      66657200 
+ 1488              	.LASF6:
+ 1489 007f 6C6F6E67 		.ascii	"long long int\000"
+ 1489      206C6F6E 
+ 1489      6720696E 
+ 1489      7400
+ 1490              	.LASF50:
+ 1491 008d 53657448 		.ascii	"SetHardwareVals\000"
+ 1491      61726477 
+ 1491      61726556 
+ 1491      616C7300 
+ 1492              	.LASF2:
+ 1493 009d 73686F72 		.ascii	"short int\000"
+ 1493      7420696E 
+ 1493      7400
+ 1494              	.LASF24:
+ 1495 00a7 72785F62 		.ascii	"rx_bits\000"
+ 1495      69747300 
+ 1496              	.LASF12:
+ 1497 00af 75696E74 		.ascii	"uint16\000"
+ 1497      313600
+ 1498              	.LASF59:
+ 1499 00b6 63757272 		.ascii	"currentAccessType\000"
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 32
+
+
+ 1499      656E7441 
+ 1499      63636573 
+ 1499      73547970 
+ 1499      6500
+ 1500              	.LASF11:
+ 1501 00c8 75696E74 		.ascii	"uint8\000"
+ 1501      3800
+ 1502              	.LASF13:
+ 1503 00ce 666C6F61 		.ascii	"float\000"
+ 1503      7400
+ 1504              	.LASF20:
+ 1505 00d4 62697473 		.ascii	"bits\000"
+ 1505      00
+ 1506              	.LASF62:
+ 1507 00d9 63617264 		.ascii	"card_in_buf\000"
+ 1507      5F696E5F 
+ 1507      62756600 
+ 1508              	.LASF33:
+ 1509 00e5 6163735F 		.ascii	"acs_outputs\000"
+ 1509      6F757470 
+ 1509      75747300 
+ 1510              	.LASF55:
+ 1511 00f1 63757272 		.ascii	"current_t1\000"
+ 1511      656E745F 
+ 1511      743100
+ 1512              	.LASF56:
+ 1513 00fc 63757272 		.ascii	"current_t2\000"
+ 1513      656E745F 
+ 1513      743200
+ 1514              	.LASF46:
+ 1515 0107 6F736470 		.ascii	"osdp_reader_data_length\000"
+ 1515      5F726561 
+ 1515      6465725F 
+ 1515      64617461 
+ 1515      5F6C656E 
+ 1516              	.LASF61:
+ 1517 011f 63617264 		.ascii	"card_ack\000"
+ 1517      5F61636B 
+ 1517      00
+ 1518              	.LASF4:
+ 1519 0128 6C6F6E67 		.ascii	"long int\000"
+ 1519      20696E74 
+ 1519      00
+ 1520              	.LASF27:
+ 1521 0131 74696D65 		.ascii	"timer_rx_ctr\000"
+ 1521      725F7278 
+ 1521      5F637472 
+ 1521      00
+ 1522              	.LASF36:
+ 1523 013e 64756D6D 		.ascii	"dummy\000"
+ 1523      7900
+ 1524              	.LASF22:
+ 1525 0144 74785F62 		.ascii	"tx_byte\000"
+ 1525      79746500 
+ 1526              	.LASF18:
+ 1527 014c 70617269 		.ascii	"parity\000"
+ 1527      747900
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 33
+
+
+ 1528              	.LASF47:
+ 1529 0153 6F736470 		.ascii	"osdp_reader_rate\000"
+ 1529      5F726561 
+ 1529      6465725F 
+ 1529      72617465 
+ 1529      00
+ 1530              	.LASF48:
+ 1531 0164 6F736470 		.ascii	"osdp_reader_buffer\000"
+ 1531      5F726561 
+ 1531      6465725F 
+ 1531      62756666 
+ 1531      657200
+ 1532              	.LASF63:
+ 1533 0177 676F745F 		.ascii	"got_pulse\000"
+ 1533      70756C73 
+ 1533      6500
+ 1534              	.LASF29:
+ 1535 0181 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 1535      5F554152 
+ 1535      545F5354 
+ 1535      52554354 
+ 1535      00
+ 1536              	.LASF17:
+ 1537 0192 62617564 		.ascii	"baud\000"
+ 1537      00
+ 1538              	.LASF42:
+ 1539 0197 6F736470 		.ascii	"osdp_data_length\000"
+ 1539      5F646174 
+ 1539      615F6C65 
+ 1539      6E677468 
+ 1539      00
+ 1540              	.LASF1:
+ 1541 01a8 756E7369 		.ascii	"unsigned char\000"
+ 1541      676E6564 
+ 1541      20636861 
+ 1541      7200
+ 1542              	.LASF0:
+ 1543 01b6 7369676E 		.ascii	"signed char\000"
+ 1543      65642063 
+ 1543      68617200 
+ 1544              	.LASF25:
+ 1545 01c2 666C6167 		.ascii	"flags\000"
+ 1545      7300
+ 1546              	.LASF7:
+ 1547 01c8 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1547      206C6F6E 
+ 1547      6720756E 
+ 1547      7369676E 
+ 1547      65642069 
+ 1548              	.LASF8:
+ 1549 01df 756E7369 		.ascii	"unsigned int\000"
+ 1549      676E6564 
+ 1549      20696E74 
+ 1549      00
+ 1550              	.LASF19:
+ 1551 01ec 73746F70 		.ascii	"stop_bits\000"
+ 1551      5F626974 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 34
+
+
+ 1551      7300
+ 1552              	.LASF5:
+ 1553 01f6 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1553      20756E73 
+ 1553      69676E65 
+ 1553      6420696E 
+ 1553      7400
+ 1554              	.LASF34:
+ 1555 0208 6163735F 		.ascii	"acs_inputs\000"
+ 1555      696E7075 
+ 1555      747300
+ 1556              	.LASF69:
+ 1557 0213 474E5520 		.ascii	"GNU C 4.8.4 20140526 (release) [ARM/embedded-4_8-br"
+ 1557      4320342E 
+ 1557      382E3420 
+ 1557      32303134 
+ 1557      30353236 
+ 1558 0246 616E6368 		.ascii	"anch revision 211358] -mcpu=cortex-m3 -mthumb -g -O"
+ 1558      20726576 
+ 1558      6973696F 
+ 1558      6E203231 
+ 1558      31333538 
+ 1559 0279 30202D66 		.ascii	"0 -ffunction-sections\000"
+ 1559      66756E63 
+ 1559      74696F6E 
+ 1559      2D736563 
+ 1559      74696F6E 
+ 1560              	.LASF70:
+ 1561 028f 2E5C696E 		.ascii	".\\inout.c\000"
+ 1561      6F75742E 
+ 1561      6300
+ 1562              	.LASF28:
+ 1563 0299 72785F72 		.ascii	"rx_recv\000"
+ 1563      65637600 
+ 1564              	.LASF23:
+ 1565 02a1 74785F62 		.ascii	"tx_bits\000"
+ 1565      69747300 
+ 1566              	.LASF30:
+ 1567 02a9 73746174 		.ascii	"status\000"
+ 1567      757300
+ 1568              	.LASF15:
+ 1569 02b0 63686172 		.ascii	"char\000"
+ 1569      00
+ 1570              	.LASF10:
+ 1571 02b5 696E7433 		.ascii	"int32_t\000"
+ 1571      325F7400 
+ 1572              	.LASF64:
+ 1573 02bd 6632665F 		.ascii	"f2f_pulsewidth\000"
+ 1573      70756C73 
+ 1573      65776964 
+ 1573      746800
+ 1574              	.LASF67:
+ 1575 02cc 62757474 		.ascii	"buttonReleased\000"
+ 1575      6F6E5265 
+ 1575      6C656173 
+ 1575      656400
+ 1576              	.LASF21:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 35
+
+
+ 1577 02db 72785F62 		.ascii	"rx_byte\000"
+ 1577      79746500 
+ 1578              	.LASF35:
+ 1579 02e3 62756666 		.ascii	"buffer\000"
+ 1579      657200
+ 1580              	.LASF3:
+ 1581 02ea 73686F72 		.ascii	"short unsigned int\000"
+ 1581      7420756E 
+ 1581      7369676E 
+ 1581      65642069 
+ 1581      6E7400
+ 1582              	.LASF51:
+ 1583 02fd 47657448 		.ascii	"GetHardwareVals\000"
+ 1583      61726477 
+ 1583      61726556 
+ 1583      616C7300 
+ 1584              	.LASF31:
+ 1585 030d 73746174 		.ascii	"status_in\000"
+ 1585      75735F69 
+ 1585      6E00
+ 1586              	.LASF49:
+ 1587 0317 4932435F 		.ascii	"I2C_Regs\000"
+ 1587      52656773 
+ 1587      00
+ 1588              	.LASF9:
+ 1589 0320 5F5F696E 		.ascii	"__int32_t\000"
+ 1589      7433325F 
+ 1589      7400
+ 1590              	.LASF65:
+ 1591 032a 74696D65 		.ascii	"timeout_cnt\000"
+ 1591      6F75745F 
+ 1591      636E7400 
+ 1592              	.LASF66:
+ 1593 0336 61637469 		.ascii	"activate_f2ftimer\000"
+ 1593      76617465 
+ 1593      5F663266 
+ 1593      74696D65 
+ 1593      7200
+ 1594              	.LASF38:
+ 1595 0348 73775F76 		.ascii	"sw_version\000"
+ 1595      65727369 
+ 1595      6F6E00
+ 1596              	.LASF71:
+ 1597 0353 433A5C55 		.ascii	"C:\\Users\\Yiquing\\Documents\\works\\NanoNXT\\osdp"
+ 1597      73657273 
+ 1597      5C596971 
+ 1597      75696E67 
+ 1597      5C446F63 
+ 1598 0380 20746573 		.ascii	" testing\\YQ\\nanoNxt_ICM3\\nanoNxt_ICM3.cydsn\000"
+ 1598      74696E67 
+ 1598      5C59515C 
+ 1598      6E616E6F 
+ 1598      4E78745F 
+ 1599              	.LASF68:
+ 1600 03ac 62757474 		.ascii	"buttonDuration\000"
+ 1600      6F6E4475 
+ 1600      72617469 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj3mRr7.s 			page 36
+
+
+ 1600      6F6E00
+ 1601              	.LASF14:
+ 1602 03bb 646F7562 		.ascii	"double\000"
+ 1602      6C6500
+ 1603              	.LASF52:
+ 1604 03c2 73746174 		.ascii	"stat\000"
+ 1604      00
+ 1605              	.LASF57:
+ 1606 03c7 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 1606      52784275 
+ 1606      66666572 
+ 1606      00
+ 1607              	.LASF39:
+ 1608 03d4 68775F76 		.ascii	"hw_version\000"
+ 1608      65727369 
+ 1608      6F6E00
+ 1609              	.LASF53:
+ 1610 03df 48616E64 		.ascii	"HandleOutputs\000"
+ 1610      6C654F75 
+ 1610      74707574 
+ 1610      7300
+ 1611              	.LASF40:
+ 1612 03ed 6F736470 		.ascii	"osdp_cmd\000"
+ 1612      5F636D64 
+ 1612      00
+ 1613              	.LASF26:
+ 1614 03f6 74696D65 		.ascii	"timer_tx_ctr\000"
+ 1614      725F7478 
+ 1614      5F637472 
+ 1614      00
+ 1615              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.8.4 20140526 (release) [ARM/embedded-4_8-br

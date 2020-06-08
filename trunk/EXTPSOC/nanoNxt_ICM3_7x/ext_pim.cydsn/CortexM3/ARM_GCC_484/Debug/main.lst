@@ -1,0 +1,3742 @@
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"main.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.comm	s,40,4
+  19              		.comm	currentAccessType,1,1
+  20              		.comm	old,1,1
+  21              		.comm	TAMPERCR_POLARITY,4,4
+  22              		.comm	card_ack,4,4
+  23              		.comm	card_in_buf,4,4
+  24              		.comm	got_pulse,1,1
+  25              		.comm	f2f_pulsewidth,4,4
+  26              		.comm	timeout_cnt,4,4
+  27              		.comm	activate_f2ftimer,1,1
+  28              		.comm	MyI2C_Regs,256,4
+  29              		.section	.text.SetVersion,"ax",%progbits
+  30              		.align	2
+  31              		.global	SetVersion
+  32              		.thumb
+  33              		.thumb_func
+  34              		.type	SetVersion, %function
+  35              	SetVersion:
+  36              	.LFB63:
+  37              		.file 1 ".\\main.c"
+   1:.\main.c      **** /* ========================================
+   2:.\main.c      ****  *
+   3:.\main.c      ****  * NanoNXT Breakout Board
+   4:.\main.c      ****  * Copyright Eyelock.Inc, 2014, 2015
+   5:.\main.c      ****  * All Rights Reserved
+   6:.\main.c      ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   7:.\main.c      ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:.\main.c      ****  * 
+   9:.\main.c      ****  * Version History:
+  10:.\main.c      ****  * ================
+  11:.\main.c      ****  * 3.0.0 : Ported Nano Breakout board functionality without HID/F2F.
+  12:.\main.c      ****  * 3.0.1 : Relay output moved from regular output mode to auxillary output mode
+  13:.\main.c      ****  * 3.0.2 : F2F functionality Added.
+  14:.\main.c      ****  * 3.0.3 : HID functionality added using SW UART for 26 bit weigand & SW UART tested on PAC comapti
+  15:.\main.c      ****  * 3.0.4 : Tamper In is directly routed to Tamper out
+  16:.\main.c      ****  * 3.0.5 : Software Reset button functionality added
+  17:.\main.c      ****  * 3.0.6 : HID functionality modified to support all types of weigand bit formats. 
+  18:.\main.c      ****  * 3.0.7 : Bootloader functionality added.
+  19:.\main.c      ****  * 3.0.8 : Reed Tamper Inverted for Beta.
+  20:.\main.c      ****  * 3.0.9 : Ported code for ICM 3(PSOC 5).
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 2
+
+
+  21:.\main.c      ****  * 3.1.0 : Bootloader functionality added to ICM3.
+  22:.\main.c      ****  * 3.1.1 : GRI 1-13-15: Tamper signals repaired. Tamper moved to main code block.  Tamper polarity 
+  23:.\main.c      ****  * 3.1.2 : GRI 1-28-15: Tamper moved to HandleInputs.  I2C bus clock was corrected to be 100kHz to 
+  24:.\main.c      ****  * 3.1.3 : GRI 1-30-15: Removed all "ClearBuffer()" instances.
+  25:.\main.c      ****  * 3.1.4 : GRI 2-02-15: Added ACK bit for card reads to prevent hanging after card read. PSoC will 
+  26:.\main.c      ****  * 3.1.5 : GRI 2-04-15: Extensive revision to input signal handler to add noise immunity/debounce (
+  27:.\main.c      ****  * 3.1.6 : Added F2F card reader functionality
+  28:.\main.c      ****  * 3.1.7 : Debouncer added to WD0 && Functionality added to detect pulsewidth in F2F
+  29:.\main.c      ****  * 3.1.8 : Added F2F conditionality to turn on timers
+  30:.\main.c      ****  * 3.1.9 : Fixed the bootloader bug for PSOC creator 3.1  Use the debug NxtICM3_bootloader for refe
+  31:.\main.c      ****  * 3.1.10 : Make F2F pulse timing adaptive to the input signal
+  32:.\main.c      **** 
+  33:.\main.c      ****  * ========================================
+  34:.\main.c      **** */
+  35:.\main.c      **** #include <project.h>
+  36:.\main.c      **** #include "system.h"
+  37:.\main.c      **** #include "wiegand.h"
+  38:.\main.c      **** #include "power.h"
+  39:.\main.c      **** #include "inout.h"
+  40:.\main.c      **** #include "i2cuart.h"
+  41:.\main.c      **** 
+  42:.\main.c      **** 
+  43:.\main.c      **** I2C_Regs MyI2C_Regs;
+  44:.\main.c      **** 
+  45:.\main.c      **** void SU_Isr(SOFT_UART_STRUCT *s);
+  46:.\main.c      ****  
+  47:.\main.c      **** 
+  48:.\main.c      **** /***********************************
+  49:.\main.c      ****     Sets the breakout board version.
+  50:.\main.c      **** *************************************/
+  51:.\main.c      **** void SetVersion()
+  52:.\main.c      **** {
+  38              		.loc 1 52 0
+  39              		.cfi_startproc
+  40              		@ args = 0, pretend = 0, frame = 0
+  41              		@ frame_needed = 1, uses_anonymous_args = 0
+  42              		@ link register save eliminated.
+  43 0000 80B4     		push	{r7}
+  44              		.cfi_def_cfa_offset 4
+  45              		.cfi_offset 7, -4
+  46 0002 00AF     		add	r7, sp, #0
+  47              		.cfi_def_cfa_register 7
+  53:.\main.c      ****     MyI2C_Regs.hw_version[0] = 0x71;
+  48              		.loc 1 53 0
+  49 0004 0D4B     		ldr	r3, .L2
+  50 0006 7122     		movs	r2, #113
+  51 0008 83F84620 		strb	r2, [r3, #70]
+  54:.\main.c      ****     MyI2C_Regs.hw_version[1] = 0x42;
+  52              		.loc 1 54 0
+  53 000c 0B4B     		ldr	r3, .L2
+  54 000e 4222     		movs	r2, #66
+  55 0010 83F84720 		strb	r2, [r3, #71]
+  55:.\main.c      ****     MyI2C_Regs.hw_version[2] = 0x0A;
+  56              		.loc 1 55 0
+  57 0014 094B     		ldr	r3, .L2
+  58 0016 0A22     		movs	r2, #10
+  59 0018 83F84820 		strb	r2, [r3, #72]
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 3
+
+
+  56:.\main.c      ****     
+  57:.\main.c      ****     MyI2C_Regs.sw_version[0] = 3;
+  60              		.loc 1 57 0
+  61 001c 074B     		ldr	r3, .L2
+  62 001e 0322     		movs	r2, #3
+  63 0020 83F84320 		strb	r2, [r3, #67]
+  58:.\main.c      ****     MyI2C_Regs.sw_version[1] = 1;
+  64              		.loc 1 58 0
+  65 0024 054B     		ldr	r3, .L2
+  66 0026 0122     		movs	r2, #1
+  67 0028 83F84420 		strb	r2, [r3, #68]
+  59:.\main.c      ****     MyI2C_Regs.sw_version[2] = 15;
+  68              		.loc 1 59 0
+  69 002c 034B     		ldr	r3, .L2
+  70 002e 0F22     		movs	r2, #15
+  71 0030 83F84520 		strb	r2, [r3, #69]
+  60:.\main.c      **** }
+  72              		.loc 1 60 0
+  73 0034 BD46     		mov	sp, r7
+  74              		@ sp needed
+  75 0036 5DF8047B 		ldr	r7, [sp], #4
+  76 003a 7047     		bx	lr
+  77              	.L3:
+  78              		.align	2
+  79              	.L2:
+  80 003c 00000000 		.word	MyI2C_Regs
+  81              		.cfi_endproc
+  82              	.LFE63:
+  83              		.size	SetVersion, .-SetVersion
+  84              		.section	.text.TriggerRelay1,"ax",%progbits
+  85              		.align	2
+  86              		.global	TriggerRelay1
+  87              		.thumb
+  88              		.thumb_func
+  89              		.type	TriggerRelay1, %function
+  90              	TriggerRelay1:
+  91              	.LFB64:
+  61:.\main.c      **** 
+  62:.\main.c      **** 
+  63:.\main.c      **** /*************************************
+  64:.\main.c      ****     Triggers Relay 1 as main output
+  65:.\main.c      ****     in msecs. (Functionality not used now)     
+  66:.\main.c      **** **************************************/
+  67:.\main.c      **** void TriggerRelay1(int waitMSecs)
+  68:.\main.c      **** {
+  92              		.loc 1 68 0
+  93              		.cfi_startproc
+  94              		@ args = 0, pretend = 0, frame = 8
+  95              		@ frame_needed = 1, uses_anonymous_args = 0
+  96 0000 80B5     		push	{r7, lr}
+  97              		.cfi_def_cfa_offset 8
+  98              		.cfi_offset 7, -8
+  99              		.cfi_offset 14, -4
+ 100 0002 82B0     		sub	sp, sp, #8
+ 101              		.cfi_def_cfa_offset 16
+ 102 0004 00AF     		add	r7, sp, #0
+ 103              		.cfi_def_cfa_register 7
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 4
+
+
+ 104 0006 7860     		str	r0, [r7, #4]
+  69:.\main.c      ****     
+  70:.\main.c      ****     LED_GRN_Write(0) ;
+ 105              		.loc 1 70 0
+ 106 0008 0020     		movs	r0, #0
+ 107 000a FFF7FEFF 		bl	LED_GRN_Write
+  71:.\main.c      ****     LED_YEL_Write(0);
+ 108              		.loc 1 71 0
+ 109 000e 0020     		movs	r0, #0
+ 110 0010 FFF7FEFF 		bl	LED_YEL_Write
+  72:.\main.c      **** 	RELAY_A_Write(1);
+ 111              		.loc 1 72 0
+ 112 0014 0120     		movs	r0, #1
+ 113 0016 FFF7FEFF 		bl	RELAY_A_Write
+  73:.\main.c      **** 	CyDelay(waitMSecs);
+ 114              		.loc 1 73 0
+ 115 001a 7B68     		ldr	r3, [r7, #4]
+ 116 001c 1846     		mov	r0, r3
+ 117 001e FFF7FEFF 		bl	CyDelay
+  74:.\main.c      **** 	LED_GRN_Write(1) ;
+ 118              		.loc 1 74 0
+ 119 0022 0120     		movs	r0, #1
+ 120 0024 FFF7FEFF 		bl	LED_GRN_Write
+  75:.\main.c      ****     LED_YEL_Write(1) ;
+ 121              		.loc 1 75 0
+ 122 0028 0120     		movs	r0, #1
+ 123 002a FFF7FEFF 		bl	LED_YEL_Write
+  76:.\main.c      **** 	RELAY_A_Write(0);
+ 124              		.loc 1 76 0
+ 125 002e 0020     		movs	r0, #0
+ 126 0030 FFF7FEFF 		bl	RELAY_A_Write
+  77:.\main.c      **** 	
+  78:.\main.c      **** }
+ 127              		.loc 1 78 0
+ 128 0034 0837     		adds	r7, r7, #8
+ 129 0036 BD46     		mov	sp, r7
+ 130              		@ sp needed
+ 131 0038 80BD     		pop	{r7, pc}
+ 132              		.cfi_endproc
+ 133              	.LFE64:
+ 134              		.size	TriggerRelay1, .-TriggerRelay1
+ 135 003a 00BF     		.section	.text.TriggerRelay2,"ax",%progbits
+ 136              		.align	2
+ 137              		.global	TriggerRelay2
+ 138              		.thumb
+ 139              		.thumb_func
+ 140              		.type	TriggerRelay2, %function
+ 141              	TriggerRelay2:
+ 142              	.LFB65:
+  79:.\main.c      **** 
+  80:.\main.c      **** /*************************************
+  81:.\main.c      ****     Triggers Relay 2 as main output
+  82:.\main.c      ****     in msecs. (Functionality not used now)     
+  83:.\main.c      **** **************************************/
+  84:.\main.c      **** 
+  85:.\main.c      **** void TriggerRelay2(int waitMSecs)
+  86:.\main.c      **** {
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 5
+
+
+ 143              		.loc 1 86 0
+ 144              		.cfi_startproc
+ 145              		@ args = 0, pretend = 0, frame = 8
+ 146              		@ frame_needed = 1, uses_anonymous_args = 0
+ 147 0000 80B5     		push	{r7, lr}
+ 148              		.cfi_def_cfa_offset 8
+ 149              		.cfi_offset 7, -8
+ 150              		.cfi_offset 14, -4
+ 151 0002 82B0     		sub	sp, sp, #8
+ 152              		.cfi_def_cfa_offset 16
+ 153 0004 00AF     		add	r7, sp, #0
+ 154              		.cfi_def_cfa_register 7
+ 155 0006 7860     		str	r0, [r7, #4]
+  87:.\main.c      ****     RELAY_B_Write(0);
+ 156              		.loc 1 87 0
+ 157 0008 0020     		movs	r0, #0
+ 158 000a FFF7FEFF 		bl	RELAY_B_Write
+  88:.\main.c      ****     LED_GRN_Write(0) ;
+ 159              		.loc 1 88 0
+ 160 000e 0020     		movs	r0, #0
+ 161 0010 FFF7FEFF 		bl	LED_GRN_Write
+  89:.\main.c      ****     LED_YEL_Write(0);
+ 162              		.loc 1 89 0
+ 163 0014 0020     		movs	r0, #0
+ 164 0016 FFF7FEFF 		bl	LED_YEL_Write
+  90:.\main.c      **** 	RELAY_B_Write(1);
+ 165              		.loc 1 90 0
+ 166 001a 0120     		movs	r0, #1
+ 167 001c FFF7FEFF 		bl	RELAY_B_Write
+  91:.\main.c      **** 	CyDelay(waitMSecs);
+ 168              		.loc 1 91 0
+ 169 0020 7B68     		ldr	r3, [r7, #4]
+ 170 0022 1846     		mov	r0, r3
+ 171 0024 FFF7FEFF 		bl	CyDelay
+  92:.\main.c      **** 	LED_GRN_Write(1) ;
+ 172              		.loc 1 92 0
+ 173 0028 0120     		movs	r0, #1
+ 174 002a FFF7FEFF 		bl	LED_GRN_Write
+  93:.\main.c      ****     LED_YEL_Write(1) ;
+ 175              		.loc 1 93 0
+ 176 002e 0120     		movs	r0, #1
+ 177 0030 FFF7FEFF 		bl	LED_YEL_Write
+  94:.\main.c      **** 	RELAY_B_Write(0);
+ 178              		.loc 1 94 0
+ 179 0034 0020     		movs	r0, #0
+ 180 0036 FFF7FEFF 		bl	RELAY_B_Write
+  95:.\main.c      **** 	
+  96:.\main.c      **** }
+ 181              		.loc 1 96 0
+ 182 003a 0837     		adds	r7, r7, #8
+ 183 003c BD46     		mov	sp, r7
+ 184              		@ sp needed
+ 185 003e 80BD     		pop	{r7, pc}
+ 186              		.cfi_endproc
+ 187              	.LFE65:
+ 188              		.size	TriggerRelay2, .-TriggerRelay2
+ 189              		.section	.text.SetBuffer,"ax",%progbits
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 6
+
+
+ 190              		.align	2
+ 191              		.global	SetBuffer
+ 192              		.thumb
+ 193              		.thumb_func
+ 194              		.type	SetBuffer, %function
+ 195              	SetBuffer:
+ 196              	.LFB66:
+  97:.\main.c      **** 
+  98:.\main.c      **** 
+  99:.\main.c      **** 
+ 100:.\main.c      **** /**************************************
+ 101:.\main.c      ****   Debug Method: To Set I2C data buffer
+ 102:.\main.c      **** ***************************************/
+ 103:.\main.c      **** void SetBuffer()
+ 104:.\main.c      **** {
+ 197              		.loc 1 104 0
+ 198              		.cfi_startproc
+ 199              		@ args = 0, pretend = 0, frame = 0
+ 200              		@ frame_needed = 1, uses_anonymous_args = 0
+ 201              		@ link register save eliminated.
+ 202 0000 80B4     		push	{r7}
+ 203              		.cfi_def_cfa_offset 4
+ 204              		.cfi_offset 7, -4
+ 205 0002 00AF     		add	r7, sp, #0
+ 206              		.cfi_def_cfa_register 7
+ 105:.\main.c      ****     MyI2C_Regs.buffer[0] = 0x02;
+ 207              		.loc 1 105 0
+ 208 0004 134B     		ldr	r3, .L7
+ 209 0006 0222     		movs	r2, #2
+ 210 0008 9A71     		strb	r2, [r3, #6]
+ 106:.\main.c      ****     MyI2C_Regs.buffer[1] = 0x32;
+ 211              		.loc 1 106 0
+ 212 000a 124B     		ldr	r3, .L7
+ 213 000c 3222     		movs	r2, #50
+ 214 000e DA71     		strb	r2, [r3, #7]
+ 107:.\main.c      ****     MyI2C_Regs.buffer[2] = 0x30;
+ 215              		.loc 1 107 0
+ 216 0010 104B     		ldr	r3, .L7
+ 217 0012 3022     		movs	r2, #48
+ 218 0014 1A72     		strb	r2, [r3, #8]
+ 108:.\main.c      ****     MyI2C_Regs.buffer[3] = 0x42;
+ 219              		.loc 1 108 0
+ 220 0016 0F4B     		ldr	r3, .L7
+ 221 0018 4222     		movs	r2, #66
+ 222 001a 5A72     		strb	r2, [r3, #9]
+ 109:.\main.c      ****     MyI2C_Regs.buffer[4] = 0x35;
+ 223              		.loc 1 109 0
+ 224 001c 0D4B     		ldr	r3, .L7
+ 225 001e 3522     		movs	r2, #53
+ 226 0020 9A72     		strb	r2, [r3, #10]
+ 110:.\main.c      ****     MyI2C_Regs.buffer[5] = 0x32;
+ 227              		.loc 1 110 0
+ 228 0022 0C4B     		ldr	r3, .L7
+ 229 0024 3222     		movs	r2, #50
+ 230 0026 DA72     		strb	r2, [r3, #11]
+ 111:.\main.c      ****     MyI2C_Regs.buffer[6] = 0x36;
+ 231              		.loc 1 111 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 7
+
+
+ 232 0028 0A4B     		ldr	r3, .L7
+ 233 002a 3622     		movs	r2, #54
+ 234 002c 1A73     		strb	r2, [r3, #12]
+ 112:.\main.c      ****     MyI2C_Regs.buffer[7] = 0x42;
+ 235              		.loc 1 112 0
+ 236 002e 094B     		ldr	r3, .L7
+ 237 0030 4222     		movs	r2, #66
+ 238 0032 5A73     		strb	r2, [r3, #13]
+ 113:.\main.c      ****     MyI2C_Regs.buffer[8] = 0x35;
+ 239              		.loc 1 113 0
+ 240 0034 074B     		ldr	r3, .L7
+ 241 0036 3522     		movs	r2, #53
+ 242 0038 9A73     		strb	r2, [r3, #14]
+ 114:.\main.c      ****     MyI2C_Regs.buffer[9] = 0x42;
+ 243              		.loc 1 114 0
+ 244 003a 064B     		ldr	r3, .L7
+ 245 003c 4222     		movs	r2, #66
+ 246 003e DA73     		strb	r2, [r3, #15]
+ 115:.\main.c      ****     MyI2C_Regs.buffer[10] = 0x31;
+ 247              		.loc 1 115 0
+ 248 0040 044B     		ldr	r3, .L7
+ 249 0042 3122     		movs	r2, #49
+ 250 0044 1A74     		strb	r2, [r3, #16]
+ 116:.\main.c      ****     MyI2C_Regs.buffer[11] = 0x77;
+ 251              		.loc 1 116 0
+ 252 0046 034B     		ldr	r3, .L7
+ 253 0048 7722     		movs	r2, #119
+ 254 004a 5A74     		strb	r2, [r3, #17]
+ 117:.\main.c      **** 
+ 118:.\main.c      **** }
+ 255              		.loc 1 118 0
+ 256 004c BD46     		mov	sp, r7
+ 257              		@ sp needed
+ 258 004e 5DF8047B 		ldr	r7, [sp], #4
+ 259 0052 7047     		bx	lr
+ 260              	.L8:
+ 261              		.align	2
+ 262              	.L7:
+ 263 0054 00000000 		.word	MyI2C_Regs
+ 264              		.cfi_endproc
+ 265              	.LFE66:
+ 266              		.size	SetBuffer, .-SetBuffer
+ 267              		.section	.text.ClearBuffer,"ax",%progbits
+ 268              		.align	2
+ 269              		.global	ClearBuffer
+ 270              		.thumb
+ 271              		.thumb_func
+ 272              		.type	ClearBuffer, %function
+ 273              	ClearBuffer:
+ 274              	.LFB67:
+ 119:.\main.c      **** 
+ 120:.\main.c      **** void ClearBuffer()
+ 121:.\main.c      **** {
+ 275              		.loc 1 121 0
+ 276              		.cfi_startproc
+ 277              		@ args = 0, pretend = 0, frame = 8
+ 278              		@ frame_needed = 1, uses_anonymous_args = 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 8
+
+
+ 279              		@ link register save eliminated.
+ 280 0000 80B4     		push	{r7}
+ 281              		.cfi_def_cfa_offset 4
+ 282              		.cfi_offset 7, -4
+ 283 0002 83B0     		sub	sp, sp, #12
+ 284              		.cfi_def_cfa_offset 16
+ 285 0004 00AF     		add	r7, sp, #0
+ 286              		.cfi_def_cfa_register 7
+ 122:.\main.c      ****     int i;
+ 123:.\main.c      ****     for(i=0; i < 20; i++)
+ 287              		.loc 1 123 0
+ 288 0006 0023     		movs	r3, #0
+ 289 0008 7B60     		str	r3, [r7, #4]
+ 290 000a 07E0     		b	.L10
+ 291              	.L11:
+ 124:.\main.c      ****       MyI2C_Regs.buffer[i] = 0;
+ 292              		.loc 1 124 0 discriminator 2
+ 293 000c 074A     		ldr	r2, .L12
+ 294 000e 7B68     		ldr	r3, [r7, #4]
+ 295 0010 1344     		add	r3, r3, r2
+ 296 0012 0022     		movs	r2, #0
+ 297 0014 9A71     		strb	r2, [r3, #6]
+ 123:.\main.c      ****     for(i=0; i < 20; i++)
+ 298              		.loc 1 123 0 discriminator 2
+ 299 0016 7B68     		ldr	r3, [r7, #4]
+ 300 0018 0133     		adds	r3, r3, #1
+ 301 001a 7B60     		str	r3, [r7, #4]
+ 302              	.L10:
+ 123:.\main.c      ****     for(i=0; i < 20; i++)
+ 303              		.loc 1 123 0 is_stmt 0 discriminator 1
+ 304 001c 7B68     		ldr	r3, [r7, #4]
+ 305 001e 132B     		cmp	r3, #19
+ 306 0020 F4DD     		ble	.L11
+ 125:.\main.c      **** }
+ 307              		.loc 1 125 0 is_stmt 1
+ 308 0022 0C37     		adds	r7, r7, #12
+ 309 0024 BD46     		mov	sp, r7
+ 310              		@ sp needed
+ 311 0026 5DF8047B 		ldr	r7, [sp], #4
+ 312 002a 7047     		bx	lr
+ 313              	.L13:
+ 314              		.align	2
+ 315              	.L12:
+ 316 002c 00000000 		.word	MyI2C_Regs
+ 317              		.cfi_endproc
+ 318              	.LFE67:
+ 319              		.size	ClearBuffer, .-ClearBuffer
+ 320              		.section	.text.SendHID_SP533,"ax",%progbits
+ 321              		.align	2
+ 322              		.global	SendHID_SP533
+ 323              		.thumb
+ 324              		.thumb_func
+ 325              		.type	SendHID_SP533, %function
+ 326              	SendHID_SP533:
+ 327              	.LFB68:
+ 126:.\main.c      **** 
+ 127:.\main.c      **** /***********************************************
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 9
+
+
+ 128:.\main.c      ****             Weigand -HID Protocol
+ 129:.\main.c      ****   Procedure to send weigand data in serial format
+ 130:.\main.c      ****   Baud Rate: 57600 Databits: 8 
+ 131:.\main.c      ****   Stop Bits: 2 Parity: Even 
+ 132:.\main.c      ****   Bits to transmit : 18 bytes
+ 133:.\main.c      ****   Zero paddings to the left before the weigand data 
+ 134:.\main.c      **** 
+ 135:.\main.c      **** ************************************************/
+ 136:.\main.c      **** 
+ 137:.\main.c      **** void SendHID_SP533()
+ 138:.\main.c      **** {
+ 328              		.loc 1 138 0
+ 329              		.cfi_startproc
+ 330              		@ args = 0, pretend = 0, frame = 0
+ 331              		@ frame_needed = 1, uses_anonymous_args = 0
+ 332 0000 80B5     		push	{r7, lr}
+ 333              		.cfi_def_cfa_offset 8
+ 334              		.cfi_offset 7, -8
+ 335              		.cfi_offset 14, -4
+ 336 0002 00AF     		add	r7, sp, #0
+ 337              		.cfi_def_cfa_register 7
+ 139:.\main.c      ****     
+ 140:.\main.c      ****     Clock_5_SetDividerValue(625); //set the baud rate to default 9600
+ 338              		.loc 1 140 0
+ 339 0004 4FF41C70 		mov	r0, #624
+ 340 0008 0121     		movs	r1, #1
+ 341 000a FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 141:.\main.c      ****     UART_ACS_Init();
+ 342              		.loc 1 141 0
+ 343 000e FFF7FEFF 		bl	UART_ACS_Init
+ 142:.\main.c      ****     CyDelay(20);
+ 344              		.loc 1 142 0
+ 345 0012 1420     		movs	r0, #20
+ 346 0014 FFF7FEFF 		bl	CyDelay
+ 143:.\main.c      ****     Mode_Sel_ACS_Write(0); //set io chip to RS232
+ 347              		.loc 1 143 0
+ 348 0018 0020     		movs	r0, #0
+ 349 001a FFF7FEFF 		bl	Mode_Sel_ACS_Write
+ 144:.\main.c      ****     TX_EN_Write(1);
+ 350              		.loc 1 144 0
+ 351 001e 0120     		movs	r0, #1
+ 352 0020 FFF7FEFF 		bl	TX_EN_Write
+ 145:.\main.c      ****     UART_ACS_LoadTxConfig();
+ 353              		.loc 1 145 0
+ 354 0024 FFF7FEFF 		bl	UART_ACS_LoadTxConfig
+ 146:.\main.c      ****     CyDelay(1); //Driver Output Enable Time, do not reduce. 
+ 355              		.loc 1 146 0
+ 356 0028 0120     		movs	r0, #1
+ 357 002a FFF7FEFF 		bl	CyDelay
+ 147:.\main.c      ****     UART_ACS_PutArray(MyI2C_Regs.buffer,MyI2C_Regs.data_length/8); 
+ 358              		.loc 1 147 0
+ 359 002e 084B     		ldr	r3, .L15
+ 360 0030 DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 361 0032 DB08     		lsrs	r3, r3, #3
+ 362 0034 DBB2     		uxtb	r3, r3
+ 363 0036 0748     		ldr	r0, .L15+4
+ 364 0038 1946     		mov	r1, r3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 10
+
+
+ 365 003a FFF7FEFF 		bl	UART_ACS_PutArray
+ 148:.\main.c      ****     CyDelay(5); //minmum 4m
+ 366              		.loc 1 148 0
+ 367 003e 0520     		movs	r0, #5
+ 368 0040 FFF7FEFF 		bl	CyDelay
+ 149:.\main.c      ****     UART_ACS_LoadRxConfig();
+ 369              		.loc 1 149 0
+ 370 0044 FFF7FEFF 		bl	UART_ACS_LoadRxConfig
+ 150:.\main.c      ****     TX_EN_Write(0);
+ 371              		.loc 1 150 0
+ 372 0048 0020     		movs	r0, #0
+ 373 004a FFF7FEFF 		bl	TX_EN_Write
+ 151:.\main.c      **** 
+ 152:.\main.c      **** }
+ 374              		.loc 1 152 0
+ 375 004e 80BD     		pop	{r7, pc}
+ 376              	.L16:
+ 377              		.align	2
+ 378              	.L15:
+ 379 0050 00000000 		.word	MyI2C_Regs
+ 380 0054 06000000 		.word	MyI2C_Regs+6
+ 381              		.cfi_endproc
+ 382              	.LFE68:
+ 383              		.size	SendHID_SP533, .-SendHID_SP533
+ 384              		.section	.text.SendHID,"ax",%progbits
+ 385              		.align	2
+ 386              		.global	SendHID
+ 387              		.thumb
+ 388              		.thumb_func
+ 389              		.type	SendHID, %function
+ 390              	SendHID:
+ 391              	.LFB69:
+ 153:.\main.c      **** 
+ 154:.\main.c      **** 
+ 155:.\main.c      **** 
+ 156:.\main.c      **** void SendHID()
+ 157:.\main.c      **** {
+ 392              		.loc 1 157 0
+ 393              		.cfi_startproc
+ 394              		@ args = 0, pretend = 0, frame = 48
+ 395              		@ frame_needed = 1, uses_anonymous_args = 0
+ 396 0000 80B5     		push	{r7, lr}
+ 397              		.cfi_def_cfa_offset 8
+ 398              		.cfi_offset 7, -8
+ 399              		.cfi_offset 14, -4
+ 400 0002 8CB0     		sub	sp, sp, #48
+ 401              		.cfi_def_cfa_offset 56
+ 402 0004 00AF     		add	r7, sp, #0
+ 403              		.cfi_def_cfa_register 7
+ 158:.\main.c      ****     Tamper_Timer_Stop();
+ 404              		.loc 1 158 0
+ 405 0006 FFF7FEFF 		bl	Tamper_Timer_Stop
+ 159:.\main.c      ****     
+ 160:.\main.c      ****     char serialOut[20];
+ 161:.\main.c      **** 	char tmp;
+ 162:.\main.c      **** 	int i,j;
+ 163:.\main.c      **** 	int padBytes;
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 11
+
+
+ 164:.\main.c      ****     int xbytes;
+ 165:.\main.c      ****     int ybits;
+ 166:.\main.c      ****     MyI2C_Regs.data_length = 26;
+ 406              		.loc 1 166 0
+ 407 000a 544B     		ldr	r3, .L23
+ 408 000c 1A22     		movs	r2, #26
+ 409 000e DA70     		strb	r2, [r3, #3]
+ 167:.\main.c      ****     xbytes =  MyI2C_Regs.data_length / 8;
+ 410              		.loc 1 167 0
+ 411 0010 524B     		ldr	r3, .L23
+ 412 0012 DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 413 0014 DB08     		lsrs	r3, r3, #3
+ 414 0016 DBB2     		uxtb	r3, r3
+ 415 0018 3B62     		str	r3, [r7, #32]
+ 168:.\main.c      ****     ybits =   MyI2C_Regs.data_length - (xbytes*8);
+ 416              		.loc 1 168 0
+ 417 001a 504B     		ldr	r3, .L23
+ 418 001c DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 419 001e 1946     		mov	r1, r3
+ 420 0020 3A6A     		ldr	r2, [r7, #32]
+ 421 0022 1346     		mov	r3, r2
+ 422 0024 5B07     		lsls	r3, r3, #29
+ 423 0026 9B1A     		subs	r3, r3, r2
+ 424 0028 DB00     		lsls	r3, r3, #3
+ 425 002a 0B44     		add	r3, r3, r1
+ 426 002c FB61     		str	r3, [r7, #28]
+ 169:.\main.c      ****     padBytes = 18  -  xbytes;
+ 427              		.loc 1 169 0
+ 428 002e 3B6A     		ldr	r3, [r7, #32]
+ 429 0030 C3F11203 		rsb	r3, r3, #18
+ 430 0034 7B62     		str	r3, [r7, #36]
+ 170:.\main.c      ****     
+ 171:.\main.c      ****     if(ybits  >  0)
+ 431              		.loc 1 171 0
+ 432 0036 FB69     		ldr	r3, [r7, #28]
+ 433 0038 002B     		cmp	r3, #0
+ 434 003a 02DD     		ble	.L18
+ 172:.\main.c      **** 	   padBytes = padBytes - 1;
+ 435              		.loc 1 172 0
+ 436 003c 7B6A     		ldr	r3, [r7, #36]
+ 437 003e 013B     		subs	r3, r3, #1
+ 438 0040 7B62     		str	r3, [r7, #36]
+ 439              	.L18:
+ 173:.\main.c      ****     
+ 174:.\main.c      ****     for (i = 0;i < padBytes;i++)
+ 440              		.loc 1 174 0
+ 441 0042 0023     		movs	r3, #0
+ 442 0044 FB62     		str	r3, [r7, #44]
+ 443 0046 0FE0     		b	.L19
+ 444              	.L20:
+ 175:.\main.c      ****     {
+ 176:.\main.c      ****        serialOut[i] = 0x00;
+ 445              		.loc 1 176 0 discriminator 2
+ 446 0048 3A1D     		adds	r2, r7, #4
+ 447 004a FB6A     		ldr	r3, [r7, #44]
+ 448 004c 1344     		add	r3, r3, r2
+ 449 004e 0022     		movs	r2, #0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 12
+
+
+ 450 0050 1A70     		strb	r2, [r3]
+ 177:.\main.c      ****        SU_PutChar(&s,serialOut[i]);
+ 451              		.loc 1 177 0 discriminator 2
+ 452 0052 3A1D     		adds	r2, r7, #4
+ 453 0054 FB6A     		ldr	r3, [r7, #44]
+ 454 0056 1344     		add	r3, r3, r2
+ 455 0058 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 456 005a 4148     		ldr	r0, .L23+4
+ 457 005c 1946     		mov	r1, r3
+ 458 005e FFF7FEFF 		bl	SU_PutChar
+ 174:.\main.c      ****     for (i = 0;i < padBytes;i++)
+ 459              		.loc 1 174 0 discriminator 2
+ 460 0062 FB6A     		ldr	r3, [r7, #44]
+ 461 0064 0133     		adds	r3, r3, #1
+ 462 0066 FB62     		str	r3, [r7, #44]
+ 463              	.L19:
+ 174:.\main.c      ****     for (i = 0;i < padBytes;i++)
+ 464              		.loc 1 174 0 is_stmt 0 discriminator 1
+ 465 0068 FA6A     		ldr	r2, [r7, #44]
+ 466 006a 7B6A     		ldr	r3, [r7, #36]
+ 467 006c 9A42     		cmp	r2, r3
+ 468 006e EBDB     		blt	.L20
+ 178:.\main.c      ****       
+ 179:.\main.c      ****     }
+ 180:.\main.c      **** 	
+ 181:.\main.c      ****     serialOut[14] = 0x01 << ybits;
+ 469              		.loc 1 181 0 is_stmt 1
+ 470 0070 0122     		movs	r2, #1
+ 471 0072 FB69     		ldr	r3, [r7, #28]
+ 472 0074 02FA03F3 		lsl	r3, r2, r3
+ 473 0078 DBB2     		uxtb	r3, r3
+ 474 007a BB74     		strb	r3, [r7, #18]
+ 182:.\main.c      **** 	tmp = MyI2C_Regs.buffer[0] & (0xFF << (8-ybits));		
+ 475              		.loc 1 182 0
+ 476 007c 374B     		ldr	r3, .L23
+ 477 007e 9B79     		ldrb	r3, [r3, #6]	@ zero_extendqisi2
+ 478 0080 DAB2     		uxtb	r2, r3
+ 479 0082 FB69     		ldr	r3, [r7, #28]
+ 480 0084 C3F10803 		rsb	r3, r3, #8
+ 481 0088 FF21     		movs	r1, #255
+ 482 008a 01FA03F3 		lsl	r3, r1, r3
+ 483 008e DBB2     		uxtb	r3, r3
+ 484 0090 1340     		ands	r3, r3, r2
+ 485 0092 DBB2     		uxtb	r3, r3
+ 486 0094 FB76     		strb	r3, [r7, #27]
+ 183:.\main.c      ****     tmp = tmp >> (8-ybits);
+ 487              		.loc 1 183 0
+ 488 0096 FA7E     		ldrb	r2, [r7, #27]	@ zero_extendqisi2
+ 489 0098 FB69     		ldr	r3, [r7, #28]
+ 490 009a C3F10803 		rsb	r3, r3, #8
+ 491 009e 42FA03F3 		asr	r3, r2, r3
+ 492 00a2 FB76     		strb	r3, [r7, #27]
+ 184:.\main.c      **** 	serialOut[i] |= tmp; 
+ 493              		.loc 1 184 0
+ 494 00a4 3A1D     		adds	r2, r7, #4
+ 495 00a6 FB6A     		ldr	r3, [r7, #44]
+ 496 00a8 1344     		add	r3, r3, r2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 13
+
+
+ 497 00aa 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 498 00ac FB7E     		ldrb	r3, [r7, #27]
+ 499 00ae 1343     		orrs	r3, r3, r2
+ 500 00b0 DAB2     		uxtb	r2, r3
+ 501 00b2 391D     		adds	r1, r7, #4
+ 502 00b4 FB6A     		ldr	r3, [r7, #44]
+ 503 00b6 0B44     		add	r3, r3, r1
+ 504 00b8 1A70     		strb	r2, [r3]
+ 185:.\main.c      **** 	SU_PutChar(&s,serialOut[i]);
+ 505              		.loc 1 185 0
+ 506 00ba 3A1D     		adds	r2, r7, #4
+ 507 00bc FB6A     		ldr	r3, [r7, #44]
+ 508 00be 1344     		add	r3, r3, r2
+ 509 00c0 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 510 00c2 2748     		ldr	r0, .L23+4
+ 511 00c4 1946     		mov	r1, r3
+ 512 00c6 FFF7FEFF 		bl	SU_PutChar
+ 186:.\main.c      **** 	i++;
+ 513              		.loc 1 186 0
+ 514 00ca FB6A     		ldr	r3, [r7, #44]
+ 515 00cc 0133     		adds	r3, r3, #1
+ 516 00ce FB62     		str	r3, [r7, #44]
+ 187:.\main.c      **** 		
+ 188:.\main.c      **** 	for (j = 1; j< (18- padBytes); j++)
+ 517              		.loc 1 188 0
+ 518 00d0 0123     		movs	r3, #1
+ 519 00d2 BB62     		str	r3, [r7, #40]
+ 520 00d4 31E0     		b	.L21
+ 521              	.L22:
+ 189:.\main.c      **** 	{
+ 190:.\main.c      **** 		serialOut[i] = (MyI2C_Regs.buffer[j-1] << ybits );// & (0xFF << ybits);
+ 522              		.loc 1 190 0 discriminator 2
+ 523 00d6 BB6A     		ldr	r3, [r7, #40]
+ 524 00d8 013B     		subs	r3, r3, #1
+ 525 00da 204A     		ldr	r2, .L23
+ 526 00dc 1344     		add	r3, r3, r2
+ 527 00de 9B79     		ldrb	r3, [r3, #6]	@ zero_extendqisi2
+ 528 00e0 1A46     		mov	r2, r3
+ 529 00e2 FB69     		ldr	r3, [r7, #28]
+ 530 00e4 02FA03F3 		lsl	r3, r2, r3
+ 531 00e8 DAB2     		uxtb	r2, r3
+ 532 00ea 391D     		adds	r1, r7, #4
+ 533 00ec FB6A     		ldr	r3, [r7, #44]
+ 534 00ee 0B44     		add	r3, r3, r1
+ 535 00f0 1A70     		strb	r2, [r3]
+ 191:.\main.c      **** 		tmp = (MyI2C_Regs.buffer[j] >> (8-ybits));// & (0xFF >> (8-ybits));
+ 536              		.loc 1 191 0 discriminator 2
+ 537 00f2 1A4A     		ldr	r2, .L23
+ 538 00f4 BB6A     		ldr	r3, [r7, #40]
+ 539 00f6 1344     		add	r3, r3, r2
+ 540 00f8 9B79     		ldrb	r3, [r3, #6]	@ zero_extendqisi2
+ 541 00fa 1A46     		mov	r2, r3
+ 542 00fc FB69     		ldr	r3, [r7, #28]
+ 543 00fe C3F10803 		rsb	r3, r3, #8
+ 544 0102 42FA03F3 		asr	r3, r2, r3
+ 545 0106 FB76     		strb	r3, [r7, #27]
+ 192:.\main.c      **** 		serialOut[i] |= tmp;
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 14
+
+
+ 546              		.loc 1 192 0 discriminator 2
+ 547 0108 3A1D     		adds	r2, r7, #4
+ 548 010a FB6A     		ldr	r3, [r7, #44]
+ 549 010c 1344     		add	r3, r3, r2
+ 550 010e 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 551 0110 FB7E     		ldrb	r3, [r7, #27]
+ 552 0112 1343     		orrs	r3, r3, r2
+ 553 0114 DAB2     		uxtb	r2, r3
+ 554 0116 391D     		adds	r1, r7, #4
+ 555 0118 FB6A     		ldr	r3, [r7, #44]
+ 556 011a 0B44     		add	r3, r3, r1
+ 557 011c 1A70     		strb	r2, [r3]
+ 193:.\main.c      **** 		SU_PutChar(&s,serialOut[i]);
+ 558              		.loc 1 193 0 discriminator 2
+ 559 011e 3A1D     		adds	r2, r7, #4
+ 560 0120 FB6A     		ldr	r3, [r7, #44]
+ 561 0122 1344     		add	r3, r3, r2
+ 562 0124 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 563 0126 0E48     		ldr	r0, .L23+4
+ 564 0128 1946     		mov	r1, r3
+ 565 012a FFF7FEFF 		bl	SU_PutChar
+ 194:.\main.c      **** 		i++;
+ 566              		.loc 1 194 0 discriminator 2
+ 567 012e FB6A     		ldr	r3, [r7, #44]
+ 568 0130 0133     		adds	r3, r3, #1
+ 569 0132 FB62     		str	r3, [r7, #44]
+ 188:.\main.c      **** 	for (j = 1; j< (18- padBytes); j++)
+ 570              		.loc 1 188 0 discriminator 2
+ 571 0134 BB6A     		ldr	r3, [r7, #40]
+ 572 0136 0133     		adds	r3, r3, #1
+ 573 0138 BB62     		str	r3, [r7, #40]
+ 574              	.L21:
+ 188:.\main.c      **** 	for (j = 1; j< (18- padBytes); j++)
+ 575              		.loc 1 188 0 is_stmt 0 discriminator 1
+ 576 013a 7B6A     		ldr	r3, [r7, #36]
+ 577 013c C3F11202 		rsb	r2, r3, #18
+ 578 0140 BB6A     		ldr	r3, [r7, #40]
+ 579 0142 9A42     		cmp	r2, r3
+ 580 0144 C7DC     		bgt	.L22
+ 195:.\main.c      **** 	}
+ 196:.\main.c      ****     
+ 197:.\main.c      ****     Tamper_Timer_Start();    
+ 581              		.loc 1 197 0 is_stmt 1
+ 582 0146 FFF7FEFF 		bl	Tamper_Timer_Start
+ 198:.\main.c      ****     serialOut[i] = 0x00;
+ 583              		.loc 1 198 0
+ 584 014a 3A1D     		adds	r2, r7, #4
+ 585 014c FB6A     		ldr	r3, [r7, #44]
+ 586 014e 1344     		add	r3, r3, r2
+ 587 0150 0022     		movs	r2, #0
+ 588 0152 1A70     		strb	r2, [r3]
+ 199:.\main.c      **** }
+ 589              		.loc 1 199 0
+ 590 0154 3037     		adds	r7, r7, #48
+ 591 0156 BD46     		mov	sp, r7
+ 592              		@ sp needed
+ 593 0158 80BD     		pop	{r7, pc}
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 15
+
+
+ 594              	.L24:
+ 595 015a 00BF     		.align	2
+ 596              	.L23:
+ 597 015c 00000000 		.word	MyI2C_Regs
+ 598 0160 00000000 		.word	s
+ 599              		.cfi_endproc
+ 600              	.LFE69:
+ 601              		.size	SendHID, .-SendHID
+ 602              		.section	.text.InitOSDP,"ax",%progbits
+ 603              		.align	2
+ 604              		.global	InitOSDP
+ 605              		.thumb
+ 606              		.thumb_func
+ 607              		.type	InitOSDP, %function
+ 608              	InitOSDP:
+ 609              	.LFB70:
+ 200:.\main.c      **** 
+ 201:.\main.c      **** 
+ 202:.\main.c      **** void InitOSDP(){
+ 610              		.loc 1 202 0
+ 611              		.cfi_startproc
+ 612              		@ args = 0, pretend = 0, frame = 0
+ 613              		@ frame_needed = 1, uses_anonymous_args = 0
+ 614 0000 80B5     		push	{r7, lr}
+ 615              		.cfi_def_cfa_offset 8
+ 616              		.cfi_offset 7, -8
+ 617              		.cfi_offset 14, -4
+ 618 0002 00AF     		add	r7, sp, #0
+ 619              		.cfi_def_cfa_register 7
+ 203:.\main.c      ****     
+ 204:.\main.c      ****     //initialize the OSDP
+ 205:.\main.c      ****     Clock_5_SetDividerValue(625); //set the baud rate to default 9600
+ 620              		.loc 1 205 0
+ 621 0004 4FF41C70 		mov	r0, #624
+ 622 0008 0121     		movs	r1, #1
+ 623 000a FFF7FEFF 		bl	Clock_5_SetDividerRegister
+ 206:.\main.c      ****     UART_ACS_Start();
+ 624              		.loc 1 206 0
+ 625 000e FFF7FEFF 		bl	UART_ACS_Start
+ 207:.\main.c      ****     ClearOsdpBuffer();
+ 626              		.loc 1 207 0
+ 627 0012 FFF7FEFF 		bl	ClearOsdpBuffer
+ 208:.\main.c      ****     
+ 209:.\main.c      ****     Clock_6_SetDividerValue(625); //set the baud rate to default 9600
+ 628              		.loc 1 209 0
+ 629 0016 4FF41C70 		mov	r0, #624
+ 630 001a 0121     		movs	r1, #1
+ 631 001c FFF7FEFF 		bl	Clock_6_SetDividerRegister
+ 210:.\main.c      ****     UART_READER_Start();
+ 632              		.loc 1 210 0
+ 633 0020 FFF7FEFF 		bl	UART_READER_Start
+ 211:.\main.c      ****     ClearOsdpReaderBuffer();
+ 634              		.loc 1 211 0
+ 635 0024 FFF7FEFF 		bl	ClearOsdpReaderBuffer
+ 212:.\main.c      ****     
+ 213:.\main.c      ****     isr_keepalive_StartEx(KeepAliveInterruptHandler);
+ 636              		.loc 1 213 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 16
+
+
+ 637 0028 0248     		ldr	r0, .L26
+ 638 002a FFF7FEFF 		bl	isr_keepalive_StartEx
+ 214:.\main.c      ****     OSDPReaderTimer_Start();
+ 639              		.loc 1 214 0
+ 640 002e FFF7FEFF 		bl	OSDPReaderTimer_Start
+ 215:.\main.c      ****     
+ 216:.\main.c      **** }
+ 641              		.loc 1 216 0
+ 642 0032 80BD     		pop	{r7, pc}
+ 643              	.L27:
+ 644              		.align	2
+ 645              	.L26:
+ 646 0034 00000000 		.word	KeepAliveInterruptHandler
+ 647              		.cfi_endproc
+ 648              	.LFE70:
+ 649              		.size	InitOSDP, .-InitOSDP
+ 650              		.section	.text.HandleCommand,"ax",%progbits
+ 651              		.align	2
+ 652              		.global	HandleCommand
+ 653              		.thumb
+ 654              		.thumb_func
+ 655              		.type	HandleCommand, %function
+ 656              	HandleCommand:
+ 657              	.LFB71:
+ 217:.\main.c      **** 
+ 218:.\main.c      ****  /***********************************************
+ 219:.\main.c      ****      Debug Code : Software UART for PAC Protocol
+ 220:.\main.c      ****   ************************************************
+ 221:.\main.c      ****  void SendPACTest()
+ 222:.\main.c      **** {
+ 223:.\main.c      ****       int i,j;
+ 224:.\main.c      ****     LED_GRN_Write(0);
+ 225:.\main.c      ****     LED_YEL_Write(1);
+ 226:.\main.c      ****   
+ 227:.\main.c      ****     for( i = 0; i < 20; i++)
+ 228:.\main.c      ****     {
+ 229:.\main.c      ****         for( j= 0; j < 12 ; j++)
+ 230:.\main.c      ****         {
+ 231:.\main.c      ****             char c = MyI2C_Regs.buffer[j];
+ 232:.\main.c      ****          SU_PutChar(&s,c);
+ 233:.\main.c      ****         }
+ 234:.\main.c      ****       
+ 235:.\main.c      ****     }
+ 236:.\main.c      **** 
+ 237:.\main.c      ****     LED_GRN_Write(1);
+ 238:.\main.c      ****     LED_YEL_Write(1);
+ 239:.\main.c      **** }
+ 240:.\main.c      **** 
+ 241:.\main.c      **** ****************************************************/
+ 242:.\main.c      **** 
+ 243:.\main.c      **** 
+ 244:.\main.c      **** /****************************************
+ 245:.\main.c      ****    Method to handle commands
+ 246:.\main.c      ****    coming from device
+ 247:.\main.c      **** 
+ 248:.\main.c      **** *****************************************/
+ 249:.\main.c      **** void HandleCommand()
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 17
+
+
+ 250:.\main.c      **** {
+ 658              		.loc 1 250 0
+ 659              		.cfi_startproc
+ 660              		@ args = 0, pretend = 0, frame = 8
+ 661              		@ frame_needed = 1, uses_anonymous_args = 0
+ 662 0000 80B5     		push	{r7, lr}
+ 663              		.cfi_def_cfa_offset 8
+ 664              		.cfi_offset 7, -8
+ 665              		.cfi_offset 14, -4
+ 666 0002 82B0     		sub	sp, sp, #8
+ 667              		.cfi_def_cfa_offset 16
+ 668 0004 00AF     		add	r7, sp, #0
+ 669              		.cfi_def_cfa_register 7
+ 251:.\main.c      ****     char cmd;
+ 252:.\main.c      ****     cmd = MyI2C_Regs.cmd;
+ 670              		.loc 1 252 0
+ 671 0006 874B     		ldr	r3, .L55
+ 672 0008 9B78     		ldrb	r3, [r3, #2]
+ 673 000a FB71     		strb	r3, [r7, #7]
+ 253:.\main.c      ****     if (cmd != CMD_BOOTLOAD && cmd != CMD_READ_CARD) MyI2C_Regs.osdp_reader_cmd = OSDP_NONE;
+ 674              		.loc 1 253 0
+ 675 000c FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 676 000e 012B     		cmp	r3, #1
+ 677 0010 06D0     		beq	.L29
+ 678              		.loc 1 253 0 is_stmt 0 discriminator 1
+ 679 0012 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 680 0014 022B     		cmp	r3, #2
+ 681 0016 03D0     		beq	.L29
+ 682 0018 824B     		ldr	r3, .L55
+ 683 001a 0022     		movs	r2, #0
+ 684 001c 83F8CD20 		strb	r2, [r3, #205]
+ 685              	.L29:
+ 254:.\main.c      ****     
+ 255:.\main.c      **** 	switch (cmd)
+ 686              		.loc 1 255 0 is_stmt 1
+ 687 0020 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 688 0022 013B     		subs	r3, r3, #1
+ 689 0024 192B     		cmp	r3, #25
+ 690 0026 00F2F580 		bhi	.L30
+ 691 002a 01A2     		adr	r2, .L32
+ 692 002c 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 693              		.p2align 2
+ 694              	.L32:
+ 695 0030 99000000 		.word	.L31+1
+ 696 0034 D3000000 		.word	.L33+1
+ 697 0038 9F000000 		.word	.L34+1
+ 698 003c B9000000 		.word	.L35+1
+ 699 0040 AB010000 		.word	.L36+1
+ 700 0044 C9010000 		.word	.L37+1
+ 701 0048 15020000 		.word	.L30+1
+ 702 004c 15020000 		.word	.L30+1
+ 703 0050 15020000 		.word	.L30+1
+ 704 0054 15020000 		.word	.L30+1
+ 705 0058 15020000 		.word	.L30+1
+ 706 005c 8D010000 		.word	.L38+1
+ 707 0060 15020000 		.word	.L30+1
+ 708 0064 15020000 		.word	.L30+1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 18
+
+
+ 709 0068 15020000 		.word	.L30+1
+ 710 006c 15020000 		.word	.L30+1
+ 711 0070 15020000 		.word	.L30+1
+ 712 0074 15020000 		.word	.L30+1
+ 713 0078 15020000 		.word	.L30+1
+ 714 007c 15020000 		.word	.L30+1
+ 715 0080 15020000 		.word	.L30+1
+ 716 0084 15020000 		.word	.L30+1
+ 717 0088 15020000 		.word	.L30+1
+ 718 008c 15020000 		.word	.L30+1
+ 719 0090 15020000 		.word	.L30+1
+ 720 0094 E7010000 		.word	.L39+1
+ 721              		.p2align 1
+ 722              	.L31:
+ 256:.\main.c      ****     {
+ 257:.\main.c      ****         case CMD_BOOTLOAD:
+ 258:.\main.c      ****             BootloadableI2C_Load();  //yqh
+ 723              		.loc 1 258 0
+ 724 0098 FFF7FEFF 		bl	BootloadableI2C_Load
+ 259:.\main.c      ****              break;
+ 725              		.loc 1 259 0
+ 726 009c BEE0     		b	.L28
+ 727              	.L34:
+ 260:.\main.c      ****         
+ 261:.\main.c      ****         case CMD_TRIGGER_RELAY1:
+ 262:.\main.c      **** 		        TriggerRelay1(MyI2C_Regs.data_length*1000); //Trigger relay and wait for x secs
+ 728              		.loc 1 262 0
+ 729 009e 614B     		ldr	r3, .L55
+ 730 00a0 DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 731 00a2 4FF47A72 		mov	r2, #1000
+ 732 00a6 02FB03F3 		mul	r3, r2, r3
+ 733 00aa 1846     		mov	r0, r3
+ 734 00ac FFF7FEFF 		bl	TriggerRelay1
+ 263:.\main.c      ****                 MyI2C_Regs.cmd = 0;  
+ 735              		.loc 1 263 0
+ 736 00b0 5C4B     		ldr	r3, .L55
+ 737 00b2 0022     		movs	r2, #0
+ 738 00b4 9A70     		strb	r2, [r3, #2]
+ 264:.\main.c      **** 				break;
+ 739              		.loc 1 264 0
+ 740 00b6 B1E0     		b	.L28
+ 741              	.L35:
+ 265:.\main.c      ****                 
+ 266:.\main.c      ****         case CMD_TRIGGER_RELAY2:
+ 267:.\main.c      **** 		        TriggerRelay2(MyI2C_Regs.data_length*1000); //Trigger relay and wait for x secs
+ 742              		.loc 1 267 0
+ 743 00b8 5A4B     		ldr	r3, .L55
+ 744 00ba DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 745 00bc 4FF47A72 		mov	r2, #1000
+ 746 00c0 02FB03F3 		mul	r3, r2, r3
+ 747 00c4 1846     		mov	r0, r3
+ 748 00c6 FFF7FEFF 		bl	TriggerRelay2
+ 268:.\main.c      ****                 MyI2C_Regs.cmd = 0;  
+ 749              		.loc 1 268 0
+ 750 00ca 564B     		ldr	r3, .L55
+ 751 00cc 0022     		movs	r2, #0
+ 752 00ce 9A70     		strb	r2, [r3, #2]
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 19
+
+
+ 269:.\main.c      **** 				break;
+ 753              		.loc 1 269 0
+ 754 00d0 A4E0     		b	.L28
+ 755              	.L33:
+ 270:.\main.c      ****                 
+ 271:.\main.c      ****         case CMD_READ_CARD:
+ 272:.\main.c      ****                 
+ 273:.\main.c      ****                 if (MyI2C_Regs.osdp_reader_cmd != OSDP_NONE ) break; //goto process osdp message
+ 756              		.loc 1 273 0
+ 757 00d2 544B     		ldr	r3, .L55
+ 758 00d4 93F8CD30 		ldrb	r3, [r3, #205]	@ zero_extendqisi2
+ 759 00d8 002B     		cmp	r3, #0
+ 760 00da 00D0     		beq	.L41
+ 761              		.loc 1 273 0 is_stmt 0 discriminator 1
+ 762 00dc 9EE0     		b	.L28
+ 763              	.L41:
+ 274:.\main.c      ****                 
+ 275:.\main.c      ****                 if(MyI2C_Regs.data_length >= 26)//Read Weigand
+ 764              		.loc 1 275 0 is_stmt 1
+ 765 00de 514B     		ldr	r3, .L55
+ 766 00e0 DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 767 00e2 192B     		cmp	r3, #25
+ 768 00e4 19D9     		bls	.L42
+ 276:.\main.c      ****                 {
+ 277:.\main.c      ****                     LED_GRN_Write(1);
+ 769              		.loc 1 277 0
+ 770 00e6 0120     		movs	r0, #1
+ 771 00e8 FFF7FEFF 		bl	LED_GRN_Write
+ 278:.\main.c      ****                     OptSelect_Write(1);
+ 772              		.loc 1 278 0
+ 773 00ec 0120     		movs	r0, #1
+ 774 00ee FFF7FEFF 		bl	OptSelect_Write
+ 279:.\main.c      ****                     ClearBuffer(); // added here - GRI 2/2/15
+ 775              		.loc 1 279 0
+ 776 00f2 FFF7FEFF 		bl	ClearBuffer
+ 280:.\main.c      ****                     while(ReadWeigand(MyI2C_Regs.data_length) == 0)
+ 777              		.loc 1 280 0
+ 778 00f6 04E0     		b	.L43
+ 779              	.L45:
+ 281:.\main.c      ****                     {
+ 282:.\main.c      ****                         if(MyI2C_Regs.cmd !=CMD_READ_CARD ) 
+ 780              		.loc 1 282 0
+ 781 00f8 4A4B     		ldr	r3, .L55
+ 782 00fa 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 783 00fc 022B     		cmp	r3, #2
+ 784 00fe 00D0     		beq	.L43
+ 283:.\main.c      ****                             break;
+ 785              		.loc 1 283 0
+ 786 0100 07E0     		b	.L44
+ 787              	.L43:
+ 280:.\main.c      ****                     while(ReadWeigand(MyI2C_Regs.data_length) == 0)
+ 788              		.loc 1 280 0 discriminator 1
+ 789 0102 484B     		ldr	r3, .L55
+ 790 0104 DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 791 0106 1846     		mov	r0, r3
+ 792 0108 FFF7FEFF 		bl	ReadWeigand
+ 793 010c 0346     		mov	r3, r0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 20
+
+
+ 794 010e 002B     		cmp	r3, #0
+ 795 0110 F2D0     		beq	.L45
+ 796              	.L44:
+ 284:.\main.c      ****                     };
+ 285:.\main.c      ****                     
+ 286:.\main.c      ****                     LED_GRN_Write(0);
+ 797              		.loc 1 286 0
+ 798 0112 0020     		movs	r0, #0
+ 799 0114 FFF7FEFF 		bl	LED_GRN_Write
+ 800 0118 37E0     		b	.L46
+ 801              	.L42:
+ 287:.\main.c      ****                     
+ 288:.\main.c      ****                 }
+ 289:.\main.c      ****                 else if(MyI2C_Regs.data_length == 12)//Read PAC
+ 802              		.loc 1 289 0
+ 803 011a 424B     		ldr	r3, .L55
+ 804 011c DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 805 011e 0C2B     		cmp	r3, #12
+ 806 0120 19D1     		bne	.L47
+ 290:.\main.c      ****                 {
+ 291:.\main.c      ****                     LED_GRN_Write(1);
+ 807              		.loc 1 291 0
+ 808 0122 0120     		movs	r0, #1
+ 809 0124 FFF7FEFF 		bl	LED_GRN_Write
+ 292:.\main.c      ****                     ClearBuffer(); // added here - GRI 2/2/15
+ 810              		.loc 1 292 0
+ 811 0128 FFF7FEFF 		bl	ClearBuffer
+ 293:.\main.c      ****                     SetupUART(PAC);
+ 812              		.loc 1 293 0
+ 813 012c 0C20     		movs	r0, #12
+ 814 012e FFF7FEFF 		bl	SetupUART
+ 294:.\main.c      ****                     while(ReadPAC()== 0)
+ 815              		.loc 1 294 0
+ 816 0132 04E0     		b	.L48
+ 817              	.L50:
+ 295:.\main.c      ****                     {
+ 296:.\main.c      ****                         if(MyI2C_Regs.cmd !=CMD_READ_CARD )
+ 818              		.loc 1 296 0
+ 819 0134 3B4B     		ldr	r3, .L55
+ 820 0136 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 821 0138 022B     		cmp	r3, #2
+ 822 013a 00D0     		beq	.L48
+ 297:.\main.c      ****                         break;
+ 823              		.loc 1 297 0
+ 824 013c 04E0     		b	.L49
+ 825              	.L48:
+ 294:.\main.c      ****                     while(ReadPAC()== 0)
+ 826              		.loc 1 294 0 discriminator 1
+ 827 013e FFF7FEFF 		bl	ReadPAC
+ 828 0142 0346     		mov	r3, r0
+ 829 0144 002B     		cmp	r3, #0
+ 830 0146 F5D0     		beq	.L50
+ 831              	.L49:
+ 298:.\main.c      ****                     }
+ 299:.\main.c      ****                     LED_GRN_Write(0);
+ 832              		.loc 1 299 0
+ 833 0148 0020     		movs	r0, #0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 21
+
+
+ 834 014a FFF7FEFF 		bl	LED_GRN_Write
+ 300:.\main.c      ****                     OptSelect_Write(1);
+ 835              		.loc 1 300 0
+ 836 014e 0120     		movs	r0, #1
+ 837 0150 FFF7FEFF 		bl	OptSelect_Write
+ 838 0154 19E0     		b	.L46
+ 839              	.L47:
+ 301:.\main.c      **** 
+ 302:.\main.c      ****                 }
+ 303:.\main.c      ****                 else//Read F2F
+ 304:.\main.c      ****                 {
+ 305:.\main.c      ****                     activate_f2ftimer = 1;
+ 840              		.loc 1 305 0
+ 841 0156 344B     		ldr	r3, .L55+4
+ 842 0158 0122     		movs	r2, #1
+ 843 015a 1A70     		strb	r2, [r3]
+ 306:.\main.c      **** 
+ 307:.\main.c      ****                     LED_GRN_Write(1);
+ 844              		.loc 1 307 0
+ 845 015c 0120     		movs	r0, #1
+ 846 015e FFF7FEFF 		bl	LED_GRN_Write
+ 308:.\main.c      ****                     OptSelect_Write(1);
+ 847              		.loc 1 308 0
+ 848 0162 0120     		movs	r0, #1
+ 849 0164 FFF7FEFF 		bl	OptSelect_Write
+ 309:.\main.c      ****                     ClearBuffer(); // added here - GRI 2/2/15
+ 850              		.loc 1 309 0
+ 851 0168 FFF7FEFF 		bl	ClearBuffer
+ 310:.\main.c      ****                     while(ReadF2F() == 0)
+ 852              		.loc 1 310 0
+ 853 016c 04E0     		b	.L51
+ 854              	.L53:
+ 311:.\main.c      ****                     {
+ 312:.\main.c      ****                         if(MyI2C_Regs.cmd !=CMD_READ_CARD ) 
+ 855              		.loc 1 312 0
+ 856 016e 2D4B     		ldr	r3, .L55
+ 857 0170 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 858 0172 022B     		cmp	r3, #2
+ 859 0174 00D0     		beq	.L51
+ 313:.\main.c      ****                             break;
+ 860              		.loc 1 313 0
+ 861 0176 04E0     		b	.L52
+ 862              	.L51:
+ 310:.\main.c      ****                     while(ReadF2F() == 0)
+ 863              		.loc 1 310 0 discriminator 1
+ 864 0178 FFF7FEFF 		bl	ReadF2F
+ 865 017c 0346     		mov	r3, r0
+ 866 017e 002B     		cmp	r3, #0
+ 867 0180 F5D0     		beq	.L53
+ 868              	.L52:
+ 314:.\main.c      ****                     };
+ 315:.\main.c      ****                     LED_GRN_Write(0);
+ 869              		.loc 1 315 0
+ 870 0182 0020     		movs	r0, #0
+ 871 0184 FFF7FEFF 		bl	LED_GRN_Write
+ 316:.\main.c      ****                 }
+ 317:.\main.c      ****                 break;
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 22
+
+
+ 872              		.loc 1 317 0
+ 873 0188 48E0     		b	.L28
+ 874              	.L46:
+ 875 018a 47E0     		b	.L28
+ 876              	.L38:
+ 318:.\main.c      **** 	    
+ 319:.\main.c      ****         case CMD_SEND_PAC:
+ 320:.\main.c      ****                 LED_YEL_Write(1);
+ 877              		.loc 1 320 0
+ 878 018c 0120     		movs	r0, #1
+ 879 018e FFF7FEFF 		bl	LED_YEL_Write
+ 321:.\main.c      ****                 SetupUART(PAC);
+ 880              		.loc 1 321 0
+ 881 0192 0C20     		movs	r0, #12
+ 882 0194 FFF7FEFF 		bl	SetupUART
+ 322:.\main.c      ****                 SendPAC();
+ 883              		.loc 1 322 0
+ 884 0198 FFF7FEFF 		bl	SendPAC
+ 323:.\main.c      ****                 MyI2C_Regs.cmd = 0;
+ 885              		.loc 1 323 0
+ 886 019c 214B     		ldr	r3, .L55
+ 887 019e 0022     		movs	r2, #0
+ 888 01a0 9A70     		strb	r2, [r3, #2]
+ 324:.\main.c      ****                 LED_YEL_Write(0);
+ 889              		.loc 1 324 0
+ 890 01a2 0020     		movs	r0, #0
+ 891 01a4 FFF7FEFF 		bl	LED_YEL_Write
+ 325:.\main.c      **** 				break;
+ 892              		.loc 1 325 0
+ 893 01a8 38E0     		b	.L28
+ 894              	.L36:
+ 326:.\main.c      ****                 
+ 327:.\main.c      ****         case CMD_SEND_F2F:
+ 328:.\main.c      ****                 LED_YEL_Write(1);
+ 895              		.loc 1 328 0
+ 896 01aa 0120     		movs	r0, #1
+ 897 01ac FFF7FEFF 		bl	LED_YEL_Write
+ 329:.\main.c      ****                 OptSelect_Write(1);
+ 898              		.loc 1 329 0
+ 899 01b0 0120     		movs	r0, #1
+ 900 01b2 FFF7FEFF 		bl	OptSelect_Write
+ 330:.\main.c      **** 				SendF2F();
+ 901              		.loc 1 330 0
+ 902 01b6 FFF7FEFF 		bl	SendF2F
+ 331:.\main.c      ****                 MyI2C_Regs.cmd = 0;
+ 903              		.loc 1 331 0
+ 904 01ba 1A4B     		ldr	r3, .L55
+ 905 01bc 0022     		movs	r2, #0
+ 906 01be 9A70     		strb	r2, [r3, #2]
+ 332:.\main.c      ****                 LED_YEL_Write(0);
+ 907              		.loc 1 332 0
+ 908 01c0 0020     		movs	r0, #0
+ 909 01c2 FFF7FEFF 		bl	LED_YEL_Write
+ 333:.\main.c      **** 			    break;        
+ 910              		.loc 1 333 0
+ 911 01c6 29E0     		b	.L28
+ 912              	.L37:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 23
+
+
+ 334:.\main.c      ****                 
+ 335:.\main.c      ****         case CMD_SEND_HID:
+ 336:.\main.c      ****                LED_YEL_Write(1);
+ 913              		.loc 1 336 0
+ 914 01c8 0120     		movs	r0, #1
+ 915 01ca FFF7FEFF 		bl	LED_YEL_Write
+ 337:.\main.c      ****                OptSelect_Write(1);
+ 916              		.loc 1 337 0
+ 917 01ce 0120     		movs	r0, #1
+ 918 01d0 FFF7FEFF 		bl	OptSelect_Write
+ 338:.\main.c      **** //               SendHID_SP533();
+ 339:.\main.c      ****                SendHID();
+ 919              		.loc 1 339 0
+ 920 01d4 FFF7FEFF 		bl	SendHID
+ 340:.\main.c      ****                MyI2C_Regs.cmd = 0;
+ 921              		.loc 1 340 0
+ 922 01d8 124B     		ldr	r3, .L55
+ 923 01da 0022     		movs	r2, #0
+ 924 01dc 9A70     		strb	r2, [r3, #2]
+ 341:.\main.c      ****                LED_YEL_Write(0);
+ 925              		.loc 1 341 0
+ 926 01de 0020     		movs	r0, #0
+ 927 01e0 FFF7FEFF 		bl	LED_YEL_Write
+ 342:.\main.c      **** 			   break;
+ 928              		.loc 1 342 0
+ 929 01e4 1AE0     		b	.L28
+ 930              	.L39:
+ 343:.\main.c      ****             
+ 344:.\main.c      ****         case CMD_SEND_WEIGAND:
+ 345:.\main.c      ****                 if (MyI2C_Regs.data_length){
+ 931              		.loc 1 345 0
+ 932 01e6 0F4B     		ldr	r3, .L55
+ 933 01e8 DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 934 01ea 002B     		cmp	r3, #0
+ 935 01ec 11D0     		beq	.L54
+ 346:.\main.c      ****                     LED_YEL_Write(0);
+ 936              		.loc 1 346 0
+ 937 01ee 0020     		movs	r0, #0
+ 938 01f0 FFF7FEFF 		bl	LED_YEL_Write
+ 347:.\main.c      ****                     OptSelect_Write(1);
+ 939              		.loc 1 347 0
+ 940 01f4 0120     		movs	r0, #1
+ 941 01f6 FFF7FEFF 		bl	OptSelect_Write
+ 348:.\main.c      ****     				SendWeigand(MyI2C_Regs.data_length);
+ 942              		.loc 1 348 0
+ 943 01fa 0A4B     		ldr	r3, .L55
+ 944 01fc DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 945 01fe 1846     		mov	r0, r3
+ 946 0200 FFF7FEFF 		bl	SendWeigand
+ 349:.\main.c      ****                     MyI2C_Regs.cmd = 0;
+ 947              		.loc 1 349 0
+ 948 0204 074B     		ldr	r3, .L55
+ 949 0206 0022     		movs	r2, #0
+ 950 0208 9A70     		strb	r2, [r3, #2]
+ 350:.\main.c      ****                     LED_YEL_Write(1);
+ 951              		.loc 1 350 0
+ 952 020a 0120     		movs	r0, #1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 24
+
+
+ 953 020c FFF7FEFF 		bl	LED_YEL_Write
+ 351:.\main.c      ****                 }
+ 352:.\main.c      **** 				break;  
+ 954              		.loc 1 352 0
+ 955 0210 04E0     		b	.L28
+ 956              	.L54:
+ 957 0212 03E0     		b	.L28
+ 958              	.L30:
+ 353:.\main.c      ****         default:
+ 354:.\main.c      ****                 LED_RED_Write(0); //error
+ 959              		.loc 1 354 0
+ 960 0214 0020     		movs	r0, #0
+ 961 0216 FFF7FEFF 		bl	LED_RED_Write
+ 355:.\main.c      ****                 break;
+ 962              		.loc 1 355 0
+ 963 021a 00BF     		nop
+ 964              	.L28:
+ 356:.\main.c      **** 	}     
+ 357:.\main.c      **** 	
+ 358:.\main.c      **** }
+ 965              		.loc 1 358 0
+ 966 021c 0837     		adds	r7, r7, #8
+ 967 021e BD46     		mov	sp, r7
+ 968              		@ sp needed
+ 969 0220 80BD     		pop	{r7, pc}
+ 970              	.L56:
+ 971 0222 00BF     		.align	2
+ 972              	.L55:
+ 973 0224 00000000 		.word	MyI2C_Regs
+ 974 0228 00000000 		.word	activate_f2ftimer
+ 975              		.cfi_endproc
+ 976              	.LFE71:
+ 977              		.size	HandleCommand, .-HandleCommand
+ 978              		.section	.text.HandleOSDP,"ax",%progbits
+ 979              		.align	2
+ 980              		.global	HandleOSDP
+ 981              		.thumb
+ 982              		.thumb_func
+ 983              		.type	HandleOSDP, %function
+ 984              	HandleOSDP:
+ 985              	.LFB72:
+ 359:.\main.c      **** 
+ 360:.\main.c      **** 
+ 361:.\main.c      **** 
+ 362:.\main.c      **** extern unsigned char keepALive[OSDP_READER_BUFFER_LENGTH];
+ 363:.\main.c      **** extern unsigned char keepALiveLength;
+ 364:.\main.c      **** 
+ 365:.\main.c      **** /****************************************
+ 366:.\main.c      ****    Method to handle OSDP commands
+ 367:.\main.c      ****    coming from device
+ 368:.\main.c      **** 
+ 369:.\main.c      **** *****************************************/
+ 370:.\main.c      **** void HandleOSDP()
+ 371:.\main.c      **** {
+ 986              		.loc 1 371 0
+ 987              		.cfi_startproc
+ 988              		@ args = 0, pretend = 0, frame = 8
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 25
+
+
+ 989              		@ frame_needed = 1, uses_anonymous_args = 0
+ 990 0000 80B5     		push	{r7, lr}
+ 991              		.cfi_def_cfa_offset 8
+ 992              		.cfi_offset 7, -8
+ 993              		.cfi_offset 14, -4
+ 994 0002 82B0     		sub	sp, sp, #8
+ 995              		.cfi_def_cfa_offset 16
+ 996 0004 00AF     		add	r7, sp, #0
+ 997              		.cfi_def_cfa_register 7
+ 372:.\main.c      ****     int i; 
+ 373:.\main.c      ****     
+ 374:.\main.c      ****     //Now, Handle the Reader Messages
+ 375:.\main.c      ****     if (MyI2C_Regs.osdp_reader_cmd != 0){
+ 998              		.loc 1 375 0
+ 999 0006 3C4B     		ldr	r3, .L75
+ 1000 0008 93F8CD30 		ldrb	r3, [r3, #205]	@ zero_extendqisi2
+ 1001 000c 002B     		cmp	r3, #0
+ 1002 000e 34D0     		beq	.L58
+ 376:.\main.c      ****     	switch (MyI2C_Regs.osdp_reader_cmd)
+ 1003              		.loc 1 376 0
+ 1004 0010 394B     		ldr	r3, .L75
+ 1005 0012 93F8CD30 		ldrb	r3, [r3, #205]	@ zero_extendqisi2
+ 1006 0016 032B     		cmp	r3, #3
+ 1007 0018 14D8     		bhi	.L59
+ 1008 001a 01A2     		adr	r2, .L61
+ 1009 001c 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 1010              		.p2align 2
+ 1011              	.L61:
+ 1012 0020 79000000 		.word	.L74+1
+ 1013 0024 31000000 		.word	.L62+1
+ 1014 0028 79000000 		.word	.L74+1
+ 1015 002c 37000000 		.word	.L64+1
+ 1016              		.p2align 1
+ 1017              	.L62:
+ 377:.\main.c      ****         {
+ 378:.\main.c      ****             case OSDP_NONE:
+ 379:.\main.c      ****                 break;
+ 380:.\main.c      ****             case OSDP_SEND:
+ 381:.\main.c      ****                 SetOSDPKeepALive();
+ 1018              		.loc 1 381 0
+ 1019 0030 FFF7FEFF 		bl	SetOSDPKeepALive
+ 382:.\main.c      ****               break;
+ 1020              		.loc 1 382 0
+ 1021 0034 21E0     		b	.L58
+ 1022              	.L64:
+ 383:.\main.c      ****             case OSDP_READ:
+ 384:.\main.c      ****                 break;
+ 385:.\main.c      ****             case OSDP_RATE:
+ 386:.\main.c      ****                 SetOSDPReaderSpeed();
+ 1023              		.loc 1 386 0
+ 1024 0036 FFF7FEFF 		bl	SetOSDPReaderSpeed
+ 387:.\main.c      ****                 MyI2C_Regs.osdp_reader_cmd = OSDP_SEND;
+ 1025              		.loc 1 387 0
+ 1026 003a 2F4B     		ldr	r3, .L75
+ 1027 003c 0122     		movs	r2, #1
+ 1028 003e 83F8CD20 		strb	r2, [r3, #205]
+ 388:.\main.c      **** //                MyI2C_Regs.osdp_reader_cmd = OSDP_NONE;
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 26
+
+
+ 389:.\main.c      ****                 break;
+ 1029              		.loc 1 389 0
+ 1030 0042 1AE0     		b	.L58
+ 1031              	.L59:
+ 390:.\main.c      ****             default:
+ 391:.\main.c      ****                 for (i=0; i<3; i++){
+ 1032              		.loc 1 391 0
+ 1033 0044 0023     		movs	r3, #0
+ 1034 0046 7B60     		str	r3, [r7, #4]
+ 1035 0048 12E0     		b	.L65
+ 1036              	.L66:
+ 392:.\main.c      ****                     LED_RED_Write(0); //error
+ 1037              		.loc 1 392 0 discriminator 2
+ 1038 004a 0020     		movs	r0, #0
+ 1039 004c FFF7FEFF 		bl	LED_RED_Write
+ 393:.\main.c      ****                     LED_YEL_Write(0);
+ 1040              		.loc 1 393 0 discriminator 2
+ 1041 0050 0020     		movs	r0, #0
+ 1042 0052 FFF7FEFF 		bl	LED_YEL_Write
+ 394:.\main.c      ****                     CyDelay(500);
+ 1043              		.loc 1 394 0 discriminator 2
+ 1044 0056 4FF4FA70 		mov	r0, #500
+ 1045 005a FFF7FEFF 		bl	CyDelay
+ 395:.\main.c      ****                     LED_RED_Write(0); //error
+ 1046              		.loc 1 395 0 discriminator 2
+ 1047 005e 0020     		movs	r0, #0
+ 1048 0060 FFF7FEFF 		bl	LED_RED_Write
+ 396:.\main.c      ****                     LED_YEL_Write(0);
+ 1049              		.loc 1 396 0 discriminator 2
+ 1050 0064 0020     		movs	r0, #0
+ 1051 0066 FFF7FEFF 		bl	LED_YEL_Write
+ 391:.\main.c      ****                 for (i=0; i<3; i++){
+ 1052              		.loc 1 391 0 discriminator 2
+ 1053 006a 7B68     		ldr	r3, [r7, #4]
+ 1054 006c 0133     		adds	r3, r3, #1
+ 1055 006e 7B60     		str	r3, [r7, #4]
+ 1056              	.L65:
+ 391:.\main.c      ****                 for (i=0; i<3; i++){
+ 1057              		.loc 1 391 0 is_stmt 0 discriminator 1
+ 1058 0070 7B68     		ldr	r3, [r7, #4]
+ 1059 0072 022B     		cmp	r3, #2
+ 1060 0074 E9DD     		ble	.L66
+ 1061 0076 00E0     		b	.L58
+ 1062              	.L74:
+ 379:.\main.c      ****                 break;
+ 1063              		.loc 1 379 0 is_stmt 1
+ 1064 0078 00BF     		nop
+ 1065              	.L58:
+ 397:.\main.c      ****                 }
+ 398:.\main.c      ****         }
+ 399:.\main.c      ****     }
+ 400:.\main.c      ****     
+ 401:.\main.c      ****     // check to see if it need send the reader again
+ 402:.\main.c      ****     if((OSDPReaderTask >> OSDP_SEND_READER) & 0x01){
+ 1066              		.loc 1 402 0
+ 1067 007a 204B     		ldr	r3, .L75+4
+ 1068 007c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 27
+
+
+ 1069 007e 9B08     		lsrs	r3, r3, #2
+ 1070 0080 DBB2     		uxtb	r3, r3
+ 1071 0082 03F00103 		and	r3, r3, #1
+ 1072 0086 002B     		cmp	r3, #0
+ 1073 0088 12D0     		beq	.L67
+ 403:.\main.c      ****         OSDPReaderTask &= ~(0x01 << OSDP_SEND_READER); //clear flag
+ 1074              		.loc 1 403 0
+ 1075 008a 1C4B     		ldr	r3, .L75+4
+ 1076 008c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1077 008e 23F00403 		bic	r3, r3, #4
+ 1078 0092 DAB2     		uxtb	r2, r3
+ 1079 0094 194B     		ldr	r3, .L75+4
+ 1080 0096 1A70     		strb	r2, [r3]
+ 404:.\main.c      ****         if (keepALiveLength > 0){
+ 1081              		.loc 1 404 0
+ 1082 0098 194B     		ldr	r3, .L75+8
+ 1083 009a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1084 009c 002B     		cmp	r3, #0
+ 1085 009e 07D0     		beq	.L67
+ 405:.\main.c      ****              LED_RED_Write(0);
+ 1086              		.loc 1 405 0
+ 1087 00a0 0020     		movs	r0, #0
+ 1088 00a2 FFF7FEFF 		bl	LED_RED_Write
+ 406:.\main.c      ****             SendOSDPReader();
+ 1089              		.loc 1 406 0
+ 1090 00a6 FFF7FEFF 		bl	SendOSDPReader
+ 407:.\main.c      ****              LED_RED_Write(1);
+ 1091              		.loc 1 407 0
+ 1092 00aa 0120     		movs	r0, #1
+ 1093 00ac FFF7FEFF 		bl	LED_RED_Write
+ 1094              	.L67:
+ 408:.\main.c      ****         }
+ 409:.\main.c      ****     }
+ 410:.\main.c      ****  
+ 411:.\main.c      ****     // check if anything comes in
+ 412:.\main.c      ****     ReadOSDPReader();
+ 1095              		.loc 1 412 0
+ 1096 00b0 FFF7FEFF 		bl	ReadOSDPReader
+ 413:.\main.c      ****     
+ 414:.\main.c      ****     //Panel Messages
+ 415:.\main.c      ****     if (MyI2C_Regs.osdp_cmd){
+ 1097              		.loc 1 415 0
+ 1098 00b4 104B     		ldr	r3, .L75
+ 1099 00b6 93F84930 		ldrb	r3, [r3, #73]	@ zero_extendqisi2
+ 1100 00ba 002B     		cmp	r3, #0
+ 1101 00bc 16D0     		beq	.L68
+ 416:.\main.c      ****     	switch (MyI2C_Regs.osdp_cmd)
+ 1102              		.loc 1 416 0
+ 1103 00be 0E4B     		ldr	r3, .L75
+ 1104 00c0 93F84930 		ldrb	r3, [r3, #73]	@ zero_extendqisi2
+ 1105 00c4 032B     		cmp	r3, #3
+ 1106 00c6 11D8     		bhi	.L68
+ 1107 00c8 01A2     		adr	r2, .L70
+ 1108 00ca 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 1109 00ce 00BF     		.p2align 2
+ 1110              	.L70:
+ 1111 00d0 ED000000 		.word	.L68+1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 28
+
+
+ 1112 00d4 E1000000 		.word	.L71+1
+ 1113 00d8 ED000000 		.word	.L68+1
+ 1114 00dc E7000000 		.word	.L73+1
+ 1115              		.p2align 1
+ 1116              	.L71:
+ 417:.\main.c      ****         {
+ 418:.\main.c      ****             case OSDP_NONE:
+ 419:.\main.c      ****                  break;
+ 420:.\main.c      ****             case OSDP_SEND:
+ 421:.\main.c      ****                 SendOSDP();
+ 1117              		.loc 1 421 0
+ 1118 00e0 FFF7FEFF 		bl	SendOSDP
+ 422:.\main.c      ****                  break;
+ 1119              		.loc 1 422 0
+ 1120 00e4 02E0     		b	.L68
+ 1121              	.L73:
+ 423:.\main.c      ****             case OSDP_READ:
+ 424:.\main.c      ****                  break;
+ 425:.\main.c      ****             case OSDP_RATE:
+ 426:.\main.c      ****                 SetOSDPRate();
+ 1122              		.loc 1 426 0
+ 1123 00e6 FFF7FEFF 		bl	SetOSDPRate
+ 427:.\main.c      ****                  break;
+ 1124              		.loc 1 427 0
+ 1125 00ea 00BF     		nop
+ 1126              	.L68:
+ 428:.\main.c      ****             default:;
+ 429:.\main.c      ****         }
+ 430:.\main.c      **** //        MyI2C_Regs.osdp_cmd = OSDP_NONE;  //clear completed command
+ 431:.\main.c      ****     }
+ 432:.\main.c      ****     
+ 433:.\main.c      ****     ReadOSDP();
+ 1127              		.loc 1 433 0
+ 1128 00ec FFF7FEFF 		bl	ReadOSDP
+ 434:.\main.c      **** 
+ 435:.\main.c      **** }
+ 1129              		.loc 1 435 0
+ 1130 00f0 0837     		adds	r7, r7, #8
+ 1131 00f2 BD46     		mov	sp, r7
+ 1132              		@ sp needed
+ 1133 00f4 80BD     		pop	{r7, pc}
+ 1134              	.L76:
+ 1135 00f6 00BF     		.align	2
+ 1136              	.L75:
+ 1137 00f8 00000000 		.word	MyI2C_Regs
+ 1138 00fc 00000000 		.word	OSDPReaderTask
+ 1139 0100 00000000 		.word	keepALiveLength
+ 1140              		.cfi_endproc
+ 1141              	.LFE72:
+ 1142              		.size	HandleOSDP, .-HandleOSDP
+ 1143              		.section	.text.main,"ax",%progbits
+ 1144              		.align	2
+ 1145              		.global	main
+ 1146              		.thumb
+ 1147              		.thumb_func
+ 1148              		.type	main, %function
+ 1149              	main:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 29
+
+
+ 1150              	.LFB73:
+ 436:.\main.c      **** 
+ 437:.\main.c      **** 
+ 438:.\main.c      **** int main()
+ 439:.\main.c      **** {
+ 1151              		.loc 1 439 0
+ 1152              		.cfi_startproc
+ 1153              		@ args = 0, pretend = 0, frame = 16
+ 1154              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1155 0000 80B5     		push	{r7, lr}
+ 1156              		.cfi_def_cfa_offset 8
+ 1157              		.cfi_offset 7, -8
+ 1158              		.cfi_offset 14, -4
+ 1159 0002 84B0     		sub	sp, sp, #16
+ 1160              		.cfi_def_cfa_offset 24
+ 1161 0004 00AF     		add	r7, sp, #0
+ 1162              		.cfi_def_cfa_register 7
+ 440:.\main.c      ****     /* Intializing the variables */
+ 441:.\main.c      ****     char cmd;
+ 442:.\main.c      ****     int wait_for_ack; // card read acknowledge
+ 443:.\main.c      ****     int ack_time_cnt; // counter for acknowledge timeout
+ 444:.\main.c      ****     
+ 445:.\main.c      ****     CyGlobalIntEnable;  /* Uncomment this line to enable global interrupts. */
+ 1163              		.loc 1 445 0
+ 1164              	@ 445 ".\main.c" 1
+ 1165 0006 62B6     		CPSIE   i
+ 1166              	@ 0 "" 2
+ 446:.\main.c      **** 
+ 447:.\main.c      **** //    /* Intializing the Timers */
+ 448:.\main.c      ****     UART_TIMER_Start();
+ 1167              		.loc 1 448 0
+ 1168              		.thumb
+ 1169 0008 FFF7FEFF 		bl	UART_TIMER_Start
+ 449:.\main.c      **** 	UART_TIMER_ISR_StartEx(UART_TIMER_ISR_Interrupt);
+ 1170              		.loc 1 449 0
+ 1171 000c 5248     		ldr	r0, .L85
+ 1172 000e FFF7FEFF 		bl	UART_TIMER_ISR_StartEx
+ 450:.\main.c      **** 
+ 451:.\main.c      ****  
+ 452:.\main.c      ****     Tamper_Timer_ISR_StartEx(Tamper_Timer_ISR_Interrupt);
+ 1173              		.loc 1 452 0
+ 1174 0012 5248     		ldr	r0, .L85+4
+ 1175 0014 FFF7FEFF 		bl	Tamper_Timer_ISR_StartEx
+ 453:.\main.c      ****     Tamper_Timer_Start();
+ 1176              		.loc 1 453 0
+ 1177 0018 FFF7FEFF 		bl	Tamper_Timer_Start
+ 454:.\main.c      ****     Timeout_Timer_Isr_StartEx(Timeout_Timer_Isr_Interrupt);
+ 1178              		.loc 1 454 0
+ 1179 001c 5048     		ldr	r0, .L85+8
+ 1180 001e FFF7FEFF 		bl	Timeout_Timer_Isr_StartEx
+ 455:.\main.c      **** 
+ 456:.\main.c      ****     /*F2F*/
+ 457:.\main.c      ****     f2f_pulsewidth = 0;
+ 1181              		.loc 1 457 0
+ 1182 0022 504B     		ldr	r3, .L85+12
+ 1183 0024 0022     		movs	r2, #0
+ 1184 0026 1A60     		str	r2, [r3]
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 30
+
+
+ 458:.\main.c      ****     isr_F2F_edge_StartEx(isr_F2F_edge_Interrupt);
+ 1185              		.loc 1 458 0
+ 1186 0028 4F48     		ldr	r0, .L85+16
+ 1187 002a FFF7FEFF 		bl	isr_F2F_edge_StartEx
+ 459:.\main.c      ****     
+ 460:.\main.c      **** 	/* Starting EZI2C */
+ 461:.\main.c      **** 	EZI2Cs_Start();
+ 1188              		.loc 1 461 0
+ 1189 002e FFF7FEFF 		bl	EZI2Cs_Start
+ 462:.\main.c      ****     EZI2Cs_SetBuffer1(sizeof(MyI2C_Regs), sizeof(MyI2C_Regs), (volatile uint8 *) &MyI2C_Regs );
+ 1190              		.loc 1 462 0
+ 1191 0032 4FF48070 		mov	r0, #256
+ 1192 0036 4FF48071 		mov	r1, #256
+ 1193 003a 4C4A     		ldr	r2, .L85+20
+ 1194 003c FFF7FEFF 		bl	EZI2Cs_SetBuffer1
+ 463:.\main.c      ****     
+ 464:.\main.c      ****     /* Starting UART for PAC & HID */
+ 465:.\main.c      ****     UART_1_Start();
+ 1195              		.loc 1 465 0
+ 1196 0040 FFF7FEFF 		bl	UART_1_Start
+ 466:.\main.c      ****     SU_Start(&s,1,PARITY_EVEN,1);
+ 1197              		.loc 1 466 0
+ 1198 0044 4A48     		ldr	r0, .L85+24
+ 1199 0046 0121     		movs	r1, #1
+ 1200 0048 0222     		movs	r2, #2
+ 1201 004a 0123     		movs	r3, #1
+ 1202 004c FFF7FEFF 		bl	SU_Start
+ 467:.\main.c      ****     
+ 468:.\main.c      ****     /* Turning off both LEDS */
+ 469:.\main.c      ****     LED_GRN_Write(1); // LED for signaling Output
+ 1203              		.loc 1 469 0
+ 1204 0050 0120     		movs	r0, #1
+ 1205 0052 FFF7FEFF 		bl	LED_GRN_Write
+ 470:.\main.c      ****     LED_YEL_Write(1); // LED for signaling Input
+ 1206              		.loc 1 470 0
+ 1207 0056 0120     		movs	r0, #1
+ 1208 0058 FFF7FEFF 		bl	LED_YEL_Write
+ 471:.\main.c      ****     LED_RED_Write(1); // turn off tamper LED
+ 1209              		.loc 1 471 0
+ 1210 005c 0120     		movs	r0, #1
+ 1211 005e FFF7FEFF 		bl	LED_RED_Write
+ 472:.\main.c      ****     
+ 473:.\main.c      ****     /* Intializing the I2C Reg value */
+ 474:.\main.c      ****     MyI2C_Regs.cmd =0;
+ 1212              		.loc 1 474 0
+ 1213 0062 424B     		ldr	r3, .L85+20
+ 1214 0064 0022     		movs	r2, #0
+ 1215 0066 9A70     		strb	r2, [r3, #2]
+ 475:.\main.c      ****     MyI2C_Regs.status =0;
+ 1216              		.loc 1 475 0
+ 1217 0068 404B     		ldr	r3, .L85+20
+ 1218 006a 0022     		movs	r2, #0
+ 1219 006c 1A70     		strb	r2, [r3]
+ 476:.\main.c      ****     MyI2C_Regs.status_in =0;
+ 1220              		.loc 1 476 0
+ 1221 006e 3F4B     		ldr	r3, .L85+20
+ 1222 0070 0022     		movs	r2, #0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 31
+
+
+ 1223 0072 5A70     		strb	r2, [r3, #1]
+ 477:.\main.c      ****     MyI2C_Regs.acs_outputs = 0;
+ 1224              		.loc 1 477 0
+ 1225 0074 3D4B     		ldr	r3, .L85+20
+ 1226 0076 0022     		movs	r2, #0
+ 1227 0078 1A71     		strb	r2, [r3, #4]
+ 478:.\main.c      ****     MyI2C_Regs.data_length = 0;
+ 1228              		.loc 1 478 0
+ 1229 007a 3C4B     		ldr	r3, .L85+20
+ 1230 007c 0022     		movs	r2, #0
+ 1231 007e DA70     		strb	r2, [r3, #3]
+ 479:.\main.c      ****     MyI2C_Regs.factory_reset = 0;
+ 1232              		.loc 1 479 0
+ 1233 0080 3A4B     		ldr	r3, .L85+20
+ 1234 0082 0022     		movs	r2, #0
+ 1235 0084 83F84220 		strb	r2, [r3, #66]
+ 480:.\main.c      ****     MyI2C_Regs.osdp_reader_cmd = OSDP_RATE;
+ 1236              		.loc 1 480 0
+ 1237 0088 384B     		ldr	r3, .L85+20
+ 1238 008a 0322     		movs	r2, #3
+ 1239 008c 83F8CD20 		strb	r2, [r3, #205]
+ 481:.\main.c      ****     MyI2C_Regs.osdp_reader_rate = 1;   
+ 1240              		.loc 1 481 0
+ 1241 0090 364B     		ldr	r3, .L85+20
+ 1242 0092 0122     		movs	r2, #1
+ 1243 0094 83F8CF20 		strb	r2, [r3, #207]
+ 482:.\main.c      ****    
+ 483:.\main.c      ****     SetHardwareVals(8);  // TAMPER_POL defaulted to 1 (normal config with active tamper = 0)
+ 1244              		.loc 1 483 0
+ 1245 0098 0820     		movs	r0, #8
+ 1246 009a FFF7FEFF 		bl	SetHardwareVals
+ 484:.\main.c      ****     
+ 485:.\main.c      ****     SetVersion();
+ 1247              		.loc 1 485 0
+ 1248 009e FFF7FEFF 		bl	SetVersion
+ 486:.\main.c      ****     
+ 487:.\main.c      ****     // initialize card reader tamper polarity bit:  1=normal
+ 488:.\main.c      ****     // This is only for TEST and must be set by webconfig/motherboard.
+ 489:.\main.c      ****     // TAMPERCR_POLARITY = 1;
+ 490:.\main.c      ****     activate_f2ftimer = 0;
+ 1249              		.loc 1 490 0
+ 1250 00a2 344B     		ldr	r3, .L85+28
+ 1251 00a4 0022     		movs	r2, #0
+ 1252 00a6 1A70     		strb	r2, [r3]
+ 491:.\main.c      ****     card_ack = 0;
+ 1253              		.loc 1 491 0
+ 1254 00a8 334B     		ldr	r3, .L85+32
+ 1255 00aa 0022     		movs	r2, #0
+ 1256 00ac 1A60     		str	r2, [r3]
+ 492:.\main.c      ****     
+ 493:.\main.c      ****     InitOSDP();
+ 1257              		.loc 1 493 0
+ 1258 00ae FFF7FEFF 		bl	InitOSDP
+ 494:.\main.c      ****     
+ 495:.\main.c      ****     /* push button */
+ 496:.\main.c      ****     buttonPressed=0;
+ 1259              		.loc 1 496 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 32
+
+
+ 1260 00b2 324B     		ldr	r3, .L85+36
+ 1261 00b4 0022     		movs	r2, #0
+ 1262 00b6 1A70     		strb	r2, [r3]
+ 497:.\main.c      ****     buttonReleased=0;
+ 1263              		.loc 1 497 0
+ 1264 00b8 314B     		ldr	r3, .L85+40
+ 1265 00ba 0022     		movs	r2, #0
+ 1266 00bc 1A70     		strb	r2, [r3]
+ 498:.\main.c      ****     buttonDuration=0;
+ 1267              		.loc 1 498 0
+ 1268 00be 314B     		ldr	r3, .L85+44
+ 1269 00c0 0022     		movs	r2, #0
+ 1270 00c2 1A60     		str	r2, [r3]
+ 499:.\main.c      ****     isr_SW_Rst_Start(); 
+ 1271              		.loc 1 499 0
+ 1272 00c4 FFF7FEFF 		bl	isr_SW_Rst_Start
+ 1273              	.L84:
+ 500:.\main.c      ****     
+ 501:.\main.c      **** 
+ 502:.\main.c      **** /* //yqh debug  
+ 503:.\main.c      **** MyI2C_Regs.cmd = 2;
+ 504:.\main.c      **** MyI2C_Regs.data_length = 10; //yqh debug
+ 505:.\main.c      **** MyI2C_Regs.osdp_reader_data_length=7;
+ 506:.\main.c      **** MyI2C_Regs.osdp_reader_rate = 1;   
+ 507:.\main.c      **** MyI2C_Regs.osdp_reader_buffer[0]=0x53;
+ 508:.\main.c      **** MyI2C_Regs.osdp_reader_buffer[1]=0x00;
+ 509:.\main.c      **** MyI2C_Regs.osdp_reader_buffer[2]=0x07;
+ 510:.\main.c      **** MyI2C_Regs.osdp_reader_buffer[3]=0x00;
+ 511:.\main.c      **** MyI2C_Regs.osdp_reader_buffer[4]=0x03;
+ 512:.\main.c      **** MyI2C_Regs.osdp_reader_buffer[5]=0x60;
+ 513:.\main.c      **** MyI2C_Regs.osdp_reader_buffer[6]=0x43;
+ 514:.\main.c      **** SetOSDPKeepALive();
+ 515:.\main.c      **** */
+ 516:.\main.c      ****   
+ 517:.\main.c      ****     
+ 518:.\main.c      **** 
+ 519:.\main.c      ****     while(1)
+ 520:.\main.c      ****     {
+ 521:.\main.c      ****     //Infinite While Loop for handling device req
+ 522:.\main.c      ****         wait_for_ack = 0;
+ 1274              		.loc 1 522 0
+ 1275 00c8 0023     		movs	r3, #0
+ 1276 00ca FB60     		str	r3, [r7, #12]
+ 523:.\main.c      ****         ack_time_cnt = 0;
+ 1277              		.loc 1 523 0
+ 1278 00cc 0023     		movs	r3, #0
+ 1279 00ce BB60     		str	r3, [r7, #8]
+ 524:.\main.c      ****         
+ 525:.\main.c      ****         
+ 526:.\main.c      ****         cmd = MyI2C_Regs.cmd;   // load command
+ 1280              		.loc 1 526 0
+ 1281 00d0 264B     		ldr	r3, .L85+20
+ 1282 00d2 9B78     		ldrb	r3, [r3, #2]
+ 1283 00d4 FB71     		strb	r3, [r7, #7]
+ 527:.\main.c      ****         
+ 528:.\main.c      ****         if (cmd !=0)  // command exists if register not 0
+ 1284              		.loc 1 528 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 33
+
+
+ 1285 00d6 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1286 00d8 002B     		cmp	r3, #0
+ 1287 00da 06D0     		beq	.L78
+ 529:.\main.c      ****         {
+ 530:.\main.c      ****   		    if (cmd == CMD_READ_CARD) {wait_for_ack = 1;}   // flag to trigger wait for ack from mother
+ 1288              		.loc 1 530 0
+ 1289 00dc FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 1290 00de 022B     		cmp	r3, #2
+ 1291 00e0 01D1     		bne	.L79
+ 1292              		.loc 1 530 0 is_stmt 0 discriminator 1
+ 1293 00e2 0123     		movs	r3, #1
+ 1294 00e4 FB60     		str	r3, [r7, #12]
+ 1295              	.L79:
+ 531:.\main.c      ****             HandleCommand();
+ 1296              		.loc 1 531 0 is_stmt 1
+ 1297 00e6 FFF7FEFF 		bl	HandleCommand
+ 1298              	.L78:
+ 532:.\main.c      ****         }
+ 533:.\main.c      ****         
+ 534:.\main.c      ****         HandleOSDP();
+ 1299              		.loc 1 534 0
+ 1300 00ea FFF7FEFF 		bl	HandleOSDP
+ 535:.\main.c      ****         
+ 536:.\main.c      ****         if ((wait_for_ack == 1) & (card_in_buf == 1))  // card read requires ack from motherboard
+ 1301              		.loc 1 536 0
+ 1302 00ee FB68     		ldr	r3, [r7, #12]
+ 1303 00f0 012B     		cmp	r3, #1
+ 1304 00f2 14BF     		ite	ne
+ 1305 00f4 0023     		movne	r3, #0
+ 1306 00f6 0123     		moveq	r3, #1
+ 1307 00f8 DAB2     		uxtb	r2, r3
+ 1308 00fa 234B     		ldr	r3, .L85+48
+ 1309 00fc 1B68     		ldr	r3, [r3]
+ 1310 00fe 012B     		cmp	r3, #1
+ 1311 0100 14BF     		ite	ne
+ 1312 0102 0023     		movne	r3, #0
+ 1313 0104 0123     		moveq	r3, #1
+ 1314 0106 DBB2     		uxtb	r3, r3
+ 1315 0108 1340     		ands	r3, r3, r2
+ 1316 010a DBB2     		uxtb	r3, r3
+ 1317 010c 002B     		cmp	r3, #0
+ 1318 010e 1FD0     		beq	.L80
+ 537:.\main.c      ****         {
+ 538:.\main.c      ****             
+ 539:.\main.c      ****             while (card_ack == 0)   // waiting for card read acknowledge here
+ 1319              		.loc 1 539 0
+ 1320 0110 15E0     		b	.L81
+ 1321              	.L83:
+ 540:.\main.c      ****             {
+ 541:.\main.c      ****                 CyDelay(10);    //10ms
+ 1322              		.loc 1 541 0
+ 1323 0112 0A20     		movs	r0, #10
+ 1324 0114 FFF7FEFF 		bl	CyDelay
+ 542:.\main.c      ****                 ack_time_cnt++;  // increment time counter every 10ms while waiting for ack
+ 1325              		.loc 1 542 0
+ 1326 0118 BB68     		ldr	r3, [r7, #8]
+ 1327 011a 0133     		adds	r3, r3, #1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 34
+
+
+ 1328 011c BB60     		str	r3, [r7, #8]
+ 543:.\main.c      ****                 if (ack_time_cnt >= 500)    // if 5000 ms, re-notify and break.
+ 1329              		.loc 1 543 0
+ 1330 011e BB68     		ldr	r3, [r7, #8]
+ 1331 0120 B3F5FA7F 		cmp	r3, #500
+ 1332 0124 0BDB     		blt	.L81
+ 544:.\main.c      ****                 {
+ 545:.\main.c      ****                     
+ 546:.\main.c      ****                     MyI2C_Regs.status |= STAT_CHANGE | STAT_CARD_IN ;   // if timeout, set status b
+ 1333              		.loc 1 546 0
+ 1334 0126 114B     		ldr	r3, .L85+20
+ 1335 0128 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1336 012a 43F00303 		orr	r3, r3, #3
+ 1337 012e DAB2     		uxtb	r2, r3
+ 1338 0130 0E4B     		ldr	r3, .L85+20
+ 1339 0132 1A70     		strb	r2, [r3]
+ 547:.\main.c      ****                     wait_for_ack = 0;
+ 1340              		.loc 1 547 0
+ 1341 0134 0023     		movs	r3, #0
+ 1342 0136 FB60     		str	r3, [r7, #12]
+ 548:.\main.c      ****                     ack_time_cnt = 0;
+ 1343              		.loc 1 548 0
+ 1344 0138 0023     		movs	r3, #0
+ 1345 013a BB60     		str	r3, [r7, #8]
+ 549:.\main.c      ****                     break;
+ 1346              		.loc 1 549 0
+ 1347 013c 03E0     		b	.L82
+ 1348              	.L81:
+ 539:.\main.c      ****             while (card_ack == 0)   // waiting for card read acknowledge here
+ 1349              		.loc 1 539 0 discriminator 1
+ 1350 013e 0E4B     		ldr	r3, .L85+32
+ 1351 0140 1B68     		ldr	r3, [r3]
+ 1352 0142 002B     		cmp	r3, #0
+ 1353 0144 E5D0     		beq	.L83
+ 1354              	.L82:
+ 550:.\main.c      ****                 }
+ 551:.\main.c      ****             }
+ 552:.\main.c      ****             card_in_buf = 0;
+ 1355              		.loc 1 552 0
+ 1356 0146 104B     		ldr	r3, .L85+48
+ 1357 0148 0022     		movs	r2, #0
+ 1358 014a 1A60     		str	r2, [r3]
+ 553:.\main.c      ****             wait_for_ack = 0;
+ 1359              		.loc 1 553 0
+ 1360 014c 0023     		movs	r3, #0
+ 1361 014e FB60     		str	r3, [r7, #12]
+ 1362              	.L80:
+ 554:.\main.c      ****         } 
+ 555:.\main.c      **** 
+ 556:.\main.c      ****         CyDelay(50);    //up to 50ms Sec delay for sending out signals. 
+ 1363              		.loc 1 556 0
+ 1364 0150 3220     		movs	r0, #50
+ 1365 0152 FFF7FEFF 		bl	CyDelay
+ 557:.\main.c      ****  
+ 558:.\main.c      ****     } //while
+ 1366              		.loc 1 558 0
+ 1367 0156 B7E7     		b	.L84
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 35
+
+
+ 1368              	.L86:
+ 1369              		.align	2
+ 1370              	.L85:
+ 1371 0158 00000000 		.word	UART_TIMER_ISR_Interrupt
+ 1372 015c 00000000 		.word	Tamper_Timer_ISR_Interrupt
+ 1373 0160 00000000 		.word	Timeout_Timer_Isr_Interrupt
+ 1374 0164 00000000 		.word	f2f_pulsewidth
+ 1375 0168 00000000 		.word	isr_F2F_edge_Interrupt
+ 1376 016c 00000000 		.word	MyI2C_Regs
+ 1377 0170 00000000 		.word	s
+ 1378 0174 00000000 		.word	activate_f2ftimer
+ 1379 0178 00000000 		.word	card_ack
+ 1380 017c 00000000 		.word	buttonPressed
+ 1381 0180 00000000 		.word	buttonReleased
+ 1382 0184 00000000 		.word	buttonDuration
+ 1383 0188 00000000 		.word	card_in_buf
+ 1384              		.cfi_endproc
+ 1385              	.LFE73:
+ 1386              		.size	main, .-main
+ 1387              		.text
+ 1388              	.Letext0:
+ 1389              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 1390              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 1391              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 1392              		.file 5 ".\\softuart.h"
+ 1393              		.file 6 ".\\system.h"
+ 1394              		.file 7 "Generated_Source\\PSoC5/core_cm3.h"
+ 1395              		.section	.debug_info,"",%progbits
+ 1396              	.Ldebug_info0:
+ 1397 0000 7B050000 		.4byte	0x57b
+ 1398 0004 0400     		.2byte	0x4
+ 1399 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 1400 000a 04       		.byte	0x4
+ 1401 000b 01       		.uleb128 0x1
+ 1402 000c 46020000 		.4byte	.LASF83
+ 1403 0010 01       		.byte	0x1
+ 1404 0011 87030000 		.4byte	.LASF84
+ 1405 0015 D6030000 		.4byte	.LASF85
+ 1406 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 1407 001d 00000000 		.4byte	0
+ 1408 0021 00000000 		.4byte	.Ldebug_line0
+ 1409 0025 02       		.uleb128 0x2
+ 1410 0026 01       		.byte	0x1
+ 1411 0027 06       		.byte	0x6
+ 1412 0028 E9010000 		.4byte	.LASF0
+ 1413 002c 02       		.uleb128 0x2
+ 1414 002d 01       		.byte	0x1
+ 1415 002e 08       		.byte	0x8
+ 1416 002f DB010000 		.4byte	.LASF1
+ 1417 0033 02       		.uleb128 0x2
+ 1418 0034 02       		.byte	0x2
+ 1419 0035 05       		.byte	0x5
+ 1420 0036 B7000000 		.4byte	.LASF2
+ 1421 003a 02       		.uleb128 0x2
+ 1422 003b 02       		.byte	0x2
+ 1423 003c 07       		.byte	0x7
+ 1424 003d 3A030000 		.4byte	.LASF3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 36
+
+
+ 1425 0041 03       		.uleb128 0x3
+ 1426 0042 90030000 		.4byte	.LASF9
+ 1427 0046 02       		.byte	0x2
+ 1428 0047 37       		.byte	0x37
+ 1429 0048 4C000000 		.4byte	0x4c
+ 1430 004c 02       		.uleb128 0x2
+ 1431 004d 04       		.byte	0x4
+ 1432 004e 05       		.byte	0x5
+ 1433 004f C1000000 		.4byte	.LASF4
+ 1434 0053 02       		.uleb128 0x2
+ 1435 0054 04       		.byte	0x4
+ 1436 0055 07       		.byte	0x7
+ 1437 0056 29020000 		.4byte	.LASF5
+ 1438 005a 02       		.uleb128 0x2
+ 1439 005b 08       		.byte	0x8
+ 1440 005c 05       		.byte	0x5
+ 1441 005d 8E000000 		.4byte	.LASF6
+ 1442 0061 02       		.uleb128 0x2
+ 1443 0062 08       		.byte	0x8
+ 1444 0063 07       		.byte	0x7
+ 1445 0064 FB010000 		.4byte	.LASF7
+ 1446 0068 04       		.uleb128 0x4
+ 1447 0069 04       		.byte	0x4
+ 1448 006a 05       		.byte	0x5
+ 1449 006b 696E7400 		.ascii	"int\000"
+ 1450 006f 02       		.uleb128 0x2
+ 1451 0070 04       		.byte	0x4
+ 1452 0071 07       		.byte	0x7
+ 1453 0072 12020000 		.4byte	.LASF8
+ 1454 0076 03       		.uleb128 0x3
+ 1455 0077 F3020000 		.4byte	.LASF10
+ 1456 007b 03       		.byte	0x3
+ 1457 007c 41       		.byte	0x41
+ 1458 007d 41000000 		.4byte	0x41
+ 1459 0081 03       		.uleb128 0x3
+ 1460 0082 FB000000 		.4byte	.LASF11
+ 1461 0086 04       		.byte	0x4
+ 1462 0087 B3       		.byte	0xb3
+ 1463 0088 2C000000 		.4byte	0x2c
+ 1464 008c 03       		.uleb128 0x3
+ 1465 008d D9000000 		.4byte	.LASF12
+ 1466 0091 04       		.byte	0x4
+ 1467 0092 B4       		.byte	0xb4
+ 1468 0093 3A000000 		.4byte	0x3a
+ 1469 0097 02       		.uleb128 0x2
+ 1470 0098 04       		.byte	0x4
+ 1471 0099 04       		.byte	0x4
+ 1472 009a 09010000 		.4byte	.LASF13
+ 1473 009e 02       		.uleb128 0x2
+ 1474 009f 08       		.byte	0x8
+ 1475 00a0 04       		.byte	0x4
+ 1476 00a1 3D040000 		.4byte	.LASF14
+ 1477 00a5 02       		.uleb128 0x2
+ 1478 00a6 01       		.byte	0x1
+ 1479 00a7 08       		.byte	0x8
+ 1480 00a8 D9020000 		.4byte	.LASF15
+ 1481 00ac 05       		.uleb128 0x5
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 37
+
+
+ 1482 00ad 8C000000 		.4byte	0x8c
+ 1483 00b1 02       		.uleb128 0x2
+ 1484 00b2 04       		.byte	0x4
+ 1485 00b3 07       		.byte	0x7
+ 1486 00b4 33000000 		.4byte	.LASF16
+ 1487 00b8 06       		.uleb128 0x6
+ 1488 00b9 28       		.byte	0x28
+ 1489 00ba 05       		.byte	0x5
+ 1490 00bb 0D       		.byte	0xd
+ 1491 00bc 51010000 		.4byte	0x151
+ 1492 00c0 07       		.uleb128 0x7
+ 1493 00c1 C5010000 		.4byte	.LASF17
+ 1494 00c5 05       		.byte	0x5
+ 1495 00c6 0F       		.byte	0xf
+ 1496 00c7 68000000 		.4byte	0x68
+ 1497 00cb 00       		.byte	0
+ 1498 00cc 07       		.uleb128 0x7
+ 1499 00cd CA000000 		.4byte	.LASF18
+ 1500 00d1 05       		.byte	0x5
+ 1501 00d2 10       		.byte	0x10
+ 1502 00d3 68000000 		.4byte	0x68
+ 1503 00d7 04       		.byte	0x4
+ 1504 00d8 07       		.uleb128 0x7
+ 1505 00d9 1F020000 		.4byte	.LASF19
+ 1506 00dd 05       		.byte	0x5
+ 1507 00de 11       		.byte	0x11
+ 1508 00df 68000000 		.4byte	0x68
+ 1509 00e3 08       		.byte	0x8
+ 1510 00e4 07       		.uleb128 0x7
+ 1511 00e5 27010000 		.4byte	.LASF20
+ 1512 00e9 05       		.byte	0x5
+ 1513 00ea 12       		.byte	0x12
+ 1514 00eb 68000000 		.4byte	0x68
+ 1515 00ef 0C       		.byte	0xc
+ 1516 00f0 07       		.uleb128 0x7
+ 1517 00f1 19030000 		.4byte	.LASF21
+ 1518 00f5 05       		.byte	0x5
+ 1519 00f6 13       		.byte	0x13
+ 1520 00f7 8C000000 		.4byte	0x8c
+ 1521 00fb 10       		.byte	0x10
+ 1522 00fc 07       		.uleb128 0x7
+ 1523 00fd 75010000 		.4byte	.LASF22
+ 1524 0101 05       		.byte	0x5
+ 1525 0102 14       		.byte	0x14
+ 1526 0103 AC000000 		.4byte	0xac
+ 1527 0107 12       		.byte	0x12
+ 1528 0108 07       		.uleb128 0x7
+ 1529 0109 CA020000 		.4byte	.LASF23
+ 1530 010d 05       		.byte	0x5
+ 1531 010e 15       		.byte	0x15
+ 1532 010f AC000000 		.4byte	0xac
+ 1533 0113 14       		.byte	0x14
+ 1534 0114 07       		.uleb128 0x7
+ 1535 0115 D1000000 		.4byte	.LASF24
+ 1536 0119 05       		.byte	0x5
+ 1537 011a 16       		.byte	0x16
+ 1538 011b 8C000000 		.4byte	0x8c
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 38
+
+
+ 1539 011f 16       		.byte	0x16
+ 1540 0120 07       		.uleb128 0x7
+ 1541 0121 F5010000 		.4byte	.LASF25
+ 1542 0125 05       		.byte	0x5
+ 1543 0126 17       		.byte	0x17
+ 1544 0127 51010000 		.4byte	0x151
+ 1545 012b 18       		.byte	0x18
+ 1546 012c 07       		.uleb128 0x7
+ 1547 012d 81040000 		.4byte	.LASF26
+ 1548 0131 05       		.byte	0x5
+ 1549 0132 18       		.byte	0x18
+ 1550 0133 51010000 		.4byte	0x151
+ 1551 0137 1C       		.byte	0x1c
+ 1552 0138 07       		.uleb128 0x7
+ 1553 0139 62010000 		.4byte	.LASF27
+ 1554 013d 05       		.byte	0x5
+ 1555 013e 19       		.byte	0x19
+ 1556 013f 51010000 		.4byte	0x151
+ 1557 0143 20       		.byte	0x20
+ 1558 0144 07       		.uleb128 0x7
+ 1559 0145 C2020000 		.4byte	.LASF28
+ 1560 0149 05       		.byte	0x5
+ 1561 014a 1A       		.byte	0x1a
+ 1562 014b 51010000 		.4byte	0x151
+ 1563 014f 24       		.byte	0x24
+ 1564 0150 00       		.byte	0
+ 1565 0151 05       		.uleb128 0x5
+ 1566 0152 68000000 		.4byte	0x68
+ 1567 0156 03       		.uleb128 0x3
+ 1568 0157 9C000000 		.4byte	.LASF29
+ 1569 015b 05       		.byte	0x5
+ 1570 015c 1B       		.byte	0x1b
+ 1571 015d B8000000 		.4byte	0xb8
+ 1572 0161 08       		.uleb128 0x8
+ 1573 0162 62030000 		.4byte	.LASF49
+ 1574 0166 0001     		.2byte	0x100
+ 1575 0168 06       		.byte	0x6
+ 1576 0169 18       		.byte	0x18
+ 1577 016a 5F020000 		.4byte	0x25f
+ 1578 016e 07       		.uleb128 0x7
+ 1579 016f D2020000 		.4byte	.LASF30
+ 1580 0173 06       		.byte	0x6
+ 1581 0174 19       		.byte	0x19
+ 1582 0175 A5000000 		.4byte	0xa5
+ 1583 0179 00       		.byte	0
+ 1584 017a 07       		.uleb128 0x7
+ 1585 017b 58030000 		.4byte	.LASF31
+ 1586 017f 06       		.byte	0x6
+ 1587 0180 1A       		.byte	0x1a
+ 1588 0181 A5000000 		.4byte	0xa5
+ 1589 0185 01       		.byte	0x1
+ 1590 0186 09       		.uleb128 0x9
+ 1591 0187 636D6400 		.ascii	"cmd\000"
+ 1592 018b 06       		.byte	0x6
+ 1593 018c 1B       		.byte	0x1b
+ 1594 018d A5000000 		.4byte	0xa5
+ 1595 0191 02       		.byte	0x2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 39
+
+
+ 1596 0192 07       		.uleb128 0x7
+ 1597 0193 76000000 		.4byte	.LASF32
+ 1598 0197 06       		.byte	0x6
+ 1599 0198 1C       		.byte	0x1c
+ 1600 0199 2C000000 		.4byte	0x2c
+ 1601 019d 03       		.byte	0x3
+ 1602 019e 07       		.uleb128 0x7
+ 1603 019f 1B010000 		.4byte	.LASF33
+ 1604 01a3 06       		.byte	0x6
+ 1605 01a4 1D       		.byte	0x1d
+ 1606 01a5 A5000000 		.4byte	0xa5
+ 1607 01a9 04       		.byte	0x4
+ 1608 01aa 07       		.uleb128 0x7
+ 1609 01ab 3B020000 		.4byte	.LASF34
+ 1610 01af 06       		.byte	0x6
+ 1611 01b0 1E       		.byte	0x1e
+ 1612 01b1 A5000000 		.4byte	0xa5
+ 1613 01b5 05       		.byte	0x5
+ 1614 01b6 07       		.uleb128 0x7
+ 1615 01b7 33030000 		.4byte	.LASF35
+ 1616 01bb 06       		.byte	0x6
+ 1617 01bc 1F       		.byte	0x1f
+ 1618 01bd 5F020000 		.4byte	0x25f
+ 1619 01c1 06       		.byte	0x6
+ 1620 01c2 07       		.uleb128 0x7
+ 1621 01c3 6F010000 		.4byte	.LASF36
+ 1622 01c7 06       		.byte	0x6
+ 1623 01c8 20       		.byte	0x20
+ 1624 01c9 6F020000 		.4byte	0x26f
+ 1625 01cd 1A       		.byte	0x1a
+ 1626 01ce 07       		.uleb128 0x7
+ 1627 01cf 68000000 		.4byte	.LASF37
+ 1628 01d3 06       		.byte	0x6
+ 1629 01d4 21       		.byte	0x21
+ 1630 01d5 A5000000 		.4byte	0xa5
+ 1631 01d9 42       		.byte	0x42
+ 1632 01da 07       		.uleb128 0x7
+ 1633 01db C1030000 		.4byte	.LASF38
+ 1634 01df 06       		.byte	0x6
+ 1635 01e0 22       		.byte	0x22
+ 1636 01e1 7F020000 		.4byte	0x27f
+ 1637 01e5 43       		.byte	0x43
+ 1638 01e6 07       		.uleb128 0x7
+ 1639 01e7 5E040000 		.4byte	.LASF39
+ 1640 01eb 06       		.byte	0x6
+ 1641 01ec 23       		.byte	0x23
+ 1642 01ed 7F020000 		.4byte	0x27f
+ 1643 01f1 46       		.byte	0x46
+ 1644 01f2 07       		.uleb128 0x7
+ 1645 01f3 78040000 		.4byte	.LASF40
+ 1646 01f7 06       		.byte	0x6
+ 1647 01f8 24       		.byte	0x24
+ 1648 01f9 2C000000 		.4byte	0x2c
+ 1649 01fd 49       		.byte	0x49
+ 1650 01fe 07       		.uleb128 0x7
+ 1651 01ff 00000000 		.4byte	.LASF41
+ 1652 0203 06       		.byte	0x6
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 40
+
+
+ 1653 0204 25       		.byte	0x25
+ 1654 0205 2C000000 		.4byte	0x2c
+ 1655 0209 4A       		.byte	0x4a
+ 1656 020a 07       		.uleb128 0x7
+ 1657 020b CA010000 		.4byte	.LASF42
+ 1658 020f 06       		.byte	0x6
+ 1659 0210 26       		.byte	0x26
+ 1660 0211 2C000000 		.4byte	0x2c
+ 1661 0215 4B       		.byte	0x4b
+ 1662 0216 07       		.uleb128 0x7
+ 1663 0217 4E000000 		.4byte	.LASF43
+ 1664 021b 06       		.byte	0x6
+ 1665 021c 27       		.byte	0x27
+ 1666 021d 2C000000 		.4byte	0x2c
+ 1667 0221 4C       		.byte	0x4c
+ 1668 0222 07       		.uleb128 0x7
+ 1669 0223 82000000 		.4byte	.LASF44
+ 1670 0227 06       		.byte	0x6
+ 1671 0228 28       		.byte	0x28
+ 1672 0229 8F020000 		.4byte	0x28f
+ 1673 022d 4D       		.byte	0x4d
+ 1674 022e 07       		.uleb128 0x7
+ 1675 022f 58000000 		.4byte	.LASF45
+ 1676 0233 06       		.byte	0x6
+ 1677 0234 29       		.byte	0x29
+ 1678 0235 2C000000 		.4byte	0x2c
+ 1679 0239 CD       		.byte	0xcd
+ 1680 023a 07       		.uleb128 0x7
+ 1681 023b 2C010000 		.4byte	.LASF46
+ 1682 023f 06       		.byte	0x6
+ 1683 0240 2A       		.byte	0x2a
+ 1684 0241 2C000000 		.4byte	0x2c
+ 1685 0245 CE       		.byte	0xce
+ 1686 0246 07       		.uleb128 0x7
+ 1687 0247 8B010000 		.4byte	.LASF47
+ 1688 024b 06       		.byte	0x6
+ 1689 024c 2B       		.byte	0x2b
+ 1690 024d 2C000000 		.4byte	0x2c
+ 1691 0251 CF       		.byte	0xcf
+ 1692 0252 07       		.uleb128 0x7
+ 1693 0253 A8010000 		.4byte	.LASF48
+ 1694 0257 06       		.byte	0x6
+ 1695 0258 2C       		.byte	0x2c
+ 1696 0259 9F020000 		.4byte	0x29f
+ 1697 025d D0       		.byte	0xd0
+ 1698 025e 00       		.byte	0
+ 1699 025f 0A       		.uleb128 0xa
+ 1700 0260 2C000000 		.4byte	0x2c
+ 1701 0264 6F020000 		.4byte	0x26f
+ 1702 0268 0B       		.uleb128 0xb
+ 1703 0269 B1000000 		.4byte	0xb1
+ 1704 026d 13       		.byte	0x13
+ 1705 026e 00       		.byte	0
+ 1706 026f 0A       		.uleb128 0xa
+ 1707 0270 A5000000 		.4byte	0xa5
+ 1708 0274 7F020000 		.4byte	0x27f
+ 1709 0278 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 41
+
+
+ 1710 0279 B1000000 		.4byte	0xb1
+ 1711 027d 27       		.byte	0x27
+ 1712 027e 00       		.byte	0
+ 1713 027f 0A       		.uleb128 0xa
+ 1714 0280 A5000000 		.4byte	0xa5
+ 1715 0284 8F020000 		.4byte	0x28f
+ 1716 0288 0B       		.uleb128 0xb
+ 1717 0289 B1000000 		.4byte	0xb1
+ 1718 028d 02       		.byte	0x2
+ 1719 028e 00       		.byte	0
+ 1720 028f 0A       		.uleb128 0xa
+ 1721 0290 2C000000 		.4byte	0x2c
+ 1722 0294 9F020000 		.4byte	0x29f
+ 1723 0298 0B       		.uleb128 0xb
+ 1724 0299 B1000000 		.4byte	0xb1
+ 1725 029d 7F       		.byte	0x7f
+ 1726 029e 00       		.byte	0
+ 1727 029f 0A       		.uleb128 0xa
+ 1728 02a0 2C000000 		.4byte	0x2c
+ 1729 02a4 AF020000 		.4byte	0x2af
+ 1730 02a8 0B       		.uleb128 0xb
+ 1731 02a9 B1000000 		.4byte	0xb1
+ 1732 02ad 2F       		.byte	0x2f
+ 1733 02ae 00       		.byte	0
+ 1734 02af 03       		.uleb128 0x3
+ 1735 02b0 62030000 		.4byte	.LASF49
+ 1736 02b4 06       		.byte	0x6
+ 1737 02b5 2D       		.byte	0x2d
+ 1738 02b6 61010000 		.4byte	0x161
+ 1739 02ba 0C       		.uleb128 0xc
+ 1740 02bb 4D030000 		.4byte	.LASF53
+ 1741 02bf 01       		.byte	0x1
+ 1742 02c0 33       		.byte	0x33
+ 1743 02c1 00000000 		.4byte	.LFB63
+ 1744 02c5 40000000 		.4byte	.LFE63-.LFB63
+ 1745 02c9 01       		.uleb128 0x1
+ 1746 02ca 9C       		.byte	0x9c
+ 1747 02cb 0D       		.uleb128 0xd
+ 1748 02cc 0C000000 		.4byte	.LASF50
+ 1749 02d0 01       		.byte	0x1
+ 1750 02d1 43       		.byte	0x43
+ 1751 02d2 00000000 		.4byte	.LFB64
+ 1752 02d6 3A000000 		.4byte	.LFE64-.LFB64
+ 1753 02da 01       		.uleb128 0x1
+ 1754 02db 9C       		.byte	0x9c
+ 1755 02dc EF020000 		.4byte	0x2ef
+ 1756 02e0 0E       		.uleb128 0xe
+ 1757 02e1 AD000000 		.4byte	.LASF52
+ 1758 02e5 01       		.byte	0x1
+ 1759 02e6 43       		.byte	0x43
+ 1760 02e7 68000000 		.4byte	0x68
+ 1761 02eb 02       		.uleb128 0x2
+ 1762 02ec 91       		.byte	0x91
+ 1763 02ed 74       		.sleb128 -12
+ 1764 02ee 00       		.byte	0
+ 1765 02ef 0D       		.uleb128 0xd
+ 1766 02f0 1A000000 		.4byte	.LASF51
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 42
+
+
+ 1767 02f4 01       		.byte	0x1
+ 1768 02f5 55       		.byte	0x55
+ 1769 02f6 00000000 		.4byte	.LFB65
+ 1770 02fa 40000000 		.4byte	.LFE65-.LFB65
+ 1771 02fe 01       		.uleb128 0x1
+ 1772 02ff 9C       		.byte	0x9c
+ 1773 0300 13030000 		.4byte	0x313
+ 1774 0304 0E       		.uleb128 0xe
+ 1775 0305 AD000000 		.4byte	.LASF52
+ 1776 0309 01       		.byte	0x1
+ 1777 030a 55       		.byte	0x55
+ 1778 030b 68000000 		.4byte	0x68
+ 1779 030f 02       		.uleb128 0x2
+ 1780 0310 91       		.byte	0x91
+ 1781 0311 74       		.sleb128 -12
+ 1782 0312 00       		.byte	0
+ 1783 0313 0C       		.uleb128 0xc
+ 1784 0314 CC030000 		.4byte	.LASF54
+ 1785 0318 01       		.byte	0x1
+ 1786 0319 67       		.byte	0x67
+ 1787 031a 00000000 		.4byte	.LFB66
+ 1788 031e 58000000 		.4byte	.LFE66-.LFB66
+ 1789 0322 01       		.uleb128 0x1
+ 1790 0323 9C       		.byte	0x9c
+ 1791 0324 0F       		.uleb128 0xf
+ 1792 0325 9C010000 		.4byte	.LASF56
+ 1793 0329 01       		.byte	0x1
+ 1794 032a 78       		.byte	0x78
+ 1795 032b 00000000 		.4byte	.LFB67
+ 1796 032f 30000000 		.4byte	.LFE67-.LFB67
+ 1797 0333 01       		.uleb128 0x1
+ 1798 0334 9C       		.byte	0x9c
+ 1799 0335 46030000 		.4byte	0x346
+ 1800 0339 10       		.uleb128 0x10
+ 1801 033a 6900     		.ascii	"i\000"
+ 1802 033c 01       		.byte	0x1
+ 1803 033d 7A       		.byte	0x7a
+ 1804 033e 68000000 		.4byte	0x68
+ 1805 0342 02       		.uleb128 0x2
+ 1806 0343 91       		.byte	0x91
+ 1807 0344 74       		.sleb128 -12
+ 1808 0345 00       		.byte	0
+ 1809 0346 11       		.uleb128 0x11
+ 1810 0347 2F040000 		.4byte	.LASF55
+ 1811 034b 01       		.byte	0x1
+ 1812 034c 89       		.byte	0x89
+ 1813 034d 00000000 		.4byte	.LFB68
+ 1814 0351 58000000 		.4byte	.LFE68-.LFB68
+ 1815 0355 01       		.uleb128 0x1
+ 1816 0356 9C       		.byte	0x9c
+ 1817 0357 12       		.uleb128 0x12
+ 1818 0358 01010000 		.4byte	.LASF57
+ 1819 035c 01       		.byte	0x1
+ 1820 035d 9C       		.byte	0x9c
+ 1821 035e 00000000 		.4byte	.LFB69
+ 1822 0362 64010000 		.4byte	.LFE69-.LFB69
+ 1823 0366 01       		.uleb128 0x1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 43
+
+
+ 1824 0367 9C       		.byte	0x9c
+ 1825 0368 CB030000 		.4byte	0x3cb
+ 1826 036c 13       		.uleb128 0x13
+ 1827 036d DE020000 		.4byte	.LASF58
+ 1828 0371 01       		.byte	0x1
+ 1829 0372 A0       		.byte	0xa0
+ 1830 0373 CB030000 		.4byte	0x3cb
+ 1831 0377 02       		.uleb128 0x2
+ 1832 0378 91       		.byte	0x91
+ 1833 0379 4C       		.sleb128 -52
+ 1834 037a 10       		.uleb128 0x10
+ 1835 037b 746D7000 		.ascii	"tmp\000"
+ 1836 037f 01       		.byte	0x1
+ 1837 0380 A1       		.byte	0xa1
+ 1838 0381 A5000000 		.4byte	0xa5
+ 1839 0385 02       		.uleb128 0x2
+ 1840 0386 91       		.byte	0x91
+ 1841 0387 63       		.sleb128 -29
+ 1842 0388 10       		.uleb128 0x10
+ 1843 0389 6900     		.ascii	"i\000"
+ 1844 038b 01       		.byte	0x1
+ 1845 038c A2       		.byte	0xa2
+ 1846 038d 68000000 		.4byte	0x68
+ 1847 0391 02       		.uleb128 0x2
+ 1848 0392 91       		.byte	0x91
+ 1849 0393 74       		.sleb128 -12
+ 1850 0394 10       		.uleb128 0x10
+ 1851 0395 6A00     		.ascii	"j\000"
+ 1852 0397 01       		.byte	0x1
+ 1853 0398 A2       		.byte	0xa2
+ 1854 0399 68000000 		.4byte	0x68
+ 1855 039d 02       		.uleb128 0x2
+ 1856 039e 91       		.byte	0x91
+ 1857 039f 70       		.sleb128 -16
+ 1858 03a0 13       		.uleb128 0x13
+ 1859 03a1 8E040000 		.4byte	.LASF59
+ 1860 03a5 01       		.byte	0x1
+ 1861 03a6 A3       		.byte	0xa3
+ 1862 03a7 68000000 		.4byte	0x68
+ 1863 03ab 02       		.uleb128 0x2
+ 1864 03ac 91       		.byte	0x91
+ 1865 03ad 6C       		.sleb128 -20
+ 1866 03ae 13       		.uleb128 0x13
+ 1867 03af 2C030000 		.4byte	.LASF60
+ 1868 03b3 01       		.byte	0x1
+ 1869 03b4 A4       		.byte	0xa4
+ 1870 03b5 68000000 		.4byte	0x68
+ 1871 03b9 02       		.uleb128 0x2
+ 1872 03ba 91       		.byte	0x91
+ 1873 03bb 68       		.sleb128 -24
+ 1874 03bc 13       		.uleb128 0x13
+ 1875 03bd ED020000 		.4byte	.LASF61
+ 1876 03c1 01       		.byte	0x1
+ 1877 03c2 A5       		.byte	0xa5
+ 1878 03c3 68000000 		.4byte	0x68
+ 1879 03c7 02       		.uleb128 0x2
+ 1880 03c8 91       		.byte	0x91
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 44
+
+
+ 1881 03c9 64       		.sleb128 -28
+ 1882 03ca 00       		.byte	0
+ 1883 03cb 0A       		.uleb128 0xa
+ 1884 03cc A5000000 		.4byte	0xa5
+ 1885 03d0 DB030000 		.4byte	0x3db
+ 1886 03d4 0B       		.uleb128 0xb
+ 1887 03d5 B1000000 		.4byte	0xb1
+ 1888 03d9 13       		.byte	0x13
+ 1889 03da 00       		.byte	0
+ 1890 03db 11       		.uleb128 0x11
+ 1891 03dc F2000000 		.4byte	.LASF62
+ 1892 03e0 01       		.byte	0x1
+ 1893 03e1 CA       		.byte	0xca
+ 1894 03e2 00000000 		.4byte	.LFB70
+ 1895 03e6 38000000 		.4byte	.LFE70-.LFB70
+ 1896 03ea 01       		.uleb128 0x1
+ 1897 03eb 9C       		.byte	0x9c
+ 1898 03ec 12       		.uleb128 0x12
+ 1899 03ed 7D010000 		.4byte	.LASF63
+ 1900 03f1 01       		.byte	0x1
+ 1901 03f2 F9       		.byte	0xf9
+ 1902 03f3 00000000 		.4byte	.LFB71
+ 1903 03f7 2C020000 		.4byte	.LFE71-.LFB71
+ 1904 03fb 01       		.uleb128 0x1
+ 1905 03fc 9C       		.byte	0x9c
+ 1906 03fd 10040000 		.4byte	0x410
+ 1907 0401 10       		.uleb128 0x10
+ 1908 0402 636D6400 		.ascii	"cmd\000"
+ 1909 0406 01       		.byte	0x1
+ 1910 0407 FB       		.byte	0xfb
+ 1911 0408 A5000000 		.4byte	0xa5
+ 1912 040c 02       		.uleb128 0x2
+ 1913 040d 91       		.byte	0x91
+ 1914 040e 77       		.sleb128 -9
+ 1915 040f 00       		.byte	0
+ 1916 0410 14       		.uleb128 0x14
+ 1917 0411 21030000 		.4byte	.LASF64
+ 1918 0415 01       		.byte	0x1
+ 1919 0416 7201     		.2byte	0x172
+ 1920 0418 00000000 		.4byte	.LFB72
+ 1921 041c 04010000 		.4byte	.LFE72-.LFB72
+ 1922 0420 01       		.uleb128 0x1
+ 1923 0421 9C       		.byte	0x9c
+ 1924 0422 34040000 		.4byte	0x434
+ 1925 0426 15       		.uleb128 0x15
+ 1926 0427 6900     		.ascii	"i\000"
+ 1927 0429 01       		.byte	0x1
+ 1928 042a 7401     		.2byte	0x174
+ 1929 042c 68000000 		.4byte	0x68
+ 1930 0430 02       		.uleb128 0x2
+ 1931 0431 91       		.byte	0x91
+ 1932 0432 74       		.sleb128 -12
+ 1933 0433 00       		.byte	0
+ 1934 0434 16       		.uleb128 0x16
+ 1935 0435 E8020000 		.4byte	.LASF65
+ 1936 0439 01       		.byte	0x1
+ 1937 043a B601     		.2byte	0x1b6
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 45
+
+
+ 1938 043c 68000000 		.4byte	0x68
+ 1939 0440 00000000 		.4byte	.LFB73
+ 1940 0444 8C010000 		.4byte	.LFE73-.LFB73
+ 1941 0448 01       		.uleb128 0x1
+ 1942 0449 9C       		.byte	0x9c
+ 1943 044a 7C040000 		.4byte	0x47c
+ 1944 044e 15       		.uleb128 0x15
+ 1945 044f 636D6400 		.ascii	"cmd\000"
+ 1946 0453 01       		.byte	0x1
+ 1947 0454 B901     		.2byte	0x1b9
+ 1948 0456 A5000000 		.4byte	0xa5
+ 1949 045a 02       		.uleb128 0x2
+ 1950 045b 91       		.byte	0x91
+ 1951 045c 6F       		.sleb128 -17
+ 1952 045d 17       		.uleb128 0x17
+ 1953 045e 6B030000 		.4byte	.LASF66
+ 1954 0462 01       		.byte	0x1
+ 1955 0463 BA01     		.2byte	0x1ba
+ 1956 0465 68000000 		.4byte	0x68
+ 1957 0469 02       		.uleb128 0x2
+ 1958 046a 91       		.byte	0x91
+ 1959 046b 74       		.sleb128 -12
+ 1960 046c 17       		.uleb128 0x17
+ 1961 046d 44040000 		.4byte	.LASF67
+ 1962 0471 01       		.byte	0x1
+ 1963 0472 BB01     		.2byte	0x1bb
+ 1964 0474 68000000 		.4byte	0x68
+ 1965 0478 02       		.uleb128 0x2
+ 1966 0479 91       		.byte	0x91
+ 1967 047a 70       		.sleb128 -16
+ 1968 047b 00       		.byte	0
+ 1969 047c 18       		.uleb128 0x18
+ 1970 047d 51040000 		.4byte	.LASF68
+ 1971 0481 07       		.byte	0x7
+ 1972 0482 2A06     		.2byte	0x62a
+ 1973 0484 88040000 		.4byte	0x488
+ 1974 0488 05       		.uleb128 0x5
+ 1975 0489 76000000 		.4byte	0x76
+ 1976 048d 19       		.uleb128 0x19
+ 1977 048e 28000000 		.4byte	.LASF69
+ 1978 0492 01       		.byte	0x1
+ 1979 0493 2B       		.byte	0x2b
+ 1980 0494 AF020000 		.4byte	0x2af
+ 1981 0498 05       		.uleb128 0x5
+ 1982 0499 03       		.byte	0x3
+ 1983 049a 00000000 		.4byte	MyI2C_Regs
+ 1984 049e 1A       		.uleb128 0x1a
+ 1985 049f 7300     		.ascii	"s\000"
+ 1986 04a1 06       		.byte	0x6
+ 1987 04a2 30       		.byte	0x30
+ 1988 04a3 56010000 		.4byte	0x156
+ 1989 04a7 05       		.uleb128 0x5
+ 1990 04a8 03       		.byte	0x3
+ 1991 04a9 00000000 		.4byte	s
+ 1992 04ad 19       		.uleb128 0x19
+ 1993 04ae E0000000 		.4byte	.LASF70
+ 1994 04b2 06       		.byte	0x6
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 46
+
+
+ 1995 04b3 33       		.byte	0x33
+ 1996 04b4 A5000000 		.4byte	0xa5
+ 1997 04b8 05       		.uleb128 0x5
+ 1998 04b9 03       		.byte	0x3
+ 1999 04ba 00000000 		.4byte	currentAccessType
+ 2000 04be 1A       		.uleb128 0x1a
+ 2001 04bf 6F6C6400 		.ascii	"old\000"
+ 2002 04c3 06       		.byte	0x6
+ 2003 04c4 34       		.byte	0x34
+ 2004 04c5 A5000000 		.4byte	0xa5
+ 2005 04c9 05       		.uleb128 0x5
+ 2006 04ca 03       		.byte	0x3
+ 2007 04cb 00000000 		.4byte	old
+ 2008 04cf 19       		.uleb128 0x19
+ 2009 04d0 3C000000 		.4byte	.LASF71
+ 2010 04d4 06       		.byte	0x6
+ 2011 04d5 35       		.byte	0x35
+ 2012 04d6 68000000 		.4byte	0x68
+ 2013 04da 05       		.uleb128 0x5
+ 2014 04db 03       		.byte	0x3
+ 2015 04dc 00000000 		.4byte	TAMPERCR_POLARITY
+ 2016 04e0 19       		.uleb128 0x19
+ 2017 04e1 B8030000 		.4byte	.LASF72
+ 2018 04e5 06       		.byte	0x6
+ 2019 04e6 38       		.byte	0x38
+ 2020 04e7 68000000 		.4byte	0x68
+ 2021 04eb 05       		.uleb128 0x5
+ 2022 04ec 03       		.byte	0x3
+ 2023 04ed 00000000 		.4byte	card_ack
+ 2024 04f1 19       		.uleb128 0x19
+ 2025 04f2 0F010000 		.4byte	.LASF73
+ 2026 04f6 06       		.byte	0x6
+ 2027 04f7 39       		.byte	0x39
+ 2028 04f8 68000000 		.4byte	0x68
+ 2029 04fc 05       		.uleb128 0x5
+ 2030 04fd 03       		.byte	0x3
+ 2031 04fe 00000000 		.4byte	card_in_buf
+ 2032 0502 19       		.uleb128 0x19
+ 2033 0503 BB010000 		.4byte	.LASF74
+ 2034 0507 06       		.byte	0x6
+ 2035 0508 3C       		.byte	0x3c
+ 2036 0509 A5000000 		.4byte	0xa5
+ 2037 050d 05       		.uleb128 0x5
+ 2038 050e 03       		.byte	0x3
+ 2039 050f 00000000 		.4byte	got_pulse
+ 2040 0513 19       		.uleb128 0x19
+ 2041 0514 FB020000 		.4byte	.LASF75
+ 2042 0518 06       		.byte	0x6
+ 2043 0519 3D       		.byte	0x3d
+ 2044 051a 68000000 		.4byte	0x68
+ 2045 051e 05       		.uleb128 0x5
+ 2046 051f 03       		.byte	0x3
+ 2047 0520 00000000 		.4byte	f2f_pulsewidth
+ 2048 0524 19       		.uleb128 0x19
+ 2049 0525 9A030000 		.4byte	.LASF76
+ 2050 0529 06       		.byte	0x6
+ 2051 052a 3E       		.byte	0x3e
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 47
+
+
+ 2052 052b 68000000 		.4byte	0x68
+ 2053 052f 05       		.uleb128 0x5
+ 2054 0530 03       		.byte	0x3
+ 2055 0531 00000000 		.4byte	timeout_cnt
+ 2056 0535 19       		.uleb128 0x19
+ 2057 0536 A6030000 		.4byte	.LASF77
+ 2058 053a 06       		.byte	0x6
+ 2059 053b 3F       		.byte	0x3f
+ 2060 053c A5000000 		.4byte	0xa5
+ 2061 0540 05       		.uleb128 0x5
+ 2062 0541 03       		.byte	0x3
+ 2063 0542 00000000 		.4byte	activate_f2ftimer
+ 2064 0546 1B       		.uleb128 0x1b
+ 2065 0547 69040000 		.4byte	.LASF78
+ 2066 054b 06       		.byte	0x6
+ 2067 054c 47       		.byte	0x47
+ 2068 054d 2C000000 		.4byte	0x2c
+ 2069 0551 1B       		.uleb128 0x1b
+ 2070 0552 44010000 		.4byte	.LASF79
+ 2071 0556 06       		.byte	0x6
+ 2072 0557 4A       		.byte	0x4a
+ 2073 0558 A5000000 		.4byte	0xa5
+ 2074 055c 1B       		.uleb128 0x1b
+ 2075 055d 0A030000 		.4byte	.LASF80
+ 2076 0561 06       		.byte	0x6
+ 2077 0562 4B       		.byte	0x4b
+ 2078 0563 A5000000 		.4byte	0xa5
+ 2079 0567 1B       		.uleb128 0x1b
+ 2080 0568 78030000 		.4byte	.LASF81
+ 2081 056c 06       		.byte	0x6
+ 2082 056d 4C       		.byte	0x4c
+ 2083 056e 4C000000 		.4byte	0x4c
+ 2084 0572 18       		.uleb128 0x18
+ 2085 0573 52010000 		.4byte	.LASF82
+ 2086 0577 01       		.byte	0x1
+ 2087 0578 6B01     		.2byte	0x16b
+ 2088 057a 2C000000 		.4byte	0x2c
+ 2089 057e 00       		.byte	0
+ 2090              		.section	.debug_abbrev,"",%progbits
+ 2091              	.Ldebug_abbrev0:
+ 2092 0000 01       		.uleb128 0x1
+ 2093 0001 11       		.uleb128 0x11
+ 2094 0002 01       		.byte	0x1
+ 2095 0003 25       		.uleb128 0x25
+ 2096 0004 0E       		.uleb128 0xe
+ 2097 0005 13       		.uleb128 0x13
+ 2098 0006 0B       		.uleb128 0xb
+ 2099 0007 03       		.uleb128 0x3
+ 2100 0008 0E       		.uleb128 0xe
+ 2101 0009 1B       		.uleb128 0x1b
+ 2102 000a 0E       		.uleb128 0xe
+ 2103 000b 55       		.uleb128 0x55
+ 2104 000c 17       		.uleb128 0x17
+ 2105 000d 11       		.uleb128 0x11
+ 2106 000e 01       		.uleb128 0x1
+ 2107 000f 10       		.uleb128 0x10
+ 2108 0010 17       		.uleb128 0x17
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 48
+
+
+ 2109 0011 00       		.byte	0
+ 2110 0012 00       		.byte	0
+ 2111 0013 02       		.uleb128 0x2
+ 2112 0014 24       		.uleb128 0x24
+ 2113 0015 00       		.byte	0
+ 2114 0016 0B       		.uleb128 0xb
+ 2115 0017 0B       		.uleb128 0xb
+ 2116 0018 3E       		.uleb128 0x3e
+ 2117 0019 0B       		.uleb128 0xb
+ 2118 001a 03       		.uleb128 0x3
+ 2119 001b 0E       		.uleb128 0xe
+ 2120 001c 00       		.byte	0
+ 2121 001d 00       		.byte	0
+ 2122 001e 03       		.uleb128 0x3
+ 2123 001f 16       		.uleb128 0x16
+ 2124 0020 00       		.byte	0
+ 2125 0021 03       		.uleb128 0x3
+ 2126 0022 0E       		.uleb128 0xe
+ 2127 0023 3A       		.uleb128 0x3a
+ 2128 0024 0B       		.uleb128 0xb
+ 2129 0025 3B       		.uleb128 0x3b
+ 2130 0026 0B       		.uleb128 0xb
+ 2131 0027 49       		.uleb128 0x49
+ 2132 0028 13       		.uleb128 0x13
+ 2133 0029 00       		.byte	0
+ 2134 002a 00       		.byte	0
+ 2135 002b 04       		.uleb128 0x4
+ 2136 002c 24       		.uleb128 0x24
+ 2137 002d 00       		.byte	0
+ 2138 002e 0B       		.uleb128 0xb
+ 2139 002f 0B       		.uleb128 0xb
+ 2140 0030 3E       		.uleb128 0x3e
+ 2141 0031 0B       		.uleb128 0xb
+ 2142 0032 03       		.uleb128 0x3
+ 2143 0033 08       		.uleb128 0x8
+ 2144 0034 00       		.byte	0
+ 2145 0035 00       		.byte	0
+ 2146 0036 05       		.uleb128 0x5
+ 2147 0037 35       		.uleb128 0x35
+ 2148 0038 00       		.byte	0
+ 2149 0039 49       		.uleb128 0x49
+ 2150 003a 13       		.uleb128 0x13
+ 2151 003b 00       		.byte	0
+ 2152 003c 00       		.byte	0
+ 2153 003d 06       		.uleb128 0x6
+ 2154 003e 13       		.uleb128 0x13
+ 2155 003f 01       		.byte	0x1
+ 2156 0040 0B       		.uleb128 0xb
+ 2157 0041 0B       		.uleb128 0xb
+ 2158 0042 3A       		.uleb128 0x3a
+ 2159 0043 0B       		.uleb128 0xb
+ 2160 0044 3B       		.uleb128 0x3b
+ 2161 0045 0B       		.uleb128 0xb
+ 2162 0046 01       		.uleb128 0x1
+ 2163 0047 13       		.uleb128 0x13
+ 2164 0048 00       		.byte	0
+ 2165 0049 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 49
+
+
+ 2166 004a 07       		.uleb128 0x7
+ 2167 004b 0D       		.uleb128 0xd
+ 2168 004c 00       		.byte	0
+ 2169 004d 03       		.uleb128 0x3
+ 2170 004e 0E       		.uleb128 0xe
+ 2171 004f 3A       		.uleb128 0x3a
+ 2172 0050 0B       		.uleb128 0xb
+ 2173 0051 3B       		.uleb128 0x3b
+ 2174 0052 0B       		.uleb128 0xb
+ 2175 0053 49       		.uleb128 0x49
+ 2176 0054 13       		.uleb128 0x13
+ 2177 0055 38       		.uleb128 0x38
+ 2178 0056 0B       		.uleb128 0xb
+ 2179 0057 00       		.byte	0
+ 2180 0058 00       		.byte	0
+ 2181 0059 08       		.uleb128 0x8
+ 2182 005a 13       		.uleb128 0x13
+ 2183 005b 01       		.byte	0x1
+ 2184 005c 03       		.uleb128 0x3
+ 2185 005d 0E       		.uleb128 0xe
+ 2186 005e 0B       		.uleb128 0xb
+ 2187 005f 05       		.uleb128 0x5
+ 2188 0060 3A       		.uleb128 0x3a
+ 2189 0061 0B       		.uleb128 0xb
+ 2190 0062 3B       		.uleb128 0x3b
+ 2191 0063 0B       		.uleb128 0xb
+ 2192 0064 01       		.uleb128 0x1
+ 2193 0065 13       		.uleb128 0x13
+ 2194 0066 00       		.byte	0
+ 2195 0067 00       		.byte	0
+ 2196 0068 09       		.uleb128 0x9
+ 2197 0069 0D       		.uleb128 0xd
+ 2198 006a 00       		.byte	0
+ 2199 006b 03       		.uleb128 0x3
+ 2200 006c 08       		.uleb128 0x8
+ 2201 006d 3A       		.uleb128 0x3a
+ 2202 006e 0B       		.uleb128 0xb
+ 2203 006f 3B       		.uleb128 0x3b
+ 2204 0070 0B       		.uleb128 0xb
+ 2205 0071 49       		.uleb128 0x49
+ 2206 0072 13       		.uleb128 0x13
+ 2207 0073 38       		.uleb128 0x38
+ 2208 0074 0B       		.uleb128 0xb
+ 2209 0075 00       		.byte	0
+ 2210 0076 00       		.byte	0
+ 2211 0077 0A       		.uleb128 0xa
+ 2212 0078 01       		.uleb128 0x1
+ 2213 0079 01       		.byte	0x1
+ 2214 007a 49       		.uleb128 0x49
+ 2215 007b 13       		.uleb128 0x13
+ 2216 007c 01       		.uleb128 0x1
+ 2217 007d 13       		.uleb128 0x13
+ 2218 007e 00       		.byte	0
+ 2219 007f 00       		.byte	0
+ 2220 0080 0B       		.uleb128 0xb
+ 2221 0081 21       		.uleb128 0x21
+ 2222 0082 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 50
+
+
+ 2223 0083 49       		.uleb128 0x49
+ 2224 0084 13       		.uleb128 0x13
+ 2225 0085 2F       		.uleb128 0x2f
+ 2226 0086 0B       		.uleb128 0xb
+ 2227 0087 00       		.byte	0
+ 2228 0088 00       		.byte	0
+ 2229 0089 0C       		.uleb128 0xc
+ 2230 008a 2E       		.uleb128 0x2e
+ 2231 008b 00       		.byte	0
+ 2232 008c 3F       		.uleb128 0x3f
+ 2233 008d 19       		.uleb128 0x19
+ 2234 008e 03       		.uleb128 0x3
+ 2235 008f 0E       		.uleb128 0xe
+ 2236 0090 3A       		.uleb128 0x3a
+ 2237 0091 0B       		.uleb128 0xb
+ 2238 0092 3B       		.uleb128 0x3b
+ 2239 0093 0B       		.uleb128 0xb
+ 2240 0094 11       		.uleb128 0x11
+ 2241 0095 01       		.uleb128 0x1
+ 2242 0096 12       		.uleb128 0x12
+ 2243 0097 06       		.uleb128 0x6
+ 2244 0098 40       		.uleb128 0x40
+ 2245 0099 18       		.uleb128 0x18
+ 2246 009a 9742     		.uleb128 0x2117
+ 2247 009c 19       		.uleb128 0x19
+ 2248 009d 00       		.byte	0
+ 2249 009e 00       		.byte	0
+ 2250 009f 0D       		.uleb128 0xd
+ 2251 00a0 2E       		.uleb128 0x2e
+ 2252 00a1 01       		.byte	0x1
+ 2253 00a2 3F       		.uleb128 0x3f
+ 2254 00a3 19       		.uleb128 0x19
+ 2255 00a4 03       		.uleb128 0x3
+ 2256 00a5 0E       		.uleb128 0xe
+ 2257 00a6 3A       		.uleb128 0x3a
+ 2258 00a7 0B       		.uleb128 0xb
+ 2259 00a8 3B       		.uleb128 0x3b
+ 2260 00a9 0B       		.uleb128 0xb
+ 2261 00aa 27       		.uleb128 0x27
+ 2262 00ab 19       		.uleb128 0x19
+ 2263 00ac 11       		.uleb128 0x11
+ 2264 00ad 01       		.uleb128 0x1
+ 2265 00ae 12       		.uleb128 0x12
+ 2266 00af 06       		.uleb128 0x6
+ 2267 00b0 40       		.uleb128 0x40
+ 2268 00b1 18       		.uleb128 0x18
+ 2269 00b2 9642     		.uleb128 0x2116
+ 2270 00b4 19       		.uleb128 0x19
+ 2271 00b5 01       		.uleb128 0x1
+ 2272 00b6 13       		.uleb128 0x13
+ 2273 00b7 00       		.byte	0
+ 2274 00b8 00       		.byte	0
+ 2275 00b9 0E       		.uleb128 0xe
+ 2276 00ba 05       		.uleb128 0x5
+ 2277 00bb 00       		.byte	0
+ 2278 00bc 03       		.uleb128 0x3
+ 2279 00bd 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 51
+
+
+ 2280 00be 3A       		.uleb128 0x3a
+ 2281 00bf 0B       		.uleb128 0xb
+ 2282 00c0 3B       		.uleb128 0x3b
+ 2283 00c1 0B       		.uleb128 0xb
+ 2284 00c2 49       		.uleb128 0x49
+ 2285 00c3 13       		.uleb128 0x13
+ 2286 00c4 02       		.uleb128 0x2
+ 2287 00c5 18       		.uleb128 0x18
+ 2288 00c6 00       		.byte	0
+ 2289 00c7 00       		.byte	0
+ 2290 00c8 0F       		.uleb128 0xf
+ 2291 00c9 2E       		.uleb128 0x2e
+ 2292 00ca 01       		.byte	0x1
+ 2293 00cb 3F       		.uleb128 0x3f
+ 2294 00cc 19       		.uleb128 0x19
+ 2295 00cd 03       		.uleb128 0x3
+ 2296 00ce 0E       		.uleb128 0xe
+ 2297 00cf 3A       		.uleb128 0x3a
+ 2298 00d0 0B       		.uleb128 0xb
+ 2299 00d1 3B       		.uleb128 0x3b
+ 2300 00d2 0B       		.uleb128 0xb
+ 2301 00d3 11       		.uleb128 0x11
+ 2302 00d4 01       		.uleb128 0x1
+ 2303 00d5 12       		.uleb128 0x12
+ 2304 00d6 06       		.uleb128 0x6
+ 2305 00d7 40       		.uleb128 0x40
+ 2306 00d8 18       		.uleb128 0x18
+ 2307 00d9 9742     		.uleb128 0x2117
+ 2308 00db 19       		.uleb128 0x19
+ 2309 00dc 01       		.uleb128 0x1
+ 2310 00dd 13       		.uleb128 0x13
+ 2311 00de 00       		.byte	0
+ 2312 00df 00       		.byte	0
+ 2313 00e0 10       		.uleb128 0x10
+ 2314 00e1 34       		.uleb128 0x34
+ 2315 00e2 00       		.byte	0
+ 2316 00e3 03       		.uleb128 0x3
+ 2317 00e4 08       		.uleb128 0x8
+ 2318 00e5 3A       		.uleb128 0x3a
+ 2319 00e6 0B       		.uleb128 0xb
+ 2320 00e7 3B       		.uleb128 0x3b
+ 2321 00e8 0B       		.uleb128 0xb
+ 2322 00e9 49       		.uleb128 0x49
+ 2323 00ea 13       		.uleb128 0x13
+ 2324 00eb 02       		.uleb128 0x2
+ 2325 00ec 18       		.uleb128 0x18
+ 2326 00ed 00       		.byte	0
+ 2327 00ee 00       		.byte	0
+ 2328 00ef 11       		.uleb128 0x11
+ 2329 00f0 2E       		.uleb128 0x2e
+ 2330 00f1 00       		.byte	0
+ 2331 00f2 3F       		.uleb128 0x3f
+ 2332 00f3 19       		.uleb128 0x19
+ 2333 00f4 03       		.uleb128 0x3
+ 2334 00f5 0E       		.uleb128 0xe
+ 2335 00f6 3A       		.uleb128 0x3a
+ 2336 00f7 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 52
+
+
+ 2337 00f8 3B       		.uleb128 0x3b
+ 2338 00f9 0B       		.uleb128 0xb
+ 2339 00fa 11       		.uleb128 0x11
+ 2340 00fb 01       		.uleb128 0x1
+ 2341 00fc 12       		.uleb128 0x12
+ 2342 00fd 06       		.uleb128 0x6
+ 2343 00fe 40       		.uleb128 0x40
+ 2344 00ff 18       		.uleb128 0x18
+ 2345 0100 9642     		.uleb128 0x2116
+ 2346 0102 19       		.uleb128 0x19
+ 2347 0103 00       		.byte	0
+ 2348 0104 00       		.byte	0
+ 2349 0105 12       		.uleb128 0x12
+ 2350 0106 2E       		.uleb128 0x2e
+ 2351 0107 01       		.byte	0x1
+ 2352 0108 3F       		.uleb128 0x3f
+ 2353 0109 19       		.uleb128 0x19
+ 2354 010a 03       		.uleb128 0x3
+ 2355 010b 0E       		.uleb128 0xe
+ 2356 010c 3A       		.uleb128 0x3a
+ 2357 010d 0B       		.uleb128 0xb
+ 2358 010e 3B       		.uleb128 0x3b
+ 2359 010f 0B       		.uleb128 0xb
+ 2360 0110 11       		.uleb128 0x11
+ 2361 0111 01       		.uleb128 0x1
+ 2362 0112 12       		.uleb128 0x12
+ 2363 0113 06       		.uleb128 0x6
+ 2364 0114 40       		.uleb128 0x40
+ 2365 0115 18       		.uleb128 0x18
+ 2366 0116 9642     		.uleb128 0x2116
+ 2367 0118 19       		.uleb128 0x19
+ 2368 0119 01       		.uleb128 0x1
+ 2369 011a 13       		.uleb128 0x13
+ 2370 011b 00       		.byte	0
+ 2371 011c 00       		.byte	0
+ 2372 011d 13       		.uleb128 0x13
+ 2373 011e 34       		.uleb128 0x34
+ 2374 011f 00       		.byte	0
+ 2375 0120 03       		.uleb128 0x3
+ 2376 0121 0E       		.uleb128 0xe
+ 2377 0122 3A       		.uleb128 0x3a
+ 2378 0123 0B       		.uleb128 0xb
+ 2379 0124 3B       		.uleb128 0x3b
+ 2380 0125 0B       		.uleb128 0xb
+ 2381 0126 49       		.uleb128 0x49
+ 2382 0127 13       		.uleb128 0x13
+ 2383 0128 02       		.uleb128 0x2
+ 2384 0129 18       		.uleb128 0x18
+ 2385 012a 00       		.byte	0
+ 2386 012b 00       		.byte	0
+ 2387 012c 14       		.uleb128 0x14
+ 2388 012d 2E       		.uleb128 0x2e
+ 2389 012e 01       		.byte	0x1
+ 2390 012f 3F       		.uleb128 0x3f
+ 2391 0130 19       		.uleb128 0x19
+ 2392 0131 03       		.uleb128 0x3
+ 2393 0132 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 53
+
+
+ 2394 0133 3A       		.uleb128 0x3a
+ 2395 0134 0B       		.uleb128 0xb
+ 2396 0135 3B       		.uleb128 0x3b
+ 2397 0136 05       		.uleb128 0x5
+ 2398 0137 11       		.uleb128 0x11
+ 2399 0138 01       		.uleb128 0x1
+ 2400 0139 12       		.uleb128 0x12
+ 2401 013a 06       		.uleb128 0x6
+ 2402 013b 40       		.uleb128 0x40
+ 2403 013c 18       		.uleb128 0x18
+ 2404 013d 9642     		.uleb128 0x2116
+ 2405 013f 19       		.uleb128 0x19
+ 2406 0140 01       		.uleb128 0x1
+ 2407 0141 13       		.uleb128 0x13
+ 2408 0142 00       		.byte	0
+ 2409 0143 00       		.byte	0
+ 2410 0144 15       		.uleb128 0x15
+ 2411 0145 34       		.uleb128 0x34
+ 2412 0146 00       		.byte	0
+ 2413 0147 03       		.uleb128 0x3
+ 2414 0148 08       		.uleb128 0x8
+ 2415 0149 3A       		.uleb128 0x3a
+ 2416 014a 0B       		.uleb128 0xb
+ 2417 014b 3B       		.uleb128 0x3b
+ 2418 014c 05       		.uleb128 0x5
+ 2419 014d 49       		.uleb128 0x49
+ 2420 014e 13       		.uleb128 0x13
+ 2421 014f 02       		.uleb128 0x2
+ 2422 0150 18       		.uleb128 0x18
+ 2423 0151 00       		.byte	0
+ 2424 0152 00       		.byte	0
+ 2425 0153 16       		.uleb128 0x16
+ 2426 0154 2E       		.uleb128 0x2e
+ 2427 0155 01       		.byte	0x1
+ 2428 0156 3F       		.uleb128 0x3f
+ 2429 0157 19       		.uleb128 0x19
+ 2430 0158 03       		.uleb128 0x3
+ 2431 0159 0E       		.uleb128 0xe
+ 2432 015a 3A       		.uleb128 0x3a
+ 2433 015b 0B       		.uleb128 0xb
+ 2434 015c 3B       		.uleb128 0x3b
+ 2435 015d 05       		.uleb128 0x5
+ 2436 015e 49       		.uleb128 0x49
+ 2437 015f 13       		.uleb128 0x13
+ 2438 0160 11       		.uleb128 0x11
+ 2439 0161 01       		.uleb128 0x1
+ 2440 0162 12       		.uleb128 0x12
+ 2441 0163 06       		.uleb128 0x6
+ 2442 0164 40       		.uleb128 0x40
+ 2443 0165 18       		.uleb128 0x18
+ 2444 0166 9642     		.uleb128 0x2116
+ 2445 0168 19       		.uleb128 0x19
+ 2446 0169 01       		.uleb128 0x1
+ 2447 016a 13       		.uleb128 0x13
+ 2448 016b 00       		.byte	0
+ 2449 016c 00       		.byte	0
+ 2450 016d 17       		.uleb128 0x17
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 54
+
+
+ 2451 016e 34       		.uleb128 0x34
+ 2452 016f 00       		.byte	0
+ 2453 0170 03       		.uleb128 0x3
+ 2454 0171 0E       		.uleb128 0xe
+ 2455 0172 3A       		.uleb128 0x3a
+ 2456 0173 0B       		.uleb128 0xb
+ 2457 0174 3B       		.uleb128 0x3b
+ 2458 0175 05       		.uleb128 0x5
+ 2459 0176 49       		.uleb128 0x49
+ 2460 0177 13       		.uleb128 0x13
+ 2461 0178 02       		.uleb128 0x2
+ 2462 0179 18       		.uleb128 0x18
+ 2463 017a 00       		.byte	0
+ 2464 017b 00       		.byte	0
+ 2465 017c 18       		.uleb128 0x18
+ 2466 017d 34       		.uleb128 0x34
+ 2467 017e 00       		.byte	0
+ 2468 017f 03       		.uleb128 0x3
+ 2469 0180 0E       		.uleb128 0xe
+ 2470 0181 3A       		.uleb128 0x3a
+ 2471 0182 0B       		.uleb128 0xb
+ 2472 0183 3B       		.uleb128 0x3b
+ 2473 0184 05       		.uleb128 0x5
+ 2474 0185 49       		.uleb128 0x49
+ 2475 0186 13       		.uleb128 0x13
+ 2476 0187 3F       		.uleb128 0x3f
+ 2477 0188 19       		.uleb128 0x19
+ 2478 0189 3C       		.uleb128 0x3c
+ 2479 018a 19       		.uleb128 0x19
+ 2480 018b 00       		.byte	0
+ 2481 018c 00       		.byte	0
+ 2482 018d 19       		.uleb128 0x19
+ 2483 018e 34       		.uleb128 0x34
+ 2484 018f 00       		.byte	0
+ 2485 0190 03       		.uleb128 0x3
+ 2486 0191 0E       		.uleb128 0xe
+ 2487 0192 3A       		.uleb128 0x3a
+ 2488 0193 0B       		.uleb128 0xb
+ 2489 0194 3B       		.uleb128 0x3b
+ 2490 0195 0B       		.uleb128 0xb
+ 2491 0196 49       		.uleb128 0x49
+ 2492 0197 13       		.uleb128 0x13
+ 2493 0198 3F       		.uleb128 0x3f
+ 2494 0199 19       		.uleb128 0x19
+ 2495 019a 02       		.uleb128 0x2
+ 2496 019b 18       		.uleb128 0x18
+ 2497 019c 00       		.byte	0
+ 2498 019d 00       		.byte	0
+ 2499 019e 1A       		.uleb128 0x1a
+ 2500 019f 34       		.uleb128 0x34
+ 2501 01a0 00       		.byte	0
+ 2502 01a1 03       		.uleb128 0x3
+ 2503 01a2 08       		.uleb128 0x8
+ 2504 01a3 3A       		.uleb128 0x3a
+ 2505 01a4 0B       		.uleb128 0xb
+ 2506 01a5 3B       		.uleb128 0x3b
+ 2507 01a6 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 55
+
+
+ 2508 01a7 49       		.uleb128 0x49
+ 2509 01a8 13       		.uleb128 0x13
+ 2510 01a9 3F       		.uleb128 0x3f
+ 2511 01aa 19       		.uleb128 0x19
+ 2512 01ab 02       		.uleb128 0x2
+ 2513 01ac 18       		.uleb128 0x18
+ 2514 01ad 00       		.byte	0
+ 2515 01ae 00       		.byte	0
+ 2516 01af 1B       		.uleb128 0x1b
+ 2517 01b0 34       		.uleb128 0x34
+ 2518 01b1 00       		.byte	0
+ 2519 01b2 03       		.uleb128 0x3
+ 2520 01b3 0E       		.uleb128 0xe
+ 2521 01b4 3A       		.uleb128 0x3a
+ 2522 01b5 0B       		.uleb128 0xb
+ 2523 01b6 3B       		.uleb128 0x3b
+ 2524 01b7 0B       		.uleb128 0xb
+ 2525 01b8 49       		.uleb128 0x49
+ 2526 01b9 13       		.uleb128 0x13
+ 2527 01ba 3F       		.uleb128 0x3f
+ 2528 01bb 19       		.uleb128 0x19
+ 2529 01bc 3C       		.uleb128 0x3c
+ 2530 01bd 19       		.uleb128 0x19
+ 2531 01be 00       		.byte	0
+ 2532 01bf 00       		.byte	0
+ 2533 01c0 00       		.byte	0
+ 2534              		.section	.debug_aranges,"",%progbits
+ 2535 0000 6C000000 		.4byte	0x6c
+ 2536 0004 0200     		.2byte	0x2
+ 2537 0006 00000000 		.4byte	.Ldebug_info0
+ 2538 000a 04       		.byte	0x4
+ 2539 000b 00       		.byte	0
+ 2540 000c 0000     		.2byte	0
+ 2541 000e 0000     		.2byte	0
+ 2542 0010 00000000 		.4byte	.LFB63
+ 2543 0014 40000000 		.4byte	.LFE63-.LFB63
+ 2544 0018 00000000 		.4byte	.LFB64
+ 2545 001c 3A000000 		.4byte	.LFE64-.LFB64
+ 2546 0020 00000000 		.4byte	.LFB65
+ 2547 0024 40000000 		.4byte	.LFE65-.LFB65
+ 2548 0028 00000000 		.4byte	.LFB66
+ 2549 002c 58000000 		.4byte	.LFE66-.LFB66
+ 2550 0030 00000000 		.4byte	.LFB67
+ 2551 0034 30000000 		.4byte	.LFE67-.LFB67
+ 2552 0038 00000000 		.4byte	.LFB68
+ 2553 003c 58000000 		.4byte	.LFE68-.LFB68
+ 2554 0040 00000000 		.4byte	.LFB69
+ 2555 0044 64010000 		.4byte	.LFE69-.LFB69
+ 2556 0048 00000000 		.4byte	.LFB70
+ 2557 004c 38000000 		.4byte	.LFE70-.LFB70
+ 2558 0050 00000000 		.4byte	.LFB71
+ 2559 0054 2C020000 		.4byte	.LFE71-.LFB71
+ 2560 0058 00000000 		.4byte	.LFB72
+ 2561 005c 04010000 		.4byte	.LFE72-.LFB72
+ 2562 0060 00000000 		.4byte	.LFB73
+ 2563 0064 8C010000 		.4byte	.LFE73-.LFB73
+ 2564 0068 00000000 		.4byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 56
+
+
+ 2565 006c 00000000 		.4byte	0
+ 2566              		.section	.debug_ranges,"",%progbits
+ 2567              	.Ldebug_ranges0:
+ 2568 0000 00000000 		.4byte	.LFB63
+ 2569 0004 40000000 		.4byte	.LFE63
+ 2570 0008 00000000 		.4byte	.LFB64
+ 2571 000c 3A000000 		.4byte	.LFE64
+ 2572 0010 00000000 		.4byte	.LFB65
+ 2573 0014 40000000 		.4byte	.LFE65
+ 2574 0018 00000000 		.4byte	.LFB66
+ 2575 001c 58000000 		.4byte	.LFE66
+ 2576 0020 00000000 		.4byte	.LFB67
+ 2577 0024 30000000 		.4byte	.LFE67
+ 2578 0028 00000000 		.4byte	.LFB68
+ 2579 002c 58000000 		.4byte	.LFE68
+ 2580 0030 00000000 		.4byte	.LFB69
+ 2581 0034 64010000 		.4byte	.LFE69
+ 2582 0038 00000000 		.4byte	.LFB70
+ 2583 003c 38000000 		.4byte	.LFE70
+ 2584 0040 00000000 		.4byte	.LFB71
+ 2585 0044 2C020000 		.4byte	.LFE71
+ 2586 0048 00000000 		.4byte	.LFB72
+ 2587 004c 04010000 		.4byte	.LFE72
+ 2588 0050 00000000 		.4byte	.LFB73
+ 2589 0054 8C010000 		.4byte	.LFE73
+ 2590 0058 00000000 		.4byte	0
+ 2591 005c 00000000 		.4byte	0
+ 2592              		.section	.debug_line,"",%progbits
+ 2593              	.Ldebug_line0:
+ 2594 0000 A4030000 		.section	.debug_str,"MS",%progbits,1
+ 2594      02006701 
+ 2594      00000201 
+ 2594      FB0E0D00 
+ 2594      01010101 
+ 2595              	.LASF41:
+ 2596 0000 6F736470 		.ascii	"osdp_status\000"
+ 2596      5F737461 
+ 2596      74757300 
+ 2597              	.LASF50:
+ 2598 000c 54726967 		.ascii	"TriggerRelay1\000"
+ 2598      67657252 
+ 2598      656C6179 
+ 2598      3100
+ 2599              	.LASF51:
+ 2600 001a 54726967 		.ascii	"TriggerRelay2\000"
+ 2600      67657252 
+ 2600      656C6179 
+ 2600      3200
+ 2601              	.LASF69:
+ 2602 0028 4D794932 		.ascii	"MyI2C_Regs\000"
+ 2602      435F5265 
+ 2602      677300
+ 2603              	.LASF16:
+ 2604 0033 73697A65 		.ascii	"sizetype\000"
+ 2604      74797065 
+ 2604      00
+ 2605              	.LASF71:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 57
+
+
+ 2606 003c 54414D50 		.ascii	"TAMPERCR_POLARITY\000"
+ 2606      45524352 
+ 2606      5F504F4C 
+ 2606      41524954 
+ 2606      5900
+ 2607              	.LASF43:
+ 2608 004e 6F736470 		.ascii	"osdp_rate\000"
+ 2608      5F726174 
+ 2608      6500
+ 2609              	.LASF45:
+ 2610 0058 6F736470 		.ascii	"osdp_reader_cmd\000"
+ 2610      5F726561 
+ 2610      6465725F 
+ 2610      636D6400 
+ 2611              	.LASF37:
+ 2612 0068 66616374 		.ascii	"factory_reset\000"
+ 2612      6F72795F 
+ 2612      72657365 
+ 2612      7400
+ 2613              	.LASF32:
+ 2614 0076 64617461 		.ascii	"data_length\000"
+ 2614      5F6C656E 
+ 2614      67746800 
+ 2615              	.LASF44:
+ 2616 0082 6F736470 		.ascii	"osdp_buffer\000"
+ 2616      5F627566 
+ 2616      66657200 
+ 2617              	.LASF6:
+ 2618 008e 6C6F6E67 		.ascii	"long long int\000"
+ 2618      206C6F6E 
+ 2618      6720696E 
+ 2618      7400
+ 2619              	.LASF29:
+ 2620 009c 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 2620      5F554152 
+ 2620      545F5354 
+ 2620      52554354 
+ 2620      00
+ 2621              	.LASF52:
+ 2622 00ad 77616974 		.ascii	"waitMSecs\000"
+ 2622      4D536563 
+ 2622      7300
+ 2623              	.LASF2:
+ 2624 00b7 73686F72 		.ascii	"short int\000"
+ 2624      7420696E 
+ 2624      7400
+ 2625              	.LASF4:
+ 2626 00c1 6C6F6E67 		.ascii	"long int\000"
+ 2626      20696E74 
+ 2626      00
+ 2627              	.LASF18:
+ 2628 00ca 70617269 		.ascii	"parity\000"
+ 2628      747900
+ 2629              	.LASF24:
+ 2630 00d1 72785F62 		.ascii	"rx_bits\000"
+ 2630      69747300 
+ 2631              	.LASF12:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 58
+
+
+ 2632 00d9 75696E74 		.ascii	"uint16\000"
+ 2632      313600
+ 2633              	.LASF70:
+ 2634 00e0 63757272 		.ascii	"currentAccessType\000"
+ 2634      656E7441 
+ 2634      63636573 
+ 2634      73547970 
+ 2634      6500
+ 2635              	.LASF62:
+ 2636 00f2 496E6974 		.ascii	"InitOSDP\000"
+ 2636      4F534450 
+ 2636      00
+ 2637              	.LASF11:
+ 2638 00fb 75696E74 		.ascii	"uint8\000"
+ 2638      3800
+ 2639              	.LASF57:
+ 2640 0101 53656E64 		.ascii	"SendHID\000"
+ 2640      48494400 
+ 2641              	.LASF13:
+ 2642 0109 666C6F61 		.ascii	"float\000"
+ 2642      7400
+ 2643              	.LASF73:
+ 2644 010f 63617264 		.ascii	"card_in_buf\000"
+ 2644      5F696E5F 
+ 2644      62756600 
+ 2645              	.LASF33:
+ 2646 011b 6163735F 		.ascii	"acs_outputs\000"
+ 2646      6F757470 
+ 2646      75747300 
+ 2647              	.LASF20:
+ 2648 0127 62697473 		.ascii	"bits\000"
+ 2648      00
+ 2649              	.LASF46:
+ 2650 012c 6F736470 		.ascii	"osdp_reader_data_length\000"
+ 2650      5F726561 
+ 2650      6465725F 
+ 2650      64617461 
+ 2650      5F6C656E 
+ 2651              	.LASF79:
+ 2652 0144 62757474 		.ascii	"buttonPressed\000"
+ 2652      6F6E5072 
+ 2652      65737365 
+ 2652      6400
+ 2653              	.LASF82:
+ 2654 0152 6B656570 		.ascii	"keepALiveLength\000"
+ 2654      414C6976 
+ 2654      654C656E 
+ 2654      67746800 
+ 2655              	.LASF27:
+ 2656 0162 74696D65 		.ascii	"timer_rx_ctr\000"
+ 2656      725F7278 
+ 2656      5F637472 
+ 2656      00
+ 2657              	.LASF36:
+ 2658 016f 64756D6D 		.ascii	"dummy\000"
+ 2658      7900
+ 2659              	.LASF22:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 59
+
+
+ 2660 0175 74785F62 		.ascii	"tx_byte\000"
+ 2660      79746500 
+ 2661              	.LASF63:
+ 2662 017d 48616E64 		.ascii	"HandleCommand\000"
+ 2662      6C65436F 
+ 2662      6D6D616E 
+ 2662      6400
+ 2663              	.LASF47:
+ 2664 018b 6F736470 		.ascii	"osdp_reader_rate\000"
+ 2664      5F726561 
+ 2664      6465725F 
+ 2664      72617465 
+ 2664      00
+ 2665              	.LASF56:
+ 2666 019c 436C6561 		.ascii	"ClearBuffer\000"
+ 2666      72427566 
+ 2666      66657200 
+ 2667              	.LASF48:
+ 2668 01a8 6F736470 		.ascii	"osdp_reader_buffer\000"
+ 2668      5F726561 
+ 2668      6465725F 
+ 2668      62756666 
+ 2668      657200
+ 2669              	.LASF74:
+ 2670 01bb 676F745F 		.ascii	"got_pulse\000"
+ 2670      70756C73 
+ 2670      6500
+ 2671              	.LASF17:
+ 2672 01c5 62617564 		.ascii	"baud\000"
+ 2672      00
+ 2673              	.LASF42:
+ 2674 01ca 6F736470 		.ascii	"osdp_data_length\000"
+ 2674      5F646174 
+ 2674      615F6C65 
+ 2674      6E677468 
+ 2674      00
+ 2675              	.LASF1:
+ 2676 01db 756E7369 		.ascii	"unsigned char\000"
+ 2676      676E6564 
+ 2676      20636861 
+ 2676      7200
+ 2677              	.LASF0:
+ 2678 01e9 7369676E 		.ascii	"signed char\000"
+ 2678      65642063 
+ 2678      68617200 
+ 2679              	.LASF25:
+ 2680 01f5 666C6167 		.ascii	"flags\000"
+ 2680      7300
+ 2681              	.LASF7:
+ 2682 01fb 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 2682      206C6F6E 
+ 2682      6720756E 
+ 2682      7369676E 
+ 2682      65642069 
+ 2683              	.LASF8:
+ 2684 0212 756E7369 		.ascii	"unsigned int\000"
+ 2684      676E6564 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 60
+
+
+ 2684      20696E74 
+ 2684      00
+ 2685              	.LASF19:
+ 2686 021f 73746F70 		.ascii	"stop_bits\000"
+ 2686      5F626974 
+ 2686      7300
+ 2687              	.LASF5:
+ 2688 0229 6C6F6E67 		.ascii	"long unsigned int\000"
+ 2688      20756E73 
+ 2688      69676E65 
+ 2688      6420696E 
+ 2688      7400
+ 2689              	.LASF34:
+ 2690 023b 6163735F 		.ascii	"acs_inputs\000"
+ 2690      696E7075 
+ 2690      747300
+ 2691              	.LASF83:
+ 2692 0246 474E5520 		.ascii	"GNU C 4.8.4 20140526 (release) [ARM/embedded-4_8-br"
+ 2692      4320342E 
+ 2692      382E3420 
+ 2692      32303134 
+ 2692      30353236 
+ 2693 0279 616E6368 		.ascii	"anch revision 211358] -mcpu=cortex-m3 -mthumb -g -O"
+ 2693      20726576 
+ 2693      6973696F 
+ 2693      6E203231 
+ 2693      31333538 
+ 2694 02ac 30202D66 		.ascii	"0 -ffunction-sections\000"
+ 2694      66756E63 
+ 2694      74696F6E 
+ 2694      2D736563 
+ 2694      74696F6E 
+ 2695              	.LASF28:
+ 2696 02c2 72785F72 		.ascii	"rx_recv\000"
+ 2696      65637600 
+ 2697              	.LASF23:
+ 2698 02ca 74785F62 		.ascii	"tx_bits\000"
+ 2698      69747300 
+ 2699              	.LASF30:
+ 2700 02d2 73746174 		.ascii	"status\000"
+ 2700      757300
+ 2701              	.LASF15:
+ 2702 02d9 63686172 		.ascii	"char\000"
+ 2702      00
+ 2703              	.LASF58:
+ 2704 02de 73657269 		.ascii	"serialOut\000"
+ 2704      616C4F75 
+ 2704      7400
+ 2705              	.LASF65:
+ 2706 02e8 6D61696E 		.ascii	"main\000"
+ 2706      00
+ 2707              	.LASF61:
+ 2708 02ed 79626974 		.ascii	"ybits\000"
+ 2708      7300
+ 2709              	.LASF10:
+ 2710 02f3 696E7433 		.ascii	"int32_t\000"
+ 2710      325F7400 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 61
+
+
+ 2711              	.LASF75:
+ 2712 02fb 6632665F 		.ascii	"f2f_pulsewidth\000"
+ 2712      70756C73 
+ 2712      65776964 
+ 2712      746800
+ 2713              	.LASF80:
+ 2714 030a 62757474 		.ascii	"buttonReleased\000"
+ 2714      6F6E5265 
+ 2714      6C656173 
+ 2714      656400
+ 2715              	.LASF21:
+ 2716 0319 72785F62 		.ascii	"rx_byte\000"
+ 2716      79746500 
+ 2717              	.LASF64:
+ 2718 0321 48616E64 		.ascii	"HandleOSDP\000"
+ 2718      6C654F53 
+ 2718      445000
+ 2719              	.LASF60:
+ 2720 032c 78627974 		.ascii	"xbytes\000"
+ 2720      657300
+ 2721              	.LASF35:
+ 2722 0333 62756666 		.ascii	"buffer\000"
+ 2722      657200
+ 2723              	.LASF3:
+ 2724 033a 73686F72 		.ascii	"short unsigned int\000"
+ 2724      7420756E 
+ 2724      7369676E 
+ 2724      65642069 
+ 2724      6E7400
+ 2725              	.LASF53:
+ 2726 034d 53657456 		.ascii	"SetVersion\000"
+ 2726      65727369 
+ 2726      6F6E00
+ 2727              	.LASF31:
+ 2728 0358 73746174 		.ascii	"status_in\000"
+ 2728      75735F69 
+ 2728      6E00
+ 2729              	.LASF49:
+ 2730 0362 4932435F 		.ascii	"I2C_Regs\000"
+ 2730      52656773 
+ 2730      00
+ 2731              	.LASF66:
+ 2732 036b 77616974 		.ascii	"wait_for_ack\000"
+ 2732      5F666F72 
+ 2732      5F61636B 
+ 2732      00
+ 2733              	.LASF81:
+ 2734 0378 62757474 		.ascii	"buttonDuration\000"
+ 2734      6F6E4475 
+ 2734      72617469 
+ 2734      6F6E00
+ 2735              	.LASF84:
+ 2736 0387 2E5C6D61 		.ascii	".\\main.c\000"
+ 2736      696E2E63 
+ 2736      00
+ 2737              	.LASF9:
+ 2738 0390 5F5F696E 		.ascii	"__int32_t\000"
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 62
+
+
+ 2738      7433325F 
+ 2738      7400
+ 2739              	.LASF76:
+ 2740 039a 74696D65 		.ascii	"timeout_cnt\000"
+ 2740      6F75745F 
+ 2740      636E7400 
+ 2741              	.LASF77:
+ 2742 03a6 61637469 		.ascii	"activate_f2ftimer\000"
+ 2742      76617465 
+ 2742      5F663266 
+ 2742      74696D65 
+ 2742      7200
+ 2743              	.LASF72:
+ 2744 03b8 63617264 		.ascii	"card_ack\000"
+ 2744      5F61636B 
+ 2744      00
+ 2745              	.LASF38:
+ 2746 03c1 73775F76 		.ascii	"sw_version\000"
+ 2746      65727369 
+ 2746      6F6E00
+ 2747              	.LASF54:
+ 2748 03cc 53657442 		.ascii	"SetBuffer\000"
+ 2748      75666665 
+ 2748      7200
+ 2749              	.LASF85:
+ 2750 03d6 433A5C55 		.ascii	"C:\\Users\\Yiquing\\Documents\\works\\NanoNXT\\osdp"
+ 2750      73657273 
+ 2750      5C596971 
+ 2750      75696E67 
+ 2750      5C446F63 
+ 2751 0403 20746573 		.ascii	" testing\\YQ\\nanoNxt_ICM3\\nanoNxt_ICM3.cydsn\000"
+ 2751      74696E67 
+ 2751      5C59515C 
+ 2751      6E616E6F 
+ 2751      4E78745F 
+ 2752              	.LASF55:
+ 2753 042f 53656E64 		.ascii	"SendHID_SP533\000"
+ 2753      4849445F 
+ 2753      53503533 
+ 2753      3300
+ 2754              	.LASF14:
+ 2755 043d 646F7562 		.ascii	"double\000"
+ 2755      6C6500
+ 2756              	.LASF67:
+ 2757 0444 61636B5F 		.ascii	"ack_time_cnt\000"
+ 2757      74696D65 
+ 2757      5F636E74 
+ 2757      00
+ 2758              	.LASF68:
+ 2759 0451 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 2759      52784275 
+ 2759      66666572 
+ 2759      00
+ 2760              	.LASF39:
+ 2761 045e 68775F76 		.ascii	"hw_version\000"
+ 2761      65727369 
+ 2761      6F6E00
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccj6BAT4.s 			page 63
+
+
+ 2762              	.LASF78:
+ 2763 0469 4F534450 		.ascii	"OSDPReaderTask\000"
+ 2763      52656164 
+ 2763      65725461 
+ 2763      736B00
+ 2764              	.LASF40:
+ 2765 0478 6F736470 		.ascii	"osdp_cmd\000"
+ 2765      5F636D64 
+ 2765      00
+ 2766              	.LASF26:
+ 2767 0481 74696D65 		.ascii	"timer_tx_ctr\000"
+ 2767      725F7478 
+ 2767      5F637472 
+ 2767      00
+ 2768              	.LASF59:
+ 2769 048e 70616442 		.ascii	"padBytes\000"
+ 2769      79746573 
+ 2769      00
+ 2770              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.8.4 20140526 (release) [ARM/embedded-4_8-br

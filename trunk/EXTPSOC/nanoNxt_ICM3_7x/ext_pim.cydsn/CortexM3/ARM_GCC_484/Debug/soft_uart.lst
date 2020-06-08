@@ -1,0 +1,1757 @@
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"soft_uart.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.section	.text.SU_Start,"ax",%progbits
+  19              		.align	2
+  20              		.global	SU_Start
+  21              		.thumb
+  22              		.thumb_func
+  23              		.type	SU_Start, %function
+  24              	SU_Start:
+  25              	.LFB63:
+  26              		.file 1 ".\\soft_uart.c"
+   1:.\soft_uart.c **** /* ========================================
+   2:.\soft_uart.c ****  *
+   3:.\soft_uart.c ****  * Copyright YOUR COMPANY, THE YEAR
+   4:.\soft_uart.c ****  * All Rights Reserved
+   5:.\soft_uart.c ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:.\soft_uart.c ****  *
+   7:.\soft_uart.c ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:.\soft_uart.c ****  * WHICH IS THE PROPERTY OF your company.
+   9:.\soft_uart.c ****  *
+  10:.\soft_uart.c ****  * ========================================
+  11:.\soft_uart.c **** */
+  12:.\soft_uart.c **** #include <project.h>
+  13:.\soft_uart.c **** #include "softuart.h"
+  14:.\soft_uart.c **** 
+  15:.\soft_uart.c **** 
+  16:.\soft_uart.c **** 
+  17:.\soft_uart.c **** 
+  18:.\soft_uart.c **** void SU_Start(SOFT_UART_STRUCT *s, int baud, int  parity, int stop)
+  19:.\soft_uart.c **** {
+  27              		.loc 1 19 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 16
+  30              		@ frame_needed = 1, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+  32 0000 80B4     		push	{r7}
+  33              		.cfi_def_cfa_offset 4
+  34              		.cfi_offset 7, -4
+  35 0002 85B0     		sub	sp, sp, #20
+  36              		.cfi_def_cfa_offset 24
+  37 0004 00AF     		add	r7, sp, #0
+  38              		.cfi_def_cfa_register 7
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 2
+
+
+  39 0006 F860     		str	r0, [r7, #12]
+  40 0008 B960     		str	r1, [r7, #8]
+  41 000a 7A60     		str	r2, [r7, #4]
+  42 000c 3B60     		str	r3, [r7]
+  20:.\soft_uart.c **** 	s->baud = baud;
+  43              		.loc 1 20 0
+  44 000e FB68     		ldr	r3, [r7, #12]
+  45 0010 BA68     		ldr	r2, [r7, #8]
+  46 0012 1A60     		str	r2, [r3]
+  21:.\soft_uart.c **** 	s->parity = parity;
+  47              		.loc 1 21 0
+  48 0014 FB68     		ldr	r3, [r7, #12]
+  49 0016 7A68     		ldr	r2, [r7, #4]
+  50 0018 5A60     		str	r2, [r3, #4]
+  22:.\soft_uart.c **** 	s->rx_bits = 0;
+  51              		.loc 1 22 0
+  52 001a FB68     		ldr	r3, [r7, #12]
+  53 001c 0022     		movs	r2, #0
+  54 001e DA82     		strh	r2, [r3, #22]	@ movhi
+  23:.\soft_uart.c **** 	s->tx_bits = 0;
+  55              		.loc 1 23 0
+  56 0020 FB68     		ldr	r3, [r7, #12]
+  57 0022 0022     		movs	r2, #0
+  58 0024 9A82     		strh	r2, [r3, #20]	@ movhi
+  24:.\soft_uart.c **** 	s->flags = TX_READY;
+  59              		.loc 1 24 0
+  60 0026 FB68     		ldr	r3, [r7, #12]
+  61 0028 0222     		movs	r2, #2
+  62 002a 9A61     		str	r2, [r3, #24]
+  25:.\soft_uart.c **** 	s->timer_tx_ctr=0;
+  63              		.loc 1 25 0
+  64 002c FB68     		ldr	r3, [r7, #12]
+  65 002e 0022     		movs	r2, #0
+  66 0030 DA61     		str	r2, [r3, #28]
+  26:.\soft_uart.c **** 	s->timer_rx_ctr=0;
+  67              		.loc 1 26 0
+  68 0032 FB68     		ldr	r3, [r7, #12]
+  69 0034 0022     		movs	r2, #0
+  70 0036 1A62     		str	r2, [r3, #32]
+  27:.\soft_uart.c **** 	s->stop_bits =stop;
+  71              		.loc 1 27 0
+  72 0038 FB68     		ldr	r3, [r7, #12]
+  73 003a 3A68     		ldr	r2, [r7]
+  74 003c 9A60     		str	r2, [r3, #8]
+  28:.\soft_uart.c **** 	s->bits=8;
+  75              		.loc 1 28 0
+  76 003e FB68     		ldr	r3, [r7, #12]
+  77 0040 0822     		movs	r2, #8
+  78 0042 DA60     		str	r2, [r3, #12]
+  29:.\soft_uart.c **** 
+  30:.\soft_uart.c **** }
+  79              		.loc 1 30 0
+  80 0044 1437     		adds	r7, r7, #20
+  81 0046 BD46     		mov	sp, r7
+  82              		@ sp needed
+  83 0048 5DF8047B 		ldr	r7, [sp], #4
+  84 004c 7047     		bx	lr
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 3
+
+
+  85              		.cfi_endproc
+  86              	.LFE63:
+  87              		.size	SU_Start, .-SU_Start
+  88 004e 00BF     		.section	.text.SU_Isr,"ax",%progbits
+  89              		.align	2
+  90              		.global	SU_Isr
+  91              		.thumb
+  92              		.thumb_func
+  93              		.type	SU_Isr, %function
+  94              	SU_Isr:
+  95              	.LFB64:
+  31:.\soft_uart.c **** 
+  32:.\soft_uart.c **** 
+  33:.\soft_uart.c **** 
+  34:.\soft_uart.c **** void SU_Isr(SOFT_UART_STRUCT *s)
+  35:.\soft_uart.c **** {
+  96              		.loc 1 35 0
+  97              		.cfi_startproc
+  98              		@ args = 0, pretend = 0, frame = 16
+  99              		@ frame_needed = 1, uses_anonymous_args = 0
+ 100 0000 80B5     		push	{r7, lr}
+ 101              		.cfi_def_cfa_offset 8
+ 102              		.cfi_offset 7, -8
+ 103              		.cfi_offset 14, -4
+ 104 0002 84B0     		sub	sp, sp, #16
+ 105              		.cfi_def_cfa_offset 24
+ 106 0004 00AF     		add	r7, sp, #0
+ 107              		.cfi_def_cfa_register 7
+ 108 0006 7860     		str	r0, [r7, #4]
+  36:.\soft_uart.c **** 	uint8 rb;
+  37:.\soft_uart.c **** 	
+  38:.\soft_uart.c **** 	// this is where we tx
+  39:.\soft_uart.c **** 	if ( s->tx_bits)
+ 109              		.loc 1 39 0
+ 110 0008 7B68     		ldr	r3, [r7, #4]
+ 111 000a 9B8A     		ldrh	r3, [r3, #20]	@ movhi
+ 112 000c 9BB2     		uxth	r3, r3
+ 113 000e 002B     		cmp	r3, #0
+ 114 0010 37D0     		beq	.L3
+  40:.\soft_uart.c **** 	{
+  41:.\soft_uart.c **** 		if ( --s->timer_tx_ctr<=0 )
+ 115              		.loc 1 41 0
+ 116 0012 7B68     		ldr	r3, [r7, #4]
+ 117 0014 DB69     		ldr	r3, [r3, #28]
+ 118 0016 013B     		subs	r3, r3, #1
+ 119 0018 7A68     		ldr	r2, [r7, #4]
+ 120 001a D361     		str	r3, [r2, #28]
+ 121 001c 002B     		cmp	r3, #0
+ 122 001e 30DC     		bgt	.L3
+  42:.\soft_uart.c **** 		{
+  43:.\soft_uart.c **** 			if ((s->tx_byte & 0x01) == 0x01)
+ 123              		.loc 1 43 0
+ 124 0020 7B68     		ldr	r3, [r7, #4]
+ 125 0022 5B8A     		ldrh	r3, [r3, #18]	@ movhi
+ 126 0024 9BB2     		uxth	r3, r3
+ 127 0026 03F00103 		and	r3, r3, #1
+ 128 002a 002B     		cmp	r3, #0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 4
+
+
+ 129 002c 03D0     		beq	.L4
+  44:.\soft_uart.c **** 			{
+  45:.\soft_uart.c ****                 OptSelect_Write(2);
+ 130              		.loc 1 45 0
+ 131 002e 0220     		movs	r0, #2
+ 132 0030 FFF7FEFF 		bl	OptSelect_Write
+ 133 0034 02E0     		b	.L5
+ 134              	.L4:
+  46:.\soft_uart.c **** 			}
+  47:.\soft_uart.c **** 			else
+  48:.\soft_uart.c **** 			{
+  49:.\soft_uart.c ****                 OptSelect_Write(3);
+ 135              		.loc 1 49 0
+ 136 0036 0320     		movs	r0, #3
+ 137 0038 FFF7FEFF 		bl	OptSelect_Write
+ 138              	.L5:
+  50:.\soft_uart.c **** 			}
+  51:.\soft_uart.c **** 			s->tx_byte = s->tx_byte >>1;
+ 139              		.loc 1 51 0
+ 140 003c 7B68     		ldr	r3, [r7, #4]
+ 141 003e 5B8A     		ldrh	r3, [r3, #18]	@ movhi
+ 142 0040 9BB2     		uxth	r3, r3
+ 143 0042 5B08     		lsrs	r3, r3, #1
+ 144 0044 9AB2     		uxth	r2, r3
+ 145 0046 7B68     		ldr	r3, [r7, #4]
+ 146 0048 5A82     		strh	r2, [r3, #18]	@ movhi
+  52:.\soft_uart.c **** 			s->tx_bits--;
+ 147              		.loc 1 52 0
+ 148 004a 7B68     		ldr	r3, [r7, #4]
+ 149 004c 9B8A     		ldrh	r3, [r3, #20]	@ movhi
+ 150 004e 9BB2     		uxth	r3, r3
+ 151 0050 013B     		subs	r3, r3, #1
+ 152 0052 9AB2     		uxth	r2, r3
+ 153 0054 7B68     		ldr	r3, [r7, #4]
+ 154 0056 9A82     		strh	r2, [r3, #20]	@ movhi
+  53:.\soft_uart.c **** 			if (s->tx_bits)
+ 155              		.loc 1 53 0
+ 156 0058 7B68     		ldr	r3, [r7, #4]
+ 157 005a 9B8A     		ldrh	r3, [r3, #20]	@ movhi
+ 158 005c 9BB2     		uxth	r3, r3
+ 159 005e 002B     		cmp	r3, #0
+ 160 0060 09D0     		beq	.L6
+  54:.\soft_uart.c **** 			{
+  55:.\soft_uart.c **** 				s->flags &=~TX_READY;
+ 161              		.loc 1 55 0
+ 162 0062 7B68     		ldr	r3, [r7, #4]
+ 163 0064 9B69     		ldr	r3, [r3, #24]
+ 164 0066 23F00202 		bic	r2, r3, #2
+ 165 006a 7B68     		ldr	r3, [r7, #4]
+ 166 006c 9A61     		str	r2, [r3, #24]
+  56:.\soft_uart.c **** 				s->timer_tx_ctr = 3;
+ 167              		.loc 1 56 0
+ 168 006e 7B68     		ldr	r3, [r7, #4]
+ 169 0070 0322     		movs	r2, #3
+ 170 0072 DA61     		str	r2, [r3, #28]
+ 171 0074 05E0     		b	.L3
+ 172              	.L6:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 5
+
+
+  57:.\soft_uart.c **** 		    }
+  58:.\soft_uart.c **** 			else
+  59:.\soft_uart.c **** 			   s->flags |=TX_READY;
+ 173              		.loc 1 59 0
+ 174 0076 7B68     		ldr	r3, [r7, #4]
+ 175 0078 9B69     		ldr	r3, [r3, #24]
+ 176 007a 43F00202 		orr	r2, r3, #2
+ 177 007e 7B68     		ldr	r3, [r7, #4]
+ 178 0080 9A61     		str	r2, [r3, #24]
+ 179              	.L3:
+  60:.\soft_uart.c **** 		}	
+  61:.\soft_uart.c **** 	}
+  62:.\soft_uart.c **** 
+  63:.\soft_uart.c ****     rb = Pin_WD0_Read();
+ 180              		.loc 1 63 0
+ 181 0082 FFF7FEFF 		bl	Pin_WD0_Read
+ 182 0086 0346     		mov	r3, r0
+ 183 0088 FB73     		strb	r3, [r7, #15]
+  64:.\soft_uart.c **** 	if ( s->rx_bits==0)
+ 184              		.loc 1 64 0
+ 185 008a 7B68     		ldr	r3, [r7, #4]
+ 186 008c DB8A     		ldrh	r3, [r3, #22]
+ 187 008e 002B     		cmp	r3, #0
+ 188 0090 15D1     		bne	.L7
+  65:.\soft_uart.c **** 	{
+  66:.\soft_uart.c **** 		if ( rb==0) // we got a start bit
+ 189              		.loc 1 66 0
+ 190 0092 FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 191 0094 002B     		cmp	r3, #0
+ 192 0096 60D1     		bne	.L2
+  67:.\soft_uart.c **** 		{
+  68:.\soft_uart.c **** 			s->timer_rx_ctr = 4;
+ 193              		.loc 1 68 0
+ 194 0098 7B68     		ldr	r3, [r7, #4]
+ 195 009a 0422     		movs	r2, #4
+ 196 009c 1A62     		str	r2, [r3, #32]
+  69:.\soft_uart.c **** 			s->rx_bits = s->bits+s->stop_bits+s->parity;
+ 197              		.loc 1 69 0
+ 198 009e 7B68     		ldr	r3, [r7, #4]
+ 199 00a0 DB68     		ldr	r3, [r3, #12]
+ 200 00a2 9AB2     		uxth	r2, r3
+ 201 00a4 7B68     		ldr	r3, [r7, #4]
+ 202 00a6 9B68     		ldr	r3, [r3, #8]
+ 203 00a8 9BB2     		uxth	r3, r3
+ 204 00aa 1344     		add	r3, r3, r2
+ 205 00ac 9AB2     		uxth	r2, r3
+ 206 00ae 7B68     		ldr	r3, [r7, #4]
+ 207 00b0 5B68     		ldr	r3, [r3, #4]
+ 208 00b2 9BB2     		uxth	r3, r3
+ 209 00b4 1344     		add	r3, r3, r2
+ 210 00b6 9AB2     		uxth	r2, r3
+ 211 00b8 7B68     		ldr	r3, [r7, #4]
+ 212 00ba DA82     		strh	r2, [r3, #22]	@ movhi
+ 213 00bc 4DE0     		b	.L2
+ 214              	.L7:
+  70:.\soft_uart.c **** 		}
+  71:.\soft_uart.c **** 	}
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 6
+
+
+  72:.\soft_uart.c **** 	else
+  73:.\soft_uart.c **** 	{
+  74:.\soft_uart.c **** 		if ( --s->timer_rx_ctr<=0 )
+ 215              		.loc 1 74 0
+ 216 00be 7B68     		ldr	r3, [r7, #4]
+ 217 00c0 1B6A     		ldr	r3, [r3, #32]
+ 218 00c2 013B     		subs	r3, r3, #1
+ 219 00c4 7A68     		ldr	r2, [r7, #4]
+ 220 00c6 1362     		str	r3, [r2, #32]
+ 221 00c8 002B     		cmp	r3, #0
+ 222 00ca 46DC     		bgt	.L2
+  75:.\soft_uart.c **** 		{				// rcv
+  76:.\soft_uart.c **** 			if ( rb )
+ 223              		.loc 1 76 0
+ 224 00cc FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 225 00ce 002B     		cmp	r3, #0
+ 226 00d0 08D0     		beq	.L10
+  77:.\soft_uart.c **** 			{	s->rx_byte |= 0x8000;	}
+ 227              		.loc 1 77 0
+ 228 00d2 7B68     		ldr	r3, [r7, #4]
+ 229 00d4 1B8A     		ldrh	r3, [r3, #16]
+ 230 00d6 6FEA4343 		mvn	r3, r3, lsl #17
+ 231 00da 6FEA5343 		mvn	r3, r3, lsr #17
+ 232 00de 9AB2     		uxth	r2, r3
+ 233 00e0 7B68     		ldr	r3, [r7, #4]
+ 234 00e2 1A82     		strh	r2, [r3, #16]	@ movhi
+ 235              	.L10:
+  78:.\soft_uart.c ****             
+  79:.\soft_uart.c **** 			s->rx_byte >>= 1;
+ 236              		.loc 1 79 0
+ 237 00e4 7B68     		ldr	r3, [r7, #4]
+ 238 00e6 1B8A     		ldrh	r3, [r3, #16]
+ 239 00e8 5B08     		lsrs	r3, r3, #1
+ 240 00ea 9AB2     		uxth	r2, r3
+ 241 00ec 7B68     		ldr	r3, [r7, #4]
+ 242 00ee 1A82     		strh	r2, [r3, #16]	@ movhi
+  80:.\soft_uart.c **** 			s->rx_bits--;
+ 243              		.loc 1 80 0
+ 244 00f0 7B68     		ldr	r3, [r7, #4]
+ 245 00f2 DB8A     		ldrh	r3, [r3, #22]
+ 246 00f4 013B     		subs	r3, r3, #1
+ 247 00f6 9AB2     		uxth	r2, r3
+ 248 00f8 7B68     		ldr	r3, [r7, #4]
+ 249 00fa DA82     		strh	r2, [r3, #22]	@ movhi
+  81:.\soft_uart.c **** 					
+  82:.\soft_uart.c **** 			if ( s->rx_bits==0)
+ 250              		.loc 1 82 0
+ 251 00fc 7B68     		ldr	r3, [r7, #4]
+ 252 00fe DB8A     		ldrh	r3, [r3, #22]
+ 253 0100 002B     		cmp	r3, #0
+ 254 0102 27D1     		bne	.L11
+  83:.\soft_uart.c **** 			{
+  84:.\soft_uart.c **** 				s->rx_recv =  (s->rx_byte>>(8-1-s->stop_bits-(s->parity?1:0)))&0xff;
+ 255              		.loc 1 84 0
+ 256 0104 7B68     		ldr	r3, [r7, #4]
+ 257 0106 1B8A     		ldrh	r3, [r3, #16]
+ 258 0108 1A46     		mov	r2, r3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 7
+
+
+ 259 010a 7B68     		ldr	r3, [r7, #4]
+ 260 010c 9B68     		ldr	r3, [r3, #8]
+ 261 010e C3F10701 		rsb	r1, r3, #7
+ 262 0112 7B68     		ldr	r3, [r7, #4]
+ 263 0114 5B68     		ldr	r3, [r3, #4]
+ 264 0116 002B     		cmp	r3, #0
+ 265 0118 0CBF     		ite	eq
+ 266 011a 0023     		moveq	r3, #0
+ 267 011c 0123     		movne	r3, #1
+ 268 011e DBB2     		uxtb	r3, r3
+ 269 0120 CB1A     		subs	r3, r1, r3
+ 270 0122 42FA03F3 		asr	r3, r2, r3
+ 271 0126 DAB2     		uxtb	r2, r3
+ 272 0128 7B68     		ldr	r3, [r7, #4]
+ 273 012a 5A62     		str	r2, [r3, #36]
+  85:.\soft_uart.c **** 				if (s->flags & RX_BYTE_READY)
+ 274              		.loc 1 85 0
+ 275 012c 7B68     		ldr	r3, [r7, #4]
+ 276 012e 9B69     		ldr	r3, [r3, #24]
+ 277 0130 03F00103 		and	r3, r3, #1
+ 278 0134 002B     		cmp	r3, #0
+ 279 0136 06D0     		beq	.L12
+  86:.\soft_uart.c **** 					 s->flags |=RX_OVERFLOW;
+ 280              		.loc 1 86 0
+ 281 0138 7B68     		ldr	r3, [r7, #4]
+ 282 013a 9B69     		ldr	r3, [r3, #24]
+ 283 013c 43F00402 		orr	r2, r3, #4
+ 284 0140 7B68     		ldr	r3, [r7, #4]
+ 285 0142 9A61     		str	r2, [r3, #24]
+ 286 0144 09E0     		b	.L2
+ 287              	.L12:
+  87:.\soft_uart.c **** 				else
+  88:.\soft_uart.c **** 					 s->flags |=RX_BYTE_READY;
+ 288              		.loc 1 88 0
+ 289 0146 7B68     		ldr	r3, [r7, #4]
+ 290 0148 9B69     		ldr	r3, [r3, #24]
+ 291 014a 43F00102 		orr	r2, r3, #1
+ 292 014e 7B68     		ldr	r3, [r7, #4]
+ 293 0150 9A61     		str	r2, [r3, #24]
+ 294 0152 02E0     		b	.L2
+ 295              	.L11:
+  89:.\soft_uart.c **** 			}
+  90:.\soft_uart.c **** 			else
+  91:.\soft_uart.c **** 				s->timer_rx_ctr = 3;
+ 296              		.loc 1 91 0
+ 297 0154 7B68     		ldr	r3, [r7, #4]
+ 298 0156 0322     		movs	r2, #3
+ 299 0158 1A62     		str	r2, [r3, #32]
+ 300              	.L2:
+  92:.\soft_uart.c **** 		}
+  93:.\soft_uart.c **** 	}
+  94:.\soft_uart.c **** }
+ 301              		.loc 1 94 0
+ 302 015a 1037     		adds	r7, r7, #16
+ 303 015c BD46     		mov	sp, r7
+ 304              		@ sp needed
+ 305 015e 80BD     		pop	{r7, pc}
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 8
+
+
+ 306              		.cfi_endproc
+ 307              	.LFE64:
+ 308              		.size	SU_Isr, .-SU_Isr
+ 309              		.section	.text.getOddParity,"ax",%progbits
+ 310              		.align	2
+ 311              		.global	getOddParity
+ 312              		.thumb
+ 313              		.thumb_func
+ 314              		.type	getOddParity, %function
+ 315              	getOddParity:
+ 316              	.LFB65:
+  95:.\soft_uart.c **** 
+  96:.\soft_uart.c **** #define START_BIT 0
+  97:.\soft_uart.c **** 
+  98:.\soft_uart.c **** unsigned char getOddParity(unsigned char p)
+  99:.\soft_uart.c ****   {
+ 317              		.loc 1 99 0
+ 318              		.cfi_startproc
+ 319              		@ args = 0, pretend = 0, frame = 8
+ 320              		@ frame_needed = 1, uses_anonymous_args = 0
+ 321              		@ link register save eliminated.
+ 322 0000 80B4     		push	{r7}
+ 323              		.cfi_def_cfa_offset 4
+ 324              		.cfi_offset 7, -4
+ 325 0002 83B0     		sub	sp, sp, #12
+ 326              		.cfi_def_cfa_offset 16
+ 327 0004 00AF     		add	r7, sp, #0
+ 328              		.cfi_def_cfa_register 7
+ 329 0006 0346     		mov	r3, r0
+ 330 0008 FB71     		strb	r3, [r7, #7]
+ 100:.\soft_uart.c ****       p = p ^ (p >> 4 | p << 4);
+ 331              		.loc 1 100 0
+ 332 000a FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 333 000c 1B09     		lsrs	r3, r3, #4
+ 334 000e DBB2     		uxtb	r3, r3
+ 335 0010 DAB2     		uxtb	r2, r3
+ 336 0012 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 337 0014 1B01     		lsls	r3, r3, #4
+ 338 0016 DBB2     		uxtb	r3, r3
+ 339 0018 1343     		orrs	r3, r3, r2
+ 340 001a DAB2     		uxtb	r2, r3
+ 341 001c FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 342 001e 5340     		eors	r3, r3, r2
+ 343 0020 DBB2     		uxtb	r3, r3
+ 344 0022 FB71     		strb	r3, [r7, #7]
+ 101:.\soft_uart.c ****       p = p ^ (p >> 2);
+ 345              		.loc 1 101 0
+ 346 0024 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 347 0026 9B08     		lsrs	r3, r3, #2
+ 348 0028 DAB2     		uxtb	r2, r3
+ 349 002a FB79     		ldrb	r3, [r7, #7]
+ 350 002c 5340     		eors	r3, r3, r2
+ 351 002e FB71     		strb	r3, [r7, #7]
+ 102:.\soft_uart.c ****       p = p ^ (p >> 1);
+ 352              		.loc 1 102 0
+ 353 0030 FB79     		ldrb	r3, [r7, #7]	@ zero_extendqisi2
+ 354 0032 5B08     		lsrs	r3, r3, #1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 9
+
+
+ 355 0034 DAB2     		uxtb	r2, r3
+ 356 0036 FB79     		ldrb	r3, [r7, #7]
+ 357 0038 5340     		eors	r3, r3, r2
+ 358 003a FB71     		strb	r3, [r7, #7]
+ 103:.\soft_uart.c ****       return p & 1;
+ 359              		.loc 1 103 0
+ 360 003c FB79     		ldrb	r3, [r7, #7]
+ 361 003e 03F00103 		and	r3, r3, #1
+ 362 0042 DBB2     		uxtb	r3, r3
+ 104:.\soft_uart.c ****   }
+ 363              		.loc 1 104 0
+ 364 0044 1846     		mov	r0, r3
+ 365 0046 0C37     		adds	r7, r7, #12
+ 366 0048 BD46     		mov	sp, r7
+ 367              		@ sp needed
+ 368 004a 5DF8047B 		ldr	r7, [sp], #4
+ 369 004e 7047     		bx	lr
+ 370              		.cfi_endproc
+ 371              	.LFE65:
+ 372              		.size	getOddParity, .-getOddParity
+ 373              		.section	.text.SU_GetStat,"ax",%progbits
+ 374              		.align	2
+ 375              		.global	SU_GetStat
+ 376              		.thumb
+ 377              		.thumb_func
+ 378              		.type	SU_GetStat, %function
+ 379              	SU_GetStat:
+ 380              	.LFB66:
+ 105:.\soft_uart.c **** 
+ 106:.\soft_uart.c **** int SU_GetStat( SOFT_UART_STRUCT *s)
+ 107:.\soft_uart.c **** {
+ 381              		.loc 1 107 0
+ 382              		.cfi_startproc
+ 383              		@ args = 0, pretend = 0, frame = 8
+ 384              		@ frame_needed = 1, uses_anonymous_args = 0
+ 385              		@ link register save eliminated.
+ 386 0000 80B4     		push	{r7}
+ 387              		.cfi_def_cfa_offset 4
+ 388              		.cfi_offset 7, -4
+ 389 0002 83B0     		sub	sp, sp, #12
+ 390              		.cfi_def_cfa_offset 16
+ 391 0004 00AF     		add	r7, sp, #0
+ 392              		.cfi_def_cfa_register 7
+ 393 0006 7860     		str	r0, [r7, #4]
+ 108:.\soft_uart.c **** 	return s->flags;
+ 394              		.loc 1 108 0
+ 395 0008 7B68     		ldr	r3, [r7, #4]
+ 396 000a 9B69     		ldr	r3, [r3, #24]
+ 109:.\soft_uart.c **** }
+ 397              		.loc 1 109 0
+ 398 000c 1846     		mov	r0, r3
+ 399 000e 0C37     		adds	r7, r7, #12
+ 400 0010 BD46     		mov	sp, r7
+ 401              		@ sp needed
+ 402 0012 5DF8047B 		ldr	r7, [sp], #4
+ 403 0016 7047     		bx	lr
+ 404              		.cfi_endproc
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 10
+
+
+ 405              	.LFE66:
+ 406              		.size	SU_GetStat, .-SU_GetStat
+ 407              		.section	.text.SU_GetChar,"ax",%progbits
+ 408              		.align	2
+ 409              		.global	SU_GetChar
+ 410              		.thumb
+ 411              		.thumb_func
+ 412              		.type	SU_GetChar, %function
+ 413              	SU_GetChar:
+ 414              	.LFB67:
+ 110:.\soft_uart.c **** 
+ 111:.\soft_uart.c **** int SU_GetChar( SOFT_UART_STRUCT *s)
+ 112:.\soft_uart.c **** {
+ 415              		.loc 1 112 0
+ 416              		.cfi_startproc
+ 417              		@ args = 0, pretend = 0, frame = 16
+ 418              		@ frame_needed = 1, uses_anonymous_args = 0
+ 419              		@ link register save eliminated.
+ 420 0000 80B4     		push	{r7}
+ 421              		.cfi_def_cfa_offset 4
+ 422              		.cfi_offset 7, -4
+ 423 0002 85B0     		sub	sp, sp, #20
+ 424              		.cfi_def_cfa_offset 24
+ 425 0004 00AF     		add	r7, sp, #0
+ 426              		.cfi_def_cfa_register 7
+ 427 0006 7860     		str	r0, [r7, #4]
+ 113:.\soft_uart.c **** 	uint8 b;
+ 114:.\soft_uart.c **** 	b = s->rx_recv;
+ 428              		.loc 1 114 0
+ 429 0008 7B68     		ldr	r3, [r7, #4]
+ 430 000a 5B6A     		ldr	r3, [r3, #36]
+ 431 000c FB73     		strb	r3, [r7, #15]
+ 115:.\soft_uart.c **** 		CyGlobalIntDisable;
+ 432              		.loc 1 115 0
+ 433              	@ 115 ".\soft_uart.c" 1
+ 434 000e 72B6     		CPSID   i
+ 435              	@ 0 "" 2
+ 116:.\soft_uart.c **** 	s->flags &=~RX_BYTE_READY;
+ 436              		.loc 1 116 0
+ 437              		.thumb
+ 438 0010 7B68     		ldr	r3, [r7, #4]
+ 439 0012 9B69     		ldr	r3, [r3, #24]
+ 440 0014 23F00102 		bic	r2, r3, #1
+ 441 0018 7B68     		ldr	r3, [r7, #4]
+ 442 001a 9A61     		str	r2, [r3, #24]
+ 117:.\soft_uart.c **** 	CyGlobalIntEnable;
+ 443              		.loc 1 117 0
+ 444              	@ 117 ".\soft_uart.c" 1
+ 445 001c 62B6     		CPSIE   i
+ 446              	@ 0 "" 2
+ 118:.\soft_uart.c **** 	return b;
+ 447              		.loc 1 118 0
+ 448              		.thumb
+ 449 001e FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 119:.\soft_uart.c **** }
+ 450              		.loc 1 119 0
+ 451 0020 1846     		mov	r0, r3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 11
+
+
+ 452 0022 1437     		adds	r7, r7, #20
+ 453 0024 BD46     		mov	sp, r7
+ 454              		@ sp needed
+ 455 0026 5DF8047B 		ldr	r7, [sp], #4
+ 456 002a 7047     		bx	lr
+ 457              		.cfi_endproc
+ 458              	.LFE67:
+ 459              		.size	SU_GetChar, .-SU_GetChar
+ 460              		.section	.text.SU_PutChar,"ax",%progbits
+ 461              		.align	2
+ 462              		.global	SU_PutChar
+ 463              		.thumb
+ 464              		.thumb_func
+ 465              		.type	SU_PutChar, %function
+ 466              	SU_PutChar:
+ 467              	.LFB68:
+ 120:.\soft_uart.c **** 
+ 121:.\soft_uart.c **** void SU_PutChar( SOFT_UART_STRUCT *s, int c)
+ 122:.\soft_uart.c **** {
+ 468              		.loc 1 122 0
+ 469              		.cfi_startproc
+ 470              		@ args = 0, pretend = 0, frame = 16
+ 471              		@ frame_needed = 1, uses_anonymous_args = 0
+ 472 0000 80B5     		push	{r7, lr}
+ 473              		.cfi_def_cfa_offset 8
+ 474              		.cfi_offset 7, -8
+ 475              		.cfi_offset 14, -4
+ 476 0002 84B0     		sub	sp, sp, #16
+ 477              		.cfi_def_cfa_offset 24
+ 478 0004 00AF     		add	r7, sp, #0
+ 479              		.cfi_def_cfa_register 7
+ 480 0006 7860     		str	r0, [r7, #4]
+ 481 0008 3960     		str	r1, [r7]
+ 123:.\soft_uart.c **** 	uint16 data_tosend;
+ 124:.\soft_uart.c **** 	int parity = 0;
+ 482              		.loc 1 124 0
+ 483 000a 0023     		movs	r3, #0
+ 484 000c BB60     		str	r3, [r7, #8]
+ 125:.\soft_uart.c **** 	data_tosend = (c<<1) | START_BIT;
+ 485              		.loc 1 125 0
+ 486 000e 3B68     		ldr	r3, [r7]
+ 487 0010 9BB2     		uxth	r3, r3
+ 488 0012 5B00     		lsls	r3, r3, #1
+ 489 0014 FB81     		strh	r3, [r7, #14]	@ movhi
+ 126:.\soft_uart.c **** 	if (s->parity==PARITY_ODD)
+ 490              		.loc 1 126 0
+ 491 0016 7B68     		ldr	r3, [r7, #4]
+ 492 0018 5B68     		ldr	r3, [r3, #4]
+ 493 001a 012B     		cmp	r3, #1
+ 494 001c 1FD1     		bne	.L21
+ 127:.\soft_uart.c **** 	  {
+ 128:.\soft_uart.c ****         parity = getOddParity(c);
+ 495              		.loc 1 128 0
+ 496 001e 3B68     		ldr	r3, [r7]
+ 497 0020 DBB2     		uxtb	r3, r3
+ 498 0022 1846     		mov	r0, r3
+ 499 0024 FFF7FEFF 		bl	getOddParity
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 12
+
+
+ 500 0028 0346     		mov	r3, r0
+ 501 002a BB60     		str	r3, [r7, #8]
+ 129:.\soft_uart.c **** 		data_tosend |= parity ? (0x300 << s->stop_bits) : (0x200 << s->stop_bits);
+ 502              		.loc 1 129 0
+ 503 002c BB68     		ldr	r3, [r7, #8]
+ 504 002e 002B     		cmp	r3, #0
+ 505 0030 07D0     		beq	.L22
+ 506              		.loc 1 129 0 is_stmt 0 discriminator 1
+ 507 0032 7B68     		ldr	r3, [r7, #4]
+ 508 0034 9B68     		ldr	r3, [r3, #8]
+ 509 0036 4FF44072 		mov	r2, #768
+ 510 003a 02FA03F3 		lsl	r3, r2, r3
+ 511 003e 9BB2     		uxth	r3, r3
+ 512 0040 06E0     		b	.L23
+ 513              	.L22:
+ 514              		.loc 1 129 0 discriminator 2
+ 515 0042 7B68     		ldr	r3, [r7, #4]
+ 516 0044 9B68     		ldr	r3, [r3, #8]
+ 517 0046 4FF40072 		mov	r2, #512
+ 518 004a 02FA03F3 		lsl	r3, r2, r3
+ 519 004e 9BB2     		uxth	r3, r3
+ 520              	.L23:
+ 521              		.loc 1 129 0 discriminator 1
+ 522 0050 F989     		ldrh	r1, [r7, #14]
+ 523 0052 1A46     		mov	r2, r3	@ movhi
+ 524 0054 0B46     		mov	r3, r1	@ movhi
+ 525 0056 1343     		orrs	r3, r3, r2
+ 526 0058 9BB2     		uxth	r3, r3
+ 527 005a FB81     		strh	r3, [r7, #14]	@ movhi
+ 528 005c 31E0     		b	.L24
+ 529              	.L21:
+ 130:.\soft_uart.c **** 	  }
+ 131:.\soft_uart.c **** 	else if (s->parity==PARITY_EVEN)
+ 530              		.loc 1 131 0 is_stmt 1
+ 531 005e 7B68     		ldr	r3, [r7, #4]
+ 532 0060 5B68     		ldr	r3, [r3, #4]
+ 533 0062 022B     		cmp	r3, #2
+ 534 0064 1FD1     		bne	.L25
+ 132:.\soft_uart.c **** 	  {
+ 133:.\soft_uart.c ****          parity = getOddParity(c);
+ 535              		.loc 1 133 0
+ 536 0066 3B68     		ldr	r3, [r7]
+ 537 0068 DBB2     		uxtb	r3, r3
+ 538 006a 1846     		mov	r0, r3
+ 539 006c FFF7FEFF 		bl	getOddParity
+ 540 0070 0346     		mov	r3, r0
+ 541 0072 BB60     		str	r3, [r7, #8]
+ 134:.\soft_uart.c **** 		data_tosend |= parity ?  (0x200 << s->stop_bits) : (0x300 << s->stop_bits);
+ 542              		.loc 1 134 0
+ 543 0074 BB68     		ldr	r3, [r7, #8]
+ 544 0076 002B     		cmp	r3, #0
+ 545 0078 07D0     		beq	.L26
+ 546              		.loc 1 134 0 is_stmt 0 discriminator 1
+ 547 007a 7B68     		ldr	r3, [r7, #4]
+ 548 007c 9B68     		ldr	r3, [r3, #8]
+ 549 007e 4FF40072 		mov	r2, #512
+ 550 0082 02FA03F3 		lsl	r3, r2, r3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 13
+
+
+ 551 0086 9BB2     		uxth	r3, r3
+ 552 0088 06E0     		b	.L27
+ 553              	.L26:
+ 554              		.loc 1 134 0 discriminator 2
+ 555 008a 7B68     		ldr	r3, [r7, #4]
+ 556 008c 9B68     		ldr	r3, [r3, #8]
+ 557 008e 4FF44072 		mov	r2, #768
+ 558 0092 02FA03F3 		lsl	r3, r2, r3
+ 559 0096 9BB2     		uxth	r3, r3
+ 560              	.L27:
+ 561 0098 F989     		ldrh	r1, [r7, #14]
+ 562 009a 1A46     		mov	r2, r3	@ movhi
+ 563 009c 0B46     		mov	r3, r1	@ movhi
+ 564 009e 1343     		orrs	r3, r3, r2
+ 565 00a0 9BB2     		uxth	r3, r3
+ 566 00a2 FB81     		strh	r3, [r7, #14]	@ movhi
+ 567 00a4 0DE0     		b	.L24
+ 568              	.L25:
+ 135:.\soft_uart.c **** 	  }
+ 136:.\soft_uart.c **** 	else
+ 137:.\soft_uart.c **** 		data_tosend |=  1<<(s->bits + s->stop_bits);
+ 569              		.loc 1 137 0 is_stmt 1
+ 570 00a6 7B68     		ldr	r3, [r7, #4]
+ 571 00a8 DA68     		ldr	r2, [r3, #12]
+ 572 00aa 7B68     		ldr	r3, [r7, #4]
+ 573 00ac 9B68     		ldr	r3, [r3, #8]
+ 574 00ae 1344     		add	r3, r3, r2
+ 575 00b0 0122     		movs	r2, #1
+ 576 00b2 02FA03F3 		lsl	r3, r2, r3
+ 577 00b6 9AB2     		uxth	r2, r3
+ 578 00b8 FB89     		ldrh	r3, [r7, #14]
+ 579 00ba 1343     		orrs	r3, r3, r2
+ 580 00bc 9BB2     		uxth	r3, r3
+ 581 00be FB81     		strh	r3, [r7, #14]	@ movhi
+ 138:.\soft_uart.c **** 	// wait for it to be ready
+ 139:.\soft_uart.c **** 	while ((s->flags&TX_READY)==0);
+ 582              		.loc 1 139 0
+ 583 00c0 FFE7     		b	.L31
+ 584              	.L24:
+ 585              	.L31:
+ 586 00c2 00BF     		nop
+ 587              	.L28:
+ 588              		.loc 1 139 0 is_stmt 0 discriminator 1
+ 589 00c4 7B68     		ldr	r3, [r7, #4]
+ 590 00c6 9B69     		ldr	r3, [r3, #24]
+ 591 00c8 03F00203 		and	r3, r3, #2
+ 592 00cc 002B     		cmp	r3, #0
+ 593 00ce F9D0     		beq	.L28
+ 140:.\soft_uart.c **** 
+ 141:.\soft_uart.c **** 	CyGlobalIntDisable;
+ 594              		.loc 1 141 0 is_stmt 1
+ 595              	@ 141 ".\soft_uart.c" 1
+ 596 00d0 72B6     		CPSID   i
+ 597              	@ 0 "" 2
+ 142:.\soft_uart.c **** 	s->flags &=~TX_READY;
+ 598              		.loc 1 142 0
+ 599              		.thumb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 14
+
+
+ 600 00d2 7B68     		ldr	r3, [r7, #4]
+ 601 00d4 9B69     		ldr	r3, [r3, #24]
+ 602 00d6 23F00202 		bic	r2, r3, #2
+ 603 00da 7B68     		ldr	r3, [r7, #4]
+ 604 00dc 9A61     		str	r2, [r3, #24]
+ 143:.\soft_uart.c **** 	CyGlobalIntEnable;
+ 605              		.loc 1 143 0
+ 606              	@ 143 ".\soft_uart.c" 1
+ 607 00de 62B6     		CPSIE   i
+ 608              	@ 0 "" 2
+ 144:.\soft_uart.c **** 	s->tx_byte = data_tosend;
+ 609              		.loc 1 144 0
+ 610              		.thumb
+ 611 00e0 7B68     		ldr	r3, [r7, #4]
+ 612 00e2 FA89     		ldrh	r2, [r7, #14]	@ movhi
+ 613 00e4 5A82     		strh	r2, [r3, #18]	@ movhi
+ 145:.\soft_uart.c **** 	s->timer_tx_ctr = 3;
+ 614              		.loc 1 145 0
+ 615 00e6 7B68     		ldr	r3, [r7, #4]
+ 616 00e8 0322     		movs	r2, #3
+ 617 00ea DA61     		str	r2, [r3, #28]
+ 146:.\soft_uart.c ****     if(s->parity != PARITY_NONE)
+ 618              		.loc 1 146 0
+ 619 00ec 7B68     		ldr	r3, [r7, #4]
+ 620 00ee 5B68     		ldr	r3, [r3, #4]
+ 621 00f0 002B     		cmp	r3, #0
+ 622 00f2 0CD0     		beq	.L29
+ 147:.\soft_uart.c ****     	s->tx_bits = s->bits+s->stop_bits+ 2;
+ 623              		.loc 1 147 0
+ 624 00f4 7B68     		ldr	r3, [r7, #4]
+ 625 00f6 DB68     		ldr	r3, [r3, #12]
+ 626 00f8 9AB2     		uxth	r2, r3
+ 627 00fa 7B68     		ldr	r3, [r7, #4]
+ 628 00fc 9B68     		ldr	r3, [r3, #8]
+ 629 00fe 9BB2     		uxth	r3, r3
+ 630 0100 1344     		add	r3, r3, r2
+ 631 0102 9BB2     		uxth	r3, r3
+ 632 0104 0233     		adds	r3, r3, #2
+ 633 0106 9AB2     		uxth	r2, r3
+ 634 0108 7B68     		ldr	r3, [r7, #4]
+ 635 010a 9A82     		strh	r2, [r3, #20]	@ movhi
+ 636 010c 0BE0     		b	.L20
+ 637              	.L29:
+ 148:.\soft_uart.c ****     else
+ 149:.\soft_uart.c ****     	s->tx_bits = s->bits+s->stop_bits+ 1;
+ 638              		.loc 1 149 0
+ 639 010e 7B68     		ldr	r3, [r7, #4]
+ 640 0110 DB68     		ldr	r3, [r3, #12]
+ 641 0112 9AB2     		uxth	r2, r3
+ 642 0114 7B68     		ldr	r3, [r7, #4]
+ 643 0116 9B68     		ldr	r3, [r3, #8]
+ 644 0118 9BB2     		uxth	r3, r3
+ 645 011a 1344     		add	r3, r3, r2
+ 646 011c 9BB2     		uxth	r3, r3
+ 647 011e 0133     		adds	r3, r3, #1
+ 648 0120 9AB2     		uxth	r2, r3
+ 649 0122 7B68     		ldr	r3, [r7, #4]
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 15
+
+
+ 650 0124 9A82     		strh	r2, [r3, #20]	@ movhi
+ 651              	.L20:
+ 150:.\soft_uart.c **** 	
+ 151:.\soft_uart.c **** }
+ 652              		.loc 1 151 0
+ 653 0126 1037     		adds	r7, r7, #16
+ 654 0128 BD46     		mov	sp, r7
+ 655              		@ sp needed
+ 656 012a 80BD     		pop	{r7, pc}
+ 657              		.cfi_endproc
+ 658              	.LFE68:
+ 659              		.size	SU_PutChar, .-SU_PutChar
+ 660              		.text
+ 661              	.Letext0:
+ 662              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 663              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 664              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 665              		.file 5 ".\\softuart.h"
+ 666              		.file 6 "Generated_Source\\PSoC5/core_cm3.h"
+ 667              		.section	.debug_info,"",%progbits
+ 668              	.Ldebug_info0:
+ 669 0000 B8020000 		.4byte	0x2b8
+ 670 0004 0400     		.2byte	0x4
+ 671 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 672 000a 04       		.byte	0x4
+ 673 000b 01       		.uleb128 0x1
+ 674 000c 59010000 		.4byte	.LASF38
+ 675 0010 01       		.byte	0x1
+ 676 0011 EB010000 		.4byte	.LASF39
+ 677 0015 5B000000 		.4byte	.LASF40
+ 678 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 679 001d 00000000 		.4byte	0
+ 680 0021 00000000 		.4byte	.Ldebug_line0
+ 681 0025 02       		.uleb128 0x2
+ 682 0026 01       		.byte	0x1
+ 683 0027 06       		.byte	0x6
+ 684 0028 51020000 		.4byte	.LASF0
+ 685 002c 02       		.uleb128 0x2
+ 686 002d 01       		.byte	0x1
+ 687 002e 08       		.byte	0x8
+ 688 002f 42000000 		.4byte	.LASF1
+ 689 0033 02       		.uleb128 0x2
+ 690 0034 02       		.byte	0x2
+ 691 0035 05       		.byte	0x5
+ 692 0036 27020000 		.4byte	.LASF2
+ 693 003a 02       		.uleb128 0x2
+ 694 003b 02       		.byte	0x2
+ 695 003c 07       		.byte	0x7
+ 696 003d C6000000 		.4byte	.LASF3
+ 697 0041 03       		.uleb128 0x3
+ 698 0042 23000000 		.4byte	.LASF9
+ 699 0046 02       		.byte	0x2
+ 700 0047 37       		.byte	0x37
+ 701 0048 4C000000 		.4byte	0x4c
+ 702 004c 02       		.uleb128 0x2
+ 703 004d 04       		.byte	0x4
+ 704 004e 05       		.byte	0x5
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 16
+
+
+ 705 004f 37020000 		.4byte	.LASF4
+ 706 0053 02       		.uleb128 0x2
+ 707 0054 04       		.byte	0x4
+ 708 0055 07       		.byte	0x7
+ 709 0056 B4000000 		.4byte	.LASF5
+ 710 005a 02       		.uleb128 0x2
+ 711 005b 08       		.byte	0x8
+ 712 005c 05       		.byte	0x5
+ 713 005d F9010000 		.4byte	.LASF6
+ 714 0061 02       		.uleb128 0x2
+ 715 0062 08       		.byte	0x8
+ 716 0063 07       		.byte	0x7
+ 717 0064 2F010000 		.4byte	.LASF7
+ 718 0068 04       		.uleb128 0x4
+ 719 0069 04       		.byte	0x4
+ 720 006a 05       		.byte	0x5
+ 721 006b 696E7400 		.ascii	"int\000"
+ 722 006f 02       		.uleb128 0x2
+ 723 0070 04       		.byte	0x4
+ 724 0071 07       		.byte	0x7
+ 725 0072 1C010000 		.4byte	.LASF8
+ 726 0076 03       		.uleb128 0x3
+ 727 0077 DA010000 		.4byte	.LASF10
+ 728 007b 03       		.byte	0x3
+ 729 007c 41       		.byte	0x41
+ 730 007d 41000000 		.4byte	0x41
+ 731 0081 03       		.uleb128 0x3
+ 732 0082 31020000 		.4byte	.LASF11
+ 733 0086 04       		.byte	0x4
+ 734 0087 B3       		.byte	0xb3
+ 735 0088 2C000000 		.4byte	0x2c
+ 736 008c 03       		.uleb128 0x3
+ 737 008d FB000000 		.4byte	.LASF12
+ 738 0091 04       		.byte	0x4
+ 739 0092 B4       		.byte	0xb4
+ 740 0093 3A000000 		.4byte	0x3a
+ 741 0097 02       		.uleb128 0x2
+ 742 0098 04       		.byte	0x4
+ 743 0099 04       		.byte	0x4
+ 744 009a 3C000000 		.4byte	.LASF13
+ 745 009e 02       		.uleb128 0x2
+ 746 009f 08       		.byte	0x8
+ 747 00a0 04       		.byte	0x4
+ 748 00a1 E7000000 		.4byte	.LASF14
+ 749 00a5 02       		.uleb128 0x2
+ 750 00a6 01       		.byte	0x1
+ 751 00a7 08       		.byte	0x8
+ 752 00a8 40020000 		.4byte	.LASF15
+ 753 00ac 05       		.uleb128 0x5
+ 754 00ad 8C000000 		.4byte	0x8c
+ 755 00b1 02       		.uleb128 0x2
+ 756 00b2 04       		.byte	0x4
+ 757 00b3 07       		.byte	0x7
+ 758 00b4 E2010000 		.4byte	.LASF16
+ 759 00b8 06       		.uleb128 0x6
+ 760 00b9 28       		.byte	0x28
+ 761 00ba 05       		.byte	0x5
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 17
+
+
+ 762 00bb 0D       		.byte	0xd
+ 763 00bc 51010000 		.4byte	0x151
+ 764 00c0 07       		.uleb128 0x7
+ 765 00c1 D5010000 		.4byte	.LASF17
+ 766 00c5 05       		.byte	0x5
+ 767 00c6 0F       		.byte	0xf
+ 768 00c7 68000000 		.4byte	0x68
+ 769 00cb 00       		.byte	0
+ 770 00cc 07       		.uleb128 0x7
+ 771 00cd 5D020000 		.4byte	.LASF18
+ 772 00d1 05       		.byte	0x5
+ 773 00d2 10       		.byte	0x10
+ 774 00d3 68000000 		.4byte	0x68
+ 775 00d7 04       		.byte	0x4
+ 776 00d8 07       		.uleb128 0x7
+ 777 00d9 19000000 		.4byte	.LASF19
+ 778 00dd 05       		.byte	0x5
+ 779 00de 11       		.byte	0x11
+ 780 00df 68000000 		.4byte	0x68
+ 781 00e3 08       		.byte	0x8
+ 782 00e4 07       		.uleb128 0x7
+ 783 00e5 1A020000 		.4byte	.LASF20
+ 784 00e9 05       		.byte	0x5
+ 785 00ea 12       		.byte	0x12
+ 786 00eb 68000000 		.4byte	0x68
+ 787 00ef 0C       		.byte	0xc
+ 788 00f0 07       		.uleb128 0x7
+ 789 00f1 00000000 		.4byte	.LASF21
+ 790 00f5 05       		.byte	0x5
+ 791 00f6 13       		.byte	0x13
+ 792 00f7 8C000000 		.4byte	0x8c
+ 793 00fb 10       		.byte	0x10
+ 794 00fc 07       		.uleb128 0x7
+ 795 00fd 34000000 		.4byte	.LASF22
+ 796 0101 05       		.byte	0x5
+ 797 0102 14       		.byte	0x14
+ 798 0103 AC000000 		.4byte	0xac
+ 799 0107 12       		.byte	0x12
+ 800 0108 07       		.uleb128 0x7
+ 801 0109 12020000 		.4byte	.LASF23
+ 802 010d 05       		.byte	0x5
+ 803 010e 15       		.byte	0x15
+ 804 010f AC000000 		.4byte	0xac
+ 805 0113 14       		.byte	0x14
+ 806 0114 07       		.uleb128 0x7
+ 807 0115 1F020000 		.4byte	.LASF24
+ 808 0119 05       		.byte	0x5
+ 809 011a 16       		.byte	0x16
+ 810 011b 8C000000 		.4byte	0x8c
+ 811 011f 16       		.byte	0x16
+ 812 0120 07       		.uleb128 0x7
+ 813 0121 29010000 		.4byte	.LASF25
+ 814 0125 05       		.byte	0x5
+ 815 0126 17       		.byte	0x17
+ 816 0127 51010000 		.4byte	0x151
+ 817 012b 18       		.byte	0x18
+ 818 012c 07       		.uleb128 0x7
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 18
+
+
+ 819 012d 0F010000 		.4byte	.LASF26
+ 820 0131 05       		.byte	0x5
+ 821 0132 18       		.byte	0x18
+ 822 0133 51010000 		.4byte	0x151
+ 823 0137 1C       		.byte	0x1c
+ 824 0138 07       		.uleb128 0x7
+ 825 0139 64020000 		.4byte	.LASF27
+ 826 013d 05       		.byte	0x5
+ 827 013e 19       		.byte	0x19
+ 828 013f 51010000 		.4byte	0x151
+ 829 0143 20       		.byte	0x20
+ 830 0144 07       		.uleb128 0x7
+ 831 0145 51010000 		.4byte	.LASF28
+ 832 0149 05       		.byte	0x5
+ 833 014a 1A       		.byte	0x1a
+ 834 014b 51010000 		.4byte	0x151
+ 835 014f 24       		.byte	0x24
+ 836 0150 00       		.byte	0
+ 837 0151 05       		.uleb128 0x5
+ 838 0152 68000000 		.4byte	0x68
+ 839 0156 03       		.uleb128 0x3
+ 840 0157 08000000 		.4byte	.LASF29
+ 841 015b 05       		.byte	0x5
+ 842 015c 1B       		.byte	0x1b
+ 843 015d B8000000 		.4byte	0xb8
+ 844 0161 08       		.uleb128 0x8
+ 845 0162 D9000000 		.4byte	.LASF31
+ 846 0166 01       		.byte	0x1
+ 847 0167 12       		.byte	0x12
+ 848 0168 00000000 		.4byte	.LFB63
+ 849 016c 4E000000 		.4byte	.LFE63-.LFB63
+ 850 0170 01       		.uleb128 0x1
+ 851 0171 9C       		.byte	0x9c
+ 852 0172 AD010000 		.4byte	0x1ad
+ 853 0176 09       		.uleb128 0x9
+ 854 0177 7300     		.ascii	"s\000"
+ 855 0179 01       		.byte	0x1
+ 856 017a 12       		.byte	0x12
+ 857 017b AD010000 		.4byte	0x1ad
+ 858 017f 02       		.uleb128 0x2
+ 859 0180 91       		.byte	0x91
+ 860 0181 74       		.sleb128 -12
+ 861 0182 0A       		.uleb128 0xa
+ 862 0183 D5010000 		.4byte	.LASF17
+ 863 0187 01       		.byte	0x1
+ 864 0188 12       		.byte	0x12
+ 865 0189 68000000 		.4byte	0x68
+ 866 018d 02       		.uleb128 0x2
+ 867 018e 91       		.byte	0x91
+ 868 018f 70       		.sleb128 -16
+ 869 0190 0A       		.uleb128 0xa
+ 870 0191 5D020000 		.4byte	.LASF18
+ 871 0195 01       		.byte	0x1
+ 872 0196 12       		.byte	0x12
+ 873 0197 68000000 		.4byte	0x68
+ 874 019b 02       		.uleb128 0x2
+ 875 019c 91       		.byte	0x91
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 19
+
+
+ 876 019d 6C       		.sleb128 -20
+ 877 019e 0A       		.uleb128 0xa
+ 878 019f E2000000 		.4byte	.LASF30
+ 879 01a3 01       		.byte	0x1
+ 880 01a4 12       		.byte	0x12
+ 881 01a5 68000000 		.4byte	0x68
+ 882 01a9 02       		.uleb128 0x2
+ 883 01aa 91       		.byte	0x91
+ 884 01ab 68       		.sleb128 -24
+ 885 01ac 00       		.byte	0
+ 886 01ad 0B       		.uleb128 0xb
+ 887 01ae 04       		.byte	0x4
+ 888 01af 56010000 		.4byte	0x156
+ 889 01b3 0C       		.uleb128 0xc
+ 890 01b4 2D000000 		.4byte	.LASF32
+ 891 01b8 01       		.byte	0x1
+ 892 01b9 22       		.byte	0x22
+ 893 01ba 00000000 		.4byte	.LFB64
+ 894 01be 60010000 		.4byte	.LFE64-.LFB64
+ 895 01c2 01       		.uleb128 0x1
+ 896 01c3 9C       		.byte	0x9c
+ 897 01c4 E2010000 		.4byte	0x1e2
+ 898 01c8 09       		.uleb128 0x9
+ 899 01c9 7300     		.ascii	"s\000"
+ 900 01cb 01       		.byte	0x1
+ 901 01cc 22       		.byte	0x22
+ 902 01cd AD010000 		.4byte	0x1ad
+ 903 01d1 02       		.uleb128 0x2
+ 904 01d2 91       		.byte	0x91
+ 905 01d3 6C       		.sleb128 -20
+ 906 01d4 0D       		.uleb128 0xd
+ 907 01d5 726200   		.ascii	"rb\000"
+ 908 01d8 01       		.byte	0x1
+ 909 01d9 24       		.byte	0x24
+ 910 01da 81000000 		.4byte	0x81
+ 911 01de 02       		.uleb128 0x2
+ 912 01df 91       		.byte	0x91
+ 913 01e0 77       		.sleb128 -9
+ 914 01e1 00       		.byte	0
+ 915 01e2 0E       		.uleb128 0xe
+ 916 01e3 EE000000 		.4byte	.LASF33
+ 917 01e7 01       		.byte	0x1
+ 918 01e8 62       		.byte	0x62
+ 919 01e9 2C000000 		.4byte	0x2c
+ 920 01ed 00000000 		.4byte	.LFB65
+ 921 01f1 50000000 		.4byte	.LFE65-.LFB65
+ 922 01f5 01       		.uleb128 0x1
+ 923 01f6 9C       		.byte	0x9c
+ 924 01f7 08020000 		.4byte	0x208
+ 925 01fb 09       		.uleb128 0x9
+ 926 01fc 7000     		.ascii	"p\000"
+ 927 01fe 01       		.byte	0x1
+ 928 01ff 62       		.byte	0x62
+ 929 0200 2C000000 		.4byte	0x2c
+ 930 0204 02       		.uleb128 0x2
+ 931 0205 91       		.byte	0x91
+ 932 0206 77       		.sleb128 -9
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 20
+
+
+ 933 0207 00       		.byte	0
+ 934 0208 0E       		.uleb128 0xe
+ 935 0209 50000000 		.4byte	.LASF34
+ 936 020d 01       		.byte	0x1
+ 937 020e 6A       		.byte	0x6a
+ 938 020f 68000000 		.4byte	0x68
+ 939 0213 00000000 		.4byte	.LFB66
+ 940 0217 18000000 		.4byte	.LFE66-.LFB66
+ 941 021b 01       		.uleb128 0x1
+ 942 021c 9C       		.byte	0x9c
+ 943 021d 2E020000 		.4byte	0x22e
+ 944 0221 09       		.uleb128 0x9
+ 945 0222 7300     		.ascii	"s\000"
+ 946 0224 01       		.byte	0x1
+ 947 0225 6A       		.byte	0x6a
+ 948 0226 AD010000 		.4byte	0x1ad
+ 949 022a 02       		.uleb128 0x2
+ 950 022b 91       		.byte	0x91
+ 951 022c 74       		.sleb128 -12
+ 952 022d 00       		.byte	0
+ 953 022e 0E       		.uleb128 0xe
+ 954 022f 07020000 		.4byte	.LASF35
+ 955 0233 01       		.byte	0x1
+ 956 0234 6F       		.byte	0x6f
+ 957 0235 68000000 		.4byte	0x68
+ 958 0239 00000000 		.4byte	.LFB67
+ 959 023d 2C000000 		.4byte	.LFE67-.LFB67
+ 960 0241 01       		.uleb128 0x1
+ 961 0242 9C       		.byte	0x9c
+ 962 0243 60020000 		.4byte	0x260
+ 963 0247 09       		.uleb128 0x9
+ 964 0248 7300     		.ascii	"s\000"
+ 965 024a 01       		.byte	0x1
+ 966 024b 6F       		.byte	0x6f
+ 967 024c AD010000 		.4byte	0x1ad
+ 968 0250 02       		.uleb128 0x2
+ 969 0251 91       		.byte	0x91
+ 970 0252 6C       		.sleb128 -20
+ 971 0253 0D       		.uleb128 0xd
+ 972 0254 6200     		.ascii	"b\000"
+ 973 0256 01       		.byte	0x1
+ 974 0257 71       		.byte	0x71
+ 975 0258 81000000 		.4byte	0x81
+ 976 025c 02       		.uleb128 0x2
+ 977 025d 91       		.byte	0x91
+ 978 025e 77       		.sleb128 -9
+ 979 025f 00       		.byte	0
+ 980 0260 0C       		.uleb128 0xc
+ 981 0261 46010000 		.4byte	.LASF36
+ 982 0265 01       		.byte	0x1
+ 983 0266 79       		.byte	0x79
+ 984 0267 00000000 		.4byte	.LFB68
+ 985 026b 2C010000 		.4byte	.LFE68-.LFB68
+ 986 026f 01       		.uleb128 0x1
+ 987 0270 9C       		.byte	0x9c
+ 988 0271 AA020000 		.4byte	0x2aa
+ 989 0275 09       		.uleb128 0x9
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 21
+
+
+ 990 0276 7300     		.ascii	"s\000"
+ 991 0278 01       		.byte	0x1
+ 992 0279 79       		.byte	0x79
+ 993 027a AD010000 		.4byte	0x1ad
+ 994 027e 02       		.uleb128 0x2
+ 995 027f 91       		.byte	0x91
+ 996 0280 6C       		.sleb128 -20
+ 997 0281 09       		.uleb128 0x9
+ 998 0282 6300     		.ascii	"c\000"
+ 999 0284 01       		.byte	0x1
+ 1000 0285 79       		.byte	0x79
+ 1001 0286 68000000 		.4byte	0x68
+ 1002 028a 02       		.uleb128 0x2
+ 1003 028b 91       		.byte	0x91
+ 1004 028c 68       		.sleb128 -24
+ 1005 028d 0F       		.uleb128 0xf
+ 1006 028e 45020000 		.4byte	.LASF37
+ 1007 0292 01       		.byte	0x1
+ 1008 0293 7B       		.byte	0x7b
+ 1009 0294 8C000000 		.4byte	0x8c
+ 1010 0298 02       		.uleb128 0x2
+ 1011 0299 91       		.byte	0x91
+ 1012 029a 76       		.sleb128 -10
+ 1013 029b 0F       		.uleb128 0xf
+ 1014 029c 5D020000 		.4byte	.LASF18
+ 1015 02a0 01       		.byte	0x1
+ 1016 02a1 7C       		.byte	0x7c
+ 1017 02a2 68000000 		.4byte	0x68
+ 1018 02a6 02       		.uleb128 0x2
+ 1019 02a7 91       		.byte	0x91
+ 1020 02a8 70       		.sleb128 -16
+ 1021 02a9 00       		.byte	0
+ 1022 02aa 10       		.uleb128 0x10
+ 1023 02ab 02010000 		.4byte	.LASF41
+ 1024 02af 06       		.byte	0x6
+ 1025 02b0 2A06     		.2byte	0x62a
+ 1026 02b2 B6020000 		.4byte	0x2b6
+ 1027 02b6 05       		.uleb128 0x5
+ 1028 02b7 76000000 		.4byte	0x76
+ 1029 02bb 00       		.byte	0
+ 1030              		.section	.debug_abbrev,"",%progbits
+ 1031              	.Ldebug_abbrev0:
+ 1032 0000 01       		.uleb128 0x1
+ 1033 0001 11       		.uleb128 0x11
+ 1034 0002 01       		.byte	0x1
+ 1035 0003 25       		.uleb128 0x25
+ 1036 0004 0E       		.uleb128 0xe
+ 1037 0005 13       		.uleb128 0x13
+ 1038 0006 0B       		.uleb128 0xb
+ 1039 0007 03       		.uleb128 0x3
+ 1040 0008 0E       		.uleb128 0xe
+ 1041 0009 1B       		.uleb128 0x1b
+ 1042 000a 0E       		.uleb128 0xe
+ 1043 000b 55       		.uleb128 0x55
+ 1044 000c 17       		.uleb128 0x17
+ 1045 000d 11       		.uleb128 0x11
+ 1046 000e 01       		.uleb128 0x1
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 22
+
+
+ 1047 000f 10       		.uleb128 0x10
+ 1048 0010 17       		.uleb128 0x17
+ 1049 0011 00       		.byte	0
+ 1050 0012 00       		.byte	0
+ 1051 0013 02       		.uleb128 0x2
+ 1052 0014 24       		.uleb128 0x24
+ 1053 0015 00       		.byte	0
+ 1054 0016 0B       		.uleb128 0xb
+ 1055 0017 0B       		.uleb128 0xb
+ 1056 0018 3E       		.uleb128 0x3e
+ 1057 0019 0B       		.uleb128 0xb
+ 1058 001a 03       		.uleb128 0x3
+ 1059 001b 0E       		.uleb128 0xe
+ 1060 001c 00       		.byte	0
+ 1061 001d 00       		.byte	0
+ 1062 001e 03       		.uleb128 0x3
+ 1063 001f 16       		.uleb128 0x16
+ 1064 0020 00       		.byte	0
+ 1065 0021 03       		.uleb128 0x3
+ 1066 0022 0E       		.uleb128 0xe
+ 1067 0023 3A       		.uleb128 0x3a
+ 1068 0024 0B       		.uleb128 0xb
+ 1069 0025 3B       		.uleb128 0x3b
+ 1070 0026 0B       		.uleb128 0xb
+ 1071 0027 49       		.uleb128 0x49
+ 1072 0028 13       		.uleb128 0x13
+ 1073 0029 00       		.byte	0
+ 1074 002a 00       		.byte	0
+ 1075 002b 04       		.uleb128 0x4
+ 1076 002c 24       		.uleb128 0x24
+ 1077 002d 00       		.byte	0
+ 1078 002e 0B       		.uleb128 0xb
+ 1079 002f 0B       		.uleb128 0xb
+ 1080 0030 3E       		.uleb128 0x3e
+ 1081 0031 0B       		.uleb128 0xb
+ 1082 0032 03       		.uleb128 0x3
+ 1083 0033 08       		.uleb128 0x8
+ 1084 0034 00       		.byte	0
+ 1085 0035 00       		.byte	0
+ 1086 0036 05       		.uleb128 0x5
+ 1087 0037 35       		.uleb128 0x35
+ 1088 0038 00       		.byte	0
+ 1089 0039 49       		.uleb128 0x49
+ 1090 003a 13       		.uleb128 0x13
+ 1091 003b 00       		.byte	0
+ 1092 003c 00       		.byte	0
+ 1093 003d 06       		.uleb128 0x6
+ 1094 003e 13       		.uleb128 0x13
+ 1095 003f 01       		.byte	0x1
+ 1096 0040 0B       		.uleb128 0xb
+ 1097 0041 0B       		.uleb128 0xb
+ 1098 0042 3A       		.uleb128 0x3a
+ 1099 0043 0B       		.uleb128 0xb
+ 1100 0044 3B       		.uleb128 0x3b
+ 1101 0045 0B       		.uleb128 0xb
+ 1102 0046 01       		.uleb128 0x1
+ 1103 0047 13       		.uleb128 0x13
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 23
+
+
+ 1104 0048 00       		.byte	0
+ 1105 0049 00       		.byte	0
+ 1106 004a 07       		.uleb128 0x7
+ 1107 004b 0D       		.uleb128 0xd
+ 1108 004c 00       		.byte	0
+ 1109 004d 03       		.uleb128 0x3
+ 1110 004e 0E       		.uleb128 0xe
+ 1111 004f 3A       		.uleb128 0x3a
+ 1112 0050 0B       		.uleb128 0xb
+ 1113 0051 3B       		.uleb128 0x3b
+ 1114 0052 0B       		.uleb128 0xb
+ 1115 0053 49       		.uleb128 0x49
+ 1116 0054 13       		.uleb128 0x13
+ 1117 0055 38       		.uleb128 0x38
+ 1118 0056 0B       		.uleb128 0xb
+ 1119 0057 00       		.byte	0
+ 1120 0058 00       		.byte	0
+ 1121 0059 08       		.uleb128 0x8
+ 1122 005a 2E       		.uleb128 0x2e
+ 1123 005b 01       		.byte	0x1
+ 1124 005c 3F       		.uleb128 0x3f
+ 1125 005d 19       		.uleb128 0x19
+ 1126 005e 03       		.uleb128 0x3
+ 1127 005f 0E       		.uleb128 0xe
+ 1128 0060 3A       		.uleb128 0x3a
+ 1129 0061 0B       		.uleb128 0xb
+ 1130 0062 3B       		.uleb128 0x3b
+ 1131 0063 0B       		.uleb128 0xb
+ 1132 0064 27       		.uleb128 0x27
+ 1133 0065 19       		.uleb128 0x19
+ 1134 0066 11       		.uleb128 0x11
+ 1135 0067 01       		.uleb128 0x1
+ 1136 0068 12       		.uleb128 0x12
+ 1137 0069 06       		.uleb128 0x6
+ 1138 006a 40       		.uleb128 0x40
+ 1139 006b 18       		.uleb128 0x18
+ 1140 006c 9742     		.uleb128 0x2117
+ 1141 006e 19       		.uleb128 0x19
+ 1142 006f 01       		.uleb128 0x1
+ 1143 0070 13       		.uleb128 0x13
+ 1144 0071 00       		.byte	0
+ 1145 0072 00       		.byte	0
+ 1146 0073 09       		.uleb128 0x9
+ 1147 0074 05       		.uleb128 0x5
+ 1148 0075 00       		.byte	0
+ 1149 0076 03       		.uleb128 0x3
+ 1150 0077 08       		.uleb128 0x8
+ 1151 0078 3A       		.uleb128 0x3a
+ 1152 0079 0B       		.uleb128 0xb
+ 1153 007a 3B       		.uleb128 0x3b
+ 1154 007b 0B       		.uleb128 0xb
+ 1155 007c 49       		.uleb128 0x49
+ 1156 007d 13       		.uleb128 0x13
+ 1157 007e 02       		.uleb128 0x2
+ 1158 007f 18       		.uleb128 0x18
+ 1159 0080 00       		.byte	0
+ 1160 0081 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 24
+
+
+ 1161 0082 0A       		.uleb128 0xa
+ 1162 0083 05       		.uleb128 0x5
+ 1163 0084 00       		.byte	0
+ 1164 0085 03       		.uleb128 0x3
+ 1165 0086 0E       		.uleb128 0xe
+ 1166 0087 3A       		.uleb128 0x3a
+ 1167 0088 0B       		.uleb128 0xb
+ 1168 0089 3B       		.uleb128 0x3b
+ 1169 008a 0B       		.uleb128 0xb
+ 1170 008b 49       		.uleb128 0x49
+ 1171 008c 13       		.uleb128 0x13
+ 1172 008d 02       		.uleb128 0x2
+ 1173 008e 18       		.uleb128 0x18
+ 1174 008f 00       		.byte	0
+ 1175 0090 00       		.byte	0
+ 1176 0091 0B       		.uleb128 0xb
+ 1177 0092 0F       		.uleb128 0xf
+ 1178 0093 00       		.byte	0
+ 1179 0094 0B       		.uleb128 0xb
+ 1180 0095 0B       		.uleb128 0xb
+ 1181 0096 49       		.uleb128 0x49
+ 1182 0097 13       		.uleb128 0x13
+ 1183 0098 00       		.byte	0
+ 1184 0099 00       		.byte	0
+ 1185 009a 0C       		.uleb128 0xc
+ 1186 009b 2E       		.uleb128 0x2e
+ 1187 009c 01       		.byte	0x1
+ 1188 009d 3F       		.uleb128 0x3f
+ 1189 009e 19       		.uleb128 0x19
+ 1190 009f 03       		.uleb128 0x3
+ 1191 00a0 0E       		.uleb128 0xe
+ 1192 00a1 3A       		.uleb128 0x3a
+ 1193 00a2 0B       		.uleb128 0xb
+ 1194 00a3 3B       		.uleb128 0x3b
+ 1195 00a4 0B       		.uleb128 0xb
+ 1196 00a5 27       		.uleb128 0x27
+ 1197 00a6 19       		.uleb128 0x19
+ 1198 00a7 11       		.uleb128 0x11
+ 1199 00a8 01       		.uleb128 0x1
+ 1200 00a9 12       		.uleb128 0x12
+ 1201 00aa 06       		.uleb128 0x6
+ 1202 00ab 40       		.uleb128 0x40
+ 1203 00ac 18       		.uleb128 0x18
+ 1204 00ad 9642     		.uleb128 0x2116
+ 1205 00af 19       		.uleb128 0x19
+ 1206 00b0 01       		.uleb128 0x1
+ 1207 00b1 13       		.uleb128 0x13
+ 1208 00b2 00       		.byte	0
+ 1209 00b3 00       		.byte	0
+ 1210 00b4 0D       		.uleb128 0xd
+ 1211 00b5 34       		.uleb128 0x34
+ 1212 00b6 00       		.byte	0
+ 1213 00b7 03       		.uleb128 0x3
+ 1214 00b8 08       		.uleb128 0x8
+ 1215 00b9 3A       		.uleb128 0x3a
+ 1216 00ba 0B       		.uleb128 0xb
+ 1217 00bb 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 25
+
+
+ 1218 00bc 0B       		.uleb128 0xb
+ 1219 00bd 49       		.uleb128 0x49
+ 1220 00be 13       		.uleb128 0x13
+ 1221 00bf 02       		.uleb128 0x2
+ 1222 00c0 18       		.uleb128 0x18
+ 1223 00c1 00       		.byte	0
+ 1224 00c2 00       		.byte	0
+ 1225 00c3 0E       		.uleb128 0xe
+ 1226 00c4 2E       		.uleb128 0x2e
+ 1227 00c5 01       		.byte	0x1
+ 1228 00c6 3F       		.uleb128 0x3f
+ 1229 00c7 19       		.uleb128 0x19
+ 1230 00c8 03       		.uleb128 0x3
+ 1231 00c9 0E       		.uleb128 0xe
+ 1232 00ca 3A       		.uleb128 0x3a
+ 1233 00cb 0B       		.uleb128 0xb
+ 1234 00cc 3B       		.uleb128 0x3b
+ 1235 00cd 0B       		.uleb128 0xb
+ 1236 00ce 27       		.uleb128 0x27
+ 1237 00cf 19       		.uleb128 0x19
+ 1238 00d0 49       		.uleb128 0x49
+ 1239 00d1 13       		.uleb128 0x13
+ 1240 00d2 11       		.uleb128 0x11
+ 1241 00d3 01       		.uleb128 0x1
+ 1242 00d4 12       		.uleb128 0x12
+ 1243 00d5 06       		.uleb128 0x6
+ 1244 00d6 40       		.uleb128 0x40
+ 1245 00d7 18       		.uleb128 0x18
+ 1246 00d8 9742     		.uleb128 0x2117
+ 1247 00da 19       		.uleb128 0x19
+ 1248 00db 01       		.uleb128 0x1
+ 1249 00dc 13       		.uleb128 0x13
+ 1250 00dd 00       		.byte	0
+ 1251 00de 00       		.byte	0
+ 1252 00df 0F       		.uleb128 0xf
+ 1253 00e0 34       		.uleb128 0x34
+ 1254 00e1 00       		.byte	0
+ 1255 00e2 03       		.uleb128 0x3
+ 1256 00e3 0E       		.uleb128 0xe
+ 1257 00e4 3A       		.uleb128 0x3a
+ 1258 00e5 0B       		.uleb128 0xb
+ 1259 00e6 3B       		.uleb128 0x3b
+ 1260 00e7 0B       		.uleb128 0xb
+ 1261 00e8 49       		.uleb128 0x49
+ 1262 00e9 13       		.uleb128 0x13
+ 1263 00ea 02       		.uleb128 0x2
+ 1264 00eb 18       		.uleb128 0x18
+ 1265 00ec 00       		.byte	0
+ 1266 00ed 00       		.byte	0
+ 1267 00ee 10       		.uleb128 0x10
+ 1268 00ef 34       		.uleb128 0x34
+ 1269 00f0 00       		.byte	0
+ 1270 00f1 03       		.uleb128 0x3
+ 1271 00f2 0E       		.uleb128 0xe
+ 1272 00f3 3A       		.uleb128 0x3a
+ 1273 00f4 0B       		.uleb128 0xb
+ 1274 00f5 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 26
+
+
+ 1275 00f6 05       		.uleb128 0x5
+ 1276 00f7 49       		.uleb128 0x49
+ 1277 00f8 13       		.uleb128 0x13
+ 1278 00f9 3F       		.uleb128 0x3f
+ 1279 00fa 19       		.uleb128 0x19
+ 1280 00fb 3C       		.uleb128 0x3c
+ 1281 00fc 19       		.uleb128 0x19
+ 1282 00fd 00       		.byte	0
+ 1283 00fe 00       		.byte	0
+ 1284 00ff 00       		.byte	0
+ 1285              		.section	.debug_aranges,"",%progbits
+ 1286 0000 44000000 		.4byte	0x44
+ 1287 0004 0200     		.2byte	0x2
+ 1288 0006 00000000 		.4byte	.Ldebug_info0
+ 1289 000a 04       		.byte	0x4
+ 1290 000b 00       		.byte	0
+ 1291 000c 0000     		.2byte	0
+ 1292 000e 0000     		.2byte	0
+ 1293 0010 00000000 		.4byte	.LFB63
+ 1294 0014 4E000000 		.4byte	.LFE63-.LFB63
+ 1295 0018 00000000 		.4byte	.LFB64
+ 1296 001c 60010000 		.4byte	.LFE64-.LFB64
+ 1297 0020 00000000 		.4byte	.LFB65
+ 1298 0024 50000000 		.4byte	.LFE65-.LFB65
+ 1299 0028 00000000 		.4byte	.LFB66
+ 1300 002c 18000000 		.4byte	.LFE66-.LFB66
+ 1301 0030 00000000 		.4byte	.LFB67
+ 1302 0034 2C000000 		.4byte	.LFE67-.LFB67
+ 1303 0038 00000000 		.4byte	.LFB68
+ 1304 003c 2C010000 		.4byte	.LFE68-.LFB68
+ 1305 0040 00000000 		.4byte	0
+ 1306 0044 00000000 		.4byte	0
+ 1307              		.section	.debug_ranges,"",%progbits
+ 1308              	.Ldebug_ranges0:
+ 1309 0000 00000000 		.4byte	.LFB63
+ 1310 0004 4E000000 		.4byte	.LFE63
+ 1311 0008 00000000 		.4byte	.LFB64
+ 1312 000c 60010000 		.4byte	.LFE64
+ 1313 0010 00000000 		.4byte	.LFB65
+ 1314 0014 50000000 		.4byte	.LFE65
+ 1315 0018 00000000 		.4byte	.LFB66
+ 1316 001c 18000000 		.4byte	.LFE66
+ 1317 0020 00000000 		.4byte	.LFB67
+ 1318 0024 2C000000 		.4byte	.LFE67
+ 1319 0028 00000000 		.4byte	.LFB68
+ 1320 002c 2C010000 		.4byte	.LFE68
+ 1321 0030 00000000 		.4byte	0
+ 1322 0034 00000000 		.4byte	0
+ 1323              		.section	.debug_line,"",%progbits
+ 1324              	.Ldebug_line0:
+ 1325 0000 2D020000 		.section	.debug_str,"MS",%progbits,1
+ 1325      02005E01 
+ 1325      00000201 
+ 1325      FB0E0D00 
+ 1325      01010101 
+ 1326              	.LASF21:
+ 1327 0000 72785F62 		.ascii	"rx_byte\000"
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 27
+
+
+ 1327      79746500 
+ 1328              	.LASF29:
+ 1329 0008 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 1329      5F554152 
+ 1329      545F5354 
+ 1329      52554354 
+ 1329      00
+ 1330              	.LASF19:
+ 1331 0019 73746F70 		.ascii	"stop_bits\000"
+ 1331      5F626974 
+ 1331      7300
+ 1332              	.LASF9:
+ 1333 0023 5F5F696E 		.ascii	"__int32_t\000"
+ 1333      7433325F 
+ 1333      7400
+ 1334              	.LASF32:
+ 1335 002d 53555F49 		.ascii	"SU_Isr\000"
+ 1335      737200
+ 1336              	.LASF22:
+ 1337 0034 74785F62 		.ascii	"tx_byte\000"
+ 1337      79746500 
+ 1338              	.LASF13:
+ 1339 003c 666C6F61 		.ascii	"float\000"
+ 1339      7400
+ 1340              	.LASF1:
+ 1341 0042 756E7369 		.ascii	"unsigned char\000"
+ 1341      676E6564 
+ 1341      20636861 
+ 1341      7200
+ 1342              	.LASF34:
+ 1343 0050 53555F47 		.ascii	"SU_GetStat\000"
+ 1343      65745374 
+ 1343      617400
+ 1344              	.LASF40:
+ 1345 005b 433A5C55 		.ascii	"C:\\Users\\Yiquing\\Documents\\works\\NanoNXT\\osdp"
+ 1345      73657273 
+ 1345      5C596971 
+ 1345      75696E67 
+ 1345      5C446F63 
+ 1346 0088 20746573 		.ascii	" testing\\YQ\\nanoNxt_ICM3\\nanoNxt_ICM3.cydsn\000"
+ 1346      74696E67 
+ 1346      5C59515C 
+ 1346      6E616E6F 
+ 1346      4E78745F 
+ 1347              	.LASF5:
+ 1348 00b4 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1348      20756E73 
+ 1348      69676E65 
+ 1348      6420696E 
+ 1348      7400
+ 1349              	.LASF3:
+ 1350 00c6 73686F72 		.ascii	"short unsigned int\000"
+ 1350      7420756E 
+ 1350      7369676E 
+ 1350      65642069 
+ 1350      6E7400
+ 1351              	.LASF31:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 28
+
+
+ 1352 00d9 53555F53 		.ascii	"SU_Start\000"
+ 1352      74617274 
+ 1352      00
+ 1353              	.LASF30:
+ 1354 00e2 73746F70 		.ascii	"stop\000"
+ 1354      00
+ 1355              	.LASF14:
+ 1356 00e7 646F7562 		.ascii	"double\000"
+ 1356      6C6500
+ 1357              	.LASF33:
+ 1358 00ee 6765744F 		.ascii	"getOddParity\000"
+ 1358      64645061 
+ 1358      72697479 
+ 1358      00
+ 1359              	.LASF12:
+ 1360 00fb 75696E74 		.ascii	"uint16\000"
+ 1360      313600
+ 1361              	.LASF41:
+ 1362 0102 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 1362      52784275 
+ 1362      66666572 
+ 1362      00
+ 1363              	.LASF26:
+ 1364 010f 74696D65 		.ascii	"timer_tx_ctr\000"
+ 1364      725F7478 
+ 1364      5F637472 
+ 1364      00
+ 1365              	.LASF8:
+ 1366 011c 756E7369 		.ascii	"unsigned int\000"
+ 1366      676E6564 
+ 1366      20696E74 
+ 1366      00
+ 1367              	.LASF25:
+ 1368 0129 666C6167 		.ascii	"flags\000"
+ 1368      7300
+ 1369              	.LASF7:
+ 1370 012f 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1370      206C6F6E 
+ 1370      6720756E 
+ 1370      7369676E 
+ 1370      65642069 
+ 1371              	.LASF36:
+ 1372 0146 53555F50 		.ascii	"SU_PutChar\000"
+ 1372      75744368 
+ 1372      617200
+ 1373              	.LASF28:
+ 1374 0151 72785F72 		.ascii	"rx_recv\000"
+ 1374      65637600 
+ 1375              	.LASF38:
+ 1376 0159 474E5520 		.ascii	"GNU C 4.8.4 20140526 (release) [ARM/embedded-4_8-br"
+ 1376      4320342E 
+ 1376      382E3420 
+ 1376      32303134 
+ 1376      30353236 
+ 1377 018c 616E6368 		.ascii	"anch revision 211358] -mcpu=cortex-m3 -mthumb -g -O"
+ 1377      20726576 
+ 1377      6973696F 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 29
+
+
+ 1377      6E203231 
+ 1377      31333538 
+ 1378 01bf 30202D66 		.ascii	"0 -ffunction-sections\000"
+ 1378      66756E63 
+ 1378      74696F6E 
+ 1378      2D736563 
+ 1378      74696F6E 
+ 1379              	.LASF17:
+ 1380 01d5 62617564 		.ascii	"baud\000"
+ 1380      00
+ 1381              	.LASF10:
+ 1382 01da 696E7433 		.ascii	"int32_t\000"
+ 1382      325F7400 
+ 1383              	.LASF16:
+ 1384 01e2 73697A65 		.ascii	"sizetype\000"
+ 1384      74797065 
+ 1384      00
+ 1385              	.LASF39:
+ 1386 01eb 2E5C736F 		.ascii	".\\soft_uart.c\000"
+ 1386      66745F75 
+ 1386      6172742E 
+ 1386      6300
+ 1387              	.LASF6:
+ 1388 01f9 6C6F6E67 		.ascii	"long long int\000"
+ 1388      206C6F6E 
+ 1388      6720696E 
+ 1388      7400
+ 1389              	.LASF35:
+ 1390 0207 53555F47 		.ascii	"SU_GetChar\000"
+ 1390      65744368 
+ 1390      617200
+ 1391              	.LASF23:
+ 1392 0212 74785F62 		.ascii	"tx_bits\000"
+ 1392      69747300 
+ 1393              	.LASF20:
+ 1394 021a 62697473 		.ascii	"bits\000"
+ 1394      00
+ 1395              	.LASF24:
+ 1396 021f 72785F62 		.ascii	"rx_bits\000"
+ 1396      69747300 
+ 1397              	.LASF2:
+ 1398 0227 73686F72 		.ascii	"short int\000"
+ 1398      7420696E 
+ 1398      7400
+ 1399              	.LASF11:
+ 1400 0231 75696E74 		.ascii	"uint8\000"
+ 1400      3800
+ 1401              	.LASF4:
+ 1402 0237 6C6F6E67 		.ascii	"long int\000"
+ 1402      20696E74 
+ 1402      00
+ 1403              	.LASF15:
+ 1404 0240 63686172 		.ascii	"char\000"
+ 1404      00
+ 1405              	.LASF37:
+ 1406 0245 64617461 		.ascii	"data_tosend\000"
+ 1406      5F746F73 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\ccFxov21.s 			page 30
+
+
+ 1406      656E6400 
+ 1407              	.LASF0:
+ 1408 0251 7369676E 		.ascii	"signed char\000"
+ 1408      65642063 
+ 1408      68617200 
+ 1409              	.LASF18:
+ 1410 025d 70617269 		.ascii	"parity\000"
+ 1410      747900
+ 1411              	.LASF27:
+ 1412 0264 74696D65 		.ascii	"timer_rx_ctr\000"
+ 1412      725F7278 
+ 1412      5F637472 
+ 1412      00
+ 1413              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.8.4 20140526 (release) [ARM/embedded-4_8-br

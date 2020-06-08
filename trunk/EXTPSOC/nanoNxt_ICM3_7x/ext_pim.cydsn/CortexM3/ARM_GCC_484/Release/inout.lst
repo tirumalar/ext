@@ -1,0 +1,2596 @@
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 4
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.file	"inout.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.section	.text.SetHardwareVals,"ax",%progbits
+  19              		.align	1
+  20              		.global	SetHardwareVals
+  21              		.thumb
+  22              		.thumb_func
+  23              		.type	SetHardwareVals, %function
+  24              	SetHardwareVals:
+  25              	.LFB63:
+  26              		.file 1 ".\\inout.c"
+   1:.\inout.c     **** /* ========================================
+   2:.\inout.c     ****  *
+   3:.\inout.c     ****  * Copyright YOUR COMPANY, THE YEAR
+   4:.\inout.c     ****  * All Rights Reserved
+   5:.\inout.c     ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:.\inout.c     ****  *
+   7:.\inout.c     ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:.\inout.c     ****  * WHICH IS THE PROPERTY OF your company.
+   9:.\inout.c     ****  *
+  10:.\inout.c     ****  * ========================================
+  11:.\inout.c     **** */
+  12:.\inout.c     **** 
+  13:.\inout.c     **** // GRI 1-13-2015 - Revised for 3.1.1;  TAMPER_OUT must not be set in SetHardwareVals - has been mov
+  14:.\inout.c     **** // GRI 2-04-2015 - Revised for 3.1.5;  Extensive revision to input signal checker to add debounce/n
+  15:.\inout.c     **** 
+  16:.\inout.c     **** #include <project.h>
+  17:.\inout.c     **** #include "system.h"
+  18:.\inout.c     **** #include "i2cuart.h"
+  19:.\inout.c     **** 
+  20:.\inout.c     **** //int pwr_cnt;
+  21:.\inout.c     **** 
+  22:.\inout.c     **** // this function reads the current settings from the file register 
+  23:.\inout.c     **** // and configures the outputs accordingly
+  24:.\inout.c     **** void  SetHardwareVals(int val)
+  25:.\inout.c     **** {
+  27              		.loc 1 25 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              	.LVL0:
+  32 0000 10B5     		push	{r4, lr}
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 2
+
+
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 4, -8
+  35              		.cfi_offset 14, -4
+  36              		.loc 1 25 0
+  37 0002 0446     		mov	r4, r0
+  26:.\inout.c     ****     // 1 - low ; 0 - high
+  27:.\inout.c     **** 
+  28:.\inout.c     ****     if((val&LED_OUT_RED) == LED_OUT_RED) 
+  38              		.loc 1 28 0
+  39 0004 10F00100 		ands	r0, r0, #1
+  40              	.LVL1:
+  29:.\inout.c     **** 	    LEDR_OUT_Write(1);
+  41              		.loc 1 29 0
+  42 0008 18BF     		it	ne
+  43 000a 0120     		movne	r0, #1
+  30:.\inout.c     ****     else
+  31:.\inout.c     ****         LEDR_OUT_Write(0);
+  44              		.loc 1 31 0
+  45 000c FFF7FEFF 		bl	LEDR_OUT_Write
+  46              	.LVL2:
+  32:.\inout.c     ****         
+  33:.\inout.c     ****     if((val&LED_OUT_GRN) == LED_OUT_GRN) 
+  47              		.loc 1 33 0
+  48 0010 14F00200 		ands	r0, r4, #2
+  34:.\inout.c     **** 	    LEDG_OUT_Write(1);
+  49              		.loc 1 34 0
+  50 0014 18BF     		it	ne
+  51 0016 0120     		movne	r0, #1
+  35:.\inout.c     ****     else
+  36:.\inout.c     ****         LEDG_OUT_Write(0);
+  52              		.loc 1 36 0
+  53 0018 FFF7FEFF 		bl	LEDG_OUT_Write
+  54              	.LVL3:
+  37:.\inout.c     ****         
+  38:.\inout.c     **** 	 if((val&SOUNDER_OUT) == SOUNDER_OUT) 
+  55              		.loc 1 38 0
+  56 001c 14F00400 		ands	r0, r4, #4
+  39:.\inout.c     **** 	    SOUND_OUT_Write(1);
+  57              		.loc 1 39 0
+  58 0020 18BF     		it	ne
+  59 0022 0120     		movne	r0, #1
+  40:.\inout.c     ****     else
+  41:.\inout.c     ****         SOUND_OUT_Write(0);
+  60              		.loc 1 41 0
+  61 0024 FFF7FEFF 		bl	SOUND_OUT_Write
+  62              	.LVL4:
+  42:.\inout.c     **** 
+  43:.\inout.c     ****     // TAMPER_OUT logic is now moved to HandleInputs.  (GRI 1-13-15, 2-3-15)
+  44:.\inout.c     ****     // TAMPER_POL is incoming webconfig polarity bit for CR tamper.
+  45:.\inout.c     ****     if((val&TAMPERCR_POL) == TAMPERCR_POL)  
+  63              		.loc 1 45 0
+  64 0028 14F00802 		ands	r2, r4, #8
+  46:.\inout.c     ****         TAMPERCR_POLARITY = 1;
+  65              		.loc 1 46 0
+  66 002c 18BF     		it	ne
+  67 002e 0122     		movne	r2, #1
+  68 0030 074B     		ldr	r3, .L13
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 3
+
+
+  47:.\inout.c     ****    else
+  48:.\inout.c     ****         TAMPERCR_POLARITY = 0;
+  49:.\inout.c     ****                 
+  50:.\inout.c     ****     if((val&RELAY_1_OUT) == RELAY_1_OUT) 
+  69              		.loc 1 50 0
+  70 0032 14F01000 		ands	r0, r4, #16
+  51:.\inout.c     ****         RELAY_A_Write(1);
+  71              		.loc 1 51 0
+  72 0036 18BF     		it	ne
+  73 0038 0120     		movne	r0, #1
+  48:.\inout.c     ****         TAMPERCR_POLARITY = 0;
+  74              		.loc 1 48 0
+  75 003a 1A60     		str	r2, [r3]
+  52:.\inout.c     ****     else
+  53:.\inout.c     ****         RELAY_A_Write(0);
+  76              		.loc 1 53 0
+  77 003c FFF7FEFF 		bl	RELAY_A_Write
+  78              	.LVL5:
+  54:.\inout.c     ****         
+  55:.\inout.c     ****     if((val&RELAY_2_OUT) == RELAY_2_OUT) 
+  79              		.loc 1 55 0
+  80 0040 14F02000 		ands	r0, r4, #32
+  56:.\inout.c     ****         RELAY_B_Write(1);
+  81              		.loc 1 56 0
+  82 0044 18BF     		it	ne
+  83 0046 0120     		movne	r0, #1
+  57:.\inout.c     ****     else
+  58:.\inout.c     ****         RELAY_B_Write(0);
+  59:.\inout.c     **** 	
+  60:.\inout.c     **** 
+  61:.\inout.c     **** } 
+  84              		.loc 1 61 0
+  85 0048 BDE81040 		pop	{r4, lr}
+  86              	.LVL6:
+  58:.\inout.c     ****         RELAY_B_Write(0);
+  87              		.loc 1 58 0
+  88 004c FFF7FEBF 		b	RELAY_B_Write
+  89              	.LVL7:
+  90              	.L14:
+  91              		.align	2
+  92              	.L13:
+  93 0050 00000000 		.word	TAMPERCR_POLARITY
+  94              		.cfi_endproc
+  95              	.LFE63:
+  96              		.size	SetHardwareVals, .-SetHardwareVals
+  97              		.section	.text.GetHardwareVals,"ax",%progbits
+  98              		.align	1
+  99              		.global	GetHardwareVals
+ 100              		.thumb
+ 101              		.thumb_func
+ 102              		.type	GetHardwareVals, %function
+ 103              	GetHardwareVals:
+ 104              	.LFB64:
+  62:.\inout.c     **** 
+  63:.\inout.c     **** 
+  64:.\inout.c     **** 
+  65:.\inout.c     **** uint8 GetHardwareVals()
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 4
+
+
+  66:.\inout.c     **** {
+ 105              		.loc 1 66 0
+ 106              		.cfi_startproc
+ 107              		@ args = 0, pretend = 0, frame = 0
+ 108              		@ frame_needed = 0, uses_anonymous_args = 0
+ 109              	.LVL8:
+ 110 0000 70B5     		push	{r4, r5, r6, lr}
+ 111              		.cfi_def_cfa_offset 16
+ 112              		.cfi_offset 4, -16
+ 113              		.cfi_offset 5, -12
+ 114              		.cfi_offset 6, -8
+ 115              		.cfi_offset 14, -4
+  67:.\inout.c     **** 	uint8 val = 0;
+  68:.\inout.c     **** 	
+  69:.\inout.c     **** 	if (LEDR_IN_Read() == 1)
+ 116              		.loc 1 69 0
+ 117 0002 FFF7FEFF 		bl	LEDR_IN_Read
+ 118              	.LVL9:
+  70:.\inout.c     **** 	    val |= LED_IN_RED;
+ 119              		.loc 1 70 0
+ 120 0006 431E     		subs	r3, r0, #1
+ 121 0008 5C42     		rsbs	r4, r3, #0
+ 122 000a 5C41     		adcs	r4, r4, r3
+ 123              	.LVL10:
+  71:.\inout.c     ****     else
+  72:.\inout.c     ****         val &= ~LED_IN_RED;
+  73:.\inout.c     ****     
+  74:.\inout.c     **** 	if (LEDG_IN_Read() == 1)
+ 124              		.loc 1 74 0
+ 125 000c FFF7FEFF 		bl	LEDG_IN_Read
+ 126              	.LVL11:
+ 127 0010 0128     		cmp	r0, #1
+  75:.\inout.c     **** 	    val |= LED_IN_GRN;
+ 128              		.loc 1 75 0
+ 129 0012 04BF     		itt	eq
+ 130 0014 44F00204 		orreq	r4, r4, #2
+ 131              	.LVL12:
+ 132 0018 E4B2     		uxtbeq	r4, r4
+ 133              	.LVL13:
+  76:.\inout.c     ****     else
+  77:.\inout.c     ****        val &= ~LED_IN_GRN; 
+  78:.\inout.c     **** 
+  79:.\inout.c     **** 	if (SOUND_IN_Read() == 1)
+ 134              		.loc 1 79 0
+ 135 001a FFF7FEFF 		bl	SOUND_IN_Read
+ 136              	.LVL14:
+ 137 001e 0128     		cmp	r0, #1
+  80:.\inout.c     **** 	   val |= SOUNDER_IN;
+ 138              		.loc 1 80 0
+ 139 0020 08BF     		it	eq
+ 140 0022 44F00404 		orreq	r4, r4, #4
+ 141              	.LVL15:
+  81:.\inout.c     ****     else
+  82:.\inout.c     ****        val &= ~SOUNDER_IN;
+  83:.\inout.c     ****     
+  84:.\inout.c     ****     if (TAMPER_IN_Read() == 1)   // Tamper coming from Card Reader
+ 142              		.loc 1 84 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 5
+
+
+ 143 0026 FFF7FEFF 		bl	TAMPER_IN_Read
+ 144              	.LVL16:
+ 145 002a 0128     		cmp	r0, #1
+  85:.\inout.c     **** 	    val |= TAMPERCR_IN;   //set register bit to 1
+ 146              		.loc 1 85 0
+ 147 002c 08BF     		it	eq
+ 148 002e 44F00804 		orreq	r4, r4, #8
+ 149              	.LVL17:
+  86:.\inout.c     ****     else
+  87:.\inout.c     ****         val &= ~TAMPERCR_IN;  //set register bit to 0
+  88:.\inout.c     ****    
+  89:.\inout.c     ****     if(REED_1_Read() == 1)  // Reed Switch 1 - local ICM tamper
+ 150              		.loc 1 89 0
+ 151 0032 FFF7FEFF 		bl	REED_1_Read
+ 152              	.LVL18:
+  90:.\inout.c     ****       val |= REED_1_IN;
+  91:.\inout.c     ****     else
+  92:.\inout.c     ****       val &= ~REED_1_IN;
+  93:.\inout.c     **** /*    
+  94:.\inout.c     ****     if (REED_2_Read() == 1) // Reed Switch 2 - local ICM tamper  *** THIS SECTION DEFEATED DUE TO I
+  95:.\inout.c     ****       val |= REED_2_IN;
+  96:.\inout.c     ****     else 
+  97:.\inout.c     ****       val &= ~REED_2_IN;
+  98:.\inout.c     **** */
+  99:.\inout.c     ****       val |= REED_2_IN; // REED_2 is always set to 1 while defeated - remove this when re-enabled
+ 100:.\inout.c     ****     
+ 101:.\inout.c     ****     
+ 102:.\inout.c     ****     if (buttonReleased){
+ 153              		.loc 1 102 0
+ 154 0036 1D4B     		ldr	r3, .L26
+  89:.\inout.c     ****     if(REED_1_Read() == 1)  // Reed Switch 1 - local ICM tamper
+ 155              		.loc 1 89 0
+ 156 0038 0128     		cmp	r0, #1
+ 157              		.loc 1 102 0
+ 158 003a 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+  90:.\inout.c     ****       val |= REED_1_IN;
+ 159              		.loc 1 90 0
+ 160 003c 08BF     		it	eq
+ 161 003e 44F01004 		orreq	r4, r4, #16
+ 162              	.LVL19:
+ 163              		.loc 1 102 0
+ 164 0042 7AB3     		cbz	r2, .L20
+ 103:.\inout.c     ****         buttonReleased = 0;
+ 165              		.loc 1 103 0
+ 166 0044 0025     		movs	r5, #0
+ 167 0046 1D70     		strb	r5, [r3]
+ 104:.\inout.c     ****         if(buttonDuration < FCTRYRST_TIME_MS){ //less than 5 seconds
+ 168              		.loc 1 104 0
+ 169 0048 194B     		ldr	r3, .L26+4
+ 170 004a 41F28732 		movw	r2, #4999
+ 171 004e 1B68     		ldr	r3, [r3]
+ 172 0050 184E     		ldr	r6, .L26+8
+ 173 0052 9342     		cmp	r3, r2
+ 174 0054 04DC     		bgt	.L21
+ 105:.\inout.c     ****             val |= 0x40; 
+ 106:.\inout.c     ****             MyI2C_Regs.factory_reset = 0;
+ 175              		.loc 1 106 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 6
+
+
+ 176 0056 86F84250 		strb	r5, [r6, #66]
+ 105:.\inout.c     ****             val |= 0x40; 
+ 177              		.loc 1 105 0
+ 178 005a 44F06000 		orr	r0, r4, #96
+ 179              	.LVL20:
+ 180 005e 70BD     		pop	{r4, r5, r6, pc}
+ 181              	.LVL21:
+ 182              	.L21:
+ 107:.\inout.c     ****         }else if(buttonDuration >=FCTRYRST_TIME_MS && buttonDuration < RSTR_TIME_MS){ //5~45 second
+ 183              		.loc 1 107 0
+ 184 0060 A3F59C53 		sub	r3, r3, #4992
+ 185 0064 083B     		subs	r3, r3, #8
+ 186 0066 49F63F42 		movw	r2, #39999
+ 187 006a 9342     		cmp	r3, r2
+ 108:.\inout.c     ****             LED_RED_Write(0);
+ 188              		.loc 1 108 0
+ 189 006c 2846     		mov	r0, r5
+ 190 006e 44F02004 		orr	r4, r4, #32
+ 191              	.LVL22:
+ 107:.\inout.c     ****         }else if(buttonDuration >=FCTRYRST_TIME_MS && buttonDuration < RSTR_TIME_MS){ //5~45 second
+ 192              		.loc 1 107 0
+ 193 0072 0AD8     		bhi	.L23
+ 194              		.loc 1 108 0
+ 195 0074 FFF7FEFF 		bl	LED_RED_Write
+ 196              	.LVL23:
+ 109:.\inout.c     ****             LED_GRN_Write(0);
+ 197              		.loc 1 109 0
+ 198 0078 2846     		mov	r0, r5
+ 199 007a FFF7FEFF 		bl	LED_GRN_Write
+ 200              	.LVL24:
+ 110:.\inout.c     ****             LED_YEL_Write(0);
+ 201              		.loc 1 110 0
+ 202 007e 2846     		mov	r0, r5
+ 203 0080 FFF7FEFF 		bl	LED_YEL_Write
+ 204              	.LVL25:
+ 111:.\inout.c     ****             val &= 0xBF;  // active reset initiated
+ 205              		.loc 1 111 0
+ 206 0084 E0B2     		uxtb	r0, r4
+ 207              	.LVL26:
+ 112:.\inout.c     ****             MyI2C_Regs.factory_reset = FACRST_CODE;
+ 208              		.loc 1 112 0
+ 209 0086 0F23     		movs	r3, #15
+ 210 0088 09E0     		b	.L24
+ 211              	.LVL27:
+ 212              	.L23:
+ 113:.\inout.c     ****         }else if(buttonDuration>=RSTR_TIME_MS){ //45 or more seconds
+ 114:.\inout.c     ****             LED_RED_Write(0);
+ 213              		.loc 1 114 0
+ 214 008a FFF7FEFF 		bl	LED_RED_Write
+ 215              	.LVL28:
+ 115:.\inout.c     ****             LED_GRN_Write(0);
+ 216              		.loc 1 115 0
+ 217 008e 2846     		mov	r0, r5
+ 218 0090 FFF7FEFF 		bl	LED_GRN_Write
+ 219              	.LVL29:
+ 116:.\inout.c     ****             LED_YEL_Write(0);
+ 220              		.loc 1 116 0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 7
+
+
+ 221 0094 2846     		mov	r0, r5
+ 222 0096 FFF7FEFF 		bl	LED_YEL_Write
+ 223              	.LVL30:
+ 117:.\inout.c     ****             val &= 0xBF;  // 
+ 224              		.loc 1 117 0
+ 225 009a E0B2     		uxtb	r0, r4
+ 226              	.LVL31:
+ 118:.\inout.c     ****             MyI2C_Regs.factory_reset = RESTRE_CODE;
+ 227              		.loc 1 118 0
+ 228 009c 9923     		movs	r3, #153
+ 229              	.LVL32:
+ 230              	.L24:
+ 231 009e 86F84230 		strb	r3, [r6, #66]
+ 232 00a2 70BD     		pop	{r4, r5, r6, pc}
+ 233              	.LVL33:
+ 234              	.L20:
+ 119:.\inout.c     ****         }
+ 120:.\inout.c     ****     }else{
+ 121:.\inout.c     ****         val |= 0x40;
+ 235              		.loc 1 121 0
+ 236 00a4 44F06000 		orr	r0, r4, #96
+ 237              	.LVL34:
+ 122:.\inout.c     ****     }
+ 123:.\inout.c     **** /*    if (SW_Rst_Read() == 0) // factory reset switch
+ 124:.\inout.c     ****     {  
+ 125:.\inout.c     ****       if(pwr_cnt >= 5000)   // switch must be held 'on' for 5 seconds
+ 126:.\inout.c     ****       {
+ 127:.\inout.c     ****           LED_RED_Write(0);
+ 128:.\inout.c     ****           LED_GRN_Write(0);
+ 129:.\inout.c     ****           LED_YEL_Write(0);
+ 130:.\inout.c     ****           val &= 0xBF;  // active reset initiated
+ 131:.\inout.c     ****           MyI2C_Regs.factory_reset = 1;
+ 132:.\inout.c     ****       }
+ 133:.\inout.c     ****       else
+ 134:.\inout.c     ****       {
+ 135:.\inout.c     ****           pwr_cnt++;
+ 136:.\inout.c     ****           val |= 0x40; 
+ 137:.\inout.c     ****           MyI2C_Regs.factory_reset = 0;
+ 138:.\inout.c     ****       }
+ 139:.\inout.c     ****     }
+ 140:.\inout.c     ****     else
+ 141:.\inout.c     ****     {
+ 142:.\inout.c     ****        pwr_cnt = 0;
+ 143:.\inout.c     ****        val |= 0x40;
+ 144:.\inout.c     ****        MyI2C_Regs.factory_reset = 0;
+ 145:.\inout.c     ****     }
+ 146:.\inout.c     ****     
+ 147:.\inout.c     ****     //val = 0;  //turn off - debug only 
+ 148:.\inout.c     **** */
+ 149:.\inout.c     ****     return val;
+ 150:.\inout.c     **** }
+ 238              		.loc 1 150 0
+ 239 00a8 70BD     		pop	{r4, r5, r6, pc}
+ 240              	.L27:
+ 241 00aa 00BF     		.align	2
+ 242              	.L26:
+ 243 00ac 00000000 		.word	buttonReleased
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 8
+
+
+ 244 00b0 00000000 		.word	buttonDuration
+ 245 00b4 00000000 		.word	MyI2C_Regs
+ 246              		.cfi_endproc
+ 247              	.LFE64:
+ 248              		.size	GetHardwareVals, .-GetHardwareVals
+ 249              		.section	.text.HandleOutputs,"ax",%progbits
+ 250              		.align	1
+ 251              		.global	HandleOutputs
+ 252              		.thumb
+ 253              		.thumb_func
+ 254              		.type	HandleOutputs, %function
+ 255              	HandleOutputs:
+ 256              	.LFB65:
+ 151:.\inout.c     **** 
+ 152:.\inout.c     **** void  HandleOutputs()   // this executes every 1 ms on Tamper_Timer_ISR_Interrupt
+ 153:.\inout.c     **** {
+ 257              		.loc 1 153 0
+ 258              		.cfi_startproc
+ 259              		@ args = 0, pretend = 0, frame = 0
+ 260              		@ frame_needed = 0, uses_anonymous_args = 0
+ 261 0000 38B5     		push	{r3, r4, r5, lr}
+ 262              		.cfi_def_cfa_offset 16
+ 263              		.cfi_offset 3, -16
+ 264              		.cfi_offset 4, -12
+ 265              		.cfi_offset 5, -8
+ 266              		.cfi_offset 14, -4
+ 154:.\inout.c     **** 	char stat = MyI2C_Regs.status_in;
+ 267              		.loc 1 154 0
+ 268 0002 084D     		ldr	r5, .L41
+ 269 0004 6C78     		ldrb	r4, [r5, #1]	@ zero_extendqisi2
+ 270              	.LVL35:
+ 155:.\inout.c     ****     if( stat & STAT_CHANGE)
+ 271              		.loc 1 155 0
+ 272 0006 E107     		lsls	r1, r4, #31
+ 273 0008 0BD5     		bpl	.L28
+ 156:.\inout.c     ****     {
+ 157:.\inout.c     ****         if(stat & STAT_ACS_OUT)
+ 274              		.loc 1 157 0
+ 275 000a A207     		lsls	r2, r4, #30
+ 276 000c 02D5     		bpl	.L30
+ 158:.\inout.c     ****            SetHardwareVals(MyI2C_Regs.acs_inputs);
+ 277              		.loc 1 158 0
+ 278 000e 6879     		ldrb	r0, [r5, #5]	@ zero_extendqisi2
+ 279 0010 FFF7FEFF 		bl	SetHardwareVals
+ 280              	.LVL36:
+ 281              	.L30:
+ 159:.\inout.c     ****         
+ 160:.\inout.c     **** //not used        if(stat & STAT_OSDP_OUT)
+ 161:.\inout.c     **** //not used            SendOSDP();
+ 162:.\inout.c     ****             
+ 163:.\inout.c     ****         if(stat & STAT_CARD_ACK)
+ 282              		.loc 1 163 0
+ 283 0014 2307     		lsls	r3, r4, #28
+ 284 0016 02D5     		bpl	.L31
+ 164:.\inout.c     ****             card_ack = 1;    
+ 285              		.loc 1 164 0
+ 286 0018 034B     		ldr	r3, .L41+4
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 9
+
+
+ 287 001a 0122     		movs	r2, #1
+ 288 001c 1A60     		str	r2, [r3]
+ 289              	.L31:
+ 165:.\inout.c     ****             
+ 166:.\inout.c     ****         MyI2C_Regs.status_in = 0; 
+ 290              		.loc 1 166 0
+ 291 001e 0023     		movs	r3, #0
+ 292 0020 6B70     		strb	r3, [r5, #1]
+ 293              	.L28:
+ 294 0022 38BD     		pop	{r3, r4, r5, pc}
+ 295              	.LVL37:
+ 296              	.L42:
+ 297              		.align	2
+ 298              	.L41:
+ 299 0024 00000000 		.word	MyI2C_Regs
+ 300 0028 00000000 		.word	card_ack
+ 301              		.cfi_endproc
+ 302              	.LFE65:
+ 303              		.size	HandleOutputs, .-HandleOutputs
+ 304              		.section	.text.HandleInputs,"ax",%progbits
+ 305              		.align	1
+ 306              		.global	HandleInputs
+ 307              		.thumb
+ 308              		.thumb_func
+ 309              		.type	HandleInputs, %function
+ 310              	HandleInputs:
+ 311              	.LFB66:
+ 167:.\inout.c     ****     }
+ 168:.\inout.c     ****    
+ 169:.\inout.c     ****     
+ 170:.\inout.c     **** }
+ 171:.\inout.c     **** 
+ 172:.\inout.c     **** 
+ 173:.\inout.c     **** void HandleInputs()   // this executes every 1 ms on Tamper_Timer_ISR_Interrupt
+ 174:.\inout.c     **** {
+ 312              		.loc 1 174 0
+ 313              		.cfi_startproc
+ 314              		@ args = 0, pretend = 0, frame = 0
+ 315              		@ frame_needed = 0, uses_anonymous_args = 0
+ 316 0000 38B5     		push	{r3, r4, r5, lr}
+ 317              		.cfi_def_cfa_offset 16
+ 318              		.cfi_offset 3, -16
+ 319              		.cfi_offset 4, -12
+ 320              		.cfi_offset 5, -8
+ 321              		.cfi_offset 14, -4
+ 175:.\inout.c     ****     char current_t1;
+ 176:.\inout.c     ****     char current_t2;
+ 177:.\inout.c     ****     
+ 178:.\inout.c     ****     /* TAMPER OUT signal to ACS Panel  GRI 1-13-15
+ 179:.\inout.c     ****        this accounts for configuration of tamper input from card reader  GRI 1-13-15 */
+ 180:.\inout.c     ****     if( (REED_1_Read() == 0)  
+ 322              		.loc 1 180 0
+ 323 0002 FFF7FEFF 		bl	REED_1_Read
+ 324              	.LVL38:
+ 325 0006 20B9     		cbnz	r0, .L44
+ 326              	.L47:
+ 181:.\inout.c     ****         /*   || (REED_2_Read() == 0)  // disabled GRI 2-4-15 */
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 10
+
+
+ 182:.\inout.c     ****         || ((TAMPER_IN_Read() == 0) && (TAMPERCR_POLARITY == 1)) 
+ 183:.\inout.c     ****         || ((TAMPER_IN_Read() == 1) && (TAMPERCR_POLARITY == 0)) )  
+ 184:.\inout.c     ****         
+ 185:.\inout.c     ****     {
+ 186:.\inout.c     ****        TAMPER_OUT_Write(0); // TAMPER_OUT to ACS is ACTIVE LOW
+ 327              		.loc 1 186 0
+ 328 0008 0020     		movs	r0, #0
+ 329 000a FFF7FEFF 		bl	TAMPER_OUT_Write
+ 330              	.LVL39:
+ 187:.\inout.c     ****        LED_RED_Write(0); //LED on
+ 331              		.loc 1 187 0
+ 332 000e 0020     		movs	r0, #0
+ 333 0010 12E0     		b	.L58
+ 334              	.L44:
+ 182:.\inout.c     ****         || ((TAMPER_IN_Read() == 0) && (TAMPERCR_POLARITY == 1)) 
+ 335              		.loc 1 182 0
+ 336 0012 FFF7FEFF 		bl	TAMPER_IN_Read
+ 337              	.LVL40:
+ 338 0016 18B9     		cbnz	r0, .L46
+ 182:.\inout.c     ****         || ((TAMPER_IN_Read() == 0) && (TAMPERCR_POLARITY == 1)) 
+ 339              		.loc 1 182 0 is_stmt 0 discriminator 1
+ 340 0018 134B     		ldr	r3, .L59
+ 341 001a 1B68     		ldr	r3, [r3]
+ 342 001c 012B     		cmp	r3, #1
+ 343 001e F3D0     		beq	.L47
+ 344              	.L46:
+ 183:.\inout.c     ****         || ((TAMPER_IN_Read() == 1) && (TAMPERCR_POLARITY == 0)) )  
+ 345              		.loc 1 183 0 is_stmt 1
+ 346 0020 FFF7FEFF 		bl	TAMPER_IN_Read
+ 347              	.LVL41:
+ 348 0024 0128     		cmp	r0, #1
+ 349 0026 03D1     		bne	.L48
+ 183:.\inout.c     ****         || ((TAMPER_IN_Read() == 1) && (TAMPERCR_POLARITY == 0)) )  
+ 350              		.loc 1 183 0 is_stmt 0 discriminator 1
+ 351 0028 0F4B     		ldr	r3, .L59
+ 352 002a 1B68     		ldr	r3, [r3]
+ 353 002c 002B     		cmp	r3, #0
+ 354 002e EBD0     		beq	.L47
+ 355              	.L48:
+ 188:.\inout.c     ****     }
+ 189:.\inout.c     ****     else
+ 190:.\inout.c     ****     {
+ 191:.\inout.c     ****        TAMPER_OUT_Write(1); // TAMPER_OUT to ACS is INACTIVE HIGH
+ 356              		.loc 1 191 0 is_stmt 1
+ 357 0030 0120     		movs	r0, #1
+ 358 0032 FFF7FEFF 		bl	TAMPER_OUT_Write
+ 359              	.LVL42:
+ 192:.\inout.c     ****        LED_RED_Write(1); //LED off
+ 360              		.loc 1 192 0
+ 361 0036 0120     		movs	r0, #1
+ 362              	.L58:
+ 363 0038 FFF7FEFF 		bl	LED_RED_Write
+ 364              	.LVL43:
+ 193:.\inout.c     ****     }
+ 194:.\inout.c     ****     // Tamper LED matches tamper_out signal status (ICM board only)
+ 195:.\inout.c     ****     
+ 196:.\inout.c     ****     
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 11
+
+
+ 197:.\inout.c     ****     //This section checks for input signal changes
+ 198:.\inout.c     **** 
+ 199:.\inout.c     ****     current_t1 = GetHardwareVals();  // read inputs first time
+ 365              		.loc 1 199 0
+ 366 003c FFF7FEFF 		bl	GetHardwareVals
+ 367              	.LVL44:
+ 200:.\inout.c     **** 	if (current_t1 != old)  //change occurred?
+ 368              		.loc 1 200 0
+ 369 0040 0A4D     		ldr	r5, .L59+4
+ 199:.\inout.c     ****     current_t1 = GetHardwareVals();  // read inputs first time
+ 370              		.loc 1 199 0
+ 371 0042 0446     		mov	r4, r0
+ 372              	.LVL45:
+ 373              		.loc 1 200 0
+ 374 0044 2B78     		ldrb	r3, [r5]	@ zero_extendqisi2
+ 375 0046 8342     		cmp	r3, r0
+ 376 0048 0DD0     		beq	.L43
+ 201:.\inout.c     **** 	{
+ 202:.\inout.c     ****         CyDelayUs(100); //delay 100us for debounce
+ 377              		.loc 1 202 0
+ 378 004a 6420     		movs	r0, #100
+ 379              	.LVL46:
+ 380 004c FFF7FEFF 		bl	CyDelayUs
+ 381              	.LVL47:
+ 203:.\inout.c     ****         current_t2 = GetHardwareVals();  // read inputs second time
+ 382              		.loc 1 203 0
+ 383 0050 FFF7FEFF 		bl	GetHardwareVals
+ 384              	.LVL48:
+ 204:.\inout.c     ****         
+ 205:.\inout.c     ****         if (current_t1 == current_t2)    // data is stable?
+ 385              		.loc 1 205 0
+ 386 0054 8442     		cmp	r4, r0
+ 387 0056 06D1     		bne	.L43
+ 206:.\inout.c     ****         {   
+ 207:.\inout.c     ****             // If Data is stable, change the status reg
+ 208:.\inout.c     ****             
+ 209:.\inout.c     **** 	        MyI2C_Regs.acs_outputs = current_t2;                //set output reg to MB
+ 388              		.loc 1 209 0
+ 389 0058 054B     		ldr	r3, .L59+8
+ 210:.\inout.c     ****             old = current_t2;                                   //store latest value
+ 390              		.loc 1 210 0
+ 391 005a 2C70     		strb	r4, [r5]
+ 211:.\inout.c     **** 	        MyI2C_Regs.status |= (STAT_ACS_IN | STAT_CHANGE);   //indicate change in ACS_IN
+ 392              		.loc 1 211 0
+ 393 005c 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 209:.\inout.c     **** 	        MyI2C_Regs.acs_outputs = current_t2;                //set output reg to MB
+ 394              		.loc 1 209 0
+ 395 005e 1C71     		strb	r4, [r3, #4]
+ 396              		.loc 1 211 0
+ 397 0060 42F00502 		orr	r2, r2, #5
+ 398 0064 1A70     		strb	r2, [r3]
+ 399              	.LVL49:
+ 400              	.L43:
+ 401 0066 38BD     		pop	{r3, r4, r5, pc}
+ 402              	.LVL50:
+ 403              	.L60:
+ 404              		.align	2
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 12
+
+
+ 405              	.L59:
+ 406 0068 00000000 		.word	TAMPERCR_POLARITY
+ 407 006c 00000000 		.word	old
+ 408 0070 00000000 		.word	MyI2C_Regs
+ 409              		.cfi_endproc
+ 410              	.LFE66:
+ 411              		.size	HandleInputs, .-HandleInputs
+ 412              		.comm	card_in_buf,4,4
+ 413              		.comm	card_ack,4,4
+ 414              		.comm	TAMPERCR_POLARITY,4,4
+ 415              		.comm	old,1,1
+ 416              		.comm	currentAccessType,1,1
+ 417              		.comm	s,40,4
+ 418              		.text
+ 419              	.Letext0:
+ 420              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 421              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\3.2\\psoc creator\\import\\gnu\\arm\\4.8.
+ 422              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 423              		.file 5 ".\\softuart.h"
+ 424              		.file 6 ".\\system.h"
+ 425              		.file 7 "Generated_Source\\PSoC5/core_cm3.h"
+ 426              		.file 8 "Generated_Source\\PSoC5/LEDR_OUT.h"
+ 427              		.file 9 "Generated_Source\\PSoC5/LEDG_OUT.h"
+ 428              		.file 10 "Generated_Source\\PSoC5/SOUND_OUT.h"
+ 429              		.file 11 "Generated_Source\\PSoC5/RELAY_A.h"
+ 430              		.file 12 "Generated_Source\\PSoC5/RELAY_B.h"
+ 431              		.file 13 "Generated_Source\\PSoC5/LEDR_IN.h"
+ 432              		.file 14 "Generated_Source\\PSoC5/LEDG_IN.h"
+ 433              		.file 15 "Generated_Source\\PSoC5/SOUND_IN.h"
+ 434              		.file 16 "Generated_Source\\PSoC5/TAMPER_IN.h"
+ 435              		.file 17 "Generated_Source\\PSoC5/REED_1.h"
+ 436              		.file 18 "Generated_Source\\PSoC5/LED_RED.h"
+ 437              		.file 19 "Generated_Source\\PSoC5/LED_GRN.h"
+ 438              		.file 20 "Generated_Source\\PSoC5/LED_YEL.h"
+ 439              		.file 21 "Generated_Source\\PSoC5/TAMPER_OUT.h"
+ 440              		.file 22 "Generated_Source\\PSoC5/CyLib.h"
+ 441              		.section	.debug_info,"",%progbits
+ 442              	.Ldebug_info0:
+ 443 0000 8A060000 		.4byte	0x68a
+ 444 0004 0400     		.2byte	0x4
+ 445 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 446 000a 04       		.byte	0x4
+ 447 000b 01       		.uleb128 0x1
+ 448 000c 0B010000 		.4byte	.LASF79
+ 449 0010 01       		.byte	0x1
+ 450 0011 2C030000 		.4byte	.LASF80
+ 451 0015 0E020000 		.4byte	.LASF81
+ 452 0019 00000000 		.4byte	.Ldebug_ranges0+0
+ 453 001d 00000000 		.4byte	0
+ 454 0021 00000000 		.4byte	.Ldebug_line0
+ 455 0025 02       		.uleb128 0x2
+ 456 0026 01       		.byte	0x1
+ 457 0027 06       		.byte	0x6
+ 458 0028 DC020000 		.4byte	.LASF0
+ 459 002c 02       		.uleb128 0x2
+ 460 002d 01       		.byte	0x1
+ 461 002e 08       		.byte	0x8
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 13
+
+
+ 462 002f CE020000 		.4byte	.LASF1
+ 463 0033 02       		.uleb128 0x2
+ 464 0034 02       		.byte	0x2
+ 465 0035 05       		.byte	0x5
+ 466 0036 C6000000 		.4byte	.LASF2
+ 467 003a 02       		.uleb128 0x2
+ 468 003b 02       		.byte	0x2
+ 469 003c 07       		.byte	0x7
+ 470 003d A9030000 		.4byte	.LASF3
+ 471 0041 03       		.uleb128 0x3
+ 472 0042 EE030000 		.4byte	.LASF9
+ 473 0046 02       		.byte	0x2
+ 474 0047 37       		.byte	0x37
+ 475 0048 4C000000 		.4byte	0x4c
+ 476 004c 02       		.uleb128 0x2
+ 477 004d 04       		.byte	0x4
+ 478 004e 05       		.byte	0x5
+ 479 004f D6010000 		.4byte	.LASF4
+ 480 0053 02       		.uleb128 0x2
+ 481 0054 04       		.byte	0x4
+ 482 0055 07       		.byte	0x7
+ 483 0056 0F030000 		.4byte	.LASF5
+ 484 005a 02       		.uleb128 0x2
+ 485 005b 08       		.byte	0x8
+ 486 005c 05       		.byte	0x5
+ 487 005d 8D000000 		.4byte	.LASF6
+ 488 0061 02       		.uleb128 0x2
+ 489 0062 08       		.byte	0x8
+ 490 0063 07       		.byte	0x7
+ 491 0064 93010000 		.4byte	.LASF7
+ 492 0068 04       		.uleb128 0x4
+ 493 0069 04       		.byte	0x4
+ 494 006a 05       		.byte	0x5
+ 495 006b 696E7400 		.ascii	"int\000"
+ 496 006f 02       		.uleb128 0x2
+ 497 0070 04       		.byte	0x4
+ 498 0071 07       		.byte	0x7
+ 499 0072 F8020000 		.4byte	.LASF8
+ 500 0076 03       		.uleb128 0x3
+ 501 0077 60030000 		.4byte	.LASF10
+ 502 007b 03       		.byte	0x3
+ 503 007c 41       		.byte	0x41
+ 504 007d 41000000 		.4byte	0x41
+ 505 0081 03       		.uleb128 0x3
+ 506 0082 DF000000 		.4byte	.LASF11
+ 507 0086 04       		.byte	0x4
+ 508 0087 B3       		.byte	0xb3
+ 509 0088 2C000000 		.4byte	0x2c
+ 510 008c 03       		.uleb128 0x3
+ 511 008d D8000000 		.4byte	.LASF12
+ 512 0091 04       		.byte	0x4
+ 513 0092 B4       		.byte	0xb4
+ 514 0093 3A000000 		.4byte	0x3a
+ 515 0097 02       		.uleb128 0x2
+ 516 0098 04       		.byte	0x4
+ 517 0099 04       		.byte	0x4
+ 518 009a F4000000 		.4byte	.LASF13
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 14
+
+
+ 519 009e 02       		.uleb128 0x2
+ 520 009f 08       		.byte	0x8
+ 521 00a0 04       		.byte	0x4
+ 522 00a1 3E040000 		.4byte	.LASF14
+ 523 00a5 02       		.uleb128 0x2
+ 524 00a6 01       		.byte	0x1
+ 525 00a7 08       		.byte	0x8
+ 526 00a8 4D030000 		.4byte	.LASF15
+ 527 00ac 05       		.uleb128 0x5
+ 528 00ad 8C000000 		.4byte	0x8c
+ 529 00b1 02       		.uleb128 0x2
+ 530 00b2 04       		.byte	0x4
+ 531 00b3 07       		.byte	0x7
+ 532 00b4 32000000 		.4byte	.LASF16
+ 533 00b8 06       		.uleb128 0x6
+ 534 00b9 28       		.byte	0x28
+ 535 00ba 05       		.byte	0x5
+ 536 00bb 0D       		.byte	0xd
+ 537 00bc 51010000 		.4byte	0x151
+ 538 00c0 07       		.uleb128 0x7
+ 539 00c1 B8020000 		.4byte	.LASF17
+ 540 00c5 05       		.byte	0x5
+ 541 00c6 0F       		.byte	0xf
+ 542 00c7 68000000 		.4byte	0x68
+ 543 00cb 00       		.byte	0
+ 544 00cc 07       		.uleb128 0x7
+ 545 00cd 07020000 		.4byte	.LASF18
+ 546 00d1 05       		.byte	0x5
+ 547 00d2 10       		.byte	0x10
+ 548 00d3 68000000 		.4byte	0x68
+ 549 00d7 04       		.byte	0x4
+ 550 00d8 07       		.uleb128 0x7
+ 551 00d9 05030000 		.4byte	.LASF19
+ 552 00dd 05       		.byte	0x5
+ 553 00de 11       		.byte	0x11
+ 554 00df 68000000 		.4byte	0x68
+ 555 00e3 08       		.byte	0x8
+ 556 00e4 07       		.uleb128 0x7
+ 557 00e5 FA000000 		.4byte	.LASF20
+ 558 00e9 05       		.byte	0x5
+ 559 00ea 12       		.byte	0x12
+ 560 00eb 68000000 		.4byte	0x68
+ 561 00ef 0C       		.byte	0xc
+ 562 00f0 07       		.uleb128 0x7
+ 563 00f1 89030000 		.4byte	.LASF21
+ 564 00f5 05       		.byte	0x5
+ 565 00f6 13       		.byte	0x13
+ 566 00f7 8C000000 		.4byte	0x8c
+ 567 00fb 10       		.byte	0x10
+ 568 00fc 07       		.uleb128 0x7
+ 569 00fd FF010000 		.4byte	.LASF22
+ 570 0101 05       		.byte	0x5
+ 571 0102 14       		.byte	0x14
+ 572 0103 AC000000 		.4byte	0xac
+ 573 0107 12       		.byte	0x12
+ 574 0108 07       		.uleb128 0x7
+ 575 0109 3E030000 		.4byte	.LASF23
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 15
+
+
+ 576 010d 05       		.byte	0x5
+ 577 010e 15       		.byte	0x15
+ 578 010f AC000000 		.4byte	0xac
+ 579 0113 14       		.byte	0x14
+ 580 0114 07       		.uleb128 0x7
+ 581 0115 D0000000 		.4byte	.LASF24
+ 582 0119 05       		.byte	0x5
+ 583 011a 16       		.byte	0x16
+ 584 011b 8C000000 		.4byte	0x8c
+ 585 011f 16       		.byte	0x16
+ 586 0120 07       		.uleb128 0x7
+ 587 0121 E8020000 		.4byte	.LASF25
+ 588 0125 05       		.byte	0x5
+ 589 0126 17       		.byte	0x17
+ 590 0127 51010000 		.4byte	0x151
+ 591 012b 18       		.byte	0x18
+ 592 012c 07       		.uleb128 0x7
+ 593 012d 79040000 		.4byte	.LASF26
+ 594 0131 05       		.byte	0x5
+ 595 0132 18       		.byte	0x18
+ 596 0133 51010000 		.4byte	0x151
+ 597 0137 1C       		.byte	0x1c
+ 598 0138 07       		.uleb128 0x7
+ 599 0139 DF010000 		.4byte	.LASF27
+ 600 013d 05       		.byte	0x5
+ 601 013e 19       		.byte	0x19
+ 602 013f 51010000 		.4byte	0x151
+ 603 0143 20       		.byte	0x20
+ 604 0144 07       		.uleb128 0x7
+ 605 0145 36030000 		.4byte	.LASF28
+ 606 0149 05       		.byte	0x5
+ 607 014a 1A       		.byte	0x1a
+ 608 014b 51010000 		.4byte	0x151
+ 609 014f 24       		.byte	0x24
+ 610 0150 00       		.byte	0
+ 611 0151 05       		.uleb128 0x5
+ 612 0152 68000000 		.4byte	0x68
+ 613 0156 03       		.uleb128 0x3
+ 614 0157 A7020000 		.4byte	.LASF29
+ 615 015b 05       		.byte	0x5
+ 616 015c 1B       		.byte	0x1b
+ 617 015d B8000000 		.4byte	0xb8
+ 618 0161 08       		.uleb128 0x8
+ 619 0162 E5030000 		.4byte	.LASF49
+ 620 0166 0001     		.2byte	0x100
+ 621 0168 06       		.byte	0x6
+ 622 0169 18       		.byte	0x18
+ 623 016a 5F020000 		.4byte	0x25f
+ 624 016e 07       		.uleb128 0x7
+ 625 016f 46030000 		.4byte	.LASF30
+ 626 0173 06       		.byte	0x6
+ 627 0174 19       		.byte	0x19
+ 628 0175 A5000000 		.4byte	0xa5
+ 629 0179 00       		.byte	0
+ 630 017a 07       		.uleb128 0x7
+ 631 017b DB030000 		.4byte	.LASF31
+ 632 017f 06       		.byte	0x6
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 16
+
+
+ 633 0180 1A       		.byte	0x1a
+ 634 0181 A5000000 		.4byte	0xa5
+ 635 0185 01       		.byte	0x1
+ 636 0186 09       		.uleb128 0x9
+ 637 0187 636D6400 		.ascii	"cmd\000"
+ 638 018b 06       		.byte	0x6
+ 639 018c 1B       		.byte	0x1b
+ 640 018d A5000000 		.4byte	0xa5
+ 641 0191 02       		.byte	0x2
+ 642 0192 07       		.uleb128 0x7
+ 643 0193 75000000 		.4byte	.LASF32
+ 644 0197 06       		.byte	0x6
+ 645 0198 1C       		.byte	0x1c
+ 646 0199 2C000000 		.4byte	0x2c
+ 647 019d 03       		.byte	0x3
+ 648 019e 07       		.uleb128 0x7
+ 649 019f 87010000 		.4byte	.LASF33
+ 650 01a3 06       		.byte	0x6
+ 651 01a4 1D       		.byte	0x1d
+ 652 01a5 A5000000 		.4byte	0xa5
+ 653 01a9 04       		.byte	0x4
+ 654 01aa 07       		.uleb128 0x7
+ 655 01ab 21030000 		.4byte	.LASF34
+ 656 01af 06       		.byte	0x6
+ 657 01b0 1E       		.byte	0x1e
+ 658 01b1 A5000000 		.4byte	0xa5
+ 659 01b5 05       		.byte	0x5
+ 660 01b6 07       		.uleb128 0x7
+ 661 01b7 A2030000 		.4byte	.LASF35
+ 662 01bb 06       		.byte	0x6
+ 663 01bc 1F       		.byte	0x1f
+ 664 01bd 5F020000 		.4byte	0x25f
+ 665 01c1 06       		.byte	0x6
+ 666 01c2 07       		.uleb128 0x7
+ 667 01c3 F9010000 		.4byte	.LASF36
+ 668 01c7 06       		.byte	0x6
+ 669 01c8 20       		.byte	0x20
+ 670 01c9 6F020000 		.4byte	0x26f
+ 671 01cd 1A       		.byte	0x1a
+ 672 01ce 07       		.uleb128 0x7
+ 673 01cf 67000000 		.4byte	.LASF37
+ 674 01d3 06       		.byte	0x6
+ 675 01d4 21       		.byte	0x21
+ 676 01d5 A5000000 		.4byte	0xa5
+ 677 01d9 42       		.byte	0x42
+ 678 01da 07       		.uleb128 0x7
+ 679 01db 08040000 		.4byte	.LASF38
+ 680 01df 06       		.byte	0x6
+ 681 01e0 22       		.byte	0x22
+ 682 01e1 7F020000 		.4byte	0x27f
+ 683 01e5 43       		.byte	0x43
+ 684 01e6 07       		.uleb128 0x7
+ 685 01e7 57040000 		.4byte	.LASF39
+ 686 01eb 06       		.byte	0x6
+ 687 01ec 23       		.byte	0x23
+ 688 01ed 7F020000 		.4byte	0x27f
+ 689 01f1 46       		.byte	0x46
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 17
+
+
+ 690 01f2 07       		.uleb128 0x7
+ 691 01f3 70040000 		.4byte	.LASF40
+ 692 01f7 06       		.byte	0x6
+ 693 01f8 24       		.byte	0x24
+ 694 01f9 2C000000 		.4byte	0x2c
+ 695 01fd 49       		.byte	0x49
+ 696 01fe 07       		.uleb128 0x7
+ 697 01ff 00000000 		.4byte	.LASF41
+ 698 0203 06       		.byte	0x6
+ 699 0204 25       		.byte	0x25
+ 700 0205 2C000000 		.4byte	0x2c
+ 701 0209 4A       		.byte	0x4a
+ 702 020a 07       		.uleb128 0x7
+ 703 020b BD020000 		.4byte	.LASF42
+ 704 020f 06       		.byte	0x6
+ 705 0210 26       		.byte	0x26
+ 706 0211 2C000000 		.4byte	0x2c
+ 707 0215 4B       		.byte	0x4b
+ 708 0216 07       		.uleb128 0x7
+ 709 0217 4D000000 		.4byte	.LASF43
+ 710 021b 06       		.byte	0x6
+ 711 021c 27       		.byte	0x27
+ 712 021d 2C000000 		.4byte	0x2c
+ 713 0221 4C       		.byte	0x4c
+ 714 0222 07       		.uleb128 0x7
+ 715 0223 81000000 		.4byte	.LASF44
+ 716 0227 06       		.byte	0x6
+ 717 0228 28       		.byte	0x28
+ 718 0229 8F020000 		.4byte	0x28f
+ 719 022d 4D       		.byte	0x4d
+ 720 022e 07       		.uleb128 0x7
+ 721 022f 57000000 		.4byte	.LASF45
+ 722 0233 06       		.byte	0x6
+ 723 0234 29       		.byte	0x29
+ 724 0235 2C000000 		.4byte	0x2c
+ 725 0239 CD       		.byte	0xcd
+ 726 023a 07       		.uleb128 0x7
+ 727 023b B5010000 		.4byte	.LASF46
+ 728 023f 06       		.byte	0x6
+ 729 0240 2A       		.byte	0x2a
+ 730 0241 2C000000 		.4byte	0x2c
+ 731 0245 CE       		.byte	0xce
+ 732 0246 07       		.uleb128 0x7
+ 733 0247 5C020000 		.4byte	.LASF47
+ 734 024b 06       		.byte	0x6
+ 735 024c 2B       		.byte	0x2b
+ 736 024d 2C000000 		.4byte	0x2c
+ 737 0251 CF       		.byte	0xcf
+ 738 0252 07       		.uleb128 0x7
+ 739 0253 6D020000 		.4byte	.LASF48
+ 740 0257 06       		.byte	0x6
+ 741 0258 2C       		.byte	0x2c
+ 742 0259 9F020000 		.4byte	0x29f
+ 743 025d D0       		.byte	0xd0
+ 744 025e 00       		.byte	0
+ 745 025f 0A       		.uleb128 0xa
+ 746 0260 2C000000 		.4byte	0x2c
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 18
+
+
+ 747 0264 6F020000 		.4byte	0x26f
+ 748 0268 0B       		.uleb128 0xb
+ 749 0269 B1000000 		.4byte	0xb1
+ 750 026d 13       		.byte	0x13
+ 751 026e 00       		.byte	0
+ 752 026f 0A       		.uleb128 0xa
+ 753 0270 A5000000 		.4byte	0xa5
+ 754 0274 7F020000 		.4byte	0x27f
+ 755 0278 0B       		.uleb128 0xb
+ 756 0279 B1000000 		.4byte	0xb1
+ 757 027d 27       		.byte	0x27
+ 758 027e 00       		.byte	0
+ 759 027f 0A       		.uleb128 0xa
+ 760 0280 A5000000 		.4byte	0xa5
+ 761 0284 8F020000 		.4byte	0x28f
+ 762 0288 0B       		.uleb128 0xb
+ 763 0289 B1000000 		.4byte	0xb1
+ 764 028d 02       		.byte	0x2
+ 765 028e 00       		.byte	0
+ 766 028f 0A       		.uleb128 0xa
+ 767 0290 2C000000 		.4byte	0x2c
+ 768 0294 9F020000 		.4byte	0x29f
+ 769 0298 0B       		.uleb128 0xb
+ 770 0299 B1000000 		.4byte	0xb1
+ 771 029d 7F       		.byte	0x7f
+ 772 029e 00       		.byte	0
+ 773 029f 0A       		.uleb128 0xa
+ 774 02a0 2C000000 		.4byte	0x2c
+ 775 02a4 AF020000 		.4byte	0x2af
+ 776 02a8 0B       		.uleb128 0xb
+ 777 02a9 B1000000 		.4byte	0xb1
+ 778 02ad 2F       		.byte	0x2f
+ 779 02ae 00       		.byte	0
+ 780 02af 03       		.uleb128 0x3
+ 781 02b0 E5030000 		.4byte	.LASF49
+ 782 02b4 06       		.byte	0x6
+ 783 02b5 2D       		.byte	0x2d
+ 784 02b6 61010000 		.4byte	0x161
+ 785 02ba 0C       		.uleb128 0xc
+ 786 02bb A7000000 		.4byte	.LASF50
+ 787 02bf 01       		.byte	0x1
+ 788 02c0 18       		.byte	0x18
+ 789 02c1 00000000 		.4byte	.LFB63
+ 790 02c5 54000000 		.4byte	.LFE63-.LFB63
+ 791 02c9 01       		.uleb128 0x1
+ 792 02ca 9C       		.byte	0x9c
+ 793 02cb 89030000 		.4byte	0x389
+ 794 02cf 0D       		.uleb128 0xd
+ 795 02d0 76616C00 		.ascii	"val\000"
+ 796 02d4 01       		.byte	0x1
+ 797 02d5 18       		.byte	0x18
+ 798 02d6 68000000 		.4byte	0x68
+ 799 02da 00000000 		.4byte	.LLST0
+ 800 02de 0E       		.uleb128 0xe
+ 801 02df 10000000 		.4byte	.LVL2
+ 802 02e3 B0050000 		.4byte	0x5b0
+ 803 02e7 00030000 		.4byte	0x300
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 19
+
+
+ 804 02eb 0F       		.uleb128 0xf
+ 805 02ec 01       		.uleb128 0x1
+ 806 02ed 50       		.byte	0x50
+ 807 02ee 10       		.uleb128 0x10
+ 808 02ef 31       		.byte	0x31
+ 809 02f0 74       		.byte	0x74
+ 810 02f1 00       		.sleb128 0
+ 811 02f2 31       		.byte	0x31
+ 812 02f3 1A       		.byte	0x1a
+ 813 02f4 74       		.byte	0x74
+ 814 02f5 00       		.sleb128 0
+ 815 02f6 31       		.byte	0x31
+ 816 02f7 1A       		.byte	0x1a
+ 817 02f8 30       		.byte	0x30
+ 818 02f9 2E       		.byte	0x2e
+ 819 02fa 28       		.byte	0x28
+ 820 02fb 0100     		.2byte	0x1
+ 821 02fd 16       		.byte	0x16
+ 822 02fe 13       		.byte	0x13
+ 823 02ff 00       		.byte	0
+ 824 0300 0E       		.uleb128 0xe
+ 825 0301 1C000000 		.4byte	.LVL3
+ 826 0305 C1050000 		.4byte	0x5c1
+ 827 0309 22030000 		.4byte	0x322
+ 828 030d 0F       		.uleb128 0xf
+ 829 030e 01       		.uleb128 0x1
+ 830 030f 50       		.byte	0x50
+ 831 0310 10       		.uleb128 0x10
+ 832 0311 31       		.byte	0x31
+ 833 0312 74       		.byte	0x74
+ 834 0313 00       		.sleb128 0
+ 835 0314 32       		.byte	0x32
+ 836 0315 1A       		.byte	0x1a
+ 837 0316 74       		.byte	0x74
+ 838 0317 00       		.sleb128 0
+ 839 0318 32       		.byte	0x32
+ 840 0319 1A       		.byte	0x1a
+ 841 031a 30       		.byte	0x30
+ 842 031b 2E       		.byte	0x2e
+ 843 031c 28       		.byte	0x28
+ 844 031d 0100     		.2byte	0x1
+ 845 031f 16       		.byte	0x16
+ 846 0320 13       		.byte	0x13
+ 847 0321 00       		.byte	0
+ 848 0322 0E       		.uleb128 0xe
+ 849 0323 28000000 		.4byte	.LVL4
+ 850 0327 D2050000 		.4byte	0x5d2
+ 851 032b 44030000 		.4byte	0x344
+ 852 032f 0F       		.uleb128 0xf
+ 853 0330 01       		.uleb128 0x1
+ 854 0331 50       		.byte	0x50
+ 855 0332 10       		.uleb128 0x10
+ 856 0333 31       		.byte	0x31
+ 857 0334 74       		.byte	0x74
+ 858 0335 00       		.sleb128 0
+ 859 0336 34       		.byte	0x34
+ 860 0337 1A       		.byte	0x1a
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 20
+
+
+ 861 0338 74       		.byte	0x74
+ 862 0339 00       		.sleb128 0
+ 863 033a 34       		.byte	0x34
+ 864 033b 1A       		.byte	0x1a
+ 865 033c 30       		.byte	0x30
+ 866 033d 2E       		.byte	0x2e
+ 867 033e 28       		.byte	0x28
+ 868 033f 0100     		.2byte	0x1
+ 869 0341 16       		.byte	0x16
+ 870 0342 13       		.byte	0x13
+ 871 0343 00       		.byte	0
+ 872 0344 0E       		.uleb128 0xe
+ 873 0345 40000000 		.4byte	.LVL5
+ 874 0349 E3050000 		.4byte	0x5e3
+ 875 034d 66030000 		.4byte	0x366
+ 876 0351 0F       		.uleb128 0xf
+ 877 0352 01       		.uleb128 0x1
+ 878 0353 50       		.byte	0x50
+ 879 0354 10       		.uleb128 0x10
+ 880 0355 31       		.byte	0x31
+ 881 0356 74       		.byte	0x74
+ 882 0357 00       		.sleb128 0
+ 883 0358 40       		.byte	0x40
+ 884 0359 1A       		.byte	0x1a
+ 885 035a 74       		.byte	0x74
+ 886 035b 00       		.sleb128 0
+ 887 035c 40       		.byte	0x40
+ 888 035d 1A       		.byte	0x1a
+ 889 035e 30       		.byte	0x30
+ 890 035f 2E       		.byte	0x2e
+ 891 0360 28       		.byte	0x28
+ 892 0361 0100     		.2byte	0x1
+ 893 0363 16       		.byte	0x16
+ 894 0364 13       		.byte	0x13
+ 895 0365 00       		.byte	0
+ 896 0366 10       		.uleb128 0x10
+ 897 0367 50000000 		.4byte	.LVL7
+ 898 036b F4050000 		.4byte	0x5f4
+ 899 036f 0F       		.uleb128 0xf
+ 900 0370 01       		.uleb128 0x1
+ 901 0371 50       		.byte	0x50
+ 902 0372 14       		.uleb128 0x14
+ 903 0373 31       		.byte	0x31
+ 904 0374 F3       		.byte	0xf3
+ 905 0375 01       		.uleb128 0x1
+ 906 0376 50       		.byte	0x50
+ 907 0377 08       		.byte	0x8
+ 908 0378 20       		.byte	0x20
+ 909 0379 1A       		.byte	0x1a
+ 910 037a F3       		.byte	0xf3
+ 911 037b 01       		.uleb128 0x1
+ 912 037c 50       		.byte	0x50
+ 913 037d 08       		.byte	0x8
+ 914 037e 20       		.byte	0x20
+ 915 037f 1A       		.byte	0x1a
+ 916 0380 30       		.byte	0x30
+ 917 0381 2E       		.byte	0x2e
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 21
+
+
+ 918 0382 28       		.byte	0x28
+ 919 0383 0100     		.2byte	0x1
+ 920 0385 16       		.byte	0x16
+ 921 0386 13       		.byte	0x13
+ 922 0387 00       		.byte	0
+ 923 0388 00       		.byte	0
+ 924 0389 11       		.uleb128 0x11
+ 925 038a BC030000 		.4byte	.LASF51
+ 926 038e 01       		.byte	0x1
+ 927 038f 41       		.byte	0x41
+ 928 0390 81000000 		.4byte	0x81
+ 929 0394 00000000 		.4byte	.LFB64
+ 930 0398 B8000000 		.4byte	.LFE64-.LFB64
+ 931 039c 01       		.uleb128 0x1
+ 932 039d 9C       		.byte	0x9c
+ 933 039e 48040000 		.4byte	0x448
+ 934 03a2 12       		.uleb128 0x12
+ 935 03a3 76616C00 		.ascii	"val\000"
+ 936 03a7 01       		.byte	0x1
+ 937 03a8 43       		.byte	0x43
+ 938 03a9 81000000 		.4byte	0x81
+ 939 03ad 2C000000 		.4byte	.LLST1
+ 940 03b1 13       		.uleb128 0x13
+ 941 03b2 06000000 		.4byte	.LVL9
+ 942 03b6 05060000 		.4byte	0x605
+ 943 03ba 13       		.uleb128 0x13
+ 944 03bb 10000000 		.4byte	.LVL11
+ 945 03bf 10060000 		.4byte	0x610
+ 946 03c3 13       		.uleb128 0x13
+ 947 03c4 1E000000 		.4byte	.LVL14
+ 948 03c8 1B060000 		.4byte	0x61b
+ 949 03cc 13       		.uleb128 0x13
+ 950 03cd 2A000000 		.4byte	.LVL16
+ 951 03d1 26060000 		.4byte	0x626
+ 952 03d5 13       		.uleb128 0x13
+ 953 03d6 36000000 		.4byte	.LVL18
+ 954 03da 31060000 		.4byte	0x631
+ 955 03de 0E       		.uleb128 0xe
+ 956 03df 78000000 		.4byte	.LVL23
+ 957 03e3 3C060000 		.4byte	0x63c
+ 958 03e7 F2030000 		.4byte	0x3f2
+ 959 03eb 0F       		.uleb128 0xf
+ 960 03ec 01       		.uleb128 0x1
+ 961 03ed 50       		.byte	0x50
+ 962 03ee 02       		.uleb128 0x2
+ 963 03ef 75       		.byte	0x75
+ 964 03f0 00       		.sleb128 0
+ 965 03f1 00       		.byte	0
+ 966 03f2 0E       		.uleb128 0xe
+ 967 03f3 7E000000 		.4byte	.LVL24
+ 968 03f7 4D060000 		.4byte	0x64d
+ 969 03fb 06040000 		.4byte	0x406
+ 970 03ff 0F       		.uleb128 0xf
+ 971 0400 01       		.uleb128 0x1
+ 972 0401 50       		.byte	0x50
+ 973 0402 02       		.uleb128 0x2
+ 974 0403 75       		.byte	0x75
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 22
+
+
+ 975 0404 00       		.sleb128 0
+ 976 0405 00       		.byte	0
+ 977 0406 0E       		.uleb128 0xe
+ 978 0407 84000000 		.4byte	.LVL25
+ 979 040b 5E060000 		.4byte	0x65e
+ 980 040f 1A040000 		.4byte	0x41a
+ 981 0413 0F       		.uleb128 0xf
+ 982 0414 01       		.uleb128 0x1
+ 983 0415 50       		.byte	0x50
+ 984 0416 02       		.uleb128 0x2
+ 985 0417 75       		.byte	0x75
+ 986 0418 00       		.sleb128 0
+ 987 0419 00       		.byte	0
+ 988 041a 13       		.uleb128 0x13
+ 989 041b 8E000000 		.4byte	.LVL28
+ 990 041f 3C060000 		.4byte	0x63c
+ 991 0423 0E       		.uleb128 0xe
+ 992 0424 94000000 		.4byte	.LVL29
+ 993 0428 4D060000 		.4byte	0x64d
+ 994 042c 37040000 		.4byte	0x437
+ 995 0430 0F       		.uleb128 0xf
+ 996 0431 01       		.uleb128 0x1
+ 997 0432 50       		.byte	0x50
+ 998 0433 02       		.uleb128 0x2
+ 999 0434 75       		.byte	0x75
+ 1000 0435 00       		.sleb128 0
+ 1001 0436 00       		.byte	0
+ 1002 0437 14       		.uleb128 0x14
+ 1003 0438 9A000000 		.4byte	.LVL30
+ 1004 043c 5E060000 		.4byte	0x65e
+ 1005 0440 0F       		.uleb128 0xf
+ 1006 0441 01       		.uleb128 0x1
+ 1007 0442 50       		.byte	0x50
+ 1008 0443 02       		.uleb128 0x2
+ 1009 0444 75       		.byte	0x75
+ 1010 0445 00       		.sleb128 0
+ 1011 0446 00       		.byte	0
+ 1012 0447 00       		.byte	0
+ 1013 0448 15       		.uleb128 0x15
+ 1014 0449 62040000 		.4byte	.LASF53
+ 1015 044d 01       		.byte	0x1
+ 1016 044e 98       		.byte	0x98
+ 1017 044f 00000000 		.4byte	.LFB65
+ 1018 0453 2C000000 		.4byte	.LFE65-.LFB65
+ 1019 0457 01       		.uleb128 0x1
+ 1020 0458 9C       		.byte	0x9c
+ 1021 0459 76040000 		.4byte	0x476
+ 1022 045d 16       		.uleb128 0x16
+ 1023 045e 45040000 		.4byte	.LASF52
+ 1024 0462 01       		.byte	0x1
+ 1025 0463 9A       		.byte	0x9a
+ 1026 0464 A5000000 		.4byte	0xa5
+ 1027 0468 B2000000 		.4byte	.LLST2
+ 1028 046c 13       		.uleb128 0x13
+ 1029 046d 14000000 		.4byte	.LVL36
+ 1030 0471 BA020000 		.4byte	0x2ba
+ 1031 0475 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 23
+
+
+ 1032 0476 15       		.uleb128 0x15
+ 1033 0477 1A000000 		.4byte	.LASF54
+ 1034 047b 01       		.byte	0x1
+ 1035 047c AD       		.byte	0xad
+ 1036 047d 00000000 		.4byte	.LFB66
+ 1037 0481 74000000 		.4byte	.LFE66-.LFB66
+ 1038 0485 01       		.uleb128 0x1
+ 1039 0486 9C       		.byte	0x9c
+ 1040 0487 1A050000 		.4byte	0x51a
+ 1041 048b 16       		.uleb128 0x16
+ 1042 048c 8E020000 		.4byte	.LASF55
+ 1043 0490 01       		.byte	0x1
+ 1044 0491 AF       		.byte	0xaf
+ 1045 0492 A5000000 		.4byte	0xa5
+ 1046 0496 D1000000 		.4byte	.LLST3
+ 1047 049a 16       		.uleb128 0x16
+ 1048 049b AA010000 		.4byte	.LASF56
+ 1049 049f 01       		.byte	0x1
+ 1050 04a0 B0       		.byte	0xb0
+ 1051 04a1 A5000000 		.4byte	0xa5
+ 1052 04a5 EF000000 		.4byte	.LLST4
+ 1053 04a9 13       		.uleb128 0x13
+ 1054 04aa 06000000 		.4byte	.LVL38
+ 1055 04ae 31060000 		.4byte	0x631
+ 1056 04b2 0E       		.uleb128 0xe
+ 1057 04b3 0E000000 		.4byte	.LVL39
+ 1058 04b7 6F060000 		.4byte	0x66f
+ 1059 04bb C5040000 		.4byte	0x4c5
+ 1060 04bf 0F       		.uleb128 0xf
+ 1061 04c0 01       		.uleb128 0x1
+ 1062 04c1 50       		.byte	0x50
+ 1063 04c2 01       		.uleb128 0x1
+ 1064 04c3 30       		.byte	0x30
+ 1065 04c4 00       		.byte	0
+ 1066 04c5 13       		.uleb128 0x13
+ 1067 04c6 16000000 		.4byte	.LVL40
+ 1068 04ca 26060000 		.4byte	0x626
+ 1069 04ce 13       		.uleb128 0x13
+ 1070 04cf 24000000 		.4byte	.LVL41
+ 1071 04d3 26060000 		.4byte	0x626
+ 1072 04d7 0E       		.uleb128 0xe
+ 1073 04d8 36000000 		.4byte	.LVL42
+ 1074 04dc 6F060000 		.4byte	0x66f
+ 1075 04e0 EA040000 		.4byte	0x4ea
+ 1076 04e4 0F       		.uleb128 0xf
+ 1077 04e5 01       		.uleb128 0x1
+ 1078 04e6 50       		.byte	0x50
+ 1079 04e7 01       		.uleb128 0x1
+ 1080 04e8 31       		.byte	0x31
+ 1081 04e9 00       		.byte	0
+ 1082 04ea 13       		.uleb128 0x13
+ 1083 04eb 3C000000 		.4byte	.LVL43
+ 1084 04ef 3C060000 		.4byte	0x63c
+ 1085 04f3 13       		.uleb128 0x13
+ 1086 04f4 40000000 		.4byte	.LVL44
+ 1087 04f8 89030000 		.4byte	0x389
+ 1088 04fc 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 24
+
+
+ 1089 04fd 50000000 		.4byte	.LVL47
+ 1090 0501 80060000 		.4byte	0x680
+ 1091 0505 10050000 		.4byte	0x510
+ 1092 0509 0F       		.uleb128 0xf
+ 1093 050a 01       		.uleb128 0x1
+ 1094 050b 50       		.byte	0x50
+ 1095 050c 02       		.uleb128 0x2
+ 1096 050d 08       		.byte	0x8
+ 1097 050e 64       		.byte	0x64
+ 1098 050f 00       		.byte	0
+ 1099 0510 13       		.uleb128 0x13
+ 1100 0511 54000000 		.4byte	.LVL48
+ 1101 0515 89030000 		.4byte	0x389
+ 1102 0519 00       		.byte	0
+ 1103 051a 17       		.uleb128 0x17
+ 1104 051b 4A040000 		.4byte	.LASF57
+ 1105 051f 07       		.byte	0x7
+ 1106 0520 2A06     		.2byte	0x62a
+ 1107 0522 26050000 		.4byte	0x526
+ 1108 0526 05       		.uleb128 0x5
+ 1109 0527 76000000 		.4byte	0x76
+ 1110 052b 18       		.uleb128 0x18
+ 1111 052c 27000000 		.4byte	.LASF58
+ 1112 0530 06       		.byte	0x6
+ 1113 0531 2F       		.byte	0x2f
+ 1114 0532 AF020000 		.4byte	0x2af
+ 1115 0536 19       		.uleb128 0x19
+ 1116 0537 7300     		.ascii	"s\000"
+ 1117 0539 06       		.byte	0x6
+ 1118 053a 30       		.byte	0x30
+ 1119 053b 56010000 		.4byte	0x156
+ 1120 053f 05       		.uleb128 0x5
+ 1121 0540 03       		.byte	0x3
+ 1122 0541 00000000 		.4byte	s
+ 1123 0545 1A       		.uleb128 0x1a
+ 1124 0546 68030000 		.4byte	.LASF59
+ 1125 054a 06       		.byte	0x6
+ 1126 054b 33       		.byte	0x33
+ 1127 054c A5000000 		.4byte	0xa5
+ 1128 0550 05       		.uleb128 0x5
+ 1129 0551 03       		.byte	0x3
+ 1130 0552 00000000 		.4byte	currentAccessType
+ 1131 0556 19       		.uleb128 0x19
+ 1132 0557 6F6C6400 		.ascii	"old\000"
+ 1133 055b 06       		.byte	0x6
+ 1134 055c 34       		.byte	0x34
+ 1135 055d A5000000 		.4byte	0xa5
+ 1136 0561 05       		.uleb128 0x5
+ 1137 0562 03       		.byte	0x3
+ 1138 0563 00000000 		.4byte	old
+ 1139 0567 1A       		.uleb128 0x1a
+ 1140 0568 3B000000 		.4byte	.LASF60
+ 1141 056c 06       		.byte	0x6
+ 1142 056d 35       		.byte	0x35
+ 1143 056e 68000000 		.4byte	0x68
+ 1144 0572 05       		.uleb128 0x5
+ 1145 0573 03       		.byte	0x3
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 25
+
+
+ 1146 0574 00000000 		.4byte	TAMPERCR_POLARITY
+ 1147 0578 1A       		.uleb128 0x1a
+ 1148 0579 CD010000 		.4byte	.LASF61
+ 1149 057d 06       		.byte	0x6
+ 1150 057e 38       		.byte	0x38
+ 1151 057f 68000000 		.4byte	0x68
+ 1152 0583 05       		.uleb128 0x5
+ 1153 0584 03       		.byte	0x3
+ 1154 0585 00000000 		.4byte	card_ack
+ 1155 0589 1A       		.uleb128 0x1a
+ 1156 058a FF000000 		.4byte	.LASF62
+ 1157 058e 06       		.byte	0x6
+ 1158 058f 39       		.byte	0x39
+ 1159 0590 68000000 		.4byte	0x68
+ 1160 0594 05       		.uleb128 0x5
+ 1161 0595 03       		.byte	0x3
+ 1162 0596 00000000 		.4byte	card_in_buf
+ 1163 059a 18       		.uleb128 0x18
+ 1164 059b 7A030000 		.4byte	.LASF63
+ 1165 059f 06       		.byte	0x6
+ 1166 05a0 4A       		.byte	0x4a
+ 1167 05a1 A5000000 		.4byte	0xa5
+ 1168 05a5 18       		.uleb128 0x18
+ 1169 05a6 21040000 		.4byte	.LASF64
+ 1170 05aa 06       		.byte	0x6
+ 1171 05ab 4B       		.byte	0x4b
+ 1172 05ac 4C000000 		.4byte	0x4c
+ 1173 05b0 1B       		.uleb128 0x1b
+ 1174 05b1 E5000000 		.4byte	.LASF65
+ 1175 05b5 08       		.byte	0x8
+ 1176 05b6 28       		.byte	0x28
+ 1177 05b7 C1050000 		.4byte	0x5c1
+ 1178 05bb 1C       		.uleb128 0x1c
+ 1179 05bc 81000000 		.4byte	0x81
+ 1180 05c0 00       		.byte	0
+ 1181 05c1 1B       		.uleb128 0x1b
+ 1182 05c2 CC030000 		.4byte	.LASF66
+ 1183 05c6 09       		.byte	0x9
+ 1184 05c7 28       		.byte	0x28
+ 1185 05c8 D2050000 		.4byte	0x5d2
+ 1186 05cc 1C       		.uleb128 0x1c
+ 1187 05cd 81000000 		.4byte	0x81
+ 1188 05d1 00       		.byte	0
+ 1189 05d2 1B       		.uleb128 0x1b
+ 1190 05d3 F8030000 		.4byte	.LASF67
+ 1191 05d7 0A       		.byte	0xa
+ 1192 05d8 28       		.byte	0x28
+ 1193 05d9 E3050000 		.4byte	0x5e3
+ 1194 05dd 1C       		.uleb128 0x1c
+ 1195 05de 81000000 		.4byte	0x81
+ 1196 05e2 00       		.byte	0
+ 1197 05e3 1B       		.uleb128 0x1b
+ 1198 05e4 30040000 		.4byte	.LASF68
+ 1199 05e8 0B       		.byte	0xb
+ 1200 05e9 28       		.byte	0x28
+ 1201 05ea F4050000 		.4byte	0x5f4
+ 1202 05ee 1C       		.uleb128 0x1c
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 26
+
+
+ 1203 05ef 81000000 		.4byte	0x81
+ 1204 05f3 00       		.byte	0
+ 1205 05f4 1B       		.uleb128 0x1b
+ 1206 05f5 80020000 		.4byte	.LASF69
+ 1207 05f9 0C       		.byte	0xc
+ 1208 05fa 28       		.byte	0x28
+ 1209 05fb 05060000 		.4byte	0x605
+ 1210 05ff 1C       		.uleb128 0x1c
+ 1211 0600 81000000 		.4byte	0x81
+ 1212 0604 00       		.byte	0
+ 1213 0605 1D       		.uleb128 0x1d
+ 1214 0606 EC010000 		.4byte	.LASF70
+ 1215 060a 0D       		.byte	0xd
+ 1216 060b 2B       		.byte	0x2b
+ 1217 060c 81000000 		.4byte	0x81
+ 1218 0610 1D       		.uleb128 0x1d
+ 1219 0611 86040000 		.4byte	.LASF71
+ 1220 0615 0E       		.byte	0xe
+ 1221 0616 2B       		.byte	0x2b
+ 1222 0617 81000000 		.4byte	0x81
+ 1223 061b 1D       		.uleb128 0x1d
+ 1224 061c 99020000 		.4byte	.LASF72
+ 1225 0620 0F       		.byte	0xf
+ 1226 0621 2B       		.byte	0x2b
+ 1227 0622 81000000 		.4byte	0x81
+ 1228 0626 1D       		.uleb128 0x1d
+ 1229 0627 B7000000 		.4byte	.LASF73
+ 1230 062b 10       		.byte	0x10
+ 1231 062c 2B       		.byte	0x2b
+ 1232 062d 81000000 		.4byte	0x81
+ 1233 0631 1D       		.uleb128 0x1d
+ 1234 0632 9B000000 		.4byte	.LASF74
+ 1235 0636 11       		.byte	0x11
+ 1236 0637 2B       		.byte	0x2b
+ 1237 0638 81000000 		.4byte	0x81
+ 1238 063c 1B       		.uleb128 0x1b
+ 1239 063d 13040000 		.4byte	.LASF75
+ 1240 0641 12       		.byte	0x12
+ 1241 0642 28       		.byte	0x28
+ 1242 0643 4D060000 		.4byte	0x64d
+ 1243 0647 1C       		.uleb128 0x1c
+ 1244 0648 81000000 		.4byte	0x81
+ 1245 064c 00       		.byte	0
+ 1246 064d 1B       		.uleb128 0x1b
+ 1247 064e 0C000000 		.4byte	.LASF76
+ 1248 0652 13       		.byte	0x13
+ 1249 0653 28       		.byte	0x28
+ 1250 0654 5E060000 		.4byte	0x65e
+ 1251 0658 1C       		.uleb128 0x1c
+ 1252 0659 81000000 		.4byte	0x81
+ 1253 065d 00       		.byte	0
+ 1254 065e 1B       		.uleb128 0x1b
+ 1255 065f 52030000 		.4byte	.LASF77
+ 1256 0663 14       		.byte	0x14
+ 1257 0664 28       		.byte	0x28
+ 1258 0665 6F060000 		.4byte	0x66f
+ 1259 0669 1C       		.uleb128 0x1c
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 27
+
+
+ 1260 066a 81000000 		.4byte	0x81
+ 1261 066e 00       		.byte	0
+ 1262 066f 1B       		.uleb128 0x1b
+ 1263 0670 91030000 		.4byte	.LASF78
+ 1264 0674 15       		.byte	0x15
+ 1265 0675 28       		.byte	0x28
+ 1266 0676 80060000 		.4byte	0x680
+ 1267 067a 1C       		.uleb128 0x1c
+ 1268 067b 81000000 		.4byte	0x81
+ 1269 067f 00       		.byte	0
+ 1270 0680 1E       		.uleb128 0x1e
+ 1271 0681 EE020000 		.4byte	.LASF82
+ 1272 0685 16       		.byte	0x16
+ 1273 0686 78       		.byte	0x78
+ 1274 0687 1C       		.uleb128 0x1c
+ 1275 0688 8C000000 		.4byte	0x8c
+ 1276 068c 00       		.byte	0
+ 1277 068d 00       		.byte	0
+ 1278              		.section	.debug_abbrev,"",%progbits
+ 1279              	.Ldebug_abbrev0:
+ 1280 0000 01       		.uleb128 0x1
+ 1281 0001 11       		.uleb128 0x11
+ 1282 0002 01       		.byte	0x1
+ 1283 0003 25       		.uleb128 0x25
+ 1284 0004 0E       		.uleb128 0xe
+ 1285 0005 13       		.uleb128 0x13
+ 1286 0006 0B       		.uleb128 0xb
+ 1287 0007 03       		.uleb128 0x3
+ 1288 0008 0E       		.uleb128 0xe
+ 1289 0009 1B       		.uleb128 0x1b
+ 1290 000a 0E       		.uleb128 0xe
+ 1291 000b 55       		.uleb128 0x55
+ 1292 000c 17       		.uleb128 0x17
+ 1293 000d 11       		.uleb128 0x11
+ 1294 000e 01       		.uleb128 0x1
+ 1295 000f 10       		.uleb128 0x10
+ 1296 0010 17       		.uleb128 0x17
+ 1297 0011 00       		.byte	0
+ 1298 0012 00       		.byte	0
+ 1299 0013 02       		.uleb128 0x2
+ 1300 0014 24       		.uleb128 0x24
+ 1301 0015 00       		.byte	0
+ 1302 0016 0B       		.uleb128 0xb
+ 1303 0017 0B       		.uleb128 0xb
+ 1304 0018 3E       		.uleb128 0x3e
+ 1305 0019 0B       		.uleb128 0xb
+ 1306 001a 03       		.uleb128 0x3
+ 1307 001b 0E       		.uleb128 0xe
+ 1308 001c 00       		.byte	0
+ 1309 001d 00       		.byte	0
+ 1310 001e 03       		.uleb128 0x3
+ 1311 001f 16       		.uleb128 0x16
+ 1312 0020 00       		.byte	0
+ 1313 0021 03       		.uleb128 0x3
+ 1314 0022 0E       		.uleb128 0xe
+ 1315 0023 3A       		.uleb128 0x3a
+ 1316 0024 0B       		.uleb128 0xb
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 28
+
+
+ 1317 0025 3B       		.uleb128 0x3b
+ 1318 0026 0B       		.uleb128 0xb
+ 1319 0027 49       		.uleb128 0x49
+ 1320 0028 13       		.uleb128 0x13
+ 1321 0029 00       		.byte	0
+ 1322 002a 00       		.byte	0
+ 1323 002b 04       		.uleb128 0x4
+ 1324 002c 24       		.uleb128 0x24
+ 1325 002d 00       		.byte	0
+ 1326 002e 0B       		.uleb128 0xb
+ 1327 002f 0B       		.uleb128 0xb
+ 1328 0030 3E       		.uleb128 0x3e
+ 1329 0031 0B       		.uleb128 0xb
+ 1330 0032 03       		.uleb128 0x3
+ 1331 0033 08       		.uleb128 0x8
+ 1332 0034 00       		.byte	0
+ 1333 0035 00       		.byte	0
+ 1334 0036 05       		.uleb128 0x5
+ 1335 0037 35       		.uleb128 0x35
+ 1336 0038 00       		.byte	0
+ 1337 0039 49       		.uleb128 0x49
+ 1338 003a 13       		.uleb128 0x13
+ 1339 003b 00       		.byte	0
+ 1340 003c 00       		.byte	0
+ 1341 003d 06       		.uleb128 0x6
+ 1342 003e 13       		.uleb128 0x13
+ 1343 003f 01       		.byte	0x1
+ 1344 0040 0B       		.uleb128 0xb
+ 1345 0041 0B       		.uleb128 0xb
+ 1346 0042 3A       		.uleb128 0x3a
+ 1347 0043 0B       		.uleb128 0xb
+ 1348 0044 3B       		.uleb128 0x3b
+ 1349 0045 0B       		.uleb128 0xb
+ 1350 0046 01       		.uleb128 0x1
+ 1351 0047 13       		.uleb128 0x13
+ 1352 0048 00       		.byte	0
+ 1353 0049 00       		.byte	0
+ 1354 004a 07       		.uleb128 0x7
+ 1355 004b 0D       		.uleb128 0xd
+ 1356 004c 00       		.byte	0
+ 1357 004d 03       		.uleb128 0x3
+ 1358 004e 0E       		.uleb128 0xe
+ 1359 004f 3A       		.uleb128 0x3a
+ 1360 0050 0B       		.uleb128 0xb
+ 1361 0051 3B       		.uleb128 0x3b
+ 1362 0052 0B       		.uleb128 0xb
+ 1363 0053 49       		.uleb128 0x49
+ 1364 0054 13       		.uleb128 0x13
+ 1365 0055 38       		.uleb128 0x38
+ 1366 0056 0B       		.uleb128 0xb
+ 1367 0057 00       		.byte	0
+ 1368 0058 00       		.byte	0
+ 1369 0059 08       		.uleb128 0x8
+ 1370 005a 13       		.uleb128 0x13
+ 1371 005b 01       		.byte	0x1
+ 1372 005c 03       		.uleb128 0x3
+ 1373 005d 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 29
+
+
+ 1374 005e 0B       		.uleb128 0xb
+ 1375 005f 05       		.uleb128 0x5
+ 1376 0060 3A       		.uleb128 0x3a
+ 1377 0061 0B       		.uleb128 0xb
+ 1378 0062 3B       		.uleb128 0x3b
+ 1379 0063 0B       		.uleb128 0xb
+ 1380 0064 01       		.uleb128 0x1
+ 1381 0065 13       		.uleb128 0x13
+ 1382 0066 00       		.byte	0
+ 1383 0067 00       		.byte	0
+ 1384 0068 09       		.uleb128 0x9
+ 1385 0069 0D       		.uleb128 0xd
+ 1386 006a 00       		.byte	0
+ 1387 006b 03       		.uleb128 0x3
+ 1388 006c 08       		.uleb128 0x8
+ 1389 006d 3A       		.uleb128 0x3a
+ 1390 006e 0B       		.uleb128 0xb
+ 1391 006f 3B       		.uleb128 0x3b
+ 1392 0070 0B       		.uleb128 0xb
+ 1393 0071 49       		.uleb128 0x49
+ 1394 0072 13       		.uleb128 0x13
+ 1395 0073 38       		.uleb128 0x38
+ 1396 0074 0B       		.uleb128 0xb
+ 1397 0075 00       		.byte	0
+ 1398 0076 00       		.byte	0
+ 1399 0077 0A       		.uleb128 0xa
+ 1400 0078 01       		.uleb128 0x1
+ 1401 0079 01       		.byte	0x1
+ 1402 007a 49       		.uleb128 0x49
+ 1403 007b 13       		.uleb128 0x13
+ 1404 007c 01       		.uleb128 0x1
+ 1405 007d 13       		.uleb128 0x13
+ 1406 007e 00       		.byte	0
+ 1407 007f 00       		.byte	0
+ 1408 0080 0B       		.uleb128 0xb
+ 1409 0081 21       		.uleb128 0x21
+ 1410 0082 00       		.byte	0
+ 1411 0083 49       		.uleb128 0x49
+ 1412 0084 13       		.uleb128 0x13
+ 1413 0085 2F       		.uleb128 0x2f
+ 1414 0086 0B       		.uleb128 0xb
+ 1415 0087 00       		.byte	0
+ 1416 0088 00       		.byte	0
+ 1417 0089 0C       		.uleb128 0xc
+ 1418 008a 2E       		.uleb128 0x2e
+ 1419 008b 01       		.byte	0x1
+ 1420 008c 3F       		.uleb128 0x3f
+ 1421 008d 19       		.uleb128 0x19
+ 1422 008e 03       		.uleb128 0x3
+ 1423 008f 0E       		.uleb128 0xe
+ 1424 0090 3A       		.uleb128 0x3a
+ 1425 0091 0B       		.uleb128 0xb
+ 1426 0092 3B       		.uleb128 0x3b
+ 1427 0093 0B       		.uleb128 0xb
+ 1428 0094 27       		.uleb128 0x27
+ 1429 0095 19       		.uleb128 0x19
+ 1430 0096 11       		.uleb128 0x11
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 30
+
+
+ 1431 0097 01       		.uleb128 0x1
+ 1432 0098 12       		.uleb128 0x12
+ 1433 0099 06       		.uleb128 0x6
+ 1434 009a 40       		.uleb128 0x40
+ 1435 009b 18       		.uleb128 0x18
+ 1436 009c 9742     		.uleb128 0x2117
+ 1437 009e 19       		.uleb128 0x19
+ 1438 009f 01       		.uleb128 0x1
+ 1439 00a0 13       		.uleb128 0x13
+ 1440 00a1 00       		.byte	0
+ 1441 00a2 00       		.byte	0
+ 1442 00a3 0D       		.uleb128 0xd
+ 1443 00a4 05       		.uleb128 0x5
+ 1444 00a5 00       		.byte	0
+ 1445 00a6 03       		.uleb128 0x3
+ 1446 00a7 08       		.uleb128 0x8
+ 1447 00a8 3A       		.uleb128 0x3a
+ 1448 00a9 0B       		.uleb128 0xb
+ 1449 00aa 3B       		.uleb128 0x3b
+ 1450 00ab 0B       		.uleb128 0xb
+ 1451 00ac 49       		.uleb128 0x49
+ 1452 00ad 13       		.uleb128 0x13
+ 1453 00ae 02       		.uleb128 0x2
+ 1454 00af 17       		.uleb128 0x17
+ 1455 00b0 00       		.byte	0
+ 1456 00b1 00       		.byte	0
+ 1457 00b2 0E       		.uleb128 0xe
+ 1458 00b3 898201   		.uleb128 0x4109
+ 1459 00b6 01       		.byte	0x1
+ 1460 00b7 11       		.uleb128 0x11
+ 1461 00b8 01       		.uleb128 0x1
+ 1462 00b9 31       		.uleb128 0x31
+ 1463 00ba 13       		.uleb128 0x13
+ 1464 00bb 01       		.uleb128 0x1
+ 1465 00bc 13       		.uleb128 0x13
+ 1466 00bd 00       		.byte	0
+ 1467 00be 00       		.byte	0
+ 1468 00bf 0F       		.uleb128 0xf
+ 1469 00c0 8A8201   		.uleb128 0x410a
+ 1470 00c3 00       		.byte	0
+ 1471 00c4 02       		.uleb128 0x2
+ 1472 00c5 18       		.uleb128 0x18
+ 1473 00c6 9142     		.uleb128 0x2111
+ 1474 00c8 18       		.uleb128 0x18
+ 1475 00c9 00       		.byte	0
+ 1476 00ca 00       		.byte	0
+ 1477 00cb 10       		.uleb128 0x10
+ 1478 00cc 898201   		.uleb128 0x4109
+ 1479 00cf 01       		.byte	0x1
+ 1480 00d0 11       		.uleb128 0x11
+ 1481 00d1 01       		.uleb128 0x1
+ 1482 00d2 9542     		.uleb128 0x2115
+ 1483 00d4 19       		.uleb128 0x19
+ 1484 00d5 31       		.uleb128 0x31
+ 1485 00d6 13       		.uleb128 0x13
+ 1486 00d7 00       		.byte	0
+ 1487 00d8 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 31
+
+
+ 1488 00d9 11       		.uleb128 0x11
+ 1489 00da 2E       		.uleb128 0x2e
+ 1490 00db 01       		.byte	0x1
+ 1491 00dc 3F       		.uleb128 0x3f
+ 1492 00dd 19       		.uleb128 0x19
+ 1493 00de 03       		.uleb128 0x3
+ 1494 00df 0E       		.uleb128 0xe
+ 1495 00e0 3A       		.uleb128 0x3a
+ 1496 00e1 0B       		.uleb128 0xb
+ 1497 00e2 3B       		.uleb128 0x3b
+ 1498 00e3 0B       		.uleb128 0xb
+ 1499 00e4 49       		.uleb128 0x49
+ 1500 00e5 13       		.uleb128 0x13
+ 1501 00e6 11       		.uleb128 0x11
+ 1502 00e7 01       		.uleb128 0x1
+ 1503 00e8 12       		.uleb128 0x12
+ 1504 00e9 06       		.uleb128 0x6
+ 1505 00ea 40       		.uleb128 0x40
+ 1506 00eb 18       		.uleb128 0x18
+ 1507 00ec 9742     		.uleb128 0x2117
+ 1508 00ee 19       		.uleb128 0x19
+ 1509 00ef 01       		.uleb128 0x1
+ 1510 00f0 13       		.uleb128 0x13
+ 1511 00f1 00       		.byte	0
+ 1512 00f2 00       		.byte	0
+ 1513 00f3 12       		.uleb128 0x12
+ 1514 00f4 34       		.uleb128 0x34
+ 1515 00f5 00       		.byte	0
+ 1516 00f6 03       		.uleb128 0x3
+ 1517 00f7 08       		.uleb128 0x8
+ 1518 00f8 3A       		.uleb128 0x3a
+ 1519 00f9 0B       		.uleb128 0xb
+ 1520 00fa 3B       		.uleb128 0x3b
+ 1521 00fb 0B       		.uleb128 0xb
+ 1522 00fc 49       		.uleb128 0x49
+ 1523 00fd 13       		.uleb128 0x13
+ 1524 00fe 02       		.uleb128 0x2
+ 1525 00ff 17       		.uleb128 0x17
+ 1526 0100 00       		.byte	0
+ 1527 0101 00       		.byte	0
+ 1528 0102 13       		.uleb128 0x13
+ 1529 0103 898201   		.uleb128 0x4109
+ 1530 0106 00       		.byte	0
+ 1531 0107 11       		.uleb128 0x11
+ 1532 0108 01       		.uleb128 0x1
+ 1533 0109 31       		.uleb128 0x31
+ 1534 010a 13       		.uleb128 0x13
+ 1535 010b 00       		.byte	0
+ 1536 010c 00       		.byte	0
+ 1537 010d 14       		.uleb128 0x14
+ 1538 010e 898201   		.uleb128 0x4109
+ 1539 0111 01       		.byte	0x1
+ 1540 0112 11       		.uleb128 0x11
+ 1541 0113 01       		.uleb128 0x1
+ 1542 0114 31       		.uleb128 0x31
+ 1543 0115 13       		.uleb128 0x13
+ 1544 0116 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 32
+
+
+ 1545 0117 00       		.byte	0
+ 1546 0118 15       		.uleb128 0x15
+ 1547 0119 2E       		.uleb128 0x2e
+ 1548 011a 01       		.byte	0x1
+ 1549 011b 3F       		.uleb128 0x3f
+ 1550 011c 19       		.uleb128 0x19
+ 1551 011d 03       		.uleb128 0x3
+ 1552 011e 0E       		.uleb128 0xe
+ 1553 011f 3A       		.uleb128 0x3a
+ 1554 0120 0B       		.uleb128 0xb
+ 1555 0121 3B       		.uleb128 0x3b
+ 1556 0122 0B       		.uleb128 0xb
+ 1557 0123 11       		.uleb128 0x11
+ 1558 0124 01       		.uleb128 0x1
+ 1559 0125 12       		.uleb128 0x12
+ 1560 0126 06       		.uleb128 0x6
+ 1561 0127 40       		.uleb128 0x40
+ 1562 0128 18       		.uleb128 0x18
+ 1563 0129 9742     		.uleb128 0x2117
+ 1564 012b 19       		.uleb128 0x19
+ 1565 012c 01       		.uleb128 0x1
+ 1566 012d 13       		.uleb128 0x13
+ 1567 012e 00       		.byte	0
+ 1568 012f 00       		.byte	0
+ 1569 0130 16       		.uleb128 0x16
+ 1570 0131 34       		.uleb128 0x34
+ 1571 0132 00       		.byte	0
+ 1572 0133 03       		.uleb128 0x3
+ 1573 0134 0E       		.uleb128 0xe
+ 1574 0135 3A       		.uleb128 0x3a
+ 1575 0136 0B       		.uleb128 0xb
+ 1576 0137 3B       		.uleb128 0x3b
+ 1577 0138 0B       		.uleb128 0xb
+ 1578 0139 49       		.uleb128 0x49
+ 1579 013a 13       		.uleb128 0x13
+ 1580 013b 02       		.uleb128 0x2
+ 1581 013c 17       		.uleb128 0x17
+ 1582 013d 00       		.byte	0
+ 1583 013e 00       		.byte	0
+ 1584 013f 17       		.uleb128 0x17
+ 1585 0140 34       		.uleb128 0x34
+ 1586 0141 00       		.byte	0
+ 1587 0142 03       		.uleb128 0x3
+ 1588 0143 0E       		.uleb128 0xe
+ 1589 0144 3A       		.uleb128 0x3a
+ 1590 0145 0B       		.uleb128 0xb
+ 1591 0146 3B       		.uleb128 0x3b
+ 1592 0147 05       		.uleb128 0x5
+ 1593 0148 49       		.uleb128 0x49
+ 1594 0149 13       		.uleb128 0x13
+ 1595 014a 3F       		.uleb128 0x3f
+ 1596 014b 19       		.uleb128 0x19
+ 1597 014c 3C       		.uleb128 0x3c
+ 1598 014d 19       		.uleb128 0x19
+ 1599 014e 00       		.byte	0
+ 1600 014f 00       		.byte	0
+ 1601 0150 18       		.uleb128 0x18
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 33
+
+
+ 1602 0151 34       		.uleb128 0x34
+ 1603 0152 00       		.byte	0
+ 1604 0153 03       		.uleb128 0x3
+ 1605 0154 0E       		.uleb128 0xe
+ 1606 0155 3A       		.uleb128 0x3a
+ 1607 0156 0B       		.uleb128 0xb
+ 1608 0157 3B       		.uleb128 0x3b
+ 1609 0158 0B       		.uleb128 0xb
+ 1610 0159 49       		.uleb128 0x49
+ 1611 015a 13       		.uleb128 0x13
+ 1612 015b 3F       		.uleb128 0x3f
+ 1613 015c 19       		.uleb128 0x19
+ 1614 015d 3C       		.uleb128 0x3c
+ 1615 015e 19       		.uleb128 0x19
+ 1616 015f 00       		.byte	0
+ 1617 0160 00       		.byte	0
+ 1618 0161 19       		.uleb128 0x19
+ 1619 0162 34       		.uleb128 0x34
+ 1620 0163 00       		.byte	0
+ 1621 0164 03       		.uleb128 0x3
+ 1622 0165 08       		.uleb128 0x8
+ 1623 0166 3A       		.uleb128 0x3a
+ 1624 0167 0B       		.uleb128 0xb
+ 1625 0168 3B       		.uleb128 0x3b
+ 1626 0169 0B       		.uleb128 0xb
+ 1627 016a 49       		.uleb128 0x49
+ 1628 016b 13       		.uleb128 0x13
+ 1629 016c 3F       		.uleb128 0x3f
+ 1630 016d 19       		.uleb128 0x19
+ 1631 016e 02       		.uleb128 0x2
+ 1632 016f 18       		.uleb128 0x18
+ 1633 0170 00       		.byte	0
+ 1634 0171 00       		.byte	0
+ 1635 0172 1A       		.uleb128 0x1a
+ 1636 0173 34       		.uleb128 0x34
+ 1637 0174 00       		.byte	0
+ 1638 0175 03       		.uleb128 0x3
+ 1639 0176 0E       		.uleb128 0xe
+ 1640 0177 3A       		.uleb128 0x3a
+ 1641 0178 0B       		.uleb128 0xb
+ 1642 0179 3B       		.uleb128 0x3b
+ 1643 017a 0B       		.uleb128 0xb
+ 1644 017b 49       		.uleb128 0x49
+ 1645 017c 13       		.uleb128 0x13
+ 1646 017d 3F       		.uleb128 0x3f
+ 1647 017e 19       		.uleb128 0x19
+ 1648 017f 02       		.uleb128 0x2
+ 1649 0180 18       		.uleb128 0x18
+ 1650 0181 00       		.byte	0
+ 1651 0182 00       		.byte	0
+ 1652 0183 1B       		.uleb128 0x1b
+ 1653 0184 2E       		.uleb128 0x2e
+ 1654 0185 01       		.byte	0x1
+ 1655 0186 3F       		.uleb128 0x3f
+ 1656 0187 19       		.uleb128 0x19
+ 1657 0188 03       		.uleb128 0x3
+ 1658 0189 0E       		.uleb128 0xe
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 34
+
+
+ 1659 018a 3A       		.uleb128 0x3a
+ 1660 018b 0B       		.uleb128 0xb
+ 1661 018c 3B       		.uleb128 0x3b
+ 1662 018d 0B       		.uleb128 0xb
+ 1663 018e 27       		.uleb128 0x27
+ 1664 018f 19       		.uleb128 0x19
+ 1665 0190 3C       		.uleb128 0x3c
+ 1666 0191 19       		.uleb128 0x19
+ 1667 0192 01       		.uleb128 0x1
+ 1668 0193 13       		.uleb128 0x13
+ 1669 0194 00       		.byte	0
+ 1670 0195 00       		.byte	0
+ 1671 0196 1C       		.uleb128 0x1c
+ 1672 0197 05       		.uleb128 0x5
+ 1673 0198 00       		.byte	0
+ 1674 0199 49       		.uleb128 0x49
+ 1675 019a 13       		.uleb128 0x13
+ 1676 019b 00       		.byte	0
+ 1677 019c 00       		.byte	0
+ 1678 019d 1D       		.uleb128 0x1d
+ 1679 019e 2E       		.uleb128 0x2e
+ 1680 019f 00       		.byte	0
+ 1681 01a0 3F       		.uleb128 0x3f
+ 1682 01a1 19       		.uleb128 0x19
+ 1683 01a2 03       		.uleb128 0x3
+ 1684 01a3 0E       		.uleb128 0xe
+ 1685 01a4 3A       		.uleb128 0x3a
+ 1686 01a5 0B       		.uleb128 0xb
+ 1687 01a6 3B       		.uleb128 0x3b
+ 1688 01a7 0B       		.uleb128 0xb
+ 1689 01a8 27       		.uleb128 0x27
+ 1690 01a9 19       		.uleb128 0x19
+ 1691 01aa 49       		.uleb128 0x49
+ 1692 01ab 13       		.uleb128 0x13
+ 1693 01ac 3C       		.uleb128 0x3c
+ 1694 01ad 19       		.uleb128 0x19
+ 1695 01ae 00       		.byte	0
+ 1696 01af 00       		.byte	0
+ 1697 01b0 1E       		.uleb128 0x1e
+ 1698 01b1 2E       		.uleb128 0x2e
+ 1699 01b2 01       		.byte	0x1
+ 1700 01b3 3F       		.uleb128 0x3f
+ 1701 01b4 19       		.uleb128 0x19
+ 1702 01b5 03       		.uleb128 0x3
+ 1703 01b6 0E       		.uleb128 0xe
+ 1704 01b7 3A       		.uleb128 0x3a
+ 1705 01b8 0B       		.uleb128 0xb
+ 1706 01b9 3B       		.uleb128 0x3b
+ 1707 01ba 0B       		.uleb128 0xb
+ 1708 01bb 27       		.uleb128 0x27
+ 1709 01bc 19       		.uleb128 0x19
+ 1710 01bd 3C       		.uleb128 0x3c
+ 1711 01be 19       		.uleb128 0x19
+ 1712 01bf 00       		.byte	0
+ 1713 01c0 00       		.byte	0
+ 1714 01c1 00       		.byte	0
+ 1715              		.section	.debug_loc,"",%progbits
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 35
+
+
+ 1716              	.Ldebug_loc0:
+ 1717              	.LLST0:
+ 1718 0000 00000000 		.4byte	.LVL0
+ 1719 0004 08000000 		.4byte	.LVL1
+ 1720 0008 0100     		.2byte	0x1
+ 1721 000a 50       		.byte	0x50
+ 1722 000b 08000000 		.4byte	.LVL1
+ 1723 000f 4C000000 		.4byte	.LVL6
+ 1724 0013 0100     		.2byte	0x1
+ 1725 0015 54       		.byte	0x54
+ 1726 0016 4C000000 		.4byte	.LVL6
+ 1727 001a 54000000 		.4byte	.LFE63
+ 1728 001e 0400     		.2byte	0x4
+ 1729 0020 F3       		.byte	0xf3
+ 1730 0021 01       		.uleb128 0x1
+ 1731 0022 50       		.byte	0x50
+ 1732 0023 9F       		.byte	0x9f
+ 1733 0024 00000000 		.4byte	0
+ 1734 0028 00000000 		.4byte	0
+ 1735              	.LLST1:
+ 1736 002c 00000000 		.4byte	.LVL8
+ 1737 0030 0C000000 		.4byte	.LVL10
+ 1738 0034 0200     		.2byte	0x2
+ 1739 0036 30       		.byte	0x30
+ 1740 0037 9F       		.byte	0x9f
+ 1741 0038 0C000000 		.4byte	.LVL10
+ 1742 003c 18000000 		.4byte	.LVL12
+ 1743 0040 0100     		.2byte	0x1
+ 1744 0042 54       		.byte	0x54
+ 1745 0043 1A000000 		.4byte	.LVL13
+ 1746 0047 42000000 		.4byte	.LVL19
+ 1747 004b 0100     		.2byte	0x1
+ 1748 004d 54       		.byte	0x54
+ 1749 004e 42000000 		.4byte	.LVL19
+ 1750 0052 5E000000 		.4byte	.LVL20
+ 1751 0056 0600     		.2byte	0x6
+ 1752 0058 74       		.byte	0x74
+ 1753 0059 00       		.sleb128 0
+ 1754 005a 08       		.byte	0x8
+ 1755 005b 20       		.byte	0x20
+ 1756 005c 21       		.byte	0x21
+ 1757 005d 9F       		.byte	0x9f
+ 1758 005e 5E000000 		.4byte	.LVL20
+ 1759 0062 60000000 		.4byte	.LVL21
+ 1760 0066 0100     		.2byte	0x1
+ 1761 0068 50       		.byte	0x50
+ 1762 0069 60000000 		.4byte	.LVL21
+ 1763 006d 72000000 		.4byte	.LVL22
+ 1764 0071 0600     		.2byte	0x6
+ 1765 0073 74       		.byte	0x74
+ 1766 0074 00       		.sleb128 0
+ 1767 0075 08       		.byte	0x8
+ 1768 0076 20       		.byte	0x20
+ 1769 0077 21       		.byte	0x21
+ 1770 0078 9F       		.byte	0x9f
+ 1771 0079 86000000 		.4byte	.LVL26
+ 1772 007d 8A000000 		.4byte	.LVL27
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 36
+
+
+ 1773 0081 0100     		.2byte	0x1
+ 1774 0083 54       		.byte	0x54
+ 1775 0084 9C000000 		.4byte	.LVL31
+ 1776 0088 9E000000 		.4byte	.LVL32
+ 1777 008c 0100     		.2byte	0x1
+ 1778 008e 54       		.byte	0x54
+ 1779 008f A4000000 		.4byte	.LVL33
+ 1780 0093 A8000000 		.4byte	.LVL34
+ 1781 0097 0600     		.2byte	0x6
+ 1782 0099 74       		.byte	0x74
+ 1783 009a 00       		.sleb128 0
+ 1784 009b 08       		.byte	0x8
+ 1785 009c 20       		.byte	0x20
+ 1786 009d 21       		.byte	0x21
+ 1787 009e 9F       		.byte	0x9f
+ 1788 009f A8000000 		.4byte	.LVL34
+ 1789 00a3 B8000000 		.4byte	.LFE64
+ 1790 00a7 0100     		.2byte	0x1
+ 1791 00a9 50       		.byte	0x50
+ 1792 00aa 00000000 		.4byte	0
+ 1793 00ae 00000000 		.4byte	0
+ 1794              	.LLST2:
+ 1795 00b2 06000000 		.4byte	.LVL35
+ 1796 00b6 13000000 		.4byte	.LVL36-1
+ 1797 00ba 0200     		.2byte	0x2
+ 1798 00bc 75       		.byte	0x75
+ 1799 00bd 01       		.sleb128 1
+ 1800 00be 13000000 		.4byte	.LVL36-1
+ 1801 00c2 24000000 		.4byte	.LVL37
+ 1802 00c6 0100     		.2byte	0x1
+ 1803 00c8 54       		.byte	0x54
+ 1804 00c9 00000000 		.4byte	0
+ 1805 00cd 00000000 		.4byte	0
+ 1806              	.LLST3:
+ 1807 00d1 44000000 		.4byte	.LVL45
+ 1808 00d5 4C000000 		.4byte	.LVL46
+ 1809 00d9 0100     		.2byte	0x1
+ 1810 00db 50       		.byte	0x50
+ 1811 00dc 4C000000 		.4byte	.LVL46
+ 1812 00e0 68000000 		.4byte	.LVL50
+ 1813 00e4 0100     		.2byte	0x1
+ 1814 00e6 54       		.byte	0x54
+ 1815 00e7 00000000 		.4byte	0
+ 1816 00eb 00000000 		.4byte	0
+ 1817              	.LLST4:
+ 1818 00ef 54000000 		.4byte	.LVL48
+ 1819 00f3 66000000 		.4byte	.LVL49
+ 1820 00f7 0100     		.2byte	0x1
+ 1821 00f9 50       		.byte	0x50
+ 1822 00fa 00000000 		.4byte	0
+ 1823 00fe 00000000 		.4byte	0
+ 1824              		.section	.debug_aranges,"",%progbits
+ 1825 0000 34000000 		.4byte	0x34
+ 1826 0004 0200     		.2byte	0x2
+ 1827 0006 00000000 		.4byte	.Ldebug_info0
+ 1828 000a 04       		.byte	0x4
+ 1829 000b 00       		.byte	0
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 37
+
+
+ 1830 000c 0000     		.2byte	0
+ 1831 000e 0000     		.2byte	0
+ 1832 0010 00000000 		.4byte	.LFB63
+ 1833 0014 54000000 		.4byte	.LFE63-.LFB63
+ 1834 0018 00000000 		.4byte	.LFB64
+ 1835 001c B8000000 		.4byte	.LFE64-.LFB64
+ 1836 0020 00000000 		.4byte	.LFB65
+ 1837 0024 2C000000 		.4byte	.LFE65-.LFB65
+ 1838 0028 00000000 		.4byte	.LFB66
+ 1839 002c 74000000 		.4byte	.LFE66-.LFB66
+ 1840 0030 00000000 		.4byte	0
+ 1841 0034 00000000 		.4byte	0
+ 1842              		.section	.debug_ranges,"",%progbits
+ 1843              	.Ldebug_ranges0:
+ 1844 0000 00000000 		.4byte	.LFB63
+ 1845 0004 54000000 		.4byte	.LFE63
+ 1846 0008 00000000 		.4byte	.LFB64
+ 1847 000c B8000000 		.4byte	.LFE64
+ 1848 0010 00000000 		.4byte	.LFB65
+ 1849 0014 2C000000 		.4byte	.LFE65
+ 1850 0018 00000000 		.4byte	.LFB66
+ 1851 001c 74000000 		.4byte	.LFE66
+ 1852 0020 00000000 		.4byte	0
+ 1853 0024 00000000 		.4byte	0
+ 1854              		.section	.debug_line,"",%progbits
+ 1855              	.Ldebug_line0:
+ 1856 0000 E0020000 		.section	.debug_str,"MS",%progbits,1
+ 1856      02003202 
+ 1856      00000201 
+ 1856      FB0E0D00 
+ 1856      01010101 
+ 1857              	.LASF41:
+ 1858 0000 6F736470 		.ascii	"osdp_status\000"
+ 1858      5F737461 
+ 1858      74757300 
+ 1859              	.LASF76:
+ 1860 000c 4C45445F 		.ascii	"LED_GRN_Write\000"
+ 1860      47524E5F 
+ 1860      57726974 
+ 1860      6500
+ 1861              	.LASF54:
+ 1862 001a 48616E64 		.ascii	"HandleInputs\000"
+ 1862      6C65496E 
+ 1862      70757473 
+ 1862      00
+ 1863              	.LASF58:
+ 1864 0027 4D794932 		.ascii	"MyI2C_Regs\000"
+ 1864      435F5265 
+ 1864      677300
+ 1865              	.LASF16:
+ 1866 0032 73697A65 		.ascii	"sizetype\000"
+ 1866      74797065 
+ 1866      00
+ 1867              	.LASF60:
+ 1868 003b 54414D50 		.ascii	"TAMPERCR_POLARITY\000"
+ 1868      45524352 
+ 1868      5F504F4C 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 38
+
+
+ 1868      41524954 
+ 1868      5900
+ 1869              	.LASF43:
+ 1870 004d 6F736470 		.ascii	"osdp_rate\000"
+ 1870      5F726174 
+ 1870      6500
+ 1871              	.LASF45:
+ 1872 0057 6F736470 		.ascii	"osdp_reader_cmd\000"
+ 1872      5F726561 
+ 1872      6465725F 
+ 1872      636D6400 
+ 1873              	.LASF37:
+ 1874 0067 66616374 		.ascii	"factory_reset\000"
+ 1874      6F72795F 
+ 1874      72657365 
+ 1874      7400
+ 1875              	.LASF32:
+ 1876 0075 64617461 		.ascii	"data_length\000"
+ 1876      5F6C656E 
+ 1876      67746800 
+ 1877              	.LASF44:
+ 1878 0081 6F736470 		.ascii	"osdp_buffer\000"
+ 1878      5F627566 
+ 1878      66657200 
+ 1879              	.LASF6:
+ 1880 008d 6C6F6E67 		.ascii	"long long int\000"
+ 1880      206C6F6E 
+ 1880      6720696E 
+ 1880      7400
+ 1881              	.LASF74:
+ 1882 009b 52454544 		.ascii	"REED_1_Read\000"
+ 1882      5F315F52 
+ 1882      65616400 
+ 1883              	.LASF50:
+ 1884 00a7 53657448 		.ascii	"SetHardwareVals\000"
+ 1884      61726477 
+ 1884      61726556 
+ 1884      616C7300 
+ 1885              	.LASF73:
+ 1886 00b7 54414D50 		.ascii	"TAMPER_IN_Read\000"
+ 1886      45525F49 
+ 1886      4E5F5265 
+ 1886      616400
+ 1887              	.LASF2:
+ 1888 00c6 73686F72 		.ascii	"short int\000"
+ 1888      7420696E 
+ 1888      7400
+ 1889              	.LASF24:
+ 1890 00d0 72785F62 		.ascii	"rx_bits\000"
+ 1890      69747300 
+ 1891              	.LASF12:
+ 1892 00d8 75696E74 		.ascii	"uint16\000"
+ 1892      313600
+ 1893              	.LASF11:
+ 1894 00df 75696E74 		.ascii	"uint8\000"
+ 1894      3800
+ 1895              	.LASF65:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 39
+
+
+ 1896 00e5 4C454452 		.ascii	"LEDR_OUT_Write\000"
+ 1896      5F4F5554 
+ 1896      5F577269 
+ 1896      746500
+ 1897              	.LASF13:
+ 1898 00f4 666C6F61 		.ascii	"float\000"
+ 1898      7400
+ 1899              	.LASF20:
+ 1900 00fa 62697473 		.ascii	"bits\000"
+ 1900      00
+ 1901              	.LASF62:
+ 1902 00ff 63617264 		.ascii	"card_in_buf\000"
+ 1902      5F696E5F 
+ 1902      62756600 
+ 1903              	.LASF79:
+ 1904 010b 474E5520 		.ascii	"GNU C 4.8.4 20140526 (release) [ARM/embedded-4_8-br"
+ 1904      4320342E 
+ 1904      382E3420 
+ 1904      32303134 
+ 1904      30353236 
+ 1905 013e 616E6368 		.ascii	"anch revision 211358] -mcpu=cortex-m3 -mthumb -g -O"
+ 1905      20726576 
+ 1905      6973696F 
+ 1905      6E203231 
+ 1905      31333538 
+ 1906 0171 73202D66 		.ascii	"s -ffunction-sections\000"
+ 1906      66756E63 
+ 1906      74696F6E 
+ 1906      2D736563 
+ 1906      74696F6E 
+ 1907              	.LASF33:
+ 1908 0187 6163735F 		.ascii	"acs_outputs\000"
+ 1908      6F757470 
+ 1908      75747300 
+ 1909              	.LASF7:
+ 1910 0193 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1910      206C6F6E 
+ 1910      6720756E 
+ 1910      7369676E 
+ 1910      65642069 
+ 1911              	.LASF56:
+ 1912 01aa 63757272 		.ascii	"current_t2\000"
+ 1912      656E745F 
+ 1912      743200
+ 1913              	.LASF46:
+ 1914 01b5 6F736470 		.ascii	"osdp_reader_data_length\000"
+ 1914      5F726561 
+ 1914      6465725F 
+ 1914      64617461 
+ 1914      5F6C656E 
+ 1915              	.LASF61:
+ 1916 01cd 63617264 		.ascii	"card_ack\000"
+ 1916      5F61636B 
+ 1916      00
+ 1917              	.LASF4:
+ 1918 01d6 6C6F6E67 		.ascii	"long int\000"
+ 1918      20696E74 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 40
+
+
+ 1918      00
+ 1919              	.LASF27:
+ 1920 01df 74696D65 		.ascii	"timer_rx_ctr\000"
+ 1920      725F7278 
+ 1920      5F637472 
+ 1920      00
+ 1921              	.LASF70:
+ 1922 01ec 4C454452 		.ascii	"LEDR_IN_Read\000"
+ 1922      5F494E5F 
+ 1922      52656164 
+ 1922      00
+ 1923              	.LASF36:
+ 1924 01f9 64756D6D 		.ascii	"dummy\000"
+ 1924      7900
+ 1925              	.LASF22:
+ 1926 01ff 74785F62 		.ascii	"tx_byte\000"
+ 1926      79746500 
+ 1927              	.LASF18:
+ 1928 0207 70617269 		.ascii	"parity\000"
+ 1928      747900
+ 1929              	.LASF81:
+ 1930 020e 433A5C55 		.ascii	"C:\\Users\\Yiquing\\Documents\\works\\NanoNXT\\f2f "
+ 1930      73657273 
+ 1930      5C596971 
+ 1930      75696E67 
+ 1930      5C446F63 
+ 1931 023b 74657374 		.ascii	"testing\\3.2.0\\nanoNxt_ICM3.cydsn\000"
+ 1931      696E675C 
+ 1931      332E322E 
+ 1931      305C6E61 
+ 1931      6E6F4E78 
+ 1932              	.LASF47:
+ 1933 025c 6F736470 		.ascii	"osdp_reader_rate\000"
+ 1933      5F726561 
+ 1933      6465725F 
+ 1933      72617465 
+ 1933      00
+ 1934              	.LASF48:
+ 1935 026d 6F736470 		.ascii	"osdp_reader_buffer\000"
+ 1935      5F726561 
+ 1935      6465725F 
+ 1935      62756666 
+ 1935      657200
+ 1936              	.LASF69:
+ 1937 0280 52454C41 		.ascii	"RELAY_B_Write\000"
+ 1937      595F425F 
+ 1937      57726974 
+ 1937      6500
+ 1938              	.LASF55:
+ 1939 028e 63757272 		.ascii	"current_t1\000"
+ 1939      656E745F 
+ 1939      743100
+ 1940              	.LASF72:
+ 1941 0299 534F554E 		.ascii	"SOUND_IN_Read\000"
+ 1941      445F494E 
+ 1941      5F526561 
+ 1941      6400
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 41
+
+
+ 1942              	.LASF29:
+ 1943 02a7 534F4654 		.ascii	"SOFT_UART_STRUCT\000"
+ 1943      5F554152 
+ 1943      545F5354 
+ 1943      52554354 
+ 1943      00
+ 1944              	.LASF17:
+ 1945 02b8 62617564 		.ascii	"baud\000"
+ 1945      00
+ 1946              	.LASF42:
+ 1947 02bd 6F736470 		.ascii	"osdp_data_length\000"
+ 1947      5F646174 
+ 1947      615F6C65 
+ 1947      6E677468 
+ 1947      00
+ 1948              	.LASF1:
+ 1949 02ce 756E7369 		.ascii	"unsigned char\000"
+ 1949      676E6564 
+ 1949      20636861 
+ 1949      7200
+ 1950              	.LASF0:
+ 1951 02dc 7369676E 		.ascii	"signed char\000"
+ 1951      65642063 
+ 1951      68617200 
+ 1952              	.LASF25:
+ 1953 02e8 666C6167 		.ascii	"flags\000"
+ 1953      7300
+ 1954              	.LASF82:
+ 1955 02ee 43794465 		.ascii	"CyDelayUs\000"
+ 1955      6C617955 
+ 1955      7300
+ 1956              	.LASF8:
+ 1957 02f8 756E7369 		.ascii	"unsigned int\000"
+ 1957      676E6564 
+ 1957      20696E74 
+ 1957      00
+ 1958              	.LASF19:
+ 1959 0305 73746F70 		.ascii	"stop_bits\000"
+ 1959      5F626974 
+ 1959      7300
+ 1960              	.LASF5:
+ 1961 030f 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1961      20756E73 
+ 1961      69676E65 
+ 1961      6420696E 
+ 1961      7400
+ 1962              	.LASF34:
+ 1963 0321 6163735F 		.ascii	"acs_inputs\000"
+ 1963      696E7075 
+ 1963      747300
+ 1964              	.LASF80:
+ 1965 032c 2E5C696E 		.ascii	".\\inout.c\000"
+ 1965      6F75742E 
+ 1965      6300
+ 1966              	.LASF28:
+ 1967 0336 72785F72 		.ascii	"rx_recv\000"
+ 1967      65637600 
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 42
+
+
+ 1968              	.LASF23:
+ 1969 033e 74785F62 		.ascii	"tx_bits\000"
+ 1969      69747300 
+ 1970              	.LASF30:
+ 1971 0346 73746174 		.ascii	"status\000"
+ 1971      757300
+ 1972              	.LASF15:
+ 1973 034d 63686172 		.ascii	"char\000"
+ 1973      00
+ 1974              	.LASF77:
+ 1975 0352 4C45445F 		.ascii	"LED_YEL_Write\000"
+ 1975      59454C5F 
+ 1975      57726974 
+ 1975      6500
+ 1976              	.LASF10:
+ 1977 0360 696E7433 		.ascii	"int32_t\000"
+ 1977      325F7400 
+ 1978              	.LASF59:
+ 1979 0368 63757272 		.ascii	"currentAccessType\000"
+ 1979      656E7441 
+ 1979      63636573 
+ 1979      73547970 
+ 1979      6500
+ 1980              	.LASF63:
+ 1981 037a 62757474 		.ascii	"buttonReleased\000"
+ 1981      6F6E5265 
+ 1981      6C656173 
+ 1981      656400
+ 1982              	.LASF21:
+ 1983 0389 72785F62 		.ascii	"rx_byte\000"
+ 1983      79746500 
+ 1984              	.LASF78:
+ 1985 0391 54414D50 		.ascii	"TAMPER_OUT_Write\000"
+ 1985      45525F4F 
+ 1985      55545F57 
+ 1985      72697465 
+ 1985      00
+ 1986              	.LASF35:
+ 1987 03a2 62756666 		.ascii	"buffer\000"
+ 1987      657200
+ 1988              	.LASF3:
+ 1989 03a9 73686F72 		.ascii	"short unsigned int\000"
+ 1989      7420756E 
+ 1989      7369676E 
+ 1989      65642069 
+ 1989      6E7400
+ 1990              	.LASF51:
+ 1991 03bc 47657448 		.ascii	"GetHardwareVals\000"
+ 1991      61726477 
+ 1991      61726556 
+ 1991      616C7300 
+ 1992              	.LASF66:
+ 1993 03cc 4C454447 		.ascii	"LEDG_OUT_Write\000"
+ 1993      5F4F5554 
+ 1993      5F577269 
+ 1993      746500
+ 1994              	.LASF31:
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 43
+
+
+ 1995 03db 73746174 		.ascii	"status_in\000"
+ 1995      75735F69 
+ 1995      6E00
+ 1996              	.LASF49:
+ 1997 03e5 4932435F 		.ascii	"I2C_Regs\000"
+ 1997      52656773 
+ 1997      00
+ 1998              	.LASF9:
+ 1999 03ee 5F5F696E 		.ascii	"__int32_t\000"
+ 1999      7433325F 
+ 1999      7400
+ 2000              	.LASF67:
+ 2001 03f8 534F554E 		.ascii	"SOUND_OUT_Write\000"
+ 2001      445F4F55 
+ 2001      545F5772 
+ 2001      69746500 
+ 2002              	.LASF38:
+ 2003 0408 73775F76 		.ascii	"sw_version\000"
+ 2003      65727369 
+ 2003      6F6E00
+ 2004              	.LASF75:
+ 2005 0413 4C45445F 		.ascii	"LED_RED_Write\000"
+ 2005      5245445F 
+ 2005      57726974 
+ 2005      6500
+ 2006              	.LASF64:
+ 2007 0421 62757474 		.ascii	"buttonDuration\000"
+ 2007      6F6E4475 
+ 2007      72617469 
+ 2007      6F6E00
+ 2008              	.LASF68:
+ 2009 0430 52454C41 		.ascii	"RELAY_A_Write\000"
+ 2009      595F415F 
+ 2009      57726974 
+ 2009      6500
+ 2010              	.LASF14:
+ 2011 043e 646F7562 		.ascii	"double\000"
+ 2011      6C6500
+ 2012              	.LASF52:
+ 2013 0445 73746174 		.ascii	"stat\000"
+ 2013      00
+ 2014              	.LASF57:
+ 2015 044a 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 2015      52784275 
+ 2015      66666572 
+ 2015      00
+ 2016              	.LASF39:
+ 2017 0457 68775F76 		.ascii	"hw_version\000"
+ 2017      65727369 
+ 2017      6F6E00
+ 2018              	.LASF53:
+ 2019 0462 48616E64 		.ascii	"HandleOutputs\000"
+ 2019      6C654F75 
+ 2019      74707574 
+ 2019      7300
+ 2020              	.LASF40:
+ 2021 0470 6F736470 		.ascii	"osdp_cmd\000"
+ARM GAS  C:\Users\Yiquing\AppData\Local\Temp\cckzGpun.s 			page 44
+
+
+ 2021      5F636D64 
+ 2021      00
+ 2022              	.LASF26:
+ 2023 0479 74696D65 		.ascii	"timer_tx_ctr\000"
+ 2023      725F7478 
+ 2023      5F637472 
+ 2023      00
+ 2024              	.LASF71:
+ 2025 0486 4C454447 		.ascii	"LEDG_IN_Read\000"
+ 2025      5F494E5F 
+ 2025      52656164 
+ 2025      00
+ 2026              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 4.8.4 20140526 (release) [ARM/embedded-4_8-br
