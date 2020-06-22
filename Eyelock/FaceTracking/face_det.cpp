@@ -16,7 +16,8 @@ int face_init();
 int FindEyeLocation(Mat frame, Point &eyes, float &eye_size, Rect &face, int min_face_size, int max_face_size);
 
 /** Global variables */
-String face_cascade_name = "/home/root/data/haarcascades/haarcascade_frontalface_alt.xml";
+// String face_cascade_name = "/home/root/data/haarcascades/haarcascade_frontalface_alt.xml";
+String face_cascade_name = "/home/root/data/haarcascades/haarcascade_frontalface_alt2.xml"; 
 CascadeClassifier face_cascade;
 
 /** Face initialization */
