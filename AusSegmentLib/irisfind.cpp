@@ -92,6 +92,7 @@ Irisfind::~Irisfind()
 	delete [] lineptrHgradSpec;
 	delete [] vgradSpec;
 	delete [] lineptrVgradSpec;
+	delete [] hgradPupil;
 	delete [] lineptrHgradPupil;
 	delete [] vgradPupil;
 	delete [] lineptrVgradPupil;
@@ -115,6 +116,7 @@ Irisfind::~Irisfind()
 		delete [] lineptrMask[i];
 	}
 	delete [] lineptrMask;
+
 }
 
 void Irisfind::SetIrisfind_Iris_Diameter(uint16 MinIrisDiameter, uint16 MaxIrisDiameter)

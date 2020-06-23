@@ -1056,12 +1056,12 @@ AusSegment::~AusSegment()
 		cvReleaseImage(&m_flatMask);
 
 	if(m_Iris){
-		delete [] m_Iris;
+		delete m_Iris;
 		m_Iris = 0;
 	}
 
 	if(m_Encode){
-		delete [] m_Encode;
+		delete m_Encode;
 		m_Encode = 0;
 	}
 
