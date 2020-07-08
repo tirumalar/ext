@@ -17,6 +17,8 @@
 #define NAME_SIZE 			100
 #define NWM_INDEX			0xFFFFFFFF
 
+#define CARD_DATA_SIZE MAX_PIN_BYTE_LENGTH
+
 using namespace std;
 
 class MatchManagerInterface;
@@ -53,6 +55,7 @@ public:
 	DualAuthNMatch m_dualAuthMatched;
 	MatchManagerInterface *m_matchManager;
 	unsigned char *m_pCardData;
+	unsigned char *m_pReceivedCardData;
 	int m_cardLen;
 	int m_numOfCard;
 	int m_accessDataLength;
@@ -63,7 +66,7 @@ public:
 	bool m_duress;
 	char m_cardUser[NAME_SIZE];
 	unsigned char m_cardMask[MAX_DATA_BYTES];
-	unsigned char matchedCardData[20];
+	unsigned char *matchedCardData;
 	DBAdapter* m_dbAdapter;
 
 protected:
