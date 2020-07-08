@@ -844,7 +844,25 @@ int BobReadArray(icmreg_t reg, char *buf, int len)
 		EyelockLog(logger, ERROR, "BobReadArray:BoB => Error starting interface");
         return -1;
     }
+
 	int result = internal_read_array(fd, reg, buf, len);
+	EyelockLog(logger, DEBUG, "BobReadArray: bytes to read=%d, bytes read=%d", len, result);
+
+	/*int maxChunkSize = 10;
+	EyelockLog(logger, DEBUG, "BobReadArray: maxChunkSize=%d, len=%d", maxChunkSize, len);
+
+	int result = 0;
+	for (int i=0; i<((len+maxChunkSize-1)/maxChunkSize); i++)
+	{
+		EyelockLog(logger, DEBUG, "BobReadArray: reading chunk #%d", i);
+		result = internal_read_array(fd, reg+i*maxChunkSize, buf+i*maxChunkSize, MIN(maxChunkSize, len-maxChunkSize*i));
+		EyelockLog(logger, DEBUG, "BobReadArray: reading chunk #%d - %d bytes read", i, result);
+		if (result < 0)
+		{
+			break;
+		}
+	}*/
+
 	//close(fd);
 	return result;
 
@@ -877,9 +895,10 @@ int internal_read_array(int fd, icmreg_t reg, char *buf, int len)
 	//usleep(50);
 	len=len+4;
 	result = read(fd, buff, len);
+	EyelockLog(logger, DEBUG, "BoB => internal_read_array() - read %d, result %d", len, result);
 	if (result != len)
 	{
-		//EyelockLog(logger, ERROR, "BoB => read error in internal_read_array() - read %s, result %d", strerror(errno), result);
+		EyelockLog(logger, ERROR, "BoB => read error in internal_read_array() - read %s, result %d", strerror(errno), result);
         //perror("read");
         return -1;
 	}
@@ -1517,7 +1536,7 @@ int BobGetData(void *ptr, int len)
 	int result = 0;
 	char tmp[2];
 	usleep(100);
-	printf("BobGetData:data length requesting %d\n", len);
+	printf("BobGetData:data length requesting %d bits\n", len);
 	BobMutexStart();
 	if (!len) {
 		BobReadArray(BOB_DATA_LENGTH_OFFSET, tmp, 2);
@@ -1525,16 +1544,18 @@ int BobGetData(void *ptr, int len)
 		len = (len << 8) + tmp[1];
 		usleep(100);
 	}
-	printf("data length in buffer %d\n", len);
-	if (len > 0 && len <= 6000)
-		result = BobReadArray(BOB_ACCESS_DATA_OFFSET, ptr, len);
+	int bytelen = (len+7)/8;
+	printf("data length in buffer %d bits, %d bytes\n", len, bytelen);
+
+	if (bytelen > 0 && bytelen <= 6000)
+		result = BobReadArray(BOB_ACCESS_DATA_OFFSET, ptr, bytelen);
 	//usleep(100);
 	//memset(tmp, 0, 2);
 	//BobWriteArray(BOB_DATA_LENGTH_OFFSET, tmp, 2);
 	usleep(100);
 	BobMutexEnd();
 	usleep(100);
-	return result;
+	return len;
 }
 
 int BobSetCommand(int val)

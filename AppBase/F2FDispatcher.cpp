@@ -810,7 +810,7 @@ void F2FDispatcher::ProcessBoBCardReader() {
 		else if (m_pMatchType->m_dualAuthMatched == WAIT_FOR_PIN) {
 			if (m_pMatchType->ValidatePin()) {
 				m_pMatchType->m_dualAuthMatched = CARD_MATCHED;
-				memcpy(m_pMatchType->m_pCardData, m_pMatchType->matchedCardData, 20);
+				memcpy(m_pMatchType->m_pCardData, m_pMatchType->matchedCardData, CARD_DATA_SIZE);
 			}
 			else {
 				m_pMatchType->m_dualAuthMatched = NOT_MATCHED;
@@ -962,7 +962,7 @@ int F2FDispatcher::GetCardData() {
 	int bytes = (m_accessDataLength+7)/8;
 	int len = 0;
 
-	memset(cardData, 0, 20);
+	memset(cardData, 0, MAX_PIN_BYTE_LENGTH);
 	if (m_osdpReaderEnable) {
 		memcpy(cardData, m_osdpMessage->osdpCardData, bytes);
 		len = m_accessDataLength;
@@ -995,6 +995,21 @@ int F2FDispatcher::GetCardData() {
 		}
 	}
 	m_pMatchType->m_cardLen = len;
+	int bytelen = (len+7)/8;
+
+	if (m_dualAuth || m_pinAuth || m_multiAuth)
+	{
+		if (bytelen > CARD_DATA_SIZE)
+		{
+			EyelockLog(logger, ERROR, "Received raw card data size exceeds the reserved size for storing it");
+		}
+		else
+		{
+			EyelockLog(logger, DEBUG, "Storing the received raw card data for sending it to the panel in the case of successful authentication");
+			memcpy(m_pMatchType->m_pReceivedCardData, m_pMatchType->m_pCardData, CARD_DATA_SIZE);
+		}
+	}
+
 	if(m_Debug && m_dualAuth) {
 		char *cardID = m_pMatchType->PrintCardData(m_pMatchType->m_pCardData, (len+7)/8);
 		EyelockLog(logger, DEBUG, "Card data read from BoB: %s, len %d", cardID, (len+7)/8);

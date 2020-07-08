@@ -13,7 +13,7 @@
 
 const char logger[30] = "MatchType";
 
-MatchType::MatchType(Configuration& conf):m_pUserData(NULL), m_pCardData(NULL), m_matchManager(NULL), m_dbAdapter(NULL)
+MatchType::MatchType(Configuration& conf):m_pUserData(NULL), m_pCardData(NULL), m_pReceivedCardData(NULL), m_matchManager(NULL), m_dbAdapter(NULL), matchedCardData(NULL)
 {
 	m_Debug = conf.getValue("Eyelock.SystemReadyDebug", false);
 	m_numOfCard = 0;
@@ -21,6 +21,8 @@ MatchType::MatchType(Configuration& conf):m_pUserData(NULL), m_pCardData(NULL), 
 	m_matchIndex = -1;
 	m_duress = false;
 	m_pCardData = (unsigned char *)malloc(MAX_PIN_BYTE_LENGTH);
+	m_pReceivedCardData = (unsigned char *)malloc(CARD_DATA_SIZE);
+	matchedCardData = (unsigned char *)malloc(CARD_DATA_SIZE);
 	if (m_pCardData == NULL)
 		EyelockLog(logger, ERROR, "Failed at malloc m_pCardData");
 
@@ -35,8 +37,12 @@ MatchType::~MatchType()
 {
 	if (m_pCardData)
 		free(m_pCardData);
+	if (m_pReceivedCardData)
+		free(m_pReceivedCardData);
 	if (m_pUserData)
 		free(m_pUserData);
+	if (matchedCardData)
+		free(matchedCardData);
 }
 
 bool MatchType::timeoutUser()
