@@ -38,6 +38,8 @@ protected:
 	bool m_f2f;
 	bool m_cardPinMatch;
 
+	bool m_sendRawCardData;
+
 	bool findCardInDB(unsigned char *card);
 	bool findCardInNwMatch(unsigned char *card);
 	bool findPinInDB(unsigned char *pin);

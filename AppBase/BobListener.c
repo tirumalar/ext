@@ -895,10 +895,10 @@ int internal_read_array(int fd, icmreg_t reg, char *buf, int len)
 	//usleep(50);
 	len=len+4;
 	result = read(fd, buff, len);
-	EyelockLog(logger, DEBUG, "BoB => internal_read_array() - read %d, result %d", len, result);
+	//EyelockLog(logger, DEBUG, "BoB => internal_read_array() - read %d, result %d", len, result);
 	if (result != len)
 	{
-		EyelockLog(logger, ERROR, "BoB => read error in internal_read_array() - read %s, result %d", strerror(errno), result);
+		//EyelockLog(logger, ERROR, "BoB => read error in internal_read_array() - read %s, result %d", strerror(errno), result);
         //perror("read");
         return -1;
 	}
