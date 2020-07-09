@@ -21,6 +21,7 @@ FIXED_BRD_VER=$(cat "${EYELOCK_WS_EXT}/OIMBinaries/versions.txt" | grep 'Fixed b
 CAM_BRD_VER=$(cat "${EYELOCK_WS_EXT}/OIMBinaries/versions.txt" | grep 'Cam Psoc Version' | cut -d':' -f2)
 
 ICM_FILE="nanoExt_ICM_v${ICM_VER}.cyacd"
+ICM7_FILE="nanoExt_ICM7_v${ICM_VER}.cyacd"
 
 FPGA_FILE="nanoExt_FPGA_v${FPGA_VER}.bin"
 FIXED_BRD_FILE="nanoExt_FixedBoard_v${FIXED_BRD_VER}.cyacd"
@@ -57,6 +58,7 @@ sed -i "s/@@version@@/${FW_VER}/" "${XML_FILE_PATH}"
 sed -i "s/@@bobversion@@/${ICM_VER}/" "${XML_FILE_PATH}"
 sed -i "s/@@tarfilename@@/${FW_FILE}/" "${XML_FILE_PATH}"
 sed -i "s/@@ICMFilename@@/${ICM_FILE}/" "${XML_FILE_PATH}"
+sed -i "s/@@ICM7Filename@@/${ICM7_FILE}/" "${XML_FILE_PATH}"
 
 sed -i "s/@@fpgaversion@@/${FPGA_VER}/" "${XML_FILE_PATH}"
 sed -i "s/@@fixedbrdversion@@/${FIXED_BRD_VER}/" "${XML_FILE_PATH}"
@@ -148,12 +150,13 @@ openssl dgst -sha256 -sign "${KEY_FILE}" -out "${TARGET_DIR}/${FWHANDLER_FILE}.s
 
 # -----------------------------------------------------------------------------------------------------------
 cp "${EYELOCK_WS_EXT}/ICMBinary/ext_pim.cyacd" "${TARGET_DIR}/${ICM_FILE}"
+cp "${EYELOCK_WS_EXT}/ICMBinary/ext_pim7.cyacd" "${TARGET_DIR}/${ICM7_FILE}"
 
 cp "${EYELOCK_WS_EXT}/OIMBinaries/output16_18.bin" "${TARGET_DIR}/${FPGA_FILE}"
 cp "${EYELOCK_WS_EXT}/OIMBinaries/fixed.cyacd" "${TARGET_DIR}/${FIXED_BRD_FILE}"
 cp "${EYELOCK_WS_EXT}/OIMBinaries/camera.cyacd" "${TARGET_DIR}/${CAM_BRD_FILE}"
 
-tar -cf "${EYELOCK_WS_EXT}/dist/${FW_FILE}" -C "${TARGET_DIR}" "${BOARD_FILE}" "${BOARD_FILE}.md5" "${ICM_FILE}" "${FPGA_FILE}" "${FIXED_BRD_FILE}" "${CAM_BRD_FILE}" "${FWHANDLER_FILE}" "${FWHANDLER_FILE}.sig" "${XML_FILE}" "${XML_FILE_LEGACY}"
+tar -cf "${EYELOCK_WS_EXT}/dist/${FW_FILE}" -C "${TARGET_DIR}" "${BOARD_FILE}" "${BOARD_FILE}.md5" "${ICM_FILE}" "${ICM7_FILE}" "${FPGA_FILE}" "${FIXED_BRD_FILE}" "${CAM_BRD_FILE}" "${FWHANDLER_FILE}" "${FWHANDLER_FILE}.sig" "${XML_FILE}" "${XML_FILE_LEGACY}"
 
 # -----------------------------------------------------------------------------------------------------------
 # encrypted version
@@ -166,7 +169,7 @@ md5sum "${TARGET_DIR}/${BOARD_FILE}" | awk ' { print $1 } ' > "${TARGET_DIR}/${B
 mv "${TARGET_DIR}/tmp" "${TARGET_DIR}/${FWHANDLER_FILE}"
 openssl dgst -sha256 -sign "${KEY_FILE}" -out "${TARGET_DIR}/${FWHANDLER_FILE}.sig" "${TARGET_DIR}/${FWHANDLER_FILE}"
 
-tar -cf "${EYELOCK_WS_EXT}/dist/${FW_FILE}.enc" -C "${TARGET_DIR}" "${BOARD_FILE}" "${BOARD_FILE}.md5" "${ICM_FILE}" "${FPGA_FILE}" "${FIXED_BRD_FILE}" "${CAM_BRD_FILE}" "${FWHANDLER_FILE}" "${FWHANDLER_FILE}.sig" "${XML_FILE}" "${XML_FILE_LEGACY}"
+tar -cf "${EYELOCK_WS_EXT}/dist/${FW_FILE}.enc" -C "${TARGET_DIR}" "${BOARD_FILE}" "${BOARD_FILE}.md5" "${ICM_FILE}" "${ICM7_FILE}" "${FPGA_FILE}" "${FIXED_BRD_FILE}" "${CAM_BRD_FILE}" "${FWHANDLER_FILE}" "${FWHANDLER_FILE}.sig" "${XML_FILE}" "${XML_FILE_LEGACY}"
 
 rm -r "${TARGET_DIR}"
 # -----------------------------------------------------------------------------------------------------------
