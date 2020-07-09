@@ -364,11 +364,18 @@ upgradeMaster(){
 
 checkIcmVersion(){
 	${logger} -L"Current ICM version: (${currentIcmVer})"
+	${logger} -L"Current ICM HW version: (${currentIcmHwVer})"
 	${logger} -L"New ICM version: (${bobVersion})"
 	if [[ ${currentIcmVer} == ${bobVersion} ]]
 	then
 		return 1
 	fi
+	
+	if [[ ${currentIcmHwVer} != '71.42.a' ]]
+	then
+		bobFileName=${bob7FileName}
+	fi
+	
 	# 0 if upgrade needed
 	return 0
 }
@@ -734,6 +741,7 @@ upgradeInternal()
 	bobVersion=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml bobversion)
 	nanoVersion=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml nanoversion)
 	bobFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml bobfilename)
+	bob7FileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml bob7filename)
 	masterFileName=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml nanofilename)
 	
 	fpgaVer=$(getXmlTag ${firmwareDir}/fwHandler/NanoEXTVersionInfo.xml fpgaversion)
@@ -785,6 +793,7 @@ upgradeInternal()
 	# must be done before swapping directories
 	# change to "icm_communicator -v ..."?
 	currentIcmVer=$(cat /home/root/BobVersion | sed -n "s/^ICM\ssoftware\sversion:\s\(.*\)$/\1/p")
+	currentIcmHwVer=$(cat /home/root/BobVersion | sed -n "s/^ICM\shardware\sversion:\s\(.*\)$/\1/p")
 
 	${logger} -L"Upgrade process started."
 
@@ -873,14 +882,14 @@ upgradeInternal()
 		${logger} -L"FW files not found."
 	fi
 	
-	# TODO: uncomment ICM upgrade when ICM communicator will be ready
-	#if [[ -n "${bobFileName}" && -e ${bobFileName} ]]
+	## TODO: uncomment ICM upgrade when ICM communicator will be ready
+	#checkIcmVersion
+	#if [[ $? -ne 0 ]]
 	#then
-	#	checkIcmVersion
-	#	if [[ $? -ne 0 ]]
+	#	${logger} -L"New PIM version matches with current."
+	#else
+	#	if [[ -n "${bobFileName}" && -e ${bobFileName} ]]
 	#	then
-	#		${logger} -L"New PIM version matches with current."
-	#	else
 	#		${logger} -L"Upgrading PIM..."
 	#		touch /home/icmupdate.txt
 	#		rm /home/bobupdate.txt
