@@ -180,6 +180,7 @@ F2FDispatcher::F2FDispatcher(Configuration& conf):ResultDispatcher(conf), m_pMat
 	m_DenyRelayTimeInMs = conf.getValue("GRITrigger.DenyRelayTimeInMs", 5000);
 	m_RelayWithSignal = conf.getValue("GRITrigger.EnableRelayWithSignal", false);
 	m_silencePeriodAfterMatchMs = conf.getValue("GRI.SilencePeriodAfterMatchMs", 2000); //2sec
+	m_sendRawCardData = conf.getValue("Eyelock.SendRawCardData",true);
 	bool m_disablebob = conf.getValue("Eyelock.BOBDisable",false); //2sec
 	if (m_dualAuth || m_transTOC)
 		m_initialState = 0;
@@ -995,18 +996,21 @@ int F2FDispatcher::GetCardData() {
 		}
 	}
 	m_pMatchType->m_cardLen = len;
-	int bytelen = (len+7)/8;
 
-	if (m_dualAuth || m_pinAuth || m_multiAuth)
+	if (m_sendRawCardData)
 	{
-		if (bytelen > CARD_DATA_SIZE)
+		int bytelen = (len+7)/8;
+		if ((m_dualAuth || m_multiAuth) && !m_pinAuth)
 		{
-			EyelockLog(logger, ERROR, "Received raw card data size exceeds the reserved size for storing it");
-		}
-		else
-		{
-			EyelockLog(logger, DEBUG, "Storing the received raw card data for sending it to the panel in the case of successful authentication");
-			memcpy(m_pMatchType->m_pReceivedCardData, m_pMatchType->m_pCardData, CARD_DATA_SIZE);
+			if (bytelen > CARD_DATA_SIZE)
+			{
+				EyelockLog(logger, ERROR, "Received raw card data size exceeds the reserved size for storing it");
+			}
+			else
+			{
+				EyelockLog(logger, DEBUG, "Storing the received raw card data for sending it to the panel in the case of successful authentication");
+				memcpy(m_pMatchType->m_pReceivedCardData, m_pMatchType->m_pCardData, CARD_DATA_SIZE);
+			}
 		}
 	}
 

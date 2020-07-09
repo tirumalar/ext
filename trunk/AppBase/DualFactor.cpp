@@ -28,6 +28,7 @@ DualFactor::DualFactor(Configuration& conf):MatchType(conf)
 	m_f2f = conf.getValue("GRITrigger.F2FEnable",false);
 	m_dualParity = true; 	// conf.getValue("GRITrigger.DualAuthenticationParity",true);
 	m_cardPinMatch = false;
+	m_sendRawCardData = conf.getValue("Eyelock.SendRawCardData",true);
 }
 
 void DualFactor::initMatchBuffer()
@@ -418,23 +419,31 @@ bool DualFactor::UpdateMatchResult(MatchResult *msg)
 		if (state==PASSED) {
 			int bytes =0,bits=0;
 			char *ptr = msg->getF2F(bytes,bits);
-			if (!m_pinAuth) {
-				printf("Comparing card data in UpdateMatchResult\n");
+			if (!m_pinAuth) { // "card and iris" and "multifactor"
 				memcpy(m_pCardData, matchedCardData, CARD_DATA_SIZE);
 				if (bytes == (m_accessDataLength+7)/8 && memcmp(m_pCardData, ptr, bytes) == 0) {
 					msg->setState(PASSED);
 
-					printf("The card data \"from DB\" : ");
-					msg->printF2FData();
+					if (m_sendRawCardData)
+					{
+						if (m_Debug)
+						{
+							printf("The card data \"from DB\" : ");
+							msg->printF2FData();
+						}
 
-					char *appendedCardData = new char[bytes+2];
-					memcpy(appendedCardData+2,m_pReceivedCardData, bytes);
-					*((short*)appendedCardData) = (short)m_accessDataLength;
-					msg->setF2F(appendedCardData);
-					delete[] appendedCardData;
+						char *appendedCardData = new char[bytes + 2];
+						memcpy(appendedCardData + 2, m_pReceivedCardData, bytes);
+						*((short*) appendedCardData) = (short) m_accessDataLength;
+						msg->setF2F(appendedCardData);
+						delete[] appendedCardData;
 
-					printf("The card data \"from card reader (stored in memory previously)\" : ");
-					msg->printF2FData();
+						if (m_Debug)
+						{
+							printf("The card data \"from card reader (stored in memory previously)\" : ");
+							msg->printF2FData();
+						}
+					}
 				}
 				else {
 					msg->setState(FAILED);

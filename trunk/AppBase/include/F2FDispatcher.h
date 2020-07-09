@@ -198,6 +198,8 @@ protected:
 	bool m_DebugTesting;
 	std::string m_sessionDir;
 
+	bool m_sendRawCardData;
+
 	//pthread_t osdp_thread;
 };
 
