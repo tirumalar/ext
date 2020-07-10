@@ -999,17 +999,25 @@ int F2FDispatcher::GetCardData() {
 
 	if (m_sendRawCardData)
 	{
-		int bytelen = (len+7)/8;
-		if ((m_dualAuth || m_multiAuth) && !m_pinAuth)
+		if ((m_dualAuth || (m_multiAuth)) && !m_pinAuth) // len > 8 means card data was received, not PIN (PIN digit can be 4 or 8 bits only)
 		{
-			if (bytelen > CARD_DATA_SIZE)
+			int bytelen = (len+7)/8;
+			if (bytelen <= CARD_DATA_SIZE)
 			{
-				EyelockLog(logger, ERROR, "Received raw card data size exceeds the reserved size for storing it");
+				if (len > 8)
+				{
+					EyelockLog(logger, DEBUG, "Storing the received raw card data (%d bytes) for sending it to the panel in the case of successful authentication", len);
+					memcpy(m_pMatchType->m_pReceivedCardData, m_pMatchType->m_pCardData, CARD_DATA_SIZE);
+				}
+				else
+				{
+					EyelockLog(logger, DEBUG, "PIN bits received: skipping storing the received card reader data (%d bytes) for sending it to the panel in the case of successful authentication", len);
+				}
+
 			}
 			else
 			{
-				EyelockLog(logger, DEBUG, "Storing the received raw card data for sending it to the panel in the case of successful authentication");
-				memcpy(m_pMatchType->m_pReceivedCardData, m_pMatchType->m_pCardData, CARD_DATA_SIZE);
+				EyelockLog(logger, ERROR, "Received raw card data size exceeds the reserved size for storing it");
 			}
 		}
 	}
