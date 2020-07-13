@@ -36,6 +36,7 @@ protected:
 	int m_acdCount;
 	bool m_dualParity;
 	bool m_f2f;
+	bool m_osdpReaderEnable;
 	bool m_cardPinMatch;
 
 	bool m_sendRawCardData;
