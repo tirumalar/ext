@@ -26,7 +26,7 @@ const unsigned char pinBurstCode8[12] = {0xF0, 0xE1, 0xD2, 0xC3, 0xB4, 0xA5, 0x9
 DualFactor::DualFactor(Configuration& conf):MatchType(conf)
 {
 	m_f2f = conf.getValue("GRITrigger.F2FEnable",false);
-	m_osdpReaderEnable = conf.getValue("GRITrigger.OSDPInputEnable",false);
+	m_osdpACSEnabled = conf.getValue("GRITrigger.OSDPEnable",false);
 	m_dualParity = true; 	// conf.getValue("GRITrigger.DualAuthenticationParity",true);
 	m_cardPinMatch = false;
 	m_sendRawCardData = conf.getValue("Eyelock.SendRawCardData",true);
@@ -425,7 +425,7 @@ bool DualFactor::UpdateMatchResult(MatchResult *msg)
 				if (bytes == (m_accessDataLength+7)/8 && memcmp(m_pCardData, ptr, bytes) == 0) {
 					msg->setState(PASSED);
 
-					if (m_sendRawCardData && !m_f2f && !m_osdpReaderEnable)
+					if (m_sendRawCardData && !m_f2f && !m_osdpACSEnabled)
 					{
 						if (m_Debug)
 						{
