@@ -997,7 +997,7 @@ int F2FDispatcher::GetCardData() {
 	}
 	m_pMatchType->m_cardLen = len;
 
-	if (m_sendRawCardData && !m_f2f && !m_osdpReaderEnable)
+	if (m_sendRawCardData && !m_f2f && !m_osdpACSEnabled)
 	{
 		if ((m_dualAuth || (m_multiAuth)) && !m_pinAuth) // len > 8 means card data was received, not PIN (PIN digit can be 4 or 8 bits only)
 		{
