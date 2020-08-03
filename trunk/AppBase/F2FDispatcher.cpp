@@ -920,6 +920,7 @@ void F2FDispatcher::ProcessBoBCardReader() {
 			// set LED off
 			m_initialState = 0;
 			SetLED(INITIAL);
+			StopEyesProcessing();
 		}
 
 		if (m_pMatchType->m_dualAuthMatched == WAIT_FOR_PIN) {
