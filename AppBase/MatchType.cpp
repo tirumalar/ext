@@ -72,6 +72,7 @@ char * MatchType::PrintCardData(unsigned char *card, int bytes)
 void MatchType::clearCardData()
 {
 	memset(m_pCardData, 0, m_cardLen);
+	memset(m_pReceivedCardData, 0, CARD_DATA_SIZE);
 	m_cardLen = 0;
 	m_matchIndex = -1;
 }
