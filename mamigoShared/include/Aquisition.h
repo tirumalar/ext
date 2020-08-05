@@ -26,7 +26,7 @@ public:
 	virtual void getIlluminatorState(__int64_t& ts,int &il0,int& il1){
 		framer->getIlluminatorState(ts,il0,il1);
 	}
-	virtual void clearFrameBuffer(){};
+	virtual void clearFrameBuffer(){framer->clearFrameBuffer();};
 	virtual cv::Rect getLatestScaledFaceRect(){
 		return m_ScaledFaceRect;
 	}
