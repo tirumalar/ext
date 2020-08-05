@@ -602,4 +602,5 @@ void BufferBasedFrameGrabber::clearFrameBuffer(){
 		EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::ClearRing() Start");
 
 	m_pRingBuffer->Clear();
+	m_ProcessBuffer->Clear();
 }
