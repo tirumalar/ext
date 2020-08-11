@@ -48,6 +48,7 @@ public:
 	void clearFrameBuffer();
 	ImageQueueItem GetFreeBuffer();
 	void ReleaseProcessBuffer(ImageQueueItem m);
+	void ReleaseAllProcessBuffers();
 	bool TryReleaseProcessBuffer(ImageQueueItem m);
 	void PushProcessBuffer(ImageQueueItem m);
 private:

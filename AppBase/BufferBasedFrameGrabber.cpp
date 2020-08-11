@@ -602,5 +602,42 @@ void BufferBasedFrameGrabber::clearFrameBuffer(){
 		EyelockLog(logger, TRACE, "BufferBasedFrameGrabber::ClearRing() Start");
 
 	m_pRingBuffer->Clear();
-	m_ProcessBuffer->Clear();
+	ReleaseAllProcessBuffers();
 }
+
+void BufferBasedFrameGrabber::ReleaseAllProcessBuffers()
+{
+	bool status = true;
+	while (true) {
+#if 1
+		if (m_current_process_queue_item.m_ptr != 0) {
+			status = TryReleaseProcessBuffer(m_current_process_queue_item);
+			if (!status) {
+				usleep(1000);
+			} else {
+				m_current_process_queue_item.m_ptr = 0;
+			}
+		}
+	#else
+		if (m_current_process_queue_item.m_ptr!=0)
+			ReleaseProcessBuffer(m_current_process_queue_item);
+	#endif
+
+		if (!(m_ProcessBuffer->Empty()))
+		{
+			status = false; // reset
+			while (1) {
+				status = m_ProcessBuffer->TryPop(m_current_process_queue_item);
+				if (status) {
+					// printf("Pop of process buffer successful\n");
+					break;//something to process
+				}
+				usleep(1000); // Leave this sleep so we don't use all CPU
+			}
+		} else {
+			break;
+		}
+	}
+}
+
+

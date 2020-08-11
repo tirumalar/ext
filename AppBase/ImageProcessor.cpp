@@ -1225,7 +1225,7 @@ IplImage * ImageProcessor::GetFrame(){
 	// printf("ImageProcessor.....GetFrame\n");
 	IplImage *frame = NULL;
 	auto start = std::chrono::high_resolution_clock::now();
-	if(m_EyelockIrisMode == 2){
+
 		frame = aquisition->getFrame_nowait();
 		m_BScaledFaceRect = aquisition->getLatestScaledFaceRect();
 		if(bIrisToFaceMapDebug){
@@ -1233,13 +1233,7 @@ IplImage * ImageProcessor::GetFrame(){
 		}
 		if (NULL == frame)
 			return NULL;
-	}else{
-		frame = aquisition->getFrame();
-		m_BScaledFaceRect = aquisition->getLatestScaledFaceRect();
-		if(bIrisToFaceMapDebug){
-			m_FaceInfoForDebug = aquisition->getLatestFaceInfo();
-		}
-	}
+
 	if(n_bDebugFrameBuffer){
 		auto finish = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double> elapsed = finish - start;
@@ -4388,16 +4382,21 @@ bool ImageProcessor::process(bool matchmode) {
 #else
 
 	IplImage *frame = NULL; //
-	while(frame == NULL){
+
 	XTIME_OP("GetFrame",
 			frame = GetFrame()
 
 	);
-	/*
+
 	if(frame == NULL)
-		printf("FRAME IS NULL FRAME IS NULL FRAME IS NULL FRAME IS NULL FRAME IS NULL\n");
+	{
+		//printf("FRAME IS NULL FRAME IS NULL FRAME IS NULL FRAME IS NULL FRAME IS NULL\n");
+		return bSentSomething;
+	}
 	else
-		printf("Get Frame Frame is not NULL\n"); */
+	{
+		//printf("Get Frame Frame is not NULL\n");
+	}
 	// cvSaveImage("Before.pgm", frame);
 #if 0
 	IplImage *test = cvCreateImage(cvSize(1200, 960),IPL_DEPTH_8U,1);
@@ -4438,7 +4437,7 @@ bool ImageProcessor::process(bool matchmode) {
 #endif
 		if (m_DHSScreens && (m_EyelockIrisMode == 2))
 			cvWaitKey(1);
-	} // end while
+
 	if (m_DHSScreens && (m_EyelockIrisMode == 2))
 		cvWaitKey(1);
     return bSentSomething;
